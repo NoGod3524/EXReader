@@ -1,0 +1,11 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.EXE",
+    "--build",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\g",
+    "--parallel",
+    "6"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 307.8364175000024
+}

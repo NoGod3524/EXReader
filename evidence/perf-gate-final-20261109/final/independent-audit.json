@@ -1,0 +1,51 @@
+{
+  "raw_sha256_verified": 399,
+  "turn_samples_recomputed": 6384,
+  "baseline_books_recomputed": 19,
+  "independent_nearest_rank": 46,
+  "all_recorded_decisions_match": true,
+  "decisions": {
+    "repeat-1": {
+      "status": "fail",
+      "failed_books": [
+        "a-raisin-in-the-sun",
+        "between-the-world-and-me",
+        "born-a-crime",
+        "i-know-why-the-caged-bird-sings",
+        "the-absolutely-true-diary-of-a-part-time-indian",
+        "the-autobiography-of-malcolm-x.",
+        "the-fire-next-time",
+        "xingshihengyan-24239",
+        "tangshi300-52323"
+      ]
+    },
+    "repeat-2": {
+      "status": "fail",
+      "failed_books": [
+        "a-raisin-in-the-sun",
+        "between-the-world-and-me"
+      ]
+    },
+    "repeat-3": {
+      "status": "pass",
+      "failed_books": []
+    },
+    "repeat-4": {
+      "status": "pass",
+      "failed_books": []
+    },
+    "repeat-5": {
+      "status": "fail",
+      "failed_books": [
+        "the-autobiography-of-malcolm-x.",
+        "the-distance-between-us-a-memoir"
+      ]
+    },
+    "positive-25": {
+      "status": "fail",
+      "failed_books": [
+        "black-boy"
+      ]
+    }
+  }
+}

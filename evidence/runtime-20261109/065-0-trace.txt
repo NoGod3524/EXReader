@@ -1,0 +1,23 @@
+065:0 src/publication.c:782 dereference of NULL 'd'
+1 publication.c:970 entry to 'exr_range_expand'
+2 publication.c:972 'd' is NULL
+3 publication.c:973 following 'false' branch (when 'out' is non-NULL)...
+4 publication.c:975 ...to here
+5 publication.c:977 following 'false' branch...
+6 publication.c:979 ...to here
+7 publication.c:980 calling 'exr_publication_load' from 'exr_range_expand'
+8 publication.c:264 entry to 'exr_publication_load'
+9 publication.c:265 'doc' is NULL
+10 publication.c:267 following 'false' branch (when 'out' is non-NULL)...
+11 publication.c:269 ...to here
+12 publication.c:270 following 'false' branch (when 'p' is non-NULL)...
+13 publication.c:270 ...to here
+14 publication.c:980 returning to 'exr_range_expand' from 'exr_publication_load'
+15 publication.c:981 following 'true' branch (when 'status == 0')...
+16 publication.c:981 ...to here
+17 publication.c:981 'd' is NULL
+18 publication.c:981 calling 'content_unit' from 'exr_range_expand'
+19 publication.c:928 entry to 'content_unit'
+20 publication.c:931 calling 'content_boundary' from 'content_unit'
+21 publication.c:781 entry to 'content_boundary'
+22 publication.c:782 dereference of NULL 'd'

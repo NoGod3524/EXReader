@@ -1,0 +1,14 @@
+{
+  "upstream_main": "ed252fb6",
+  "release_dll": "a1e1e135ae0da52dc92ecafb921af80ed015615f070b3bb2efe29d09d24f57ec",
+  "examples/reader.c": "43fad8f3604862fe78caa0fc9d07339396c66b558819e68e4fd7744c6bc99044",
+  "examples/windows/shell_screen.inc": "bcb1720a3c334d7a02536bd075f06d84586ae375582417761b96f3a7f0933270",
+  "examples/windows/shell_style_store.inc": "91d2cc291c9a9369778cb1b0ebed21f8d7815f92dfad838d6201fc408b0d46e3",
+  "examples/windows/shell_settings.inc": "e4fe4ffccf59a246efbbc1f68998d3f11190f38397313feafb7698d60546fb90",
+  "src/fonts.c": "7ceb8ff17c65b8b559918ec8916c82505f171f0604173b81445cc76b6d716424",
+  "src/raster.c": "1c7279ca4fa2da6575bcddc9bf1e32f458081b017c1e7e468c3cd0eed904e1fa",
+  "src/opentype.c": "5ddb8b045fbc773a99fecd22580b57e8b135bf4f2e12b28a82218e294e12f83a",
+  "src/font_internal.h": "dc328d2ecf4027a2c5d7bd8a1c741af9937cf0aad6d9bc2e5bc1e3330ae8f4f3",
+  "tests/perf_page_turns.py": "1e69c6431d8cd27fc85f349333b2fb97005f005732b2f8baa37da3574370b5b1",
+  "tests/perf_host_checks.c": "00d8949bd8da4c21cd8e443724754ec2a97aed945c813e653e4c15b58dec9124"
+}

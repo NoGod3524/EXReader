@@ -1,0 +1,36 @@
+{
+  "sdk_build_source": "1a7d3bfbf0ff3506bc62781fbcc94134c18b120f",
+  "comparison_objects": {
+    "src": {
+      "current": "2f95d09f10ae807559b4742ffa567d60a4495b9b",
+      "sdk_build_source": "2f95d09f10ae807559b4742ffa567d60a4495b9b"
+    },
+    "include": {
+      "current": "b7d48451e5b773a95b1363315c64c005b5ac1903",
+      "sdk_build_source": "b7d48451e5b773a95b1363315c64c005b5ac1903"
+    },
+    "cmake": {
+      "current": "805c2ab2258f1d38308df839f0075271bdf8b8cb",
+      "sdk_build_source": "805c2ab2258f1d38308df839f0075271bdf8b8cb"
+    },
+    "CMakeLists.txt": {
+      "current": "f8a9eb92e4762c038821a0da12ba89c3c1c72677",
+      "sdk_build_source": "f8a9eb92e4762c038821a0da12ba89c3c1c72677"
+    },
+    "tools/reading_real_benchmark.c": {
+      "current": "786723068a4eb5ad51aaa47173a3311b0f17eff1",
+      "sdk_build_source": "786723068a4eb5ad51aaa47173a3311b0f17eff1"
+    },
+    "tools/regress": {
+      "current": "64a60b4d620a51fe4d3dc212b3fd0d2d81c3d866",
+      "sdk_build_source": "64a60b4d620a51fe4d3dc212b3fd0d2d81c3d866"
+    }
+  },
+  "sdk_sha256": "c72d233b9a7cb1e8c93dd4fbd9aa7b494b73318326e3d58f62be7352f6569d3a",
+  "regression_dll_sha256": "c72d233b9a7cb1e8c93dd4fbd9aa7b494b73318326e3d58f62be7352f6569d3a",
+  "product_sources_match": true,
+  "regression_content_fingerprint": "f133272deccc097ee10bbdcf18cdb60c95bf3035ddde529e8dbea24a1d5ce488",
+  "baseline_precedes_all_candidates": true,
+  "same_probe_all_repeats": true,
+  "same_sdk_all_repeats": true
+}

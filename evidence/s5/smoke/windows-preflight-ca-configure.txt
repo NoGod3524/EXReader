@@ -1,0 +1,382 @@
+-- Found PkgConfig: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/pkgconf.exe (found version "3.0.5")
+-- Looking for dlfcn.h
+-- Looking for dlfcn.h - not found
+-- Looking for fcntl.h
+-- Looking for fcntl.h - found
+-- Looking for inttypes.h
+-- Looking for inttypes.h - found
+-- Looking for memory.h
+-- Looking for memory.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stdlib.h
+-- Looking for stdlib.h - found
+-- Looking for strings.h
+-- Looking for strings.h - found
+-- Looking for string.h
+-- Looking for string.h - found
+-- Looking for sys/stat.h
+-- Looking for sys/stat.h - found
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for unistd.h
+-- Looking for unistd.h - found
+-- Looking for getpagesize
+-- Looking for getpagesize - not found
+-- Looking for mmap
+-- Looking for mmap - not found
+-- Looking for getrandom
+-- Looking for getrandom - not found
+-- Performing Test HAVE_ARC4RANDOM_BUF
+-- Performing Test HAVE_ARC4RANDOM_BUF - Failed
+-- Performing Test HAVE_ARC4RANDOM
+-- Performing Test HAVE_ARC4RANDOM - Failed
+-- Looking for 4 include files stdlib.h, ..., float.h
+-- Looking for 4 include files stdlib.h, ..., float.h - found
+-- Performing Test HAVE_OFF_T
+-- Performing Test HAVE_OFF_T - Success
+-- Performing Test HAVE_GETENTROPY
+-- Performing Test HAVE_GETENTROPY - Failed
+-- Performing Test HAVE_SYSCALL_GETRANDOM
+-- Performing Test HAVE_SYSCALL_GETRANDOM - Failed
+-- Performing Test _FLAG_DETECTION_UNUSABLE
+-- Performing Test _FLAG_DETECTION_UNUSABLE - Failed
+-- Performing Test FLAG_WSTRICT_ALIASING
+-- Performing Test FLAG_WSTRICT_ALIASING - Success
+-- Performing Test FLAG_WIMPLICIT_FALLTHROUGH
+-- Performing Test FLAG_WIMPLICIT_FALLTHROUGH - Success
+-- Performing Test FLAG_VISIBILITY
+-- Performing Test FLAG_VISIBILITY - Success
+-- Looking for cos in m
+-- Looking for cos in m - found
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 4.4.2
+-- 
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix ....... 
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     rand_s ................... ON
+-- 
+-- ===========================================================================
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Success
+-- Performing Test HAVE_BUILTIN_BSWAP16
+-- Performing Test HAVE_BUILTIN_BSWAP16 - Success
+-- Performing Test HAVE_BUILTIN_BSWAP32
+-- Performing Test HAVE_BUILTIN_BSWAP32 - Success
+-- Performing Test HAVE_BUILTIN_BSWAP64
+-- Performing Test HAVE_BUILTIN_BSWAP64 - Success
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found OpenGL: opengl32
+-- Performing Test HAVE_MATH_LIBRARY
+-- Performing Test HAVE_MATH_LIBRARY - Success
+-- Looking for include file GLUT/glut.h
+-- Looking for include file GLUT/glut.h - not found
+-- Looking for include file GL/glut.h
+-- Looking for include file GL/glut.h - not found
+-- Looking for include file OpenGL/glut.h
+-- Looking for include file OpenGL/glut.h - not found
+-- Looking for include file shlwapi.h
+-- Looking for include file shlwapi.h - found
+-- Looking for include file wincodec.h
+-- Looking for include file wincodec.h - found
+-- Looking for include file windows.h
+-- Looking for include file windows.h - found
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Failed
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Success
+-- Performing Test WEBP_HAVE_FLAG_SSE2
+-- Performing Test WEBP_HAVE_FLAG_SSE2 - Success
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+-- Looking for stddef.h
+-- Looking for stddef.h - found
+-- Check size of off64_t
+-- Check size of off64_t - done
+-- Looking for fseeko
+-- Looking for fseeko - found
+-- Looking for unistd.h
+-- Looking for unistd.h - found
+-- Renaming
+--     S:/windows-preflight/_deps/zlib-src/zconf.h
+-- to 'zconf.h.included' because this file is included with zlib
+-- but CMake generates it automatically in the build directory.
+-- Building tiff version 4.7.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test C_FLAG_Wall
+-- Performing Test C_FLAG_Wall - Success
+-- Performing Test C_FLAG_Winline
+-- Performing Test C_FLAG_Winline - Success
+-- Performing Test C_FLAG_Wformat_security
+-- Performing Test C_FLAG_Wformat_security - Success
+-- Performing Test C_FLAG_Wpointer_arith
+-- Performing Test C_FLAG_Wpointer_arith - Success
+-- Performing Test C_FLAG_Wdisabled_optimization
+-- Performing Test C_FLAG_Wdisabled_optimization - Success
+-- Performing Test C_FLAG_Wno_unknown_pragmas
+-- Performing Test C_FLAG_Wno_unknown_pragmas - Success
+-- Performing Test C_FLAG_fstrict_aliasing
+-- Performing Test C_FLAG_fstrict_aliasing - Success
+-- Performing Test HAVE_LD_VERSION_SCRIPT
+-- Performing Test HAVE_LD_VERSION_SCRIPT - Success
+-- Looking for assert.h
+-- Looking for assert.h - found
+-- Looking for io.h
+-- Looking for io.h - found
+-- Looking for sys/time.h
+-- Looking for sys/time.h - found
+-- Looking for getopt
+-- Looking for getopt - found
+-- Looking for optarg
+-- Looking for optarg - found
+-- Looking for setmode
+-- Looking for setmode - found
+-- Check size of size_t
+-- Check size of size_t - done
+-- Found ZLIB: zlibstatic (found version "1.3.1")
+-- Could NOT find Deflate (missing: Deflate_LIBRARY Deflate_INCLUDE_DIR) 
+-- Could NOT find JPEG (missing: JPEG_LIBRARY JPEG_INCLUDE_DIR) 
+-- Could NOT find JBIG (missing: JBIG_LIBRARY JBIG_INCLUDE_DIR) 
+-- Could NOT find LERC (missing: LERC_LIBRARY LERC_INCLUDE_DIR) 
+-- Could NOT find liblzma (missing: LIBLZMA_LIBRARY LIBLZMA_INCLUDE_DIR LIBLZMA_HAS_AUTO_DECODER LIBLZMA_HAS_EASY_ENCODER LIBLZMA_HAS_LZMA_PRESET) 
+-- Could NOT find ZSTD (missing: ZSTD_LIBRARY ZSTD_INCLUDE_DIR) 
+-- Could NOT find WebP (missing: WebP_LIBRARY WebP_INCLUDE_DIR) 
+-- Found OpenGL: opengl32  found components: OpenGL
+-- Could NOT find GLUT (missing: GLUT_glut_LIBRARY GLUT_INCLUDE_DIR) 
+-- Looking for GL/gl.h
+-- Looking for GL/gl.h - found
+-- Looking for GL/glu.h
+-- Looking for GL/glu.h - found
+-- Looking for OpenGL/gl.h
+-- Looking for OpenGL/gl.h - not found
+-- Looking for OpenGL/glu.h
+-- Looking for OpenGL/glu.h - not found
+-- Looking for pow
+-- Looking for pow - found
+-- Found CMath: TRUE
+-- Include resource version information for LibTIFF
+-- 
+-- Libtiff is now configured for Windows-10.0.26200
+-- 
+--   Libtiff build version:       4.7.0
+--   Libtiff library version:     6.1.0
+--   Libtiff release date:        20240911
+-- 
+--   Installation directory:             C:/Program Files (x86)/EXReader
+--   Documentation directory:            share/doc/tiff
+--   C compiler:                         C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe
+--   C++ compiler:                       C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe
+--   Build shared libraries:             OFF
+--   Build tools:                        OFF
+--   Build tests:                        OFF
+--   Build contrib:                      OFF
+--   Build docs:                         OFF
+--   Build deprecated features:          OFF
+--   Enable linker symbol versioning:    TRUE
+--   Support Microsoft Document Imaging: ON
+--   Use win32 IO:                       ON
+-- 
+--  Support for internal codecs:
+--   CCITT Group 3 & 4 algorithms:       ON
+--   Macintosh PackBits algorithm:       ON
+--   LZW algorithm:                      ON
+--   ThunderScan 4-bit RLE algorithm:    ON
+--   NeXT 2-bit RLE algorithm:           ON
+--   LogLuv high dynamic range encoding: ON
+-- 
+--  Support for external codecs:
+--   ZLIB support:                       Requested:ON Availability:TRUE Support:TRUE
+--   libdeflate support:                 Requested:OFF Availability:FALSE Support:FALSE
+--   Pixar log-format algorithm:         Requested:ON Availability:TRUE Support:TRUE
+--   JPEG support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   Old JPEG support:                   Requested:OFF Availability:FALSE Support:FALSE (Depends on JPEG Support)
+--   JPEG 8/12 bit dual mode:            Requested:OFF Availability:FALSE Support:FALSE
+--   ISO JBIG support:                   Requested:OFF Availability:FALSE Support:FALSE
+--   LERC support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   LZMA2 support:                      Requested:OFF Availability:FALSE Support:FALSE
+--   ZSTD support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   WEBP support:                       Requested:OFF Availability:FALSE Support:FALSE
+-- 
+--   C++ support:                        ON (requested) TRUE (availability)
+-- 
+--   OpenGL support:                     Requested:OFF Availability:FALSE Support:FALSE
+-- 
+-- Performing Test C_TEST_COMPILED
+-- Performing Test C_TEST_COMPILED - Failed
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_TEST_COMPILED
+-- Performing Test C_TEST_COMPILED - Success
+-- Performing Test CXX_TEST_COMPILED
+-- Performing Test CXX_TEST_COMPILED - Success
+-- Looking for pthread_setname_np
+-- Looking for pthread_setname_np - found
+-- Performing Test HAVE_C_FLAG
+-- Performing Test HAVE_C_FLAG - Success
+-- Performing Test HAVE_CXX_FLAG
+-- Performing Test HAVE_CXX_FLAG - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Failed
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Failed
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Performing Test C_FLAG_SUPPORTED
+-- Performing Test C_FLAG_SUPPORTED - Success
+-- Performing Test CXX_FLAG_SUPPORTED
+-- Performing Test CXX_FLAG_SUPPORTED - Success
+-- Found Git: C:/Program Files/Git/cmd/git.exe (found version "2.55.0.windows.5")
+-- Found Perl: C:/Program Files/Git/usr/bin/perl.exe (found version "5.42.3")
+-- libavif: Enabling warnings for GCC
+-- libavif: Codec enabled: aom (decode only)
+-- Found Python3: C:/Python314/python.exe (found version "3.14.7") found components: Interpreter
+-- Configuring done (531.2s)
+-- Generating done (7.7s)
+-- Build files have been written to: S:/windows-preflight

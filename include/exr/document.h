@@ -278,6 +278,10 @@ EXR_API void exr_document_free(exr_document *doc);
 EXR_API size_t exr_document_memory_size(const exr_document *doc);
 EXR_API const char *exr_document_text(const exr_document *doc, size_t *size);
 EXR_API const char *exr_document_title(const exr_document *doc);
+/* Physical book progression, independent of paragraph bidi. Explicit OPF spine
+   ltr/rtl wins; default/absent uses ar/he/iw/fa/ur/yi/ps/sd/dv primary language
+   subtags, otherwise LTR (also for NULL). RTL means next page is on the left. */
+EXR_API exr_direction exr_document_page_progression(const exr_document *doc);
 EXR_API const exr_block *exr_document_blocks(const exr_document *doc, size_t *count);
 EXR_API const exr_node *exr_document_nodes(const exr_document *doc, size_t *count);
 EXR_API const exr_chapter *exr_document_chapters(const exr_document *doc, size_t *count);

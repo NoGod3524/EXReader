@@ -24,6 +24,8 @@ exr_status exr_epub_chapter_feed_bounded(const exr_document *index,size_t part,
 exr_status exr_parse(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_epub_index(const void *data, size_t size, exr_document **out, exr_error *error);
 exr_status exr_epub_index_source(const exr_source *source, exr_document **out, exr_error *error);
+exr_status exr_epub_index_ex(const void *data, size_t size, const char *passphrase, exr_document **out, exr_error *error);
+exr_status exr_epub_index_source_ex(const exr_source *source, const char *passphrase, exr_document **out, exr_error *error);
 exr_status exr_file_source_limit(const char *path,uint64_t maximum,exr_source *source,exr_error *error);
 exr_status exr_file_source(const char *path, exr_source *source, exr_error *error);
 exr_status exr_xml_resource(const exr_document *doc, size_t resource, const char *root_name,

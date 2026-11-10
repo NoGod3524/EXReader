@@ -1,0 +1,838 @@
+{
+  "epub_sha256": "da3ce098c0098de162e636abfb3668817e2cf8cff81b80874016bcfcd1a002a0",
+  "dll_sha256": "3d5eaef9da4601c595f531db4aa9229823761709c2605f7e4bdb820d88889e21",
+  "loaded_faces": [
+    {
+      "family": "Times New Roman",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/times.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3678
+    },
+    {
+      "family": "Noto Serif SC",
+      "style_name": "ExtraLight",
+      "path": "C:\\Windows/Fonts/NotoSerifSC-VF.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 200,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 30928
+    },
+    {
+      "family": "SimSun",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/simsun.ttc",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 28849
+    },
+    {
+      "family": "Segoe UI",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/segoeui.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3998
+    },
+    {
+      "family": "Noto Sans SC",
+      "style_name": "Thin",
+      "path": "C:\\Windows/Fonts/NotoSansSC-VF.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 100,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 30890
+    },
+    {
+      "family": "Segoe UI Emoji",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/seguiemj.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 3,
+      "location": 1,
+      "codepoints": 2028
+    },
+    {
+      "family": "SimSun-ExtB",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/simsunb.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 3,
+      "location": 1,
+      "codepoints": 60446
+    },
+    {
+      "family": "Malgun Gothic",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/malgun.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 27133
+    },
+    {
+      "family": "SimSun-ExtG",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/SimsunExtG.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 3,
+      "location": 1,
+      "codepoints": 9850
+    },
+    {
+      "family": "Sans Serif Collection",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/SansSerifCollection.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 10873
+    },
+    {
+      "family": "Segoe UI Symbol",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/seguisym.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 7536
+    },
+    {
+      "family": "Segoe UI Historic",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/seguihis.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 4260
+    },
+    {
+      "family": "Segoe Fluent Icons",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/SegoeIcons.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 0,
+      "location": 1,
+      "codepoints": 2033
+    },
+    {
+      "family": "Microsoft Yi Baiti",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/msyi.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 3,
+      "location": 1,
+      "codepoints": 1535
+    },
+    {
+      "family": "Ebrima",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/ebrima.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 2104
+    },
+    {
+      "family": "Nirmala UI",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/Nirmala.ttc",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 1516
+    },
+    {
+      "family": "Gadugi",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/gadugi.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 1241
+    },
+    {
+      "family": "Leelawadee UI",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/LeelawUI.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 714
+    },
+    {
+      "family": "MS Reference Sans Serif",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/REFSAN.TTF",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 1170
+    },
+    {
+      "family": "Myanmar Text",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/mmrtext.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 484
+    },
+    {
+      "family": "Microsoft Himalaya",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/himalaya.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 466
+    },
+    {
+      "family": "Mongolian Baiti",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/monbaiti.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 515
+    },
+    {
+      "family": "Yu Gothic UI",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/YuGothM.ttc",
+      "face_index": 1,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 16538
+    },
+    {
+      "family": "Javanese Text",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/javatext.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 329
+    },
+    {
+      "family": "Microsoft New Tai Lue",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/ntailu.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 339
+    },
+    {
+      "family": "Courier New",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/cour.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3180
+    },
+    {
+      "family": "Microsoft PhagsPa",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/phagspa.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 617
+    },
+    {
+      "family": "MV Boli",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/mvboli.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 283
+    },
+    {
+      "family": "Microsoft Tai Le",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/taile.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 7,
+      "location": 1,
+      "codepoints": 320
+    },
+    {
+      "family": "Arial",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/arial.ttf",
+      "face_index": 0,
+      "style": 0,
+      "weight": 400,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 3506
+    },
+    {
+      "family": "MingLiU_MSCS-ExtB",
+      "style_name": "Regular",
+      "path": "C:\\Windows/Fonts/mingliub.ttc",
+      "face_index": 3,
+      "style": 0,
+      "weight": 400,
+      "scripts": 3,
+      "location": 1,
+      "codepoints": 47385
+    },
+    {
+      "family": "Bookman Old Style",
+      "style_name": "Bold",
+      "path": "C:\\Windows/Fonts/BOOKOSB.TTF",
+      "face_index": 0,
+      "style": 1,
+      "weight": 600,
+      "scripts": 5,
+      "location": 1,
+      "codepoints": 672
+    }
+  ],
+  "scenes": [
+    {
+      "name": "chinese_emoji",
+      "language": "zh",
+      "pages": [
+        {
+          "screenshot": "chinese_emoji-0.png",
+          "sha256": "3f4076cce19a02ccb179efec5941fd1e839c50d5166a00a5569ec6a3b8fe6c86",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.1267746913580247,
+          "visible_glyphs": 312,
+          "ft_zero": 0,
+          "notdef": 0,
+          "missing": [],
+          "rtl_glyphs": 0,
+          "font_usage": {
+            "Noto Serif SC": 260,
+            "Segoe UI Emoji": 40,
+            "Times New Roman": 12
+          }
+        }
+      ]
+    },
+    {
+      "name": "japanese",
+      "language": "ja",
+      "pages": [
+        {
+          "screenshot": "japanese-0.png",
+          "sha256": "f7f4823872ac7bfc8b8fa3debc459e92c17b7178f9db44450d74612f5de8f5e1",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.10583333333333333,
+          "visible_glyphs": 380,
+          "ft_zero": 0,
+          "notdef": 0,
+          "missing": [],
+          "rtl_glyphs": 0,
+          "font_usage": {
+            "Noto Serif SC": 380
+          }
+        }
+      ]
+    },
+    {
+      "name": "arabic_rtl",
+      "language": "ar",
+      "pages": [
+        {
+          "screenshot": "arabic_rtl-0.png",
+          "sha256": "33aa65bbf604fd0c88838494b0b35109479a5985f8cdacf1c681ff173da0ce5c",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.1197608024691358,
+          "visible_glyphs": 1229,
+          "ft_zero": 0,
+          "notdef": 0,
+          "missing": [],
+          "rtl_glyphs": 1229,
+          "font_usage": {
+            "Times New Roman": 1229
+          }
+        }
+      ]
+    },
+    {
+      "name": "math_symbols",
+      "language": "en",
+      "pages": [
+        {
+          "screenshot": "math_symbols-0.png",
+          "sha256": "87af280f066ad6b71b7343f35e14f8f95ffbabd0a538572646a44de4c3f28e8f",
+          "width": 720,
+          "height": 720,
+          "nonblank_ratio": 0.07422453703703703,
+          "visible_glyphs": 683,
+          "ft_zero": 0,
+          "notdef": 0,
+          "missing": [],
+          "rtl_glyphs": 0,
+          "font_usage": {
+            "Times New Roman": 533,
+            "Noto Serif SC": 132,
+            "Segoe UI Symbol": 18
+          }
+        }
+      ]
+    }
+  ],
+  "zwj_reference": {
+    "engine": "HarfBuzz",
+    "version": "14.6.0",
+    "font_sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+  },
+  "zwj_sequences": [
+    {
+      "sequence": "👨‍👩‍👧",
+      "scalars": [
+        "U+1F468",
+        "U+200D",
+        "U+1F469",
+        "U+200D",
+        "U+1F467"
+      ],
+      "visible_glyphs": 3,
+      "glyphs": [
+        1283,
+        1464,
+        1271
+      ],
+      "reference_glyphs": [
+        1283,
+        1464,
+        1271
+      ],
+      "positions": [
+        [
+          1441.7142857142858,
+          425.0,
+          0.0
+        ],
+        [
+          1177.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          -673.1428571428571,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          1405,
+          425,
+          0
+        ],
+        [
+          1161,
+          0,
+          0
+        ],
+        [
+          0,
+          -1666,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    },
+    {
+      "sequence": "🏳️‍🌈",
+      "scalars": [
+        "U+1F3F3",
+        "U+FE0F",
+        "U+200D",
+        "U+1F308"
+      ],
+      "visible_glyphs": 1,
+      "glyphs": [
+        1071
+      ],
+      "reference_glyphs": [
+        1071
+      ],
+      "positions": [
+        [
+          2779.4285714285716,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    },
+    {
+      "sequence": "👩‍💻",
+      "scalars": [
+        "U+1F469",
+        "U+200D",
+        "U+1F4BB"
+      ],
+      "visible_glyphs": 1,
+      "glyphs": [
+        1623
+      ],
+      "reference_glyphs": [
+        1623
+      ],
+      "positions": [
+        [
+          2779.4285714285716,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    },
+    {
+      "sequence": "👨‍🚀",
+      "scalars": [
+        "U+1F468",
+        "U+200D",
+        "U+1F680"
+      ],
+      "visible_glyphs": 1,
+      "glyphs": [
+        1447
+      ],
+      "reference_glyphs": [
+        1447
+      ],
+      "positions": [
+        [
+          2779.4285714285716,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    },
+    {
+      "sequence": "👩‍❤️‍👨",
+      "scalars": [
+        "U+1F469",
+        "U+200D",
+        "U+2764",
+        "U+FE0F",
+        "U+200D",
+        "U+1F468"
+      ],
+      "visible_glyphs": 3,
+      "glyphs": [
+        2013,
+        4132,
+        1997
+      ],
+      "reference_glyphs": [
+        2013,
+        4132,
+        1997
+      ],
+      "positions": [
+        [
+          -32.57142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          -32.57142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          2779.4285714285716,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    },
+    {
+      "sequence": "👨‍👩‍👧‍👦",
+      "scalars": [
+        "U+1F468",
+        "U+200D",
+        "U+1F469",
+        "U+200D",
+        "U+1F467",
+        "U+200D",
+        "U+1F466"
+      ],
+      "visible_glyphs": 4,
+      "glyphs": [
+        1283,
+        1464,
+        1271,
+        1259
+      ],
+      "reference_glyphs": [
+        1283,
+        1464,
+        1271,
+        1259
+      ],
+      "positions": [
+        [
+          1441.7142857142858,
+          425.0,
+          0.0
+        ],
+        [
+          1177.142857142857,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          -673.1428571428571,
+          0.0
+        ],
+        [
+          0.0,
+          335.85714285714283,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          1405,
+          425,
+          0
+        ],
+        [
+          1161,
+          0,
+          0
+        ],
+        [
+          0,
+          -2170,
+          0
+        ],
+        [
+          0,
+          -1161,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Emoji",
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    },
+    {
+      "sequence": "👩🏻‍💻",
+      "scalars": [
+        "U+1F469",
+        "U+1F3FB",
+        "U+200D",
+        "U+1F4BB"
+      ],
+      "visible_glyphs": 1,
+      "glyphs": [
+        1476
+      ],
+      "reference_glyphs": [
+        1476
+      ],
+      "positions": [
+        [
+          2779.4285714285716,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    },
+    {
+      "sequence": "👨🏿‍🚀",
+      "scalars": [
+        "U+1F468",
+        "U+1F3FF",
+        "U+200D",
+        "U+1F680"
+      ],
+      "visible_glyphs": 1,
+      "glyphs": [
+        1420
+      ],
+      "reference_glyphs": [
+        1420
+      ],
+      "positions": [
+        [
+          2779.4285714285716,
+          0.0,
+          0.0
+        ]
+      ],
+      "reference_positions": [
+        [
+          2812,
+          0,
+          0
+        ]
+      ],
+      "matches_reference_glyphs": true,
+      "families": [
+        "Segoe UI Emoji"
+      ],
+      "ft_zero": 0,
+      "notdef": 0
+    }
+  ]
+}

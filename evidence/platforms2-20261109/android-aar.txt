@@ -1,0 +1,10 @@
+UTC: 2026-11-09T08:12:26.426126+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/abi/package_android.py", "--sdk", "P:/android-stage", "--abi", "x86_64", "--output", "P:/android-stage/exreader-x86_64.aar"]
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+P:\android-stage\exreader-x86_64.aar: 8383090 bytes; JNI + Java; x86_64; minSdk=24
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:12:29.834468+00:00

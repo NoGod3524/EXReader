@@ -1,0 +1,15 @@
+{
+  "name": "msvc-build",
+  "command": [
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.EXE",
+    "/nologo",
+    "/fsanitize=address",
+    "/Zi",
+    "/Od",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\tools\\quality\\address_probe.c",
+    "/FeC:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\msvc-address.exe"
+  ],
+  "exit_code": 0,
+  "stdout": "address_probe.c\r\n",
+  "stderr": ""
+}

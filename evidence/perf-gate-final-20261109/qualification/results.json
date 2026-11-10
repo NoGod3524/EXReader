@@ -1,0 +1,64 @@
+[
+  {
+    "name": "repeat-1",
+    "capture_exit": 0,
+    "gate_exit": 0,
+    "status": "pass",
+    "worst_cycle_ratio": 0.988481521522924,
+    "worst_wall_ratio": 0.9498961679083034,
+    "failed_books": [],
+    "invalid_evidence": null
+  },
+  {
+    "name": "repeat-2",
+    "capture_exit": 0,
+    "gate_exit": 0,
+    "status": "pass",
+    "worst_cycle_ratio": 1.0352974343788488,
+    "worst_wall_ratio": 1.5454630277583392,
+    "failed_books": [],
+    "invalid_evidence": null
+  },
+  {
+    "name": "repeat-3",
+    "capture_exit": 0,
+    "gate_exit": 0,
+    "status": "pass",
+    "worst_cycle_ratio": 1.049758481411158,
+    "worst_wall_ratio": 1.0176920012269464,
+    "failed_books": [],
+    "invalid_evidence": null
+  },
+  {
+    "name": "repeat-4",
+    "capture_exit": 0,
+    "gate_exit": 0,
+    "status": "pass",
+    "worst_cycle_ratio": 1.0718500524296382,
+    "worst_wall_ratio": 1.0090363888291478,
+    "failed_books": [],
+    "invalid_evidence": null
+  },
+  {
+    "name": "repeat-5",
+    "capture_exit": 0,
+    "gate_exit": 0,
+    "status": "pass",
+    "worst_cycle_ratio": 1.0759619608709987,
+    "worst_wall_ratio": 0.9979374609968586,
+    "failed_books": [],
+    "invalid_evidence": null
+  },
+  {
+    "name": "positive-25",
+    "capture_exit": 0,
+    "gate_exit": 1,
+    "status": "fail",
+    "worst_cycle_ratio": 1.2395208693775182,
+    "worst_wall_ratio": 1.2456078496356182,
+    "failed_books": [
+      "black-boy"
+    ],
+    "invalid_evidence": null
+  }
+]

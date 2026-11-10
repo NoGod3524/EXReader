@@ -1,0 +1,6 @@
+UTC: 2026-11-09T08:26:51.401327+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["python", "-B", "tools/abi/test_check_exports.py"]
+PASS exports: extern/undefined/private, ar, per-slice fat, missing/extra, malformed, absent status
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:26:52.861456+00:00

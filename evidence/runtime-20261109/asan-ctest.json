@@ -1,0 +1,14 @@
+{
+  "command": [
+    "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ctest.EXE",
+    "--test-dir",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\local\\a",
+    "--output-on-failure",
+    "-j",
+    "2",
+    "--output-junit",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-runtime-20261109\\evidence\\runtime-20261109\\asan-ctest.xml"
+  ],
+  "exit_code": 8,
+  "elapsed_seconds": 1383.3830167999986
+}

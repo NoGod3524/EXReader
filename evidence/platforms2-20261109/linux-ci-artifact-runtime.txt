@@ -1,0 +1,17 @@
+UTC: 2026-11-09T08:25:24.901054+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["ssh", "-i", "P:/vm-key", "-p", "22222", "-o", "UserKnownHostsFile=P:/known_hosts", "root@127.0.0.1", "set -e; mkdir -p /w/debian/repo/ci-lib; cp /w/ci-libexreader.so /w/debian/repo/ci-lib/libexreader.so; ln -s libexreader.so /w/debian/repo/ci-lib/libexreader.so.1; chown -R 1000:1000 /w/debian/repo/ci-lib; chroot /w/debian su -s /bin/sh probe -c \"cd /repo && python3 -B tools/platforms/run_native.py --library ci-lib/libexreader.so --smoke smoke --out evidence/platforms2-20261109/linux-ci\""]
+PASS explicit_load version=3.42.0
+ARGV: ['cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-I/repo/include', '/repo/tools/platforms/probe.c', '/repo/ci-lib/libexreader.so', '-o', '/repo/evidence/platforms2-20261109/linux-ci/platform-probe', '-Wl,-rpath,/repo/ci-lib']
+ARGV: ['/repo/evidence/platforms2-20261109/linux-ci/platform-probe', '/repo/smoke/smoke.epub', '/repo/smoke/font.otf', '/repo/evidence/platforms2-20261109/linux-ci', 'create']
+ARGV: ['/repo/evidence/platforms2-20261109/linux-ci/platform-probe', '/repo/smoke/smoke.epub', '/repo/smoke/font.otf', '/repo/evidence/platforms2-20261109/linux-ci', 'reopen']
+ARGV: ['/repo/evidence/platforms2-20261109/linux-ci/platform-probe', '/repo/smoke/smoke.epub', '/repo/smoke/font.otf', '/repo/evidence/platforms2-20261109/linux-ci/negative', 'reopen']
+PASS load version=3.42.0 abi=1 mode=reopen
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=45 changed_pixels=2553
+PASS platform checks=5/5
+PASS negative control rejected moved annotation
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:25:25.884248+00:00

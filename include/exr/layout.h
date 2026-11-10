@@ -44,6 +44,22 @@ typedef struct {
 EXR_API const exr_layout_block *exr_layout_blocks(const exr_layout *layout, size_t *count);
 /* Invalid pages return a zero record. Borrowed blocks live until layout_free. */
 EXR_API exr_page_structure exr_layout_page_structure(const exr_layout *layout, size_t page);
+/* A pager over a pre-paginated EPUB part lays its content document out once at
+   the native CSS viewport (content <meta name="viewport">, else the package
+   rendition:viewport, else the first image's intrinsic size, else the requested
+   page) and maps it into the requested page with one uniform scale, centred:
+   page = native * scale + (x, y). It always yields exactly one page; CSS
+   position:absolute with top/right/bottom/left is honoured on such pages.
+   Reflow pages return a zero record. */
+typedef enum {
+  EXR_VIEWPORT_NONE = 0, EXR_VIEWPORT_CONTENT, EXR_VIEWPORT_PACKAGE, EXR_VIEWPORT_IMAGE, EXR_VIEWPORT_PAGE
+} exr_viewport_source;
+typedef struct {
+  int fixed;
+  exr_viewport_source source;
+  float width, height, scale, x, y;
+} exr_fixed_viewport;
+EXR_API exr_fixed_viewport exr_layout_fixed_viewport(const exr_layout *layout);
 
 typedef enum { EXR_BOX_BLOCK = 1, EXR_BOX_IMAGE, EXR_BOX_CELL } exr_box_kind;
 /* Solid table-border rectangles, including collapsed grids and split cells.
@@ -124,9 +140,55 @@ EXR_API exr_status exr_publication_open_source(const exr_source *source,
                                                exr_publication **out, exr_error *error);
 EXR_API exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                                exr_publication **out, exr_error *error);
+/* LCP Basic Profile read-only resource decoding; the host must validate license
+   trust (this codec does not verify signatures or certificates).
+   passphrase is borrowed UTF-8
+   for this call only: NULL means missing; an empty string is a supplied value.
+   No passphrase or decrypted EPUB is written to disk. Resources are decrypted
+   on demand in memory (32 MiB each), with the key retained until the last
+   publication/document/session reference closes. The original open functions
+   are equivalent to these with NULL. See docs/DRM.md for profile/trust limits.
+   Source ownership transfers only on success, as with open_source. */
+EXR_API exr_status exr_publication_open_ex(const char *path, const char *passphrase,
+                                           exr_publication **out, exr_error *error);
+EXR_API exr_status exr_publication_open_source_ex(const exr_source *source, const char *passphrase,
+                                                  exr_publication **out, exr_error *error);
+EXR_API exr_status exr_publication_open_memory_ex(exr_format format, const void *data, size_t size,
+                                                  const char *passphrase, exr_publication **out, exr_error *error);
 EXR_API void exr_publication_free(exr_publication *publication);
 EXR_API const char *exr_publication_title(const exr_publication *publication);
+/* Same policy as document_page_progression; custom publications default LTR.
+   Host left/right keys and spread placement should use this, never reverse the
+   logical spine directory or pager_next order. NULL returns LTR. */
+EXR_API exr_direction exr_publication_page_progression(const exr_publication *publication);
 EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
+/* EPUB 3 Fixed Layout (rendition: vocabulary). An itemref
+   rendition:layout-pre-paginated/-reflowable overrides the package default, so
+   one publication may mix fixed and reflowable parts. spread is the declared
+   page-spread-left/right/center; viewport_* is the package rendition:viewport
+   ("width=W, height=H"), zero when absent. Non-EPUB parts are reflowable. */
+typedef enum { EXR_RENDITION_REFLOWABLE = 0, EXR_RENDITION_PRE_PAGINATED = 1 } exr_rendition_layout;
+typedef enum { EXR_SPREAD_AUTO = 0, EXR_SPREAD_LEFT, EXR_SPREAD_RIGHT, EXR_SPREAD_CENTER } exr_spread_side;
+typedef struct {
+  exr_rendition_layout layout;
+  exr_spread_side spread;
+  float viewport_width, viewport_height;
+} exr_part_rendition;
+EXR_API exr_status exr_publication_rendition(const exr_publication *publication, size_t part,
+                                             exr_part_rendition *out, exr_error *error);
+/* Two-page screens in reading order. left/right are physical slots holding
+   part indices, SIZE_MAX when empty. Pre-paginated parts pair by declared
+   page-spread sides; an unspecified side alternates from the previous page
+   and the first page is recto (right for ltr, left for rtl). Reflowable and
+   page-spread-center parts, and every part under rendition:spread none, are
+   single screens (EXR_SPREAD_SINGLE, part in left). Free with exr_free(). */
+#define EXR_SPREAD_SINGLE 1u
+typedef struct {
+  size_t left, right;
+  unsigned flags;
+} exr_spread;
+EXR_API exr_status exr_publication_spreads(const exr_publication *publication, exr_spread **spreads,
+                                           size_t *count, exr_error *error);
 /* Borrowed until publication_free; EPUB navigation is decoded on first request.
    Custom publications copy navigation through exr_publication_input. */
 EXR_API exr_status exr_publication_navigation(exr_publication *publication,
@@ -191,6 +253,43 @@ EXR_API exr_status exr_publication_search(exr_publication *publication,exr_text_
 /* Enumerates overlapping matches. NULL callback counts without collecting. */
 EXR_API exr_status exr_publication_search_all(exr_publication *publication,const char *needle,
   unsigned flags,exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_error *error);
+/* Disk-backed positional index. Run build/search/load/save on a host worker,
+   with exclusive access to this publication (use a separate one from the UI).
+   No internal threads are created. A zero cursor starts a query; keep the same
+   needle/flags when resuming. max_results=0 streams all hits; callbacks can stop
+   earlier. next advances past the delivered start, preserving overlapping hits.
+   Cancellation/errors leave the input cursor unchanged and clear count.
+   The legacy search APIs and their flags are unchanged. */
+enum { EXR_INDEX_IGNORE_DIACRITICS=4 }; /* Latin-1 accents and U+0300..036F. */
+typedef struct { exr_text_position next; int done; } exr_index_cursor;
+typedef struct {
+  size_t text_bytes, memory_bytes, peak_memory_bytes, disk_bytes;
+  size_t indexed_parts, total_parts;
+  int complete;
+} exr_index_stats;
+/* max_parts=0 finishes; otherwise yields after that many directory entries.
+   memory_limit=0 uses 30% of indexed UTF-8 bytes, with a 512-byte handle floor.
+   The budget includes the index handle and its single build/query buffer.
+   Provider document parsing, stdio handles, caller needles/results are separate.
+   Payloads spill to a temporary file; no hits are omitted to meet the budget.
+   Explicit budgets below 512 fail EXR_LIMIT. NULL stats is allowed. */
+EXR_API exr_status exr_publication_index_build(exr_publication *publication,size_t memory_limit,
+  size_t max_parts,const exr_control *control,exr_index_stats *stats,exr_error *error);
+EXR_API exr_status exr_publication_index_search(exr_publication *publication,const char *needle,
+  unsigned flags,exr_index_cursor *cursor,size_t max_results,exr_search_fn callback,void *context,
+  const exr_control *control,size_t *count,exr_error *error);
+EXR_API exr_status exr_publication_index_info(exr_publication *publication,exr_index_stats *stats,
+  exr_error *error);
+/* Save completed or partial indexes; load resumes without parsing saved parts.
+   revision must be a nonempty immutable content identity, e.g. source SHA-256.
+   The host must change it whenever source bytes/projection options change.
+   Version, directory identity, checksum and record bounds are also checked.
+   Save writes the requested file; use a fresh path then rename for atomic host
+   replacement. Failed load leaves the previous index usable. */
+EXR_API exr_status exr_publication_index_save(exr_publication *publication,const char *path,
+  const char *revision,const exr_control *control,exr_error *error);
+EXR_API exr_status exr_publication_index_load(exr_publication *publication,const char *path,
+  const char *revision,size_t memory_limit,const exr_control *control,exr_index_stats *stats,exr_error *error);
 /* Owned strings; zero-initialize outputs and release with content_anchor_free.
    Stable ID (path when ID is empty) routes each endpoint after part reordering.
    The FNV-1a text revision plus size permits exact offsets in unchanged text,
@@ -446,6 +545,8 @@ EXR_API exr_status exr_pager_get(exr_pager *pager, size_t page, const exr_layout
                                  exr_error *error);
 EXR_API size_t exr_pager_cached_count(const exr_pager *pager);
 EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);
+typedef struct { size_t hits,misses; } exr_pager_cache_stats;
+EXR_API exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);
 /* Bounded in-memory replay checkpoints, separate from the page payload cache.
    Defaults: 4 entries / 2 MiB / every 16 pages in get() mode. Capacity zero disables.
    Capacity <=64, nonzero budget/interval required when enabled; not serialized. */

@@ -1,0 +1,28 @@
+{
+  "inventory": 1903,
+  "executed_inputs": 1761,
+  "invocations": 1761,
+  "kinds": {
+    "audio_metadata": 1,
+    "audio": 1,
+    "reference_or_test_data": 142,
+    "document": 1584,
+    "font": 61,
+    "configuration": 1,
+    "library": 2,
+    "image": 93,
+    "sevenz": 18
+  },
+  "outcomes": {
+    "complete": 1305,
+    "sdk_rejected": 456
+  },
+  "originals": {
+    "complete": 1305,
+    "sdk_rejected": 456
+  },
+  "variants": {
+    "original": 1761
+  },
+  "pages": 4724
+}

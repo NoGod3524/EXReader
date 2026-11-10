@@ -1,0 +1,6080 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test",
+      "include"
+    ],
+    "files" : 
+    [
+      "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/CMakeLists.txt",
+      "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/cmake/component_tests.cmake"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 180,
+        "parent" : 0
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 183,
+        "parent" : 2
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 186,
+        "parent" : 4
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 189,
+        "parent" : 6
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 192,
+        "parent" : 8
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 195,
+        "parent" : 10
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 198,
+        "parent" : 12
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 201,
+        "parent" : 14
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 204,
+        "parent" : 16
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 210,
+        "parent" : 18
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 213,
+        "parent" : 20
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 214,
+        "parent" : 22
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 215,
+        "parent" : 24
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 221,
+        "parent" : 26
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 227,
+        "parent" : 28
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 233,
+        "parent" : 30
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 239,
+        "parent" : 32
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 245,
+        "parent" : 34
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 251,
+        "parent" : 36
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 257,
+        "parent" : 38
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 263,
+        "parent" : 40
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 269,
+        "parent" : 42
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 275,
+        "parent" : 44
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 283,
+        "parent" : 46
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 290,
+        "parent" : 48
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 297,
+        "parent" : 50
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 304,
+        "parent" : 52
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 306,
+        "parent" : 54
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 309,
+        "parent" : 56
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 312,
+        "parent" : 58
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 315,
+        "parent" : 60
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 318,
+        "parent" : 62
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 324,
+        "parent" : 64
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 331,
+        "parent" : 66
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 337,
+        "parent" : 68
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 340,
+        "parent" : 70
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 343,
+        "parent" : 72
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 346,
+        "parent" : 74
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 349,
+        "parent" : 76
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 352,
+        "parent" : 78
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 356,
+        "parent" : 80
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 364,
+        "parent" : 82
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 366,
+        "parent" : 84
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 368,
+        "parent" : 86
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 370,
+        "parent" : 88
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 372,
+        "parent" : 90
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 375,
+        "parent" : 92
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 384,
+        "parent" : 94
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 393,
+        "parent" : 96
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 402,
+        "parent" : 98
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 411,
+        "parent" : 100
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 417,
+        "parent" : 102
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 423,
+        "parent" : 104
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 429,
+        "parent" : 106
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 437,
+        "parent" : 108
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 443,
+        "parent" : 110
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 446,
+        "parent" : 112
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 449,
+        "parent" : 114
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 455,
+        "parent" : 116
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 461,
+        "parent" : 118
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 462,
+        "parent" : 120
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 463,
+        "parent" : 122
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 466,
+        "parent" : 124
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 469,
+        "parent" : 126
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 472,
+        "parent" : 128
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 475,
+        "parent" : 130
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 478,
+        "parent" : 132
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 481,
+        "parent" : 134
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 484,
+        "parent" : 136
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 487,
+        "parent" : 138
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 490,
+        "parent" : 140
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 493,
+        "parent" : 142
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 513,
+        "parent" : 144
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 516,
+        "parent" : 146
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 519,
+        "parent" : 148
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 522,
+        "parent" : 150
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 525,
+        "parent" : 152
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 528,
+        "parent" : 154
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 531,
+        "parent" : 156
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 534,
+        "parent" : 158
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 537,
+        "parent" : 160
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 540,
+        "parent" : 162
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 546,
+        "parent" : 164
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 546,
+        "parent" : 166
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 546,
+        "parent" : 168
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 550,
+        "parent" : 170
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 553,
+        "parent" : 172
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 556,
+        "parent" : 174
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 559,
+        "parent" : 176
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 566,
+        "parent" : 178
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 566,
+        "parent" : 180
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 570,
+        "parent" : 182
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 570,
+        "parent" : 184
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 570,
+        "parent" : 186
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 570,
+        "parent" : 188
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 574,
+        "parent" : 190
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 578,
+        "parent" : 192
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 578,
+        "parent" : 194
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 578,
+        "parent" : 196
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 578,
+        "parent" : 198
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 578,
+        "parent" : 200
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 584,
+        "parent" : 202
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 584,
+        "parent" : 204
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 584,
+        "parent" : 206
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 586,
+        "parent" : 208
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 588,
+        "parent" : 210
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 593,
+        "parent" : 212
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 596,
+        "parent" : 214
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 599,
+        "parent" : 216
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 602,
+        "parent" : 218
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 605,
+        "parent" : 220
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 608,
+        "parent" : 222
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 611,
+        "parent" : 224
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 618,
+        "parent" : 226
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 625,
+        "parent" : 228
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 632,
+        "parent" : 230
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 639,
+        "parent" : 232
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 646,
+        "parent" : 234
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 652,
+        "parent" : 236
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 659,
+        "parent" : 238
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 667,
+        "parent" : 240
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 677,
+        "parent" : 242
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 687,
+        "parent" : 244
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 697,
+        "parent" : 246
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 703,
+        "parent" : 248
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 710,
+        "parent" : 250
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 714,
+        "parent" : 252
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 717,
+        "parent" : 254
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 720,
+        "parent" : 256
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 723,
+        "parent" : 258
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 726,
+        "parent" : 260
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 729,
+        "parent" : 262
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 735,
+        "parent" : 264
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 738,
+        "parent" : 266
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 741,
+        "parent" : 268
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 744,
+        "parent" : 270
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 747,
+        "parent" : 272
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 750,
+        "parent" : 274
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 756,
+        "parent" : 276
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 759,
+        "parent" : 278
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 763,
+        "parent" : 280
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 766,
+        "parent" : 282
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 769,
+        "parent" : 284
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 772,
+        "parent" : 286
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 778,
+        "parent" : 288
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 781,
+        "parent" : 290
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 784,
+        "parent" : 292
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 787,
+        "parent" : 294
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 790,
+        "parent" : 296
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 793,
+        "parent" : 298
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 796,
+        "parent" : 300
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 799,
+        "parent" : 302
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 802,
+        "parent" : 304
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 805,
+        "parent" : 306
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 814,
+        "parent" : 308
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 814,
+        "parent" : 310
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 814,
+        "parent" : 312
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 819,
+        "parent" : 314
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 819,
+        "parent" : 316
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 823,
+        "parent" : 318
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 826,
+        "parent" : 320
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 830,
+        "parent" : 322
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 830,
+        "parent" : 324
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 830,
+        "parent" : 326
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 830,
+        "parent" : 328
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 837,
+        "parent" : 330
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 841,
+        "parent" : 332
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 844,
+        "parent" : 334
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 850,
+        "parent" : 336
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 856,
+        "parent" : 338
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 859,
+        "parent" : 340
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 865,
+        "parent" : 342
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 868,
+        "parent" : 344
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 874,
+        "parent" : 346
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 881,
+        "parent" : 348
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 882,
+        "parent" : 350
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 889,
+        "parent" : 352
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 892,
+        "parent" : 354
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 898,
+        "parent" : 356
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 901,
+        "parent" : 358
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 911,
+        "parent" : 360
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 916,
+        "parent" : 362
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 922,
+        "parent" : 364
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 933,
+        "parent" : 366
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 941,
+        "parent" : 368
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 944,
+        "parent" : 370
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 949,
+        "parent" : 372
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 950,
+        "parent" : 374
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 951,
+        "parent" : 376
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 954,
+        "parent" : 378
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 955,
+        "parent" : 380
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 956,
+        "parent" : 382
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 958,
+        "parent" : 384
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 960,
+        "parent" : 386
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1005,
+        "parent" : 388
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1006,
+        "parent" : 390
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1012,
+        "parent" : 392
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1017,
+        "parent" : 394
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1025,
+        "parent" : 396
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1031,
+        "parent" : 398
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1035,
+        "parent" : 400
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 402
+      },
+      {
+        "file" : 1,
+        "parent" : 403
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 6,
+        "parent" : 404
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 406
+      },
+      {
+        "file" : 1,
+        "parent" : 407
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 13,
+        "parent" : 408
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 410
+      },
+      {
+        "file" : 1,
+        "parent" : 411
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 16,
+        "parent" : 412
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 414
+      },
+      {
+        "file" : 1,
+        "parent" : 415
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 44,
+        "parent" : 416
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 418
+      },
+      {
+        "file" : 1,
+        "parent" : 419
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 48,
+        "parent" : 420
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 422
+      },
+      {
+        "file" : 1,
+        "parent" : 423
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 77,
+        "parent" : 424
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 426
+      },
+      {
+        "file" : 1,
+        "parent" : 427
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 77,
+        "parent" : 428
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 430
+      },
+      {
+        "file" : 1,
+        "parent" : 431
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 77,
+        "parent" : 432
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 1,
+        "file" : 0,
+        "line" : 1131,
+        "parent" : 434
+      },
+      {
+        "file" : 1,
+        "parent" : 435
+      },
+      {
+        "command" : 0,
+        "file" : 1,
+        "line" : 77,
+        "parent" : 436
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1144,
+        "parent" : 438
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1144,
+        "parent" : 440
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1144,
+        "parent" : 442
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1144,
+        "parent" : 444
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1158,
+        "parent" : 446
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1165,
+        "parent" : 448
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1165,
+        "parent" : 450
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1165,
+        "parent" : 452
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1176,
+        "parent" : 454
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1176,
+        "parent" : 456
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1176,
+        "parent" : 458
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1176,
+        "parent" : 460
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1176,
+        "parent" : 462
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1188,
+        "parent" : 464
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1188,
+        "parent" : 466
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1188,
+        "parent" : 468
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1188,
+        "parent" : 470
+      },
+      {
+        "file" : 0
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 1188,
+        "parent" : 472
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 1,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-render-audit-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-render-audit",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-dashed-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-dashed",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 5,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-shading-mesh-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-shading-mesh",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 7,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-shading-mesh7-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-shading-mesh7",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 9,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-ccitt-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-ccitt",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 11,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-normalize-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/unicode/NormalizationTest.txt"
+      ],
+      "name" : "native-normalize",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 13,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-hyphen-test.exe"
+      ],
+      "name" : "native-hyphen",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 15,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-hyphen-replacements-test.exe"
+      ],
+      "name" : "native-hyphen-replacements",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 17,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-case-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/unicode/CaseMappingTest.txt"
+      ],
+      "name" : "native-case",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 19,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-hyphen-layout-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-hyphen-layout",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 21,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-hyphen-builtin-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "rules"
+      ],
+      "name" : "native-hyphen-builtin-rules",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 23,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-hyphen-builtin-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "switches"
+      ],
+      "name" : "native-hyphen-builtin-switches",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 25,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-hyphen-builtin-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "joiners"
+      ],
+      "name" : "native-hyphen-builtin-joiners",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 27,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-float-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-float",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 29,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-fragments-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-fragments",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 31,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-border-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-border",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 33,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-border-edges-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-border-edges",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 35,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-header-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-header",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 37,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-alignment-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-alignment",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 39,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-intrinsic-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-intrinsic",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 41,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-columns-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-columns",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 43,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-table-spacing-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-table-spacing",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 45,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-crypto-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/pdf-crypto"
+      ],
+      "name" : "native-pdf-crypto",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 47,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-index-test.exe"
+      ],
+      "name" : "native-chapter-index",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 49,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-window-test.exe"
+      ],
+      "name" : "native-chapter-window",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 51,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-style-budget-test.exe"
+      ],
+      "name" : "native-style-budget",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 53,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-source-test.exe"
+      ],
+      "name" : "native-chapter-source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 55,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cbz-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-cbz",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 57,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-image-formats-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/images"
+      ],
+      "name" : "native-image-formats",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 59,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cbz-formats-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-cbz-formats",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 61,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-library-stream-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/images/png/gradient.png",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/pdf-public.pdf"
+      ],
+      "name" : "native-library-stream",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 63,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-m4b-metadata-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-m4b-metadata",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 65,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-indic-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/indic"
+      ],
+      "name" : "native-indic",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 67,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-wp7-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/wp7"
+      ],
+      "name" : "native-wp7",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 69,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-ruby-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-ruby",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 71,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-color-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-color",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 73,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-intent-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-intent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 75,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-matte-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-matte",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 77,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-groupcs-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-groupcs",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 79,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-native-inks-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-inks",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 81,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-nested-groups-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-nested-groups",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 83,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-paint-source-test.exe"
+      ],
+      "name" : "native-paint-source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 85,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-zero-opacity-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-zero-opacity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 87,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-alpha-source-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-alpha-source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 89,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-mask-functions-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-mask-functions",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 91,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-mask-scope-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-mask-scope",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 93,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-shading-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-shading",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 95,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-calculator-test.exe"
+      ],
+      "name" : "native-pdf-calculator",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 97,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-color-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-font-color",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 99,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-color-v1-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-font-color-v1",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 101,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-svg-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-font-svg",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 103,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-ot-variation-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-ot-variation",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 105,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-orthogonal-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-orthogonal",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 107,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-variable-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-variable",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 109,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-inline-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-pdf-inline",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 111,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-stretch-test.exe"
+      ],
+      "name" : "native-stretch",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 113,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-m4b-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-m4b",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 115,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-epub-metadata-write-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-epub-metadata-write",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 117,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-vertical-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-vertical",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 119,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-combine-upright-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts",
+        "geometry"
+      ],
+      "name" : "native-combine-upright-geometry",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 121,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-combine-upright-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts",
+        "modes"
+      ],
+      "name" : "native-combine-upright-modes",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 123,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-combine-upright-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts",
+        "wrap"
+      ],
+      "name" : "native-combine-upright-wrap",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 125,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-type3-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-pdf-type3",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 127,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-aac-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-aac",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 129,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-markup-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-pdf-markup",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 131,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-flac-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-flac",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 133,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pcm-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/audio"
+      ],
+      "name" : "native-pcm",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 135,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-audio-output-test.exe"
+      ],
+      "name" : "native-audio-output",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 137,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-mp3-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-mp3",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 139,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-metadata-write-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-pdf-metadata-write",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 141,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-write-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-pdf-write",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 143,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-form-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/fallback.ttf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/cbdt.ttf"
+      ],
+      "name" : "native-pdf-form",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 145,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-appearance-test.exe"
+      ],
+      "name" : "native-pdf-appearance",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 147,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-page-annotations-test.exe"
+      ],
+      "name" : "native-page-annotations",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 149,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-metadata-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-metadata",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 151,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-annotation-test.exe"
+      ],
+      "name" : "native-annotation",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 153,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-reanchor-library-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-reanchor-library",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 155,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-progress-library-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-progress-library",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 157,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-text-source-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-text-source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 159,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-text-index-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-text-index",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 161,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-abi-test.exe"
+      ],
+      "name" : "native-abi",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 163,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-core",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 165,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-layout-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "chapter"
+      ],
+      "name" : "native-chapter-layout-chapter",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 167,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-layout-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "title"
+      ],
+      "name" : "native-chapter-layout-title",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 169,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-layout-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "indent"
+      ],
+      "name" : "native-chapter-layout-indent",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 171,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-flow-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-flow",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 173,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-construct-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-construct",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 175,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-text-test.exe"
+      ],
+      "name" : "native-cfi-text",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 177,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-cfi",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 179,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-compat-test.exe",
+        "parse",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/cfi-vectors.tsv"
+      ],
+      "name" : "native-cfi-compat-parse",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 181,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-compat-test.exe",
+        "invalid",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/cfi-vectors.tsv"
+      ],
+      "name" : "native-cfi-compat-invalid",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 183,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-compat-test.exe",
+        "mapping"
+      ],
+      "name" : "native-cfi-compat-mapping",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 185,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-compat-test.exe",
+        "roundtrip"
+      ],
+      "name" : "native-cfi-compat-roundtrip",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 187,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-compat-test.exe",
+        "cross"
+      ],
+      "name" : "native-cfi-compat-cross",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 189,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cfi-compat-test.exe",
+        "contracts"
+      ],
+      "name" : "native-cfi-compat-contracts",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 191,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-anchor-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-anchor",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 193,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-document-search-test.exe",
+        "basic",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-document-search-basic",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 195,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-document-search-test.exe",
+        "unicode",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-document-search-unicode",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 197,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-document-search-test.exe",
+        "flags",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-document-search-flags",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 199,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-document-search-test.exe",
+        "errors",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-document-search-errors",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 201,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-document-search-test.exe",
+        "mapping",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-document-search-mapping",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 203,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-content-ranges-test.exe",
+        "mapping"
+      ],
+      "name" : "native-content-mapping",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 205,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-content-ranges-test.exe",
+        "relocation"
+      ],
+      "name" : "native-content-relocation",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 207,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-content-ranges-test.exe",
+        "expansion"
+      ],
+      "name" : "native-content-expansion",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 209,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-content-ranges-test.exe",
+        "hits",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-content-hits",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 211,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-content-ranges-test.exe",
+        "reflow",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/fallback.ttf"
+      ],
+      "name" : "native-content-reflow",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 213,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-anchor-library-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-anchor-library",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 215,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-note-limit-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-note-limit",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 217,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-export-xml-test.exe"
+      ],
+      "name" : "native-export-xml",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 219,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-rtf-fallback-test.exe"
+      ],
+      "name" : "native-rtf-fallback",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 221,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-html-raw-test.exe"
+      ],
+      "name" : "native-html-raw",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 223,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-lazy-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-lazy",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 225,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-source-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 227,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-object-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-objects",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 229,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-pages-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-pages",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 231,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-cmap-test.exe"
+      ],
+      "name" : "native-pdf-cmap",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 233,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-font-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-font",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 235,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-text-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-text",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 237,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-vector-test.exe"
+      ],
+      "name" : "native-vector",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 239,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-graphics-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-graphics",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 241,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-outline-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-outline",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 243,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-raster-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-raster",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 245,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-image-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-pdf-image",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 247,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-audio-library-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-audio-library",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 249,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-wave-example.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/audio/pcm.wav"
+      ],
+      "name" : "native-wave-example",
+      "properties" : 
+      [
+        {
+          "name" : "PASS_REGULAR_EXPRESSION",
+          "value" : 
+          [
+            "frames=3200 decoded=3200 peak=0.500000"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 251,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pcm-example.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/audio/pcm.wav"
+      ],
+      "name" : "native-pcm-example",
+      "properties" : 
+      [
+        {
+          "name" : "PASS_REGULAR_EXPRESSION",
+          "value" : 
+          [
+            "decoded=3200 peak=0.500000"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 253,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-wave-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-wave",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 255,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-audio-player-test.exe"
+      ],
+      "name" : "native-audio-player",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 257,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-audio-test.exe"
+      ],
+      "name" : "native-audio",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 259,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fixed-library-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-fixed-library",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 261,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fixed-text-test.exe"
+      ],
+      "name" : "native-fixed-text",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 263,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fixed-pdf-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-fixed-pdf",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 265,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fixed-example.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/pdf-public.pdf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/fixed-example.png"
+      ],
+      "name" : "native-fixed-example",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 267,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fixed-test.exe"
+      ],
+      "name" : "native-fixed",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 269,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-path-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-font-path",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 271,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-blend-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/pdf-blend"
+      ],
+      "name" : "native-blend",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 273,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-canvas-test.exe"
+      ],
+      "name" : "native-canvas",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 275,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-canvas-cmyk-test.exe"
+      ],
+      "name" : "native-canvas-cmyk",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 277,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-viewport-test.exe"
+      ],
+      "name" : "native-viewport",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 279,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-positioned-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-positioned",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 281,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-library-unique-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-library-unique",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 283,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-cover-import-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-cover-import",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 285,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-kf8-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-kf8",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 287,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-mobi-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-mobi",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 289,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-decoration-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-decoration",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 291,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-rtf-number-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-rtf-number",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 293,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-rtf-list-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-rtf-list",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 295,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-rtf-note-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-rtf-note",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 297,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-rtf-table-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-rtf-table",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 299,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-rtf-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-rtf",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 301,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-docx-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-docx",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 303,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fb2-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-fb2",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 305,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-export-html-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-export-html",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 307,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-export-epub-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-export-epub",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 309,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-sevenz-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "codecs"
+      ],
+      "name" : "native-sevenz-codecs",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 311,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-sevenz-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "safety"
+      ],
+      "name" : "native-sevenz-safety",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 313,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-sevenz-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "source"
+      ],
+      "name" : "native-sevenz-source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 315,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-locate-report-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "entries"
+      ],
+      "name" : "native-locate-report-entries",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 317,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-locate-report-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "reset"
+      ],
+      "name" : "native-locate-report-reset",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 319,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-navigation-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-navigation",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 321,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-toc-page-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-toc-page",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 323,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-toc-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "nav"
+      ],
+      "name" : "native-toc-nav",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 325,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-toc-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "ncx"
+      ],
+      "name" : "native-toc-ncx",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 327,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-toc-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "recovery"
+      ],
+      "name" : "native-toc-recovery",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 329,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-toc-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "fragment"
+      ],
+      "name" : "native-toc-fragment",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 331,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-text-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/unicode"
+      ],
+      "name" : "native-text",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 333,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-bidi-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/bidi"
+      ],
+      "name" : "native-bidi",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 335,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-shaping-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/shaping"
+      ],
+      "name" : "native-shaping",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 337,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-complex-layout-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/shaping"
+      ],
+      "name" : "native-complex-layout",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 339,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-line-boundary-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/shaping",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-line-boundary",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 341,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-font",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 343,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-book-font-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-book-font",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 345,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-budget-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-budget",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 347,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-bounds-test.exe"
+      ],
+      "name" : "native-chapter-bounds",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 349,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-reader-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-chapter-reader",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 351,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-chapter-reader-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts",
+        "--oversized-unit"
+      ],
+      "name" : "native-chapter-oversized-unit",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 60.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 353,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pager-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-pager",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 355,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-page-cache-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts"
+      ],
+      "name" : "native-page-cache",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 357,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-checkpoints-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-checkpoints",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 359,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-control-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-control",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 361,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tools/generate_conversion_corpus.py",
+        "--out",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/convert-corpus",
+        "--fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-convert-corpus",
+      "properties" : 
+      [
+        {
+          "name" : "FIXTURES_SETUP",
+          "value" : 
+          [
+            "convert-corpus"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 363,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-convert-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/convert-corpus",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/native-convert.json"
+      ],
+      "name" : "native-convert",
+      "properties" : 
+      [
+        {
+          "name" : "DEPENDS",
+          "value" : 
+          [
+            "native-convert-corpus"
+          ]
+        },
+        {
+          "name" : "FIXTURES_REQUIRED",
+          "value" : 
+          [
+            "convert-corpus"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 365,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_convert_cli.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-convert.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/convert-corpus",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/convert-cli-work",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/native-convert-cli.json"
+      ],
+      "name" : "native-convert-cli",
+      "properties" : 
+      [
+        {
+          "name" : "DEPENDS",
+          "value" : 
+          [
+            "native-convert-corpus"
+          ]
+        },
+        {
+          "name" : "FIXTURES_REQUIRED",
+          "value" : 
+          [
+            "convert-corpus"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 367,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_convert_benchmark.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-convert.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/convert-corpus",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/convert-benchmark-work",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/native-convert-benchmark.json",
+        "--instrumented"
+      ],
+      "name" : "native-convert-benchmark",
+      "properties" : 
+      [
+        {
+          "name" : "DEPENDS",
+          "value" : 
+          [
+            "native-convert-corpus"
+          ]
+        },
+        {
+          "name" : "FIXTURES_REQUIRED",
+          "value" : 
+          [
+            "convert-corpus"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 369,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tools/pdf_group_reference.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/pdf-blend"
+      ],
+      "name" : "native-pdf-group-reference",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 371,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tools/check_case_reference.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-case-test.exe",
+        "C:/Program Files/nodejs/node.exe"
+      ],
+      "name" : "native-case-reference",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 373,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tools/check_hyphen_compound.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll"
+      ],
+      "name" : "native-hyphen-compound-oracle",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 375,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tools/check_hyphen_replacements.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll"
+      ],
+      "name" : "native-hyphen-replacement-oracle",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 377,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tools/check_hyphen_conditional.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll"
+      ],
+      "name" : "native-hyphen-conditional-oracle",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 379,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_benchmark.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-benchmark.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-benchmark",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 381,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_document_probe.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-check-document.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-document-probe",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 383,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_corpus_triage.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-check-document.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-corpus-triage",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 385,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_png.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/native-page.png"
+      ],
+      "name" : "native-png",
+      "properties" : 
+      [
+        {
+          "name" : "DEPENDS",
+          "value" : 
+          [
+            "native-core"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 387,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_png.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/native-styled-page.png",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/native-image-page.png",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/native-image-page.bmp"
+      ],
+      "name" : "native-color-png",
+      "properties" : 
+      [
+        {
+          "name" : "DEPENDS",
+          "value" : 
+          [
+            "native-flow"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 389,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-fuzz-driver",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 120.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 391,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz-font.exe",
+        "--seed",
+        "1",
+        "--iterations",
+        "300",
+        "--save",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/fuzz-font.bin",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/pdf-cubic.otf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/variable.ttf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/shaping/shaping.ttf"
+      ],
+      "name" : "native-fuzz-font",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 120.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 393,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz-layout.exe",
+        "--seed",
+        "1",
+        "--iterations",
+        "100",
+        "--font",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf",
+        "--save",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/fuzz-layout.bin",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/sample.txt",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/layout.epub"
+      ],
+      "name" : "native-fuzz-layout",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 120.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 395,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz-render.exe",
+        "--seed",
+        "1",
+        "--iterations",
+        "100",
+        "--font",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf",
+        "--save",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/fuzz-render.bin",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/comic.cbz",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/pdf-color/shading-axial.pdf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/layout.epub"
+      ],
+      "name" : "native-fuzz-render",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 120.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 397,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_fuzz_pipelines.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz-font.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz-layout.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz-render.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures"
+      ],
+      "name" : "native-fuzz-pipeline-contract",
+      "properties" : 
+      [
+        {
+          "name" : "TIMEOUT",
+          "value" : 180.0
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 399,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_reliability_campaign.py"
+      ],
+      "name" : "native-fuzz-accounting",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 401,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-fuzz.exe",
+        "--seed",
+        "1",
+        "--iterations",
+        "500",
+        "--save",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/fuzz-last.bin",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/pdf-blend/nonisolated.pdf",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/layout.epub",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/comic.cbz",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/sample.txt"
+      ],
+      "name" : "native-fuzz-smoke",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 405,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-jpx-test.exe"
+      ],
+      "name" : "native-pdf-jpx",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 409,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-core-component-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/fonts/primary.ttf"
+      ],
+      "name" : "native-core-component",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 413,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-anchor-boundary-test.exe"
+      ],
+      "name" : "native-anchor-boundary",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 417,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-library-source-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-library-source",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 421,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-library-epub-storage-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+      ],
+      "name" : "native-library-epub-storage",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 425,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-audio-component-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/components/audio"
+      ],
+      "name" : "native-audio-component",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 429,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-library-component-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/components/library"
+      ],
+      "name" : "native-library-component",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 433,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf_edit-component-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/components/pdf_edit"
+      ],
+      "name" : "native-pdf_edit-component",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 437,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-textindex-component-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/components/textindex"
+      ],
+      "name" : "native-textindex-component",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 439,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_font_manager.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-manager-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/font_manager",
+        "discovery"
+      ],
+      "name" : "native-font-manager-discovery",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 441,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_font_manager.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-manager-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/font_manager",
+        "selection"
+      ],
+      "name" : "native-font-manager-selection",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 443,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_font_manager.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-manager-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/font_manager",
+        "cache"
+      ],
+      "name" : "native-font-manager-cache",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 445,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/check_font_manager.py",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-font-manager-test.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures/font_manager",
+        "integration"
+      ],
+      "name" : "native-font-manager-integration",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 447,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-xml-input-test.exe"
+      ],
+      "name" : "native-xml-input",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 449,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-epub-strict-test.exe",
+        "mimetype"
+      ],
+      "name" : "native-epub-strict-mimetype",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 451,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-epub-strict-test.exe",
+        "directory"
+      ],
+      "name" : "native-epub-strict-directory",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 453,
+      "command" : 
+      [
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-epub-strict-test.exe",
+        "container"
+      ],
+      "name" : "native-epub-strict-container",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 455,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/pdf_deepening_inputs.py",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-deepening-test.exe",
+        "--fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "--group",
+        "search"
+      ],
+      "name" : "native-pdf-deepening-search",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 457,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/pdf_deepening_inputs.py",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-deepening-test.exe",
+        "--fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "--group",
+        "coordinates"
+      ],
+      "name" : "native-pdf-deepening-coordinates",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 459,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/pdf_deepening_inputs.py",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-deepening-test.exe",
+        "--fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "--group",
+        "scan"
+      ],
+      "name" : "native-pdf-deepening-scan",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 461,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/pdf_deepening_inputs.py",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-deepening-test.exe",
+        "--fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "--group",
+        "contracts"
+      ],
+      "name" : "native-pdf-deepening-contracts",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 463,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/pdf_deepening_inputs.py",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-pdf-deepening-test.exe",
+        "--fixtures",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/fixtures",
+        "--group",
+        "encryption"
+      ],
+      "name" : "native-pdf-deepening-encryption",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 465,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/book_formats.py",
+        "--library",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-book-codec-probe.exe",
+        "--group",
+        "codec"
+      ],
+      "name" : "native-book-codec",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 467,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/book_formats.py",
+        "--library",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-book-codec-probe.exe",
+        "--group",
+        "mobi"
+      ],
+      "name" : "native-book-mobi",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 469,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/book_formats.py",
+        "--library",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-book-codec-probe.exe",
+        "--group",
+        "kf8"
+      ],
+      "name" : "native-book-kf8",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 471,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/book_formats.py",
+        "--library",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-book-codec-probe.exe",
+        "--group",
+        "fb2"
+      ],
+      "name" : "native-book-fb2",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    },
+    {
+      "backtrace" : 473,
+      "command" : 
+      [
+        "C:/Python314/python.exe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/tests/book_formats.py",
+        "--library",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader.dll",
+        "--probe",
+        "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a/exreader-book-codec-probe.exe",
+        "--group",
+        "errors"
+      ],
+      "name" : "native-book-errors",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "C:/Users/Oscar/Documents/Codex/EXReader-runtime-20261109/evidence/runtime-20261109/local/a"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "formats_internal.h"
+#include "lcp_internal.h"
 #include "graphics_internal.h"
 #include <ctype.h>
 #include <expat.h>
@@ -237,6 +238,8 @@ typedef struct {
   const exr_source *source;
   size_t read_bytes;
   exr_error *error;
+  void *protection;
+  const exr_resource_allocator *allocator;
 } archive;
 static exr_status archive_backing(archive *z, const exr_document *d, exr_error *e);
 static size_t source_read(void *context, mz_uint64 offset, void *buffer, size_t size) {
@@ -292,6 +295,13 @@ static void *member(archive *z, const char *name, size_t *size, exr_error *e) {
     if (z->status == EXR_OK) z->status = exr_fail(e, EXR_FORMAT, "ZIP member decompression failed");
     return NULL;
   }
+  z->status = exr_lcp_decode(z->protection, name, &p, size, z->allocator, e);
+  if (z->status == EXR_OK && *size > EXR_MAX_INPUT - z->expanded)
+    z->status = exr_fail(e, EXR_LIMIT, "Decrypted EPUB resources exceed extraction limit");
+  if (z->status != EXR_OK) {
+    if (z->allocator) z->allocator->release(z->allocator->context, p); else mz_free(p);
+    *size = 0; return NULL;
+  }
   z->expanded += *size;
   return p;
 }
@@ -301,6 +311,7 @@ typedef struct {
 typedef struct {
   char *id;
   int linear;
+  int layout, side; /* EPUB 3 itemref rendition overrides; see exr_rendition. */
 } spine_item;
 typedef struct {
   XML_Parser parser;
@@ -310,9 +321,25 @@ typedef struct {
   size_t count, capacity;
   spine_item *spine;
   size_t spine_count, spine_cap;
-  exr_buffer title,language;
+  exr_buffer title,language,meta;
+  exr_direction page_progression;
   int in_title,in_language,have_language,failed,depth;
+  /* Package-level EPUB 3 Fixed Layout metadata (rendition: vocabulary). */
+  int in_meta,meta_kind,layout,spread_none;
+  float viewport_width,viewport_height;
 } package;
+/* Space-separated property token test (OPF properties attribute). */
+static int has_token(const char *list,const char *token) {
+  size_t n=strlen(token);
+  while(list && *list) {
+    size_t k=0;
+    while(*list && space((unsigned char)*list)) list++;
+    while(list[k] && !space((unsigned char)list[k])) k++;
+    if(k==n && !strncmp(list,token,n)) return 1;
+    list+=k;
+  }
+  return 0;
+}
 static void XMLCALL package_start(void *user, const char *full, const char **attrs) {
   package *p = user;
   const char *tag = local(full), *a, *b;
@@ -355,6 +382,13 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
     } else {
       p->spine[p->spine_count].id = exr_copy(a, strlen(a));
       p->spine[p->spine_count].linear = !b || strcmp(b, "no");
+      b = attribute(attrs, "properties");
+      p->spine[p->spine_count].layout = has_token(b,"rendition:layout-pre-paginated") ? 1 :
+                                        has_token(b,"rendition:layout-reflowable") ? 2 : 0;
+      p->spine[p->spine_count].side =
+        has_token(b,"page-spread-left") || has_token(b,"rendition:page-spread-left") ? 1 :
+        has_token(b,"page-spread-right") || has_token(b,"rendition:page-spread-right") ? 2 :
+        has_token(b,"rendition:page-spread-center") || has_token(b,"page-spread-center") ? 3 : 0;
       if (!p->spine[p->spine_count++].id)
         p->failed = 1;
     }
@@ -362,6 +396,14 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
   if (!strcmp(tag, "spine") && !p->toc_id) {
     a = attribute(attrs, "toc");
     if (a && !(p->toc_id = exr_copy(a, strlen(a)))) p->failed = 1;
+    a = attribute(attrs, "page-progression-direction");
+    if(a && !strcmp(a,"rtl")) p->page_progression=EXR_DIRECTION_RTL;
+    else if(a && !strcmp(a,"ltr")) p->page_progression=EXR_DIRECTION_LTR;
+  }
+  if (!strcmp(tag, "meta") && !attribute(attrs, "refines") && (a = attribute(attrs, "property"))) {
+    int kind = !strcmp(a, "rendition:layout") ? 1 : !strcmp(a, "rendition:viewport") ? 2 :
+               !strcmp(a, "rendition:spread") ? 3 : 0;
+    if (kind) { p->meta.size = 0; p->meta_kind = kind; p->in_meta = p->depth; }
   }
   if (!strcmp(tag, "title"))
     p->in_title = 1;
@@ -373,6 +415,18 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
 }
 static void XMLCALL package_end(void *user, const char *tag) {
   package *p = user;
+  if (p->in_meta && p->in_meta == p->depth) {
+    char value[256]; size_t first = 0, last = p->meta.size;
+    while (first < last && space((unsigned char)p->meta.data[first])) first++;
+    while (last > first && space((unsigned char)p->meta.data[last - 1])) last--;
+    if (last - first < sizeof(value)) {
+      memcpy(value, p->meta.data ? p->meta.data + first : "", last - first); value[last - first] = 0;
+      if (p->meta_kind == 1) p->layout = !strcmp(value, "pre-paginated") ? 1 : !strcmp(value, "reflowable") ? 2 : 0;
+      else if (p->meta_kind == 2) exr_viewport_parse(value, &p->viewport_width, &p->viewport_height);
+      else if (p->meta_kind == 3) p->spread_none = !strcmp(value, "none");
+    }
+    p->in_meta = 0;
+  }
   if (!strcmp(local(tag), "title"))
     p->in_title = 0;
   if(p->in_language==p->depth) {
@@ -391,6 +445,9 @@ static void XMLCALL package_text(void *user, const XML_Char *s, int n) {
     XML_StopParser(p->parser, XML_FALSE);
   }
   if(p->in_language && ((size_t)n>4096-p->language.size || !exr_append(&p->language,s,(size_t)n))) {
+    p->failed=1; XML_StopParser(p->parser,XML_FALSE);
+  }
+  if(p->in_meta && ((size_t)n>4096-p->meta.size || !exr_append(&p->meta,s,(size_t)n))) {
     p->failed=1; XML_StopParser(p->parser,XML_FALSE);
   }
 }
@@ -527,6 +584,7 @@ static void package_free(package *p) {
   free(p->toc_id);
   free(p->title.data);
   free(p->language.data);
+  free(p->meta.data);
 }
 static exr_status archive_open(archive *z, const void *data, size_t n, exr_error *e) {
   if (!mz_zip_reader_init_mem(&z->archive, data, n, 0))
@@ -538,6 +596,7 @@ static exr_status archive_open(archive *z, const void *data, size_t n, exr_error
   return EXR_OK;
 }
 static exr_status archive_backing(archive *z, const exr_document *d, exr_error *e) {
+  z->protection = d->shared_archive ? d->shared_archive->protection : NULL;
   if (!d->shared_archive || !d->shared_archive->source.read_at)
     return archive_open(z, d->archive, d->archive_size, e);
   z->source = &d->shared_archive->source;
@@ -583,12 +642,12 @@ exr_status exr_epub_export_check(const exr_document *d, exr_error *e) {
   mz_zip_reader_end(&z.archive); return status;
 }
 static exr_status archive_copy(exr_document *d, const void *data, size_t n, exr_error *e) {
-  exr_archive_store *store = calloc(1, sizeof(*store));
+  exr_archive_store *store = d->shared_archive ? d->shared_archive : calloc(1, sizeof(*store));
   if (!store)
     return exr_fail(e, EXR_MEMORY, "Archive allocation failed");
   store->bytes = malloc(n);
   if (!store->bytes) {
-    free(store);
+    if (!d->shared_archive) free(store);
     return exr_fail(e, EXR_MEMORY, "Archive allocation failed");
   }
   memcpy(store->bytes, data, n);
@@ -654,13 +713,26 @@ exr_status exr_xml_resource(const exr_document *index, size_t resource, const ch
 /* Build the reading order without extracting XHTML. Missing or damaged chapter
    members are reported only when that chapter is requested. */
 static exr_status strict_fail(exr_error *e, const char *member, const char *expected, const char *found);
-static exr_status epub_metadata(exr_document *d, archive *z, int strict, exr_error *e) {
+static exr_status epub_metadata(exr_document *d, archive *z, int strict, const char *passphrase, exr_error *e) {
   package p = {0};
   void *bytes = NULL;
   size_t size = 0, i, j;
   exr_status result = EXR_FORMAT;
   char path[2048];
   const char *active_member = "META-INF/container.xml";
+  void *protection = NULL;
+  result = exr_lcp_open(&z->archive, passphrase, &protection, e);
+  if (result != EXR_OK) return result;
+  if (protection) {
+    if (!d->shared_archive) {
+      d->shared_archive = calloc(1, sizeof(*d->shared_archive));
+      if (!d->shared_archive) { exr_lcp_free(protection); return exr_fail(e, EXR_MEMORY, "LCP archive allocation failed"); }
+      d->shared_archive->refs = 1;
+    }
+    d->shared_archive->protection = protection;
+    d->shared_archive->protection_free = exr_lcp_free;
+    z->protection = protection;
+  }
   bytes = member(z, "META-INF/container.xml", &size, e);
   if (!bytes)
     goto done;
@@ -701,6 +773,7 @@ static exr_status epub_metadata(exr_document *d, archive *z, int strict, exr_err
     d->language=exr_copy(p.language.data,p.language.size);
     if(!d->language) { result=exr_fail(e,EXR_MEMORY,"Publication language allocation failed"); goto done; }
   }
+  d->page_progression=p.page_progression;
   for (i = 0; i < p.count; i++) {
     exr_resource r;
     if (!exr_resolve_path(p.root, p.items[i].href, path) || !p.items[i].id[0]) {
@@ -752,6 +825,24 @@ static exr_status epub_metadata(exr_document *d, archive *z, int strict, exr_err
     if (result != EXR_OK)
       goto done;
   }
+  d->spread_none = p.spread_none;
+  for (i = 0; i < p.spine_count && !p.layout; i++)
+    if (p.spine[i].layout || p.spine[i].side) break;
+  /* Rendition data exists only for packages that declare it, so reflowable
+     books keep a NULL table and their original layout path. */
+  if (p.layout || i < p.spine_count || p.viewport_width > 0) {
+    free(d->renditions); d->rendition_count = 0;
+    d->renditions = calloc(d->chapter_count, sizeof(*d->renditions));
+    if (!d->renditions) { result = exr_fail(e, EXR_MEMORY, "Rendition table allocation failed"); goto done; }
+    d->rendition_count = d->chapter_count;
+    for (i = 0; i < d->chapter_count; i++) {
+      exr_rendition *r = &d->renditions[i];
+      int item = i < p.spine_count ? p.spine[i].layout : 0;
+      r->fixed = i < p.spine_count && (item ? item == 1 : p.layout == 1);
+      r->spread = i < p.spine_count ? (unsigned char)p.spine[i].side : 0;
+      r->viewport_width = p.viewport_width; r->viewport_height = p.viewport_height;
+    }
+  }
   result = EXR_OK;
 done:
   if (bytes)
@@ -798,6 +889,13 @@ static exr_status epub_parse_chapter(exr_document *d, archive *z, size_t resourc
   chapter_input input={0};
   exr_status result;
   if(index<0) return z->status;
+  if (exr_lcp_has(z->protection, d->resources[resource].path)) {
+    size_t n = 0;
+    void *bytes = member(z, d->resources[resource].path, &n, e);
+    if (!bytes) return z->status;
+    result = exr_xml_tree(d, bytes, n, resource, in_spine, linear, "html", e);
+    mz_free(bytes); return result;
+  }
   input.archive=z;input.error=e;input.size=(size_t)stat.m_uncomp_size;
   result=exr_xml_tree_begin(d,resource,in_spine,linear,"html",NULL,NULL,&input.parser,e);
   if(result!=EXR_OK) return result;
@@ -813,6 +911,9 @@ static exr_status epub_parse_chapter(exr_document *d, archive *z, size_t resourc
   return result;
 }
 exr_status exr_epub_index(const void *data, size_t n, exr_document **out, exr_error *e) {
+  return exr_epub_index_ex(data, n, NULL, out, e);
+}
+exr_status exr_epub_index_ex(const void *data, size_t n, const char *passphrase, exr_document **out, exr_error *e) {
   archive z = {0};
   exr_document *d;
   exr_status result;
@@ -832,7 +933,7 @@ exr_status exr_epub_index(const void *data, size_t n, exr_document **out, exr_er
     return exr_fail(e, EXR_MEMORY, "Index allocation failed");
   }
   d->format = EXR_EPUB;
-  result = epub_metadata(d, &z, 0, e);
+  result = epub_metadata(d, &z, 0, passphrase, e);
   if (result == EXR_OK)
     result = archive_copy(d, data, n, e);
   mz_zip_reader_end(&z.archive);
@@ -844,6 +945,9 @@ exr_status exr_epub_index(const void *data, size_t n, exr_document **out, exr_er
   return exr_fail(e, EXR_OK, "");
 }
 exr_status exr_epub_index_source(const exr_source *source, exr_document **out, exr_error *e) {
+  return exr_epub_index_source_ex(source, NULL, out, e);
+}
+exr_status exr_epub_index_source_ex(const exr_source *source, const char *passphrase, exr_document **out, exr_error *e) {
   exr_document *d;
   archive z = {0};
   exr_status status;
@@ -863,7 +967,7 @@ exr_status exr_epub_index_source(const exr_source *source, exr_document **out, e
   d->archive_size = (size_t)source->size;
   status = archive_backing(&z, d, e);
   if (status == EXR_OK) {
-    status = epub_metadata(d, &z, 0, e);
+    status = epub_metadata(d, &z, 0, passphrase, e);
     mz_zip_reader_end(&z.archive);
   }
   if (status != EXR_OK) { exr_document_free(d); return status; }
@@ -1017,7 +1121,7 @@ static exr_status strict_package(archive *z, exr_error *e) {
   size_t i;
   if (!d) return exr_fail(e, EXR_MEMORY, "Strict EPUB: package allocation failed");
   d->format = EXR_EPUB;
-  status = epub_metadata(d, z, 1, e);
+  status = epub_metadata(d, z, 1, NULL, e);
   if (status != EXR_OK) {
     exr_document_free(d);
     return status;
@@ -1083,6 +1187,7 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   }
   d->format = EXR_EPUB;
   d->load_package = index->load_package;
+  d->page_progression = index->page_progression;
   d->shared_archive = index->shared_archive;
   d->archive = index->archive;
   d->archive_size = index->archive_size;
@@ -1105,6 +1210,14 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   }
   /* A requested auxiliary chapter is an independent reading unit. The index
      retains its original spine/linear flags, while this snapshot can be laid out. */
+  d->page_progression = index->page_progression;
+  d->spread_none = index->spread_none;
+  if (index->renditions && part < index->rendition_count) {
+    d->renditions = malloc(sizeof(*d->renditions));
+    if (!d->renditions) { result = exr_fail(e, EXR_MEMORY, "Rendition allocation failed"); goto done; }
+    *d->renditions = index->renditions[part];
+    d->rendition_count = 1;
+  }
   result = epub_parse_chapter(d, &z, index->chapters[part].resource, 1, 1, e);
   if (result == EXR_OK)
     result = exr_model_finish(d, e);
@@ -1164,11 +1277,23 @@ static exr_status chapter_feed_with_allocator(const exr_document *index,size_t p
       return exr_fail(e,EXR_ARGUMENT,"Incomplete chapter source allocator");
     z.archive.m_pAlloc=resource_allocate;z.archive.m_pRealloc=resource_reallocate;
     z.archive.m_pFree=resource_release;z.archive.m_pAlloc_opaque=(void *)allocator;
+    z.allocator=allocator;
   }
   status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;
   status=archive_backing(&z,index,e);
   if(status!=EXR_OK) { mz_zip_reader_end(&z.archive);return status; }
   path=index->resources[index->chapters[part].resource].path;
+  if (exr_lcp_has(z.protection, path)) {
+    void *bytes; size_t n = 0;
+    bytes = member(&z, path, &n, e);
+    if (!bytes) status = z.status;
+    else {
+      input.feed=feed;input.context=context;input.control=control;input.error=e;input.size=n;
+      status = bounded_chapter_feed(&input, 0, bytes, n) == n ? feed(context,NULL,0,1,e) : input.status;
+      if (allocator) allocator->release(allocator->context,bytes); else mz_free(bytes);
+    }
+    mz_zip_reader_end(&z.archive);return status;
+  }
   member_index=mz_zip_reader_locate_file(&z.archive,path,NULL,MZ_ZIP_FLAG_CASE_SENSITIVE);
   if(member_index<0 || !mz_zip_reader_file_stat(&z.archive,(mz_uint)member_index,&stat))
     status=exr_fail(e,EXR_FORMAT,"Streaming chapter member is missing");
@@ -1212,7 +1337,7 @@ static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_
     result = exr_docx(d, docx_member, &z, e);
     goto done;
   }
-  result = epub_metadata(d, &z, 0, e);
+  result = epub_metadata(d, &z, 0, NULL, e);
   if (result != EXR_OK)
     goto done;
   result = archive_copy(d, data, n, e);
@@ -1666,6 +1791,7 @@ exr_status exr_document_resource_bounded(const exr_document *d,size_t resource,
   }
   z.archive.m_pAlloc=resource_allocate;z.archive.m_pRealloc=resource_reallocate;
   z.archive.m_pFree=resource_release;z.archive.m_pAlloc_opaque=(void *)allocator;
+  z.allocator=allocator;
   status=archive_backing(&z,d,e);
   if(status!=EXR_OK) { mz_zip_reader_end(&z.archive);return status; }
   file=member_info(&z,d->resources[resource].path,&stat,e);
@@ -1676,7 +1802,8 @@ exr_status exr_document_resource_bounded(const exr_document *d,size_t resource,
   if(!mz_zip_reader_extract_to_mem(&z.archive,(mz_uint)file,*out,*size,0)) {
     status=z.status!=EXR_OK ? z.status : EXR_FORMAT;goto done;
   }
-  status=exr_control_cancel(control,e);
+  status=exr_lcp_decode(z.protection,d->resources[resource].path,out,size,allocator,e);
+  if(status==EXR_OK) status=exr_control_cancel(control,e);
 done:
   mz_zip_reader_end(&z.archive);
   if(status!=EXR_OK) {

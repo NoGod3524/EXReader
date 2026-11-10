@@ -1,5 +1,7 @@
 # EXReader — native C reading engine & SDK
 
+共享库发布包与三平台最小接入命令见 [SDK 快速开始](tools/release/README.md)。
+
 默认分支为 `main`；`codex/framework` 为 SDK 化之前的归档历史，不再接受新提交。台账与证据入口见 [docs/reader-total-progress/](docs/reader-total-progress/) 与 [evidence/INDEX.md](evidence/INDEX.md)。
 
 EXReader 是面向桌面和移动阅读应用的 **C11 原生阅读引擎与可嵌入 SDK**，当前为 **3.42.0 开发版**，ABI epoch 1、书库 schema 7。核心自有代码使用 MIT 协议，可构建静态组件或 DLL / SO / dylib，以 C 接口供 C/C++、Swift 和 JNI 宿主调用。
@@ -31,6 +33,8 @@ Android 宿主已在共同源码 S 完成 API34 x86_64 模拟器联合验收。�
 框架面向通用宿主：宿主可以直接构造文档树和资源，将自己的解析结果交给引擎；文档树、资源、字形、行、图片和单元格坐标均可读取。宿主可以覆盖样式、关闭书内 CSS、替换图片解码器，或直接使用布局数据自行绘制。文档构造、解析和排版可独立于 SQLite 书库使用，UI、账号、同步和平台事件由宿主决定。
 
 ## 组件选择
+
+EPUB 可通过 `exr_publication_open_ex` 传入口令，按需在内存中解码 LCP Basic Profile 资源。生产 LCP profile 和 Adobe ADEPT 尚未支持；错误码、信任边界及样本复现见 [DRM 说明](docs/DRM.md)。
 
 核心接入使用 `#include <exr/core.h>` 和 `EXReader::exr_core`，包含文档模型、文字分析、排版分页、坐标/命中与绘制接口。需要单独模型或文字分析时，也可直接链接 `exr_doc`、`exr_text`。`exreader.h` 和默认总库继续兼容原入口。
 

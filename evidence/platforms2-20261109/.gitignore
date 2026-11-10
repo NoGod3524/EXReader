@@ -1,0 +1,7 @@
+work/
+*.raw.json
+*.raw.diff.json
+__pycache__/
+platform-probe
+platform-probe.exe
+!**/*.log

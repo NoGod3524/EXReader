@@ -1,0 +1,5 @@
+UTC: 2026-11-09T08:15:32.138259+00:00
+CWD: C:\Users\Oscar\Documents\Codex\EXReader-plat2-20261109
+ARGV: ["P:/android-sdk/platform-tools/adb.exe", "-s", "emulator-5554", "shell", "am", "force-stop", "org.exreader.platformprobe"]
+EXIT_CODE: 0
+END_UTC: 2026-11-09T08:15:32.203999+00:00

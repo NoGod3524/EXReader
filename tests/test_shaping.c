@@ -352,10 +352,36 @@ static void damaged_tables(void) {
     rejected("a\xcc\x87\xcc\x81",5,&o,EXR_FONT);exr_font_free(font);font=original;
   }
 }
+static int cache_cancel(void *context) { (void)context;return 1; }
+static void cached_contexts(void) {
+  const uint32_t context[]={0,'A',0x4e00,0x628,0x627,0x200c,0x200d,0x301};
+  const char *text[]={"AV","ffi","\xd8\xa8","a\xcc\x81"};
+  exr_shape_feature kern={TAG('k','e','r','n'),1};
+  size_t t,a,b,repeat;
+  for(t=0;t<4;t++) for(a=0;a<8;a++) for(b=0;b<8;b++) {
+    exr_shape_options o=options();exr_shaped_glyph *expected=NULL,*actual=NULL;size_t n=0,m=0;
+    o.context_before=context[a];o.context_after=context[b];o.font_size=16+(float)(a%3);
+    o.style_flags=(unsigned)(b%2);o.direction=t==2 ? EXR_DIRECTION_RTL : EXR_DIRECTION_LTR;
+    o.script=t==2 ? TAG('a','r','a','b') : TAG('l','a','t','n');
+    /* Explicit default kern keeps the reference on the uncached feature path. */
+    o.features=&kern;o.feature_count=1;
+    OK(exr_shape(font,0,text[t],strlen(text[t]),&o,&expected,&n,&error));
+    o.features=NULL;o.feature_count=0;
+    for(repeat=0;repeat<2;repeat++) {
+      OK(exr_shape(font,0,text[t],strlen(text[t]),&o,&actual,&m,&error));
+      CHECK(m==n && (!m || !memcmp(actual,expected,m*sizeof(*actual))));
+      if(m) actual[0].glyph=UINT32_MAX; /* Caller ownership cannot corrupt a later hit. */
+      exr_free(actual);actual=NULL;
+    }
+    o.control.cancelled=cache_cancel;
+    CHECK(exr_shape(font,0,text[t],strlen(text[t]),&o,&actual,&m,&error)==EXR_CANCELLED && !actual && !m);
+    exr_free(expected);
+  }
+}
 int main(int argc, char **argv) {
   CHECK(argc == 2); directory = argv[1]; font = open_font("shaping.ttf");
   validation(); latin(); marks(); lookup_flags(); long_marks(); optional_lookups(); context_formats();
-  arabic(); controls_and_missing(); damaged_tables();
+  arabic(); controls_and_missing(); damaged_tables(); cached_contexts();
   exr_font_free(font);
   printf("EXReader shaping: %u checks passed\n", checks);
   return 0;
