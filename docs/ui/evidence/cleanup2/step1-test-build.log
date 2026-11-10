@@ -1,0 +1,20 @@
+-- The C compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (2.8s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Users/Oscar/exreader-agents/g01-windows-account/EXReader/build/cleanup2/test
+[1/5] Building CXX object CMakeFiles/EXReader.dir/shell_speech.cpp.obj
+[2/5] Building CXX object CMakeFiles/EXReader.dir/shell_d2d.cpp.obj
+[3/5] Building CXX object CMakeFiles/EXReader.dir/shell_epub.cpp.obj
+[4/5] Building C object CMakeFiles/EXReader.dir/C_/Users/Oscar/exreader-agents/g01-windows-account/EXReader/examples/reader.c.obj
+[5/5] Linking CXX executable EXReader.exe

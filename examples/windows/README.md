@@ -67,3 +67,12 @@ point `font_file` at Reader.otf, and set `serif = Noto Serif SC` and
 Build with an SDK exposing `exr/font_manager.h` and its 12 symbols. Measured
 startup, real-book page hashes and DPI-aware UI captures are documented in
 [`font-manager-host evidence`](../../docs/ui/evidence/font-manager-host/README.md).
+
+## Acceptance-only executable
+
+Product builds default to `EXR_READER_TEST_DRIVERS=OFF`. To run the existing
+acceptance scripts, configure a separate build with
+`-DEXR_READER_WINDOWS_SHELL=ON -DEXR_READER_TEST_DRIVERS=ON`. Script paths and
+`--drive` arguments stay unchanged. The driver unit and its command strings are
+excluded from the product. This option belongs only to this consumer project;
+the root build and SDK logic are unchanged.

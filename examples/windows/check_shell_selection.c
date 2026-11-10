@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Checks the production host, including HWND dispatch and CF_UNICODETEXT. */
 #define WinMain reader_WinMain
+#define EXR_READER_TEST_DRIVERS 1
 #include "../reader.c"
 #undef WinMain
 #include <assert.h>

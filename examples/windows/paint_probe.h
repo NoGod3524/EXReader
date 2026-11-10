@@ -7,11 +7,13 @@ static int host_probe_counting;
 static unsigned long host_probe_presented,host_probe_blank,host_probe_stale,host_probe_present_failed;
 static unsigned long host_probe_bitblt,host_probe_deferred;
 static LONG host_probe_stretch;
+#ifdef EXR_READER_TEST_DRIVERS
 static void host_probe_reset(void) {
   host_probe_presented=host_probe_blank=host_probe_stale=host_probe_present_failed=0;
   host_probe_bitblt=host_probe_stretch=host_probe_deferred=0;
   host_probe_counting=1;
 }
+#endif
 static void host_probe_require_ui(void) {
   if(host_probe_ui_thread && GetCurrentThreadId()!=host_probe_ui_thread)abort();
 }

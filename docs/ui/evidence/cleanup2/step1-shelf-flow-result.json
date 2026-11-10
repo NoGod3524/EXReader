@@ -1,0 +1,28 @@
+{
+  "roundtrips": "3/3; same content range, page and raster; no pager rebuild",
+  "tap_zones": {
+    "25": "15/15",
+    "20": "15/15"
+  },
+  "single_clicks": "10/10",
+  "drag_selection": "10/10; long text drags never flip",
+  "swipes": "20/20",
+  "vertical_taps": "10/10",
+  "vertical_swipes": "10/10 extra",
+  "unsaved_note": "saved on Ctrl+W; verified after process restart",
+  "restart": "1/1 identical content range/page/raster; open settles before shell activation",
+  "startup_shelf": "1/1",
+  "uncached_reopen": "1/1 after reading another title",
+  "shelf_books": 3,
+  "screenshots": [
+    "flow/shelf.png",
+    "flow/reading.png",
+    "flow/hidden.png",
+    "flow/regions.png",
+    "vertical/vertical.png"
+  ],
+  "boundaries": "6/6 ignored; fixed stable page-id restore 2/2",
+  "rapid_taps": "2/2 DBLCLK gutter messages turn pages",
+  "capture": "ops/capture_window.py",
+  "exe_sha256": "b72f4b79a5cac380df0b184f0498e27920f9c81ade74ff2b14a2fb2da5337b97"
+}

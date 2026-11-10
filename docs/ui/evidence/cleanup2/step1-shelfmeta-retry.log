@@ -1,0 +1,72 @@
+{
+  "edits_persisted": "3/3",
+  "covers_restored": "3/3",
+  "covers_removed_to_default": "3/3",
+  "cover_files_left_after_removal": 0,
+  "series": {
+    "成长三部曲": [
+      "Crying in H Mart",
+      "Black Boy",
+      "Born a Crime"
+    ],
+    "火的系列": [
+      "Between the World and Me",
+      "The Fire Next Time",
+      "The Fire This Time"
+    ]
+  },
+  "tag_filters": {
+    "经典": 3,
+    "种族": 3,
+    "回忆录": 4,
+    "小说": 2
+  },
+  "tag_expected": {
+    "经典": 3,
+    "种族": 3,
+    "回忆录": 4,
+    "小说": 2
+  },
+  "untagged": 1,
+  "failed_save_rollback": {
+    "dialog_kept": true,
+    "title_unchanged": true,
+    "save_failures": 1
+  },
+  "stats": {
+    "read_ms": {
+      "Between the World and Me": 120000,
+      "Born a Crime": 120000,
+      "The House on Mango Street": 120000
+    },
+    "opens": {
+      "Between the World and Me": 1,
+      "Born a Crime": 1,
+      "The House on Mango Street": 1
+    },
+    "total_read_ms": 360000,
+    "streak": 3,
+    "days": [
+      [
+        "2026-11-08",
+        120000
+      ],
+      [
+        "2026-11-09",
+        120000
+      ],
+      [
+        "2026-11-10",
+        120000
+      ]
+    ]
+  },
+  "idle_ms": {
+    "0": 0,
+    "5min": 30000,
+    "10min": 30000,
+    "resume": 40000,
+    "unfocused": 40000
+  },
+  "shelf_sha256_after_edit": "1ffcee9d74d7576ac9bf7d6c6bad1f853c224580cb90d7aa0d90a1b42ddb6de8"
+}
