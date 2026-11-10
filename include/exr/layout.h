@@ -502,6 +502,8 @@ EXR_API exr_status exr_pager_get(exr_pager *pager, size_t page, const exr_layout
                                  exr_error *error);
 EXR_API size_t exr_pager_cached_count(const exr_pager *pager);
 EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);
+typedef struct { size_t hits,misses; } exr_pager_cache_stats;
+EXR_API exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);
 /* Bounded in-memory replay checkpoints, separate from the page payload cache.
    Defaults: 4 entries / 2 MiB / every 16 pages in get() mode. Capacity zero disables.
    Capacity <=64, nonzero budget/interval required when enabled; not serialized. */
