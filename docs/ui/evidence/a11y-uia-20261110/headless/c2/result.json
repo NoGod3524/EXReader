@@ -1,0 +1,338 @@
+{
+  "mode": "headless-static",
+  "runtime_uia": "pending_external_manual",
+  "checks": [
+    {
+      "check": "Name+HelpText:shell_back",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_button",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_toc",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_settings",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_toc_panel",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_toc_list",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_panel",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_bar",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_edit",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_prev",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_next",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_case",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_word",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_search_close",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_segments[0]",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_segments[1]",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_segments[2]",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:style_preset",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_tap_buttons[0]",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "Name+HelpText:shell_tap_buttons[1]",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "dynamic_style_fields",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "registration_called_during_shell_create",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "IAccPropServices_Name_HelpText",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "page_name_and_provider_dispatch",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "text_provider_interfaces",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "panel_structure_event_calls",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "closed_tab_order",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "tab_skips_hidden_disabled",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "reverse_tab_wrap",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "focus_stroke_2px_scaled",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "contrast_system_palette",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "contrast_theme_d2d_path",
+      "pass": true,
+      "kind": "static"
+    },
+    {
+      "check": "existing_screenshots_available",
+      "pass": true,
+      "kind": "evidence_inventory"
+    },
+    {
+      "check": "manual_checklist_available",
+      "pass": true,
+      "kind": "static"
+    }
+  ],
+  "historical_screenshots": [
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/01-text-page.png",
+      "bytes": 18824,
+      "sha256": "901d873f84c981095fb2b67da4ac0c47d23cffc2b6ded661a03e282b4f36c4db",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/02-page-focused.png",
+      "bytes": 19809,
+      "sha256": "1444637a4dbc94a068a51e7afa011dd63289e0ebadc4b94b557f1fd8065a1f8c",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/03-toc-button-focused.png",
+      "bytes": 19120,
+      "sha256": "caa67c8b62818c1e2284b046510627dbc17dfc7e221ba8e6b7e2549f2aea620b",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/03b-toc-ring-crop-x4.png",
+      "bytes": 1184,
+      "sha256": "5aa0038af14d269f9d88390afd65c7f8ac289a656175d492707eeeacec12545b",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/04-settings-button-focused.png",
+      "bytes": 19835,
+      "sha256": "3e275110b43c79dd837e78754099adaa6a72c000512416bfef081f3e4d340deb",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/05-toc-open.png",
+      "bytes": 19611,
+      "sha256": "28fb2711346c390bc99ef5fc443662f1c537782c00e0ea617c3413ca521afd09",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/06-settings-open.png",
+      "bytes": 19809,
+      "sha256": "1444637a4dbc94a068a51e7afa011dd63289e0ebadc4b94b557f1fd8065a1f8c",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/07-after-settings.png",
+      "bytes": 58199,
+      "sha256": "0bd673a2237fa88342914bbc09c0b22438fb1dc53ceac6e756ed2a657b194396",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/08-high-contrast-text.png",
+      "bytes": 54952,
+      "sha256": "6a1c1e01d74d944e6962b9ae1451e264dfdf537daea852e27a8a23242406aecc",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/09-high-contrast-toc-focus.png",
+      "bytes": 55232,
+      "sha256": "051fd257c427b23b5dd1f89123fc6917060074eebe4c4ab479cb21e9f8340169",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/10-high-contrast-toc-open.png",
+      "bytes": 55232,
+      "sha256": "051fd257c427b23b5dd1f89123fc6917060074eebe4c4ab479cb21e9f8340169",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run1/11-high-contrast-settings-open.png",
+      "bytes": 55258,
+      "sha256": "af77f1c8bd13bdfa48c6aaba3b9e15fba230d062bf18b42a77c88d143f6a0698",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run2/01-text-page.png",
+      "bytes": 14911,
+      "sha256": "fca189d163b02e813ac4624d38a2dba9b3e8d02b928d50fac92b8bbe401bc9a3",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run4/01-text-page.png",
+      "bytes": 44208,
+      "sha256": "44c40d4069833f8ed8f4a6a03b087253709f389f0c627713ace2f0d3be447662",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/01-text-page.png",
+      "bytes": 44208,
+      "sha256": "da1c0f3ffa87764f55e6818c24d774acaf7f90b3985a35a171cf8fc1d745dd6a",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/02-page-focused.png",
+      "bytes": 44822,
+      "sha256": "f1d4d5675a5a3457ba3d5db7b94679ff0f3ab58c7ddb858779f47a86ae84157b",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/03-toc-button-focused.png",
+      "bytes": 45510,
+      "sha256": "f5c95643a7479306c691ceba745b54df86e31c0946c9a405d296056fadd8d000",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/03b-toc-ring-crop-x4.png",
+      "bytes": 2226,
+      "sha256": "28884c05b76b162ba16520d9323b375cd5f67acc51edfd9e61b10ec588fcd20f",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/04-settings-button-focused.png",
+      "bytes": 45707,
+      "sha256": "3de3603adc0f15fa220f9a1ba699530b12e9a3c505ac70829ef060d699da3542",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/05-toc-open.png",
+      "bytes": 51251,
+      "sha256": "14baee29ceccb23c5c5b33da3edc5efcbf7c1cf155e188426526536854b1d3c6",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/06-settings-open.png",
+      "bytes": 133791,
+      "sha256": "ccf3dad059abf80ced4c8bd3d70b87067f753ad6d26c1d62f8da687df7f430ce",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/07-after-settings.png",
+      "bytes": 106754,
+      "sha256": "f44ce6bcf1dca24dc4c15de482f489b05087a00070fd7010eb1c01f304363d7b",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/08-high-contrast-text.png",
+      "bytes": 100771,
+      "sha256": "b56c5b76ab79a463e8f279210c1bd93bf13a7442a88998ef3bd07baa5dd9313d",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/09-high-contrast-toc-focus.png",
+      "bytes": 101611,
+      "sha256": "49a7221a2095e63a8de96369df3e071eeb61fca77194365d8cdad11241484d67",
+      "kind": "historical"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/10-high-contrast-toc-open.png",
+      "bytes": 113797,
+      "sha256": "1cbcf650d3f265acc615d906b164b0ff7d04c530225b37b383238cb628bc02ac",
+      "kind": "historical"
+    }
+  ],
+  "sources": {
+    "examples/reader.c": "94f377ecc075a07afff01d697ae33322a184abfe9f3b13981eb0ae502c14ee99",
+    "apps/reader/desktop/windows_accessibility.inc": "c5fa7d4b80ea1d42fc39d387e49e4412d032914ebdbbd1b4579b954e0b5b9246",
+    "examples/windows/shell_screen.inc": "19f8f2afd22fb5a20a334a30db6096d0db94612d8e6638cfb60f58fddaa8e615",
+    "examples/windows/shell_settings.inc": "c9b65906ae9aef1dda647c5bc7941aa5668c7bb85b540f21ac7c645e2df69d3d",
+    "examples/windows/shell_toc.inc": "ec29da856d3bb60df8eb41a79ca6be3f093746c0feee2a375efa2828fd28aec9",
+    "examples/windows/shell_tokens.h": "4a1c18046fb181332b93afe8a0d04de01fec63a66bbef7944fad42e99fd33920",
+    "examples/windows/shell_d2d.cpp": "124c116d43cac761551a22271e75f8239d4a5c8ea3e7b08cc8ec96ff07ae8a20"
+  },
+  "manual_checklist": "docs/a11y/C2-MANUAL-CHECK.md"
+}

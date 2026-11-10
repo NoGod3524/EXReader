@@ -1,0 +1,14 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-c2-a11y-20261110/build/a11y
+    Start 176: native-opds
+1/3 Test #176: native-opds ......................   Passed    0.37 sec
+    Start 259: windows-opds-timeout
+2/3 Test #259: windows-opds-timeout .............   Passed    5.00 sec
+    Start 260: windows-a11y-c2-static
+3/3 Test #260: windows-a11y-c2-static ...........   Passed    1.84 sec
+
+100% tests passed out of 3
+
+Label Time Summary:
+headless    =   6.83 sec*proc (2 tests)
+
+Total Test time (real) =   7.50 sec

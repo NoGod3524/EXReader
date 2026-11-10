@@ -108,6 +108,7 @@ static int shell_settings_command(int id) {
     shell_tap_edge=id==IDC_SHELL_TAP20 ? 20:25;settings_save();shell_settings_refresh();return 1;
   }
   if(id==IDC_SHELL_DICTIONARY) {shell_toggle_settings();dict_manager_open();return 1;}
+  if(id==IDC_SHELL_SYNC) {shell_toggle_settings();sy_open();return 1;}
   if(id==IDC_SHELL_MINUS || id==IDC_SHELL_PLUS) { shell_step_font(id==IDC_SHELL_PLUS ? 1 : -1);return 1; }
   if(id>=IDC_STYLE_BASE && id<IDC_STYLE_BASE+24) {
     int i=(id-IDC_STYLE_BASE)/3,op=(id-IDC_STYLE_BASE)%3;
@@ -144,9 +145,10 @@ static void shell_panel_layout(void) {
   for(int i=0;i<3;i++)MoveWindow(shell_segments[i],kpad+shell_px(20+i*96,shell_dpi),top+shell_px(394,shell_dpi),shell_px(92,shell_dpi),shell_px(32,shell_dpi),TRUE);
   MoveWindow(style_preset,kpad+shell_px(20,shell_dpi),top+shell_px(452,shell_dpi),shell_px(190,shell_dpi),shell_px(200,shell_dpi),TRUE);
   MoveWindow(style_save,kpad+shell_px(220,shell_dpi),top+shell_px(448,shell_dpi),shell_px(112,shell_dpi),shell_px(34,shell_dpi),TRUE);
-  MoveWindow(style_reset,kpad+shell_px(20,shell_dpi),top+shell_px(506,shell_dpi),shell_px(148,shell_dpi),shell_px(34,shell_dpi),TRUE);
+  MoveWindow(style_reset,kpad+shell_px(20,shell_dpi),top+shell_px(506,shell_dpi),shell_px(96,shell_dpi),shell_px(34,shell_dpi),TRUE);
   for(int i=0;i<2;i++)MoveWindow(shell_tap_buttons[i],kpad+shell_px(20+156*i,shell_dpi),top+shell_px(586,shell_dpi),shell_px(148,shell_dpi),shell_px(32,shell_dpi),TRUE);
-  MoveWindow(GetDlgItem(shell_panel,IDC_SHELL_DICTIONARY),kpad+shell_px(176,shell_dpi),top+shell_px(506,shell_dpi),shell_px(156,shell_dpi),shell_px(34,shell_dpi),TRUE);
+  MoveWindow(GetDlgItem(shell_panel,IDC_SHELL_DICTIONARY),kpad+shell_px(124,shell_dpi),top+shell_px(506,shell_dpi),shell_px(130,shell_dpi),shell_px(34,shell_dpi),TRUE);
+  MoveWindow(GetDlgItem(shell_panel,IDC_SHELL_SYNC),kpad+shell_px(262,shell_dpi),top+shell_px(506,shell_dpi),shell_px(78,shell_dpi),shell_px(34,shell_dpi),TRUE);
 }
 
 static float shell_ease(float x) {
@@ -274,6 +276,7 @@ static void shell_create_panel(HWND parent) {
   shell_tap_buttons[1]=shell_make_button(shell_panel,IDC_SHELL_TAP25,L"25 / 50 / 25");
   for(int i=0;i<2;i++)ShowWindow(shell_tap_buttons[i],SW_SHOW);
   HWND dictionary=shell_make_button(shell_panel,IDC_SHELL_DICTIONARY,L"词典与生词本");ShowWindow(dictionary,SW_SHOW);
+  HWND cloud=shell_make_button(shell_panel,IDC_SHELL_SYNC,L"云同步");ShowWindow(cloud,SW_SHOW);
 }
 
 static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
@@ -291,7 +294,7 @@ static int shell_draw_settings(const DRAWITEMSTRUCT *item) {
   else if(id==IDC_SHELL_PLUS) wcscpy(text,L"+");
   else if(id==IDC_SHELL_TAP20 || id==IDC_SHELL_TAP25) variant=(id==IDC_SHELL_TAP20 ? shell_tap_edge==20:shell_tap_edge==25) ? 1:2;
   else if(id>=IDC_SHELL_LIGHT && id<=IDC_SHELL_SYSTEM) variant=id-IDC_SHELL_LIGHT==shell_theme_mode ? 1 : 2;
-  else if(id==IDC_SHELL_DICTIONARY) variant=2;
+  else if(id==IDC_SHELL_DICTIONARY || id==IDC_SHELL_SYNC) variant=2;
   shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),variant,state);
   return 1;
 }

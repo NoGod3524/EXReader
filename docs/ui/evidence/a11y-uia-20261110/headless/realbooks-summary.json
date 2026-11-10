@@ -1,0 +1,11 @@
+{
+  "requested_books": 19,
+  "successful_books": 19,
+  "failed_books": [],
+  "total_pages": 11318,
+  "total_glyphs": 8648571,
+  "wall_seconds": 507.075501,
+  "sum_book_seconds": 1820.226316,
+  "fastest_book": "tangshi300-52323",
+  "slowest_book": "the-autobiography-of-malcolm-x."
+}

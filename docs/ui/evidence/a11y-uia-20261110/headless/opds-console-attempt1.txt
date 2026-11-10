@@ -1,0 +1,16 @@
+PASS https_upgrade_exact_fit 2047 bytes plus terminator
+PASS https_upgrade_overflow_rejected overlong address becomes bad_url
+PASS loopback_http_preserved local fixtures remain reachable
+PASS error_timeout_local_accept_no_response code=timeout win_error=12002 http=0 elapsed_ms=4016 accepted=1 message=连接超时：1 秒内没有收到服务器响应，请检查网络或稍后重试。
+PASS local_slow_server_join server stopped
+PASS root_feed title=Project Gutenberg entries=3 search_description=https://www.gutenberg.org/catalog/osd-books.xml
+PASS list_ge_20 url=https://www.gutenberg.org/ebooks/search.opds/?sort_order=downloads entries=25 first=Pride and Prejudice next=https://www.gutenberg.org/ebooks/search.opds/?sort_order=downloads&start_index=26
+PASS next_page_differs page1=25 page2=25 overlap=0 page2_first=The Adventures of Tom Sawyer, Complete
+PASS book_detail_has_download book=Pride and Prejudice editions=2 pick=1 format=epub size=24864457 url=https://www.gutenberg.org/ebooks/1342.epub3.images
+PASS download_epub bytes=24864457 content_type=application/epub+zip final=https://www.gutenberg.org/cache/epub/1342/pg1342-images-3.epub magic=PK
+FAIL opensearch_ge_1 failed: 服务器响应超时（HTTP 504），请稍后重试。
+PASS error_404 code=not_found http=404 message=地址不存在（HTTP 404），请检查书源地址。
+PASS error_plain_http_rejected code=not_https message=仅支持 HTTPS 书源，已拒绝不安全的 http:// 地址。
+PASS cache_hit_within_ttl second fetch from_cache=1 hits=1
+PASS cache_expires fetch with expired ttl from_cache=0
+PASS cache_ttl_is_10_minutes ONET_CACHE_MS=600000
