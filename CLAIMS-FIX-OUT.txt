@@ -1,0 +1,25 @@
+8 条都改完了，已开 draft PR **#52**：https://github.com/NoGod3524/EXReader/pull/52（分支 `docs/claims-fix-20261105`，提交 `ed11766c`，base `main`）。
+
+开工前 `origin/main` 已经前进到 `4519bd5b`（PR #50）。这个 PR 只改了 `examples/windows`，和本次要改的文件没有交集，所以我先快进到最新 main 再改。仓库自带的两项检查本地跑过：`check_version_consistency.py` 结果 PASS；`check_reading_doc_links.py` 查了 112 个链接，0 错误。
+
+| # | 旧 | 新 | 证据 |
+|---|---|---|---|
+| 1 | README：核心 3.39.0，总 SDK 3.40.0 | 核心 3.40.0 / PDF 3.38.3 / 书库 3.34.0 / 其余 3.33.0；总 SDK 3.42.0 | `cmake/versions.cmake:2-9` |
+| 2 | SUPPORT_MATRIX：3.40.0，schema 6 | 3.42.0，schema 7 | `src/library.c:35`、`cmake/versions.cmake:2` |
+| 3 | `find_package(EXReader 3.40.0 EXACT …)`，共 4 处 | 改为 `3.42.0 EXACT`：SUPPORT_MATRIX:111、SDK_COMPATIBILITY:104/476、VERSIONING:27 | `CMakeLists.txt:971`（PROJECT_VERSION） |
+| 4 | 表格间距"不支持" | 改为"支持"。写明接受 1–2 个非负长度、支持 inherit/initial/unset、非法声明作废、separate 模型外缘与轨道间留距、collapse 按 0；回归 `native-table-spacing` | `src/style.c:761-778`、`src/pager_table.c:511`、`docs/WP5_BORDER_SPACING.md` |
+| 5 | 标注行写"AcroForm 未支持" | 标注行只留"其余类型未支持"；新增"AcroForm 表单 / 部分"一行，列出读写范围、上限和 UNSUPPORTED 清单；回归 `native-pdf-form` | `include/exr/pdf_edit.h:83,105`、`CMakeLists.txt:475` |
+| 6 | "默认分支强制 reading-required"，共 4 处 | 原句保留并标"当时"，补一句：2026-11-03 起必需检查为 `reading-required-core`（五个非性能组），performance 为 advisory（E3，issue #32，硬截止 2026-12-15） | 规则集 25700819（本次回读确认 context 为 `reading-required-core`）、`PERF-BASELINE-POLICY.md:14-24` |
+| 7 | README："后续产品目标为六平台互通的原生阅读器" | 改为 SDK 定位：本仓库不推进六端产品；Windows+GTK 受支持，Android/macOS/iPhone/iPad 只保证编译 | `docs/PROJECT-POSITIONING.md:2,7-8` |
+| 8 | INDEX 没有台账口径汇总 | 顶部加表：名义 99/108、有审计支撑 95、当前树可复现未知、F 组名义 4/12（审计当时 final 为 1/12） | `catalog.json` 重新统计为 99/1/8，F 组为 F02/F04/F06/F07；run 40928834086（#29 attempt 2）回读开始时间 2026-10-29T18:17:09Z |
+
+**第 6 条的写法：** `R6-READING-RELEASE.md:123-125` 是 R6 当时的历史记录，所以我没有改原文，只在后面加了一行"后续变更"注记。README、CORE-ROADMAP、PROJECT_OVERVIEW 这三处同样保留原句，只标"当时"再补新状态。
+
+**没改的条目：**
+- `NATIVE_API.md:889`、`HANDOFF.md:69`：按你的要求保持不动。`HANDOFF.md:3` 也还写着 3.40.0 / schema 6，但它是 2026-10-22 的日期快照，同样没动。
+- `docs/reader-next-s14/`、`docs/reader-next-s15/` 里的 `3.40.0 EXACT`：这是当时的修复记录，原文描述的就是旧行为，不改。
+- 审计里的 5 条部分成立（C07、C21、C22、C26、C35）：不在这 8 条范围内，没改。其中 README:16 平台验收并列（C35）和第 7 条相关，要的话可以另开一条处理。
+- 其他文件里提到"六平台互通"的句子都是"不授予…"这类范围声明，不是目标声明，不用改。
+
+**git status 不算干净：** 改动已全部提交并推送，但还剩一个不属于本次的未跟踪文件 `CLAIMS-FIX-OUT.txt`。它开工前就在，内容是一条 `--print` 调用报错，我没有提交也没有删除，要不要删由你决定。
+
