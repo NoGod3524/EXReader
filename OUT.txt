@@ -1,0 +1,9 @@
+已完成并推送至指定分支，创建 draft PR **[#114](https://github.com/NoGod3524/EXReader/pull/114)**；PR 自动 CI 已触发，正在运行。
+
+- **语料**：两本阿拉伯语、一本希伯来语自造 EPUB，各 4 页；另测 Gutenberg 希伯来真书 210 页、带明确标记测试附录的派生版 213 页，共 11 张截图。
+- **六项结果**：段落方向、数字嵌入、标点镜像、双向混排、末行对齐、翻页方向，三本自造书及附录派生版均 **6/6**。原书缺少拉丁混排场景，未虚报通过。
+- **修复定位**：`exr_flow_emit_line()` 的 RTL 末行对齐；`package_start()/epub_metadata()` 元数据传递及 `page_procedure()` 默认翻页映射。
+- **19 本回归**：11,318 页，页数、字形数及逐页像素哈希全部不变。
+- **测试**：新增 5 组、225 检查；MSVC 完整 ctest **262/262**。MinGW 为 261/262，唯一失败是打包工具链错配。
+
+完整证据见[验收报告](C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/tests/rtl-verify-20261109/REPORT.md)。逐步进展已写入 `RTL-OUT.txt`，工作树干净。
