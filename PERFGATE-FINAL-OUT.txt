@@ -1,0 +1,54 @@
+**现在不能开 required。** 最终同代码复验只有 **2/5 pass**，最高误报 **+47.9538%**；Ubuntu CI 基线仍为 **0/19**。
+
+已 commit、push 到 `codex/perf-gate-final-20261109`，创建 draft **[PR #104](https://github.com/NoGod3524/EXReader/pull/104)**。
+
+**五次最终复验：**
+
+| 次数 | 最大周期增幅 | 最大墙钟比 | 结果 |
+|---|---:|---:|---|
+| 1 | +47.9538% | 4.541× | fail |
+| 2 | +39.3197% | 1.366× | fail |
+| 3 | +16.2792% | 1.160× | pass |
+| 4 | +4.6194% | 1.054× | pass |
+| 5 | +40.9419% | 1.414× | fail |
+
+初版的 5/5 pass 和最终失败批次均已保留，没有删点或放宽阈值。
+
+**三档阈值：**警告 10%、门禁 20%、硬上限 35%，分别约为 #97 的 +4.40% 归一化残差的 2.27、4.55、7.95 倍。这些余量未通过本轮实测。附加墙钟看门狗为 3×，也出现误报。
+
+**真阳性通过：**实际增加约 25% CPU 工作后，仅 `black-boy` 触发 fail：
+
+`91,359,405 → 113,268,185 cycles`，**+23.9809%**，exit 1。没有修改采样 JSON 模拟退化。
+
+**19 本冻结数值如下，均为本地 Windows 数据，不是 Ubuntu CI 基线：**
+
+| 书籍 | 线程周期 p95 |
+|---|---:|
+| A Raisin in the Sun | 137,122,483 |
+| Between the World and Me | 46,685,987 |
+| Black Boy | 91,359,405 |
+| Born a Crime | 44,512,938 |
+| Crying in H Mart | 62,122,509 |
+| How Does It Feel to Be a Problem | 74,963,655 |
+| I Know Why the Caged Bird Sings | 135,155,153 |
+| Pachinko | 85,976,154 |
+| Absolutely True Diary | 28,985,947 |
+| Autobiography of Malcolm X | 156,152,241 |
+| The Distance Between Us | 74,928,326 |
+| The Fire Next Time | 135,046,517 |
+| The Fire This Time | 99,422,556 |
+| The House on Mango Street | 39,650,741 |
+| Zami | 31,619,622 |
+| 红楼梦 | 55,927,302 |
+| 醒世恒言 | 54,282,239 |
+| 唐诗三百首 | 54,077,844 |
+| 草枕 | 90,454,656 |
+
+其他验收：
+
+- 19 本完整回归：**11,426 页，页数、字形及逐页哈希变化均为 0**。
+- patch 通过 **`git apply --check` 和 actionlint**；`.github/` 未改。
+- CI JSON 明确记录 `blocked`，没有伪造基线。
+- 尚缺：获准部署 CI 入口、19 本书的 CI 访问、实际 PMU/runner 验证，以及 Ubuntu 上的 **19/19 基线、5/5 pass 和真阳性 fail**。当前 256 个 workflow 没有新采样器入口。
+
+[完整报告、原始证据、恢复与回滚步骤](https://github.com/NoGod3524/EXReader/blob/codex/perf-gate-final-20261109/docs/validation/PERF-GATE-FINAL.md)；逐步记录已写入 `PERFGATE-FINAL-OUT.txt`。
