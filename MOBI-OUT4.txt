@@ -1,0 +1,21 @@
+已完成并推送 `codex/engine-mobi-kf8-fb2-20261108`，工作树干净。Draft PR：[#96](https://github.com/NoGod3524/EXReader/pull/96)，最新提交 `733a20d3`。
+
+- **A MOBI**：PDB/PalmDOC、RECINDEX 图片、UTF-8/CP1252、pagebreak 分片及内置目录。
+- **B KF8**：HUFF/CDIC、SKEL/FRAG 重组、按需计长与解压、FDST 和导航；不支持的内容明确报错。
+- **C FB2**：XML/ZIP、UTF-8/windows-1251、section 分片、嵌套目录及图片。
+- **D 接入**：共用 publication → document → pager/render 链路。
+
+| 验收 | 结果 |
+|---|---|
+| 1. 样本 | MOBI 3、AZW3 5、FB2 7 |
+| 2. 打开与首屏 | 15/15 正常；截图 3 张 |
+| 3. PalmDOC 对比 | 3/3 一致：1569、1716、1612 字节 |
+| 4. HUFF 对比 | 2/2 一致：212019、494405 字节，匹配 FDST |
+| 5. FB2 图片 | 7/7 打开；主要图片样本 3/3 正常 |
+| 6. EPUB 回归 | 19 本、11116 页，页数及哈希变化均为 0 |
+| 7. ctest | **210/210**，新增 **5 组** |
+| 8. 错误处理 | 13 个案例明确报错，输出为空并附原因 |
+
+EPUB 回归采用原清单中的 **17 本 EPUB＋2 本 Gutenberg EPUB**，用原始 DLL 重测基线；旧清单另有 PDF、MOBI 各一本。
+
+[完整报告：逐本页数、字符数、完整 SHA-256、截图及错误语义](C:/Users/Oscar/Documents/Codex/EXReader-mobi-20261108/evidence/mobi-kf8-fb2-20261108/REPORT.md)。过程已追加至 `MOBI-OUT.txt`。
