@@ -2,6 +2,7 @@
 #include "flow_internal.h"
 #include "opentype_internal.h"
 #include "ruby_internal.h"
+#include "reflow_internal.h"
 /* Recover plain-text chapter/paragraph lines embedded in XHTML text nodes.
    Iterate raw lines once, mapping to the existing normalized projection. No
    document nodes or source offsets are rewritten, including bounded readers. */
@@ -99,6 +100,10 @@ typedef struct {
   int bidi_active;
 } checkpoint;
 struct exr_pager {
+  void *edit_state;
+  exr_edit_page_fn edit_page;
+  void (*edit_free)(void *);
+  size_t cache_hits,cache_misses;
   void *owned_view;
   void (*view_release)(void *);
   void *owned_chapter;
@@ -1665,7 +1670,7 @@ exr_status exr_pager_next(exr_pager *p, exr_layout **out, exr_error *e) {
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing page output");
   *out = NULL;
-  if (!p || p->busy || p->mode == 2)
+  if (!p || p->busy || p->mode == 2 || p->edit_state)
     return exr_fail(e, EXR_ARGUMENT, "Invalid, reentrant or cached-mode pager");
   p->mode = 1;
   return next_page(p, out, e);
@@ -1733,9 +1738,17 @@ exr_status exr_pager_get(exr_pager *p, size_t index, const exr_layout **out, exr
       memmove(p->cache + 1, p->cache, i * sizeof(*p->cache));
       p->cache[0] = entry;
       *out = entry.layout;
+      p->cache_hits++;
       return exr_fail(e, EXR_OK, "");
     }
-  {
+  p->cache_misses++;
+  if(p->edit_page) {
+    p->busy=1;
+    status=p->edit_page(p->edit_state,index,&page,e);
+    p->busy=0;
+    if(status!=EXR_OK) return status;
+    p->generated_pages++;
+  } else {
     checkpoint *best = NULL;
     for (i = 0; i < p->checkpoint_count; i++) {
       checkpoint *c = p->checkpoints[i];
@@ -1746,7 +1759,7 @@ exr_status exr_pager_get(exr_pager *p, size_t index, const exr_layout **out, exr
       if (status != EXR_OK) return status;
     } else if (p->failed || index < p->emitted) reset_cursor(p);
   }
-  while (p->emitted <= index) {
+  while (!p->edit_page && p->emitted <= index) {
     status = next_page(p, &page, e);
     if (status != EXR_OK) {
       p->failed = 1;
@@ -1780,6 +1793,9 @@ exr_status exr_pager_get(exr_pager *p, size_t index, const exr_layout **out, exr
 }
 size_t exr_pager_cached_count(const exr_pager *p) { return p ? p->cache_count : 0; }
 size_t exr_pager_cached_bytes(const exr_pager *p) { return p ? p->cache_bytes : 0; }
+exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *p) {
+  return p ? (exr_pager_cache_stats){p->cache_hits,p->cache_misses} : (exr_pager_cache_stats){0};
+}
 exr_status exr_pager_set_checkpoints(exr_pager *p, size_t capacity, size_t budget,
                                       size_t interval, exr_error *e) {
   if (!p || p->busy || capacity > 64 || (capacity && (!budget || !interval)))
@@ -1934,6 +1950,7 @@ void exr_pager_free(exr_pager *p) {
   free((void *)p->config.user_css);
   if(p->chapter_release) p->chapter_release(p->owned_chapter);
   if(p->view_release) p->view_release(p->owned_view);
+  if(p->edit_free) p->edit_free(p->edit_state);
   free(p);
 }
 static exr_status append_page(exr_layout *all, exr_layout *page, exr_error *e) {
@@ -2032,4 +2049,71 @@ exr_status exr_layout_create_hyphenated(const exr_document *doc, exr_font *font,
 }
 exr_status exr_flow_create(const exr_document *doc,exr_font *font,const exr_layout_config *config,exr_layout **out,exr_error *e) {
   return exr_layout_create_hyphenated(doc,font,config,NULL,out,e);
+}
+
+/* Editing pages share precisely the normal bounded page cache. The callback
+   supplies native-shaped page payloads; snapshots/tokens have no glyph cache. */
+exr_status exr_pager_edit_create(exr_font *font,const exr_layout_config *config,void *state,
+  exr_edit_page_fn page,void (*release)(void *),exr_pager **out,exr_error *e) {
+  exr_pager *p;
+  exr_status status=exr_layout_validate(config,e);
+  if(status!=EXR_OK) return status;
+  p=calloc(1,sizeof(*p));
+  if(!p) return exr_fail(e,EXR_MEMORY,"Editing pager allocation failed");
+  p->config=*config;p->config.user_css=NULL;p->physical_page=config->page;
+  p->cache_capacity=1;p->mode=2;
+  p->edit_state=state;p->edit_page=page;p->edit_free=release;
+  p->assets=calloc(1,sizeof(*p->assets));
+  if(!p->assets) { free(p);return exr_fail(e,EXR_MEMORY,"Editing assets allocation failed"); }
+  p->assets->font=font;exr_font_ref(font);
+  *out=p;return EXR_OK;
+}
+void *exr_pager_edit_state(const exr_pager *p) { return p && !p->busy ? p->edit_state : NULL; }
+void exr_pager_edit_busy(exr_pager *p,int busy) { p->busy=busy; }
+const exr_layout_config *exr_pager_edit_config(const exr_pager *p) { return &p->config; }
+static size_t rebase_offset(size_t value,size_t old_base,size_t new_base) {
+  return value==SIZE_MAX ? value : new_base+(value-old_base);
+}
+size_t exr_pager_edit_commit(exr_pager *p,size_t first,size_t old_end,size_t new_end,
+  size_t old_base,size_t new_base,size_t generated) {
+  size_t i=0,removed=0,j;
+  while(i<p->cache_count) {
+    cached_page *c=&p->cache[i];exr_layout *l=c->layout;
+    if(c->index>=first && c->index<old_end) {
+      p->cache_bytes-=c->bytes;exr_layout_free(l);
+      memmove(c,c+1,(--p->cache_count-i)*sizeof(*c));removed++;continue;
+    }
+    if(c->index>=old_end) {
+      c->index=new_end+(c->index-old_end);
+      for(j=0;j<l->glyph_count;j++) {
+        exr_glyph *g=&l->glyphs[j];
+        g->start=rebase_offset(g->start,old_base,new_base);g->end=rebase_offset(g->end,old_base,new_base);
+        g->cluster_start=rebase_offset(g->cluster_start,old_base,new_base);
+        g->cluster_end=rebase_offset(g->cluster_end,old_base,new_base);
+      }
+      for(j=0;j<l->line_count;j++) {
+        l->lines[j].start=rebase_offset(l->lines[j].start,old_base,new_base);
+        l->lines[j].end=rebase_offset(l->lines[j].end,old_base,new_base);
+      }
+      for(j=0;j<l->block_count;j++) {
+        l->blocks[j].start=rebase_offset(l->blocks[j].start,old_base,new_base);
+        l->blocks[j].end=rebase_offset(l->blocks[j].end,old_base,new_base);
+      }
+      l->pages[0].start=rebase_offset(l->pages[0].start,old_base,new_base);
+      l->pages[0].end=rebase_offset(l->pages[0].end,old_base,new_base);
+    }
+    i++;
+  }
+  p->generated_pages+=generated;
+  return removed;
+}
+exr_status exr_edit_shape(const exr_document *doc,exr_font *font,
+  const exr_layout_config *config,exr_style *styles,exr_layout **out,exr_error *e) {
+  flow parent={0};exr_layout viewport={0},assets={0};exr_float_state floats={0};
+  float height=0;
+  viewport.options=config->page;assets.font=font;
+  parent.layout=&viewport;parent.assets=&assets;parent.doc=doc;parent.font=font;
+  parent.config=config;parent.styles=styles;parent.paragraph=&styles[0];parent.error=e;
+  parent.floats=&floats;parent.width=config->page.width-2*config->page.margin;
+  return exr_flow_unit(&parent,2,parent.width,out,&height);
 }
