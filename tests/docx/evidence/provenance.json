@@ -1,0 +1,28 @@
+{
+  "source_revision": "3076d3dd",
+  "note": "W3 changes tools/tests only. Existing integrated baseline compared with a clean Release build from this checkout.",
+  "baseline_file_sha256": "a926bfcfa47e6da835d8f405bea9fb22a319d43c88652ca277479a16cede647e",
+  "candidate_file_sha256": "4eefc48e4c6d3bb90f740560d4836ecb3d2f14d7dabbb7bf490e3763af7ad02f",
+  "commands": [
+    "python -m unittest discover -s tests/docx -v",
+    "python tools/docx/verify_docx.py build/docx-inputs/profile-export.docx --json tests/docx/evidence/profile.json",
+    "python tools/docx/roundtrip.py --manifest tests/docx/corpus.json --library build/native/libexreader.dll --output build/w3-roundtrip",
+    "python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/native/libexreader.dll --font C:/Users/Oscar/exr-deps/reader-font/Reader.otf --layout tools/regress/layout.json --source-revision 3076d3dd-W3-tools-only --baseline <integrated-baseline.json> --output build/w3-realbooks.json --workers 3",
+    "ctest --test-dir build/native -C Release --output-on-failure -j 3",
+    "python tools/check_layers.py build/native"
+  ],
+  "expected_probe_exit": 1,
+  "expected_roundtrip_exit": 1,
+  "actual_pdf_status": "SKIP",
+  "pdf_reason": "soffice and pdftotext absent from PATH; no LibreOffice installation found",
+  "actual_roundtrip_exit": 1,
+  "repeated_roundtrip_reports_equal": true,
+  "native_ctest": {
+    "passed": 249,
+    "total": 250,
+    "failed": [
+      "sdk-release"
+    ],
+    "reason": "MinGW SDK import library is libexreader.dll.a; README MSVC quickstart requests lib/exreader.lib (LNK1181)."
+  }
+}
