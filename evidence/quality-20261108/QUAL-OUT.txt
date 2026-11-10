@@ -2306,3 +2306,7 @@ k, 333 pages
 [2026-11-08T15:29:19.5880816-05:00] Combined accounting and evidence acceptance check completed, exit=0; verification.txt.
 [2026-11-08T15:31:15.8247728-05:00] Final QUALITY.md section completed: ctest 205/205, real books 19/11484 pages unchanged, 1742 executed inputs plus 142 references, line coverage 31737/33840=93.79%, functions 2281/2354. Evidence acceptance recheck exit=0.
 [2026-11-08T15:31:52.2539633-05:00] Staged authorized quality tools/evidence/report only; checked no local binaries/counters or Python caches are staged and code/docs whitespace checks pass; protected product directories remain unchanged.
+[2026-11-08T15:32:34.6187770-05:00] Commit completed: 933ae3e7d6b1e3e2b0a2a6243b718597102647d2; message=Record compiler diagnostics and measured coverage; only authorized added paths.
+[2026-11-08T15:32:47.1867091-05:00] Push completed: git push -u origin codex/quality-diagnostics-20261108; exit=0; commit=933ae3e7d6b1e3e2b0a2a6243b718597102647d2.
+[2026-11-08T15:32:55.8740816-05:00] Draft PR create completed: gh pr create --draft --base main --head codex/quality-diagnostics-20261108; exit=0; output=https://github.com/NoGod3524/EXReader/pull/98.
+[2026-11-08T15:33:22.9534573-05:00] Publication verified: PR #98 is OPEN and draft, base=main, head=933ae3e7d6b1e3e2b0a2a6243b718597102647d2; 211 authorized added files; protected paths unchanged. Post-commit publication receipts are appended locally to this log.

@@ -1,0 +1,10 @@
+已提交 `933ae3e7` 并推送指定分支，创建 Draft PR **[#98](https://github.com/NoGod3524/EXReader/pull/98)**。
+
+- **路线 C**：本机缺少 `-lubsan`，WSL 未安装。[命令与输出证据](C:/Users/Oscar/Documents/Codex/EXReader-qual-20261108/evidence/quality-20261108/route.txt)
+- **执行规模**：ctest **205/205 通过**；19 本真书 **11,484 页，页数与逐页哈希不变**；登记 1,884 个样本文件，实际执行 1,742 个输入。
+- **诊断**：fanalyzer 79 条，另有普通构建警告 2 条。合计分类：项目待核查 **30**、第三方 **45**、疑似误报 **6**。
+- **覆盖率**：总体行覆盖 **93.79%**；111/111 源文件执行，函数 **2,281/2,354**。关键文件：pager **96.26%**、layout **95.64%**、raster **88.14%**。
+
+**这是静态分析结果，不等同于运行时检查的结论。** 产品代码及四个受保护目录未改。[完整报告](C:/Users/Oscar/Documents/Codex/EXReader-qual-20261108/docs/QUALITY.md)
+
+`QUAL-OUT.txt` 已逐步追加；提交后的发布回执留在本地，未再次提交。
