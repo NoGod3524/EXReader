@@ -16,3 +16,16 @@ Three unchanged script paths PASS:
   examples/windows/check_shell_search.py: hong/english/vertical/pdf/mobi/whole-document PASS.
 ctest --test-dir build/review --output-on-failure -j 4: 257/257 PASS, 127.48s (current configured tree has 257 tests).
 Evidence: docs/ui/evidence/cleanup2/step1-*; full raw script runs build/cleanup2/step1-*.
+
+STEP 2 COMPLETE
+Rollback: revert the step-2 commit; archive manifest preserves exact pre-removal bytes.
+Deleted: 300 lines across examples (step2-audit.json contains per-file numstat); net -213 lines. Removed creation, HWND state, enable handling, geometry, old-ID command dispatch and shell's restore-to-toolbar path. New operation IDs start at 0x9000, historical IDs 101..117 retired.
+Consumer projects always select the shell; root CMake/src/include/cmake untouched.
+Native hidden list controls remain as SDK selection models, with no old 17 controls or visible old layout.
+Source grep (full expression/command in step2-audit.json): 0 hits for retired IDs/layout/restore path.
+Product ASCII+UTF16 legacy captions: 0 matches.
+Real HWND check at empty shelf and reading: retired_controls=absent, 2/2 PASS (step2-retired-controls.log).
+Product + test + native test build PASS; ctest 257/257 PASS, 117.11s.
+Existing shelf flow PASS: roundtrips 3/3, single clicks 10/10, swipes 20/20; step2-flow-result.json.
+Archive docs/ui/archive/legacy-17-control/: 119 files, 119/119 SHA256 verified. 104 files moved; 15 protected-scope historical inputs copied, originals untouched as required by scope restriction. manifest.json lists all originals/paths/hashes.
+HOST-AUDIT, INTERACTION, UI-SPEC, WIREFRAMES and step2/5/6 reports explicitly mark legacy UI 已移除 and historical evidence invalid.

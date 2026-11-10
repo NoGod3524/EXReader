@@ -27,7 +27,7 @@ target_link_libraries(EXReader PRIVATE EXReader::exreader comdlg32 gdi32 uiautom
 if(NOT MSVC)
   target_link_libraries(EXReader PRIVATE m)
 endif()
-option(EXR_READER_WINDOWS_SHELL "Build the reader with the 2a Windows shell" OFF)
+set(EXR_READER_WINDOWS_SHELL ON) # The retired native toolbar has no build path.
 if(EXR_READER_WINDOWS_SHELL)
   enable_language(CXX)
   target_sources(EXReader PRIVATE shell_d2d.cpp shell_epub.cpp shell_speech.cpp)

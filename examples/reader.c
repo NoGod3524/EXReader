@@ -103,11 +103,7 @@ static shell_d2d *host_shell;
 #endif
 
 enum {
-  IDC_IMPORT_LABEL = 100, IDC_IMPORT_EDIT, IDC_IMPORT_BUTTON, IDC_OPEN_BUTTON,
-  IDC_DELETE_BUTTON, IDC_PREV, IDC_NEXT, IDC_SELECT_ALL, IDC_COPY_QUOTE,
-  IDC_ADD_NOTE, IDC_UPDATE_NOTE, IDC_DELETE_NOTE, IDC_JUMP_NOTE,
-  IDC_FONT_DEC, IDC_FONT_INC, IDC_ZOOM_DEC, IDC_ZOOM_INC, IDC_CANCEL,
-  IDC_SHELF_LABEL, IDC_BOOKS, IDC_NOTES_LABEL, IDC_NOTES, IDC_NOTE_EDIT,
+  IDC_SHELF_LABEL = 118, IDC_BOOKS, IDC_NOTES_LABEL, IDC_NOTES, IDC_NOTE_EDIT,
   IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS, IDC_SHELF_SEARCH, IDC_SHELF_REFRESH,
   IDC_METADATA_BUTTON, IDC_METADATA_TITLE, IDC_METADATA_AUTHOR, IDC_METADATA_FAVORITE,
   IDC_METADATA_SAVE, IDC_METADATA_CANCEL, IDC_METADATA_RETRY, IDC_METADATA_DISCARD,
@@ -115,8 +111,12 @@ enum {
   IDC_ACCOUNT_BUTTON, IDC_ACCOUNT_ROOT, IDC_ACCOUNT_USER, IDC_ACCOUNT_PASSWORD, IDC_ACCOUNT_REMEMBER,
   IDC_ACCOUNT_APPLY, IDC_ACCOUNT_SYNC, IDC_ACCOUNT_CANCEL, IDC_ACCOUNT_RETRY, IDC_ACCOUNT_FORGET,
   IDC_ACCOUNT_CLOSE, IDC_ACCOUNT_MESSAGE, IDC_ACCOUNT_DETAIL,
-  /* Accessibility labels only: no original or account control id moves. */
+  /* Labels for the remaining model/dialog controls. */
   IDC_SHELF_SEARCH_LABEL = 150, IDC_NOTE_EDIT_LABEL
+};
+
+enum {
+  HOST_CMD_IMPORT = 0x9000, HOST_CMD_OPEN, HOST_CMD_DELETE, HOST_CMD_PREV, HOST_CMD_NEXT, HOST_CMD_SELECT_ALL, HOST_CMD_COPY_QUOTE, HOST_CMD_ADD_NOTE, HOST_CMD_UPDATE_NOTE, HOST_CMD_DELETE_NOTE, HOST_CMD_JUMP_NOTE, HOST_CMD_FONT_DEC, HOST_CMD_FONT_INC, HOST_CMD_ZOOM_DEC, HOST_CMD_ZOOM_INC, HOST_CMD_CANCEL
 };
 
 #define WM_HOST_COMPLETE (WM_APP + 1)
@@ -128,7 +128,7 @@ static int host_offscreen;
 static HWND host_focus(HWND window) { return host_offscreen ? GetFocus() : SetFocus(window); }
 #define SetFocus host_focus
 #ifdef EXR_READER_WINDOWS_SHELL
-static int shell_drive_on, shell_active;
+static int shell_active;
 static int shelf_requested, shelf_visible, shelf_exit_pending, shell_bar_hidden, shell_tap_edge=25;
 static void shelf_create(HWND parent);
 static void shelf_show(int show);
@@ -299,11 +299,10 @@ typedef struct { char *key,*sort_title;uint64_t ordinal; } host_shelf_cursor;
 #endif
 
 typedef struct {
-  HWND window, page, books, notes, note_edit, import_edit, status, page_label;
-  HWND import_label, import_button, open_button, delete_button;
-  HWND prev_button, next_button, select_button, copy_button;
-  HWND add_button, update_button, remove_button, jump_button;
-  HWND font_dec, font_inc, zoom_dec, zoom_inc, cancel_button;
+  HWND window, page, books, notes, note_edit, status, page_label;
+#ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
+  HWND import_button; /* optional cloud-import context anchor */
+#endif
   HWND shelf_label, notes_label, shelf_search_label, note_edit_label;
   exr_library *library;
   exr_font *font;
@@ -418,7 +417,7 @@ static void shelf_fixed_page(int64_t id,const exr_fixed_page *pages,size_t count
 static int dragging;
 #ifdef EXR_READER_WINDOWS_SHELL
 static int shell_wants_reading(void) {
-  return host_shell && (g.drive_mode ? shell_drive_on : 1);
+  return host_shell && 1;
 }
 static shell_geometry shell_snapshot(void) {
   RECT client = {0}; shell_geometry out = {0};
@@ -3658,7 +3657,7 @@ static void handle_job_complete(host_job *job);
 /* Used by the accessibility provider, which is compiled before this function. */
 static size_t point_offset(int x, int y, int at_end);
 
-static HWND make_button(HWND parent, int id, const wchar_t *text) {
+static inline HWND make_button(HWND parent, int id, const wchar_t *text) {
   HWND window = CreateWindowExW(0, L"BUTTON", text,
                                 WS_CHILD | WS_VISIBLE | WS_TABSTOP,
                                 0, 0, 10, 10, parent, (HMENU)(INT_PTR)id, NULL, NULL);
@@ -3699,35 +3698,12 @@ static HWND make_static(HWND parent, int id, const wchar_t *text) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
 #include "../apps/reader/desktop/windows_preferences_ui.inc"
 #endif
-#ifdef EXR_READER_WINDOWS_COMPACT
-#include "../apps/reader/desktop/windows_compact_ui.inc"
-#endif
 
 #ifdef EXR_READER_WINDOWS_SHELL
 static void shell_create(HWND parent);
 static void layout_controls(void);
 #endif
 static void create_controls(HWND parent) {
-  g.import_label = make_static(parent, IDC_IMPORT_LABEL, L"导入路径");
-  g.import_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP |
-                                  ES_AUTOHSCROLL, 0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_IMPORT_EDIT, NULL, NULL);
-  SendMessageW(g.import_edit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
-  g.import_button = make_button(parent, IDC_IMPORT_BUTTON, L"导入(&I)");
-  g.open_button = make_button(parent, IDC_OPEN_BUTTON, L"打开(&O)");
-  g.delete_button = make_button(parent, IDC_DELETE_BUTTON, L"删除(&D)");
-  g.prev_button = make_button(parent, IDC_PREV, L"上一页(&P)");
-  g.next_button = make_button(parent, IDC_NEXT, L"下一页(&N)");
-  g.select_button = make_button(parent, IDC_SELECT_ALL, L"全选本页(&A)");
-  g.copy_button = make_button(parent, IDC_COPY_QUOTE, L"复制引用(&C)");
-  g.add_button = make_button(parent, IDC_ADD_NOTE, L"添加标注(&T)");
-  g.update_button = make_button(parent, IDC_UPDATE_NOTE, L"更新标注(&U)");
-  g.remove_button = make_button(parent, IDC_DELETE_NOTE, L"删除标注(&R)");
-  g.jump_button = make_button(parent, IDC_JUMP_NOTE, L"跳转标注(&J)");
-  g.font_dec = make_button(parent, IDC_FONT_DEC, L"字号-");
-  g.font_inc = make_button(parent, IDC_FONT_INC, L"字号+");
-  g.zoom_dec = make_button(parent, IDC_ZOOM_DEC, L"缩放-");
-  g.zoom_inc = make_button(parent, IDC_ZOOM_INC, L"缩放+");
-  g.cancel_button = make_button(parent, IDC_CANCEL, L"取消(&X)");
 #ifdef EXR_READER_WINDOWS_SEARCH
   inbook.button = make_button(parent, IDC_INBOOK, L"书内查找(&B)");
 #endif
@@ -3739,14 +3715,14 @@ static void create_controls(HWND parent) {
 #endif
   g.shelf_label = make_static(parent, IDC_SHELF_LABEL, L"书架");
   g.books = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"书架",
-                            WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+                            WS_CHILD | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                             0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_BOOKS, NULL, NULL);
   SendMessageW(g.books, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
 #ifdef EXR_READER_PRODUCT_CATALOG
   /* A real static with a mnemonic names the search box (the same native path the
      import field already uses) and gives it an Alt access key. */
   g.shelf_search_label=make_static(parent,IDC_SHELF_SEARCH_LABEL,L"\u641c\u7d22(&S)");
-  g.shelf_search=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,
+  g.shelf_search=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_TABSTOP|ES_AUTOHSCROLL,
     0,0,10,10,parent,(HMENU)(INT_PTR)IDC_SHELF_SEARCH,NULL,NULL);
   SendMessageW(g.shelf_search,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),TRUE);
   SendMessageW(g.shelf_search,EM_SETLIMITTEXT,256,0);
@@ -3764,18 +3740,18 @@ static void create_controls(HWND parent) {
 #endif
   g.notes_label = make_static(parent, IDC_NOTES_LABEL, L"标注（双击跳转）");
   g.notes = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"标注列表",
-                            WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
+                            WS_CHILD | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
                             0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_NOTES, NULL, NULL);
   SendMessageW(g.notes, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
   g.note_edit_label = make_static(parent, IDC_NOTE_EDIT_LABEL, L"\u6807\u6ce8\u5185\u5bb9(&M)");
-  g.note_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+  g.note_edit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"", WS_CHILD | WS_TABSTOP |
                                  ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL,
                                  0, 0, 10, 10, parent, (HMENU)(INT_PTR)IDC_NOTE_EDIT, NULL, NULL);
   SendMessageW(g.note_edit, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
   /* Multiline editing without swallowing Tab: see host_a11y_prepare_note. */
   host_a11y_prepare_note();
-  g.page = CreateWindowExW(WS_EX_CLIENTEDGE, L"EXReaderPage", L"阅读区域",
-                           WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, 0, 10, 10, parent,
+  g.page = CreateWindowExW(0, L"EXReaderPage", L"阅读区域",
+                           WS_CHILD | WS_TABSTOP, 0, 0, 10, 10, parent,
                            (HMENU)(INT_PTR)IDC_PAGE, NULL, NULL);
   g.page_label = make_static(parent, IDC_PAGE_LABEL, L"未打开书籍");
   g.status = make_static(parent, IDC_STATUS, L"就绪");
@@ -3785,10 +3761,9 @@ static void create_controls(HWND parent) {
   /* One native menu entry; every low-frequency control lives inside it. */
   prefs_create_menu(parent);
 #endif
-#ifdef EXR_READER_WINDOWS_COMPACT
-  compact_create(parent);
-#endif
 #ifdef EXR_READER_WINDOWS_SHELL
+  /* Model HWNDs are never a screen: only the shell creates visible UI. */
+  for(HWND child=GetWindow(parent,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) ShowWindow(child,SW_HIDE);
   shell_create(parent);
 #endif
 }
@@ -3799,82 +3774,11 @@ static void create_controls(HWND parent) {
 
 static void layout_controls(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
-  if (shell_layout()) return;
-#endif
-#ifdef EXR_READER_WINDOWS_COMPACT
-  if (compact_layout()) return;
-#endif
-  RECT area;
-  int width, height, left_width, content_top = 76, content_bottom;
-  int books_height, notes_top, notes_height;
-  const int button_y = 40, button_h = 28;
-  GetClientRect(g.window, &area);
-  width = area.right;
-  height = area.bottom;
-  content_bottom = height - 36;
-  left_width = width / 4;
-  if (left_width < 250) left_width = 250;
-  if (left_width > 340) left_width = 340;
-  MoveWindow(g.import_label, 8, 12, 62, 20, TRUE);
-  MoveWindow(g.import_edit, 72, 8, width - 72 - 8 - 3 * 88, 26, TRUE);
-  MoveWindow(g.import_button, width - 8 - 3 * 88 + 4, 8, 80, 26, TRUE);
-  MoveWindow(g.open_button, width - 8 - 2 * 88 + 8, 8, 80, 26, TRUE);
-  MoveWindow(g.delete_button, width - 8 - 88 + 4, 8, 80, 26, TRUE);
-  {
-    struct { HWND window; int x, w; } row[] = {
-      {g.prev_button, 8, 76}, {g.next_button, 90, 76}, {g.select_button, 172, 84},
-      {g.copy_button, 262, 84}, {g.add_button, 352, 80}, {g.update_button, 438, 64},
-      {g.remove_button, 508, 80}, {g.jump_button, 594, 64}, {g.font_dec, 664, 64},
-      {g.font_inc, 734, 64}, {g.zoom_dec, 804, 64}, {g.zoom_inc, 874, 64},
-      {g.cancel_button, 944, 60}
-    };
-    size_t i;
-    for (i = 0; i < sizeof(row) / sizeof(row[0]); i++)
-      MoveWindow(row[i].window, row[i].x, button_y, row[i].w, button_h, TRUE);
-  }
-  MoveWindow(g.shelf_label, 8, content_top, left_width - 16, 18, TRUE);
-#ifdef EXR_READER_DESKTOP_METADATA
-  MoveWindow(g.shelf_label,8,content_top,left_width-104,18,TRUE);
-  MoveWindow(g.metadata_button,left_width-88,content_top-2,80,22,TRUE);
-#endif
-#ifdef EXR_READER_WINDOWS_ACCOUNT
-  /* One small secondary entry beside the shelf title; it stays inside the left pane. */
-  MoveWindow(g.shelf_label,8,content_top,left_width-164,18,TRUE);
-  MoveWindow(g.account_button,left_width-148,content_top-2,56,22,TRUE);
-#endif
-  books_height = (content_bottom - content_top - 30) * 45 / 100;
-  if (books_height < 120) books_height = 120;
-  MoveWindow(g.books, 8, content_top + 20, left_width - 16, books_height, TRUE);
-#ifdef EXR_READER_PRODUCT_CATALOG
-  MoveWindow(g.shelf_search_label,8,content_top+22,52,20,TRUE);
-  MoveWindow(g.shelf_search,64,content_top+20,left_width-134,24,TRUE);
-  MoveWindow(g.shelf_refresh,left_width-64,content_top+20,56,24,TRUE);
-  MoveWindow(g.books,8,content_top+48,left_width-16,books_height-28,TRUE);
-  if(g.product_ready) PostMessageW(g.window,WM_APP+31,0,0);
-#endif
-  notes_top = content_top + 20 + books_height + 24;
-  notes_height = content_bottom - 80 - notes_top;
-  if (notes_height < 80) notes_height = 80;
-  MoveWindow(g.notes_label, 8, notes_top - 20, left_width - 16, 18, TRUE);
-  MoveWindow(g.notes, 8, notes_top, left_width - 16, notes_height, TRUE);
-  MoveWindow(g.note_edit_label, 8, content_bottom - 74, left_width - 16, 18, TRUE);
-  MoveWindow(g.note_edit, 8, content_bottom - 54, left_width - 16, 52, TRUE);
-  MoveWindow(g.page, left_width + 4, content_top, width - left_width - 12, content_bottom - content_top - 4, TRUE);
-  MoveWindow(g.page_label, 8, content_bottom + 8, 330, 22, TRUE);
-#ifdef EXR_READER_WINDOWS_SEARCH
-  MoveWindow(inbook.button, width-128, content_bottom+6, 120, 24, TRUE);
-#endif
-  MoveWindow(g.status, 346, content_bottom + 8, width - 354, 22, TRUE);
-#ifdef EXR_READER_WINDOWS_SEARCH
-  MoveWindow(g.status,346,content_bottom+8,width-486,22,TRUE);
-#endif
-#ifdef EXR_READER_WINDOWS_NAVIGATION
-  MoveWindow(directory.button,width-232,content_bottom+6,96,24,TRUE);
-  MoveWindow(g.status,346,content_bottom+8,width-590,22,TRUE);
-#endif
-#ifdef EXR_READER_WINDOWS_RECORDS
-  MoveWindow(records.button,width-354,content_bottom+6,114,24,TRUE);
-  MoveWindow(g.status,346,content_bottom+8,width-712,22,TRUE);
+  shell_layout();
+#else
+  RECT area; GetClientRect(g.window, &area);
+  MoveWindow(g.page, 0, 0, area.right, area.bottom, TRUE);
+  ShowWindow(g.page, SW_SHOWNA);
 #endif
 }
 static int compute_view(void);
@@ -4451,10 +4355,10 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
           if (GetKeyState(VK_CONTROL) & 0x8000) { copy_quote(); return 0; }
           break;
         case 'O':
-          if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(IDC_OPEN_BUTTON); return 0; }
+          if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(HOST_CMD_OPEN); return 0; }
           break;
         case 'I':
-          if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(IDC_IMPORT_BUTTON); return 0; }
+          if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(HOST_CMD_IMPORT); return 0; }
           break;
         case VK_ESCAPE:
           selection_clear();
@@ -5235,29 +5139,7 @@ static int import_title_fallback(const wchar_t *path, int64_t id) {
 static void host_update_controls(void) {
   HWND focused = GetFocus();
   int busy = (g.job != NULL) || (g.pending != NULL);
-  int has = g.has_current && g.frame.valid && !g.session.txt;
-  int can_page = g.has_current && g.frame.valid;
-  EnableWindow(g.import_button, !busy);
-  EnableWindow(g.open_button, g.shelf_count > 0);
-  EnableWindow(g.delete_button, !busy && g.shelf_count > 0);
-  EnableWindow(g.prev_button, (!busy || (g.job && g.job->kind==JOB_PREFETCH)) && can_page && (g.frame.page > 0 || (g.session.bounded && g.frame.part > 0)));
-  EnableWindow(g.next_button, (!busy || (g.job && g.job->kind==JOB_PREFETCH)) && can_page);
-  EnableWindow(g.select_button, !busy && can_page);
-  EnableWindow(g.copy_button, !busy && can_page);
-  EnableWindow(g.add_button, !busy && has);
-  EnableWindow(g.update_button, !busy && has);
-  EnableWindow(g.remove_button, !busy && has);
-  EnableWindow(g.jump_button, !busy && has);
-#ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-  EnableWindow(g.font_dec, !busy && can_page && !g.frame.fixed);
-  EnableWindow(g.font_inc, !busy && can_page && !g.frame.fixed);
-#else
-  EnableWindow(g.font_dec, !busy && has && !g.frame.fixed);
-  EnableWindow(g.font_inc, !busy && has && !g.frame.fixed);
-#endif
-  EnableWindow(g.zoom_dec, !busy && has && g.frame.fixed);
-  EnableWindow(g.zoom_inc, !busy && has && g.frame.fixed);
-  EnableWindow(g.cancel_button, busy || g.job != NULL);
+  (void)busy;
 #ifdef EXR_READER_WINDOWS_NAVIGATION
   winnav_controls();
 #endif
@@ -5280,9 +5162,6 @@ static void host_update_controls(void) {
   host_a11y_focus_guard(focused);
   /* A modal dialog owns the keyboard: keep the truthful blocked state. */
   host_a11y_owner_reapply();
-#ifdef EXR_READER_WINDOWS_COMPACT
-  compact_controls();
-#endif
 #ifdef EXR_READER_WINDOWS_SHELL
   shell_sync();
 #endif
@@ -5701,7 +5580,7 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
-  if (g.session.txt && id != IDC_OPEN_BUTTON && id != IDC_IMPORT_BUTTON && id != IDC_CANCEL && id != IDC_DELETE_BUTTON && id != IDC_PREV && id != IDC_NEXT && id != IDC_SELECT_ALL && id != IDC_COPY_QUOTE
+  if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT && id != HOST_CMD_CANCEL && id != HOST_CMD_DELETE && id != HOST_CMD_PREV && id != HOST_CMD_NEXT && id != HOST_CMD_SELECT_ALL && id != HOST_CMD_COPY_QUOTE
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
 #endif
@@ -5721,7 +5600,7 @@ static void host_command(int id) {
       && id != IDC_CLOUD_IMPORT && id != IDC_BULK_ORGANIZE
 #endif
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
-      && id != IDC_FONT_DEC && id != IDC_FONT_INC
+      && id != HOST_CMD_FONT_DEC && id != HOST_CMD_FONT_INC
 #endif
   ) {
 #ifdef EXR_READER_WINDOWS_TXT_PROGRESS
@@ -5759,28 +5638,22 @@ static void host_command(int id) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
     case IDC_ACCOUNT_BUTTON: acct_open_dialog();break;
 #endif
-    case IDC_IMPORT_BUTTON: {
-      wchar_t path[HOST_PATH];
-      path[0] = 0;
-      if (g.import_edit) GetWindowTextW(g.import_edit, path, HOST_PATH);
-      import_path(path, 1);
-      break;
-    }
-    case IDC_OPEN_BUTTON: open_selected_book(); break;
-    case IDC_DELETE_BUTTON: delete_selected_book(); break;
-    case IDC_PREV: page_step(-1); break;
-    case IDC_NEXT: page_step(1); break;
-    case IDC_SELECT_ALL: select_all_page(); break;
-    case IDC_COPY_QUOTE: copy_quote(); break;
-    case IDC_ADD_NOTE: add_note(); break;
-    case IDC_UPDATE_NOTE: update_note(); break;
-    case IDC_DELETE_NOTE: delete_note(); break;
-    case IDC_JUMP_NOTE: jump_selected_note(); break;
-    case IDC_FONT_DEC: change_font(-HOST_FONT_STEP); break;
-    case IDC_FONT_INC: change_font(HOST_FONT_STEP); break;
-    case IDC_ZOOM_DEC: change_zoom(-HOST_ZOOM_STEP); break;
-    case IDC_ZOOM_INC: change_zoom(HOST_ZOOM_STEP); break;
-    case IDC_CANCEL: job_cancel_button(); break;
+    case HOST_CMD_IMPORT: import_path(NULL, 1); break;
+    case HOST_CMD_OPEN: open_selected_book(); break;
+    case HOST_CMD_DELETE: delete_selected_book(); break;
+    case HOST_CMD_PREV: page_step(-1); break;
+    case HOST_CMD_NEXT: page_step(1); break;
+    case HOST_CMD_SELECT_ALL: select_all_page(); break;
+    case HOST_CMD_COPY_QUOTE: copy_quote(); break;
+    case HOST_CMD_ADD_NOTE: add_note(); break;
+    case HOST_CMD_UPDATE_NOTE: update_note(); break;
+    case HOST_CMD_DELETE_NOTE: delete_note(); break;
+    case HOST_CMD_JUMP_NOTE: jump_selected_note(); break;
+    case HOST_CMD_FONT_DEC: change_font(-HOST_FONT_STEP); break;
+    case HOST_CMD_FONT_INC: change_font(HOST_FONT_STEP); break;
+    case HOST_CMD_ZOOM_DEC: change_zoom(-HOST_ZOOM_STEP); break;
+    case HOST_CMD_ZOOM_INC: change_zoom(HOST_ZOOM_STEP); break;
+    case HOST_CMD_CANCEL: job_cancel_button(); break;
   }
 }
 
@@ -6101,20 +5974,14 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #endif
     case WM_GETMINMAXINFO: {
       MINMAXINFO *limits = (MINMAXINFO *)lparam;
-      limits->ptMinTrackSize.x = 1060;
-      limits->ptMinTrackSize.y = 660;
+      limits->ptMinTrackSize.x = 480;
+      limits->ptMinTrackSize.y = 360;
 #ifdef EXR_READER_WINDOWS_SHELL
-      if (shell_active) {
+      {
         RECT minimum = {0, 0, shell_px(SHELL_MIN_CLIENT_W, shell_dpi), shell_px(SHELL_MIN_CLIENT_H, shell_dpi)};
         shell_adjust_client(&minimum, window, shell_dpi);
         limits->ptMinTrackSize.x = minimum.right - minimum.left;
         limits->ptMinTrackSize.y = minimum.bottom - minimum.top;
-      }
-#endif
-#ifdef EXR_READER_WINDOWS_COMPACT
-      if (!compact_expanded) {
-        limits->ptMinTrackSize.x = 640;
-        limits->ptMinTrackSize.y = 420;
       }
 #endif
       if (host_offscreen) {
@@ -6127,11 +5994,6 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       }
       return 0;
     }
-#ifdef EXR_READER_WINDOWS_COMPACT
-    case WM_INITMENUPOPUP:
-      compact_menu_update();
-      return 0;
-#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
     case WM_SETTINGCHANGE:
     case WM_THEMECHANGED:
@@ -6149,9 +6011,6 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       if (id == IDC_SHELL_SETTINGS) { shell_toggle_settings(); return 0; }
       if (shell_settings_command(id)) return 0;
       if (id == IDC_SHELL_TOC) { shell_toc_set(!shell_toc_open,shell_toc_keyboard); return 0; }
-#endif
-#ifdef EXR_READER_WINDOWS_COMPACT
-      if (code == 0 && compact_command(id)) return 0;
 #endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       if(id==IDC_PREFERENCES) { prefs_show();return 0; }
@@ -6231,9 +6090,6 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       handle_job_complete(job);
 #ifdef EXR_READER_WINDOWS_WAVE3
       w3_after_complete(job);
-#endif
-#ifdef EXR_READER_WINDOWS_COMPACT
-      compact_complete(job);
 #endif
       job_release(job);
       host_probe_log("ui_accepted_gen",(double)g.frame.generation);
@@ -6442,9 +6298,6 @@ static int message_loop(void) {
     if(prefs_ui_open() && IsDialogMessageW(prefs_dialog_handle(),&message)) continue;
     prefs_translate(&message);
     if(message.message==WM_NULL) continue;
-#endif
-#ifdef EXR_READER_WINDOWS_COMPACT
-    if (compact_translate(&message)) continue;
 #endif
 #ifdef EXR_READER_WINDOWS_SHELL
     if (shell_footnote_translate(&message)) continue;
@@ -6729,7 +6582,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     SendMessageW(g.books, LB_SETCURSEL, 0, 0);
     set_status(L"选择一本书并点击“打开”，或导入新书。");
   } else {
-    set_status(L"书架为空：输入文件路径后点击“导入”。");
+    set_status(L"书架为空：打开一本书开始阅读。");
   }
 #ifdef EXR_READER_WINDOWS_SHELL
 #endif

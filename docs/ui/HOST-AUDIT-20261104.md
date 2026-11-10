@@ -1,5 +1,7 @@
 # EXReader Windows 宿主审计（2026-11-04）
 
+> 2026-11-10 更新：旧 17 控件界面已移除，包含其布局、101–117 消息入口及返回旧面板路径。下文涉及旧控件、phase-a/b/c、旧无障碍证据与 `--debug-ui` 的描述仅为历史；[归档及清单](archive/legacy-17-control/README.md)。当前产品仅使用新界面。
+
 **本轮未改任何代码，未触碰 `examples/` 与受保护树。** 本目录四份文档是本轮全部产出。
 
 - 审计基线：`origin/main` @ `4efd3366`，也就是交付包 `EXReader-Windows-4efd3366.zip` 的源码。下文 `reader.c:N` 均指这一提交的 `examples/reader.c`。

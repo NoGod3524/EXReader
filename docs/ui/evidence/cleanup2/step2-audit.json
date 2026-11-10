@@ -1,0 +1,8 @@
+{
+  "grep_command": "git grep -n -E \"IDC_(IMPORT_(LABEL|EDIT|BUTTON)|OPEN_BUTTON|DELETE_BUTTON|PREV|NEXT|SELECT_ALL|COPY_QUOTE|ADD_NOTE|UPDATE_NOTE|DELETE_NOTE|JUMP_NOTE|FONT_(DEC|INC)|ZOOM_(DEC|INC)|CANCEL)|shell_legacy_reachable|shell_hidden|content_top = 76\" -- examples/reader.c examples/windows/shell*.inc",
+  "hits": [],
+  "archive_files": 119,
+  "archive_hash_failures": [],
+  "binary_legacy_labels_remaining": [],
+  "source_diff_numstat": "1\t1\texamples/CMakeLists.txt\n51\t198\texamples/reader.c\n1\t1\texamples/windows/CMakeLists.txt\n24\t28\texamples/windows/shell_drive_test.inc\n10\t72\texamples/windows/shell_screen.inc\n"
+}
