@@ -400,3 +400,7 @@ exr_page_structure exr_layout_page_structure(const exr_layout *l,size_t page) {
   }
   return result;
 }
+exr_fixed_viewport exr_layout_fixed_viewport(const exr_layout *l) {
+  exr_fixed_viewport none={0};
+  return l ? l->fixed : none;
+}
