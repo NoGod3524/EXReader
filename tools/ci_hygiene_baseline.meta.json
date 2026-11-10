@@ -5,19 +5,17 @@
     "content_sha256",
     "occurrence"
   ],
-  "generated_date_utc": "2026-11-03",
-  "source_commit": "2c851890f26e54f9614deaef9049f5a447649a3f",
+  "generated_date_utc": "2026-11-10",
+  "source_commit": "5787dda9f61d481149f543774fe8e5f7ce31e9a2",
   "command": "python tools/check_ci_hygiene.py --remap-baseline",
-  "entries": 531,
-  "rule_bindings": 533,
-  "checker_sha256": "9cba38eaf7458c189dc609ce355a0c03bc2d9c442a23bb05ccd7a33fba463287",
-  "baseline_sha256": "a7ef074e2afa6ce3c2bd8302d748439edcd7f4de380556fc70064d8a21021940",
+  "entries": 259,
+  "rule_bindings": 259,
+  "checker_sha256": "b813482180561351a45dbb25fbc358933389bdb1edb1eb8f4e617d54fc88dba2",
+  "baseline_sha256": "7ae06de8a29ebf74af833120c4f6581a9635afe37d1b466aedc3374359991bef",
   "patterns": {
-    "failfast": 507,
-    "negative": 15,
-    "diagnostic": 7,
+    "failfast": 242,
+    "negative": 9,
+    "diagnostic": 4,
     "packaging": 4
-  },
-  "generator_commit": "0cb535813dd6e2871975ae0942806cdf752dacf7",
-  "source_commit_role": "workflow input and old baseline snapshot; generator bytes are pinned separately"
+  }
 }
