@@ -1,6 +1,23 @@
-[步骤 1] 2026-11-08：基线 db9bab66，分支 codex/dictionary-20261108，工作树干净。已核对 StarDict/foliate-js 格式、现有 miniz、Windows 逻辑选区及锚点、原生测试驱动和 19 本回归路径。实现采用独立 base 层词典 API，不介入分页/排版。
-[步骤 2] 引擎四组测试 stardict/dictzip/contracts/dictd 全通过。已实测公开 FreeDict 英汉（26,660 词）与英法（8,799 词、原始 dictzip 16 块）；随机读取每查询只解压命中块。Windows 原生选区 10/10、缺词提示、分组折叠、5 个生词/CSV 例句/重启锚点回读全部通过首轮，继续截图与异常路径核验。
-[步骤 3] 公开语料独立 oracle 验证：英汉精确 30/30、前缀 10/10、大小写 5/5；Wikizionario Inglese-Italiano 原生 .syn 共 10,698 条，抽样 10/10。多词典 2/2 正确。引擎最终登记在 text 层以复用现有 Unicode 17 折叠数据；无新增压缩依赖。19 本回归 11,223 页，页数、字形数和逐页像素哈希变化均为 0。
-[步骤 4] ctest 全量 216/216（203.77 秒），新增 5 组；最终宿主复检 7/7。选区查词 10/10、原生缺词复制 1/1、分组折叠/展开 2/2、生词 5/5、CSV 例句 5/5、按书筛选 4/1、重启锚点回读 5/5。浅色/深色/缺词/生词本/词典设置 5 张截图已检查。原始英法 dictzip 10 次首次查询 0.1924–0.3245 ms，每次 1 块，读取 4,342–8,891 压缩字节。验收文档与不含词典载荷的证据归档至 docs/ui/DICTIONARY-ACCEPTANCE.md 和 docs/ui/evidence/dictionary-20261108/。
-[步骤 5] 实现与验收已提交为 39446305（Add StarDict and dictd dictionaries with selection lookup and vocabulary），成功推送 origin/codex/dictionary-20261108。查询输出数量断言加入后，4 组词典测试与公开 30/10/5/10 查询复检全部通过。
-[步骤 6] 已创建并读取验证 draft PR #94：https://github.com/NoGod3524/EXReader/pull/94；OPEN，isDraft=true，base=main，head=codex/dictionary-20261108。证据 metadata 补记实现提交 394463050f85cb215ff791da6b427f372de48b01；本次收尾仅追加记录，不改已验收代码。
+已提交并推送 `codex/dictionary-20261108`，draft PR **[#94](https://github.com/NoGod3524/EXReader/pull/94)**，HEAD `8bd9f5ec`，工作树干净。
+
+- **A**：StarDict 四文件解析、dictzip 按块随机解压、分级匹配、多词典合并；复用现有 miniz。
+- **B**：本地 dictd 已支持并通过测试。
+- **C**：右键查词／Ctrl+D／选中即查，360 DIP 弹窗、分组折叠、缺词提示与复制，目录保存到 `shelf.json`。
+- **D**：生词本、按书筛选、锚点定位例句、含例句 CSV 导出。
+
+| 验收 | 数字 |
+|---|---|
+| 1. 公开 StarDict | 英汉 **26,660 条**；IFO `3.0.0`、`h`、idx **464,739 B**；随机查询 **10/10** |
+| 2. 查询正确性 | 精确 **30/30**、前缀 **10/10**、大小写 **5/5** |
+| 3. 真实 `.syn` | **10/10** |
+| 4. 多词典分组 | **2/2** |
+| 5. 宿主选词查询 | **10/10** |
+| 6. 生词及 CSV 例句 | **5/5**；重启锚点恢复 **5/5** |
+| 7. 真书回归 | **19/19、11,223 页**；页数与逐页哈希变化 **0** |
+| 8. ctest | **216/216**，新增 **5 组** |
+
+随机查询耗时 **0.1924–0.3245 ms**，每次只解压 **1 块**。apple：偏移 93,725 B、0.2789 ms；zebra：偏移 902,706 B、0.1924 ms，没有随位置线性增长。
+
+[完整验收、10 个词逐项耗时与截图](C:/Users/Oscar/Documents/Codex/EXReader-dict-20261108/docs/ui/DICTIONARY-ACCEPTANCE.md)。全过程已追加到 `DICT-OUT.txt`。
+
+宿主入口覆盖 Windows 逻辑文本选区；PDF 固定版式选区尚未接入。
