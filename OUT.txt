@@ -1,0 +1,38 @@
+已完成，提交 `7aa0b0e8`，推送到指定分支并创建 draft PR [#117](https://github.com/NoGod3524/EXReader/pull/117)。自动 CI 已触发，仍在运行。产品代码未改。
+
+**结论：当前 DOCX 不满足指定格式要求，往返存在明确结构丢失。**
+
+| 校验项 | 结果 |
+|---|---|
+| ZIP/XML 完整性 | PASS |
+| DOCX 内容类型 | PASS |
+| 主文档关系 | PASS |
+| 存在 sectPr | PASS |
+| sectPr 非空 | FAIL |
+| 正文段落 pPr | FAIL |
+| 双倍行距 480/auto | FAIL |
+| Times New Roman | FAIL |
+| 字号 24 | FAIL |
+| Letter 页面尺寸 | FAIL |
+| 四边 1440 页边距 | FAIL |
+| 页眉 part | WARN |
+| 节引用页眉 | WARN |
+| 页眉 PAGE 域 | FAIL |
+
+三份真实 DOCX 的独立比对如下，数值为原始→输出：
+
+| 文档 | 段落 | 字符 | 表格 | 图片 | 脚注 | 节及页边距 |
+|---|---:|---:|---:|---:|---:|---|
+| Minitab 手册 | 336→189 | 13865→13721 | 10→0 | 17→0 | 0→0 | 1节→1节，页边距全部缺失 |
+| 五节课程大纲 | 117→103 | 5555→5557 | 2→0 | 0→0 | 0→0 | 5节→1节，页边距全部缺失 |
+| OHCHR 报告 | 209→208 | 71205→71315 | 2→0 | 0→0 | 5→0 | 1节→1节，页边距全部缺失 |
+
+**14/18 项不一致**：12 项计数减少或页边距丢失，另有两项字符数增加。三份 SDK 再读文本哈希均相同，却漏掉上述结构损失。
+
+- 自测 **8/8 PASS**；故意删除页面尺寸的坏样本必须退出 `1`，并输出失败 XML。
+- LibreOffice/PDF 比较：**SKIP**，未找到 `soffice`、`pdftotext`。
+- 19 本回归：**11,318 页，页数及逐页哈希零变化**。
+- 原生测试：**249/250 PASS**；唯一失败为 `sdk-release` 的 MinGW/MSVC 导入库不匹配。
+- 已逐步追加 `W3-OUT.txt`。
+
+[完整报告、逐条损失及 XML 证据](https://github.com/NoGod3524/EXReader/blob/codex/dx-verify-20261110/tests/docx/RESULTS.md)。
