@@ -1,0 +1,21 @@
+已完成 **rebase 到最新 main `92b2741c`**，并推送。[PR #76](https://github.com/NoGod3524/EXReader/pull/76) 已恢复 **CLEAN / MERGEABLE，六组 CI 全部成功**。
+
+合并处理：
+
+- `CMakeLists.txt`：保留 main 全部源码／测试注册及四组 TOC 测试。
+- `layout.h`：锚点四个 API 与目录 API 全部保留。
+- `publication.c`：保留双方新函数，合入 TOC 状态及释放逻辑。
+- `R-PROTECTED-TREES.md`：双方登记均保留。
+- `base_internal.h`：保留 main 内容，仅新增链接比较声明；相关 document／navigation 改动均保留。
+
+验证结果：
+
+- MinGW `-Wall -Wextra -Werror` 编译通过。
+- **ctest 188/188**；本次 main 实际注册 184 项，加四组 TOC。
+- **19/19 真书：11,296 → 11,296 页，逐页哈希差异 0/11,296**。
+- 真实书目录跳转与反查 **30/30**。
+
+已使用 `--force-with-lease`，远端 head：
+`57e1ac13f2910eb1a34ab1290deefd2dbb29a9a0`
+
+每步记录见 [TOC-MERGE-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/TOC-MERGE-OUT.txt)。

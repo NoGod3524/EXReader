@@ -1,0 +1,22 @@
+已提交 `137fc700` 并推送，草稿 PR：[**#76**](https://github.com/NoGod3524/EXReader/pull/76)，base 为 `main`。
+
+| 真书 | 目录项 | 深度 | 来源 | 跳转 |
+|---|---:|---:|---|---:|
+| 紅樓夢 | 108 | 1 | 正文恢复 | 10/10 |
+| 醒世恆言 | 40 | 1 | 正文恢复 | 10/10 |
+| Pachinko | 70 | 2 | NCX | 10/10 |
+
+本语料的《醒世恆言》NCX 也只有许可证，因此使用正文恢复。真实 nav 补充验证：Born a Crime，22 项、2 级。
+
+- **跳转与反查：30/30**，标题行偏差全部为 **0**。
+- **缺失锚点：1 个**，来自 17 本 EPUB、1,774 次请求；样例为 `Text/p000_cover.xhtml#cover`，回退至 part 0、offset 0。指定三本均为 0。
+- **19 本回归：11,061 → 11,061 页**，页数变化、逐页哈希差异均为 **0**。
+- **ctest：173/173**；新增四组、234 项断言。
+
+实现入口：
+
+- [navigation.c](C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/src/navigation.c:217)：`exr_epub_navigation_details`。
+- [publication.c](C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/src/publication.c:519)：`exr_publication_toc`、`exr_publication_resolve_href`、`exr_publication_locate`、`exr_publication_target_at`、`exr_publication_missing_targets`。
+- [document.c](C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/src/document.c:707)：`exr_document_locate`。
+
+[完整报告及 30 项逐项结果](C:/Users/Oscar/Documents/Codex/EXReader-toc-links-20261107/evidence/toc-links-20261107/REPORT.md)。受保护树已登记；未改 `examples/`，未合成卷首目录页，未手动触发 CI、未取消 workflow run。

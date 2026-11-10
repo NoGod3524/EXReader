@@ -1,0 +1,21 @@
+I've stopped. I haven't finished the task, and I've changed nothing in the source tree.
+
+Some other process is editing this worktree on this same task. While I was running a build, tracked files here started changing, and I didn't write any of it. When I last checked at 16:28, the working tree had:
+- **Modified:** `CMakeLists.txt`, `include/exr/document.h`, `include/exr/layout.h`, `src/base_internal.h`, `src/common.c`, `src/formats_internal.h`, `src/navigation.c`, `src/publication.c`.
+- **New files:** `tests/test_toc.c` and `tests/make_toc_fixtures.py`.
+
+The changes already declare and partly implement the API this task asks for: `exr_publication_toc`, `exr_publication_resolve_href`, `exr_publication_locate`, `exr_publication_missing_targets`, `exr_publication_target_at` and `exr_document_locate`. It's unfinished: my `cmake --build` failed at the link step because the exports in `exreader.def` had no definitions.
+
+If I kept going, we'd overwrite each other's edits and the numbers I report wouldn't match any one version of the code. I'm not adding another set of edits on top. `ListAgents` shows no other session, but several `claude.exe` processes were running, so I can't tell who owns it.
+
+What I found before stopping:
+- **Existing engine code:** nav.xhtml and NCX parsing already exist in `src/navigation.c`, exposed as `exr_publication_navigation`. They give a part index and an href, but there is no fragment-to-offset lookup, no missing-anchor reporting and no reverse lookup.
+- **Host-side recovery:** the 108 回目 recovery lives in the host, in `shell_toc_recover_chapters` in `examples/windows/shell_toc.inc`. It needs to move into the engine, and the other process's header comment suggests that's the plan.
+- **Baseline needs redoing:** `evidence/realbooks-baseline-20261107` was taken at `c665d1cb`, but main has since merged the CJK U+3000 whitespace change. For a trustworthy zero-diff regression I need a fresh 19-book baseline from the unmodified HEAD (`c9dfc6c1`). That means building from clean HEAD in a separate directory.
+- **Build state:** my build was incomplete (it stopped at the link error), and my run may have shared `build/w` with the other process.
+
+Please tell me which you want:
+1. If the other process is yours or a duplicate session, stop it and I'll take over this worktree. I'd review its diff and finish from there.
+2. If it should continue, I'll stay out and can take the real-book measurements (baseline, jump accuracy, missing-anchor counts) once it reports done.
+3. If neither, I'll start over in a fresh worktree off `origin/main`, after first taking the clean-HEAD baseline.
+
