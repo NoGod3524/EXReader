@@ -14,3 +14,5 @@
 [验收记录：缓存命中数、4 个锚点示例及原始数据](evidence/x2-reflow-20261110/README.md) · [接口说明](docs/X2_REFLOW.md)
 
 X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
+[Y4 A] 2026-11-10: clean worktree; branch codex/dx-editor-main-20261110 at 6cb452da, matching #124 integration base. Starting X1 then X6 merges.
+[Y4 X1] Merged IO hooks and 13 bridge test groups. Kept #124 tools/docx verifier and release scripts unchanged (scope); moved bridge declarations from formats.h to edit.h. Excluded historical evidence/x1; OUT3 retained. No model conflict in this merge.
