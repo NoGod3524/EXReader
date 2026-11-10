@@ -1,0 +1,79 @@
+[package wrapper] ['C:\\Program Files\\PowerShell\\7\\pwsh.EXE', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-dxwrite-20261110\\tools\\release\\build_packages.ps1', '-BuildDir', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-dxwrite-20261110\\build', '-OutputDir', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke 3uvbyss4\\packages', '-Configuration', 'Release', '-Python', 'C:\\Python314\\python.exe']
+PASS package files and safe paths: 45 ordinary files; 13130497 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 15 API headers + version.h = 16 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 44 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [427]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke 3uvbyss4\packages\.exreader-package-0mtdw_9j\exreader-3.42.0-win-x64
+PASS package files and safe paths: 45 ordinary files; 13130497 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 15 API headers + version.h = 16 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 44 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [427]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke 3uvbyss4\packages\.exreader-package-0mtdw_9j\exreader-3.42.0-win-x64.zip
+Package: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke 3uvbyss4\packages\exreader-3.42.0-win-x64.zip
+Archive bytes: 6213749
+Archive SHA256: 298ae8286d9d87effd93898140b3f3df707adbbee43b029f04bbc209fcfedb22
+Unpacked: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke 3uvbyss4\packages\exreader-3.42.0-win-x64
+exit: 0
+
+[extracted package check] ['C:\\Python314\\python.exe', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-dxwrite-20261110\\tools\\release\\check_release.py', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke 3uvbyss4\\independent extraction\\exreader-3.42.0-win-x64', '--json', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-dxwrite-20261110\\build\\release-smoke\\check-release.json']
+PASS package files and safe paths: 45 ordinary files; 13130497 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 15 API headers + version.h = 16 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 44 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [427]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke 3uvbyss4\independent extraction\exreader-3.42.0-win-x64
+exit: 0
+
+[README three commands] ['C:\\Program Files\\PowerShell\\7\\pwsh.EXE', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke 3uvbyss4\\quickstart.ps1']
+EXR_README_COMMAND_1
+EXR_README_COMMAND_2
+main.c
+EXR_README_COMMAND_3
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+exit: 0
+
+[README command 1] $env:PATH = "$PWD\lib;$env:PATH"
+exit: 0
+
+[README command 2] cl /nologo /W4 /Iinclude examples\minimal\main.c lib\exreader.lib /Feminimal.exe
+main.c
+exit: 0
+
+[README command 3] .\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+exit: 0
+
+[relocated CLI version] ['C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke 3uvbyss4\\independent extraction\\exreader-3.42.0-win-x64\\bin\\exr-info.exe', '--version']
+EXReader 3.42.0
+exit: 0
+
+[relocated CLI info] ['C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke 3uvbyss4\\independent extraction\\exreader-3.42.0-win-x64\\bin\\exr-info.exe', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke 3uvbyss4\\independent extraction\\exreader-3.42.0-win-x64\\examples\\minimal\\sample.epub', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke 3uvbyss4\\independent extraction\\exreader-3.42.0-win-x64\\examples\\minimal\\font.ttf']
+Version: 3.42.0
+Format: EPUB
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+exit: 0
