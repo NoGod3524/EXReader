@@ -30,7 +30,8 @@ class Run(c.Structure):
 class Block(c.Structure):
     _fields_ = [('id', ID), ('section', ID), ('kind', c.c_int), ('props', PP),
                 ('runs', c.POINTER(Run)), ('count', c.c_size_t),
-                ('xml', c.c_void_p), ('xml_size', c.c_size_t)]
+                ('xml', c.c_void_p), ('xml_size', c.c_size_t),
+                ('table', c.c_void_p), ('image', c.c_void_p)]
 class Section(c.Structure):
     _fields_ = [('id', ID)] + [(n, c.c_int32) for n in
                 ('width', 'height', 'top', 'right', 'bottom', 'left', 'header', 'footer')] + [
