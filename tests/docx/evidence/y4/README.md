@@ -65,7 +65,7 @@
 | `tools/docx/README.md`、`tools/docx/roundtrip.py` | 冲突均保留 #124 版本，以遵守边界；新的 editable 对比放在 `tests/docx/`。 |
 | 其它越界导入文件 | X1 发布脚本、`formats.h`、历史 evidence 与 X6 docs 均恢复为 #124，实际功能在允许范围内落地。 |
 
-同步 #124 所带固定版式源码、文档与证据均为上游原样继承，不属于本 PR 的编辑器增量。`src/export_text.c`、`.github/` 与最新 #124 完全相同；X1、X6、#124 均为当前分支祖先，合入 #124 分支无冲突。详见 [scope.json](scope.json)。
+同步 #124 所带固定版式源码、文档与证据均为上游原样继承，不属于本 PR 的编辑器增量。`src/export_text.c` 与验收基底及当前 #124 相同，`.github/` 相对任务起点 `6cb452da` 未改动；X1、X6 和验收基底 `9841d30b` 均为当前分支祖先，合入当前 #124 分支无冲突。详见 [scope.json](scope.json)。
 
 ## 证据与复现
 
