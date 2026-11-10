@@ -1265,3 +1265,8 @@ if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
 endif()
 
 include(cmake/build_manifest.cmake)
+
+if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND)
+  add_test(NAME simplified-observer COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/regress/check_simplified.py --self-check)
+endif()
