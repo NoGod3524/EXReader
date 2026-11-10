@@ -637,12 +637,35 @@ int exr_add_block(exr_document *d, const char *text, size_t n, unsigned heading)
   d->text[d->size] = 0;
   return 1;
 }
+int exr_viewport_parse(const char *content, float *width, float *height) {
+  float w = 0, h = 0;
+  const char *at = content;
+  while (at && *at) {
+    char key[16]; size_t k = 0; double value; char *end;
+    while (*at == ' ' || *at == ',' || *at == ';' || *at == '\t' || *at == '\n' || *at == '\r') at++;
+    while (*at && *at != '=' && *at != ',' && *at != ';' && *at != ' ' && k + 1 < sizeof(key)) key[k++] = *at++;
+    key[k] = 0;
+    while (*at == ' ') at++;
+    if (*at != '=') { while (*at && *at != ',' && *at != ';') at++; continue; }
+    at++; while (*at == ' ') at++;
+    value = strtod(at, &end);
+    if (end != at && isfinite(value)) {
+      if (!strcmp(key, "width")) w = (float)value;
+      else if (!strcmp(key, "height")) h = (float)value;
+    }
+    at = end != at ? end : at + (*at != 0);
+    while (*at && *at != ',' && *at != ';') at++;
+  }
+  if (!(w >= 1 && w <= 16384 && h >= 1 && h <= 16384)) return 0;
+  *width = w; *height = h; return 1;
+}
 void exr_document_free(exr_document *d) {
   if (d) {
     free(d->text);
     free(d->title);
     free(d->language);
     free(d->blocks);
+    free(d->renditions);
     exr_model_free(d);
     free(d);
   }
@@ -653,6 +676,19 @@ const char *exr_document_text(const exr_document *d, size_t *n) {
   return d ? d->text : NULL;
 }
 const char *exr_document_title(const exr_document *d) { return d && d->title ? d->title : ""; }
+exr_direction exr_document_page_progression(const exr_document *d) {
+  static const char *const rtl[]={"ar","he","iw","fa","ur","yi","ps","sd","dv"};
+  size_t i;
+  if(d && d->page_progression!=EXR_DIRECTION_AUTO) return d->page_progression;
+  /* EPUB default is reading-system defined. Use the primary language subtag;
+     explicit spine ltr/rtl always wins, and text direction is never changed. */
+  if(d && d->language) for(i=0;i<sizeof(rtl)/sizeof(*rtl);i++) {
+    const char *s=d->language;
+    if((s[0]|32)==rtl[i][0] && s[1] && (s[1]|32)==rtl[i][1] && (!s[2] || s[2]=='-'))
+      return EXR_DIRECTION_RTL;
+  }
+  return EXR_DIRECTION_LTR;
+}
 const exr_block *exr_document_blocks(const exr_document *d, size_t *n) {
   if (n)
     *n = d ? d->count : 0;

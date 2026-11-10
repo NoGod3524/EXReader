@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "scope": "All named dynamic exports independently decoded by LLVM; no archive globals",
+  "observations": [
+    {
+      "platform": "windows",
+      "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+      "binary_sha256": "59970583c1af96405b9be57763a4af0b4550682b3771a5e7a6894b832dd594dc",
+      "size_bytes": 7936512,
+      "tool": "llvm-readobj.exe",
+      "tool_sha256": "288a7ed8b2ef28ea8e91b5fdb099e6c22bcad338d161af72647040d8e45a0755",
+      "tool_version": "LLVM (http://llvm.org/):\n  LLVM version 18.0.3\n  Optimized build.",
+      "argv": [
+        "P:\\android-sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readobj.exe",
+        "--coff-exports",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\ci\\windows\\bin\\exreader.dll"
+      ],
+      "actual_export_count": 427,
+      "manifest_export_count": 427,
+      "sorted_names_sha256": "6bc7cd94030620a1fcdbd8637c696015de9d7caed299424d648031c37a121986",
+      "stdout_sha256": "f6aaeed868954c4cf36c3be5a6caa4fa06f2601306a1c3fae50efe6c829e8584",
+      "missing": [],
+      "extra": [],
+      "passed": true
+    },
+    {
+      "platform": "linux",
+      "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+      "binary_sha256": "07ac839f69ab4343d16de18fc5b64f8f47c02de7dab70aa40975d94845ace615",
+      "size_bytes": 10088272,
+      "tool": "llvm-nm.exe",
+      "tool_sha256": "b0cc4ea1ab2e20004f80a9373089af883c1b95d5e1d1ecbc8795737965070306",
+      "tool_version": "llvm-nm, compatible with GNU nm\nLLVM (http://llvm.org/):\n  LLVM version 18.0.3\n  Optimized build.",
+      "argv": [
+        "P:\\android-sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-nm.exe",
+        "--dynamic",
+        "--defined-only",
+        "--format=posix",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\ci\\linux\\lib\\libexreader.so"
+      ],
+      "actual_export_count": 427,
+      "manifest_export_count": 427,
+      "sorted_names_sha256": "6bc7cd94030620a1fcdbd8637c696015de9d7caed299424d648031c37a121986",
+      "stdout_sha256": "da6cd1507df776890458af60191364892fa8c45a5a02b8c118950c7e31ddaecb",
+      "missing": [],
+      "extra": [],
+      "passed": true
+    },
+    {
+      "platform": "android",
+      "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+      "binary_sha256": "277f6feaa1ab814679186cea47fd2a91e525c22634ed0a4869710b5f3c302909",
+      "size_bytes": 35820312,
+      "tool": "llvm-nm.exe",
+      "tool_sha256": "b0cc4ea1ab2e20004f80a9373089af883c1b95d5e1d1ecbc8795737965070306",
+      "tool_version": "llvm-nm, compatible with GNU nm\nLLVM (http://llvm.org/):\n  LLVM version 18.0.3\n  Optimized build.",
+      "argv": [
+        "P:\\android-sdk\\ndk\\27.2.12479018\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-nm.exe",
+        "--dynamic",
+        "--defined-only",
+        "--format=posix",
+        "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\ci\\android\\lib\\libexreader.so"
+      ],
+      "actual_export_count": 427,
+      "manifest_export_count": 427,
+      "sorted_names_sha256": "6bc7cd94030620a1fcdbd8637c696015de9d7caed299424d648031c37a121986",
+      "stdout_sha256": "81eb00c70bf042a8de50d43c14a405afa8cba5db774cdb6b9a3ad00631bea749",
+      "missing": [],
+      "extra": [],
+      "passed": true
+    }
+  ]
+}

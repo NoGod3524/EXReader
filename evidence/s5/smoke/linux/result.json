@@ -1,0 +1,55 @@
+{
+  "checks": {
+    "load": true,
+    "open": true,
+    "render": true,
+    "search": true,
+    "annotation": true
+  },
+  "passed": 5,
+  "version": "3.42.0",
+  "library": "/s5-source/lib/libexreader.so",
+  "library_sha256": "07ac839f69ab4343d16de18fc5b64f8f47c02de7dab70aa40975d94845ace615",
+  "negative_moved_annotation_exit": 1,
+  "commands": [
+    [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/s5-source/include",
+      "/s5-source/tools/platforms/probe.c",
+      "/s5-source/lib/libexreader.so",
+      "-o",
+      "/s5-source/result/platform-probe",
+      "-Wl,-rpath,/s5-source/lib"
+    ],
+    [
+      "/s5-source/result/platform-probe",
+      "/repo/smoke/smoke.epub",
+      "/repo/smoke/font.otf",
+      "/s5-source/result",
+      "create"
+    ],
+    [
+      "/s5-source/result/platform-probe",
+      "/repo/smoke/smoke.epub",
+      "/repo/smoke/font.otf",
+      "/s5-source/result",
+      "reopen"
+    ],
+    [
+      "/s5-source/result/platform-probe",
+      "/repo/smoke/smoke.epub",
+      "/repo/smoke/font.otf",
+      "/s5-source/result/negative",
+      "reopen"
+    ]
+  ],
+  "input_sha256": {
+    "smoke.epub": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+    "font.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+  }
+}
