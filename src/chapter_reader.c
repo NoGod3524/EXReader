@@ -434,6 +434,7 @@ exr_status exr_publication_pager_create(exr_publication *publication,size_t part
   r->document.resources=r->metadata->resources;r->document.resource_count=r->metadata->resource_count;
   r->document.shared_archive=r->metadata->shared_archive;r->document.archive=r->metadata->archive;
   r->document.archive_size=r->metadata->archive_size;r->document.language=r->metadata->language;
+  r->document.page_progression=r->metadata->page_progression;
   r->chapter=r->metadata->chapters[part];r->chapter.root=1;r->chapter.in_spine=r->chapter.linear=1;
   r->document.chapters=&r->chapter;r->document.chapter_count=1;
   /* The view's single chapter uses the stable synthetic chapter node. */

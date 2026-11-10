@@ -1,0 +1,11 @@
+import|C:\Users\Oscar\Documents\Codex\EXReader-A3-20261109\tests\fixtures\rtl\arabic-library.epub
+open|arabic-library (original test book)
+check|page|1
+state|initial
+probe_key|left
+check|page|2
+state|after_forward
+probe_key|right
+check|page|1
+state|after_back
+quit

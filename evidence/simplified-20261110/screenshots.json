@@ -1,0 +1,100 @@
+{
+  "pg27166-hans": {
+    "first": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg27166-hans\\first.png",
+      "sha256": "c5d4bd89e2ad19cb6ace9ed86269968828e2572ce87c96d81b1e7172a1334a86"
+    },
+    "first-image": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg27166-hans\\first-image.png",
+      "sha256": "c5d4bd89e2ad19cb6ace9ed86269968828e2572ce87c96d81b1e7172a1334a86"
+    },
+    "first-han": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg27166-hans\\first-han.png",
+      "sha256": "f6f7e8e375b6926486f34f0fe2bae41a615bf76f55296785985a00851f95fe3a"
+    }
+  },
+  "pg24042-hans": {
+    "first": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg24042-hans\\first.png",
+      "sha256": "4d431b29f08ac2c04a3d220ae79f1620ceb27007912ee30f0e9844e2c4866f82"
+    },
+    "first-image": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg24042-hans\\first-image.png",
+      "sha256": "4d431b29f08ac2c04a3d220ae79f1620ceb27007912ee30f0e9844e2c4866f82"
+    },
+    "first-han": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg24042-hans\\first-han.png",
+      "sha256": "3381efbb6939af20388a2d2f99eb395f6bd5dbd370a5d85633de1c42ed605681"
+    }
+  },
+  "pg25271-hans": {
+    "first": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg25271-hans\\first.png",
+      "sha256": "b58afa94795e8ee40eed4bd411b165f399b1be030201de73f61563cb3edfbba6"
+    },
+    "first-image": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg25271-hans\\first-image.png",
+      "sha256": "b58afa94795e8ee40eed4bd411b165f399b1be030201de73f61563cb3edfbba6"
+    },
+    "first-han": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg25271-hans\\first-han.png",
+      "sha256": "40377ca1aada84ffb53fa2873953a74be6d4c38b2c7612e4da2094dfab5be660"
+    }
+  },
+  "pg25242-hans": {
+    "first": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg25242-hans\\first.png",
+      "sha256": "d81505634ae7423d55f3571bca23e9436d5e1474fbc5d89b861e6e268208e2b6"
+    },
+    "first-image": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg25242-hans\\first-image.png",
+      "sha256": "d81505634ae7423d55f3571bca23e9436d5e1474fbc5d89b861e6e268208e2b6"
+    },
+    "first-han": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg25242-hans\\first-han.png",
+      "sha256": "86a14cf958c7b06ec8fdb7066cde05a93516429ce1ab55a29b7f76a7938da421"
+    }
+  },
+  "pg52323-hans": {
+    "first": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg52323-hans\\first.png",
+      "sha256": "6a84946161c9fa5395a5ac3958e55defc57ec60a39ea8b417300f7d7d236e6eb"
+    },
+    "first-image": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg52323-hans\\first-image.png",
+      "sha256": "6a84946161c9fa5395a5ac3958e55defc57ec60a39ea8b417300f7d7d236e6eb"
+    },
+    "first-han": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\pg52323-hans\\first-han.png",
+      "sha256": "644a51b31fee37dd42f287b9ba222e950502460e3b13ac852a12597e50a05475"
+    }
+  },
+  "python-howto-hans": {
+    "first": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\python-howto-hans\\first.png",
+      "sha256": "f1ce141e0748e20c18bcc602320c7b5d5af9a265d048b831280280c997694acb"
+    },
+    "first-han": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\python-howto-hans\\first-han.png",
+      "sha256": "f1ce141e0748e20c18bcc602320c7b5d5af9a265d048b831280280c997694acb"
+    },
+    "first-table": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\python-howto-hans\\first-table.png",
+      "sha256": "c93d3244126ba3c0afc67e1667702c58b1b4ceb1a06c5db7943e2c5caf3714ec"
+    }
+  },
+  "byte-of-python-hans": {
+    "first": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\byte-of-python-hans\\first.png",
+      "sha256": "0b9003e9d1e9d563f3fab33542b4f768a8906d1d01027a81ec922198772c9621"
+    },
+    "first-han": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\byte-of-python-hans\\first-han.png",
+      "sha256": "0b9003e9d1e9d563f3fab33542b4f768a8906d1d01027a81ec922198772c9621"
+    },
+    "first-image": {
+      "path": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-A4-20261109\\tests\\corpus\\simplified\\screenshots\\byte-of-python-hans\\first-image.png",
+      "sha256": "f3f02acd5102b07e2211c728e062601038da693eb1db9dc052d13ed397c104da"
+    }
+  }
+}
