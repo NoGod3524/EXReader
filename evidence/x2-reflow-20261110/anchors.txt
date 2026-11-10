@@ -1,0 +1,4 @@
+anchor: page 8 offset 8 -> page 9 offset 8, block 1080 byte 8
+anchor split: page 5 offset 12 -> page 5 offset 13, byte 12 -> 6
+anchor UTF8: page 1 offset 4 -> page 1 offset 30, block 100031 byte 4
+anchor replacement: page 0 offset 16 -> page 0 offset 23, text target

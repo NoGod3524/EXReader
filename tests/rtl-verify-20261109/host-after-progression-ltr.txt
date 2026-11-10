@@ -1,0 +1,19 @@
+HOST	phase=0	engine=3.42.0	pid=22880
+STEP	1	import	PASS	page=0;status=已导入《hebrew-journey (original test book)》并写入书架。
+STEP	2	open	PASS	page=1;status=已打开《hebrew-journey (original test book)》 · 从首个阅读章节开始。
+STEP	3	check	PASS	page=1;page_count=0;kind=reflow;window_status=已打开《hebrew-journey (original test book)》 · 从首个阅读章节开始。
+STATE	4	initial	PASS	book_id=1;page=0;page_count=0;font=150;zoom=100;offset=0;page_text_len=799;range_len=799;notes=0;selected_id=1;selection_active=0;page_text_fnv=2969481697498198288;page_hash_len=799;bounded=1;part=0;generation=1;progress_record_preserved=0;part_path=part0.xhtml;book_bytes=8608;index_bytes=145573;parse_workspace_bytes=112300;peak_parse_workspace_bytes=124601;projection_bytes=3057;page_cache_bytes=77600;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=59306;bitmap_bytes=2995200;dib_bytes=2995200;state=initial;title=hebrew-journey (original test book);kind=reflow;page_text=אנחנו קוראים ספרים בכל יום ולומדים מילים חדשות במסע אל עולם הידע.%0Aאנחנו קוראים ספרים בכל יום;offset_text=אנחנו קוראים ספרים בכל יום ולומדים ;status=已打开《hebrew-journey (original test book)》 · 从首个阅读章节开始。
+SHELF	4	initial	PASS	title=hebrew-journey (original test book);author=;id=1;format=4
+STEP	4	state	PASS	state captured
+STEP	5	probe_key	PASS	page=2;status=第 2 页。
+STEP	6	check	PASS	page=2;page_count=0;kind=reflow;window_status=第 2 页。
+STATE	7	after_forward	PASS	book_id=1;page=1;page_count=0;font=150;zoom=100;offset=799;page_text_len=799;range_len=799;notes=0;selected_id=1;selection_active=0;page_text_fnv=2591049788271974556;page_hash_len=799;bounded=1;part=0;generation=2;progress_record_preserved=0;part_path=part0.xhtml;book_bytes=8608;index_bytes=145573;parse_workspace_bytes=127430;peak_parse_workspace_bytes=127430;projection_bytes=3057;page_cache_bytes=155200;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=59176;bitmap_bytes=2995200;dib_bytes=2995200;state=after_forward;title=hebrew-journey (original test book);kind=reflow;page_text=מילים חדשות במסע אל עולם הידע] «אנחנו קוראים ספרים בכל יום ולומדים מילים חדשות במסע אל עולם ;offset_text=מילים חדשות במסע אל עולם הידע] «אנח;status=第 2 页。
+SHELF	7	after_forward	PASS	title=hebrew-journey (original test book);author=;id=1;format=4
+STEP	7	state	PASS	state captured
+STEP	8	probe_key	PASS	page=1;status=第 1 页。
+STEP	9	check	PASS	page=1;page_count=0;kind=reflow;window_status=第 1 页。
+STATE	10	after_back	PASS	book_id=1;page=0;page_count=0;font=150;zoom=100;offset=0;page_text_len=799;range_len=799;notes=0;selected_id=1;selection_active=0;page_text_fnv=2969481697498198288;page_hash_len=799;bounded=1;part=0;generation=3;progress_record_preserved=0;part_path=part0.xhtml;book_bytes=8608;index_bytes=145573;parse_workspace_bytes=112300;peak_parse_workspace_bytes=124601;projection_bytes=3057;page_cache_bytes=77600;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=59306;bitmap_bytes=2995200;dib_bytes=2995200;state=after_back;title=hebrew-journey (original test book);kind=reflow;page_text=אנחנו קוראים ספרים בכל יום ולומדים מילים חדשות במסע אל עולם הידע.%0Aאנחנו קוראים ספרים בכל יום;offset_text=אנחנו קוראים ספרים בכל יום ולומדים ;status=第 1 页。
+SHELF	10	after_back	PASS	title=hebrew-journey (original test book);author=;id=1;format=4
+STEP	10	state	PASS	state captured
+STEP	11	quit	PASS	closing
+DONE	11	eof	PASS	script finished

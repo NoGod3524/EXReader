@@ -1,0 +1,1 @@
+{"@context":"http://www.w3.org/ns/anno.jsonld","type":"Annotation","id":"platform-runtime-highlight","body":{"type":"TextualBody","format":"text/plain","value":"highlight"},"target":{"type":"SpecificResource","source":"urn:exreader:platform-smoke","selector":{"type":"TextQuoteSelector","exact":"deliveryneedle","prefix":"","suffix":" A reader opens a book, turns pa"}}}
