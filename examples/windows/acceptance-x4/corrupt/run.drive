@@ -1,0 +1,6 @@
+open|X4 Acceptance
+shell|on
+shell_client|1100|700
+wait_idle
+annot_dump|rejected
+quit

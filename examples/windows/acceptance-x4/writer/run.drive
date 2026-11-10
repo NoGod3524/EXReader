@@ -1,0 +1,20 @@
+import|C:\Users\Oscar\Documents\Codex\EXReader-x4-save-20261110\examples\windows\.build-x4-final\acceptance-final\X4 Acceptance.html
+open|X4 Acceptance
+shell|on
+shell_client|1100|700
+wait_idle
+select_pointer|down|0|0
+select_pointer|move|15|1
+select_pointer|up|15|1
+annot_command|6
+annot_edit|explicit baseline
+annot_dump|saved
+annot_command|6
+annot_edit|unsaved draft 中文 😀 before force kill|2|preview
+annot_dump|edited
+probe_wait|35000
+annot_dump|waited
+annot_autosave
+annot_autosave
+annot_dump|unchanged
+probe_wait|120000

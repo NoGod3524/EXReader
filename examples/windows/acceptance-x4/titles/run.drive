@@ -1,0 +1,21 @@
+open|X4 Acceptance
+shell|on
+shell_client|1100|700
+wait_idle
+annot_pick|0|marker
+annot_edit|dirty title first edit|1|preview
+annot_dump|edit-1
+snapshot|edit-1
+annot_save
+annot_close
+annot_dump|save-2
+snapshot|save-2
+annot_pick|0|marker
+annot_edit|dirty title second edit|2|preview
+annot_dump|edit-3
+snapshot|edit-3
+annot_answer|cancel
+annot_request_close
+annot_dump|close-cancelled
+annot_answer|yes
+quit

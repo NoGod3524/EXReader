@@ -1,0 +1,9 @@
+X4 已完成，6/6 验收通过；`src/` 无改动。
+
+- 默认 30 秒自动保存，35 秒检查通过；强杀恢复后哈希一致。
+- 保存中强杀 3 次，原文件均保持上一完整版本。
+- 副本截断至 13 字节，报“副本损坏，无法恢复”，进程正常退出。
+- 标题栏 `* → 无 * → *`；关闭保存、放弃、取消均通过。
+- `-Wall -Wextra -Werror` 编译，零警告。
+
+[完整验收报告：时间戳、SHA-256、三次截图与构建日志](/C:/Users/Oscar/Documents/Codex/EXReader-x4-save-20261110/examples/windows/acceptance-x4/README.md)

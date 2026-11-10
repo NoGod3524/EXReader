@@ -92,8 +92,12 @@ static int shell_save_replace(const wchar_t *path,const char *bytes,size_t size,
   SHELL_SAVE_CHECK(path,"readback");
   if(shell_save_equal(path,bytes,size,validate,context)) {result=1;DeleteFileW(backup);}
   else if(existed) {
-    if(!MoveFileExW(backup,path,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH) ||
+    /* Keep .bak until rollback itself is verified, including a second I/O failure. */
+    if(!shell_save_flush(temp,old,oldsize,&attributes.ftLastWriteTime) ||
+       !shell_save_equal(temp,old,oldsize,NULL,NULL) ||
+       !MoveFileExW(temp,path,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH) ||
        !shell_save_equal(path,old,oldsize,NULL,NULL))result=-1;
+    else DeleteFileW(backup);
   } else if(!DeleteFileW(path) && GetLastError()!=ERROR_FILE_NOT_FOUND)result=-1;
 done:
   DeleteFileW(temp);free(old);return result;

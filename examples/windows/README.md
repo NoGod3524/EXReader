@@ -13,7 +13,8 @@ cmake --build build/win-host --config Release --parallel 4
 
 The SDK must be installed from the same source revision (`cmake --install build/native
 --config Release --prefix stage`) and its aggregate runtime must be the shared library
-(`exreader.dll`). The build copies the runtime next to `EXReader.exe`.
+(`exreader.dll`). Enable `EXR_ENABLE_PDF=ON` in that SDK: the host also links the
+fixed-page open functions. The build copies the runtime next to `EXReader.exe`.
 
 The installed SDK exposes the same consumer project as `stage/examples/windows`, because
 the top-level install rule copies the whole `examples` directory.
@@ -90,7 +91,8 @@ the copy. A missing original also permits recovery. A corrupt copy reports
 `.tmp`, `FlushFileBuffers`, and `MoveFileExW(REPLACE_EXISTING | WRITE_THROUGH)`.
 It validates structure and exact bytes before replacement and immediately
 reads back the installed file. A flushed `.bak` restores the previous bytes
-and modification time if readback fails. Failed saves keep edits dirty. The
+and modification time if readback fails. It remains until rollback verification
+finishes; failed rollback prevents further writes to the original. Failed saves keep edits dirty. The
 autosave envelope contains `EXRAUTO1`, a little-endian 64-bit payload length,
 CRC32 of the payload, and CRC32 of the first 20 header bytes (24 bytes total).
 The JSON validator checks the schema, book identity, and every note's anchors.
@@ -98,6 +100,7 @@ A per-document Win32 lock prevents two host processes overwriting each other's
 temporary files. Recovery ignores unfinished `.tmp` files.
 
 ```powershell
+cmake -S examples/windows -B build/win-host -DEXR_SDK=C:/path/to/stage -DEXR_READER_WINDOWS_SHELL=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build/win-host --target EXReader check_shell_save check_shell_selection
 build/win-host/check_shell_save.exe selftest build/storage-check
 build/win-host/check_shell_selection.exe annotations tests/fixtures/fonts/primary.ttf
@@ -107,7 +110,14 @@ python -X utf8 examples/windows/check_shell_autosave.py build/win-host/EXReader.
 The acceptance script waits 35 seconds after an unsubmitted UTF-8 draft,
 checks timestamps and SHA-256, force-kills and restarts the host, recovers and
 compares content, rejects a truncated copy, and tests Save / Discard / Cancel.
+Use an empty evidence directory. Three consecutive full-window captures show
+Edit / Save / Edit (`*` / no `*` / `*`). A leading `annot_answer` drive action
+is consumed before startup reopens the last book, so recovery answers do not
+race the first drive timer tick. Normal startup displays the native dialog.
 The storage check executable alone enables fault injection: three pauses in
 the production write function let the parent force-kill at a partial write,
 after flush, and immediately before replacement. It also injects post-save
 readback corruption and checks rollback. These hooks are absent from EXReader.
+
+Measured X4 results, complete SHA-256 values, build logs, and screenshots:
+[`acceptance-x4`](acceptance-x4/README.md).

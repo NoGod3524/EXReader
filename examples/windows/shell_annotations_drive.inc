@@ -17,6 +17,7 @@ static int annot_drive_dump(const char *name) {
   cv_text_string(&j,"}\n");int ok=!j.failed && select_drive_write(name,".annotations.json",j.data,j.size);cv_text_free(&j);return ok;
 }
 static int annot_drive(const char *action) {
+  if(!strcmp(action,"annot_request_close")) {PostMessageW(g.window,WM_CLOSE,0,0);return 1;}
   if(!strcmp(action,"annot_answer")) {annot_test_answer=!strcmp(drive_args[1],"yes") ? IDYES:!strcmp(drive_args[1],"no") ? IDNO:IDCANCEL;return 1;}
   if(!strcmp(action,"annot_save"))return annot_save();
   if(!strcmp(action,"annot_autosave")) {annot_autosave();return annot_storage.autosaved==annot_storage.revision;}
@@ -30,7 +31,8 @@ static int annot_drive(const char *action) {
   if(!strcmp(action,"annot_edit")) {
     if(!annot_panel || !IsWindowVisible(annot_panel))return 0;
     wchar_t *wide=host_wide(drive_args[1],strlen(drive_args[1]));if(!wide)return 0;
-    SetWindowTextW(annot_edit,wide);free(wide);
+    /* WM_SETTEXT omits EN_CHANGE on multiline edits; replace selection like typing. */
+    SendMessageW(annot_edit,EM_SETSEL,0,-1);SendMessageW(annot_edit,EM_REPLACESEL,TRUE,(LPARAM)wide);free(wide);
     if(drive_argc>2 && drive_args[2][0]) {
       int id=10+atoi(drive_args[2]);CheckRadioButton(annot_panel,10,12,id);
       SendMessageW(annot_panel,WM_COMMAND,MAKEWPARAM(id,BN_CLICKED),0);

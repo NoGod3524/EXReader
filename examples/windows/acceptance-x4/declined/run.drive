@@ -1,0 +1,8 @@
+annot_answer|no
+wait_idle
+shell|on
+shell_client|1100|700
+wait_idle
+annot_prompt|有未保存的修改，是否恢复？
+annot_dump|declined
+quit

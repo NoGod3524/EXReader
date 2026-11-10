@@ -76,6 +76,8 @@ def payload(path):
 
 def main():
     exe, font, checker, out = [Path(p).resolve() for p in sys.argv[1:5]]
+    if out.exists() and any(out.iterdir()):
+        raise SystemExit(f"Use an empty output directory: {out}")
     out.mkdir(parents=True, exist_ok=True)
     storage = out / "storage"
     storage.mkdir(exist_ok=True)
@@ -95,12 +97,15 @@ def main():
                 force(process)
         actual = (storage / "atomic.json").read_bytes()
         assert actual == baseline
+        (storage / f"{stage}.json").write_bytes(actual)
+        staged = (storage / "atomic.json.tmp").read_bytes()
         results["atomic_kills"].append({"stage": stage, "sha256": sha(actual),
-                                        "bytes": len(actual), "pid": process.pid})
+                                        "bytes": len(actual), "pid": process.pid,
+                                        "staged_bytes": len(staged)})
 
     store, profile = out / "store", out / "profile"
     store.mkdir(exist_ok=True)
-    book = out / "X4-acceptance.html"
+    book = out / "X4 Acceptance.html"
     book.write_text("<html><head><title>X4 Acceptance</title></head><body>"
                     "<p>X4 persistence acceptance document. Select this text to attach a note.</p>"
                     "<p>A complete note must survive process termination.</p></body></html>", encoding="utf-8")
@@ -110,10 +115,13 @@ def main():
               "select_pointer|down|0|0", "select_pointer|move|15|1", "select_pointer|up|15|1",
               "annot_command|6", "annot_edit|explicit baseline", "annot_dump|saved",
               "annot_command|6", "annot_edit|unsaved draft 中文 😀 before force kill|2|preview",
-              "annot_dump|edited", "probe_wait|35000", "annot_dump|waited", "probe_wait|120000"]
+              "annot_dump|edited", "probe_wait|35000", "annot_dump|waited",
+              "annot_autosave", "annot_autosave", "annot_dump|unchanged", "probe_wait|120000"]
     process = start(exe, font, writer, profile, store, script)
     try:
         wait_for(lambda: (writer / "edited.annotations.json").exists(), process)
+        log = (writer / "drive.log").read_text(encoding="utf-8")
+        assert "\tFAIL\t" not in log, log
         observed_edit = time.time()
         original, = store.glob("*.json")
         original_bytes, original_time = original.read_bytes(), original.stat().st_mtime_ns
@@ -129,8 +137,11 @@ def main():
         assert dump(writer, "edited")["dirty"] == dump(writer, "waited")["dirty"] == 1
         auto_time = auto.stat().st_mtime_ns
         # A dirty document with no further edits must not rewrite the same copy.
-        time.sleep(1)
+        wait_for(lambda: (writer / "unchanged.annotations.json").exists(), process)
         assert auto.stat().st_mtime_ns == auto_time
+        (writer / "original-before.json").write_bytes(original_bytes)
+        (writer / "autosave-payload.json").write_bytes(data)
+        (writer / "autosave-container.bin").write_bytes(auto.read_bytes())
         results["autosave"] = {"configured_seconds": 30, "wait_seconds": waited-observed_edit,
                                "original_utc": utc(original_time / 1e9), "autosave_utc": utc(auto_time / 1e9),
                                "payload_sha256": sha(data), "original_sha256": sha(original_bytes),
@@ -149,6 +160,7 @@ def main():
     recovered = dump(restart, "recovered")
     assert recovered["dirty"] == 1 and recovered["prompts"] == 1
     assert original.read_bytes() == data
+    (restart / "recovered-saved.json").write_bytes(original.read_bytes())
     assert dump(restart, "saved")["dirty"] == 0 and not auto.exists()
     results["recovery"] = {"prompt": "有未保存的修改，是否恢复？", "dirty_after_recovery": 1,
                            "recovered_sha256": sha(original.read_bytes()), "matches_before_force": True}
@@ -166,7 +178,17 @@ def main():
         if process.poll() is None:
             force(process)
     saved = original.read_bytes()
-    auto.write_bytes(auto.read_bytes()[:13])
+    healthy_copy = auto.read_bytes()
+    declined = out / "declined"
+    process = start(exe, font, declined, profile, store,
+                    ["annot_answer|no", "wait_idle", *setup,
+                     "annot_prompt|有未保存的修改，是否恢复？", "annot_dump|declined", "quit"])
+    finish(process, declined)
+    assert dump(declined, "declined")["dirty"] == 0
+    assert not auto.exists() and original.read_bytes() == saved
+    results["declined_recovery"] = {"sidecar_deleted": True, "dirty": 0, "original_unchanged": True}
+    auto.write_bytes(healthy_copy[:13])
+    (out / "truncated.autosave").write_bytes(auto.read_bytes())
     corrupt = out / "corrupt"
     process = start(exe, font, corrupt, profile, store,
                     ["open|X4 Acceptance", *setup, "annot_dump|rejected", "quit"])
@@ -189,6 +211,27 @@ def main():
     assert not auto.exists() and original.read_bytes() == saved
     results["choices"] = {"cancel_keeps_dirty": True, "discard_clears_dirty": True,
                           "original_unchanged": True, "interval_seconds": 1}
+
+    # Three consecutive window captures include the native title bar and its '*'.
+    titles = out / "titles"
+    process = start(exe, font, titles, profile, store,
+                    ["open|X4 Acceptance", *setup, "annot_pick|0|marker",
+                     "annot_edit|dirty title first edit|1|preview", "annot_dump|edit-1", "snapshot|edit-1",
+                     "annot_save", "annot_close", "annot_dump|save-2", "snapshot|save-2",
+                     "annot_pick|0|marker", "annot_edit|dirty title second edit|2|preview",
+                     "annot_dump|edit-3", "snapshot|edit-3", "annot_answer|cancel", "annot_request_close",
+                     "annot_dump|close-cancelled", "annot_answer|yes", "quit"])
+    finish(process, titles)
+    states = [dump(titles, name) for name in ("edit-1", "save-2", "edit-3")]
+    assert [state["dirty"] for state in states] == [1, 0, 1]
+    assert [state["title"].startswith("* ") for state in states] == [True, False, True]
+    assert dump(titles, "close-cancelled")["dirty"] == 1
+    assert json.loads(original.read_bytes())["annotations"][0]["text"] == "dirty title second edit"
+    assert not auto.exists()
+    results["dirty_titles"] = [{"dirty": state["dirty"], "title": state["title"],
+                                "screenshot": f"titles/{name}.png"}
+                               for state, name in zip(states, ("edit-1", "save-2", "edit-3"))]
+    results["close"] = {"cancel_keeps_window_and_dirty": True, "save_closes_and_persists": True}
     (out / "results.json").write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(results, ensure_ascii=False, indent=2), flush=True)
 

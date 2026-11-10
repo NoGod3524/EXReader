@@ -7059,6 +7059,11 @@ static void drive_start(void) {
   g.drive_index = 0;
   g.drive_failures = 0;
   g.drive_done = 0;
+#ifdef EXR_READER_WINDOWS_SHELL
+  /* Recovery may prompt before the first drive timer tick. Prime its answer. */
+  if(drive_read_step() && !strcmp(drive_action,"annot_answer"))drive_execute();
+  else {rewind(drive_file);drive_step_active=0;g.drive_index=0;}
+#endif
   SetTimer(g.window, 1, 40, NULL);
 }
 

@@ -31,6 +31,12 @@ static int annot_applying,annot_draft_changed;
 static int annot_test_answer,annot_prompt_count;
 static const wchar_t *annot_last_prompt=L"";
 static wchar_t annot_last_error[256];
+/* A leave decision precedes asynchronous navigation; reject edits in that gap. */
+static int annot_can_edit(void) {
+  return annot_writable && annot_book==g.frame.book_id && !g.closing && !shelf_exit_pending && !shelf_requested &&
+    !(g.job && (g.job->kind==JOB_OPEN || g.job->kind==JOB_IMPORT)) &&
+    !(g.pending && (g.pending->kind==JOB_OPEN || g.pending->kind==JOB_IMPORT));
+}
 static void annot_title(void) {
   if(!g.window)return;
   wchar_t title[512];wchar_t *name=host_wide(g.has_current && g.current.title ? g.current.title:"",g.has_current && g.current.title ? strlen(g.current.title):0);
@@ -56,7 +62,7 @@ static void annot_free(shell_annotation *a) {exr_content_anchor_free(&a->anchor)
 static void annot_clear(void) {
   if(annot_panel) ShowWindow(annot_panel,SW_HIDE);
   for(int i=0;i<annot_count;i++) annot_free(&annotations[i]);
-  free(annotations);annotations=NULL;annot_count=0;annot_selected=-1;annot_writable=0;
+  free(annotations);annotations=NULL;annot_count=0;annot_selected=-1;annot_writable=0;annot_book=0;
   cv_text_free(&annot_before_edit);annot_draft_changed=0;
   memset(&annot_storage,0,sizeof(annot_storage));
   if(g.window)KillTimer(g.window,SHELL_SAVE_TIMER);
@@ -178,11 +184,14 @@ static int annot_validate(const char *bytes,size_t size,void *context) {
   for(int i=0;i<count;i++)annot_free(&items[i]);
   free(items);return ok;
 }
+static void annot_adopt(shell_annotation *items,int count) {
+  for(int i=0;i<annot_count;i++)annot_free(&annotations[i]);
+  free(annotations);annotations=items;annot_count=count;annot_selected=-1;
+}
 static int annot_parse(const char *bytes,size_t size) {
   shell_annotation *items=NULL;int count=0;
   if(!annot_decode(bytes,size,&items,&count))return 0;
-  for(int i=0;i<annot_count;i++)annot_free(&annotations[i]);
-  free(annotations);annotations=items;annot_count=count;annot_selected=-1;return 1;
+  annot_adopt(items,count);return 1;
 }
 static int annot_save(void) {
   if(!annot_writable) {annot_error(L"标注存储不可用；原文件已保留。");return 0;}
@@ -190,6 +199,7 @@ static int annot_save(void) {
   int result=json.failed ? 0:shell_save_replace(annot_path,json.data,json.size,annot_validate,NULL,NULL);
   cv_text_free(&json);
   if(result!=1) {
+    if(result<0)annot_writable=0;
     annot_error(result<0 ? L"保存校验失败且回滚失败；保存前的完整版本保留在 .bak，请勿覆盖。":L"标注保存失败；原文件已保留，更改仍未保存，请重试。");return 0;
   }
   /* Remove before clearing dirty: a failed cleanup must not resurrect discarded work. */
@@ -207,15 +217,19 @@ static void annot_autosave(void) {
   else set_status(L"自动保存失败；更改仍在内存中，请重试或显式保存。");
 }
 static int annot_before_leave(void) {
-  if(!annot_storage.dirty)return 1;
+  if(!annot_storage.dirty){annot_close();return 1;}
   int answer=annot_question(L"有未保存的修改，是否保存？\n是：保存；否：放弃；取消：继续编辑。",MB_YESNOCANCEL|MB_DEFBUTTON3);
-  if(answer==IDYES)return annot_save();
+  if(answer==IDYES) {if(!annot_save())return 0;annot_close();return 1;}
   if(answer!=IDNO)return 0;
-  if(!shell_save_discard(annot_path)) {annot_error(L"无法删除恢复副本；仍保留当前修改，请重试。");return 0;}
+  shell_annotation *items=NULL;int count=0;
   char *bytes=NULL;size_t size=0;int found=shell_save_read(annot_path,&bytes,&size);
-  if(found<0 || (found==1 && !annot_parse(bytes,size))) {free(bytes);annot_error(L"无法重新载入保存前的文件；仍保留当前修改。");return 0;}
+  if(found<0 || (found==1 && !annot_decode(bytes,size,&items,&count))) {free(bytes);annot_error(L"无法重新载入保存前的文件；仍保留当前修改。");return 0;}
   free(bytes);
-  if(!found) {for(int i=0;i<annot_count;i++)annot_free(&annotations[i]);free(annotations);annotations=NULL;annot_count=0;}
+  if(!shell_save_discard(annot_path)) {
+    for(int i=0;i<count;i++)annot_free(&items[i]);
+    free(items);annot_error(L"无法删除恢复副本；仍保留当前修改，请重试。");return 0;
+  }
+  annot_adopt(items,count);
   memset(&annot_storage,0,sizeof(annot_storage));if(g.window)KillTimer(g.window,SHELL_SAVE_TIMER);
   annot_close();annot_title();return 1;
 }
@@ -228,9 +242,10 @@ static void annot_resolve(void) {
   }
 }
 static void annot_sync(void) {
-  if(!g.frame.valid || g.frame.fixed || !g.session.active || g.job || g.pending)return;
+  if(!g.frame.valid || !g.session.active || g.job || g.pending)return;
   if(annot_book==g.frame.book_id)return;
-  annot_clear();annot_book=g.frame.book_id;annot_hash[0]=0;
+  annot_clear();annot_book=g.frame.book_id;annot_hash[0]=0;annot_path[0]=0;
+  if(g.frame.fixed)return;
   if(!annot_identity(annot_hash)) {annot_error(L"无法读取书籍内容身份，标注不可用。");return;}
   wchar_t directory[HOST_PATH],name[80];
   DWORD n=GetEnvironmentVariableW(L"EXREADER_ANNOTATIONS_DIR",directory,HOST_PATH);
@@ -312,7 +327,7 @@ static void annot_marks(HDC dc) {
   }
 }
 static int annot_commit(const char *text,int color) {
-  annot_sync();if(!annot_writable || color<0 || color>2)return 0;
+  annot_sync();if(!annot_can_edit() || color<0 || color>2)return 0;
   if(annot_selected>=0 && annot_selected<annot_count) {
     shell_annotation *a=&annotations[annot_selected];char *copy=host_strdup(text);if(!copy)return 0;
     char *old=a->text;
@@ -329,7 +344,7 @@ static int annot_commit(const char *text,int color) {
   annot_dirty();annot_resolve();selection_clear();page_dirty(g.page,0);return 1;
 }
 static int annot_delete(void) {
-  if(!annot_writable || annot_selected<0 || annot_selected>=annot_count)return 0;
+  if(!annot_can_edit() || annot_selected<0 || annot_selected>=annot_count)return 0;
   int at=annot_selected;shell_annotation saved=annotations[at];
   memmove(annotations+at,annotations+at+1,(size_t)(annot_count-at-1)*sizeof(*annotations));annot_count--;
   annot_dirty();annot_free(&saved);annot_selected=-1;annot_close();selection_clear();page_dirty(g.page,0);return 1;
@@ -363,7 +378,8 @@ static LRESULT CALLBACK annot_procedure(HWND window,UINT message,WPARAM wp,LPARA
       if(!annot_applying && ((LOWORD(wp)==20 && HIWORD(wp)==EN_CHANGE) ||
          (LOWORD(wp)>=10 && LOWORD(wp)<=12 && HIWORD(wp)==BN_CLICKED))) {annot_editor_changed();return 0;}
       if(LOWORD(wp)==1) {
-        if(annot_editor_changed() && annot_save())annot_close();return 0;
+        if(annot_editor_changed() && annot_save())annot_close();
+        return 0;
       }
       if(LOWORD(wp)==2){annot_cancel_edit();return 0;}
       if(LOWORD(wp)==3){annot_selected=annot_editing;annot_delete();return 0;}
@@ -396,6 +412,7 @@ static LRESULT CALLBACK annot_procedure(HWND window,UINT message,WPARAM wp,LPARA
 static void annot_open(void) {
   if(!select_valid && annot_selected<0)return;
   if(!annot_writable){annot_error(L"标注存储不可用；原文件已保留。");return;}
+  if(!annot_can_edit())return;
   annot_close();annot_serialize(&annot_before_edit);annot_draft_changed=0;
   if(annot_before_edit.failed) {annot_error(L"内存不足，无法打开笔记编辑器。");return;}
   annot_editing=annot_selected;
@@ -451,7 +468,8 @@ static int annot_click(int x,int y) {
 }
 static int annot_translate(const MSG *message) {
   if(message->message==WM_KEYDOWN && message->wParam=='S' && (GetKeyState(VK_CONTROL)&0x8000) && !(GetKeyState(VK_SHIFT)&0x8000)) {
-    if(annot_editor_changed() && annot_save())annot_close();return 1;
+    if(annot_editor_changed() && annot_save())annot_close();
+    return 1;
   }
   if(!annot_panel || !IsWindowVisible(annot_panel))return 0;
   if(message->message==WM_KEYDOWN && message->wParam==VK_ESCAPE){annot_cancel_edit();return 1;}

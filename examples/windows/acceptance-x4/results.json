@@ -1,0 +1,80 @@
+{
+  "storage_selftest": "PASS CRC32; length; truncation; payload CRC; structure; discard; timestamp; temp validation; readback rollback; failed rollback retains backup; first-save rollback",
+  "atomic_kills": [
+    {
+      "stage": "writing",
+      "sha256": "5bddd86e73b1f8c371d862bf4f9ee8b76aaeae2eb56116fc8ea9582ba5fdfba3",
+      "bytes": 52,
+      "pid": 32096,
+      "staged_bytes": 65536
+    },
+    {
+      "stage": "flushed",
+      "sha256": "5bddd86e73b1f8c371d862bf4f9ee8b76aaeae2eb56116fc8ea9582ba5fdfba3",
+      "bytes": 52,
+      "pid": 31140,
+      "staged_bytes": 1048575
+    },
+    {
+      "stage": "before-replace",
+      "sha256": "5bddd86e73b1f8c371d862bf4f9ee8b76aaeae2eb56116fc8ea9582ba5fdfba3",
+      "bytes": 52,
+      "pid": 30740,
+      "staged_bytes": 1048575
+    }
+  ],
+  "autosave": {
+    "configured_seconds": 30,
+    "wait_seconds": 34.937963008880615,
+    "original_utc": "2026-11-10T20:13:47.775807+00:00",
+    "autosave_utc": "2026-11-10T20:14:17.798783+00:00",
+    "payload_sha256": "8fa8fe75929eaf6d8997d16b368683d8275c9527498a00807e4db794df27b977",
+    "original_sha256": "93d9548c6b601337425fde1657baec2ee8a369e4448e5074591104f9e21ef474",
+    "container_sha256": "97ccd95e3aa62466250d2ccb1d70efc5def65e021ad5c6ddb0eed857ea576080",
+    "pid": 12264
+  },
+  "recovery": {
+    "prompt": "有未保存的修改，是否恢复？",
+    "dirty_after_recovery": 1,
+    "recovered_sha256": "8fa8fe75929eaf6d8997d16b368683d8275c9527498a00807e4db794df27b977",
+    "matches_before_force": true
+  },
+  "declined_recovery": {
+    "sidecar_deleted": true,
+    "dirty": 0,
+    "original_unchanged": true
+  },
+  "corrupt": {
+    "error": "副本损坏，无法恢复",
+    "exit_code": 0,
+    "original_sha256": "8fa8fe75929eaf6d8997d16b368683d8275c9527498a00807e4db794df27b977",
+    "truncated_bytes": 13
+  },
+  "choices": {
+    "cancel_keeps_dirty": true,
+    "discard_clears_dirty": true,
+    "original_unchanged": true,
+    "interval_seconds": 1
+  },
+  "dirty_titles": [
+    {
+      "dirty": 1,
+      "title": "* EXReader - X4 Acceptance",
+      "screenshot": "titles/edit-1.png"
+    },
+    {
+      "dirty": 0,
+      "title": "EXReader - X4 Acceptance",
+      "screenshot": "titles/save-2.png"
+    },
+    {
+      "dirty": 1,
+      "title": "* EXReader - X4 Acceptance",
+      "screenshot": "titles/edit-3.png"
+    }
+  ],
+  "close": {
+    "cancel_keeps_window_and_dirty": true,
+    "save_closes_and_persists": true
+  }
+}

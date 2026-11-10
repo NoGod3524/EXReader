@@ -1,0 +1,23 @@
+{
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "flags": [
+    "-Wall",
+    "-Wextra",
+    "-Werror"
+  ],
+  "warnings": 0,
+  "exe_sha256": "391bb1e874701ece7d026520b16958f2eb7facd56e1fd771c34866d6f15164f6",
+  "checker_sha256": "cafc87e61d000835a0a638c6f1aeeeccd4dd71bec3e241cf681c9964d8703fb5",
+  "source_sha256": {
+    "examples/reader.c": "3ce42eecbf2f360fb162b27d61188ec8e8944198da39823ce70bc5ada6306f52",
+    "examples/windows/CMakeLists.txt": "e2dee47b54dadd7fe553795ee9339582f5269bb9cfc4a2e2c477b7415b3deaa8",
+    "examples/windows/README.md": "dde75538f272d2670341ea80323303621de9b195353b77f2ef0467ee2207a2af",
+    "examples/windows/check_shell_annotations.inc": "889cd2f9b2c7e15ce50902542e369bcfe1a9c446cb30617fef620358c2635dea",
+    "examples/windows/check_shell_autosave.py": "42a40b8f58d4f6e669ded6a0a31c91b2b666ceffb41ed76fc6dfbccb4698d2fc",
+    "examples/windows/check_shell_save.c": "077c82832c2b31960a1d61ee82abe70755fce1df057072daa3d0544807f34141",
+    "examples/windows/shell_annotations.inc": "bf620d6a654f839be3049cc854bddb08735866f089be4d33f95e8622ca8908ec",
+    "examples/windows/shell_annotations_drive.inc": "5cd5b940d5cfc50f4e1cd9ad8a75350e7ffbd2df2de67d26eedb5e7f7c46115d",
+    "examples/windows/shell_save.h": "69097fecee6c104118acb162787b1b486c79c5aed024b4e520bcc2d9bf2431b0"
+  },
+  "base_commit": "268297e30ff7c596b716bab93ed5c1be538f1c72"
+}
