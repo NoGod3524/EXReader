@@ -17,6 +17,7 @@ typedef struct {
   exr_text_range range; /* resolved session cache; never serialized */
   int found;
 } shell_annotation;
+static void sy_note(const char *sha);static void sy_boot(void);
 static shell_annotation *annotations;
 static int annot_editing=-1,annot_writable;
 static int64_t annot_book;
@@ -101,6 +102,7 @@ static int annot_save(void) {
 done:
   if(file!=INVALID_HANDLE_VALUE)CloseHandle(file);
   if(!ok) {DeleteFileW(temp);annot_error(L"标注保存失败；更改未保存，请重试。");}
+  else sy_note(annot_hash);
   cv_text_free(&json);return ok;
 }
 static int annot_uint(const cv_json *o,const char *key,uint64_t *out) {

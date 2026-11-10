@@ -1,0 +1,36 @@
+PASS Name+HelpText:shell_back
+PASS Name+HelpText:shell_search_button
+PASS Name+HelpText:shell_toc
+PASS Name+HelpText:shell_settings
+PASS Name+HelpText:shell_toc_panel
+PASS Name+HelpText:shell_toc_list
+PASS Name+HelpText:shell_panel
+PASS Name+HelpText:shell_search_bar
+PASS Name+HelpText:shell_search_edit
+PASS Name+HelpText:shell_search_prev
+PASS Name+HelpText:shell_search_next
+PASS Name+HelpText:shell_search_case
+PASS Name+HelpText:shell_search_word
+PASS Name+HelpText:shell_search_close
+PASS Name+HelpText:shell_segments[0]
+PASS Name+HelpText:shell_segments[1]
+PASS Name+HelpText:shell_segments[2]
+PASS Name+HelpText:style_preset
+PASS Name+HelpText:shell_tap_buttons[0]
+PASS Name+HelpText:shell_tap_buttons[1]
+PASS dynamic_style_fields
+PASS registration_called_during_shell_create
+PASS IAccPropServices_Name_HelpText
+PASS page_name_and_provider_dispatch
+PASS text_provider_interfaces
+PASS panel_structure_event_calls
+PASS closed_tab_order
+PASS tab_skips_hidden_disabled
+PASS reverse_tab_wrap
+PASS focus_stroke_2px_scaled
+PASS contrast_system_palette
+PASS contrast_theme_d2d_path
+PASS existing_screenshots_available
+PASS manual_checklist_available
+Historical screenshots: 25; runtime UIA: pending_external_manual
+PASS static negative controls: missing Name, HelpText, registration call

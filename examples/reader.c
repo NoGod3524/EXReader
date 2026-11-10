@@ -968,6 +968,10 @@ static void sm_landed(int opened);
 static HWND sm_view;
 static void sm_tick(void);
 static void sm_shelf_visibility(int show);
+static void opds_create(HWND parent);
+static void opds_layout(void);
+static void opds_show(void);
+static volatile LONG opds_busy;
 static void sm_edit_open(int shelf);
 static const char *sm_title(size_t shelf);
 static const char *sm_author(size_t shelf);
@@ -4307,9 +4311,11 @@ static void selection_report(void) {
 #include "windows/shell_footnotes.inc"
 #include "windows/shell_shelf.inc"
 #include "windows/shell_shelfmeta.inc"
+#include "windows/shell_opds.inc"
 #include "windows/shell_gestures.inc"
 #include "windows/shell_tts.inc"
 #include "windows/shell_dictionary.inc"
+#include "windows/shell_sync.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -6276,8 +6282,10 @@ static int check_selection(int minimum, const char *needle) {
 #include "windows/shell_annotations_drive.inc"
 #include "windows/shell_style_drive.inc"
 #include "windows/shell_shelfmeta_drive.inc"
+#include "windows/shell_opds_drive.inc"
 #include "windows/shell_tts_drive.inc"
 #include "windows/shell_dictionary_drive.inc"
+#include "windows/shell_sync_drive.inc"
 #endif
 
 static int drive_execute(void) {
@@ -6290,6 +6298,14 @@ static int drive_execute(void) {
   if (!strncmp(action,"sm_",3)) {
     drive_step_finish(sm_drive(action),"shelf metadata action");return 0;
   }
+  if (!strncmp(action,"opds_",5)) {
+    int result=opds_drive(action);
+    if (drive_expect_idle) {
+      if (!result) {drive_step_finish(0,"opds action could not start");return 0;}
+      return 1;
+    }
+    drive_step_finish(result,"opds action");return 0;
+  }
   if (!strncmp(action,"tts_",4)) {
     drive_step_finish(tts_drive(action),"speech action dispatched");return 0;
   }
@@ -6298,6 +6314,9 @@ static int drive_execute(void) {
   }
   if (!strncmp(action,"dict_",5)) {
     drive_step_finish(dict_drive(action),"dictionary action dispatched");return 0;
+  }
+  if (!strncmp(action,"sync_",5)) {
+    drive_step_finish(sy_drive(action),"cloud sync action dispatched");return 0;
   }
 #include "windows/shell_annotations_navigation.inc"
 #include "windows/shell_shelf_drive.inc"
@@ -7009,7 +7028,7 @@ static void drive_tick(void) {
     if (drive_expect_idle) {
       if (
 #ifdef EXR_READER_WINDOWS_SHELL
-          shell_layout_waiting || shell_animating || shell_search_pending || shell_search_thread || shell_search_jump_pending ||
+          opds_busy || shell_layout_waiting || shell_animating || shell_search_pending || shell_search_thread || shell_search_jump_pending ||
 #endif
           g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
         if (GetTickCount() - drive_step_start > 120000) {
@@ -7317,6 +7336,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
   if(message==WM_APP+31) { product_shelf_edges();return 0; }
 #endif
 #ifdef EXR_READER_WINDOWS_SHELL
+  if(message==WM_SY_DONE) { sy_done(); return 0; }
   if(message==WM_ACTIVATE) sm_focus(LOWORD(wparam)!=WA_INACTIVE);
 #endif
   switch (message) {
@@ -7330,6 +7350,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       shell_apply_theme();
       if(host_shell) shell_prepare_settings();
       sm_create(window);
+      opds_create(window);
 #endif
       return 0;
     case WM_SIZE: {
@@ -7556,6 +7577,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
 #ifdef EXR_READER_WINDOWS_SHELL
       if (wparam == SHELF_TIMER) {shelf_pump();return 0;}
       if(wparam==0x5760) { sm_tick(); return 0; }
+      if(wparam==0x5C01 || wparam==0x5C02) { sy_timer(wparam); return 0; }
       if(wparam==0x5453) {tts_poll();return 0;}
       if (wparam == 0x5756) { shell_search_start(); return 0; }
       if (wparam == 0x5757) { shell_search_poll(); return 0; }

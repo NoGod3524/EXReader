@@ -1,0 +1,46 @@
+{
+  "previous_commit": "5cdc779ce7b90d47167893592fe1ac72d71b9261",
+  "compiled_only": [
+    "build/headless-host/EXReader.exe"
+  ],
+  "executed_console_only": [
+    "build/a11y/check_sync.exe",
+    "build/a11y/check_shell_opds.exe"
+  ],
+  "binary_sha256": {
+    "build/headless-host/EXReader.exe": "3fc6b0a2e540f09705ace77d8a01622b467436a6f26a3f1db89a665d0f1ae84c",
+    "build/headless-host/libexreader.dll": "da18d1c832192474c32318508669b96a092466e20b0cf2c7f8a1082d33a26c5f",
+    "build/a11y/check_sync.exe": "c644059224a7ae269e49533b2795bdd1b259b448109d9c3a0c0f271067f7b4c2",
+    "build/a11y/check_shell_opds.exe": "724139e5e82368538adec6539921c2ef9e5b9d000e5f7663ba74f90773ecf52d"
+  },
+  "changed_source_sha256": {
+    "cmake/modules.cmake": "162527fcf24b733dce2246a27a48ea2bb721251a8c048b99b4cbbbc55d9c9c20",
+    "examples/reader.c": "94f377ecc075a07afff01d697ae33322a184abfe9f3b13981eb0ae502c14ee99",
+    "examples/windows/CMakeLists.txt": "6d54ed1989e77d31a80e236a244a4b2ac7e0c4f869ec743121790e1adc8e718d",
+    "examples/windows/check_shell_opds.c": "ae661d81252452d02ab653c4d8342ae4aaf1c4a085bdfc96aaa63a3d6085086e",
+    "examples/windows/check_shell_sync.inc": "5980e0d80b3aa45caaee72dfc1ab9714a31a8770091a71fc9eb9401e2619b84b",
+    "examples/windows/mock_webdav.inc": "aacd9be153b798d9778442ef47fc848b68645cf2dc25299908e4895edff6d364",
+    "examples/windows/opds_net.h": "c6bb9215826ec379c0a2554034837b651c447fce07f57b20386c10a86bb11aa6",
+    "examples/windows/selection_tests.cmake": "7d16cb317c85202b6b3ea0ebfea23906a05aa4f02245a2a099c9d117b218189d",
+    "examples/windows/shell_annotations.inc": "7ea360314e6de4fc231a40f7e720916eef1dd851323a4644a1e83382a8dc76b3",
+    "examples/windows/shell_dictionary.inc": "78d808a0dde4fe60c89645e918e894b0d70176851d032120d1d288e2eb58f64f",
+    "examples/windows/shell_opds.inc": "4978f028b3aebe7e61e4c283ae9ad508ca69a31bed0e37097c1205e78da65f75",
+    "examples/windows/shell_opds_drive.inc": "d37571a38430878584e534d7fb3ceba702774a3deb667de0d94376b87c4136f4",
+    "examples/windows/shell_screen.inc": "19f8f2afd22fb5a20a334a30db6096d0db94612d8e6638cfb60f58fddaa8e615",
+    "examples/windows/shell_settings.inc": "c9b65906ae9aef1dda647c5bc7941aa5668c7bb85b540f21ac7c645e2df69d3d",
+    "examples/windows/shell_shelf.inc": "639ccd9a1616be679ca23c850960515be5c5a5f43fe1cc82eb4850ae2ff9cded",
+    "examples/windows/shell_shelfmeta.inc": "0a93d3a538a2784c42469177e4390f3e54fb1e695ac534ded9ba26ce692874d3",
+    "examples/windows/shell_sync.inc": "24c07c34019a8e161032a1c2770bfff2b0ef57197803b8982f95b142d30064fe",
+    "examples/windows/shell_sync_drive.inc": "e131d1ba9b7a17cc37d923bd15c30d275175d1e7439873f0cace3d4e783a0042",
+    "include/exr/opds.h": "35daf578357a984762d08fe7b32757f983577b2e63b70781c62fd4186a2588de",
+    "src/opds.c": "d6ae647c348e975694566526d9d51204a96fd29ad11fc9b57b7a7aa65c776a53",
+    "examples/windows/check_sync.c": "f46f5c9894a512128ad60231f6ab786f8cb9174c016a79ba6d3d2a511b0a3d02"
+  },
+  "host_compile_flags": "-O2 -Wall -Wextra -Werror; EXR_READER_WINDOWS_SHELL=1",
+  "console_compile_flags": "Release -Wall -Wextra -Werror; check_sync has -UNDEBUG",
+  "realbooks_result": "realbooks.json.gz; source_revision=headless-c2-working-tree",
+  "prior_feature_sources": {
+    "webdav": "471900a2",
+    "opds": "83a554ae"
+  }
+}

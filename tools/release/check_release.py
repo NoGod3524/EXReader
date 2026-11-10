@@ -21,7 +21,7 @@ from sdk_version import source_version
 API_HEADERS = {
     'audio.h', 'base.h', 'core.h', 'dictionary.h', 'document.h', 'edit.h',
     'font_manager.h', 'formats.h', 'graphics.h', 'layout.h', 'library.h',
-    'pdf.h', 'pdf_edit.h', 'reflow.h', 'render.h', 'text.h', 'textindex.h',
+    'opds.h', 'pdf.h', 'pdf_edit.h', 'reflow.h', 'render.h', 'text.h', 'textindex.h',
 }
 PACKAGE_NAME = re.compile(r'exreader-(\d+\.\d+\.\d+)-(win-x64|linux-x64|macos-arm64)')
 
