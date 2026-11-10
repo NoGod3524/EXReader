@@ -42,6 +42,19 @@ static shell_d2d *host_shell;
 #include <string.h>
 #include <stdarg.h>
 #include <wchar.h>
+#ifdef EXR_READER_WINDOWS_SHELL
+#include "windows/shell_highlight.h"
+#ifdef EXR_READER_WINDOWS_EDIT
+static void shell_edit_create(HWND window);
+static int shell_edit_command(int id);
+static int shell_edit_translate(const MSG *message);
+static int shell_edit_message(HWND window,UINT message,WPARAM wp,LPARAM lp,LRESULT *result);
+static int shell_edit_before_close(void);
+static int shell_edit_before_leave(void);
+static void shell_edit_destroy(void);
+static int shell_edit_relayout(void);
+#endif
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
 #endif
@@ -4287,9 +4300,16 @@ static void selection_report(void) {
 #include "windows/shell_gestures.inc"
 #include "windows/shell_tts.inc"
 #include "windows/shell_dictionary.inc"
+#ifdef EXR_READER_WINDOWS_EDIT
+#include "windows/shell_edit.inc"
+#endif
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
+#ifdef EXR_READER_WINDOWS_EDIT
+  LRESULT edit_result=0;
+  if (shell_edit_message(window,message,wparam,lparam,&edit_result)) return edit_result;
+#endif
   if (shell_gesture_message(window, message, wparam, lparam)) return 0;
   if (shell_selection_message(window, message, wparam, lparam)) return 0;
 #endif
@@ -5100,6 +5120,9 @@ static void jump_selected_note(void) {
 }
 
 static void open_selected_book(void) {
+#ifdef EXR_READER_WINDOWS_EDIT
+  if (!shell_edit_before_leave()) return;
+#endif
   LRESULT index;
   host_job *job;
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -5182,6 +5205,9 @@ static void delete_selected_book(void) {
 }
 
 static void import_path(const wchar_t *path, int dialog_fallback) {
+#ifdef EXR_READER_WINDOWS_EDIT
+  if (!shell_edit_before_leave()) return;
+#endif
   host_job *job;
   wchar_t chosen[HOST_PATH] = L"";
   if (g.job || g.pending) {
@@ -7401,6 +7427,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
 #ifdef EXR_READER_WINDOWS_SHELL
+#ifdef EXR_READER_WINDOWS_EDIT
+      if (shell_edit_command(id)) return 0;
+#endif
       if (id == IDC_SHELL_BACK) { shelf_return(); return 0; }
       if (id == IDC_SHELL_SEARCH) { shell_search_set(!shell_search_open); return 0; }
       if (id == IDC_SHELL_SETTINGS) { shell_toggle_settings(); return 0; }
@@ -7570,6 +7599,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_CLOSE:
 #ifdef EXR_READER_WINDOWS_SHELL
+#ifdef EXR_READER_WINDOWS_EDIT
+      if (!shell_edit_before_close()) return 0;
+#endif
       tts_stop();
 #endif
       if (g.closing) return 0;
@@ -7625,6 +7657,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       settings_save();
 #ifdef EXR_READER_WINDOWS_SHELL
       shell_search_destroy();
+#ifdef EXR_READER_WINDOWS_EDIT
+      shell_edit_destroy();
+#endif
       shelf_destroy();
       tts_destroy();
       annot_clear();
@@ -7707,6 +7742,9 @@ static int message_loop(void) {
     if (compact_translate(&message)) continue;
 #endif
 #ifdef EXR_READER_WINDOWS_SHELL
+    #ifdef EXR_READER_WINDOWS_EDIT
+    if (shell_edit_translate(&message)) continue;
+    #endif
     if (shell_footnote_translate(&message)) continue;
     if (shell_translate(&message)) continue;
 #endif

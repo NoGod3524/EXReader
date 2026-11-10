@@ -116,8 +116,9 @@ static void shell_adjust_client(RECT *rect, HWND window, unsigned dpi) {
   typedef BOOL (WINAPI *adjust_fn)(LPRECT, DWORD, BOOL, DWORD, UINT);
   adjust_fn adjust = (adjust_fn)(void (*)(void))GetProcAddress(GetModuleHandleW(L"user32.dll"), "AdjustWindowRectExForDpi");
   DWORD style = (DWORD)GetWindowLongPtrW(window, GWL_STYLE), ex = (DWORD)GetWindowLongPtrW(window, GWL_EXSTYLE);
-  if (adjust) adjust(rect, style, FALSE, ex, dpi);
-  else AdjustWindowRectEx(rect, style, FALSE, ex);
+  BOOL menu=GetMenu(window)!=NULL;
+  if (adjust) adjust(rect, style, menu, ex, dpi);
+  else AdjustWindowRectEx(rect, style, menu, ex);
 }
 
 static void shell_update_dpi(HWND window) {
@@ -174,6 +175,9 @@ static HWND shell_make_button(HWND parent, int id, const wchar_t *name) {
 
 static void shell_create_panel(HWND parent);
 static void shell_create(HWND parent) {
+#ifdef EXR_READER_WINDOWS_EDIT
+  shell_edit_create(parent);
+#endif
   shelf_create(parent);
   shell_back=shell_make_button(parent,IDC_SHELL_BACK,L"← 书架");
   shell_toc = shell_make_button(parent, IDC_SHELL_TOC, L"目录");

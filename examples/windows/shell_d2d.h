@@ -17,6 +17,19 @@ extern "C" {
 
 typedef struct shell_d2d shell_d2d;
 
+/* Exact UTF-16 host editing layout. Positions are converted to model UTF-8 by
+   the C host; IME preview text is never part of the editable model. */
+typedef struct shell_edit_view shell_edit_view;
+HRESULT shell_edit_view_create(shell_d2d *, const wchar_t *, unsigned, const wchar_t *,
+                               float, float, shell_edit_view **);
+void shell_edit_view_free(shell_edit_view *);
+unsigned shell_edit_view_hit(shell_edit_view *, float, float);
+HRESULT shell_edit_view_caret(shell_edit_view *, unsigned, float box[4]);
+unsigned shell_edit_view_line_edge(shell_edit_view *, unsigned, int);
+float shell_edit_view_height(shell_edit_view *);
+HRESULT shell_edit_view_paint(shell_d2d *, shell_edit_view *, HDC, const RECT *,
+                              float, float, unsigned, unsigned, uint32_t, uint32_t, uint32_t);
+
 
 /* Text styles from UI-SPEC sections 3 and 9. */
 enum { SHELL_TEXT_TITLE = 0, /* 15, weight 650, left, one line with ellipsis */

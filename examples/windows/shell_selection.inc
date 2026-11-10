@@ -139,10 +139,7 @@ static HRGN select_region_for(size_t start,size_t end) {
       if (glyph->flags & EXR_GLYPH_VERTICAL) {
         x = line->x; y = glyph->baseline; w = line->width; h = glyph->advance;
       }
-      if (w < 0) { x += w; w = -w; }
-      if (h < 0) { y += h; h = -h; }
-      HRGN box = CreateRectRgn((int)floorf(x), (int)floorf(y), (int)ceilf(x+w), (int)ceilf(y+h));
-      CombineRgn(region, region, box, RGN_OR); DeleteObject(box);
+      shell_highlight_rect(region, x, y, w, h);
     }
   }
   return region;
