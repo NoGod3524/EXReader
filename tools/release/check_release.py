@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / 'tools'))
 from sdk_version import source_version
 
 API_HEADERS = {
-    'audio.h', 'base.h', 'core.h', 'dictionary.h', 'document.h',
+    'audio.h', 'base.h', 'core.h', 'dictionary.h', 'document.h', 'edit.h',
     'font_manager.h', 'formats.h', 'graphics.h', 'layout.h', 'library.h',
     'pdf.h', 'pdf_edit.h', 'render.h', 'text.h', 'textindex.h',
 }
@@ -162,7 +162,7 @@ def check_package(path, source_root=ROOT):
         actual = {p for p in files if p.startswith('include/exr/') and p.endswith('.h')}
         require(actual == expected, f'public header mismatch: missing={sorted(expected-actual)}, extra={sorted(actual-expected)}')
         require(all(files[p] for p in expected), 'empty public header')
-        return '15 API headers + version.h = 16 files'
+        return f'{len(API_HEADERS)} API headers + version.h = {len(expected)} files'
     check('public headers', headers)
 
     def minimal():
