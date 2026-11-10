@@ -1,0 +1,10 @@
+基准在后台运行,完成后我会收到通知,再汇总数据、写文档并提交。
+
+18 组基准还在后台跑,54 次运行大约完成了 5 次,预计还要一个多小时。跑完后我会汇总数据、写 `docs/validation/TYPOGRAPHY-BENCH.md`,再提交并开 draft PR。目前还没有可报告的结论数字。
+
+后台还有别的编译任务在占 CPU,可能让数据变吵。我会在离散度里如实标出来。
+
+`ops\capture_window.py` 在这个工作树里不存在。我用的是同一个脚本 `docs/ui/acceptance/capture_window.py`。
+
+The run is still going (7 of 54 folders written). Nothing new to report yet. I'm waiting for the benchmark to finish.
+
