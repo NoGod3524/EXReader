@@ -1,0 +1,64 @@
+Shelf enhancement is done: all ten acceptance items pass, and it's up as draft **PR #92** (https://github.com/NoGod3524/EXReader/pull/92, base `main`, branch `codex/shelf-metadata-20261108`).
+
+**Prerequisite:** `codex/host-shelf-flow-20261108` is still not merged into main. So this branch implements a minimal shelf itself (grid/list + click to open), and the code, README and PR are all marked "与 shelf-flow 分支会冲突，合并时以 shelf-flow 的书架为准".
+
+## Implementation highlights
+
+- **A) Metadata editing:** Right-clicking a book offers 「打开 / 编辑信息」. The dialog edits title, author, series name, series number and tags (comma-separated, or click existing tags to add/remove), and can replace or remove the cover.
+  - Display priority is `shelf.json` override > library/OPF value > 「未命名/未知作者」. A field equal to the library value is stored as `null`.
+  - A replacement cover is copied into `%APPDATA%\EXReader\covers\`. Book files are never modified.
+- **B) Series and tags:** Books in the same series are grouped and sorted by series number. Books without a series go into a final 「未分组」 group. The tag bar reads 全部 N / 各标签 N / 未分类 N. Grid and list views are both available, and the current view is saved.
+- **C) Timing rule:** A book counts as being read only when all of these hold:
+  - a book is open on the reading screen and the shelf overlay is hidden;
+  - the main window is in the foreground;
+  - there has been activity (page turn, scroll or open) within the last 30 s.
+
+  A still window stops counting 30 s after the last page turn. Losing focus, opening the shelf, switching books or closing settles the time and stops the timer. The streak counts back from today; an empty "today" does not break it.
+- **D) Persistence:** Everything lives in `%APPDATA%\EXReader\shelf.json` with `version: 1`.
+  - Writes are atomic: write a temp file, flush, then `MoveFileExW`. If a write fails, the in-memory edit is rolled back and the file stays byte-identical.
+  - A newer version number or an unparseable file is never overwritten; the shelf becomes read-only and shows a notice.
+  - Book ids use the same content SHA-256 as annotations (the shared function is `shell_content_identity`).
+
+## The ten acceptance items
+
+| # | Result |
+|---|---|
+| 1 | Edits persisted across restart: **3/3** |
+| 2 | Covers correct after restart **3/3** (sizes 300×450, 320×480, 280×420); after removal **3/3** back to default, 0 cover files left |
+| 3 | 成长三部曲 and 火的系列, 3 books each, ordered 1/2/3 within each group (inserted out of order) |
+| 4 | 经典 3, 种族 3, 回忆录 4, 小说 2, all matching expected; 未分类 1; 全部 9 |
+| 5 | 3 books × 120000 ms on an accelerated clock over 3 consecutive days: total 360000 ms, opens 1 each, **streak 3 days**. ctest also checks 1→2→3, and 0 after a skipped day |
+| 6 | After a page turn, 5 min still: **+30 s**; another 5 min: **+0**; page turn then 10 s: +10 s; 60 s while unfocused: +0 |
+| 7 | Excerpt below |
+| 8 | 19/19 books, 11296 pages, 8648640 glyphs; page-count, glyph-count and page-hash changes all **0**; content fingerprint identical |
+| 9 | ctest **212/212** (211 existing + the new `windows-selection-shelfmeta`); host self-test **26/26** |
+| 10 | Grid, list, edit dialog and stats page, plus tag-filter, restart and cover-removal screenshots, all in `docs/ui/evidence/shelfmeta/run/` |
+
+How to verify item 6 by hand: turn a page, leave it alone for 5 minutes, then open 统计. That book's time will have grown by only about 30 s.
+
+## `shelf.json` excerpt
+
+```json
+{"version":1,"books":[
+{"sha256":"5a3b11c8…b3df","title":"芒果街上的小屋","author":"桑德拉·希斯内罗丝","series":null,"series_index":null,"tags":["小说"],"cover":null,
+ "stats":{"read_ms":120000,"opens":1,"last_read_ms":1794157560000,"page_turns":12,"page":4,"page_count":0,"part":3,"part_count":4,"progress":0.7500}},
+{"sha256":"c22402e0…6d58","title":null,"author":null,"series":"成长三部曲","series_index":3,"tags":["回忆录"],"cover":null,"stats":{…}}
+],"days":[{"date":"2026-11-06","read_ms":120000},…],"view":"grid"}
+```
+
+- `title`/`author`: `null` means use the library value.
+- `cover`: a path relative to the `shelf.json` folder, e.g. `covers/<sha>-<ms>.png`.
+- `page_turns`: pages read.
+- `page_count`: 0 when the chapter's page total isn't known yet (EPUB chapters are paginated lazily).
+- `days`: reading time per local date, used for today's time and the streak.
+
+The full field table is in `docs/ui/evidence/shelfmeta/README.md`.
+
+## Things to know
+
+- **Two bugs found and fixed in this session.** On its first run the new ctest crashed, because cleaning up the text of an empty field (`sm_trimmed`) didn't handle NULL. That was a real bug and is fixed. It then failed an assertion because the test assumed the wrong shelf order; I fixed the test. After both fixes, ctest passes 212/212 and the window acceptance was rerun on the final binary.
+- **Regression baseline.** `annotations/books-before.json` (11484 pages) was rendered from older library source (c665d1c), so comparing against it differs on almost every book. I compared against the same-source baseline from the perf-gate work instead (`evidence/perf-gate-20261107/realbooks-repeat.json`). This branch doesn't touch `src/` or `include/`.
+- **Author shows 「未知作者」.** Library import doesn't store the OPF author, so unedited books show 「未知作者」 until someone edits them. Fixing that is library-layer (`src/`) work, outside this task's scope.
+- **Build command.** The `$b` directory in the task's command has no static `libexreader`, so the link failed. I linked against this worktree's own SDK build (`out\sdk`), with `-L` quoted as `"-L$b"`.
+- **Pushes.** The branch was rebased onto the latest main (db9bab66) with no conflicts, then pushed twice. Each step is recorded in `SHELFMETA-OUT.txt`.
+
