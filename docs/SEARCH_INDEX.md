@@ -104,7 +104,7 @@ hosts opt into worker-side batching explicitly.
 ```powershell
 python tools/search_index_bench.py --dll build/search-index/libexreader.dll `
   --book C:/path/to/hongloumeng-24264.epub --cache build/hongloumeng.idx `
-  --output tests/search-index-20261109/benchmark.json
+  --output evidence/search-index-20261109/benchmark.json
 ctest --test-dir build/search-index --output-on-failure
 ```
 
@@ -115,3 +115,4 @@ pairs, compares every ordered hit tuple for 20 queries against the linear API,
 and checks complete 64-hit cursor continuation. Cold excludes publication open
 and does not flush the operating system's file cache. Both APIs must search the
 same spelling: the Gutenberg source is traditional Chinese.
+
