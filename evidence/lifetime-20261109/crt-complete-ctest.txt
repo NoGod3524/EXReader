@@ -421,3 +421,23 @@ small=10 one_mib_peak=51171328 batch_peak=262291456 outputs_batch=5385732
         Start 200: native-hyphen-replacement-oracle
 200/253 Test #200: native-hyphen-replacement-oracle .......   Passed    8.33 sec
         Start 201: native-hyphen-conditional-oracle
+201/253 Test #201: native-hyphen-conditional-oracle .......   Passed   45.62 sec
+        Start 202: native-benchmark
+202/253 Test #202: native-benchmark .......................   Passed    6.45 sec
+        Start 203: native-document-probe
+203/253 Test #203: native-document-probe ..................   Passed   25.64 sec
+        Start 204: native-corpus-triage
+204/253 Test #204: native-corpus-triage ...................   Passed    9.18 sec
+        Start 205: native-png
+205/253 Test #205: native-png .............................   Passed    0.21 sec
+        Start 206: native-color-png
+206/253 Test #206: native-color-png .......................   Passed    1.29 sec
+        Start 207: native-fuzz-driver
+207/253 Test #207: native-fuzz-driver .....................   Passed    0.32 sec
+        Start 208: native-fuzz-font
+208/253 Test #208: native-fuzz-font .......................   Passed    0.70 sec
+        Start 209: native-fuzz-layout
+209/253 Test #209: native-fuzz-layout .....................   Passed    0.52 sec
+        Start 210: native-fuzz-render
+210/253 Test #210: native-fuzz-render .....................   Passed    0.36 sec
+        Start 211: native-fuzz-pipeline-contract
