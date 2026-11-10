@@ -1,7 +1,34 @@
-[步骤 1] 已检查宿主选区、逻辑锚点、页面合成、重排和验收驱动。沿用exr_content_anchor及字形簇区域；标注仅修改临时显示位图。复用现有严格JSON解析器，使用Windows原生SHA-256计算原始内容身份。
-[步骤 2] A–C实现已完成：三色右键菜单/Ctrl+H、Ctrl+N笔记框、行尾6px标记、点击选中/Delete、编辑删除；完整exr_content_anchor JSON，原始字节SHA-256身份，默认APPDATA/EXReader/annotations，EXREADER_ANNOTATIONS_DIR可覆盖。保存失败回滚，损坏文件保留。引擎与.github未改。
-[步骤 3] 初轮真实宿主已通过：5高亮+3笔记重开8/8；18→24→18每阶段8/8；衬线→微软雅黑→衬线每阶段8/8；跨2页显示/删除2/2；草枕竖排2/2；三标记3/3，点击编辑1/1；换路径/新书库8/8同SHA-256。ctest211/211。正在最终视觉修整与冻结复测。
-[步骤 4] 最终核对字体元数据后，用真正Noto Serif SC→Microsoft YaHei→Noto Serif SC重跑完整验收：每阶段8/8，字体切换截图167059像素改变；创建/重开截图逐像素完全相同（差异0）。草枕正文竖排2/2，重开后2/2。最终ctest211/211（26.47s），宿主自检26/26；19书11484页，页数/字形数/页哈希变化0，fingerprint=dcceb19c8ea43ba4db5ac57a7ea2b3bbbc127a105f3451490f2ffe2eff7f44fa。
-[步骤 5] 已整理docs/ui/ANNOTATIONS-ACCEPTANCE.md、完整JSON样例/字段说明、13张DPI截图、每阶段锚点与区域数据、211项测试记录、26项自检、19书逐页哈希及构建配置。最终完整窗口验收使用Noto Serif SC；高亮/笔记/跨页/竖排截图均已目视检查。可选D侧栏未实现。
-[步骤 6] 实现及验收证据已提交b3d91133（Add anchored highlights and notes to the Windows reader shell），并push到origin/codex/annotations-ui-20261108。仅examples/、docs/ui/与本日志；未改引擎/.github，提交信息无跳过标记，未取消workflow。
-[步骤 7] 已创建draft PR #86：https://github.com/NoGod3524/EXReader/pull/86 ，base=main，head=codex/annotations-ui-20261108。九项数字、完整JSON样例、13张DPI截图、211/211 ctest及26/26自检已随PR提交。
+已提交并推送，draft PR：[**#86**](https://github.com/NoGod3524/EXReader/pull/86)。实现提交 `b3d91133`，工作区干净。
+
+- **A 高亮**：三色菜单、`Ctrl+H`、横竖排绘制、点击选中及删除。新增黄/绿用于区分类别，蓝色沿用 accent 色系。
+- **B 笔记**：320px 输入框、surface/shadow-lg/14px 圆角；支持保存、编辑、删除和行尾圆点打开。
+- **C 存储**：原始内容 SHA-256 作为书 id，完整保存引擎锚点；JSON 原子写入，失败回滚。默认路径符合要求。可选 D 未实现。
+
+| 验收 | 结果 |
+|---|---|
+| 1. 重开恢复 | **8/8**；前后截图差异 **0 像素** |
+| 2. 18→24→18 | 每阶段 **8/8** |
+| 3. 衬线→无衬线→衬线 | 每阶段 **8/8** |
+| 4. 跨两页 | 显示 **2/2**，删除后两侧 **2/2** |
+| 5. 草枕竖排 | **2/2**，重开后 **2/2** |
+| 6. JSON | **8 条**；页码字段 **0**；改路径仍恢复 **8/8** |
+| 7. 真书回归 | **19/19，11,484 页**；页数、字形数、哈希变化均 **0** |
+| 8. 测试 | ctest **211/211**；宿主自检 **26/26** |
+| 9. 截图 | **13 张**，均由指定脚本抓取并检查 |
+
+实际 JSON 字段片段：
+
+```json
+{
+  "color": 2,
+  "text": "编辑后的笔记 😀",
+  "anchor": {
+    "start": {"part_id": "pg-header", "selector": {"start": 11445, "end": 11445}},
+    "end": {"part_id": "pg-header", "selector": {"start": 11473, "end": 11473}}
+  }
+}
+```
+
+两端点组成半开范围；偏移单位为逻辑文本 UTF-8 字节。完整文件另存包内路径、文本修订指纹、文本长度、定位上下文及创建/更新时间戳。
+
+[完整验收、JSON 与截图](C:/Users/Oscar/Documents/Codex/EXReader-annot-20261108/docs/ui/ANNOTATIONS-ACCEPTANCE.md)。`ANNOT-OUT.txt` 已逐步追加；引擎和 `.github/` 未改。
