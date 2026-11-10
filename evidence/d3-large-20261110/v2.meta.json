@@ -1,0 +1,24 @@
+{
+ "output": "C:\\Users\\Oscar\\Documents\\Codex\\large-book-d3\\books\\v2.epub",
+ "bytes": 2240775,
+ "sha256": "a90e1a84fb3720785558f07e2a997dc3484db78439196c582e045a88c256d83e",
+ "volumes": [
+  {
+   "volume": "v01",
+   "source": "hongloumeng-24264.epub",
+   "title": "紅樓夢",
+   "repeat": false,
+   "spine_items": 31
+  },
+  {
+   "volume": "v02",
+   "source": "pg23962.epub",
+   "title": "西遊記",
+   "repeat": false,
+   "spine_items": 13
+  }
+ ],
+ "spine_items": 44,
+ "text_chars_non_space": 1519599,
+ "images": 2
+}

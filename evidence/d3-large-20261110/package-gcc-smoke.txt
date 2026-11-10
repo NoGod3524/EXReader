@@ -1,0 +1,9 @@
+COMMAND: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c lib/libexreader.dll.a -o minimal-gcc.exe
+exit: 0
+COMMAND: C:\Users\Oscar\Documents\Codex\large-book-d3\package-gcc-smoke\exreader-3.42.0-win-x64\minimal-gcc.exe examples/minimal/sample.epub examples/minimal/font.ttf page-gcc.pgm
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-gcc.pgm (720 x 1040, PGM)
+exit: 0
+PASS matching MinGW SDK consumer: {"width": 720, "height": 1040, "bytes": 748816, "nonwhite_pixels": 129549}

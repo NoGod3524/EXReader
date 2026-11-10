@@ -1,0 +1,59 @@
+{
+ "output": "C:\\Users\\Oscar\\Documents\\Codex\\large-book-d3\\books\\v7.epub",
+ "bytes": 7306655,
+ "sha256": "d2070e9c15ddc0fcf5a67f3ffc14f34b4ceadbdd06cc2f851bb7adcdfa73b599",
+ "volumes": [
+  {
+   "volume": "v01",
+   "source": "hongloumeng-24264.epub",
+   "title": "紅樓夢",
+   "repeat": false,
+   "spine_items": 31
+  },
+  {
+   "volume": "v02",
+   "source": "pg23962.epub",
+   "title": "西遊記",
+   "repeat": false,
+   "spine_items": 13
+  },
+  {
+   "volume": "v03",
+   "source": "pg23950.epub",
+   "title": "三國志演義",
+   "repeat": false,
+   "spine_items": 12
+  },
+  {
+   "volume": "v04",
+   "source": "pg23863.epub",
+   "title": "水滸傳",
+   "repeat": false,
+   "spine_items": 10
+  },
+  {
+   "volume": "v05",
+   "source": "pg23910.epub",
+   "title": "封神演義",
+   "repeat": false,
+   "spine_items": 14
+  },
+  {
+   "volume": "v06",
+   "source": "pg24226.epub",
+   "title": "史記",
+   "repeat": false,
+   "spine_items": 13
+  },
+  {
+   "volume": "v07",
+   "source": "pg24230.epub",
+   "title": "今古奇觀",
+   "repeat": false,
+   "spine_items": 14
+  }
+ ],
+ "spine_items": 107,
+ "text_chars_non_space": 4853409,
+ "images": 7
+}

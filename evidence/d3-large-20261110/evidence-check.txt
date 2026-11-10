@@ -1,0 +1,10 @@
+A/B consistency: 7 books x 2 sides x 5 runs; page/part/TOC/full-search/first-batch/TOC-target values identical.
+Protected release checker SHA256: 6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b
+book | pages | EPUB bytes | chars | images | sequential peak/end MiB
+1 1684 1147530 787000 1 59.58 31.97
+2 3329 2240775 1519599 2 61.33 31.96
+4 5901 3920115 2667969 4 61.88 32.99
+7 10964 7306655 4853409 7 62.16 33.33
+11 13711 9234187 6131260 11 63.02 33.32
+12 26013 16050910 10895535 12 63.28 33.4
+24 52026 32099747 21791068 24 64.6 35.63

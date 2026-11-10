@@ -1,0 +1,1 @@
+pixel padding and comparator self-checks passed

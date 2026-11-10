@@ -1,0 +1,2 @@
+19/19 books; 11426 pages; 0 changed page hashes; identical content fingerprint: f133272deccc097ee10bbdcf18cdb60c95bf3035ddde529e8dbea24a1d5ce488
+Compressed candidate retained; baseline stays at its original tracked path.
