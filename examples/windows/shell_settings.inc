@@ -13,9 +13,11 @@ static const float style_step[]={1,.05f,.1f,4,4,4,4,.01f};
 static COLORREF shell_colorref(uint32_t rgb) { return RGB((rgb>>16)&255,(rgb>>8)&255,rgb&255); }
 
 static void shell_apply_theme(void) {
-  shell_colors=shell_is_dark() ? &shell_theme_dark : &shell_theme_light;
+  shell_contrast_refresh();
+  shell_colors=shell_contrast ? &shell_theme_contrast : shell_is_dark() ? &shell_theme_dark : &shell_theme_light;
+  if(host_shell) shell_d2d_toc_clear(host_shell); /* cached rows carry the old palette */
   /* Class brushes are owned here after registration; keep legacy white. */
-  uint32_t bg=shell_active ? shell_colors->layer_page : shell_theme_light.layer_float;
+  uint32_t bg=shell_active || shell_contrast ? shell_colors->layer_page : shell_theme_light.layer_float;
   HWND windows[2]={g.window,g.page};
   for(int i=0;i<2;i++) if(windows[i]) {
     HBRUSH brush=CreateSolidBrush(shell_colorref(bg));
@@ -30,7 +32,7 @@ static void shell_apply_theme(void) {
    bitmap, keeping SDK bytes and cached layouts unchanged. Grayscale coverage
    maps black/white to text/bg; colour illustrations retain their RGB. */
 static void shell_color_display(host_frame *frame) {
-  int theme=shell_is_dark()+1;
+  int theme=shell_contrast ? 100+(int)shell_contrast_generation : shell_is_dark()+1;
   if(!frame->valid || frame->fixed || !frame->shell_geometry.enabled || !IsRectEmpty(&frame->shell_image)) return;
   if(!frame_prepare_display(frame) || frame->display_shell_theme==theme) return;
   DIBSECTION section={0};
@@ -176,7 +178,7 @@ static void shell_toggle_settings(void) {
   if(!shell_panel_open && shell_toc_open) shell_toc_set(0,0);
   BOOL animations=FALSE;
   SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0);
-  shell_panel_open=!shell_panel_open;
+  shell_panel_open=!shell_panel_open;host_a11y_panel_toggled(shell_panel,shell_panel_open);
   shell_animation_from=shell_animation_value;shell_animation_start=host_probe_ms();
   shell_animating=animations;
   if(shell_panel_open) { shell_settings_refresh(); ShowWindow(shell_panel,SW_SHOWNOACTIVATE); }
