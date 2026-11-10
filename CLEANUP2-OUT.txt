@@ -1,0 +1,18 @@
+CLEANUP2 — baseline 0a8076a7, branch claude/review-cleanup-20261109
+
+STEP 1 COMPLETE
+Rollback: revert the step-1 commit (test-driver extraction).
+Only consumer CMake option added: examples/windows/CMakeLists.txt EXR_READER_TEST_DRIVERS OFF.
+Reason: compile the acceptance unit only for explicit test builds, leaving core CMake untouched.
+Product: cmake --build build/review-host --parallel 4 (Release, warning gate passed).
+Test: cmake -S examples/windows -B build/cleanup2/test -G Ninja -DEXR_SDK=<workspace>/build/review/stage -DEXR_READER_WINDOWS_SHELL=ON -DEXR_READER_TEST_DRIVERS=ON -DCMAKE_BUILD_TYPE=Release; cmake --build build/cleanup2/test.
+strings EXE + strings -el EXE: case-insensitive drive substring lines 81 -> 57.
+Remaining: Windows system GUID/property symbol names and CRT `drive`. The product contains no acceptance-driver strings; 78 dispatch command literals checked in a stripped audit copy (avoids confusing product function/global symbol names with command literals): 0 remain. See step1-command-audit.json.
+Exact --drive, drive.log, shell_measure, shelf_dump, select_pointer, annot_dump: present before, absent in product, present in test.
+Bytes (both unstripped): 2,244,404 -> 2,145,098 (-99,306, -4.42%).
+Three unchanged script paths PASS:
+  docs/ui/acceptance/check_shelf_flow.py: 3/3 roundtrips; 10/10 single clicks; 20/20 swipes.
+  docs/ui/acceptance/check_shelfmeta.py: 3/3 edits, covers, removal; fresh repeat PASS after initial capture window race.
+  examples/windows/check_shell_search.py: hong/english/vertical/pdf/mobi/whole-document PASS.
+ctest --test-dir build/review --output-on-failure -j 4: 257/257 PASS, 127.48s (current configured tree has 257 tests).
+Evidence: docs/ui/evidence/cleanup2/step1-*; full raw script runs build/cleanup2/step1-*.

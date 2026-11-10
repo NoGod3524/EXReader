@@ -575,6 +575,7 @@ static int shell_translate(const MSG *message) {
 
 /* Every control in the 17-row map of HOST-AUDIT section A (IDs 101..117) is
    visible, a tab stop and inside the client area. */
+#ifdef EXR_READER_TEST_DRIVERS
 static int shell_legacy_reachable(char *missing, size_t capacity) {
   RECT client, box;
   int id, count = 0;
@@ -595,8 +596,10 @@ static int shell_legacy_reachable(char *missing, size_t capacity) {
   }
   return count;
 }
+#endif
 
 /* Visible direct children of the main window, for legacy driver telemetry. */
+#ifdef EXR_READER_TEST_DRIVERS
 static int shell_visible_children(void) {
   int count = 0;
   HWND child;
@@ -604,7 +607,9 @@ static int shell_visible_children(void) {
     count += IsWindowVisible(child) != 0;
   return count;
 }
+#endif
 
+#ifdef EXR_READER_TEST_DRIVERS
 static HWND shell_button_named(const char *name) {
   return !strcmp(name,"minus") ? shell_minus : !strcmp(name,"plus") ? shell_plus :
     !strcmp(name,"shelf") ? shell_back :
@@ -612,6 +617,7 @@ static HWND shell_button_named(const char *name) {
     !strcmp(name,"system") ? shell_segments[2] :
     !strcmp(name, "search") ? shell_search_button : !strcmp(name, "toc") ? shell_toc : !strcmp(name, "settings") ? shell_settings : NULL;
 }
+#endif
 
 #include "shell_settings.inc"
 #include "shell_toc.inc"
