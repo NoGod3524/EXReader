@@ -1,5 +1,7 @@
 # Evidence index
 
+- 2026-11-05 — [15本×5位置抽样渲染](real-books-20261105/PAGES-SUMMARY.md)：75成功/0失败；最慢Malcolm X PDF中间页53.741800ms；7本最慢/最快>10倍。[草枕CJK坐标验收](real-books-20261105/CJK-LINEBREAK.md)：462页/6857正文列指定避头尾违规0，74组两标点总占位/单字均2.000，未见挤压；只登记引擎缺口，不修代码。方法论：视觉结论必须由像素测量确认，缩略图只能作为假设来源。
+
 - 2026-11-05 — [Pachinko首行缩进像素复核：A](real-books-20261105/TEXT-INDENT-PIXELS.md)：原PNG同段首行/续行66/44px（差22px），另一段65/44px（差21px），匹配1.2em×18px；布局原点差21.600002px。撤回“首行齐平／缩进缺失”观察，不登记为引擎缺陷；未指定作者样式的宿主CJK默认2em需求仍归第5步。
 
 - 2026-11-05 — [CJK验收范围与责任分流](real-books-20261105/CJK-READABILITY-CHECKLIST.md)：原15本中文样本0；草枕日文结果不能替代中文验证。已查 [text-indent](real-books-20261105/TEXT-INDENT.md)：草枕普通段1em，葡语Pachinko普通段1.2em，均有显式零缩进；缺省2em策略归第5步。行宽/上边距归宿主第3步；hyphenation归后续引擎版本，不在2a范围。
