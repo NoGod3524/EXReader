@@ -1,0 +1,127 @@
+{
+ "checks": [
+  {
+   "check": "ui_root_loaded",
+   "pass": true,
+   "detail": "title=Project Gutenberg entries=3 search=description"
+  },
+  {
+   "check": "ui_list_ge_20",
+   "pass": true,
+   "detail": "entries=25 first=Pride and Prejudice"
+  },
+  {
+   "check": "ui_next_page_differs",
+   "pass": true,
+   "detail": "page1=25 page2=25 overlap=0 page2_first=The Adventures of Tom Sawyer, Complete"
+  },
+  {
+   "check": "ui_back_uses_cache",
+   "pass": true,
+   "detail": "entries=25 from_cache=1 hits=1"
+  },
+  {
+   "check": "ui_book_has_editions",
+   "pass": true,
+   "detail": "book=Pride and Prejudice editions=[('epub', 609138), ('epub', 24864457)]"
+  },
+  {
+   "check": "ui_download_ok",
+   "pass": true,
+   "detail": "bytes=609138 path=C:\\Users\\Oscar\\Documents\\Codex\\opds-codex-accept-1\\profile-real\\opds-downloads\\Pride and Prejudice.epub"
+  },
+  {
+   "check": "ui_import_started",
+   "pass": true,
+   "detail": "import_path called once"
+  },
+  {
+   "check": "ui_book_on_shelf_after_restart",
+   "pass": true,
+   "detail": "books=1 title=Pride and Prejudice author=Jane Austen"
+  },
+  {
+   "check": "local_feed_loopback",
+   "pass": true,
+   "detail": "entries=5"
+  },
+  {
+   "check": "cache_serves_second_load",
+   "pass": true,
+   "detail": "from_cache=1"
+  },
+  {
+   "check": "refresh_bypasses_cache",
+   "pass": true,
+   "detail": "server /feed.xml hits=2"
+  },
+  {
+   "check": "inline_search_template",
+   "pass": true,
+   "detail": "template=http://127.0.0.1:6296/search?q={searchTerms}"
+  },
+  {
+   "check": "error_404",
+   "pass": true,
+   "detail": "code=not_found http=404 message=地址不存在（HTTP 404），请检查书源地址。 | status=地址不存在（HTTP 404），请检查书源地址。"
+  },
+  {
+   "check": "error_timeout",
+   "pass": true,
+   "detail": "code=timeout http=0 message=连接超时：2 秒内没有收到服务器响应，请检查网络或稍后重试。 | status=连接超时：2 秒内没有收到服务器响应，请检查网络或稍后重试。"
+  },
+  {
+   "check": "error_401",
+   "pass": true,
+   "detail": "code=auth http=401 message=该书源需要登录（HTTP 401），目前不支持账号密码。 | status=该书源需要登录（HTTP 401），目前不支持账号密码。"
+  },
+  {
+   "check": "error_500",
+   "pass": true,
+   "detail": "code=server_error http=500 message=书源服务器出错（HTTP 500），请稍后再试。 | status=书源服务器出错（HTTP 500），请稍后再试。"
+  },
+  {
+   "check": "error_http",
+   "pass": false,
+   "detail": "code=not_found http=404 message=地址不存在（HTTP 404），请检查书源地址。 | status=地址不存在（HTTP 404），请检查书源地址。"
+  },
+  {
+   "check": "error_dns",
+   "pass": true,
+   "detail": "code=dns http=0 message=无法解析域名，请检查书源地址或网络连接。 | status=无法解析域名，请检查书源地址或网络连接。"
+  },
+  {
+   "check": "error_fake_epub_rejected",
+   "pass": true,
+   "detail": "下载失败：下载的内容不是有效的 epub 文件（可能是网页或错误页）。"
+  },
+  {
+   "check": "download_in_progress",
+   "pass": true,
+   "detail": "busy=1"
+  },
+  {
+   "check": "download_cancelled",
+   "pass": true,
+   "detail": "cancelled=1 part_left=0 status=已取消下载。"
+  },
+  {
+   "check": "local_download_imports",
+   "pass": false,
+   "detail": "shelf=[]"
+  }
+ ],
+ "server_hits": {
+  "/feed.xml": 2,
+  "/search": 1,
+  "/missing.xml": 1,
+  "/slow.xml": 1,
+  "/auth.xml": 1,
+  "/err500.xml": 1,
+  "/fake.epub": 1,
+  "/big.epub": 1,
+  "/book.epub": 1
+ },
+ "passed": 20,
+ "total": 22
+}

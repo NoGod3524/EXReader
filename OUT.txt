@@ -1,0 +1,137 @@
+OPDS b2 续跑收尾（2026-11-10）
+
+① 接管位置
+工作树：C:\Users\Oscar\Documents\Codex\EXReader-b2-opds-20261110
+分支：codex/opds-catalog-20261110
+接管提交：5d34adf38eb73c3512921cfe707e8a190fc7005d
+Claude 的 OPDS-OUT.txt 最后一行原文：
+Step 6: SDK built (ctest build dir ../exr-opds-build), host built with docs/ui/acceptance/build_opds_host.ps1 (-Wall -Wextra -Werror clean). Next: run docs/ui/acceptance/check_opds.py (real Gutenberg + local loopback server).
+
+② 续跑补充
+- 沿用现有 SDK、WinHTTP、书源窗口和验收驱动；未合并 b1-webdav。
+- 首轮窗口验收实际为 20/22；保留失败记录并修复两处原因：
+  a. 手输 HTTP 书源被自动升级成 HTTPS：新书源地址原样交给传输层检查，保留目录内旧 HTTP 链接通过 HTTPS 请求的兼容行为。
+  b. 取消下载后下一次下载继承了验收驱动旧的 nowait 参数：读取可选参数前检查 drive_argc；原测试断言未修改。
+- 分层检查发现公共头 include/exr/opds.h 未分类，补登记到 tools/layers.json 的 doc 层。
+- 补跑完整 ctest、真实 Gutenberg 与本地错误/取消/缓存窗口验收、19 本逐页像素哈希回归、分层和版本检查。
+- 归档 9 张实际窗口截图、驱动脚本/日志/JSON、首轮失败与修复后的结果、完整 ctest 日志、逐页回归及打包证据到 evidence/opds-20261110。
+- SDK 发布检查定位到 VS 遥测初始化和 MinGW/MSVC 导入库格式不匹配；补做独立解压后的 MinGW 示例和 CLI 冒烟。
+
+③ 验证命令与实际输出
+A. 宿主构建（exit 0）
+命令：
+powershell -NoProfile -ExecutionPolicy Bypass -File docs/ui/acceptance/build_opds_host.ps1 -SdkBuild ../exr-opds-build -Output ../exr-opds-host
+脚本使用 -O2 -Wall -Wextra -Werror，实际输出 SHA256：
+EXReader.exe     82B770D10B90BC6411F203EB2A5837D7DD8F7225D51CE99D6EF6571E395AC2AA
+libexreader.dll  1DA5A48571C6A2BD5B4A22A5AEF06377DE3CD7D5692C1BEF97AA78DEA5000071
+证据：evidence/opds-20261110/build-and-protected-files.json
+
+B. 真实窗口验收（首轮 exit 1，修复后 exit 0；断言未修改）
+首轮命令：
+python docs/ui/acceptance/check_opds.py ../exr-opds-host/EXReader.exe ../exr-demo-main/Reader.otf ../opds-codex-accept-1
+实际结果：20/22 checks passed
+失败项：error_http、local_download_imports。
+复跑命令：
+python docs/ui/acceptance/check_opds.py ../exr-opds-host/EXReader.exe ../exr-demo-main/Reader.otf ../opds-codex-accept-2
+实际输出节选：
+PASS ui_root_loaded title=Project Gutenberg entries=3 search=description
+PASS ui_list_ge_20 entries=25 first=Pride and Prejudice
+PASS ui_next_page_differs page1=25 page2=25 overlap=0 page2_first=The Adventures of Tom Sawyer, Complete
+PASS ui_back_uses_cache entries=25 from_cache=1 hits=1
+PASS ui_book_has_editions book=Pride and Prejudice editions=[('epub', 609138), ('epub', 24864457)]
+PASS ui_download_ok bytes=609138 path=C:\Users\Oscar\Documents\Codex\opds-codex-accept-2\profile-real\opds-downloads\Pride and Prejudice.epub
+PASS ui_import_started import_path called once
+PASS ui_book_on_shelf_after_restart books=1 title=Pride and Prejudice author=Jane Austen
+PASS error_timeout code=timeout http=0 message=连接超时：2 秒内没有收到服务器响应，请检查网络或稍后重试。 | status=连接超时：2 秒内没有收到服务器响应，请检查网络或稍后重试。
+PASS error_http code=not_https http=0 message=仅支持 HTTPS 书源，已拒绝不安全的 http:// 地址。 | status=仅支持 HTTPS 书源，已拒绝不安全的 http:// 地址。
+PASS download_cancelled cancelled=1 part_left=0 status=已取消下载。
+PASS local_download_imports shelf=['Selection Original']
+22/22 checks passed
+其余包含缓存、刷新、搜索、401/404/500、DNS、伪 EPUB 拒绝和下载进度；完整实际输出在 window-acceptance.txt，全部判断在 window-result.json。
+日志中的本地服务器 WinError 10054 来自超时/取消后的连接重置。
+已目视核对 real/popular.png、real/opened.png 与 local/local-opened.png：目录可读，Gutenberg 图书打开封面，本地样本打开正文。
+证据：evidence/opds-20261110/{initial-window-result.json,window-result.json,window-acceptance.txt,real/,real-restart/,local/}
+Claude Step 4 已完成的网络/OpenSearch/缓存 TTL 控制台结果另存 claude-console-result.json，保留其原始输出，不计作本轮重跑。
+
+C. 完整 ctest（exit 1）
+命令：
+ctest --test-dir ../exr-opds-build --output-on-failure -j 2
+实际输出：
+3/257 Test #176: native-opds ............................ Passed 0.67 sec
+99% tests passed, 1 tests failed out of 257
+Label Time Summary:
+release = 183.64 sec*proc (1 test)
+Total Test time (real) = 956.69 sec
+The following tests FAILED:
+  1 - sdk-release (Timeout)
+即 256/257，通过项包含 native-opds；唯一失败为发布冒烟。
+完整命令、各测试输出和耗时：evidence/opds-20261110/ctest-full.txt；摘要：ctest-summary.txt。
+
+D. 19 本真书全量回归（exit 0）
+基线：仓库既有 evidence/simplified-20261110/realbooks-after.json.gz，解压到 ../opds-realbooks-baseline.json；字体 SHA256 为 2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b。
+命令：
+python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll ../exr-opds-build/libexreader.dll --font ../exr-demo-main/Reader.otf --layout tools/regress/layout.json --output ../opds-realbooks-after.json --baseline ../opds-realbooks-baseline.json --workers 2 --source-revision 5d34adf3
+实际最终输出：
+{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11318, "total_glyphs": 8648571, "wall_seconds": 529.4154, "sum_book_seconds": 992.763281, "fastest_book": "the-house-on-mango-street", "slowest_book": "the-autobiography-of-malcolm-x."}
+实际 diff：
+{"comparable": true, "incompatible_conditions": [], "added_books": [], "removed_books": [], "hash_changed_pages": 0, "failed_books": [], "needs_review": false}
+19 本的 source_changed、page_count_changed、glyph_count_changed 均为 false；所有页的像素哈希相同。
+content_fingerprint：8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434
+529.4154 秒为当时并行负载下的执行耗时，本项结论为页数/像素一致性。
+证据：evidence/opds-20261110/{realbooks-after.json.gz,realbooks.diff.json}。只保存计数与哈希，原书留在原位置。
+
+E. 分层与版本检查（均 exit 0）
+命令：python tools/check_layers.py ../exr-opds-build
+实际输出：
+121 objects, 1365 symbol references, 0 remaining inverse references, 0 new
+1068 source/header dependencies, 0 inverse includes
+命令：python tools/check_version_consistency.py
+实际输出：PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+证据：evidence/opds-20261110/{layers.txt,version.txt}
+
+F. 发布打包和 README 冒烟（exit 1）
+初次单独重试卡在 vcvars 初始化启动的 Send-VsDevShellTelemetry；停止该次重试后，用 VS 自带环境开关关闭该子进程再次运行。
+命令：
+$env:VSCMD_SKIP_SENDTELEMETRY='1'
+python tools/release/smoke_release.py --build-dir ../exr-opds-build --config Release --compiler gcc --output-dir ../opds-release-smoke-no-telemetry
+实际输出节选：
+PASS package files and safe paths: 49 ordinary files; 13457257 bytes
+PASS public headers: 18 API headers + version.h = 19 files
+PASS SHA256SUMS coverage and content: 48 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS public export count: lib/libexreader.dll: exr_* exports [440]; minimum 389
+PASS CLI runtime layout and import library: import library lib/libexreader.dll.a; bin DLL matches lib DLL
+解压后的 package check 也全部通过，随后实际失败输出：
+LINK : fatal error LNK1181: cannot open input file 'lib\exreader.lib'
+FAIL: README three commands failed with exit 1
+证据：evidence/opds-20261110/{release-smoke-no-telemetry.txt,release-smoke.json,package-check.json}
+
+G. MinGW 包外运行补充（exit 0）
+在 ../opds-mingw-smoke 解压同一归档，工作目录切到解压后的 SDK，PATH 前置其 lib 目录。
+实际执行命令：
+gcc -std=c11 -Wall -Wextra -Werror -Iinclude examples/minimal/main.c -Llib -lexreader -o minimal.exe
+./minimal.exe examples/minimal/sample.epub examples/minimal/font.ttf page-1.pgm
+./bin/exr-info.exe --version
+./bin/exr-info.exe examples/minimal/sample.epub examples/minimal/font.ttf
+四条命令均 exit 0，实际输出：
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+EXReader 3.42.0
+Version: 3.42.0
+Format: EPUB
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+PASS: relocated MinGW SDK, minimal example, nonwhite PGM, CLI and version
+同时校验 PGM 非全白且 CLI/示例标题、页数、目录数一致。
+证据：evidence/opds-20261110/{mingw-package-smoke.txt,mingw-package-smoke.json}
+
+H. 保护项
+tests/check_reading_release.py 未修改，SHA256：6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。
+tools/version_literal_exceptions.json 未修改，SHA256：6d2ab944c7c624b1f82ffa61b0c742fb1cb731b88bd700b245bac644aa247fc2。
+未新增 src/*.h；include/exr/opds.h 已登记到 doc 层；未修改测试断言；未合并其他功能分支。
+
+④ 尚未完成与实现边界
+- OPDS 2.0 JSON、账号密码登录不在本次现有实现范围内；支持 OPDS 1.x Atom / OpenSearch。
+- 尚未获得全绿的 sdk-release：当前 MinGW 产物提供 lib/libexreader.dll.a，而 README 的 Windows 快速开始固定使用 cl 和 lib/exreader.lib。需要 MSVC 构建的 SDK 来运行该 MSVC 路径，或另行完善 README 的 MinGW 路径及对应冒烟；本轮保留原断言与失败结果。MinGW 实际编译、渲染和 CLI 路径已验证可运行。

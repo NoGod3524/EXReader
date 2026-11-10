@@ -1,0 +1,3 @@
+Command: python tools/check_version_consistency.py
+Exit: 0
+PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
