@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\docs\ui\acceptance\check_a11y_c2.py", line 583, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\docs\ui\acceptance\check_a11y_c2.py", line 307, in main
+    r.start()
+    ~~~~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\docs\ui\acceptance\check_a11y_c2.py", line 109, in start
+    self.root = self.iua.ElementFromHandle(self.hwnd)
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+_ctypes.COMError: (-2146233083, None, (None, None, None, 0, None))

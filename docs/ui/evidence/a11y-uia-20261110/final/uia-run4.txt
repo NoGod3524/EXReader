@@ -1,0 +1,11 @@
+activating window for focus checks
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\docs\ui\acceptance\check_a11y_c2.py", line 583, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\docs\ui\acceptance\check_a11y_c2.py", line 386, in main
+    r.tab_to('阅读区域')
+    ~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\docs\ui\acceptance\check_a11y_c2.py", line 211, in tab_to
+    raise AssertionError('Tab cannot reach ' + name)
+AssertionError: Tab cannot reach 阅读区域

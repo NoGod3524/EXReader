@@ -1,0 +1,230 @@
+[
+ {
+  "name": "EXReader",
+  "type": "window",
+  "type_id": 50032,
+  "id": "",
+  "class": "EXReaderHost",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   256,
+   256,
+   1536,
+   1116
+  ]
+ },
+ {
+  "name": "书架",
+  "type": "pane",
+  "type_id": 50033,
+  "id": "",
+  "class": "EXReaderShelf",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   265,
+   294,
+   1527,
+   1107
+  ]
+ },
+ {
+  "name": "",
+  "type": "list",
+  "type_id": 50008,
+  "id": "190",
+  "class": "ListBox",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": true,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   295,
+   449,
+   1497,
+   1077
+  ]
+ },
+ {
+  "name": "＋ 打开书籍",
+  "type": "button",
+  "type_id": 50000,
+  "id": "191",
+  "class": "Button",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1292,
+   338,
+   1467,
+   388
+  ]
+ },
+ {
+  "name": "系列 / 标签",
+  "type": "button",
+  "type_id": 50000,
+  "id": "192",
+  "class": "Button",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   977,
+   338,
+   1127,
+   388
+  ]
+ },
+ {
+  "name": "阅读统计",
+  "type": "button",
+  "type_id": 50000,
+  "id": "193",
+  "class": "Button",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1137,
+   338,
+   1282,
+   388
+  ]
+ },
+ {
+  "name": null,
+  "type": "title bar",
+  "type_id": 50037,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   285,
+   259,
+   1527,
+   294
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu bar",
+  "type_id": 50010,
+  "id": "MenuBar",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   265,
+   265,
+   293,
+   293
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu item",
+  "type_id": 50011,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   265,
+   265,
+   293,
+   293
+  ]
+ },
+ {
+  "name": "Minimize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1349,
+   257,
+   1409,
+   294
+  ]
+ },
+ {
+  "name": "Maximize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1409,
+   257,
+   1468,
+   294
+  ]
+ },
+ {
+  "name": "Close",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1468,
+   257,
+   1528,
+   294
+  ]
+ }
+]

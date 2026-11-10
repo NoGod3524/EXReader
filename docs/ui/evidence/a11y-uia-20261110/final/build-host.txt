@@ -1,0 +1,6 @@
+
+Algorithm       Hash                                                                   Path
+---------       ----                                                                   ----
+SHA256          51742953305F56428E8E99E069B851F1AD88C8F01D57323B740A563351F6AC68       C:\Users\Oscar\Documents\Codex\E…
+SHA256          79E9496E24DD2DA013AA931D8AC3B07AF39A5DC9976E644F17ABF30BD18ACD6C       C:\Users\Oscar\Documents\Codex\E…
+
