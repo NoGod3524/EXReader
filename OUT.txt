@@ -16,3 +16,4 @@
 X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
 [Y4 A] 2026-11-10: clean worktree; branch codex/dx-editor-main-20261110 at 6cb452da, matching #124 integration base. Starting X1 then X6 merges.
 [Y4 X1] Merged IO hooks and 13 bridge test groups. Kept #124 tools/docx verifier and release scripts unchanged (scope); moved bridge declarations from formats.h to edit.h. Excluded historical evidence/x1; OUT3 retained. No model conflict in this merge.
+[Y4 X6] Union merge: src/docx_edit.c retains X6 table/row/cell/image ownership + X1 opaque/section handling; src/docx_edit_io.c retains newer X1 section/reference/namespace fixes and X6 shared XML/table/image IO hooks. edit.h and CMake test lists/layers retain both additions. Renamed X6 edit_internal.h to docx_edit_model_internal.h to respect scope; docs/tools retained from #124. OUT conflict kept prior Y4 log; OUT2 retained. cmake/modules.cmake already discovers sources from layers (no conflict/change needed).
