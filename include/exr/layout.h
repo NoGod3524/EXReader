@@ -504,6 +504,19 @@ EXR_API size_t exr_pager_cached_count(const exr_pager *pager);
 EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);
 typedef struct { size_t hits,misses; } exr_pager_cache_stats;
 EXR_API exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);
+typedef exr_pager_cache_stats exr_pager_cache_stats_legacy;
+/* Keep the original type and by-value function source/ABI compatible.
+   Initialize struct_size to sizeof(exr_pager_cache_stats_v1); larger buffers
+   are accepted and bytes beyond this version are untouched. Both getters read
+   the same lifetime get() hit/miss counters, including lookups that later fail
+   or reach EOF. Sequential next() does not use the page cache, so it leaves
+   hits/misses unchanged; each delivered page still increments requests. */
+typedef struct {
+  size_t struct_size;
+  uint64_t requests, hits, misses;
+} exr_pager_cache_stats_v1;
+EXR_API exr_status exr_pager_cache_stats_get(const exr_pager *pager,
+  exr_pager_cache_stats_v1 *out, exr_error *error);
 /* Bounded in-memory replay checkpoints, separate from the page payload cache.
    Defaults: 4 entries / 2 MiB / every 16 pages in get() mode. Capacity zero disables.
    Capacity <=64, nonzero budget/interval required when enabled; not serialized. */
