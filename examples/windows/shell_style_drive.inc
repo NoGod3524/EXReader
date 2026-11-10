@@ -117,8 +117,7 @@ static int style_drive(const char *action) {
   }
   if(!strcmp(action,"style_pick")) {
     int i=atoi(drive_args[1]);if(i<0 || i>=shell_preset_count){drive_step_finish(0,"no such preset");return 0;}
-    SendMessageW(style_preset,CB_SETCURSEL,(WPARAM)i,0);
-    SendMessageW(shell_panel,WM_COMMAND,MAKEWPARAM(IDC_STYLE_PRESET,CBN_SELCHANGE),(LPARAM)style_preset);
+    shell_preset_pick(i);
     drive_expect_idle=1;return 1;
   }
   if(!strcmp(action,"style_dump")){drive_step_finish(style_drive_dump(drive_args[1]),"style captured");return 0;}

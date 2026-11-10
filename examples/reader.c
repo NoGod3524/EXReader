@@ -128,7 +128,7 @@ static int host_offscreen;
 static HWND host_focus(HWND window) { return host_offscreen ? GetFocus() : SetFocus(window); }
 #define SetFocus host_focus
 #ifdef EXR_READER_WINDOWS_SHELL
-static int shell_drive_on, shell_legacy, shell_active;
+static int shell_drive_on, shell_active;
 static int shelf_requested, shelf_visible, shelf_exit_pending, shell_bar_hidden, shell_tap_edge=25;
 static void shelf_create(HWND parent);
 static void shelf_show(int show);
@@ -418,7 +418,7 @@ static void shelf_fixed_page(int64_t id,const exr_fixed_page *pages,size_t count
 static int dragging;
 #ifdef EXR_READER_WINDOWS_SHELL
 static int shell_wants_reading(void) {
-  return host_shell && (g.drive_mode ? shell_drive_on : 1) && !shell_legacy;
+  return host_shell && (g.drive_mode ? shell_drive_on : 1);
 }
 static shell_geometry shell_snapshot(void) {
   RECT client = {0}; shell_geometry out = {0};
@@ -5082,7 +5082,6 @@ static void open_selected_book(void) {
   LRESULT index;
   host_job *job;
 #ifdef EXR_READER_WINDOWS_SHELL
-  shell_legacy = 0; /* opening a book returns to the reading screen */
   if(!shelf_before_exit()) return;
   if(!shelf_capture()) return;
   shelf_requested=0;shell_bar_hidden=0;
@@ -6440,6 +6439,7 @@ static int drive_execute(void) {
   if (!strcmp(action,"shell_render_focus")) {
     HWND previous=shell_render_focus;
     shell_render_focus=shell_button_named(drive_args[1]);
+    shell_bar_regions(shell_render_focus);
     if(previous) InvalidateRect(previous,NULL,FALSE);
     if(shell_render_focus) InvalidateRect(shell_render_focus,NULL,FALSE);
     drive_step_finish(host_offscreen,"offscreen drawing-state injection; no activation");return 0;

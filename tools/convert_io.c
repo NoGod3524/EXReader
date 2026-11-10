@@ -483,7 +483,6 @@ int cv_read_file(const char *path, unsigned char **data, size_t *size, char **er
   bytes[at] = 0; *data = bytes; *size = at;
   return 1;
 }
-void cv_sha256_file_init(void) {}
 #else
 int cv_identity(const char *path, cv_file_id *id, char **error) {
   struct stat st;

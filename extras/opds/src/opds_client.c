@@ -298,8 +298,6 @@ static int dl_write(void *ctx, const void *data, size_t n) {
   return 0;
 }
 
-static int has_sep(const char *p) { return strchr(p, '/') || strchr(p, '\\'); }
-
 static int reserved_name(const char *name) {
   char base[16];
   size_t n = 0;
