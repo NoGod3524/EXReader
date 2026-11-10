@@ -5,7 +5,11 @@
 static void sy_drive_pump(unsigned ms) {
   ULONGLONG end=GetTickCount64()+ms;MSG m;
   while(GetTickCount64()<end) {
-    while(PeekMessageW(&m,NULL,0,0,PM_REMOVE)) {TranslateMessage(&m);DispatchMessageW(&m);}
+    while(PeekMessageW(&m,NULL,0,0,PM_REMOVE)) {
+      /* The drive timer must not re-enter this unfinished sync_wait step. */
+      if(m.hwnd==g.window && m.message==WM_TIMER && m.wParam==1) continue;
+      TranslateMessage(&m);DispatchMessageW(&m);
+    }
     Sleep(10);
   }
 }
