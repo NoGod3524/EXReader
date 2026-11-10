@@ -969,6 +969,9 @@ if(EXR_FULL_TESTS)
         ${CMAKE_CURRENT_BINARY_DIR}/convert-cli-work
         ${CMAKE_CURRENT_BINARY_DIR}/native-convert-cli.json)
       set_tests_properties(native-convert-cli PROPERTIES FIXTURES_REQUIRED convert-corpus)
+      add_test(NAME native-docx-write COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_docx_write.py
+        $<TARGET_FILE:exreader-convert> ${CMAKE_CURRENT_BINARY_DIR}/docx-write-test)
       set(exr_convert_benchmark_options)
       if(EXR_SANITIZE AND NOT MSVC)
         list(APPEND exr_convert_benchmark_options --instrumented)

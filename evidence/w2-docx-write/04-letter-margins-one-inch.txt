@@ -1,0 +1,218 @@
+Window: "verified.docx - Compatibility Mode - Word", App: WINWORD.EXE.
+	0 window (disabled) verified.docx - Compatibility Mode - Word Secondary Actions: Raise
+		455 window Page Setup Secondary Actions: Raise
+			516 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 36
+			517 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 38
+			518 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 40
+			519 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 42
+			520 edit (settable, string) RichEdit Control Value: 0 cm ID: 44
+			464 title bar (settable, string) Value: Page Setup
+				465 button Context help
+				466 button Close
+			521 tab (settable, string) Value: Margins
+				522 tab item (selectable) Margins
+				523 tab item (selectable) Paper
+				524 tab item (selectable) Layout
+				525 tab item (selectable) Document Grid
+			526 text Margins
+			527 text Top:
+			528 spinner (settable, string) Top: Value: 2.54 cm
+			529 text Bottom:
+			530 spinner (settable, string) Bottom: Value: 2.54 cm
+			531 text Left:
+			532 spinner (settable, string) Left: Value: 2.54 cm
+			533 text Right:
+			534 spinner (settable, string) Right: Value: 2.54 cm
+			535 text Gutter:
+			536 spinner (settable, string) Gutter: Value: 0 cm
+			537 text Gutter position:
+			538 combo box (settable, string) Gutter position: Value: Left
+			539 text Portrait
+			540 text Landscape
+			541 radio button (selectable) Portrait
+			542 radio button (selectable) Landscape
+			543 text Orientation
+			544 text Pages
+			545 text Multiple pages:
+			546 combo box (settable, string) Multiple pages: Value: Normal
+			485 text Apply to:
+			547 combo box (settable, string) Apply to: Value: Whole document
+			487 text Preview
+			488 image Preview
+			490 button Set As Default
+			491 button OK
+			492 button Cancel
+			493 image
+		1 pane (disabled) DropShadowTop
+		2 pane (disabled) MsoDockTop
+			3 tool bar Description: Ribbon toolbar
+				4 pane Ribbon
+					5 pane (disabled)
+						6 Pane Secondary Actions: Raise
+							7 Pane Ribbon
+								8 ToolBar Quick Access Toolbar
+									9 Toggle Switch AutoSave ID: AutoSaveSwitch
+									10 Button Save ID: FileSave
+									11 SplitButton (disabled) Can't Undo ID: Undo
+										12 Button (disabled) Can't Undo
+										13 Menu Item (disabled) More Options ID: Undo_Dropdown
+									14 Button (disabled) Can't Repeat ID: RedoOrRepeat
+									15 Menu Item Customize Quick Access Toolbar
+								16 Title Bar ‪verified.docx - Compatibility Mode‬ - Saved to this PC
+									17 Menu Item (disabled) ‪verified.docx - Compatibility Mode‬ - Saved to this PC
+								18 Menu Item Type to search and use the up and down arrow keys to navigate ID: TellMeControlAnchor
+									19 Edit Box (settable, string) Microsoft search Value: Search ID: TellMeTextBoxAutomationId
+								20 Menu Item 一诺 许 ID: MeControlWidget
+								21 Button Minimize
+								22 Button Maximize
+								23 Button Close
+								24 Button File Tab ID: FileTabButton
+								25 Pane Ribbon Tabs
+									26 Tab Item (selectable) Home ID: TabHome
+									27 Tab Item (selectable) Insert ID: TabInsert
+									28 Tab Item (selectable) Draw ID: TabDrawInk
+									29 Tab Item (selectable) Design ID: TabWordDesign
+									30 Tab Item (selectable) Layout ID: TabPageLayoutWord
+									31 Tab Item (selectable) References ID: TabReferences
+									32 Tab Item (selectable) Mailings ID: TabMailings
+									33 Tab Item (selectable) Review ID: TabReviewWord
+									34 Tab Item (selectable) View ID: TabView
+									35 Tab Item (selectable) Help ID: HelpTab
+									36 Button Comments
+									37 ComboBox (settable, string) Editing Value: Editing
+									38 Menu Item Share
+								39 Pane Lower Ribbon
+									417 Group Layout
+										418 Group Page Setup
+											419 Menu Item Text Direction ID: TextDirectionGalleryWord
+											420 Menu Item Margins ID: PageMarginsGallery
+											421 Menu Item Orientation ID: PageOrientationGallery
+											422 Menu Item Size ID: PageSizeGallery
+											423 Menu Item Columns ID: TableColumnsGallery
+											424 Menu Item Breaks ID: BreaksGallery
+											425 Menu Item Line Numbers ID: LineNumbersMenu
+											426 Menu Item Hyphenation ID: HyphenationMenu
+											427 Button Page Setup... ID: PageSetupDialog
+										428 Group Paragraph
+											429 Spinner (settable, string) Indent Left Value: 0 cm ID: ParagraphIndentLeft
+											430 Button More
+											431 Button Less
+											432 Spinner (settable, string) Indent Right Value: 0 cm ID: ParagraphIndentRight
+											433 Button More
+											434 Button Less
+											435 Spinner (settable, string) Spacing Before Value: 0 pt ID: ParagraphSpacingBefore
+											436 Button More
+											437 Button Less
+											438 Spinner (settable, string) Spacing After Value: 6 pt ID: ParagraphSpacingAfter
+											439 Button More
+											440 Button Less
+											441 Button Paragraph... ID: ParagraphDialog
+										442 Group Arrange
+											443 Menu Item (disabled) Position ID: PicturePositionGallery
+											444 Menu Item (disabled) Wrap Text ID: TextWrapGallery
+											445 SplitButton (disabled) Bring Forward
+												446 Button (disabled) Bring Forward ID: ObjectBringForward
+												447 Menu Item (disabled) More Options ID: ObjectBringForwardMenu_Dropdown
+											448 SplitButton (disabled) Send Backward
+												449 Button (disabled) Send Backward ID: ObjectSendBackward
+												450 Menu Item (disabled) More Options ID: ObjectSendBackwardMenu_Dropdown
+											451 Button Selection Pane... ID: SelectionPane
+											452 Menu Item Align ID: ObjectAlignMenu
+											453 Menu Item (disabled) Group ID: ObjectsGroupMenu
+											454 Menu Item (disabled) Rotate ID: ObjectRotateGallery
+								121 Menu Item Ribbon Display Options
+		122 pane (disabled) MsoDockBottom
+			123 tool bar Description: Status Bar toolbar
+				124 pane Status Bar
+					125 pane (disabled)
+						126 Pane Secondary Actions: Raise
+							127 Status Bar Status Bar
+								169 Button Page Number Page 1 of 2
+								170 Text Word Count 83 words
+								171 Button Coauthoring Mode
+								172 Button Spelling and Grammar Check Errors
+								173 Button Language English (United States)
+								174 Button Text Predictions Text Predictions: Off
+								175 Button Accessibility Checker Accessibility: Unavailable
+								129 Button Focus
+								130 Button Read Mode
+								131 Button Print Layout
+								132 Button Web Layout
+								133 Button Zoom Out (Ctrl -) Value: 100
+								134 Slider (settable, float) Zoom Value: 1000
+									135 Button Zoom Out
+									136 Thumb Position
+									137 Button Zoom In
+								138 Button Zoom In (Ctrl +) Value: 100
+								139 Button Zoom 100%
+								140 Thumb Size box
+		141 pane
+			142 pane verified.docx - Compatibility Mode
+				143 document verified.docx - Compatibility Mode
+					144 page Page 1 ID: UIA_AutomationId_Word_Page_1
+						145 edit Header -Section 1-
+							146 Field page
+						147 edit Page 1 content ID: Body
+							148 Field date
+						149 edit Footer -Section 1-
+					150 page Page 2 ID: UIA_AutomationId_Word_Page_2
+						151 edit Header -Section 1-
+							152 Field page
+						153 edit Page 2 content ID: Body
+						154 edit Footer -Section 1-
+				155 pane (disabled) Vertical
+					156 Pane Secondary Actions: Raise
+						157 ScrollBar (settable, float) Value: 0
+		163 title bar (settable, string) Value: verified.docx - Compatibility Mode - Word
+			164 menu bar System ID: MenuBar
+				165 menu item System
+			166 button Minimize
+			167 button Maximize
+			168 button Close
+		455 window Page Setup Secondary Actions: Raise
+			516 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 36
+			517 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 38
+			518 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 40
+			519 edit (settable, string) RichEdit Control Value: 2.54 cm ID: 42
+			520 edit (settable, string) RichEdit Control Value: 0 cm ID: 44
+			464 title bar (settable, string) Value: Page Setup
+				465 button Context help
+				466 button Close
+			548 tab (settable, string) Value: Margins
+				549 tab item (selectable) Margins
+				550 tab item (selectable) Paper
+				551 tab item (selectable) Layout
+				552 tab item (selectable) Document Grid
+			526 text Margins
+			527 text Top:
+			528 spinner (settable, string) Top: Value: 2.54 cm
+			529 text Bottom:
+			530 spinner (settable, string) Bottom: Value: 2.54 cm
+			531 text Left:
+			532 spinner (settable, string) Left: Value: 2.54 cm
+			533 text Right:
+			534 spinner (settable, string) Right: Value: 2.54 cm
+			535 text Gutter:
+			536 spinner (settable, string) Gutter: Value: 0 cm
+			537 text Gutter position:
+			553 combo box (settable, string) Gutter position: Value: Left
+			539 text Portrait
+			540 text Landscape
+			541 radio button (selectable) Portrait
+			542 radio button (selectable) Landscape
+			543 text Orientation
+			544 text Pages
+			545 text Multiple pages:
+			554 combo box (settable, string) Multiple pages: Value: Normal
+			485 text Apply to:
+			555 combo box (settable, string) Apply to: Value: Whole document
+			487 text Preview
+			488 image Preview
+			490 button Set As Default
+			491 button OK
+			492 button Cancel
+			493 image
+
+Document text: ```
+0 cm
+```
