@@ -11,14 +11,21 @@ static void test_annotations(void) {
     annot_selected=-1;assert(select_set((exr_text_position){0,(size_t)i*3},(exr_text_position){0,(size_t)i*3+3},-1,1));
     assert(annot_commit(i>=5 ? "笔记\n\"quote\"\\😀":"",i%3));
   }
-  assert(annot_count==8);cv_text saved={0};annot_serialize(&saved);assert(!saved.failed);
+  assert(annot_count==8 && annot_storage.dirty);
+  assert(GetFileAttributesW(annot_path)==INVALID_FILE_ATTRIBUTES);
+  annot_autosave();assert(annot_storage.dirty && annot_storage.autosaved==annot_storage.revision);
+  assert(annot_save() && !annot_storage.dirty);
+  cv_text saved={0};annot_serialize(&saved);assert(!saved.failed);
   annot_clear();assert(annot_parse(saved.data,saved.size));annot_resolve();annot_writable=1;
   for(int i=0;i<8;i++)assert(annotations[i].found && annotations[i].range.start.offset==(size_t)i*3 && annotations[i].color==i%3);
   annot_selected=7;select_all_part();assert(annot_selected==-1);
   assert(!strcmp(annotations[7].text,"笔记\n\"quote\"\\😀"));
   wchar_t good[HOST_PATH];copy_wstring(good,HOST_PATH,annot_path);copy_wstring(annot_path,HOST_PATH,L"Z:\\missing-exreader-folder\\file.json");
-  annot_selected=7;assert(!annot_commit("unsaved",0));assert(!strcmp(annotations[7].text,"笔记\n\"quote\"\\😀"));
-  assert(!annot_delete());assert(annot_count==8);copy_wstring(annot_path,HOST_PATH,good);
+  annot_selected=7;assert(annot_commit("unsaved",0));assert(!annot_save() && annot_storage.dirty);
+  assert(!strcmp(annotations[7].text,"unsaved"));
+  assert(annot_delete() && annot_count==7);assert(!annot_save());copy_wstring(annot_path,HOST_PATH,good);
+  assert(shell_save_equal(good,saved.data,saved.size,annot_validate,NULL));
+  assert(annot_parse(saved.data,saved.size));annot_resolve();
   for(int vertical=0;vertical<2;vertical++) {
     prepare_layout(vertical);size_t pixels=(size_t)g.frame.bitmap.width*g.frame.bitmap.height;
     uint32_t *copy=malloc(pixels*4);assert(copy);memcpy(copy,g.frame.dib,pixels*4);
@@ -29,10 +36,17 @@ static void test_annotations(void) {
   }
   annot_selected=7;assert(annot_commit("edited",2));assert(annotations[7].color==2 && !strcmp(annotations[7].text,"edited"));
   assert(annot_delete());assert(annot_count==7);
+  annot_selected=6;annot_open();SetWindowTextW(annot_edit,L"unsubmitted editor draft 中文 😀");
+  assert(annot_storage.dirty && !strcmp(annotations[6].text,"unsubmitted editor draft 中文 😀"));
+  annot_autosave();char *draft=NULL;size_t draft_size=0;
+  assert(shell_save_recovery(annot_path,&draft,&draft_size,annot_validate,NULL)==1);
+  assert(strstr(draft,"unsubmitted editor draft"));free(draft);annot_cancel_edit();
+  assert(strcmp(annotations[6].text,"unsubmitted editor draft 中文 😀"));
+  assert(annot_save() && !annot_storage.dirty);
   shell_annotation *items=annotations;int count=annot_count;annotations=NULL;annot_count=0;
   assert(!annot_parse("{\"version\":2}",13));assert(!annot_parse("{broken",7));
   const char *nul="{\"version\":1,\"text\":\"\\u0000\"}";assert(!annot_parse(nul,strlen(nul)));
   annotations=items;annot_count=count;annot_clear();cv_text_free(&saved);exr_library_close(g.library);g.library=NULL;
   DeleteFileW(good);RemoveDirectoryW(directory);
-  puts("ANNOTATIONS restore 8/8; UTF-8 escaping; colors 3/3; rollback 2/2; horizontal/vertical ink unchanged; edit/delete; malformed/version reject");
+  puts("ANNOTATIONS dirty/save/edit; autosave; UTF-8 editor draft + cancel; failed save retains memory + original; horizontal/vertical ink unchanged; malformed/version reject");
 }

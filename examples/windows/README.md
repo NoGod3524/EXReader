@@ -67,3 +67,47 @@ point `font_file` at Reader.otf, and set `serif = Noto Serif SC` and
 Build with an SDK exposing `exr/font_manager.h` and its 12 symbols. Measured
 startup, real-book page hashes and DPI-aware UI captures are documented in
 [`font-manager-host evidence`](../../docs/ui/evidence/font-manager-host/README.md).
+
+## Autosave and recovery (X4)
+
+The shell's notes and highlights are one editable document per book. Edits,
+including text still in the note editor, set its dirty bit and the window's `*`.
+The note editor's Save button and Ctrl+S explicitly save the document. Closing,
+returning to the shelf, or opening another book offers Save / Discard / Cancel.
+Cancelling the note editor restores its opening contents in memory.
+
+The default autosave interval is 30 seconds; `--autosave-seconds N` accepts
+1–86400 seconds. Clean documents and unchanged autosave revisions perform no
+writes. Notes remain at `%APPDATA%\EXReader\annotations\<book-sha256>.json`
+(override with `EXREADER_ANNOTATIONS_DIR`). Their recovery copy is that original
+path plus `.autosave`; autosave never changes the original JSON or the book.
+On reopening the last book at startup, a newer recovery copy offers
+“有未保存的修改，是否恢复？”. Recovery keeps the document dirty; Discard deletes
+the copy. A missing original also permits recovery. A corrupt copy reports
+“副本损坏，无法恢复” and leaves the saved original available.
+
+`shell_save.h` is independent of the SDK and editor. It uses a same-directory
+`.tmp`, `FlushFileBuffers`, and `MoveFileExW(REPLACE_EXISTING | WRITE_THROUGH)`.
+It validates structure and exact bytes before replacement and immediately
+reads back the installed file. A flushed `.bak` restores the previous bytes
+and modification time if readback fails. Failed saves keep edits dirty. The
+autosave envelope contains `EXRAUTO1`, a little-endian 64-bit payload length,
+CRC32 of the payload, and CRC32 of the first 20 header bytes (24 bytes total).
+The JSON validator checks the schema, book identity, and every note's anchors.
+A per-document Win32 lock prevents two host processes overwriting each other's
+temporary files. Recovery ignores unfinished `.tmp` files.
+
+```powershell
+cmake --build build/win-host --target EXReader check_shell_save check_shell_selection
+build/win-host/check_shell_save.exe selftest build/storage-check
+build/win-host/check_shell_selection.exe annotations tests/fixtures/fonts/primary.ttf
+python -X utf8 examples/windows/check_shell_autosave.py build/win-host/EXReader.exe C:/path/to/Reader.otf build/win-host/check_shell_save.exe build/x4-evidence
+```
+
+The acceptance script waits 35 seconds after an unsubmitted UTF-8 draft,
+checks timestamps and SHA-256, force-kills and restarts the host, recovers and
+compares content, rejects a truncated copy, and tests Save / Discard / Cancel.
+The storage check executable alone enables fault injection: three pauses in
+the production write function let the parent force-kill at a partial write,
+after flush, and immediately before replacement. It also injects post-save
+readback corruption and checks rollback. These hooks are absent from EXReader.

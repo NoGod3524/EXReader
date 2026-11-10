@@ -29,6 +29,7 @@
 #include "windows/shell_geometry.h"
 #include "../tools/convert_json.h"
 #include "windows/shell_speech.h"
+#include "windows/shell_save.h"
 int shell_epub_source(exr_source *source);
 int shell_style_document(exr_document **document);
 /* Created with the main window; draws the reading screen (windows/shell_screen.inc). */
@@ -174,6 +175,10 @@ static int shell_drag_begin;
 static void shell_selection_reset(void);
 static void shell_selection_landed(void);
 static void annot_sync(void);
+static int annot_before_leave(void);
+static int annot_save(void);
+static void annot_autosave(void);
+static unsigned shell_autosave_seconds=30;
 static int annot_translate(const MSG *message);
 static int annot_command(int command);
 static int annot_click(int x,int y);
@@ -1683,6 +1688,11 @@ static void job_supersede(void) {
 
 static void job_submit(host_job *job) {
   if (!job) return;
+#ifdef EXR_READER_WINDOWS_SHELL
+  if((job->kind==JOB_OPEN || job->kind==JOB_IMPORT) && !annot_before_leave()) {
+    job_release(job);return;
+  }
+#endif
   if (g.closing) {
     job_release(job);
     return;
@@ -5166,6 +5176,9 @@ static void delete_selected_book(void) {
   }
   int64_t id=g.shelf[index].id;
   if(id<=0) { set_status(L"此书没有可移除的本机原书。");return; }
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(g.has_current && id==g.current.id && !annot_before_leave())return;
+#endif
 #ifdef EXR_READER_PRODUCT_CATALOG
   host_job *job=job_new(JOB_PRODUCT_DELETE);
   if(!job) { set_status(L"内存不足，无法删除书籍。");return; }
@@ -7530,6 +7543,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
     }
     case WM_TIMER:
 #ifdef EXR_READER_WINDOWS_SHELL
+      if(wparam==SHELL_SAVE_TIMER) {annot_autosave();return 0;}
       if (wparam == SHELF_TIMER) {shelf_pump();return 0;}
       if(wparam==0x5760) { sm_tick(); return 0; }
       if(wparam==0x5453) {tts_poll();return 0;}
@@ -7570,6 +7584,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_CLOSE:
 #ifdef EXR_READER_WINDOWS_SHELL
+      if(!g.closing && !annot_before_leave())return 0;
       tts_stop();
 #endif
       if (g.closing) return 0;
@@ -7619,6 +7634,9 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_DESTROY:
       KillTimer(window, 1);
+#ifdef EXR_READER_WINDOWS_SHELL
+      KillTimer(window,SHELL_SAVE_TIMER);
+#endif
 #ifdef EXR_READER_WINDOWS_PREFERENCES
       prefs_destroy_menu(window);
 #endif
@@ -7826,6 +7844,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     else if (!wcscmp(argv[i], L"--library")) { copy_wstring(library_override, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--font-config")) { copy_wstring(font_config, HOST_PATH, value); i++; }
     else if (!wcscmp(argv[i], L"--font")) { copy_wstring(font_path, HOST_PATH, value); i++; }
+#ifdef EXR_READER_WINDOWS_SHELL
+    else if (!wcscmp(argv[i],L"--autosave-seconds")) {
+      wchar_t *end=NULL;unsigned long seconds=wcstoul(value,&end,10);
+      if(!value[0] || *end || seconds<1 || seconds>86400) {LocalFree(argv);return 2;}
+      shell_autosave_seconds=(unsigned)seconds;i++;
+    }
+#endif
     else if (!wcscmp(argv[i], L"--phase")) { copy_wstring(phase, 32, value); i++; }
     else if (argv[i][0] != L'-') copy_wstring(book_path, HOST_PATH, argv[i]);
   }
