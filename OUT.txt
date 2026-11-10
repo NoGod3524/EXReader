@@ -1,0 +1,156 @@
+D2 EPUB 媒体续跑收尾（2026-11-10）
+分支：codex/media-epub-2-20261110
+接手提交：bb672b35；最终被测源码：c60951f0；对照基线：6000a89d。
+证据目录：evidence/d2-media-20261110/；入口：该目录 README.md。
+
+① Claude 做到哪
+
+MEDIA-OUT.txt 接手时最后一行原文：
+“步骤 6：4 本语料识别/SMIL/降级截图已生成（../d2m-report）；19 本真书基线-候选渲染在后台运行；完整 ctest 在后台运行（../d2m-ctest.log）。”
+
+实际接手时后台验证已结束。旧 DLL 的 19 本对比为零变化；完整 ctest 为 258/260，失败 sdk-release 与 native-chapter-index（原始日志已保存为 claude-ctest.txt）。
+但该 DLL 的写入时间为 17:18:47，已保存的 document.c 晚于它，源码还存在对已删除字段 media_expected 的引用。因此旧 DLL 的通过结果不能代替最终源码验证。
+
+② 本次补完了什么
+
+1. 补齐最后的占位节点接线：删除 media.c 对不存在的 media_expected 字段的访问；只在 EPUB 解析时预留空占位节点，媒体扫描填写文字。保留原有识别、时长探测、SMIL 和降级实现。
+2. 修复 generic XML 与流式 chapter-index 的节点数差异；占位节点保持源码顺序，避免布局漏字或截断。tests/test_media_epub.c 只新增可见文本节点顺序断言，未删除或放宽已有断言。
+3. 重新构建最终源码，重跑 4 组媒体测试、chapter-index、完整 260 项 ctest、19 本真书逐页回归、层依赖审计及版本检查。
+4. 重新生成 4 本媒体语料的识别/映射 JSON 和 7 张截图；补《草枕》真实 SMIL 的 439 个片段映射与 16 张部件首页截图。4 本合成 EPUB 一并入证据库，真书仍在原位置。
+5. 追查 SDK 验证：MinGW 构建只生成 libexreader.dll.a，而 Windows README 用 MSVC 链接 exreader.lib。用现有 MSVC lib.exe 从当前 DLL 的 438 项导出生成匹配的导入库后，重新跑通完整 SDK smoke。未改变 DLL、编译开关或发布检查脚本。
+6. 保存原始日志、逐书页数/哈希变化表、媒体测量表、配置和输入 SHA-256；本报告补入原先为空的 OUT.txt。
+
+③ 验证命令及实际输出
+
+以下命令在本工作树根目录执行；完整输出在证据目录。返回码由实际进程记录。
+
+A. 构建
+命令：cmake --build ../d2m-build -j 4
+最终输出末段（build-final.txt）：
+[165/168] Linking C executable exreader-media-epub-test.exe
+[166/168] Linking C executable exreader-pdf-deepening-test.exe
+[167/168] Linking C executable exreader-epub-strict-test.exe
+返回码：0。
+最终 DLL SHA-256：7eb56b6c8be32ad8350c1dfa1f54980daf2c392e9bee5d7bbd520966535284f1。
+
+B. 4 组媒体测试
+命令：ctest --test-dir ../d2m-build -R '^native-media-epub-' -V
+实际输出摘录（media-ctest.txt）：
+245: elements: 4 media elements, labels visible in part text
+246: overlay: par p1  text[0,4)="One."  <->  OPS/audio/a.wav 0-1500 ms
+246: overlay: par p2  text[5,9)="Two."  <->  OPS/audio/a.wav 1500-3000 ms
+246: overlay: par p3  text[10,16)="Three."  <->  OPS/audio/gone.wav 1000-2000 ms  (audio missing)
+247: degrade: state=1  "[Audio unavailable: audio/gone.mp3 is missing from this book]"
+247: degrade: state=2  "[Embedded media not supported: movie.swf (application/x-shockwave-flash)]"
+247: degrade: state=3  "[Video is online: http://example.com/v.mp4 - not loaded]"
+247: degrade: state=4  "[Audio: no source given]"
+100% tests passed out of 4
+Total Test time (real) = 2.00 sec
+返回码：0。
+
+C. chapter-index 回归
+命令：ctest --test-dir ../d2m-build -R ^native-chapter-index$ --output-on-failure
+输出（chapter-index.txt）：
+1/1 Test #32: native-chapter-index .............   Passed    1.74 sec
+100% tests passed out of 1
+Total Test time (real) = 1.78 sec
+返回码：0。
+
+D. 完整 ctest 与失败项复测（不是一次全套 260/260）
+命令：ctest --test-dir ../d2m-build --output-on-failure -j 2
+输出（ctest-final.txt）：
+99% tests passed, 3 tests failed out of 260
+Total Test time (real) = 337.15 sec
+The following tests FAILED:
+  1 - sdk-release (Failed)
+ 39 - native-library-stream (Failed)
+106 - native-publication-index-boundaries (Failed)
+返回码：8；实际为 257/260。
+
+library-stream 与 index-boundaries 首轮均无诊断输出；没有改动它们的实现或断言。直接运行 boundaries 返回 publication index boundaries passed、exit_code=0（index-boundaries-retry.txt）。
+随后命令：ctest --test-dir ../d2m-build --rerun-failed --output-on-failure -j 1
+输出（ctest-rerun-failed.txt）：
+2/3 Test #39: native-library-stream .................   Passed    5.10 sec
+3/3 Test #106: native-publication-index-boundaries ...   Passed    4.04 sec
+67% tests passed, 1 tests failed out of 3
+Total Test time (real) = 17.75 sec
+仅 sdk-release 仍失败，返回码：8。
+两项无输出失败的根因尚未隔离；串行复测已成功，不将其归因为已证实的负载问题。
+
+E. SDK smoke 的具体失败层与补验证
+首轮和第一次复测已通过打包、解压、438 项导出及版本检查，卡在 README 的 MSVC 链接命令：
+LINK : fatal error LNK1181: cannot open input file 'lib\exreader.lib'
+FAIL: README three commands failed with exit 1
+
+补验证所用环境准备：
+将生成的 ../d2m-build/exreader.def 前加 LIBRARY libexreader.dll，写到 ../d2m-build/msvc-compat.def（副本已入证据库）。
+New-Item -ItemType Directory -Force ../d2m-build/Release
+& 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\lib.exe' /nologo /def:../d2m-build/msvc-compat.def /machine:x64 /out:../d2m-build/Release/exreader.lib
+输出（msvc-import.txt）：
+Creating library ../d2m-build/Release/exreader.lib and object ../d2m-build/Release/exreader.exp
+exit_code=0
+
+再次命令：ctest --test-dir ../d2m-build --rerun-failed --output-on-failure -j 1
+输出（ctest-sdk-final.txt）：
+1/1 Test #1: sdk-release ......................   Passed    8.27 sec
+100% tests passed out of 1
+Total Test time (real) = 8.28 sec
+返回码：0。
+sdk-smoke/smoke.txt 中重定位后的 CLI 实际输出：
+Version: 3.42.0
+Format: EPUB
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+exit: 0
+sdk-smoke/smoke.json：passed=true；三条 README 命令 exit_code 均为 0；示例 2 页、目录 1 项，720×1040 PGM，129549 个非白像素；CLI 为 EPUB、3.42.0。
+因此 260 项各自均取得通过记录；全套首轮及两次复测日志全部保留。
+
+F. 19 本真书逐页回归
+命令：python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll ../d2m-build/libexreader.dll --font C:/Windows/Fonts/NotoSerifSC-VF.ttf --layout tools/regress/layout.json --output evidence/d2-media-20261110/real-final.json --baseline evidence/d2-media-20261110/real-before.json --workers 3 --source-revision c60951f0
+输出末行（real-final.txt）：
+{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11426, "total_glyphs": 8648571, "wall_seconds": 203.025383, "sum_book_seconds": 565.53115, "fastest_book": "the-house-on-mango-street", "slowest_book": "hongloumeng-24264"}
+返回码：0。
+另以保存的 JSON 独立比较：
+python tools/regress/run_realbooks.py --baseline evidence/d2-media-20261110/real-before.json --candidate evidence/d2-media-20261110/real-final.json --output evidence/d2-media-20261110/real-final-verified.diff.json
+实际输出（real-compare.txt）：
+{"comparable": true, "incompatible_conditions": [], "added_books": [], "removed_books": [], "hash_changed_pages": 0, "failed_books": [], "needs_review": false}
+返回码：0。19 本逐书页数、字形数与 11426 页像素哈希全部不变；books-table.csv 列出逐书结果。运行耗时只记录，不作为性能结论。
+
+G. 合成语料与真实 SMIL
+命令：python tests/media_corpus/media_report.py ../d2m-build/libexreader.dll C:/Windows/Fonts/NotoSerifSC-VF.ttf tools/regress/layout.json evidence/d2-media-20261110/media-final ../d2m-corpus/media-av.epub ../d2m-corpus/media-cover-bgm.epub ../d2m-corpus/media-legacy.epub ../d2m-corpus/media-smil.epub
+输出（media-final.txt；下列保留主要实际字段）：
+media-av.epub: parts=1 pages=1 media=3 overlays=0
+media-cover-bgm.epub: parts=2 pages=2 media=2 overlays=0
+media-legacy.epub: parts=1 pages=2 media=6 overlays=0
+media-smil.epub: parts=2 pages=2 media=0 overlays=2
+返回码：0。实际 MP3/M4A/MP4 时长分别 4048/3000/2000 ms；封面、autoplay/loop/background 标志和降级状态见 media-final/media-report.json。
+
+同一脚本以 tools/regress/corpus.json 中的《草枕》路径为输入、输出目录换为 evidence/d2-media-20261110/kusamakura：
+kusamakura-japanese-vertical-writing.epub: parts=16 pages=464 media=0 overlays=2
+返回码：0。kusamakura-overlays.csv 实际数据：
+part=2, smil=OPS/xhtml/一.smil, duration_ms=2015025, clips=219, missing_audio=0, unresolved_text=0
+part=3, smil=OPS/xhtml/二.smil, duration_ms=1588006, clips=220, missing_audio=0, unresolved_text=0
+
+H. 静态约束
+命令：python tools/check_layers.py ../d2m-build
+输出（layers.txt）：
+122 objects, 1391 symbol references, 0 remaining inverse references, 0 new
+1086 source/header dependencies, 0 inverse includes
+返回码：0。原新增的两个 .c 已登记；本次未新增 src/*.h。
+命令：python tools/check_version_consistency.py
+输出（version-check.txt）：PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+返回码：0。
+Get-FileHash tests/check_reading_release.py -Algorithm SHA256：
+6EB22A304686B2160D1F283A709936BFDFD65C3B0F5E10BB060F457C4FAFFB2B
+该文件及 tools/version_literal_exceptions.json 相对接手提交均无差异；后者没有重排格式。
+
+④ 没做到的、仍需补什么
+
+1. MP3/AAC 解码开关保持 OFF，基线与候选一致。原失败在 src/mp3.c:15 的 #include <minimp3.h>；候选实际配置的 _deps/minimp3-src/minimp3.h 不存在，FETCHCONTENT_SOURCE_DIR_MINIMP3 为空。续跑时发现 C:/Users/Oscar/exr-deps/minimp3/minimp3.h 已存在于另一目录，但没有擅自改配置启用。
+   要补齐 MP3，需将依赖指向经过校验、符合 cmake/deps.cmake 固定提交 ea99364f61c14656440e8d77e9c233ccf3124633 的头文件目录，或正常填充 FetchContent，再启用 EXR_ENABLE_MP3 并补解码测试。AAC 是另一个 FAAD2 依赖（固定提交 521d105979795b887ea11e1f36565e97a8fbfc53），需单独补依赖与 EXR_ENABLE_AAC 验证；不能用补 minimp3.h 代替。FAAD2 的 GPL-2.0-or-later 条件已在现有 cmake/deps.cmake 中注明。
+2. SDK 验证依赖本次显式生成的 MSVC 导入库；没有修改通用 MinGW 打包流程。干净 MinGW 构建仍需重复上述准备，或由打包任务统一处理 MSVC 导入库。导出变化后应重新生成，不能复用旧库。
+3. 两项首轮无输出失败已复测成功，根因未隔离，日志未隐藏；没有把首轮说成一次 260/260。
+4. 本实现提供识别、可见占位与 SMIL 数据映射，尚无宿主播放控件、页内媒体框输出、媒体成员流式读取或 chapter_window 媒体占位支持。具体接口缺口和上限已沿用 docs/MEDIA-EPUB.md；本次未扩展方案。
+
+推送与 draft PR：完成后追加记录。

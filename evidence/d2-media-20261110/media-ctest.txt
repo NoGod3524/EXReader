@@ -1,0 +1,60 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/d2m-build/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/d2m-build
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 245
+    Start 245: native-media-epub-elements
+
+245: Test command: C:\Users\Oscar\Documents\Codex\d2m-build\exreader-media-epub-test.exe "elements"
+245: Working Directory: C:/Users/Oscar/Documents/Codex/d2m-build
+245: Test timeout computed to be: 10000000
+245: elements: 4 media elements, labels visible in part text
+245: ok
+1/4 Test #245: native-media-epub-elements .......   Passed    0.58 sec
+test 246
+    Start 246: native-media-epub-overlay
+
+246: Test command: C:\Users\Oscar\Documents\Codex\d2m-build\exreader-media-epub-test.exe "overlay"
+246: Working Directory: C:/Users/Oscar/Documents/Codex/d2m-build
+246: Test timeout computed to be: 10000000
+246: overlay: par p1  text[0,4)="One."  <->  OPS/audio/a.wav 0-1500 ms
+246: overlay: par p2  text[5,9)="Two."  <->  OPS/audio/a.wav 1500-3000 ms
+246: overlay: par p3  text[10,16)="Three."  <->  OPS/audio/gone.wav 1000-2000 ms  (audio missing)
+246: ok
+2/4 Test #246: native-media-epub-overlay ........   Passed    0.39 sec
+test 247
+    Start 247: native-media-epub-degrade
+
+247: Test command: C:\Users\Oscar\Documents\Codex\d2m-build\exreader-media-epub-test.exe "degrade"
+247: Working Directory: C:/Users/Oscar/Documents/Codex/d2m-build
+247: Test timeout computed to be: 10000000
+247: degrade: state=1  "[Audio unavailable: audio/gone.mp3 is missing from this book]"
+247: degrade: state=2  "[Embedded media not supported: movie.swf (application/x-shockwave-flash)]"
+247: degrade: state=2  "[Video not supported: clip.flv (video/x-flv)]"
+247: degrade: state=3  "[Video is online: http://example.com/v.mp4 - not loaded]"
+247: degrade: state=4  "[Audio: no source given]"
+247: degrade: state=2  "[Video not supported: old.wmv (video/x-ms-wmv)]"
+247: ok
+3/4 Test #247: native-media-epub-degrade ........   Passed    0.32 sec
+test 248
+    Start 248: native-media-epub-plain
+
+248: Test command: C:\Users\Oscar\Documents\Codex\d2m-build\exreader-media-epub-test.exe "plain"
+248: Working Directory: C:/Users/Oscar/Documents/Codex/d2m-build
+248: Test timeout computed to be: 10000000
+248: ok
+4/4 Test #248: native-media-epub-plain ..........   Passed    0.68 sec
+
+The following tests passed:
+	native-media-epub-elements
+	native-media-epub-overlay
+	native-media-epub-degrade
+	native-media-epub-plain
+
+100% tests passed out of 4
+
+Total Test time (real) =   2.00 sec
