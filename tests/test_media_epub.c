@@ -116,6 +116,16 @@ static void elements(void) {
   CHECK(contains(t, "[Audio: a.wav, 0:01]") && contains(t, "[Video: v.mp4, 0:13]") && contains(t, "[Audio: bg.mp3, about 0:03]"));
   CHECK(contains(t, "Intro") && contains(t, "Outro"));
   CHECK(!contains(t, "no audio"));   /* the label replaces fallback text that would contradict it */
+  /* Layout consumes text nodes in source order, including media placeholders. */
+  {
+    size_t nodes_count, i, previous = 0;
+    const exr_node *nodes = exr_document_nodes(d, &nodes_count);
+    for (i = 0; i < nodes_count; i++) {
+      if (nodes[i].kind != EXR_NODE_TEXT || nodes[i].start == SIZE_MAX || nodes[i].end <= nodes[i].start) continue;
+      CHECK(nodes[i].start >= previous);
+      previous = nodes[i].end;
+    }
+  }
   printf("elements: %zu media elements, labels visible in part text\n", count);
   exr_document_free(d); exr_publication_free(p); mz_free(zip); free(c1);
 }
