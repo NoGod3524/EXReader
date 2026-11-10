@@ -109,6 +109,7 @@
     "navigation.c": "formats",
     "normalize.c": "base",
     "numbering.c": "base",
+    "opds.c": "doc",
     "opentype.c": "text",
     "pager.c": "layout",
     "pager_table.c": "layout",

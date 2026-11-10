@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Host-owned recent books. SQLite retains original bytes; JSON owns content points. */
-enum { SHELF_LIMIT=64, SHELF_LIST=190, SHELF_IMPORT, SHELF_ORGANIZE, SHELF_STATS, SHELF_TIMER=0x5348 };
+enum { SHELF_LIMIT=64, SHELF_LIST=190, SHELF_IMPORT, SHELF_ORGANIZE, SHELF_STATS, SHELF_SOURCES, SHELF_TIMER=0x5348 };
 typedef struct {
   int64_t id;
   char *path,*title,*author;
@@ -14,7 +14,7 @@ typedef struct {
 } shelf_book;
 static shelf_book shelf_recent[SHELF_LIMIT];
 static int shelf_count,shelf_loaded,shelf_writable=1;
-static HWND shelf_panel,shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_children[128];
+static HWND shelf_panel,shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_sources,shelf_children[128];
 static int shelf_child_count;
 static wchar_t shelf_json_path[HOST_PATH];
 static WNDPROC shelf_list_base;
@@ -299,6 +299,7 @@ static LRESULT CALLBACK shelf_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
     case WM_COMMAND:
       if(LOWORD(wp)==SHELF_IMPORT) {g.auto_open_imported=1;import_path(NULL,1);return 0;}
       if(LOWORD(wp)==SHELF_ORGANIZE || LOWORD(wp)==SHELF_STATS) {sm_show(LOWORD(wp)==SHELF_STATS);return 0;}
+      if(LOWORD(wp)==SHELF_SOURCES) {opds_show();return 0;}
       break;
     case WM_DRAWITEM: {
       const DRAWITEMSTRUCT *d=(const DRAWITEMSTRUCT *)lp;
@@ -330,9 +331,11 @@ static int shelf_layout(void) {
   int pad=shell_px(24,shell_dpi),top=shell_px(124,shell_dpi);
   MoveWindow(shelf_list,pad,top,max(0,r.right-2*pad),max(0,r.bottom-top-pad),TRUE);
   MoveWindow(shelf_add,r.right-shell_px(188,shell_dpi),shell_px(35,shell_dpi),shell_px(140,shell_dpi),shell_px(40,shell_dpi),TRUE);
+  MoveWindow(shelf_sources,r.right-shell_px(552,shell_dpi),shell_px(35,shell_dpi),shell_px(100,shell_dpi),shell_px(40,shell_dpi),TRUE);
   MoveWindow(shelf_organize,r.right-shell_px(440,shell_dpi),shell_px(35,shell_dpi),shell_px(120,shell_dpi),shell_px(40,shell_dpi),TRUE);
   MoveWindow(shelf_stats,r.right-shell_px(312,shell_dpi),shell_px(35,shell_dpi),shell_px(116,shell_dpi),shell_px(40,shell_dpi),TRUE);
   sm_refresh();
+  opds_layout();
   return 1;
 }
 static void shelf_show(int show) {
@@ -360,6 +363,7 @@ static void shelf_create(HWND parent) {
   shelf_add=CreateWindowExW(0,L"BUTTON",L"＋ 打开书籍",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_IMPORT,NULL,NULL);
   shelf_organize=CreateWindowExW(0,L"BUTTON",L"系列 / 标签",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_ORGANIZE,NULL,NULL);
   shelf_stats=CreateWindowExW(0,L"BUTTON",L"阅读统计",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_STATS,NULL,NULL);
+  shelf_sources=CreateWindowExW(0,L"BUTTON",L"书源",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,0,0,0,0,shelf_panel,(HMENU)SHELF_SOURCES,NULL,NULL);
 }
 static void shelf_load(void) {
   path_join(shelf_json_path,HOST_PATH,g.data_dir,L"recent-books.json");shelf_loaded=1;
