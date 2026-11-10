@@ -1,0 +1,18 @@
+已提交 `3b3580dc` 并推送指定分支，创建 [Draft PR #59](https://github.com/NoGod3524/EXReader/pull/59)，base 为 main。
+
+**六项中 5 项通过；性能项未通过，第 4 步尚未验收通过。**
+
+| 验收项 | 最终数字 |
+|---|---|
+| 新屏空白帧 / 提交帧 | 1280：**0/183**；2560：**0/182** |
+| 未命中排版＋渲染 p95 | **25.1427 / 47.9864 ms**，超过 25/35 ms |
+| 缓存命中排版增量 | 40 次命中，每次 **0**，合计 **0**；渲染增量也为 0 |
+| 尺寸往返 | 两档首行不变；正文像素差 **0**；旧尺寸提交 **0** |
+| 旧面板空白帧 / 提交帧 | **0/74** |
+| 自检 | **exit=0，checks=26** |
+
+新屏两档 `StretchDIBits=0`，均走 BitBlt。
+
+改动文件：`reader.c`、`paint_probe.h`、新增 `check_step4.py`，以及审计 §F 和[原始证据](/C:/Users/Oscar/Documents/Codex/EXReader-ui-step4-20261106/docs/ui/evidence/2a-step4-20261106/README.md)。
+
+**未出现前台窗口**；全程离屏、PrintWindow、隐藏控制台。未手动运行 CI；PR 自动触发的 **5 个工作流均已取消**。
