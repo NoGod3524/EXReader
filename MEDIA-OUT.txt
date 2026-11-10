@@ -8,3 +8,4 @@ D2 media: step1 explored src (document.c projection skips object; no audio/video
 步骤 5：构建（MP3/AAC 关闭，因缺 minimp3.h；基线同配置）成功；4 组新 ctest 全过（elements/overlay/degrade/plain）。
 步骤 6：4 本语料识别/SMIL/降级截图已生成（../d2m-report）；19 本真书基线-候选渲染在后台运行；完整 ctest 在后台运行（../d2m-ctest.log）。
 步骤 7（Codex）：接手旧 ctest 为 258/260；发现已保存源码晚于 DLL，补齐 EPUB 专用占位节点预留、删除失效 media_expected 引用并新增节点顺序断言。最终源码 c60951f0 构建成功；媒体 4/4、chapter-index 1/1；完整 ctest 首轮 257/260，两项无输出失败串行复测通过，sdk-release 补生成匹配当前 DLL 的 MSVC exreader.lib 后通过，260 项各有通过记录。19 本 11426 页/8648571 字形及逐页像素哈希不变；草枕 2 份 SMIL 共 439 clips、missing_audio=0、unresolved_text=0。MP3/AAC 保持 OFF。证据已入 evidence/d2-media-20261110，OUT.txt 已补完整报告；待提交证据、push 当前 media-epub-2 分支并开 draft PR。
+步骤 8（完成）：证据与 OUT.txt 已提交推送至 origin/codex/media-epub-2-20261110；draft PR #128：https://github.com/NoGod3524/EXReader/pull/128 。只读 merge-tree 检查对 main fe3d46e1 仅 OUT.txt 有文本冲突，未合并其他分支，留主控集成。CONTINUE.md 为用户原有未跟踪文件，保持原状。
