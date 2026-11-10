@@ -1,0 +1,6 @@
+PASS load version=3.42.0 abi=1 mode=create
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS search_all needle=deliveryneedle hits=1000
+STORED highlight; awaiting independent process reopen

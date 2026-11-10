@@ -1,0 +1,40 @@
+{
+  "windows": {
+    "directory": "evidence\\s5\\smoke\\windows",
+    "library": "evidence/s5/work/ci/windows/bin/exreader.dll",
+    "book": "evidence/s5/work/smoke/smoke.epub",
+    "font": "evidence/s5/work/smoke/font.otf",
+    "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+    "environment": {
+      "os": "Windows 11 Home 10.0.26200 x86_64",
+      "sdk_toolchain": "MSVC CI artifact",
+      "probe_compiler": "MinGW GCC 16.2.0 -O2"
+    }
+  },
+  "linux": {
+    "directory": "evidence\\s5\\smoke\\linux",
+    "library": "evidence/s5/work/ci/linux/lib/libexreader.so.3.42.0",
+    "book": "evidence/s5/work/smoke/smoke.epub",
+    "font": "evidence/s5/work/smoke/font.otf",
+    "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+    "environment": {
+      "os": "Debian 12 glibc 2.36, QEMU Linux 6.12.115 x86_64",
+      "user": "probe uid=1000",
+      "sdk_toolchain": "Ubuntu 22.04 CI artifact",
+      "probe_compiler": "GCC 12.2.0 -O2"
+    }
+  },
+  "android": {
+    "directory": "evidence\\s5\\smoke\\android",
+    "library": "evidence/s5/work/android-stage/lib/libexreader.so",
+    "book": "evidence/s5/work/smoke/smoke.epub",
+    "font": "evidence/s5/work/smoke/font.otf",
+    "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+    "environment": {
+      "os": "AOSP Android 11 API 30 x86_64 emulator",
+      "kernel": "5.4.86-android11-2",
+      "execution": "adb shell native ELF, API 24 target",
+      "probe_compiler": "NDK 27.2.12479018 Clang 18.0.3 -O2"
+    }
+  }
+}

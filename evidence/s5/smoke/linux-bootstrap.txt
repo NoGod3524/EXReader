@@ -1,0 +1,82 @@
+ [6nip link set eth0 up; udhcpc -n -i eth0; mkdir -p /w; mount /dev/vda
+
+
+ /w; printf 'http://dl-cdn.alpinelinux.org/alpine/v3.22/main\nhttp://dl-cdn.alpi
+
+
+nelinux.org/alpine/v3.22/community\n' > /etc/apk/repositories; apk add --no-prog
+
+
+ress openssh; mkdir -p /root/.ssh; printf 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI
+
+
+O/qA2MYhP74v5nqEqWezij9k53RaFcYNepDcaapzrq0 oscar@lap25002' > /root/.ssh/authori
+
+
+zed_keys; chmod 700 /root/.ssh; chmod 600 /root/.ssh/authorized_keys; ssh-keygen
+
+
+ -A; /usr/sbin/sshd -o PermitRootLogin=prohibit-password; mount -t proc proc /w/
+
+
+debian/proc; mount --bind /dev /w/debian/dev; cp /etc/resolv.conf /w/debian/etc/
+
+
+resolv.conf; chroot /w/debian gcc --version; rc=$?; printf '\n__PLAT%s=%s\n' DON
+
+
+E "$rc"
+
+udhcpc: started, v1.37.0
+
+udhcpc: broadcasting discover
+
+udhcpc: broadcasting select for 10.0.2.15, server 10.0.2.2
+
+udhcpc: lease of 10.0.2.15 obtained from 10.0.2.2, lease time 86400
+
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.22/main/x86_64/APKINDEX.tar.gz
+
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.22/community/x86_64/APKINDEX.tar.gz
+
+(1/11) Installing openssh-keygen (10.0_p1-r11)
+
+(2/11) Installing ncurses-terminfo-base (6.5_p20250503-r0)
+
+(3/11) Installing libncursesw (6.5_p20250503-r0)
+
+(4/11) Installing libedit (20250104.3.1-r1)
+
+(5/11) Installing openssh-client-common (10.0_p1-r11)
+
+(6/11) Installing openssh-client-default (10.0_p1-r11)
+
+(7/11) Installing openssh-sftp-server (10.0_p1-r11)
+
+(8/11) Installing openssh-server-common (10.0_p1-r11)
+
+(9/11) Installing openssh-server-common-openrc (10.0_p1-r11)
+
+(10/11) Installing openssh-server (10.0_p1-r11)
+
+(11/11) Installing openssh (10.0_p1-r11)
+
+Executing busybox-1.37.0-r20.trigger
+
+OK: 17 MiB in 39 packages
+
+ssh-keygen: generating new host keys: RSA ECDSA ED25519 
+
+gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+
+Copyright (C) 2022 Free Software Foundation, Inc.
+
+This is free software; see the source for copying conditions.  There is NO
+
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+
+__PLATDONE=0
