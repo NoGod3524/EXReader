@@ -9,3 +9,5 @@
 [步骤 7] 最终 DLL(sha256 41b1e231…) 复跑：19 本 19/19、11426 页、8648571 字形，页数/字形/逐页哈希变化 0；固定版式验证 8 本结果与上一轮逐字段一致，六项 6/6。准备提交。
 [步骤 8] 加固：rendition 表增加 rendition_count，pager/publication 按计数越界保护。重编后复跑：19 本 19/19、11426 页、8648571 字形，变化 0（最终 DLL sha256 8ca8792c…）；固定版式验证与前轮逐字段一致；MSVC 全量 ctest 复跑中。
 [步骤 9] 加固后 MSVC 全量 ctest 复跑：254/254 通过（新增 native-fixed-layout 4 组全过）。
+[步骤 10] 已提交 877b126e；推送 codex/fixed-layout-20261109 并建 draft PR。
+[步骤 11 完成] 已推送 877b126e 到 codex/fixed-layout-20261109，draft PR #120（base main）：https://github.com/NoGod3524/EXReader/pull/120 。最终：8 本语料六项 6/6；19 本 11426 页哈希零变化；MSVC ctest 254/254。
