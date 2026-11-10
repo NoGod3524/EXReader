@@ -1,19 +1,19 @@
 # EXReader C SDK API 参考
 
-本参考覆盖当前 `include/` 的 **19/19 个公开头文件、457/457 个公开函数声明（100%）**，
+本参考覆盖当前 `include/` 的 **20/20 个公开头文件、462/462 个公开函数声明（100%）**，
 按 **15/15 个模块**组织，每个模块附一个完整、独立的 C11 程序。
-16 个头文件声明函数；`exreader.h`、`exr/core.h` 为聚合入口，`exr/version.h` 提供版本宏。
+17 个头文件声明函数；`exreader.h`、`exr/core.h` 为聚合入口，`exr/version.h` 提供版本宏。
 `EXR_API` 函数声明是本参考的统计口径；类型、枚举、宏和回调类型不另计为导出函数。
 
 原 SDK 文档验收时，Windows 聚合 DLL 的 427 个具名导出全部覆盖：**427/427（100%）**；
-当前 [ABI 契约](../tools/abi/contract.json) 的 **394/394** 项也全部覆盖，现在另外记录 63 个未冻结声明。
+当前 [ABI 契约](../tools/abi/contract.json) 的 **394/394** 项也全部覆盖，现在另外记录 68 个未冻结声明。
 任务中的“约 389”是 [历史 ABI 快照](ABI.md) 的数值，不能作为当前总数。
 真实编译、运行与导出比对见 [示例验收](examples/README.md)、[编译输出](examples/compile-output.txt)、
 [运行输出](examples/test-output.txt)、[机器统计](examples/verification.json)。
 
 合入 main 后新增的编辑模型与重排声明见 `exr/edit.h`、`exr/reflow.h`。当前 main 没有 `src/docx_edit.c`；
 模型函数须配置 `EXR_EDIT_MODEL_SOURCE` 接入匹配的 X1 实现，重排函数在缺少模型时返回 `EXR_UNSUPPORTED`。
-这里的 457 是头文件声明数，不是默认 DLL 导出实测数；上面的编译和机器统计保留原验收时间点，
+这里的 462 是头文件声明数，不是默认 DLL 导出实测数；上面的编译和机器统计保留原验收时间点，
 新增接口的配置、限制和锚点字段见 [X2 接口说明](X2_REFLOW.md)。
 
 ## 阅读约定与 ABI 分类
@@ -21,13 +21,13 @@
 | 标注 | 本参考中函数数 | 含义 |
 |---|---:|---|
 | 稳定 | 394 | 已列入当前 ABI 1 符号契约；沿用现有交付冻结口径，不新增跨版本二进制布局保证 |
-| 实验 | 63 | 当前公开头文件已声明，尚未加入冻结清单；其中 edit.h 的模型声明需要外部 X1 实现，不能假设默认 DLL 已导出；升级时核对签名与结构布局 |
-| 内部 | 0 / 457 | 当前公开声明没有内部入口；`src/` 私有函数及第三方依赖不属于 SDK 合约，不应由外部调用 |
+| 实验 | 68 | 当前公开头文件已声明，尚未加入冻结清单；其中 edit.h 的模型声明需要外部 X1 实现，不能假设默认 DLL 已导出；升级时核对签名与结构布局 |
+| 内部 | 0 / 462 | 当前公开声明没有内部入口；`src/` 私有函数及第三方依赖不属于 SDK 合约，不应由外部调用 |
 
 “内部”适用于所有仅出现在 `src/*_internal.h` 等私有声明中的实现，例如
 `exr_fail`、`exr_control_poll`、`exr_grow`、`exr_copy`（[私有基础头](../src/base_internal.h)）。
 某些平台动态库可能暴露这些实现或第三方符号；可被链接器找到不等于公开 API。
-本页 0/457 仅说明公开函数的分类，不表示引擎没有内部函数，也不把历史其他平台的多余导出数量当作本次测量。
+本页 0/462 仅说明公开函数的分类，不表示引擎没有内部函数，也不把历史其他平台的多余导出数量当作本次测量。
 
 所有字符串均为 UTF-8。普通文本范围用规范化文本的 UTF-8 字节半开区间 `[start, end)`，
 不是原文件偏移、Unicode 字符序号或 CFI 的 UTF-16 code units。索引通常从 0 起；`SIZE_MAX`
@@ -73,7 +73,7 @@ provider、读取源、分配内存的接口还可能传播相应回调、I/O、
 | 标注 | 45 | [annotation.c](examples/annotation.c) |
 | 目录 | 17 | [toc.c](examples/toc.c) |
 | 书库 | 49 | [library.c](examples/library.c) |
-| 格式与转换 | 29 | [formats.c](examples/formats.c) |
+| 格式与转换 | 34 | [formats.c](examples/formats.c) |
 | 固定版面与 PDF | 12 | [pdf.c](examples/pdf.c) |
 | 音频 | 76 | [audio.c](examples/audio.c) |
 
@@ -5274,6 +5274,8 @@ int main(void) {
 ```c
 /* SPDX-License-Identifier: MIT */
 #include <exr/formats.h>
+#include <exr/opds.h>
+#include <string.h>
 #include <stdio.h>
 
 int main(void) {
@@ -5287,7 +5289,18 @@ int main(void) {
   else
     fprintf(stderr, "%s\n", error.message);
   exr_document_free(document);
-  return status == EXR_OK ? 0 : 1;
+  if (status != EXR_OK) return 1;
+  const char atom[] = "<feed xmlns='http://www.w3.org/2005/Atom'><title>Catalog</title>"
+    "<entry><title>Example</title><link rel='http://opds-spec.org/acquisition' "
+    "type='application/epub+zip' href='../books/a.epub'/></entry></feed>";
+  exr_opds_feed feed = {0};
+  status = exr_opds_parse(atom, sizeof(atom) - 1, "https://example.test/catalog/root.xml", &feed, &error);
+  int catalog_ok = status == EXR_OK && feed.entry_count == 1 && feed.entries[0].download_url &&
+    !strcmp(feed.entries[0].download_url, "https://example.test/books/a.epub");
+  if (catalog_ok) printf("OPDS entries=%zu title=%s\n", feed.entry_count, feed.title);
+  else fprintf(stderr, "OPDS parse failed: %s\n", error.message);
+  exr_opds_feed_free(&feed);
+  return catalog_ok ? 0 : 1;
 }
 ```
 
@@ -5696,6 +5709,77 @@ int main(void) {
 **线程** 同一对象及共享回调上下文的操作由宿主串行；同步回调在调用线程运行，不要重入当前对象。
 
 **所有权** 输入借用；data 用 exr_free。成功字节独立于 doc。
+
+### `exr_opds_parse`
+
+**签名** `exr_status exr_opds_parse(const void *data, size_t size, const char *base_url, exr_opds_feed *out, exr_error *error);`
+
+**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `data/size` 为 Atom 字节；`base_url` 为相对地址基准；`out` 指向空 feed；`error` 可 NULL。
+
+**返回与失败** EXR_OK 返回 OPDS 1.x 内容；无效参数 ARGUMENT，损坏 XML/结构 FORMAT，输入超过 16 MiB、4096 条目或 64 层嵌套 LIMIT，分配失败 MEMORY。失败清零输出。
+
+**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
+
+**所有权** 输入仅调用期间借用；feed 内字符串、条目和地址由 exr_opds_feed_free 统一释放。再次填充前先释放旧 feed。
+
+### `exr_opds_feed_free`
+
+**签名** `void exr_opds_feed_free(exr_opds_feed *feed);`
+
+**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `feed` 为解析结果，可 NULL。
+
+**返回与失败** 无返回值；NULL 无操作，释放后结构清零。
+
+**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
+
+**所有权** 释放 feed 的所有成员，不释放宿主持有的 feed 结构本身。
+
+### `exr_opds_parse_search`
+
+**签名** `exr_status exr_opds_parse_search(const void *data, size_t size, const char *base_url, char **template_url, exr_error *error);`
+
+**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `data/size` 为 OpenSearch XML；`base_url` 用来解析相对模板；`template_url` 接收结果；`error` 可 NULL。
+
+**返回与失败** EXR_OK 返回 Atom/OPDS 搜索模板；参数 ARGUMENT、损坏 XML/缺少模板 FORMAT、输入上限 LIMIT、内存 MEMORY；失败输出 NULL。
+
+**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
+
+**所有权** 输入借用；成功的模板字符串由 exr_free 释放。
+
+### `exr_opds_search_url`
+
+**签名** `exr_status exr_opds_search_url(const char *template_url, const char *query, char **out, exr_error *error);`
+
+**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `template_url` 含 `{searchTerms}`；`query` 为非空 UTF-8 搜索词；`out` 接收展开地址；`error` 可 NULL。
+
+**返回与失败** EXR_OK 返回百分号编码后的查询地址；空查询/缺少搜索参数 ARGUMENT，查询超过 1 KiB LIMIT，分配失败 MEMORY。其他模板参数展开为空。
+
+**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
+
+**所有权** 输入借用；成功地址由 exr_free 释放，失败输出 NULL。
+
+### `exr_opds_resolve_url`
+
+**签名** `exr_status exr_opds_resolve_url(const char *base_url, const char *reference, char **out, exr_error *error);`
+
+**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `base_url` 为相对引用的基准；`reference` 为地址引用；`out` 接收解析结果；`error` 可 NULL。
+
+**返回与失败** EXR_OK 按 RFC 3986 合并路径；无效参数或相对地址缺少有效基准 ARGUMENT，地址长度超限 LIMIT，内存失败 MEMORY。地址文本解析不执行网络请求。
+
+**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
+
+**所有权** 输入借用；成功字符串由 exr_free 释放，失败输出 NULL。
+
 
 ## 固定版面与 PDF
 
