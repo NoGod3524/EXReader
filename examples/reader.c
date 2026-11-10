@@ -4446,12 +4446,12 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
 #ifdef EXR_READER_WINDOWS_PREFERENCES
           if (prefs.active) { page_step(prefs_turn_from_key(wparam)); return 0; }
 #endif
-          page_step(-1); return 0;
+          page_step(wparam==VK_LEFT && exr_publication_page_progression(g.session.publication)==EXR_DIRECTION_RTL ? 1 : -1); return 0;
         case VK_RIGHT: case VK_NEXT:
 #ifdef EXR_READER_WINDOWS_PREFERENCES
           if (prefs.active) { page_step(prefs_turn_from_key(wparam)); return 0; }
 #endif
-          page_step(1); return 0;
+          page_step(wparam==VK_RIGHT && exr_publication_page_progression(g.session.publication)==EXR_DIRECTION_RTL ? -1 : 1); return 0;
         case VK_DOWN:
 #ifdef EXR_READER_WINDOWS_PREFERENCES
           if (prefs.active) { page_step(prefs_turn_from_key(VK_DOWN)); return 0; }
@@ -6364,9 +6364,10 @@ static int drive_execute(void) {
     host_probe_burst_left=100;SetTimer(g.page,HOST_PROBE_BURST_TIMER,10,NULL);drive_expect_idle=1;return 1;
   }
   if (!strcmp(action, "probe_key") || !strcmp(action, "probe_wheel")) {
+    UINT key=!strcmp(drive_args[1],"left") ? VK_LEFT : !strcmp(drive_args[1],"right") ? VK_RIGHT : VK_NEXT;
     SetFocus(g.page);
     host_probe_log("input_gen",(double)g.frame.generation);
-    SendMessageW(g.page,!strcmp(action,"probe_key")?WM_KEYDOWN:WM_MOUSEWHEEL,!strcmp(action,"probe_key")?VK_NEXT:MAKEWPARAM(0,-WHEEL_DELTA),0);
+    SendMessageW(g.page,!strcmp(action,"probe_key")?WM_KEYDOWN:WM_MOUSEWHEEL,!strcmp(action,"probe_key")?key:MAKEWPARAM(0,-WHEEL_DELTA),0);
     drive_expect_idle=1;return 1;
   }
   if (!strcmp(action, "quit")) {
