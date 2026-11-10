@@ -15,7 +15,7 @@
 
 ## 七项逐本结论与截图
 
-“右上”以当前直立字格的物理坐标为准：句号和逗号的墨迹位于列中心右侧、字格上半部。日文的「、」「。」和中文全角逗号、句号均测量。
+“右上”以当前直立字格的物理坐标为准：句号和逗号的墨迹位于列中心右侧、字格上半部。日文的「、」「。」和中文全角逗号、句号均测量。下文间距为变换后轮廓包围盒的y间隔，包含贝塞尔控制点，截图另作视觉核验。
 
 ### 湖上晨读（7页）
 
@@ -75,13 +75,13 @@
 
 ## 失败定位及修复
 
-`src/inline.c::punctuation_room()` 原来对等宽标点一律允许挤掉半 em，`！` 的可见轮廓伸到这段空间内。28 px正文中，原 `！` 的 advance=14 px、轮廓 y=65.984…87.068；后一个 `？` 的轮廓 y=80.620…102.068，重叠6.448 px。现按 FreeType 竖排 bearing/height 限制可去除的尾部空白，advance=24 px，轮廓间隔3.552 px。
+`src/inline.c::punctuation_room()` 原来对等宽标点一律允许挤掉半 em，`！` 的可见轮廓伸到这段空间内。28 px正文中，原 `！` 的 advance=14 px、轮廓 y=65.984…87.068；后一个 `？` 的轮廓 y=80.620…102.068，重叠6.448 px。现按 FreeType 竖排 bearing/height 分别限制开括号的前部空白与相邻标点的尾部空白，advance=24 px，轮廓间隔3.552 px。
 
-`src/inline.c::punctuation_width()` 原列尾规则还会把整串标点强压成一 em，绕开上述安全余量。竖排改用逐字的尾部空白预算，保留标点墨迹；横排路径不变。原始矩形字体反例在旧 DLL 上失败，修复版通过。
+`src/inline.c::punctuation_width()` 原列尾规则还会把整串标点强压成一 em，绕开上述安全余量。竖排改用逐字的尾部空白预算，保留标点墨迹；横排路径不变。原始矩形字体反例在旧 DLL 上失败，修复版通过。另新增非对称括号：上部留白600单位、墨迹300单位，确保列首裁剪前部空白时保留原位置。
 
 ![同一页标点修复前后（原像素4倍裁切）](punctuation-comparison.png)
 
-[修复前完整页](punctuation-before.png) · [修复后完整页](zh-lake-04.png) · [旧DLL失败输出](boundaries-before.log)
+[修复前完整页](punctuation-before.png) · [修复后完整页](zh-lake-04.png) · [原基线失败输出](boundaries-before.log) · [首轮修复的开括号反例](boundaries-first-fix.log)
 
 ## 合字及连续标点边界
 
@@ -98,6 +98,8 @@
 ## 19本横排真书回归
 
 先在未修改的 `3076d3dd` 构建保存完整基线，再用修复后的同一配置逐页重绘。720×1040，margin36、font28、line-height1.5、paragraph-spacing10；所有语料 SHA、字体、CSS、像素合同保持一致。未修改版本亦复现了既存 perf-optimize 集成基线。
+
+首次候选有两页哈希变化（库存中的竖排《草枕》，0基页462/463），原因是开括号使用了尾部空白预算，导致38/61个字形移动6.28 px。修正前/后空白预算后完整重跑，最终下列差异为0；[首轮差异](initial-realbooks.diff.json)与[首轮结果](initial-final-realbooks.json.gz)保留。
 
 **19/19，11,318页，8,648,571字形；页数变化0，逐页像素哈希变化0。**
 
@@ -127,9 +129,9 @@
 
 ## 测试
 
-**MSVC Release ctest 260/260，全绿，40.95秒。新增3组：**
+**MSVC Release ctest 260/260，全绿，53.92秒。新增3组：**
 
-- `native-vertical-expand-boundaries`：26个配置/边界场景，含旧版会失败的列尾压缩与高标点轮廓相交反例。
+- `native-vertical-expand-boundaries`：27个配置/边界场景，含旧版会失败的列尾压缩与高标点轮廓相交反例。
 - `native-vertical-expand-ruby`：20组、40个小字，多页、右侧关系和页内边界。
 - `native-vertical-expand-images`：6张实际解码图片、多页、长宽比及四角像素方向。
 
