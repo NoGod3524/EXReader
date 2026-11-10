@@ -1,7 +1,18 @@
-Step 1: inspected baseline and existing quote anchors / layout hit test. Branch codex/engine-annotation-anchors-20261107. Protected-tree registration: include/exr/layout.h (new content range API), src/publication.c (mapping/expansion), src/layout.c (strict content hit API), tests (new acceptance suites), CMakeLists.txt (test registration only). No examples/ or .github/ changes. Baseline render will run before edits.
-Step 2: baseline DLL built from c9dfc6c (original API declarations restored during baseline build). Implemented part-local half-open ranges, content endpoint anchors with text revision/context, bidirectional capture/resolve, grapheme/word/sentence/paragraph expansion, strict image-aware hit test. All implementation is in src/publication.c; src/layout.c is untouched. No layout algorithm changes.
-Step 3: five new suites passed (mapping/relocation/expansion/hits/reflow). Real-book measurement: hongloumeng-24264.epub, parts 1 and 2; PRNG seed 0x41ce2026. Exact equality means FOUND plus both (part, UTF-8 offset) endpoints equal the saved range; denominator includes failures/missing/ambiguous. Same layout 200/200=100.00%; size 17->18->24->17 100/100=100.00% (164 page movements across intermediate stages); Noto Serif SC->Reader.otf->Noto Serif SC 100/100=100.00% (1 page movement); 1280x800->1552x928->1280x800 100/100=100.00% (91 page movements). All intermediate stages also resolved 100/100. Mismatch list: empty. Page counts 18->20->34->18; font 18->18->18; window 18->12->18. Raw output: build/anchors/acceptance.txt.
-Step 4: hit fixture 50/50=100.00% (10 body, 10 line start, 10 line end, 10 punctuation, 10 image). Additional RTL, vertical, text/image overlap and invalid-coordinate checks pass. 19/19 real books: 11,168 pages, 8,648,640 glyphs; baseline vs candidate regression exits 0, changed page hashes=0. No page count changes. Baseline and candidate were independently rendered; raw reports in build/anchors/realbooks-{before,after}.json.
-Step 5: committed evidence prepared in tests/anchor-acceptance-20261107.json (per-book input SHA-256, counts and before/after page-hash fingerprints) and tests/content-ranges.md (definition, API semantics, reproduction). Full local configuration registers 181 ctests: 176 preexisting plus 5 new content suites, with tools and fuzz enabled; this configuration differs from the task's quoted 172 baseline. Final protected-tree registration: include/exr/layout.h; src/publication.c; tests/test_content_ranges.c; tests/content-ranges.md; tests/anchor-acceptance-20261107.json; CMakeLists.txt test registration. src/layout.c, examples/, .github/ unchanged.
-Step 6: full build completed; ctest --test-dir build/anchors --output-on-failure -j 4: 181/181 passed, 0 failures, 524.15 seconds. Five new suites all passed. Strict -std=c11 -Wall -Wextra -Wpedantic -Werror standalone test compilation also passed. git diff --check clean. All acceptance metrics are now recorded in tests/anchor-acceptance-20261107.json.
-Step 7: implementation commit b7fd1959 pushed to origin/codex/engine-annotation-anchors-20261107. Created draft PR #74 against main via gh pr create --draft --base main: https://github.com/NoGod3524/EXReader/pull/74 . Appended this publication record and normalized evidence implementation hashes to Git LF blob bytes; this follow-up changes evidence/log only. No manual workflow dispatch or workflow cancellation performed.
+已推送指定分支，Draft PR：[**#74**](https://github.com/NoGod3524/EXReader/pull/74)，base 为 `main`。CI 已自动触发。
+
+A–B 实现在 [publication.c](C:/Users/Oscar/Documents/Codex/EXReader-anchors-20261107/src/publication.c:518)，接口位于 [layout.h](C:/Users/Oscar/Documents/Codex/EXReader-anchors-20261107/include/exr/layout.h)：`exr_anchor_from_range()`、`exr_range_from_anchor()`、`exr_range_expand()`、`exr_hit_test()`。
+
+C 的测量代码在 [test_content_ranges.c](C:/Users/Oscar/Documents/Codex/EXReader-anchors-20261107/tests/test_content_ranges.c:188)，数字见[验收证据](C:/Users/Oscar/Documents/Codex/EXReader-anchors-20261107/tests/anchor-acceptance-20261107.json)。
+
+| 验收 | 实测 |
+|---|---:|
+| 同布局双向映射 | 200/200，100% |
+| 字号 17→18→24→17 | 100/100，100% |
+| Noto Serif SC↔Reader.otf | 100/100，100% |
+| 窗口尺寸往返 | 100/100，100% |
+| 已知坐标命中 | 50/50，100% |
+| ctest | **181/181 全通过** |
+
+三个重排项目均无不一致条目。新增 **5 组测试**；本机完整配置原有 176 项。
+
+19 本真书共 **11,168 页**，页数与逐页像素哈希全部不变。过程已追加至 [ANCHOR-OUT.txt](C:/Users/Oscar/Documents/Codex/EXReader-anchors-20261107/ANCHOR-OUT.txt)。
