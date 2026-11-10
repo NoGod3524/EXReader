@@ -1,0 +1,3356 @@
+{
+  "oracle": "HarfBuzz nominal cmap (independent of engine mirror mapping)",
+  "harfbuzz_version": "14.6.0",
+  "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+  "books": [
+    {
+      "book": "arabic-journey",
+      "page_count": 4,
+      "passed": 4,
+      "results": {
+        "direction": true,
+        "numbers": true,
+        "punctuation": true,
+        "mixed": true,
+        "alignment": false,
+        "progression": false
+      },
+      "failures": [
+        {
+          "item": "alignment",
+          "evidence": {
+            "page": 1,
+            "line": 9,
+            "x": 36.0,
+            "width": 67.0,
+            "expected_right": 684,
+            "final": true
+          }
+        },
+        {
+          "item": "alignment",
+          "evidence": {
+            "page": 3,
+            "line": 9,
+            "x": 36.0,
+            "width": 67.0,
+            "expected_right": 684,
+            "final": true
+          }
+        },
+        {
+          "item": "progression",
+          "evidence": {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        }
+      ],
+      "evidence": {
+        "direction": [
+          {
+            "page": 0,
+            "line": 0,
+            "source_offsets": [
+              120,
+              118,
+              116,
+              114,
+              112,
+              110,
+              108,
+              105,
+              103,
+              101,
+              99,
+              96,
+              94,
+              92,
+              89,
+              87,
+              85,
+              83,
+              81,
+              78,
+              76,
+              74,
+              72,
+              69,
+              67,
+              64,
+              62,
+              60,
+              58,
+              56,
+              53,
+              51,
+              49,
+              47,
+              45,
+              42,
+              40,
+              38,
+              36,
+              34,
+              32,
+              29,
+              27,
+              25,
+              22,
+              20,
+              17,
+              15,
+              13,
+              11,
+              9,
+              6,
+              4,
+              2,
+              0
+            ],
+            "x": [
+              105.0,
+              115.0,
+              122.0,
+              135.0,
+              145.0,
+              155.0,
+              160.0,
+              172.0,
+              181.0,
+              186.0,
+              192.0,
+              213.0,
+              228.0,
+              233.0,
+              245.0,
+              255.0,
+              260.0,
+              266.0,
+              276.0,
+              297.0,
+              307.0,
+              312.0,
+              326.0,
+              346.0,
+              361.0,
+              375.0,
+              382.0,
+              391.0,
+              397.0,
+              406.0,
+              427.0,
+              446.0,
+              452.0,
+              462.0,
+              467.0,
+              484.0,
+              493.0,
+              498.0,
+              508.0,
+              514.0,
+              520.0,
+              538.0,
+              547.0,
+              558.0,
+              571.0,
+              584.0,
+              601.0,
+              620.0,
+              626.0,
+              636.0,
+              641.0,
+              653.0,
+              658.0,
+              671.0,
+              678.0
+            ],
+            "right": 684.0
+          },
+          {
+            "page": 2,
+            "line": 0,
+            "source_offsets": [
+              120,
+              118,
+              116,
+              114,
+              112,
+              110,
+              108,
+              105,
+              103,
+              101,
+              99,
+              96,
+              94,
+              92,
+              89,
+              87,
+              85,
+              83,
+              81,
+              78,
+              76,
+              74,
+              72,
+              69,
+              67,
+              64,
+              62,
+              60,
+              58,
+              56,
+              53,
+              51,
+              49,
+              47,
+              45,
+              42,
+              40,
+              38,
+              36,
+              34,
+              32,
+              29,
+              27,
+              25,
+              22,
+              20,
+              17,
+              15,
+              13,
+              11,
+              9,
+              6,
+              4,
+              2,
+              0
+            ],
+            "x": [
+              105.0,
+              115.0,
+              122.0,
+              135.0,
+              145.0,
+              155.0,
+              160.0,
+              172.0,
+              181.0,
+              186.0,
+              192.0,
+              213.0,
+              228.0,
+              233.0,
+              245.0,
+              255.0,
+              260.0,
+              266.0,
+              276.0,
+              297.0,
+              307.0,
+              312.0,
+              326.0,
+              346.0,
+              361.0,
+              375.0,
+              382.0,
+              391.0,
+              397.0,
+              406.0,
+              427.0,
+              446.0,
+              452.0,
+              462.0,
+              467.0,
+              484.0,
+              493.0,
+              498.0,
+              508.0,
+              514.0,
+              520.0,
+              538.0,
+              547.0,
+              558.0,
+              571.0,
+              584.0,
+              601.0,
+              620.0,
+              626.0,
+              636.0,
+              641.0,
+              653.0,
+              658.0,
+              671.0,
+              678.0
+            ],
+            "right": 684.0
+          }
+        ],
+        "numbers": [
+          {
+            "page": 0,
+            "line": 2,
+            "token": "0123456789",
+            "x": [
+              544.0,
+              558.0,
+              572.0,
+              586.0,
+              600.0,
+              614.0,
+              628.0,
+              642.0,
+              656.0,
+              670.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 0,
+            "line": 3,
+            "token": "2026",
+            "x": [
+              520.0,
+              534.0,
+              548.0,
+              562.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 0,
+            "line": 4,
+            "token": "12.34",
+            "x": [
+              481.0,
+              495.0,
+              509.0,
+              516.0,
+              530.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 2,
+            "token": "0123456789",
+            "x": [
+              544.0,
+              558.0,
+              572.0,
+              586.0,
+              600.0,
+              614.0,
+              628.0,
+              642.0,
+              656.0,
+              670.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 3,
+            "token": "2026",
+            "x": [
+              520.0,
+              534.0,
+              548.0,
+              562.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 4,
+            "token": "12.34",
+            "x": [
+              481.0,
+              495.0,
+              509.0,
+              516.0,
+              530.0
+            ],
+            "scene": "digits"
+          }
+        ],
+        "punctuation": [
+          {
+            "page": 0,
+            "line": 5,
+            "source": "U+0028",
+            "expected": "U+0029",
+            "level": 1,
+            "actual_gid": 12,
+            "harfbuzz_cmap_gid": 12
+          },
+          {
+            "page": 0,
+            "line": 6,
+            "source": "U+005B",
+            "expected": "U+005D",
+            "level": 1,
+            "actual_gid": 64,
+            "harfbuzz_cmap_gid": 64
+          },
+          {
+            "page": 0,
+            "line": 6,
+            "source": "U+0029",
+            "expected": "U+0028",
+            "level": 1,
+            "actual_gid": 11,
+            "harfbuzz_cmap_gid": 11
+          },
+          {
+            "page": 0,
+            "line": 7,
+            "source": "U+00AB",
+            "expected": "U+00BB",
+            "level": 1,
+            "actual_gid": 170,
+            "harfbuzz_cmap_gid": 170
+          },
+          {
+            "page": 0,
+            "line": 7,
+            "source": "U+005D",
+            "expected": "U+005B",
+            "level": 1,
+            "actual_gid": 62,
+            "harfbuzz_cmap_gid": 62
+          },
+          {
+            "page": 0,
+            "line": 8,
+            "source": "U+201C",
+            "expected": "U+201C",
+            "level": 1,
+            "actual_gid": 179,
+            "harfbuzz_cmap_gid": 179
+          },
+          {
+            "page": 0,
+            "line": 8,
+            "source": "U+00BB",
+            "expected": "U+00AB",
+            "level": 1,
+            "actual_gid": 169,
+            "harfbuzz_cmap_gid": 169
+          },
+          {
+            "page": 0,
+            "line": 9,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 0,
+            "line": 9,
+            "source": "U+201D",
+            "expected": "U+201D",
+            "level": 1,
+            "actual_gid": 180,
+            "harfbuzz_cmap_gid": 180
+          },
+          {
+            "page": 0,
+            "line": 10,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 2,
+            "line": 5,
+            "source": "U+0028",
+            "expected": "U+0029",
+            "level": 1,
+            "actual_gid": 12,
+            "harfbuzz_cmap_gid": 12
+          },
+          {
+            "page": 2,
+            "line": 6,
+            "source": "U+005B",
+            "expected": "U+005D",
+            "level": 1,
+            "actual_gid": 64,
+            "harfbuzz_cmap_gid": 64
+          },
+          {
+            "page": 2,
+            "line": 6,
+            "source": "U+0029",
+            "expected": "U+0028",
+            "level": 1,
+            "actual_gid": 11,
+            "harfbuzz_cmap_gid": 11
+          },
+          {
+            "page": 2,
+            "line": 7,
+            "source": "U+00AB",
+            "expected": "U+00BB",
+            "level": 1,
+            "actual_gid": 170,
+            "harfbuzz_cmap_gid": 170
+          },
+          {
+            "page": 2,
+            "line": 7,
+            "source": "U+005D",
+            "expected": "U+005B",
+            "level": 1,
+            "actual_gid": 62,
+            "harfbuzz_cmap_gid": 62
+          },
+          {
+            "page": 2,
+            "line": 8,
+            "source": "U+201C",
+            "expected": "U+201C",
+            "level": 1,
+            "actual_gid": 179,
+            "harfbuzz_cmap_gid": 179
+          },
+          {
+            "page": 2,
+            "line": 8,
+            "source": "U+00BB",
+            "expected": "U+00AB",
+            "level": 1,
+            "actual_gid": 169,
+            "harfbuzz_cmap_gid": 169
+          },
+          {
+            "page": 2,
+            "line": 9,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 2,
+            "line": 9,
+            "source": "U+201D",
+            "expected": "U+201D",
+            "level": 1,
+            "actual_gid": 180,
+            "harfbuzz_cmap_gid": 180
+          },
+          {
+            "page": 2,
+            "line": 10,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          }
+        ],
+        "mixed": [
+          {
+            "page": 0,
+            "line": 12,
+            "token": "OpenAI Reader ABC xyz",
+            "x": [
+              401.0,
+              421.0,
+              435.0,
+              449.0,
+              463.0,
+              480.0,
+              487.0,
+              494.0,
+              513.0,
+              527.0,
+              541.0,
+              555.0,
+              569.0,
+              578.0,
+              585.0,
+              602.0,
+              619.0,
+              638.0,
+              645.0,
+              658.0,
+              671.0
+            ],
+            "scene": "mixed"
+          },
+          {
+            "page": 1,
+            "line": 10,
+            "token": "Reader ABC",
+            "x": [
+              36.0,
+              55.0,
+              69.0,
+              83.0,
+              97.0,
+              111.0,
+              120.0,
+              127.0,
+              144.0,
+              161.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 1,
+            "line": 10,
+            "token": "English paragraph",
+            "x": [
+              343.0,
+              360.0,
+              374.0,
+              388.0,
+              394.0,
+              400.0,
+              413.0,
+              427.0,
+              434.0,
+              448.0,
+              462.0,
+              471.0,
+              485.0,
+              499.0,
+              508.0,
+              522.0,
+              536.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 2,
+            "line": 12,
+            "token": "OpenAI Reader ABC xyz",
+            "x": [
+              401.0,
+              421.0,
+              435.0,
+              449.0,
+              463.0,
+              480.0,
+              487.0,
+              494.0,
+              513.0,
+              527.0,
+              541.0,
+              555.0,
+              569.0,
+              578.0,
+              585.0,
+              602.0,
+              619.0,
+              638.0,
+              645.0,
+              658.0,
+              671.0
+            ],
+            "scene": "mixed"
+          },
+          {
+            "page": 3,
+            "line": 10,
+            "token": "Reader ABC",
+            "x": [
+              36.0,
+              55.0,
+              69.0,
+              83.0,
+              97.0,
+              111.0,
+              120.0,
+              127.0,
+              144.0,
+              161.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 3,
+            "line": 10,
+            "token": "English paragraph",
+            "x": [
+              343.0,
+              360.0,
+              374.0,
+              388.0,
+              394.0,
+              400.0,
+              413.0,
+              427.0,
+              434.0,
+              448.0,
+              462.0,
+              471.0,
+              485.0,
+              499.0,
+              508.0,
+              522.0,
+              536.0
+            ],
+            "scene": "ltr"
+          }
+        ],
+        "alignment": [
+          {
+            "page": 0,
+            "line": 14,
+            "x": 36.0,
+            "width": 624.0,
+            "expected_right": 660,
+            "final": false
+          },
+          {
+            "page": 0,
+            "line": 15,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 0,
+            "line": 16,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 0,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 1,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 2,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 3,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 4,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 5,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 6,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 7,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 8,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 9,
+            "x": 36.0,
+            "width": 67.0,
+            "expected_right": 684,
+            "final": true
+          },
+          {
+            "page": 2,
+            "line": 14,
+            "x": 36.0,
+            "width": 624.0,
+            "expected_right": 660,
+            "final": false
+          },
+          {
+            "page": 2,
+            "line": 15,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 2,
+            "line": 16,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 0,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 1,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 2,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 3,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 4,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 5,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 6,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 7,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 8,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 9,
+            "x": 36.0,
+            "width": 67.0,
+            "expected_right": 684,
+            "final": true
+          }
+        ],
+        "progression": [
+          {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        ]
+      }
+    },
+    {
+      "book": "arabic-library",
+      "page_count": 4,
+      "passed": 4,
+      "results": {
+        "direction": true,
+        "numbers": true,
+        "punctuation": true,
+        "mixed": true,
+        "alignment": false,
+        "progression": false
+      },
+      "failures": [
+        {
+          "item": "alignment",
+          "evidence": {
+            "page": 1,
+            "line": 11,
+            "x": 36.0,
+            "width": 60.0,
+            "expected_right": 684,
+            "final": true
+          }
+        },
+        {
+          "item": "alignment",
+          "evidence": {
+            "page": 3,
+            "line": 11,
+            "x": 36.0,
+            "width": 60.0,
+            "expected_right": 684,
+            "final": true
+          }
+        },
+        {
+          "item": "progression",
+          "evidence": {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        }
+      ],
+      "evidence": {
+        "direction": [
+          {
+            "page": 0,
+            "line": 0,
+            "source_offsets": [
+              124,
+              122,
+              120,
+              118,
+              116,
+              114,
+              112,
+              109,
+              107,
+              105,
+              103,
+              100,
+              98,
+              96,
+              94,
+              91,
+              89,
+              87,
+              84,
+              82,
+              80,
+              78,
+              76,
+              73,
+              71,
+              69,
+              66,
+              64,
+              61,
+              59,
+              57,
+              55,
+              53,
+              50,
+              48,
+              46,
+              43,
+              41,
+              39,
+              37,
+              35,
+              33,
+              31,
+              28,
+              26,
+              24,
+              22,
+              20,
+              17,
+              15,
+              13,
+              11,
+              9,
+              7,
+              5,
+              2,
+              0
+            ],
+            "x": [
+              50.0,
+              57.0,
+              68.0,
+              73.0,
+              86.0,
+              93.0,
+              98.0,
+              110.0,
+              123.0,
+              129.0,
+              139.0,
+              160.0,
+              179.0,
+              185.0,
+              191.0,
+              208.0,
+              222.0,
+              236.0,
+              254.0,
+              261.0,
+              270.0,
+              276.0,
+              283.0,
+              300.0,
+              310.0,
+              332.0,
+              346.0,
+              360.0,
+              381.0,
+              400.0,
+              414.0,
+              420.0,
+              426.0,
+              444.0,
+              453.0,
+              462.0,
+              483.0,
+              494.0,
+              500.0,
+              507.0,
+              516.0,
+              538.0,
+              544.0,
+              557.0,
+              572.0,
+              579.0,
+              585.0,
+              590.0,
+              603.0,
+              613.0,
+              619.0,
+              625.0,
+              635.0,
+              645.0,
+              650.0,
+              662.0,
+              677.0
+            ],
+            "right": 684.0
+          },
+          {
+            "page": 2,
+            "line": 0,
+            "source_offsets": [
+              124,
+              122,
+              120,
+              118,
+              116,
+              114,
+              112,
+              109,
+              107,
+              105,
+              103,
+              100,
+              98,
+              96,
+              94,
+              91,
+              89,
+              87,
+              84,
+              82,
+              80,
+              78,
+              76,
+              73,
+              71,
+              69,
+              66,
+              64,
+              61,
+              59,
+              57,
+              55,
+              53,
+              50,
+              48,
+              46,
+              43,
+              41,
+              39,
+              37,
+              35,
+              33,
+              31,
+              28,
+              26,
+              24,
+              22,
+              20,
+              17,
+              15,
+              13,
+              11,
+              9,
+              7,
+              5,
+              2,
+              0
+            ],
+            "x": [
+              50.0,
+              57.0,
+              68.0,
+              73.0,
+              86.0,
+              93.0,
+              98.0,
+              110.0,
+              123.0,
+              129.0,
+              139.0,
+              160.0,
+              179.0,
+              185.0,
+              191.0,
+              208.0,
+              222.0,
+              236.0,
+              254.0,
+              261.0,
+              270.0,
+              276.0,
+              283.0,
+              300.0,
+              310.0,
+              332.0,
+              346.0,
+              360.0,
+              381.0,
+              400.0,
+              414.0,
+              420.0,
+              426.0,
+              444.0,
+              453.0,
+              462.0,
+              483.0,
+              494.0,
+              500.0,
+              507.0,
+              516.0,
+              538.0,
+              544.0,
+              557.0,
+              572.0,
+              579.0,
+              585.0,
+              590.0,
+              603.0,
+              613.0,
+              619.0,
+              625.0,
+              635.0,
+              645.0,
+              650.0,
+              662.0,
+              677.0
+            ],
+            "right": 684.0
+          }
+        ],
+        "numbers": [
+          {
+            "page": 0,
+            "line": 2,
+            "token": "0123456789",
+            "x": [
+              544.0,
+              558.0,
+              572.0,
+              586.0,
+              600.0,
+              614.0,
+              628.0,
+              642.0,
+              656.0,
+              670.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 0,
+            "line": 3,
+            "token": "2026",
+            "x": [
+              470.0,
+              484.0,
+              498.0,
+              512.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 0,
+            "line": 4,
+            "token": "12.34",
+            "x": [
+              371.0,
+              385.0,
+              399.0,
+              406.0,
+              420.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 2,
+            "token": "0123456789",
+            "x": [
+              544.0,
+              558.0,
+              572.0,
+              586.0,
+              600.0,
+              614.0,
+              628.0,
+              642.0,
+              656.0,
+              670.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 3,
+            "token": "2026",
+            "x": [
+              470.0,
+              484.0,
+              498.0,
+              512.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 4,
+            "token": "12.34",
+            "x": [
+              371.0,
+              385.0,
+              399.0,
+              406.0,
+              420.0
+            ],
+            "scene": "digits"
+          }
+        ],
+        "punctuation": [
+          {
+            "page": 0,
+            "line": 6,
+            "source": "U+0028",
+            "expected": "U+0029",
+            "level": 1,
+            "actual_gid": 12,
+            "harfbuzz_cmap_gid": 12
+          },
+          {
+            "page": 0,
+            "line": 7,
+            "source": "U+005B",
+            "expected": "U+005D",
+            "level": 1,
+            "actual_gid": 64,
+            "harfbuzz_cmap_gid": 64
+          },
+          {
+            "page": 0,
+            "line": 7,
+            "source": "U+0029",
+            "expected": "U+0028",
+            "level": 1,
+            "actual_gid": 11,
+            "harfbuzz_cmap_gid": 11
+          },
+          {
+            "page": 0,
+            "line": 8,
+            "source": "U+00AB",
+            "expected": "U+00BB",
+            "level": 1,
+            "actual_gid": 170,
+            "harfbuzz_cmap_gid": 170
+          },
+          {
+            "page": 0,
+            "line": 8,
+            "source": "U+005D",
+            "expected": "U+005B",
+            "level": 1,
+            "actual_gid": 62,
+            "harfbuzz_cmap_gid": 62
+          },
+          {
+            "page": 0,
+            "line": 9,
+            "source": "U+201C",
+            "expected": "U+201C",
+            "level": 1,
+            "actual_gid": 179,
+            "harfbuzz_cmap_gid": 179
+          },
+          {
+            "page": 0,
+            "line": 9,
+            "source": "U+00BB",
+            "expected": "U+00AB",
+            "level": 1,
+            "actual_gid": 169,
+            "harfbuzz_cmap_gid": 169
+          },
+          {
+            "page": 0,
+            "line": 10,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 0,
+            "line": 10,
+            "source": "U+201D",
+            "expected": "U+201D",
+            "level": 1,
+            "actual_gid": 180,
+            "harfbuzz_cmap_gid": 180
+          },
+          {
+            "page": 0,
+            "line": 11,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 2,
+            "line": 6,
+            "source": "U+0028",
+            "expected": "U+0029",
+            "level": 1,
+            "actual_gid": 12,
+            "harfbuzz_cmap_gid": 12
+          },
+          {
+            "page": 2,
+            "line": 7,
+            "source": "U+005B",
+            "expected": "U+005D",
+            "level": 1,
+            "actual_gid": 64,
+            "harfbuzz_cmap_gid": 64
+          },
+          {
+            "page": 2,
+            "line": 7,
+            "source": "U+0029",
+            "expected": "U+0028",
+            "level": 1,
+            "actual_gid": 11,
+            "harfbuzz_cmap_gid": 11
+          },
+          {
+            "page": 2,
+            "line": 8,
+            "source": "U+00AB",
+            "expected": "U+00BB",
+            "level": 1,
+            "actual_gid": 170,
+            "harfbuzz_cmap_gid": 170
+          },
+          {
+            "page": 2,
+            "line": 8,
+            "source": "U+005D",
+            "expected": "U+005B",
+            "level": 1,
+            "actual_gid": 62,
+            "harfbuzz_cmap_gid": 62
+          },
+          {
+            "page": 2,
+            "line": 9,
+            "source": "U+201C",
+            "expected": "U+201C",
+            "level": 1,
+            "actual_gid": 179,
+            "harfbuzz_cmap_gid": 179
+          },
+          {
+            "page": 2,
+            "line": 9,
+            "source": "U+00BB",
+            "expected": "U+00AB",
+            "level": 1,
+            "actual_gid": 169,
+            "harfbuzz_cmap_gid": 169
+          },
+          {
+            "page": 2,
+            "line": 10,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 2,
+            "line": 10,
+            "source": "U+201D",
+            "expected": "U+201D",
+            "level": 1,
+            "actual_gid": 180,
+            "harfbuzz_cmap_gid": 180
+          },
+          {
+            "page": 2,
+            "line": 11,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          }
+        ],
+        "mixed": [
+          {
+            "page": 0,
+            "line": 13,
+            "token": "OpenAI Reader ABC xyz",
+            "x": [
+              401.0,
+              421.0,
+              435.0,
+              449.0,
+              463.0,
+              480.0,
+              487.0,
+              494.0,
+              513.0,
+              527.0,
+              541.0,
+              555.0,
+              569.0,
+              578.0,
+              585.0,
+              602.0,
+              619.0,
+              638.0,
+              645.0,
+              658.0,
+              671.0
+            ],
+            "scene": "mixed"
+          },
+          {
+            "page": 1,
+            "line": 12,
+            "token": "Reader ABC",
+            "x": [
+              36.0,
+              55.0,
+              69.0,
+              83.0,
+              97.0,
+              111.0,
+              120.0,
+              127.0,
+              144.0,
+              161.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 1,
+            "line": 12,
+            "token": "English paragraph",
+            "x": [
+              343.0,
+              360.0,
+              374.0,
+              388.0,
+              394.0,
+              400.0,
+              413.0,
+              427.0,
+              434.0,
+              448.0,
+              462.0,
+              471.0,
+              485.0,
+              499.0,
+              508.0,
+              522.0,
+              536.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 2,
+            "line": 13,
+            "token": "OpenAI Reader ABC xyz",
+            "x": [
+              401.0,
+              421.0,
+              435.0,
+              449.0,
+              463.0,
+              480.0,
+              487.0,
+              494.0,
+              513.0,
+              527.0,
+              541.0,
+              555.0,
+              569.0,
+              578.0,
+              585.0,
+              602.0,
+              619.0,
+              638.0,
+              645.0,
+              658.0,
+              671.0
+            ],
+            "scene": "mixed"
+          },
+          {
+            "page": 3,
+            "line": 12,
+            "token": "Reader ABC",
+            "x": [
+              36.0,
+              55.0,
+              69.0,
+              83.0,
+              97.0,
+              111.0,
+              120.0,
+              127.0,
+              144.0,
+              161.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 3,
+            "line": 12,
+            "token": "English paragraph",
+            "x": [
+              343.0,
+              360.0,
+              374.0,
+              388.0,
+              394.0,
+              400.0,
+              413.0,
+              427.0,
+              434.0,
+              448.0,
+              462.0,
+              471.0,
+              485.0,
+              499.0,
+              508.0,
+              522.0,
+              536.0
+            ],
+            "scene": "ltr"
+          }
+        ],
+        "alignment": [
+          {
+            "page": 0,
+            "line": 15,
+            "x": 36.0,
+            "width": 624.0,
+            "expected_right": 660,
+            "final": false
+          },
+          {
+            "page": 0,
+            "line": 16,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 0,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 1,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 2,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 3,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 4,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 5,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 6,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 7,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 8,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 9,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 10,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 11,
+            "x": 36.0,
+            "width": 60.0,
+            "expected_right": 684,
+            "final": true
+          },
+          {
+            "page": 2,
+            "line": 15,
+            "x": 36.0,
+            "width": 624.0,
+            "expected_right": 660,
+            "final": false
+          },
+          {
+            "page": 2,
+            "line": 16,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 0,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 1,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 2,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 3,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 4,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 5,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 6,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 7,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 8,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 9,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 10,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 11,
+            "x": 36.0,
+            "width": 60.0,
+            "expected_right": 684,
+            "final": true
+          }
+        ],
+        "progression": [
+          {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        ]
+      }
+    },
+    {
+      "book": "hebrew-journey",
+      "page_count": 4,
+      "passed": 4,
+      "results": {
+        "direction": true,
+        "numbers": true,
+        "punctuation": true,
+        "mixed": true,
+        "alignment": false,
+        "progression": false
+      },
+      "failures": [
+        {
+          "item": "alignment",
+          "evidence": {
+            "page": 1,
+            "line": 15,
+            "x": 36.0,
+            "width": 288.0,
+            "expected_right": 684,
+            "final": true
+          }
+        },
+        {
+          "item": "alignment",
+          "evidence": {
+            "page": 3,
+            "line": 15,
+            "x": 36.0,
+            "width": 288.0,
+            "expected_right": 684,
+            "final": true
+          }
+        },
+        {
+          "item": "progression",
+          "evidence": {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        }
+      ],
+      "evidence": {
+        "direction": [
+          {
+            "page": 0,
+            "line": 0,
+            "source_offsets": [
+              97,
+              95,
+              92,
+              90,
+              88,
+              86,
+              83,
+              81,
+              79,
+              77,
+              75,
+              72,
+              70,
+              68,
+              66,
+              64,
+              61,
+              59,
+              57,
+              55,
+              53,
+              51,
+              49,
+              46,
+              44,
+              42,
+              39,
+              37,
+              35,
+              32,
+              30,
+              28,
+              26,
+              24,
+              21,
+              19,
+              17,
+              15,
+              13,
+              11,
+              8,
+              6,
+              4,
+              2,
+              0
+            ],
+            "x": [
+              79.0,
+              91.0,
+              113.0,
+              127.0,
+              142.0,
+              158.0,
+              179.0,
+              196.0,
+              202.0,
+              220.0,
+              233.0,
+              256.0,
+              272.0,
+              278.0,
+              290.0,
+              296.0,
+              319.0,
+              335.0,
+              341.0,
+              354.0,
+              370.0,
+              376.0,
+              388.0,
+              401.0,
+              417.0,
+              423.0,
+              436.0,
+              448.0,
+              460.0,
+              481.0,
+              497.0,
+              503.0,
+              516.0,
+              530.0,
+              552.0,
+              568.0,
+              574.0,
+              589.0,
+              602.0,
+              608.0,
+              629.0,
+              635.0,
+              644.0,
+              660.0,
+              669.0
+            ],
+            "right": 684.0
+          },
+          {
+            "page": 0,
+            "line": 1,
+            "source_offsets": [
+              115,
+              113,
+              111,
+              109,
+              106,
+              104,
+              102,
+              100
+            ],
+            "x": [
+              580.0,
+              594.0,
+              607.0,
+              613.0,
+              636.0,
+              652.0,
+              664.0,
+              670.0
+            ],
+            "right": 684.0
+          },
+          {
+            "page": 2,
+            "line": 0,
+            "source_offsets": [
+              97,
+              95,
+              92,
+              90,
+              88,
+              86,
+              83,
+              81,
+              79,
+              77,
+              75,
+              72,
+              70,
+              68,
+              66,
+              64,
+              61,
+              59,
+              57,
+              55,
+              53,
+              51,
+              49,
+              46,
+              44,
+              42,
+              39,
+              37,
+              35,
+              32,
+              30,
+              28,
+              26,
+              24,
+              21,
+              19,
+              17,
+              15,
+              13,
+              11,
+              8,
+              6,
+              4,
+              2,
+              0
+            ],
+            "x": [
+              79.0,
+              91.0,
+              113.0,
+              127.0,
+              142.0,
+              158.0,
+              179.0,
+              196.0,
+              202.0,
+              220.0,
+              233.0,
+              256.0,
+              272.0,
+              278.0,
+              290.0,
+              296.0,
+              319.0,
+              335.0,
+              341.0,
+              354.0,
+              370.0,
+              376.0,
+              388.0,
+              401.0,
+              417.0,
+              423.0,
+              436.0,
+              448.0,
+              460.0,
+              481.0,
+              497.0,
+              503.0,
+              516.0,
+              530.0,
+              552.0,
+              568.0,
+              574.0,
+              589.0,
+              602.0,
+              608.0,
+              629.0,
+              635.0,
+              644.0,
+              660.0,
+              669.0
+            ],
+            "right": 684.0
+          },
+          {
+            "page": 2,
+            "line": 1,
+            "source_offsets": [
+              115,
+              113,
+              111,
+              109,
+              106,
+              104,
+              102,
+              100
+            ],
+            "x": [
+              580.0,
+              594.0,
+              607.0,
+              613.0,
+              636.0,
+              652.0,
+              664.0,
+              670.0
+            ],
+            "right": 684.0
+          }
+        ],
+        "numbers": [
+          {
+            "page": 0,
+            "line": 3,
+            "token": "0123456789",
+            "x": [
+              433.0,
+              447.0,
+              461.0,
+              475.0,
+              489.0,
+              503.0,
+              517.0,
+              531.0,
+              545.0,
+              559.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 0,
+            "line": 4,
+            "token": "2026",
+            "x": [
+              277.0,
+              291.0,
+              305.0,
+              319.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 0,
+            "line": 5,
+            "token": "12.34",
+            "x": [
+              108.0,
+              122.0,
+              136.0,
+              143.0,
+              157.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 3,
+            "token": "0123456789",
+            "x": [
+              433.0,
+              447.0,
+              461.0,
+              475.0,
+              489.0,
+              503.0,
+              517.0,
+              531.0,
+              545.0,
+              559.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 4,
+            "token": "2026",
+            "x": [
+              277.0,
+              291.0,
+              305.0,
+              319.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 2,
+            "line": 5,
+            "token": "12.34",
+            "x": [
+              108.0,
+              122.0,
+              136.0,
+              143.0,
+              157.0
+            ],
+            "scene": "digits"
+          }
+        ],
+        "punctuation": [
+          {
+            "page": 0,
+            "line": 7,
+            "source": "U+0028",
+            "expected": "U+0029",
+            "level": 1,
+            "actual_gid": 12,
+            "harfbuzz_cmap_gid": 12
+          },
+          {
+            "page": 0,
+            "line": 8,
+            "source": "U+005B",
+            "expected": "U+005D",
+            "level": 1,
+            "actual_gid": 64,
+            "harfbuzz_cmap_gid": 64
+          },
+          {
+            "page": 0,
+            "line": 8,
+            "source": "U+0029",
+            "expected": "U+0028",
+            "level": 1,
+            "actual_gid": 11,
+            "harfbuzz_cmap_gid": 11
+          },
+          {
+            "page": 0,
+            "line": 9,
+            "source": "U+00AB",
+            "expected": "U+00BB",
+            "level": 1,
+            "actual_gid": 170,
+            "harfbuzz_cmap_gid": 170
+          },
+          {
+            "page": 0,
+            "line": 9,
+            "source": "U+005D",
+            "expected": "U+005B",
+            "level": 1,
+            "actual_gid": 62,
+            "harfbuzz_cmap_gid": 62
+          },
+          {
+            "page": 0,
+            "line": 10,
+            "source": "U+201C",
+            "expected": "U+201C",
+            "level": 1,
+            "actual_gid": 179,
+            "harfbuzz_cmap_gid": 179
+          },
+          {
+            "page": 0,
+            "line": 10,
+            "source": "U+00BB",
+            "expected": "U+00AB",
+            "level": 1,
+            "actual_gid": 169,
+            "harfbuzz_cmap_gid": 169
+          },
+          {
+            "page": 0,
+            "line": 11,
+            "source": "U+201D",
+            "expected": "U+201D",
+            "level": 1,
+            "actual_gid": 180,
+            "harfbuzz_cmap_gid": 180
+          },
+          {
+            "page": 0,
+            "line": 12,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 0,
+            "line": 13,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 2,
+            "line": 7,
+            "source": "U+0028",
+            "expected": "U+0029",
+            "level": 1,
+            "actual_gid": 12,
+            "harfbuzz_cmap_gid": 12
+          },
+          {
+            "page": 2,
+            "line": 8,
+            "source": "U+005B",
+            "expected": "U+005D",
+            "level": 1,
+            "actual_gid": 64,
+            "harfbuzz_cmap_gid": 64
+          },
+          {
+            "page": 2,
+            "line": 8,
+            "source": "U+0029",
+            "expected": "U+0028",
+            "level": 1,
+            "actual_gid": 11,
+            "harfbuzz_cmap_gid": 11
+          },
+          {
+            "page": 2,
+            "line": 9,
+            "source": "U+00AB",
+            "expected": "U+00BB",
+            "level": 1,
+            "actual_gid": 170,
+            "harfbuzz_cmap_gid": 170
+          },
+          {
+            "page": 2,
+            "line": 9,
+            "source": "U+005D",
+            "expected": "U+005B",
+            "level": 1,
+            "actual_gid": 62,
+            "harfbuzz_cmap_gid": 62
+          },
+          {
+            "page": 2,
+            "line": 10,
+            "source": "U+201C",
+            "expected": "U+201C",
+            "level": 1,
+            "actual_gid": 179,
+            "harfbuzz_cmap_gid": 179
+          },
+          {
+            "page": 2,
+            "line": 10,
+            "source": "U+00BB",
+            "expected": "U+00AB",
+            "level": 1,
+            "actual_gid": 169,
+            "harfbuzz_cmap_gid": 169
+          },
+          {
+            "page": 2,
+            "line": 11,
+            "source": "U+201D",
+            "expected": "U+201D",
+            "level": 1,
+            "actual_gid": 180,
+            "harfbuzz_cmap_gid": 180
+          },
+          {
+            "page": 2,
+            "line": 12,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 2,
+            "line": 13,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          }
+        ],
+        "mixed": [
+          {
+            "page": 0,
+            "line": 15,
+            "token": "OpenAI Reader ABC xyz",
+            "x": [
+              290.0,
+              310.0,
+              324.0,
+              338.0,
+              352.0,
+              369.0,
+              376.0,
+              383.0,
+              402.0,
+              416.0,
+              430.0,
+              444.0,
+              458.0,
+              467.0,
+              474.0,
+              491.0,
+              508.0,
+              527.0,
+              534.0,
+              547.0,
+              560.0
+            ],
+            "scene": "mixed"
+          },
+          {
+            "page": 1,
+            "line": 16,
+            "token": "Reader ABC",
+            "x": [
+              36.0,
+              55.0,
+              69.0,
+              83.0,
+              97.0,
+              111.0,
+              120.0,
+              127.0,
+              144.0,
+              161.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 1,
+            "line": 16,
+            "token": "English paragraph",
+            "x": [
+              343.0,
+              360.0,
+              374.0,
+              388.0,
+              394.0,
+              400.0,
+              413.0,
+              427.0,
+              434.0,
+              448.0,
+              462.0,
+              471.0,
+              485.0,
+              499.0,
+              508.0,
+              522.0,
+              536.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 2,
+            "line": 15,
+            "token": "OpenAI Reader ABC xyz",
+            "x": [
+              290.0,
+              310.0,
+              324.0,
+              338.0,
+              352.0,
+              369.0,
+              376.0,
+              383.0,
+              402.0,
+              416.0,
+              430.0,
+              444.0,
+              458.0,
+              467.0,
+              474.0,
+              491.0,
+              508.0,
+              527.0,
+              534.0,
+              547.0,
+              560.0
+            ],
+            "scene": "mixed"
+          },
+          {
+            "page": 3,
+            "line": 16,
+            "token": "Reader ABC",
+            "x": [
+              36.0,
+              55.0,
+              69.0,
+              83.0,
+              97.0,
+              111.0,
+              120.0,
+              127.0,
+              144.0,
+              161.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 3,
+            "line": 16,
+            "token": "English paragraph",
+            "x": [
+              343.0,
+              360.0,
+              374.0,
+              388.0,
+              394.0,
+              400.0,
+              413.0,
+              427.0,
+              434.0,
+              448.0,
+              462.0,
+              471.0,
+              485.0,
+              499.0,
+              508.0,
+              522.0,
+              536.0
+            ],
+            "scene": "ltr"
+          }
+        ],
+        "alignment": [
+          {
+            "page": 1,
+            "line": 0,
+            "x": 36.0,
+            "width": 624.0,
+            "expected_right": 660,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 1,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 2,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 3,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 4,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 5,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 6,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 7,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 8,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 9,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 10,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 11,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 12,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 13,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 14,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 1,
+            "line": 15,
+            "x": 36.0,
+            "width": 288.0,
+            "expected_right": 684,
+            "final": true
+          },
+          {
+            "page": 3,
+            "line": 0,
+            "x": 36.0,
+            "width": 624.0,
+            "expected_right": 660,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 1,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 2,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 3,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 4,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 5,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 6,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 7,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 8,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 9,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 10,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 11,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 12,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 13,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 14,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 3,
+            "line": 15,
+            "x": 36.0,
+            "width": 288.0,
+            "expected_right": 684,
+            "final": true
+          }
+        ],
+        "progression": [
+          {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        ]
+      }
+    },
+    {
+      "book": "hunger",
+      "controlled_scenarios": false,
+      "note": "Unmodified real book: no invented six-scenario score; see controlled appendix."
+    },
+    {
+      "book": "hunger-probed",
+      "page_count": 213,
+      "passed": 4,
+      "results": {
+        "direction": true,
+        "numbers": true,
+        "punctuation": true,
+        "mixed": true,
+        "alignment": false,
+        "progression": false
+      },
+      "failures": [
+        {
+          "item": "alignment",
+          "evidence": {
+            "page": 211,
+            "line": 17,
+            "x": 36.0,
+            "width": 288.0,
+            "expected_right": 684,
+            "final": true
+          }
+        },
+        {
+          "item": "progression",
+          "evidence": {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        }
+      ],
+      "evidence": {
+        "direction": [
+          {
+            "page": 210,
+            "line": 2,
+            "source_offsets": [
+              140,
+              138,
+              135,
+              133,
+              131,
+              129,
+              126,
+              124,
+              122,
+              120,
+              118,
+              115,
+              113,
+              111,
+              109,
+              107,
+              104,
+              102,
+              100,
+              98,
+              96,
+              94,
+              92,
+              89,
+              87,
+              85,
+              82,
+              80,
+              78,
+              75,
+              73,
+              71,
+              69,
+              67,
+              64,
+              62,
+              60,
+              58,
+              56,
+              54,
+              51,
+              49,
+              47,
+              45,
+              43
+            ],
+            "x": [
+              79.0,
+              91.0,
+              113.0,
+              127.0,
+              142.0,
+              158.0,
+              179.0,
+              196.0,
+              202.0,
+              220.0,
+              233.0,
+              256.0,
+              272.0,
+              278.0,
+              290.0,
+              296.0,
+              319.0,
+              335.0,
+              341.0,
+              354.0,
+              370.0,
+              376.0,
+              388.0,
+              401.0,
+              417.0,
+              423.0,
+              436.0,
+              448.0,
+              460.0,
+              481.0,
+              497.0,
+              503.0,
+              516.0,
+              530.0,
+              552.0,
+              568.0,
+              574.0,
+              589.0,
+              602.0,
+              608.0,
+              629.0,
+              635.0,
+              644.0,
+              660.0,
+              669.0
+            ],
+            "right": 684.0
+          },
+          {
+            "page": 210,
+            "line": 3,
+            "source_offsets": [
+              158,
+              156,
+              154,
+              152,
+              149,
+              147,
+              145,
+              143
+            ],
+            "x": [
+              580.0,
+              594.0,
+              607.0,
+              613.0,
+              636.0,
+              652.0,
+              664.0,
+              670.0
+            ],
+            "right": 684.0
+          }
+        ],
+        "numbers": [
+          {
+            "page": 210,
+            "line": 5,
+            "token": "0123456789",
+            "x": [
+              433.0,
+              447.0,
+              461.0,
+              475.0,
+              489.0,
+              503.0,
+              517.0,
+              531.0,
+              545.0,
+              559.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 210,
+            "line": 6,
+            "token": "2026",
+            "x": [
+              277.0,
+              291.0,
+              305.0,
+              319.0
+            ],
+            "scene": "digits"
+          },
+          {
+            "page": 210,
+            "line": 7,
+            "token": "12.34",
+            "x": [
+              108.0,
+              122.0,
+              136.0,
+              143.0,
+              157.0
+            ],
+            "scene": "digits"
+          }
+        ],
+        "punctuation": [
+          {
+            "page": 210,
+            "line": 9,
+            "source": "U+0028",
+            "expected": "U+0029",
+            "level": 1,
+            "actual_gid": 12,
+            "harfbuzz_cmap_gid": 12
+          },
+          {
+            "page": 210,
+            "line": 10,
+            "source": "U+005B",
+            "expected": "U+005D",
+            "level": 1,
+            "actual_gid": 64,
+            "harfbuzz_cmap_gid": 64
+          },
+          {
+            "page": 210,
+            "line": 10,
+            "source": "U+0029",
+            "expected": "U+0028",
+            "level": 1,
+            "actual_gid": 11,
+            "harfbuzz_cmap_gid": 11
+          },
+          {
+            "page": 210,
+            "line": 11,
+            "source": "U+00AB",
+            "expected": "U+00BB",
+            "level": 1,
+            "actual_gid": 170,
+            "harfbuzz_cmap_gid": 170
+          },
+          {
+            "page": 210,
+            "line": 11,
+            "source": "U+005D",
+            "expected": "U+005B",
+            "level": 1,
+            "actual_gid": 62,
+            "harfbuzz_cmap_gid": 62
+          },
+          {
+            "page": 210,
+            "line": 12,
+            "source": "U+201C",
+            "expected": "U+201C",
+            "level": 1,
+            "actual_gid": 179,
+            "harfbuzz_cmap_gid": 179
+          },
+          {
+            "page": 210,
+            "line": 12,
+            "source": "U+00BB",
+            "expected": "U+00AB",
+            "level": 1,
+            "actual_gid": 169,
+            "harfbuzz_cmap_gid": 169
+          },
+          {
+            "page": 210,
+            "line": 13,
+            "source": "U+201D",
+            "expected": "U+201D",
+            "level": 1,
+            "actual_gid": 180,
+            "harfbuzz_cmap_gid": 180
+          },
+          {
+            "page": 210,
+            "line": 14,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          },
+          {
+            "page": 210,
+            "line": 15,
+            "source": "U+0022",
+            "expected": "U+0022",
+            "level": 1,
+            "actual_gid": 5,
+            "harfbuzz_cmap_gid": 5
+          }
+        ],
+        "mixed": [
+          {
+            "page": 211,
+            "line": 0,
+            "token": "OpenAI Reader ABC xyz",
+            "x": [
+              290.0,
+              310.0,
+              324.0,
+              338.0,
+              352.0,
+              369.0,
+              376.0,
+              383.0,
+              402.0,
+              416.0,
+              430.0,
+              444.0,
+              458.0,
+              467.0,
+              474.0,
+              491.0,
+              508.0,
+              527.0,
+              534.0,
+              547.0,
+              560.0
+            ],
+            "scene": "mixed"
+          },
+          {
+            "page": 212,
+            "line": 0,
+            "token": "Reader ABC",
+            "x": [
+              36.0,
+              55.0,
+              69.0,
+              83.0,
+              97.0,
+              111.0,
+              120.0,
+              127.0,
+              144.0,
+              161.0
+            ],
+            "scene": "ltr"
+          },
+          {
+            "page": 212,
+            "line": 0,
+            "token": "English paragraph",
+            "x": [
+              343.0,
+              360.0,
+              374.0,
+              388.0,
+              394.0,
+              400.0,
+              413.0,
+              427.0,
+              434.0,
+              448.0,
+              462.0,
+              471.0,
+              485.0,
+              499.0,
+              508.0,
+              522.0,
+              536.0
+            ],
+            "scene": "ltr"
+          }
+        ],
+        "alignment": [
+          {
+            "page": 211,
+            "line": 2,
+            "x": 36.0,
+            "width": 624.0,
+            "expected_right": 660,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 3,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 4,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 5,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 6,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 7,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 8,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 9,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 10,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 11,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 12,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 13,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 14,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 15,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 16,
+            "x": 36.0,
+            "width": 648.0,
+            "expected_right": 684,
+            "final": false
+          },
+          {
+            "page": 211,
+            "line": 17,
+            "x": 36.0,
+            "width": 288.0,
+            "expected_right": 684,
+            "final": true
+          }
+        ],
+        "progression": [
+          {
+            "direction": null,
+            "next_side": "unknown"
+          }
+        ]
+      }
+    }
+  ]
+}

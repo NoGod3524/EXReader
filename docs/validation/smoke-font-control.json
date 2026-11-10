@@ -1,0 +1,35 @@
+{
+  "controlled_variable": "font file only",
+  "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+  "library_sha256": "59970583c1af96405b9be57763a4af0b4550682b3771a5e7a6894b832dd594dc",
+  "book_sha256": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+  "reference": {
+    "pages": 215,
+    "search_hits": 1000,
+    "pixel_sha256": "c1a085e1c0292c666fd6fdf4d4001254c1171ca5584e5c636d18e819c128c3ef",
+    "png_sha256": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+    "width": 360,
+    "height": 480,
+    "ink_pixels": 20543,
+    "pixel_bytes": 691200,
+    "raw_log_sha256": "d5234dbff39c7c5316cd1c8f61b822cc9d4d84c84f1bb6c0e697eaea711e1bcc",
+    "font": "Noto Sans CJK SC Regular",
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+  },
+  "substitution": {
+    "pages": 215,
+    "search_hits": 1000,
+    "pixel_sha256": "3448ab252cb33cbc799e4f914ed4ee4f857a26ca77f2fd91c369ede7d9ba4f35",
+    "png_sha256": "e5a6984d9bd0823b3b0a350d31553384479e85ae7519d71986612d662fa4a8e8",
+    "width": 360,
+    "height": 480,
+    "ink_pixels": 19358,
+    "pixel_bytes": 691200,
+    "raw_log_sha256": "995a89ef28addb9530369dc7645f27eb7cf4e8db2faa2b06e8334bd6c2394376",
+    "font": "Windows Arial",
+    "font_sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+  },
+  "different_pixels": 31997,
+  "different_channels": 95991,
+  "reason": "Only font bytes changed. The font substitution changes glyph shapes and metrics (first glyph baseline 45 to 44), producing 31997 different pixels. SDK library, FreeType, 72 DPI, 18 px font size, layout, EPUB, OS and C probe remain fixed."
+}

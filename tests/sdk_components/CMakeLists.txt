@@ -65,6 +65,19 @@ if(TARGET EXReader::exreader)
 endif()
 
 enable_testing()
+if(EXR_SDK AND TARGET EXReader::exreader AND NOT CMAKE_CROSSCOMPILING)
+  get_target_property(consumer_sdk_type EXReader::exreader TYPE)
+  if(consumer_sdk_type STREQUAL "SHARED_LIBRARY")
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_test(NAME installed-consumer-contract COMMAND ${Python3_EXECUTABLE} -B
+      "${CMAKE_CURRENT_LIST_DIR}/../../tools/consumer/run.py"
+      --sdk "${EXR_SDK}" --config "$<CONFIG>" --generator "${CMAKE_GENERATOR}"
+      --compiler "${CMAKE_C_COMPILER}"
+      --allow-added "Intentional public APIs added since the frozen 389-symbol baseline; Unix also exposes existing internal/vendor symbols documented in docs/ABI.md"
+      --report-dir "${CMAKE_CURRENT_BINARY_DIR}/consumer-contract")
+    set_tests_properties(installed-consumer-contract PROPERTIES TIMEOUT 300)
+  endif()
+endif()
 if(EXR_TEST_FONT)
   add_test(NAME installed-core COMMAND core-consumer "${EXR_TEST_FONT}" "${EXR_TEST_COLOR_FONT}")
 endif()

@@ -1,0 +1,103 @@
+{
+  "comparable": true,
+  "incompatible_conditions": [],
+  "added_books": [],
+  "removed_books": [],
+  "books": [
+    {
+      "id": "byte-of-python-hans",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 357,
+      "new_page_count": 357,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg24042-hans",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 168,
+      "new_page_count": 168,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg25242-hans",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 76,
+      "new_page_count": 76,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg25271-hans",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 98,
+      "new_page_count": 98,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg27166-hans",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 500,
+      "new_page_count": 500,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "pg52323-hans",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 77,
+      "new_page_count": 77,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    },
+    {
+      "id": "python-howto-hans",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 924,
+      "new_page_count": 924,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    }
+  ],
+  "hash_changed_pages": 0,
+  "failed_books": [],
+  "needs_review": false,
+  "layout_hash_changed_books": []
+}

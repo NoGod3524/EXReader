@@ -1,28 +1,33 @@
 # EXReader C SDK API 参考
 
-本参考覆盖当前 `include/` 的 **17/17 个公开头文件、427/427 个公开函数（100%）**，
+本参考覆盖当前 `include/` 的 **19/19 个公开头文件、457/457 个公开函数声明（100%）**，
 按 **15/15 个模块**组织，每个模块附一个完整、独立的 C11 程序。
-14 个头文件声明函数；`exreader.h`、`exr/core.h` 为聚合入口，`exr/version.h` 提供版本宏。
+16 个头文件声明函数；`exreader.h`、`exr/core.h` 为聚合入口，`exr/version.h` 提供版本宏。
 `EXR_API` 函数声明是本参考的统计口径；类型、枚举、宏和回调类型不另计为导出函数。
 
-当前 Windows 聚合 DLL 的 427 个具名导出全部覆盖：**427/427（100%）**；
-当前 [ABI 契约](../tools/abi/contract.json) 的 **394/394** 项也全部覆盖，另外记录 33 个新增入口。
+原 SDK 文档验收时，Windows 聚合 DLL 的 427 个具名导出全部覆盖：**427/427（100%）**；
+当前 [ABI 契约](../tools/abi/contract.json) 的 **394/394** 项也全部覆盖，现在另外记录 63 个未冻结声明。
 任务中的“约 389”是 [历史 ABI 快照](ABI.md) 的数值，不能作为当前总数。
 真实编译、运行与导出比对见 [示例验收](examples/README.md)、[编译输出](examples/compile-output.txt)、
 [运行输出](examples/test-output.txt)、[机器统计](examples/verification.json)。
+
+合入 main 后新增的编辑模型与重排声明见 `exr/edit.h`、`exr/reflow.h`。当前 main 没有 `src/docx_edit.c`；
+模型函数须配置 `EXR_EDIT_MODEL_SOURCE` 接入匹配的 X1 实现，重排函数在缺少模型时返回 `EXR_UNSUPPORTED`。
+这里的 457 是头文件声明数，不是默认 DLL 导出实测数；上面的编译和机器统计保留原验收时间点，
+新增接口的配置、限制和锚点字段见 [X2 接口说明](X2_REFLOW.md)。
 
 ## 阅读约定与 ABI 分类
 
 | 标注 | 本参考中函数数 | 含义 |
 |---|---:|---|
 | 稳定 | 394 | 已列入当前 ABI 1 符号契约；沿用现有交付冻结口径，不新增跨版本二进制布局保证 |
-| 实验 | 33 | 当前公开头文件已声明、当前 DLL 已实现，但尚未加入上述冻结清单；升级时核对签名与结构布局 |
-| 内部 | 0 / 427 | 当前公开声明没有内部入口；`src/` 私有函数及第三方依赖不属于 SDK 合约，不应由外部调用 |
+| 实验 | 63 | 当前公开头文件已声明，尚未加入冻结清单；其中 edit.h 的模型声明需要外部 X1 实现，不能假设默认 DLL 已导出；升级时核对签名与结构布局 |
+| 内部 | 0 / 457 | 当前公开声明没有内部入口；`src/` 私有函数及第三方依赖不属于 SDK 合约，不应由外部调用 |
 
 “内部”适用于所有仅出现在 `src/*_internal.h` 等私有声明中的实现，例如
 `exr_fail`、`exr_control_poll`、`exr_grow`、`exr_copy`（[私有基础头](../src/base_internal.h)）。
 某些平台动态库可能暴露这些实现或第三方符号；可被链接器找到不等于公开 API。
-本页 0/427 仅说明公开函数的分类，不表示引擎没有内部函数，也不把历史其他平台的多余导出数量当作本次测量。
+本页 0/457 仅说明公开函数的分类，不表示引擎没有内部函数，也不把历史其他平台的多余导出数量当作本次测量。
 
 所有字符串均为 UTF-8。普通文本范围用规范化文本的 UTF-8 字节半开区间 `[start, end)`，
 不是原文件偏移、Unicode 字符序号或 CFI 的 UTF-16 code units。索引通常从 0 起；`SIZE_MAX`
@@ -62,8 +67,8 @@ provider、读取源、分配内存的接口还可能传播相应回调、I/O、
 | 字典 | 6 | [dictionary.c](examples/dictionary.c) |
 | 渲染 | 4 | [render.c](examples/render.c) |
 | 全文索引 | 9 | [textindex.c](examples/textindex.c) |
-| 文档 | 40 | [document.c](examples/document.c) |
-| 分页 | 48 | [pagination.c](examples/pagination.c) |
+| 文档 | 60 | [document.c](examples/document.c) |
+| 分页 | 58 | [pagination.c](examples/pagination.c) |
 | 搜索 | 10 | [search.c](examples/search.c) |
 | 标注 | 45 | [annotation.c](examples/annotation.c) |
 | 目录 | 17 | [toc.c](examples/toc.c) |
@@ -2290,6 +2295,287 @@ int main(void) {
 
 **所有权** 释放 chunk.ssml 和 sentences 并清零；chunk 结构本身由调用者保存。
 
+### `exr_document_page_progression`
+
+**签名** `exr_direction exr_document_page_progression(const exr_document *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/document.h)）。
+
+**参数** doc 为文档，可为 NULL。
+
+**返回与失败** 返回物理翻页方向；显式 OPF ltr/rtl 优先，其次按主语言判断，NULL 默认 LTR；与段落 bidi 分开。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 按值返回。
+
+### `exr_edit_begin`
+
+**签名** `exr_edit_tx *exr_edit_begin(exr_edit_doc *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型。
+
+**返回与失败** 返回事务句柄；无效模型、已有事务或分配失败返回 NULL；不支持嵌套事务。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 句柄由 commit/rollback 消费；doc_free 也会回滚活动事务。
+
+### `exr_edit_block_at`
+
+**签名** `const exr_edit_block *exr_edit_block_at(const exr_edit_doc *doc,size_t index);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型，index 为零基块序号。
+
+**返回与失败** 返回只读块视图；调用前确认 index 小于 block_count。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 借用指针，块被修改/删除即失效，不能 free。
+
+### `exr_edit_block_count`
+
+**签名** `size_t exr_edit_block_count(const exr_edit_doc *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型。
+
+**返回与失败** 返回块数量。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 按值返回。
+
+### `exr_edit_commit`
+
+**签名** `exr_status exr_edit_commit(exr_edit_tx *tx);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** tx 为活动事务。
+
+**返回与失败** 返回 exr_status；命令失败会锁存错误，commit 回滚整个事务并返回该错误。空提交保留 redo；成功新编辑在提交时清空 redo。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 消费 tx；无论成功或失败都不可再使用。
+
+### `exr_edit_defaults`
+
+**签名** `exr_edit_options exr_edit_defaults(void);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** 无参数。
+
+**返回与失败** 返回默认 undo_depth=100；显式设置为 0 禁用历史。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 按值返回 options。
+
+### `exr_edit_delete_block`
+
+**签名** `exr_status exr_edit_delete_block(exr_edit_doc *doc,exr_edit_id block_id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为模型，block_id 为要删除的块。
+
+**返回与失败** 返回 exr_status；当前表格只保留，不支持删除/编辑。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 成功删除使该块借用视图失效；ID 永不复用。
+
+### `exr_edit_doc_create`
+
+**签名** `exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t section_count, const exr_edit_block *blocks,size_t block_count,const exr_edit_part *parts,size_t part_count, const exr_edit_options *options,exr_edit_doc **out);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** sections/blocks/parts 与各自数量提供种子数据；options 可为 NULL；out 为非空输出。
+
+**返回与失败** 返回 exr_status。非零 ID 必须全局唯一，零 ID 自动分配且不复用；section_id=0 取首节，NULL/0 sections 创建 Letter 节。需提供保留内容所需全部 OPC part/opaque XML；本接口不解析或写 DOCX。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 深拷贝所有输入；失败清空 out；成功模型用 exr_edit_doc_free 释放。
+
+### `exr_edit_doc_free`
+
+**签名** `void exr_edit_doc_free(exr_edit_doc *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型。
+
+**返回与失败** 释放模型并回滚尚未结束的事务；无返回值。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 消费模型；所有借用视图及活动事务句柄失效，先释放关联 pager。
+
+### `exr_edit_find_block`
+
+**签名** `const exr_edit_block *exr_edit_find_block(const exr_edit_doc *doc,exr_edit_id id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型，id 为稳定非零块 ID。
+
+**返回与失败** 按 ID 查询只读块；调用者检查返回指针是否为空。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 借用指针，块被修改/删除即失效。
+
+### `exr_edit_insert_paragraph`
+
+**签名** `exr_status exr_edit_insert_paragraph(exr_edit_doc *doc,exr_edit_id after_id, const exr_edit_run *runs,size_t count,const exr_edit_para_props *props,exr_edit_id *new_id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为模型，after_id=0 表示开头；runs/count 为文字片段，props 可为 NULL，new_id 接收新块 ID。
+
+**返回与失败** 返回 exr_status；新 run 获得新 ID，节继承锚点（开头用首节），空 props 为继承属性集；失败清空输出 ID。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 输入可别名借用视图；新内容由模型管理。
+
+### `exr_edit_memory_bytes`
+
+**签名** `size_t exr_edit_memory_bytes(const exr_edit_doc *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型。
+
+**返回与失败** 返回保留分配字节，含历史与容量，不含分配器额外开销。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 按值返回。
+
+### `exr_edit_parts`
+
+**签名** `const exr_edit_part *exr_edit_parts(const exr_edit_doc *doc,size_t *count);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型，count 接收 OPC part 数量。
+
+**返回与失败** 返回只读 part 数组；name 为 OPC 路径，data/size 为内容。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 借用至 doc_free，不能 free。
+
+### `exr_edit_redo`
+
+**签名** `exr_status exr_edit_redo(exr_edit_doc *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型。
+
+**返回与失败** 返回 exr_status；事务打开或重做栈为空时返回 EXR_ARGUMENT。成功的新编辑会清空 redo。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 模型继续持有内容；更新后重新取得借用块/run 视图。
+
+### `exr_edit_rollback`
+
+**签名** `exr_status exr_edit_rollback(exr_edit_tx *tx);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** tx 为活动事务。
+
+**返回与失败** 返回 exr_status 并回滚事务内修改；失败命令后需回滚才能继续。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 消费 tx；之后不可再使用。
+
+### `exr_edit_sections`
+
+**签名** `const exr_edit_section *exr_edit_sections(const exr_edit_doc *doc,size_t *count);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型，count 接收节数量。
+
+**返回与失败** 返回只读节数组，包含纸张、边距、页眉页脚引用。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 借用至 doc_free，不能 free。
+
+### `exr_edit_set_paragraph_props`
+
+**签名** `exr_status exr_edit_set_paragraph_props(exr_edit_doc *doc,exr_edit_id block_id, const exr_edit_para_props *props);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc、block_id 指定段落，props 指定属性及 present 位。
+
+**返回与失败** 返回 exr_status；present 区分未设置/继承和显式值。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 属性由模型持有；旧块视图在修改后失效。
+
+### `exr_edit_set_run_props`
+
+**签名** `exr_status exr_edit_set_run_props(exr_edit_doc *doc,exr_edit_id block_id, size_t run_index,const exr_edit_run_props *props);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc、block_id、run_index 指定 run，props 提供属性及 present 位。
+
+**返回与失败** 返回 exr_status；显式 false bold/italic 可以覆盖继承。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 属性由模型持有；修改后重新取得视图。
+
+### `exr_edit_split_paragraph`
+
+**签名** `exr_status exr_edit_split_paragraph(exr_edit_doc *doc,exr_edit_id block_id, size_t run_index,size_t byte_offset);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc、block_id 指定段落，run_index/byte_offset 为 run 内 UTF-8 标量边界；(run_count,0) 表示末尾。
+
+**返回与失败** 返回 exr_status；左块保留 ID，右块新 ID，完整移动的 run 保留 ID，拆开的右片段新 ID；opaque run 仅允许 offset=0。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 段落属性复制；修改后重新取得借用视图。
+
+### `exr_edit_undo`
+
+**签名** `exr_status exr_edit_undo(exr_edit_doc *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型。
+
+**返回与失败** 返回 exr_status；事务打开或撤销栈为空时返回 EXR_ARGUMENT。事务外每个成功命令占一个撤销项。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 模型继续持有内容；更新后重新取得借用块/run 视图。
+
+
 ## 分页
 
 将文字与样式排为完整布局、逐页页器或按章节缓存会话，并查询页面几何。
@@ -3001,6 +3287,147 @@ int main(int argc, char **argv) {
 **线程** 可并发读取不可变快照；调用期间不得销毁对象或其借用视图。
 
 **所有权** out 为调用者值结构，不分配。
+
+### `exr_edit_anchor_capture`
+
+**签名** `exr_status exr_edit_anchor_capture(const exr_pager *pager,size_t page_index, exr_edit_id block_id,size_t byte_offset,exr_edit_view_anchor *out,exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/reflow.h)）。
+
+**参数** pager、page_index 指定编辑页；block_id 与 byte_offset 为块内拼接 run 的 UTF-8 字节边界；out、error 接收输出。
+
+**返回与失败** 编辑前捕获；返回 EXR_OK，无效页、块、UTF-8 边界或文字不在该页为 EXR_ARGUMENT；缺少模型实现时 EXR_UNSUPPORTED。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** out 为值记录；宿主另存相对像素位移。
+
+### `exr_edit_anchor_restore`
+
+**签名** `exr_status exr_edit_anchor_restore(const exr_pager *pager, const exr_edit_view_anchor *before,exr_edit_view_anchor *out,exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/reflow.h)）。
+
+**参数** pager 为更新后的编辑分页器；before 为保存的锚点，out 接收恢复位置，error 为诊断。
+
+**返回与失败** 返回 exr_status；只接受当前及上一成功修订，过期/无效锚点为 EXR_ARGUMENT，缺少模型实现时 EXR_UNSUPPORTED。插入取右亲和，删除文字收缩到替换末端，删块优先向后找，EOF 再向前。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 输入输出可为同一记录；page_offset 为页内源字节偏移，宿主自行恢复像素位移。
+
+### `exr_edit_layout_after`
+
+**签名** `exr_status exr_edit_layout_after(exr_edit_doc *doc,exr_pager *pager, exr_edit_id changed_block_id,size_t *pages_repaginated,exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/reflow.h)）。
+
+**参数** doc 为当前或保留 ID 的替换模型；pager 为编辑分页器；changed_block_id=0 自动检测，否则仅作提示；pages_repaginated、error 接收输出。
+
+**返回与失败** 返回 exr_status；比较快照汇总全部编辑、事务和 undo/redo。失败不提交新目录、不失效旧缓存；缺少模型实现时 EXR_UNSUPPORTED。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 成功后替换绑定模型，所有旧借用页失效；保留模型直至 pager 释放或成功换绑。
+
+### `exr_edit_pager_create`
+
+**签名** `exr_status exr_edit_pager_create(exr_edit_doc *doc,exr_font *font, const exr_layout_config *config,exr_pager **out,exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/reflow.h)）。
+
+**参数** doc 为编辑模型，font 为字体，config 为宿主几何配置（可为 NULL 取默认），out 为分页器输出，error 为诊断。
+
+**返回与失败** 返回 EXR_OK 或参数/分配/排版错误；缺少模型实现时 EXR_UNSUPPORTED。opaque run/表格、编号、keep-next、user CSS 不支持；页大小不取节纸张大小。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 模型必须比 pager 活得久；font 保留引用；成功 pager 用 exr_pager_free 释放，失败清空 out。
+
+### `exr_edit_reflow_statistics`
+
+**签名** `exr_edit_reflow_stats exr_edit_reflow_statistics(const exr_pager *pager);`
+
+**ABI** 实验（[公开头文件](../include/exr/reflow.h)）。
+
+**参数** pager 为编辑分页器。
+
+**返回与失败** 按值返回 revision、page_count、pages_repaginated、pages_reused、cache_invalidated 和 dirty；非编辑分页器返回零。dirty 的 old/new 区间为半开块顺序，first_page/end_page 为旧脏页区间，不能按 ID 大小排序。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 统计为值拷贝。
+
+### `exr_layout_fixed_viewport`
+
+**签名** `exr_fixed_viewport exr_layout_fixed_viewport(const exr_layout *layout);`
+
+**ABI** 实验（[公开头文件](../include/exr/layout.h)）。
+
+**参数** layout 为已排版页面。
+
+**返回与失败** 返回 fixed、source、原生 width/height、统一 scale 和居中偏移 x/y；可重排页面返回零记录。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 按值返回。
+
+### `exr_pager_cache_statistics`
+
+**签名** `exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);`
+
+**ABI** 实验（[公开头文件](../include/exr/layout.h)）。
+
+**参数** pager 为分页器，可为 NULL。
+
+**返回与失败** 返回页缓存 hits/misses；NULL 返回零统计。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 按值返回，不取得缓存页所有权。
+
+### `exr_publication_page_progression`
+
+**签名** `exr_direction exr_publication_page_progression(const exr_publication *publication);`
+
+**ABI** 实验（[公开头文件](../include/exr/layout.h)）。
+
+**参数** publication 为出版物，可为 NULL。
+
+**返回与失败** 返回物理方向，NULL/自定义出版物默认 LTR；用于左右键和跨页槽位，不倒转 spine 或 pager_next 顺序。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 按值返回。
+
+### `exr_publication_rendition`
+
+**签名** `exr_status exr_publication_rendition(const exr_publication *publication, size_t part, exr_part_rendition *out, exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/layout.h)）。
+
+**参数** publication 和 part 指定零基章节；out 必须非空，error 接收诊断。
+
+**返回与失败** 返回 EXR_OK；无效章节/输出返回 EXR_ARGUMENT。out 包含 layout、spread、viewport_width/height；非 EPUB 为可重排，缺失 viewport 为零。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 写入调用者的 out，无新增分配。
+
+### `exr_publication_spreads`
+
+**签名** `exr_status exr_publication_spreads(const exr_publication *publication, exr_spread **spreads, size_t *count, exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/layout.h)）。
+
+**参数** publication 为出版物；spreads、count 为非空输出，error 接收诊断。
+
+**返回与失败** 返回 EXR_OK；无效输入为 EXR_ARGUMENT，分配失败为 EXR_MEMORY。输出阅读顺序的屏幕，left/right 为物理槽位的 part 索引，空槽为 SIZE_MAX；EXR_SPREAD_SINGLE 时单页在 left。
+
+**线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
+
+**所有权** 成功数组用 exr_free 释放；有效输出先置 NULL/0。
+
 
 ## 搜索
 
