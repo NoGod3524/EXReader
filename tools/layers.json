@@ -220,6 +220,7 @@
     "include/exr/text.h": "text",
     "include/exr/font_manager.h": "text",
     "include/exr/document.h": "doc",
+    "include/exr/opds.h": "doc",
     "include/exr/formats.h": "formats",
     "include/exr/layout.h": "layout",
     "include/exr/edit.h": "doc",
