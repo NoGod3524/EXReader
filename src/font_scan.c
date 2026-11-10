@@ -463,6 +463,7 @@ exr_status exr_fm_parse(void *library_handle, exr_fm_file *file, exr_error *e) {
       continue;
     }
     out->face_index = (unsigned)i;
+    out->color = FT_HAS_COLOR(face) != 0;
     os2 = FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
     out->weight = os2 && os2->version != 0xffff && os2->usWeightClass ? os2->usWeightClass : 400;
     out->style = ((face->style_flags & FT_STYLE_FLAG_BOLD) || out->weight >= 600 ? EXR_FONT_STYLE_BOLD : 0u) |

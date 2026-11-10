@@ -1,0 +1,24 @@
+{
+  "comparable": true,
+  "incompatible_conditions": [],
+  "added_books": [],
+  "removed_books": [],
+  "books": [
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "old_status": "ok",
+      "new_status": "ok",
+      "source_changed": false,
+      "old_page_count": 646,
+      "new_page_count": 646,
+      "page_count_changed": false,
+      "glyph_count_changed": false,
+      "added_pages": [],
+      "removed_pages": [],
+      "hash_changed_pages": []
+    }
+  ],
+  "hash_changed_pages": 0,
+  "failed_books": [],
+  "needs_review": false
+}

@@ -317,6 +317,11 @@
     "exr_publication_cfi_resolve",
     "exr_publication_create",
     "exr_publication_free",
+    "exr_publication_index_build",
+    "exr_publication_index_info",
+    "exr_publication_index_load",
+    "exr_publication_index_save",
+    "exr_publication_index_search",
     "exr_publication_load",
     "exr_publication_locate",
     "exr_publication_missing_targets",
@@ -1648,6 +1653,26 @@
     },
     "exr_publication_free": {
       "signature": "EXR_API void exr_publication_free(exr_publication *publication);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_index_build": {
+      "signature": "EXR_API exr_status exr_publication_index_build(exr_publication *publication,size_t memory_limit, size_t max_parts,const exr_control *control,exr_index_stats *stats,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_index_info": {
+      "signature": "EXR_API exr_status exr_publication_index_info(exr_publication *publication,exr_index_stats *stats, exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_index_load": {
+      "signature": "EXR_API exr_status exr_publication_index_load(exr_publication *publication,const char *path, const char *revision,size_t memory_limit,const exr_control *control,exr_index_stats *stats,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_index_save": {
+      "signature": "EXR_API exr_status exr_publication_index_save(exr_publication *publication,const char *path, const char *revision,const exr_control *control,exr_error *error);",
+      "header": "include/exr/layout.h"
+    },
+    "exr_publication_index_search": {
+      "signature": "EXR_API exr_status exr_publication_index_search(exr_publication *publication,const char *needle, unsigned flags,exr_index_cursor *cursor,size_t max_results,exr_search_fn callback,void *context, const exr_control *control,size_t *count,exr_error *error);",
       "header": "include/exr/layout.h"
     },
     "exr_publication_load": {

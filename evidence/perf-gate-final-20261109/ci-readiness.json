@@ -1,0 +1,42 @@
+{
+  "checked_utc": "2026-11-09T07:29:53.268723+00:00",
+  "source_revision": "ed252fb6e483192ec0553a936e341f49c144b824",
+  "workflow_tree": "3e5e1cc140ebbb554ed9fffd87cd3a51f94d0010",
+  "tracked_workflow_files": 256,
+  "perf_entrypoints": [],
+  "realbook_entrypoints": [],
+  "existing_performance_workflow": {
+    "path": ".github/workflows/reading-real.yml",
+    "runs_on": "ubuntu-22.04",
+    "books": 8,
+    "manifest": "tools/reading_corpus/real-v1.json"
+  },
+  "required_contexts": [
+    {
+      "context": "reading-required-core",
+      "integration_id": 15368
+    }
+  ],
+  "repository_visibility": "public",
+  "ci_cycle_baseline_books": 0,
+  "ci_qualification_repetitions": 0,
+  "authorized_workflow_edits": false,
+  "blockers": [
+    "No existing workflow entrypoint for tools/perf or the 19-book corpus; .github edits prohibited.",
+    "No Ubuntu capture/run exists for this probe: 0/19 frozen cycle p95 and 0/5 CI repetitions.",
+    "19-book manifest contains local Windows paths, with no configured CI transport. Do not publish private book bytes to this public repository.",
+    "Linux PMU availability and runner CPU homogeneity require actual runner verification; not inferred from Windows."
+  ],
+  "final_local_qualification": {
+    "pass_count": 2,
+    "total": 5,
+    "false_positive_runs": [
+      1,
+      2,
+      5
+    ],
+    "worst_cycle_ratio": 1.4795376762290373,
+    "evidence": "evidence/perf-gate-final-20261109/final/qualification/results.json"
+  },
+  "required_ready": false
+}

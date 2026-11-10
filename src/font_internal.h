@@ -24,14 +24,33 @@ typedef struct {
   unsigned design_units,hmetrics,vmetrics,bitmap_only;
   float bitmap_scale_y;
 } exr_face;
+typedef struct exr_cached_glyph {
+  struct exr_cached_glyph *previous, *next, *hash_next;
+  size_t face, bytes, work;
+  uint32_t glyph;
+  FT_F26Dot6 size;
+  unsigned flags, bucket;
+  FT_Bitmap bitmap;
+  int left, top;
+} exr_cached_glyph;
 struct exr_font {
   FT_Library library;
   exr_face *faces;
   size_t count, base_count, refs;
   struct exr_font *fallback;
   unsigned manager_order; /* Preserve the manager's explicit base-face chain. */
+  struct exr_glyph_cache *raster_cache;
+  size_t manager_required; /* Prefix before automatically discovered faces. */
 };
+exr_cached_glyph *exr_glyph_cache_find(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags);
+void exr_glyph_cache_store(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags,
+                           FT_GlyphSlot slot,size_t work);
 void exr_font_ref(exr_font *font);
+/* Managed multilingual chains need room for several full CJK collections.
+   The public raw-input constructor retains its 128 MiB limit. */
+#define EXR_FONT_MANAGER_MAX_BYTES (2 * EXR_MAX_INPUT)
+exr_status exr_font_create_managed(const exr_font_input *inputs, size_t count,
+                                   exr_font **out, exr_error *error);
 FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out);
 int exr_font_face_supported(FT_Face face);
 size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,

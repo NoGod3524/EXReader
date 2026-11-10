@@ -17,13 +17,14 @@ with tempfile.TemporaryDirectory(prefix="exr-font-manager-") as directory:
     for name in ("latin-serif.ttf", "cjk-serif.ttf", "cjk-sans.ttf"):
         target = root / "fonts" / ("字庫" if name == "cjk-serif.ttf" else "") / name
         shutil.copyfile(Path(fixtures) / name, target)
-    for name in ("cjk-serif-bold.ttf", "cjk-serif-italic.ttf", "collection.ttc"):
+    for name in ("cjk-serif-bold.ttf", "cjk-serif-italic.ttf", "collection.ttc", "supplement.ttf", "emoji.ttf"):
         shutil.copyfile(Path(fixtures) / name, root / "extra" / name)
     if group == "selection":
         (root / "duplicates").mkdir()
         for i in range(40):
             shutil.copyfile(Path(fixtures) / "latin-serif.ttf", root / "duplicates" / f"copy-{i}.ttf")
     if group == "integration":
+        shutil.copyfile(Path(fixtures) / "many-scripts.ttc", root / "extra" / "many-scripts.ttc")
         with zipfile.ZipFile(root / "embedded.epub", "w") as book:
             book.writestr("mimetype", "application/epub+zip")
             book.writestr("META-INF/container.xml", '<container><rootfiles><rootfile full-path="book.opf"/></rootfiles></container>')

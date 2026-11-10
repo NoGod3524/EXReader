@@ -1,0 +1,55 @@
+{
+  "checks": {
+    "load": true,
+    "open": true,
+    "render": true,
+    "search": true,
+    "annotation": true
+  },
+  "passed": 5,
+  "version": "3.42.0",
+  "library": "/repo/out/libexreader.so.3.42.0",
+  "library_sha256": "13e2d00dfbddb9e5de708dd88dabb9ce4328a53b1051050c2c58d708c4dffac2",
+  "negative_moved_annotation_exit": 1,
+  "commands": [
+    [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/repo/include",
+      "/repo/tools/platforms/probe.c",
+      "/repo/out/libexreader.so.3.42.0",
+      "-o",
+      "/repo/evidence/platforms2-20261109/linux/platform-probe",
+      "-Wl,-rpath,/repo/out"
+    ],
+    [
+      "/repo/evidence/platforms2-20261109/linux/platform-probe",
+      "/repo/smoke/smoke.epub",
+      "/repo/smoke/font.otf",
+      "/repo/evidence/platforms2-20261109/linux",
+      "create"
+    ],
+    [
+      "/repo/evidence/platforms2-20261109/linux/platform-probe",
+      "/repo/smoke/smoke.epub",
+      "/repo/smoke/font.otf",
+      "/repo/evidence/platforms2-20261109/linux",
+      "reopen"
+    ],
+    [
+      "/repo/evidence/platforms2-20261109/linux/platform-probe",
+      "/repo/smoke/smoke.epub",
+      "/repo/smoke/font.otf",
+      "/repo/evidence/platforms2-20261109/linux/negative",
+      "reopen"
+    ]
+  ],
+  "input_sha256": {
+    "smoke.epub": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+    "font.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+  }
+}

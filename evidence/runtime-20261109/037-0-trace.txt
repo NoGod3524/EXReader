@@ -1,0 +1,55 @@
+037:0 src/cfi.c:5 use of NULL 's' where non-null expected
+1 cfi.c:420 entry to 'exr_document_cfi_create_quoted'
+2 cfi.c:422 following 'false' branch...
+3 cfi.c:423 ...to here
+4 cfi.c:423 calling 'exr_cfi_create_for_part' from 'exr_document_cfi_create_quoted'
+5 cfi.c:230 entry to 'exr_cfi_create_for_part'
+6 cfi.c:232 'prefix' is NULL
+7 cfi.c:232 'prefix' is NULL
+8 cfi.c:233 following 'false' branch (when 'out' is non-NULL)...
+9 cfi.c:234 ...to here
+10 cfi.c:234 'prefix' is NULL
+11 cfi.c:235 following 'false' branch...
+12 cfi.c:236 ...to here
+13 cfi.c:235 following 'false' branch (when the strings are equal)...
+14 cfi.c:238 ...to here
+15 cfi.c:238 following 'false' branch (when 'status == 0')...
+16 cfi.c:239 ...to here
+17 cfi.c:239 following 'false' branch (when 'status == 0')...
+18 cfi.c:240 ...to here
+19 cfi.c:240 calling 'exr_document_cfi_path_create' from 'exr_cfi_create_for_part'
+20 cfi.c:50 entry to 'exr_document_cfi_path_create'
+21 cfi.c:53 following 'false' branch (when 'out' is non-NULL)...
+22 cfi.c:54 ...to here
+23 cfi.c:56 following 'false' branch (when 'point' is non-NULL)...
+24 cfi.c:56 ...to here
+25 cfi.c:240 returning to 'exr_cfi_create_for_part' from 'exr_document_cfi_path_create'
+26 cfi.c:241 following 'true' branch...
+27 cfi.c:241 ...to here
+28 cfi.c:241 calling 'exr_document_cfi_path_create_quoted' from 'exr_cfi_create_for_part'
+29 cfi.c:399 entry to 'exr_document_cfi_path_create_quoted'
+30 cfi.c:401 'path' is NULL
+31 cfi.c:401 'path' is NULL
+32 cfi.c:401 'path' is NULL
+33 cfi.c:402 following 'true' branch (when 'out' is non-NULL)...
+34 cfi.c:402 ...to here
+35 cfi.c:403 following 'false' branch...
+36 cfi.c:404 ...to here
+37 cfi.c:404 calling 'exr_document_cfi_path_create' from 'exr_document_cfi_path_create_quoted'
+38 cfi.c:50 entry to 'exr_document_cfi_path_create'
+39 cfi.c:53 following 'false' branch (when 'out' is non-NULL)...
+40 cfi.c:54 ...to here
+41 cfi.c:55 calling 'root_element' from 'exr_document_cfi_path_create'
+42 cfi.c:11 entry to 'root_element'
+43 cfi.c:13 following 'false' branch (when 'd' is non-NULL)...
+44 cfi.c:13 ...to here
+45 cfi.c:55 returning to 'exr_document_cfi_path_create' from 'root_element'
+46 cfi.c:404 returning to 'exr_document_cfi_path_create_quoted' from 'exr_document_cfi_path_create'
+47 cfi.c:404 following 'false' branch (when 'status == 0')...
+48 cfi.c:405 ...to here
+49 cfi.c:405 following 'false' branch (when 'status == 0')...
+50 cfi.c:406 ...to here
+51 cfi.c:406 'path' is NULL
+52 cfi.c:406 calling 'put' from 'exr_document_cfi_path_create_quoted'
+53 cfi.c:5 entry to 'put'
+54 cfi.c:5 argument 1 ('s') NULL where non-null expected

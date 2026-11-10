@@ -1,0 +1,31 @@
+{
+  "inventory": 1903,
+  "executed_inputs": 1761,
+  "invocations": 7044,
+  "kinds": {
+    "audio_metadata": 1,
+    "audio": 1,
+    "reference_or_test_data": 142,
+    "document": 1584,
+    "font": 61,
+    "configuration": 1,
+    "library": 2,
+    "image": 93,
+    "sevenz": 18
+  },
+  "outcomes": {
+    "sdk_rejected": 5267,
+    "complete": 1777
+  },
+  "originals": {
+    "complete": 1305,
+    "sdk_rejected": 456
+  },
+  "variants": {
+    "empty": 1761,
+    "original": 1761,
+    "half": 1761,
+    "header-xor": 1761
+  },
+  "pages": 8644
+}

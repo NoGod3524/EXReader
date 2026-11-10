@@ -114,7 +114,8 @@ WP6已验收，冻结 SDK 候选的 WP16 五项登记出口已闭合，同源四
 | Android / iOS / iPadOS | 部分 | 库交叉编译、Swift适配、iPhone/iPad模拟器阅读自检；真机安装暂缓 | CI `android`、`apple-mobile` |
 | 原生参考阅读 App | 部分 | Windows宿主覆盖书架、重排/固定页、选文标注、进度恢复及后台任务，但未接有界大章入口；Linux GTK宿主覆盖≤8MiB原书的重排阅读、书架、标注与恢复；macOS/iPhone/iPad仍为最小参考应用；完整跨平台生命周期、无障碍和移动真机验收未完成 | `docs/validation/wp13-windows-worker-review.json`、`docs/validation/wp13-windows-evidence-review.json`、`docs/validation/wp13-linux-review.json`；Apple自检见 `docs/validation/parallel-integration.json` |
 | OPDS | 部分 | 独立 OPDS1/2 客户端与安装SDK消费者，Linux/Windows目录、搜索、分页、认证、获取及原子发布已验收；默认SDK不引入网络运行时；宿主UI未接入，参考传输仅HTTP，HTTPS需宿主TLS；facets、indirect acquisition、借阅/支付/LCP未实现 | `docs/validation/wp15-opds-review.json` |
-| 可嵌入平台阅读视图 / TTS / 无障碍 / LCP | 未支持 | 可嵌入平台组件与这些服务尚未验收；目标见 [VERSIONING.md](VERSIONING.md) | — |
+| LCP EPUB | 部分 | Basic Profile：宿主口令、内存资源解密、日期与错误码；生产 profile、签名/证书校验、LSD 回收及 ADEPT 未支持，见 [DRM.md](DRM.md) | `native-lcp-*`；`evidence/drm-lcp-20261109/acceptance.json` |
+| 可嵌入平台阅读视图 / TTS / 无障碍 | 未支持 | 可嵌入平台组件与这些服务尚未验收；目标见 [VERSIONING.md](VERSIONING.md) | — |
 
 ## 质量口径
 

@@ -1,0 +1,9 @@
+{
+  "name": "docker",
+  "command": [
+    "docker",
+    "--version"
+  ],
+  "exit_code": null,
+  "error": "[WinError 2] The system cannot find the file specified"
+}

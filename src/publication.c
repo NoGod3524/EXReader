@@ -4,8 +4,11 @@
 #include <ctype.h>
 
 typedef struct { char *text; size_t size; } search_part;
+typedef struct publication_search_index publication_search_index;
+static void publication_index_free(publication_search_index *index);
 struct exr_publication {
   char *title;
+  exr_direction page_progression;
   exr_part *parts;
   size_t count, refs;
   exr_part_load_fn load;
@@ -22,6 +25,7 @@ struct exr_publication {
   size_t missing_count, missing_capacity;
   search_part *search;
   int searching;
+  publication_search_index *index;
   exr_footnote *footnotes;
   size_t footnote_count, footnote_capacity;
   exr_footnote_reference *references;
@@ -77,6 +81,7 @@ void exr_publication_free(exr_publication *p) {
     free((void *)p->parts[i].title);
   }
   free(p->parts);
+  publication_index_free(p->index);
   if(p->search) {
     for(i=0;i<p->count;i++) free(p->search[i].text);
     free(p->search);
@@ -199,7 +204,10 @@ static exr_status publication_index(exr_document *index, exr_publication **out, 
   input.context = index;
   input.release = epub_release;
   status = exr_publication_create(&input, out, e);
-  if (status == EXR_OK) (*out)->navigation_ready = 0;
+  if (status == EXR_OK) {
+    (*out)->navigation_ready = 0;
+    (*out)->page_progression=exr_document_page_progression(index);
+  }
   free(parts);
   if (status != EXR_OK)
     exr_document_free(index);
@@ -224,6 +232,10 @@ static exr_status publication_book(exr_format format,const void *data,size_t siz
 }
 exr_status exr_publication_open_memory(exr_format format, const void *data, size_t size,
                                        exr_publication **out, exr_error *e) {
+  return exr_publication_open_memory_ex(format, data, size, NULL, out, e);
+}
+exr_status exr_publication_open_memory_ex(exr_format format, const void *data, size_t size,
+                                          const char *passphrase, exr_publication **out, exr_error *e) {
   exr_document *index = NULL;
   exr_status status;
   if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
@@ -232,15 +244,18 @@ exr_status exr_publication_open_memory(exr_format format, const void *data, size
   if(format==EXR_MOBI || format==EXR_FB2) return publication_book(format,data,size,out,e);
   if (format != EXR_EPUB)
     return exr_fail(e, EXR_FORMAT, "Indexed loading accepts EPUB, MOBI/KF8 and FB2");
-  status = exr_epub_index(data, size, &index, e);
+  status = exr_epub_index_ex(data, size, passphrase, &index, e);
   return status == EXR_OK ? publication_index(index, out, e) : status;
 }
 exr_status exr_publication_open_source(const exr_source *source, exr_publication **out, exr_error *e) {
+  return exr_publication_open_source_ex(source, NULL, out, e);
+}
+exr_status exr_publication_open_source_ex(const exr_source *source, const char *passphrase, exr_publication **out, exr_error *e) {
   exr_document *index = NULL;
   exr_status status;
   if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing publication output");
   *out = NULL;
-  status = exr_epub_index_source(source, &index, e);
+  status = exr_epub_index_source_ex(source, passphrase, &index, e);
   if (status != EXR_OK) return status;
   status = publication_index(index, out, e);
   if (status == EXR_OK) index->shared_archive->source.release = source->release;
@@ -248,6 +263,9 @@ exr_status exr_publication_open_source(const exr_source *source, exr_publication
 }
 
 exr_status exr_publication_open(const char *path, exr_publication **out, exr_error *e) {
+  return exr_publication_open_ex(path, NULL, out, e);
+}
+exr_status exr_publication_open_ex(const char *path, const char *passphrase, exr_publication **out, exr_error *e) {
   exr_source source = {0};
   exr_status status;
   if (!out)
@@ -269,11 +287,14 @@ exr_status exr_publication_open(const char *path, exr_publication **out, exr_err
   }
   status = exr_file_source(path, &source, e);
   if (status != EXR_OK) return status;
-  status = exr_publication_open_source(&source, out, e);
+  status = exr_publication_open_source_ex(&source, passphrase, out, e);
   if (status != EXR_OK) source.release(source.context);
   return status;
 }
 const char *exr_publication_title(const exr_publication *p) { return p ? p->title : ""; }
+exr_direction exr_publication_page_progression(const exr_publication *p) {
+  return p && p->page_progression==EXR_DIRECTION_RTL ? EXR_DIRECTION_RTL : EXR_DIRECTION_LTR;
+}
 size_t exr_publication_index_memory(const exr_publication *p) {
   return p ? sizeof(*p)+p->metadata_bytes+p->count*sizeof(*p->parts)+
     p->navigation_count*sizeof(*p->navigation)+(p->load==exr_book_load ? ((exr_format_book *)p->context)->memory :
@@ -283,6 +304,59 @@ const exr_part *exr_publication_parts(const exr_publication *p, size_t *count) {
   if (count)
     *count = p ? p->count : 0;
   return p ? p->parts : NULL;
+}
+static const exr_rendition *part_rendition(const exr_publication *p,size_t part) {
+  const exr_document *index=p && p->load==epub_load ? p->context : NULL;
+  return index && index->renditions && part<index->rendition_count ? &index->renditions[part] : NULL;
+}
+exr_status exr_publication_rendition(const exr_publication *p,size_t part,exr_part_rendition *out,exr_error *e) {
+  const exr_rendition *r;
+  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing rendition output");
+  memset(out,0,sizeof(*out));
+  if(!p || part>=p->count) return exr_fail(e,EXR_ARGUMENT,"Invalid publication part");
+  r=part_rendition(p,part);
+  if(r) {
+    out->layout=r->fixed ? EXR_RENDITION_PRE_PAGINATED : EXR_RENDITION_REFLOWABLE;
+    out->spread=(exr_spread_side)r->spread;
+    out->viewport_width=r->viewport_width; out->viewport_height=r->viewport_height;
+  }
+  return exr_fail(e,EXR_OK,"");
+}
+exr_status exr_publication_spreads(const exr_publication *p,exr_spread **out,size_t *count,exr_error *e) {
+  exr_spread *list,open={SIZE_MAX,SIZE_MAX,0};
+  size_t i,n=0; int rtl,previous=0,none;
+  if(!out || !count) return exr_fail(e,EXR_ARGUMENT,"Missing spread output");
+  *out=NULL; *count=0;
+  if(!p) return exr_fail(e,EXR_ARGUMENT,"Missing publication");
+  list=calloc(p->count ? p->count : 1,sizeof(*list));
+  if(!list) return exr_fail(e,EXR_MEMORY,"Spread allocation failed");
+  rtl=exr_publication_page_progression(p)==EXR_DIRECTION_RTL;
+  none=p->load==epub_load && ((const exr_document *)p->context)->spread_none;
+#define FLUSH() do { if(open.left!=SIZE_MAX || open.right!=SIZE_MAX) list[n++]=open; open.left=open.right=SIZE_MAX; open.flags=0; } while(0)
+  for(i=0;i<p->count;i++) {
+    const exr_rendition *r=part_rendition(p,i); int side;
+    if(!p->parts[i].in_reading_order) continue;
+    if(!r || !r->fixed || none || r->spread==EXR_SPREAD_CENTER) {
+      FLUSH(); list[n].left=i; list[n].right=SIZE_MAX; list[n++].flags=EXR_SPREAD_SINGLE;
+      previous=0; continue;
+    }
+    side=r->spread ? r->spread : previous ? (previous==EXR_SPREAD_LEFT ? EXR_SPREAD_RIGHT : EXR_SPREAD_LEFT) :
+         rtl ? EXR_SPREAD_LEFT : EXR_SPREAD_RIGHT;
+    previous=side;
+    /* The reading-order first slot opens a screen: left for ltr, right for rtl. */
+    if(side==(rtl ? EXR_SPREAD_RIGHT : EXR_SPREAD_LEFT)) {
+      FLUSH(); if(rtl) open.right=i; else open.left=i;
+    } else if(rtl ? open.right!=SIZE_MAX && open.left==SIZE_MAX : open.left!=SIZE_MAX && open.right==SIZE_MAX) {
+      if(rtl) open.left=i; else open.right=i;
+      FLUSH();
+    } else {
+      FLUSH(); if(rtl) open.left=i; else open.right=i; FLUSH();
+    }
+  }
+  FLUSH();
+#undef FLUSH
+  *out=list; *count=n;
+  return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_publication_navigation(exr_publication *p, const exr_navigation **out,
                                        size_t *count, exr_error *e) {
@@ -1357,3 +1431,5 @@ exr_status exr_publication_search_all(exr_publication *p,const char *needle,unsi
   if(!count) return exr_fail(e,EXR_ARGUMENT,"Missing search count");
   return search_run(p,(exr_text_position){0,0},needle,flags,callback,context,control,count,NULL,e);
 }
+
+#include "publication_index.h"

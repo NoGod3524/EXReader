@@ -1,0 +1,238 @@
+{
+  "status": "pass",
+  "exit_code": 0,
+  "scope": "local",
+  "failed_books": [],
+  "candidate_capture_sha256": "a94126d14460c346e304d7690337853e874ee9d5e8ef6a1e3ae56dc059b17561",
+  "worst_cycle_ratio": 1.1627923058175962,
+  "worst_wall_ratio": 1.1599637602166635,
+  "exceeded": [
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "baseline_cycles_p95": 135155153,
+      "thread_cycles_p95": 157157372,
+      "wall_ms_p95": 47.884,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.1627923058175962,
+      "wall_ratio": 1.1599637602166635,
+      "exceeded": [
+        "warning"
+      ]
+    }
+  ],
+  "books": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "baseline_cycles_p95": 137122483,
+      "thread_cycles_p95": 139018165,
+      "wall_ms_p95": 43.0173,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0138247350728036,
+      "wall_ratio": 1.0155457661690133,
+      "exceeded": []
+    },
+    {
+      "id": "between-the-world-and-me",
+      "baseline_cycles_p95": 46685987,
+      "thread_cycles_p95": 48807193,
+      "wall_ms_p95": 14.9115,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.045435603621275,
+      "wall_ratio": 1.0289612056473316,
+      "exceeded": []
+    },
+    {
+      "id": "black-boy",
+      "baseline_cycles_p95": 91359405,
+      "thread_cycles_p95": 91586582,
+      "wall_ms_p95": 28.6236,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0024866295922132,
+      "wall_ratio": 1.018046535449314,
+      "exceeded": []
+    },
+    {
+      "id": "born-a-crime",
+      "baseline_cycles_p95": 44512938,
+      "thread_cycles_p95": 44415866,
+      "wall_ms_p95": 13.8806,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 0.9978192407789394,
+      "wall_ratio": 1.0075856011498174,
+      "exceeded": []
+    },
+    {
+      "id": "crying-in-h-mart",
+      "baseline_cycles_p95": 62122509,
+      "thread_cycles_p95": 63679069,
+      "wall_ms_p95": 19.782,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.025056296422284,
+      "wall_ratio": 1.0178020168759003,
+      "exceeded": []
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "baseline_cycles_p95": 74963655,
+      "thread_cycles_p95": 78737180,
+      "wall_ms_p95": 24.4664,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0503380604907806,
+      "wall_ratio": 1.05706940874036,
+      "exceeded": []
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "baseline_cycles_p95": 135155153,
+      "thread_cycles_p95": 157157372,
+      "wall_ms_p95": 47.884,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.1627923058175962,
+      "wall_ratio": 1.1599637602166635,
+      "exceeded": [
+        "warning"
+      ]
+    },
+    {
+      "id": "pachinko",
+      "baseline_cycles_p95": 85976154,
+      "thread_cycles_p95": 87895273,
+      "wall_ms_p95": 27.536,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0223215265014065,
+      "wall_ratio": 1.034686186022568,
+      "exceeded": []
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "baseline_cycles_p95": 28985947,
+      "thread_cycles_p95": 30053482,
+      "wall_ms_p95": 9.2161,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.036829398742777,
+      "wall_ratio": 1.0486306279654556,
+      "exceeded": []
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "baseline_cycles_p95": 156152241,
+      "thread_cycles_p95": 158858890,
+      "wall_ms_p95": 50.2206,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0173333983724255,
+      "wall_ratio": 1.0584969607041386,
+      "exceeded": []
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "baseline_cycles_p95": 74928326,
+      "thread_cycles_p95": 76201906,
+      "wall_ms_p95": 23.6927,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0169973102028196,
+      "wall_ratio": 1.0194661858926088,
+      "exceeded": []
+    },
+    {
+      "id": "the-fire-next-time",
+      "baseline_cycles_p95": 135046517,
+      "thread_cycles_p95": 135468847,
+      "wall_ms_p95": 41.8915,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0031272927979327,
+      "wall_ratio": 1.0088332968088871,
+      "exceeded": []
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "baseline_cycles_p95": 99422556,
+      "thread_cycles_p95": 100351415,
+      "wall_ms_p95": 31.122,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0093425379246939,
+      "wall_ratio": 1.008764537333558,
+      "exceeded": []
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "baseline_cycles_p95": 39650741,
+      "thread_cycles_p95": 41956536,
+      "wall_ms_p95": 13.1497,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0581526332635247,
+      "wall_ratio": 1.0670945962395215,
+      "exceeded": []
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "baseline_cycles_p95": 31619622,
+      "thread_cycles_p95": 32793154,
+      "wall_ms_p95": 9.9649,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0371140426662913,
+      "wall_ratio": 1.0396348461137193,
+      "exceeded": []
+    },
+    {
+      "id": "hongloumeng-24264",
+      "baseline_cycles_p95": 55927302,
+      "thread_cycles_p95": 58202702,
+      "wall_ms_p95": 18.2011,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.040684959199355,
+      "wall_ratio": 1.0363674668610212,
+      "exceeded": []
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "baseline_cycles_p95": 54282239,
+      "thread_cycles_p95": 55124909,
+      "wall_ms_p95": 17.1157,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0155238622342015,
+      "wall_ratio": 1.0164441646673161,
+      "exceeded": []
+    },
+    {
+      "id": "tangshi300-52323",
+      "baseline_cycles_p95": 54077844,
+      "thread_cycles_p95": 56942001,
+      "wall_ms_p95": 17.567,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0529635944805789,
+      "wall_ratio": 1.0515635475529164,
+      "exceeded": []
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "baseline_cycles_p95": 90454656,
+      "thread_cycles_p95": 92688793,
+      "wall_ms_p95": 28.4585,
+      "samples": 48,
+      "injected_fraction": 0.0,
+      "cycle_ratio": 1.0246989718251762,
+      "wall_ratio": 1.0202482997952944,
+      "exceeded": []
+    }
+  ],
+  "baseline_sha256": "2851f9eef44ee461e513a34edf586e8168d53fa4777c85b26bd65e3151d866dc"
+}

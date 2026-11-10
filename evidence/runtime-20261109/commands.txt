@@ -1,0 +1,72 @@
+Source revision for all product code: d9ffdbf0 (see verification.json for all 116 source hashes).
+Run from the repository root in a fresh worktree/output directory. Do not reuse old gcda counters.
+Prerequisites: installed VS 2022 Build Tools with ASan, the existing MinGW GCC/gcov/CMake/Ninja,
+Python 3, dependency source directories recorded in ../quality-20261108/configure-command.json,
+the 19 original books in tools/regress/corpus.json, and the Reader.otf used by the historical baseline.
+No new packages, containers, WSL installation, or security-setting changes were needed.
+
+1. Detector positive control and all requested route evidence:
+python -X utf8 tools/quality/runtime_routes.py
+
+2. Complete ASan build BEFORE starting any process that loads its DLL:
+python -X utf8 tools/quality/runtime_native.py asan build
+python -X utf8 tools/quality/runtime_native.py asan bridge
+python -X utf8 tools/quality/runtime_native.py asan probe
+python -X utf8 tools/quality/runtime_native.py asan ctest
+python -X utf8 tools/quality/runtime_native.py asan contracts
+python -X utf8 tools/quality/runtime_workloads.py asan books --workers 2
+python -X utf8 tools/quality/runtime_workloads.py asan fixtures --workers 3
+
+The build enables EXR_BUILD_FUZZ, so a fresh run registers all 228 tests.
+The MSVC runner attaches the repository's existing --instrumented benchmark option
+to the generated CTestTestfile.cmake under evidence/.../local/a. Root CMake excludes
+MSVC from that existing sanitizer-specific branch. ASan quarantine remains default.
+Product RSS budget checks run separately below, without ASan.
+
+The recorded session first ran 221 tests using the previous configuration, then
+enabled the seven fuzz tests. Re-linking while the old DLL was in use failed with
+LNK1104; this attempt is preserved. After all consumers exited, build was retried,
+then runtime_native.py asan fuzz executed the seven additional registered tests.
+runtime_native.py asan benchmark repeats the initial RSS-oracle failure using the
+existing instrumented mode. All initial and final outputs are retained separately.
+
+3. Fresh coverage build, identical feature configuration, GCC -O1 --coverage:
+python -X utf8 tools/quality/runtime_native.py coverage build
+python -X utf8 tools/quality/runtime_native.py coverage bridge
+python -X utf8 tools/quality/runtime_native.py coverage probe
+python -X utf8 tools/quality/runtime_native.py coverage ctest
+python -X utf8 tools/quality/runtime_native.py coverage contracts
+python -X utf8 tools/quality/runtime_workloads.py coverage books --workers 2
+python -X utf8 tools/quality/runtime_workloads.py coverage fixtures --workers 2 --original-only
+python -X utf8 tools/quality/measure.py coverage --build evidence/runtime-20261109/local/g --output evidence/runtime-20261109
+
+Book and fixture subprocesses use isolated GCOV_PREFIX directories. Raw gcov JSON,
+commands and counters' source line union are retained; binaries/gcda remain local.
+All 1,903 fixture files are inventoried and hashed. All 1,761 SDK inputs are executed;
+142 reference/oracle/metadata files are not claimed as standalone parser inputs.
+Every SDK input also gets three deterministic ASan variants: empty, first half,
+and XOR 0xff on up to the first 16 bytes. The mutation identity and payload SHA-256
+are in each JSONL record. No original fixture or book is changed.
+
+4. Independent MSVC build without sanitizer, with the same /Z7 /Od settings:
+python -X utf8 tools/quality/runtime_native.py control build
+python -X utf8 tools/quality/runtime_native.py control bridge
+python -X utf8 tools/quality/runtime_workloads.py control books --workers 3
+
+All 19 books are compared against this current-source control, as well as the old
+November 8 baseline. The old Zami result predates merged PR #96 and has 646 pages;
+the current source has 666. The original mixed corpus is preserved, including Zami.
+The history replay verifies the preserved PR #96 before/after DLL SHA-256 values:
+python -X utf8 tools/quality/diagnose_book_history.py
+It requires the original sibling EXReader-mobi-20261108/build and build/baseline
+DLLs identified in evidence/mobi-kf8-fb2-20261108/REPORT.md and protected-trees.json.
+These original DLLs are read/copied only. The before replay matches every old Zami
+page; the after replay matches every current Zami page. No baseline is overwritten.
+
+5. Per-record static proofs and final cross-check:
+python -X utf8 tools/quality/triage_runtime.py
+python -X utf8 tools/quality/verify_runtime.py
+
+The 30 decisions refer to the exact old SARIF records, not a fresh warning count.
+ASan silence is not used to infer that uninitialized-value/leak reports are false.
+Each decision includes a source-level return-value, loop-invariant or ownership proof.
