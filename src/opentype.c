@@ -14,11 +14,61 @@ struct indic_config;
 /* A cached miss applies only when every subtable has independently rejected
    the current glyph before reading any surrounding text. */
 typedef struct { const unsigned char *lookup; unsigned glyph; } ot_miss;
+typedef struct {
+  uint32_t size, flags, direction, script, language, before, after, vertical;
+} ot_shape_key;
+typedef struct {
+  ot_shape_key key;
+  size_t size,count;
+  uint64_t hash;
+  /* Glyph array followed by the exact UTF-8 bytes, checked after the hash. */
+  exr_shaped_glyph glyphs[];
+} ot_cached_shape;
+enum { OT_SHAPE_SLOTS=1024 };
 struct exr_ot_state {
   ot_table gsub, gpos, gdef;
   unsigned variations;
   ot_miss misses[256];
+  ot_cached_shape *shapes[OT_SHAPE_SLOTS];
 };
+/* Short inline runs dominate page turns. Each face has at most 1024 entries,
+   each <= 64 glyphs + 256 text bytes; large runs and progress callbacks use the
+   ordinary path. Font instances keep their variation coordinates immutable. */
+static unsigned joining(uint32_t cp);
+static int shape_key(const exr_shape_options *options,int vertical,size_t size,ot_shape_key *key) {
+  if(size>256 || options->feature_count || options->control.progress) return 0;
+  memcpy(&key->size,&options->font_size,sizeof(key->size));
+  key->flags=options->style_flags;key->direction=(uint32_t)options->direction;
+  key->script=options->script;key->language=options->language;
+  /* External scalars are consumed only by joining_forms(), through joining().
+     Keep those exact equivalence classes instead of fragmenting the cache on
+     different nonjoining CJK neighbours. Arabic joining boundaries stay distinct. */
+  key->before=joining(options->context_before);key->after=joining(options->context_after);
+  key->vertical=(uint32_t)vertical;
+  return 1;
+}
+static uint64_t shape_hash(const ot_shape_key *key,const char *text,size_t size) {
+  uint64_t hash=UINT64_C(14695981039346656037);size_t i;
+  const unsigned char *bytes=(const unsigned char *)key;
+  for(i=0;i<sizeof(*key);i++) { hash^=bytes[i];hash*=UINT64_C(1099511628211); }
+  for(i=0;i<size;i++) { hash^=(unsigned char)text[i];hash*=UINT64_C(1099511628211); }
+  return hash;
+}
+static ot_cached_shape *shape_cached(exr_face *face,const ot_shape_key *key,const char *text,size_t size,uint64_t hash) {
+  ot_cached_shape *entry=face->ot ? face->ot->shapes[hash&(OT_SHAPE_SLOTS-1)] : NULL;
+  return entry && entry->hash==hash && entry->size==size && !memcmp(&entry->key,key,sizeof(*key)) &&
+    !memcmp(entry->glyphs+entry->count,text,size) ? entry : NULL;
+}
+static void shape_remember(exr_face *face,const ot_shape_key *key,const char *text,size_t size,uint64_t hash,
+                             const exr_shaped_glyph *glyphs,size_t count) {
+  ot_cached_shape *entry;
+  if(!face->ot || count>64) return;
+  entry=malloc(sizeof(*entry)+count*sizeof(*glyphs)+size);if(!entry) return;
+  entry->key=*key;entry->size=size;entry->count=count;entry->hash=hash;
+  if(count) memcpy(entry->glyphs,glyphs,count*sizeof(*glyphs));
+  memcpy(entry->glyphs+count,text,size);
+  free(face->ot->shapes[hash&(OT_SHAPE_SLOTS-1)]);face->ot->shapes[hash&(OT_SHAPE_SLOTS-1)]=entry;
+}
 typedef struct {
   exr_shaped_glyph out;
   uint32_t cp;
@@ -835,7 +885,9 @@ static int table_load(exr_face *face, FT_ULong tag, ot_table *table, size_t rema
   return EXR_OK;
 }
 void exr_ot_free(exr_face *face) {
+  size_t i;
   if (!face || !face->ot) return;
+  for(i=0;i<OT_SHAPE_SLOTS;i++) free(face->ot->shapes[i]);
   free(face->ot->gsub.data); free(face->ot->gpos.data); free(face->ot->gdef.data);
   free(face->ot); face->ot = NULL;
 }
@@ -1995,6 +2047,7 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   size_t previous_visible = SIZE_MAX, previous_base = SIZE_MAX;
   uint32_t cp, script,previous_scalar=0;
   int has_kern = 0;
+  ot_shape_key key={0}; uint64_t hash=0; int cacheable;
   exr_shaped_glyph *result = NULL;
   if (out) *out = NULL;
   if (out_count) *out_count = 0;
@@ -2017,6 +2070,21 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   if (w.status != EXR_OK) return w.status;
   if (!size) return exr_fail(error, EXR_OK, "");
   w.face = &font->faces[face_index]; w.options = options; w.vertical = vertical;
+  cacheable=shape_key(options,vertical,size,&key);
+  if(cacheable) {
+    ot_cached_shape *cached;
+    hash=shape_hash(&key,text,size);cached=shape_cached(w.face,&key,text,size,hash);
+    if(cached) {
+      result=cached->count ? malloc(cached->count*sizeof(*result)) : NULL;
+      if(result || !cached->count) {
+        if(cached->count) memcpy(result,cached->glyphs,cached->count*sizeof(*result));
+        w.status=exr_font_size(w.face,options->font_size) ? EXR_FONT :
+          exr_control_poll(&options->control,EXR_STAGE_SHAPE,size,size,error);
+        if(w.status==EXR_OK) { *out=result;*out_count=cached->count;result=NULL; }
+        goto done;
+      }
+    }
+  }
   w.work_limit = 64000000u;
   if (!w.face->design_units)
     return exr_fail(error, EXR_FONT, "Font has no usable design-unit scale");
@@ -2164,7 +2232,10 @@ static exr_status shape(exr_font *font, size_t face_index, const char *text, siz
   }
   if (w.status == EXR_OK)
     w.status = exr_control_poll(&options->control, EXR_STAGE_SHAPE, size, size, error);
-  if (w.status == EXR_OK) { *out = result; *out_count = w.count; result = NULL; }
+  if (w.status == EXR_OK) {
+    if(cacheable) shape_remember(w.face,&key,text,size,hash,result,w.count);
+    *out = result; *out_count = w.count; result = NULL;
+  }
 done:
   free(boundaries); free(pens); free(w.items); free(result);
   if (w.status == EXR_OK) return exr_fail(error, EXR_OK, "");

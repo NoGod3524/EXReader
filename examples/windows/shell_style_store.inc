@@ -102,6 +102,20 @@ static int shell_style_save(void) {
   }
   cv_text_string(&out,"]}}\n");cv_json_free(root);
   wchar_t path[HOST_PATH],temp[HOST_PATH];shell_shelf_path(path);
+  /* A page turn saves the same settings. Avoid an atomic write-through when
+     the complete serialized file is already identical. */
+  FILE *existing=out.failed?NULL:_wfopen(path,L"rb");
+  if(existing) {
+    unsigned char bytes[1024];size_t offset=0;int same=1;
+    while(offset<out.size) {
+      size_t count=out.size-offset;if(count>sizeof(bytes))count=sizeof(bytes);
+      if(fread(bytes,1,count,existing)!=count || memcmp(bytes,out.data+offset,count)) {same=0;break;}
+      offset+=count;
+    }
+    same=same && fgetc(existing)==EOF && !ferror(existing);
+    if(fclose(existing)!=0)same=0;
+    if(same){cv_text_free(&out);return 1;}
+  }
   swprintf(temp,HOST_PATH,L"%ls.tmp",path);FILE *f=out.failed?NULL:_wfopen(temp,L"wb");ok=0;
   if(f){ok=fwrite(out.data,1,out.size,f)==out.size;if(fclose(f)!=0)ok=0;}
   if(ok)ok=MoveFileExW(temp,path,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)!=0;
