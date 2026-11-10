@@ -1,0 +1,50 @@
+MERGE commutative=1 tombstone=1 newer-edit-wins=1
+  sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 1 本书。
+FIRST-UPLOAD put=1 mkcol=1 revision=1 annotations=1
+  sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 1 本书。
+INCREMENTAL put=1 mkcol=0 revision=2 annotations=2
+  sync -> code=0  同步完成：上传 0 本，从云端更新 0 本，共 1 本书。
+IDLE put=0 (nothing changed, nothing uploaded)
+  sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 1 本书。
+PULL annotations=2 progress=0.25(anchor 100) title="Title A"
+  sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 1 本书。
+  sync -> code=0  同步完成：上传 1 本，从云端更新 1 本，共 1 本书。
+  devB: first|second|B-only|A-only
+  sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 1 本书。
+  devA: first|second|A-only|B-only
+CONFLICT common-base A+1 B+1 -> both devices 4 annotations (2 shared + A-only + B-only), nothing lost
+  sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 2 本书。
+  sync -> code=0  同步完成：上传 1 本，从云端更新 1 本，共 2 本书。
+  devB: from-B|from-A
+  sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 2 本书。
+  devA: from-A|from-B
+CONFLICT-2 each device added 1 -> both devices have 2
+  sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 2 本书。
+  sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 2 本书。
+  sync -> code=0  同步完成：上传 0 本，从云端更新 0 本，共 2 本书。
+DELETE tombstone propagated, not resurrected
+  sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 2 本书。
+  sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 2 本书。
+LWW progress 0.25->0.80 and title A->B reached the other device
+  401: 连接服务器失败：认证失败（HTTP 401），用户名或密码不正确。
+ERROR-401 reported: 认证失败（HTTP 401）
+  404: 连接服务器失败：找不到同步目录（HTTP 404），请检查服务器地址与路径。
+ERROR-404 reported: 找不到同步目录（HTTP 404）
+  timeout: 连接服务器失败：连接超时，服务器长时间没有响应。
+ERROR-TIMEOUT reported: 连接超时
+  403: 连接服务器失败：拒绝访问（HTTP 403），该账号对此目录没有读写权限。
+ERROR-403 permission denied reported
+  after two 500s: 同步完成：上传 0 本，从云端更新 0 本，共 2 本书。
+RETRY two HTTP 500 responses then success, no user-visible failure
+  corrupt: 远端状态文件损坏或版本不受支持（11111111…），已跳过这本书，未覆盖远端。
+CORRUPT-REMOTE reported, local annotations byte-identical, remote not overwritten
+  offline: 连接服务器失败：无法连接服务器（网络已断开，或服务器未运行）。
+OFFLINE server down: failure reported, 3 drafts queued and persisted in sync.json
+  unroutable: 连接服务器失败：连接超时，服务器长时间没有响应。
+  dns: 连接服务器失败：无法解析服务器域名（网络未连接或地址拼写错误）。
+  sync -> code=0  同步完成：上传 3 本，从云端更新 0 本，共 4 本书。
+RECONNECT 3/3 offline edits pushed (X annotations=5, Z created, W created), queue empty
+  scanned 54 files under the data root: password hits=0  username hits=0  fragment hits=0
+CREDENTIALS password/username absent from all files; DPAPI blob roundtrip ok; tampered blob rejected; delete removes file
+PASS WebDAV 15 scenarios; windows_created=0
+15/15 scenarios; exit_code=0

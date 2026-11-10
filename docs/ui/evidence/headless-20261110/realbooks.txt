@@ -1,0 +1,20 @@
+ok: between-the-world-and-me: 196 pages, 1.259s
+ok: a-raisin-in-the-sun: 356 pages, 3.220s
+ok: born-a-crime: 441 pages, 2.219s
+ok: black-boy: 1073 pages, 4.797s
+ok: how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america: 511 pages, 2.966s
+ok: crying-in-h-mart: 473 pages, 4.043s
+ok: i-know-why-the-caged-bird-sings: 625 pages, 7.556s
+ok: pachinko: 1286 pages, 7.909s
+ok: the-absolutely-true-diary-of-a-part-time-indian: 582 pages, 3.151s
+ok: the-distance-between-us-a-memoir: 735 pages, 4.983s
+ok: the-fire-next-time: 189 pages, 1.702s
+ok: the-fire-this-time-a-new-generation-speaks-about-race: 333 pages, 4.784s
+ok: the-house-on-mango-street: 191 pages, 0.738s
+ok: zami-a-new-spelling-of-my-name---a-biomythography: 681 pages, 2.971s
+ok: the-autobiography-of-malcolm-x.: 279 pages, 21.671s
+ok: hongloumeng-24264: 903 pages, 6.711s
+ok: tangshi300-52323: 56 pages, 0.432s
+ok: xingshihengyan-24239: 640 pages, 5.122s
+ok: kusamakura-japanese-vertical-writing: 445 pages, 3.227s
+{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 9995, "total_glyphs": 8662386, "wall_seconds": 45.927326, "sum_book_seconds": 89.460314, "fastest_book": "tangshi300-52323", "slowest_book": "the-autobiography-of-malcolm-x."}
