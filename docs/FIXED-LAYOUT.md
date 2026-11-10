@@ -11,7 +11,7 @@
 | 排版与缩放 | 固定部件在原生视口（CSS px，margin 0，字号 16，行高 1.2，段距 0，强制启用书内 CSS，忽略读者 user CSS）上只排一页，然后用统一比例 `scale=min(W/vw,H/vh)` 居中映射到请求页（等比，留白不裁切）。溢出内容留在该页，pager 恒定只出 1 页。 |
 | 绝对定位 | 仅在固定页上生效：`position:absolute/fixed` 加 `top/right/bottom/left`（px/em/%/负值）。包含块是页面；在已定位的祖先内部，包含块是该祖先盒。inset 为 auto 时保留静态位置。元素脱离文档流，不推挤后续静态内容；背景盒覆盖声明的 `width/height`。流式页面完全不读这些属性。 |
 | 双页展开 | `exr_publication_spreads()` 按阅读顺序返回物理左/右槽：ltr 下 left 开屏，rtl 下 right 开屏；未声明 side 时与上一页交替，首页为 recto（ltr 在右，rtl 在左）；`center` 页、流式页和 `rendition:spread none` 下的页面一律单屏（`EXR_SPREAD_SINGLE`）。 |
-| 新增公共 API | `exr_publication_rendition`、`exr_publication_page_progression`、`exr_publication_spreads`、`exr_layout_fixed_viewport`，均为增量 ABI，原有签名未改动。 |
+| 新增公共 API | `exr_publication_rendition`、`exr_publication_spreads`、`exr_layout_fixed_viewport` 为增量 ABI；复用已有 `exr_publication_page_progression`，返回解析后的 `exr_direction`（缺省依语言回退，无语言时 LTR），原有签名未改动。 |
 
 已知不支持的部分（本次没有实现，也不计入六项结论）：
 

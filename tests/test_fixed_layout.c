@@ -118,7 +118,7 @@ static void rendition(void) {
   exr_publication_free(p); free(opf);
   /* No rendition data: reflowable, single screens, reflow pages carry no fixed record. */
   opf=package("","",items,"<itemref idref=\"a\"/><itemref idref=\"b\"/>");
-  p=book(opf,m,7); CHECK(exr_publication_page_progression(p)==0);
+  p=book(opf,m,7); CHECK(exr_publication_page_progression(p)==EXR_DIRECTION_LTR);
   OK(exr_publication_rendition(p,0,&r,&error)); CHECK(r.layout==EXR_RENDITION_REFLOWABLE && r.spread==EXR_SPREAD_AUTO && r.viewport_width==0);
   { static const size_t want[][3]={{0,NO,1},{1,NO,1}}; spreads_equal(p,want,2); }
   { size_t count; exr_document *d=NULL; exr_layout *l=first_page(p,0,300,400,&count,&d); CHECK(l && !exr_layout_fixed_viewport(l).fixed);
