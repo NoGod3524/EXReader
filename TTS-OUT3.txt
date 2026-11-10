@@ -1,0 +1,33 @@
+已提交并推送 `codex/tts-20261108`，Draft PR：[#93](https://github.com/NoGod3524/EXReader/pull/93)。
+
+- **A 引擎**：分块 SSML、段落停顿、中英文语言标签、可配跳过/短提示、句子范围及续读游标。
+- **B 宿主**：SAPI 控制、四档语速、音色下拉、锚点跟随和当前句浅色高亮。
+- **C 边界**：切书、离开阅读界面、关闭窗口时停止；最小化继续；无音色明确提示。
+
+| 验收 | 结果 |
+|---|---|
+| 1. 五段 SSML | 7,805 / 5,941 / 8,476 / 31 / 5,883 字；XML **5/5** 合法，误差 **0%** |
+| 2. 十次分块 | **7,824 字＝9×800＋624**；拼接文本及 SHA-256 与原文一致，重复/遗漏 **0/0** |
+| 3. 控制状态 | 开始、暂停、继续、停止各 **3/3** |
+| 4. SetRate | 0.8×→**−2**；1.0×→**0**；1.2×→**2**；1.5×→**4** |
+| 5. 音色 | **2 个**：Microsoft David Desktop - English (United States)；Microsoft Zira Desktop - English (United States) |
+| 6. 跟随 | **30.328 秒、77 个事件**，自动从章节页 **1→2** |
+| 7. 高亮 | 当前句 **[105,449)**；截图确认，停止后清除 |
+| 8. 退出停止 | 播放中退出阅读界面、切书，均验证 SAPI 返回 done，**2/2**；最小化 **3 秒**位置继续推进 |
+| 9. 真书回归 | **19/19 本、11,296 页**；页数变化 **0**，逐页像素哈希变化 **0** |
+| 10. 测试 | ctest **217/217**，Windows 回归 **6/6**；新增 **5 组** |
+
+本机无中文 SAPI 音色；中文完成 SSML 校验，实际发声验收使用英文真书。
+
+紅樓夢 SSML 样例片段：
+
+```xml
+<p>
+  <s xml:lang="zh-CN">實愧則有余，悔又無益之大無可如何之日也！</s>
+</p>
+<break time="300ms"/>
+```
+
+截图：[朗读前](https://github.com/NoGod3524/EXReader/blob/codex/tts-20261108/docs/ui/evidence/tts-20261108/follow-before.png) → [30 秒后及句子高亮](https://github.com/NoGod3524/EXReader/blob/codex/tts-20261108/docs/ui/evidence/tts-20261108/follow-after.png)。
+
+[完整验收、校验方法与日志](https://github.com/NoGod3524/EXReader/blob/codex/tts-20261108/docs/ui/TTS-20261108.md)。各步骤已写入 `TTS-OUT.txt`。
