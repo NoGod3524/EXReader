@@ -6,3 +6,7 @@
 - 能力矩阵：**41 行**，明确标出不支持项。
 - ABI：稳定 **394**、实验 **33**、公开函数中的内部入口 **0**；私有实现明确禁止外部调用。
 - `S4-OUT.txt` 已逐步记录并提交。最新提交 `f191e99f`；PR CI 已自动触发，目前排队或运行中。
+[2026-11-10T16:24:55.8568014-05:00] Step 1: gh pr view 109: head=codex/sdk-docs-20261109; mergeable=UNKNOWN; mergeStateStatus=UNKNOWN; statusCheckRollup=[]. Local HEAD detached at 979a4025; working tree clean. Re-querying full PR state before branch mutation.
+[2026-11-10T16:25:25.9151276-05:00] Step 2: PR OPEN, mergeable=CONFLICTING, mergeStateStatus=DIRTY, core absent. Confirmed true conflict. Fetching main and PR head before union merge.
+[2026-11-10T16:25:52.3370459-05:00] Step 3: fetch completed; PR head remains 979a4025. Named branch is attached to EXReader-S4-20261109, so keeping this authorized workspace detached and will push HEAD explicitly to codex/sdk-docs-20261109. OUT.txt is the only local modification.
+[2026-11-10T16:26:29.0939032-05:00] Step 4: merge stopped before modifying files because tracked OUT.txt has this session's required progress entries. Committing progress first, then retrying merge; both histories will be retained.
