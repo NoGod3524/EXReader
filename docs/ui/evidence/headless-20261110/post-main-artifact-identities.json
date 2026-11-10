@@ -1,0 +1,47 @@
+{
+  "engine_host_source_revision": "8c08679f35de45108c91ae7d1096b57d456eeb26",
+  "artifacts": [
+    {
+      "path": "build/w/check_sync.exe",
+      "bytes": 1796720,
+      "sha256": "916a9ed3165ac4df509cc82741da12919154e389d0f349d3b496449209e32efd",
+      "pe_subsystem": 3
+    },
+    {
+      "path": "build/w/check_shell_opds.exe",
+      "bytes": 93418,
+      "sha256": "90119298d6e1e7e94b48ef3f92491357ab247ccfbf55384f2bcb0e60710222eb",
+      "pe_subsystem": 3
+    },
+    {
+      "path": "build/w/check_opds_docs.exe",
+      "bytes": 64201,
+      "sha256": "8b366ff197756715c5fe252604976add250331c6d5cea76ef696062a27598163",
+      "pe_subsystem": 3
+    },
+    {
+      "path": "build/host/EXReader.exe",
+      "bytes": 2672167,
+      "sha256": "69e18402b23258962b21a682cd1ab41af318d8e787b51a0af2d570d032271370",
+      "pe_subsystem": 2
+    },
+    {
+      "path": "build/w/libexreader.dll",
+      "bytes": 6360244,
+      "sha256": "91fed44890b63a2d4b0397de9d7eb18bd209a0850716a0ce5ebb4cf6bd58bb88"
+    },
+    {
+      "path": "build/host/libexreader.dll",
+      "bytes": 6360244,
+      "sha256": "91fed44890b63a2d4b0397de9d7eb18bd209a0850716a0ce5ebb4cf6bd58bb88"
+    }
+  ],
+  "unchanged_reading_release_sha256": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+  "version_exceptions": {
+    "retained": 552,
+    "added": 0,
+    "removed": 35,
+    "indent": 2
+  },
+  "gui_execution": "not performed"
+}

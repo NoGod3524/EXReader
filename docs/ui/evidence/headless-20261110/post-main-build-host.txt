@@ -1,0 +1,3 @@
+[1/3] Building CXX object CMakeFiles/EXReader.dir/shell_epub.cpp.obj
+[2/3] Building C object CMakeFiles/EXReader.dir/C_/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/examples/reader.c.obj
+[3/3] Linking CXX executable EXReader.exe

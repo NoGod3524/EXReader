@@ -1,6 +1,6 @@
 # 无窗口验收报告
 
-分支：`codex/webdav-sync-20261110`。代码验收提交：`787e86e09cd3ca517922e6b14dfbee31ed1bcf98`。
+分支：`codex/webdav-sync-20261110`。引擎与宿主验收提交：`8c08679f35de45108c91ae7d1096b57d456eeb26`。Draft PR：[#131](https://github.com/NoGod3524/EXReader/pull/131)。
 
 ① 续跑起点（原进度文件最后一行）
 
@@ -20,71 +20,87 @@ b1 原分支缺少 b2/C2 文件，因此把已提交的 b2 实现（`83a554ae`�
 
 编译中修复两处问题：OPDS URL 升级遇到容量不足时返回空地址供现有错误路径拒绝，避免截断 URL；同步控制台入口声明为 `static inline`，解决 GUI 宿主中的未使用函数警告。原宿主编译失败日志保留为 `build-host-failed.txt`。
 
-③ 命令与实际输出
+已合并 `main` 的 `fe3d46e1`，唯一冲突 `OUT.txt` 保留 main 交接说明。补齐 OPDS 的五个 API 文档条目并扩展现有格式模块示例，SDK 文档覆盖检查与控制台示例均通过。
 
-以下命令均在仓库根目录运行。完整参数、退出码、耗时和日志关联见 [commands.json](commands.json)。日志统一为 LF 并去除行尾空白。
+
+③ 命令与实际输出（合并 main 后）
+
+命令在仓库根目录执行。完整参数、退出码与日志关联见 [commands.json](commands.json)。日志统一为 LF 并去除行尾空白。
 
 ```text
 cmake --build build/w --target check_sync check_shell_opds exreader-opds-test -j 2
 Linking CXX executable check_sync.exe (exit 0)
 ```
-完整输出：[build-console-final.txt](build-console-final.txt)。
+完整输出：[post-main-build-console.txt](post-main-build-console.txt)。
 
 ```text
 ctest --test-dir build/w -V -R ^(windows-selection-sync|windows-opds-timeout|windows-a11y-static|native-opds)$
+PASS WebDAV 15 scenarios; windows_created=0
+PASS error_timeout code=timeout win_error=12002 http=0 accepted=1 elapsed_ms=4000
+25/25 static checks; 9 historical PNGs; manual checklist generated
 100% tests passed out of 4
 ```
-完整输出：[ctest-headless-final.txt](ctest-headless-final.txt)。
+完整输出：[post-main-ctest.txt](post-main-ctest.txt)。
 
 ```text
-C:\Python314\python.exe -X utf8 examples/windows/check_shell_sync.py build/w/check_sync.exe docs\ui\evidence\headless-20261110
-PASS WebDAV 15 scenarios; windows_created=0
-15/15 scenarios; exit_code=0
+build\w\check_shell_opds.exe https://www.gutenberg.org/ebooks.opds/ docs\ui\evidence\headless-20261110\post-main-opds
+13/13 checks passed; list=25; next overlap=0; search=7; EPUB=24864457 bytes, magic=PK; timeout win_error=12002; 404/cache checks passed
 ```
-完整输出：[sync-15.txt](sync-15.txt)。
-
-```text
-build\w\check_shell_opds.exe https://www.gutenberg.org/ebooks.opds/ docs\ui\evidence\headless-20261110\opds
-13/13 checks passed; root entries=3; list=25; next overlap=0; search=7; EPUB=24864457 bytes, magic=PK; timeout win_error=12002, http=0, accepted=1; 404/cache checks passed
-```
-完整输出：[opds-gutenberg.txt](opds-gutenberg.txt)。
+完整输出：[post-main-opds-gutenberg.txt](post-main-opds-gutenberg.txt)。
 
 ```text
 C:\Python314\python.exe -X utf8 tools/check_version_consistency.py
-PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+PASS: SDK 3.42.0; ABI 1; 552 live exact literal exceptions
 ```
-完整输出：[version.txt](version.txt)。
+完整输出：[post-main-version-final.txt](post-main-version-final.txt)。
 
 ```text
 C:\Python314\python.exe -X utf8 tools/check_layers.py build/w
-121 objects, 1361 symbol references, 0 remaining inverse references, 0 new
+121 objects, 1369 symbol references, 0 remaining inverse references, 0 new
 1068 source/header dependencies, 0 inverse includes
 ```
-完整输出：[layers.txt](layers.txt)。
+完整输出：[post-main-layers.txt](post-main-layers.txt)。
 
 ```text
 cmake -S examples/windows -B build/host -DEXR_SDK=out\sdk -DEXR_READER_WINDOWS_SHELL=ON "-DCMAKE_C_FLAGS=-O2 -Wall -Wextra -Werror"
 Configuring done; Generating done (exit 0)
 ```
-完整输出：[configure-host.txt](configure-host.txt)。
+完整输出：[post-main-configure-host.txt](post-main-configure-host.txt)。
 
 ```text
 cmake --build build/host --target EXReader -j 2
-[2/2] Linking CXX executable EXReader.exe (exit 0; compile only)
+[3/3] Linking CXX executable EXReader.exe (exit 0; compile only)
 ```
-完整输出：[build-host.txt](build-host.txt)。
+完整输出：[post-main-build-host.txt](post-main-build-host.txt)。
 
 ```text
-C:\Python314\python.exe -X utf8 tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/w/libexreader.dll --font tests/fixtures/fonts/primary.ttf --layout tools/regress/layout.json --output docs\ui\evidence\headless-20261110\realbooks.json --baseline docs/ui/evidence/webdav-20261110/books-final.json --source-revision 787e86e09cd3ca517922e6b14dfbee31ed1bcf98 --workers 2
+C:\Python314\python.exe -X utf8 tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/w/libexreader.dll --font tests/fixtures/fonts/primary.ttf --layout tools/regress/layout.json --output docs\ui\evidence\headless-20261110\post-main-realbooks.json --baseline docs/ui/evidence/webdav-20261110/books-final.json --source-revision 8c08679f35de45108c91ae7d1096b57d456eeb26 --workers 2
 19/19 books; 9995 pages; total_glyphs=8662386; source/page/glyph counts unchanged; hash_changed_pages=0; needs_review=false
 ```
-完整输出：[realbooks.txt](realbooks.txt)。
+完整输出：[post-main-realbooks.txt](post-main-realbooks.txt)。
 
-C2 实际输出：`25/25 static checks; 9 historical PNGs; manual checklist generated`。运行时 UIA 状态仍为 `pending-user-present-manual-check`。
+```text
+C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe -std=c11 -Wall -Wextra -Wpedantic -Werror -Iinclude docs/examples/formats.c build/w/libexreader.dll.a -o build/w/check_opds_docs.exe
+exit 0 (-Wall -Wextra -Wpedantic -Werror)
+```
+完整输出：[post-main-docs-compile.txt](post-main-docs-compile.txt)。
 
-保护文件 `tests/check_reading_release.py` 的 SHA-256 为 `6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b`，与续跑前字节一致。版本例外 JSON 字节一致，保留 indent=2；`include/exr/opds.h` 已登记在 doc 层，没有新增 `src/*.h`。详细二进制和保护文件身份见 [artifact-identities.json](artifact-identities.json)。
+```text
+build\w\check_opds_docs.exe
+format=2
+OPDS entries=1 title=Catalog
+```
+完整输出：[post-main-docs-example.txt](post-main-docs-example.txt)。
 
-19 本书使用 b1 原有 `books-final.json`、`tools/regress/layout.json` 和 `primary.ttf`；逐书逐页比较见 [realbooks.diff.json](realbooks.diff.json)，完整逐页记录见 [realbooks.json.gz](realbooks.json.gz)。Gutenberg 下载文件仅保留在本地 `build/headless-opds/`，提交其大小与 SHA-256 记录。
+```text
+C:\Python314\python.exe -X utf8 tools/check_sdk_docs.py --output docs\ui\evidence\headless-20261110\sdk-docs-static.json
+documented_functions=462; public_functions=462; coverage_percent=100.0; errors=[]; passed=true
+```
+完整输出：[post-main-docs-coverage.txt](post-main-docs-coverage.txt)。
+
+`tests/check_reading_release.py` SHA-256 仍为 `6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b`，与续跑前字节一致。版本例外随 main 仅删除 35 个条目，其余 552 个条目内容不变，保留 indent=2。`include/exr/opds.h` 已登记 doc 层，没有新增 `src/*.h`。二进制和保护文件身份见 [post-main-artifact-identities.json](post-main-artifact-identities.json)。
+
+19 本书使用 b1 原有 `books-final.json`、`tools/regress/layout.json` 和 `primary.ttf`；比较见 [post-main-realbooks.diff.json](post-main-realbooks.diff.json)，完整逐页记录见 [post-main-realbooks.json.gz](post-main-realbooks.json.gz)。早先的 787e86e0 验收和编译失败日志也保留在本目录。下载的 Gutenberg EPUB 仅保留在本地 `build/headless-opds/`，提交大小和 SHA-256。
 
 ④ 需要真实窗口的待办（本轮全部未执行）
 
