@@ -24,6 +24,9 @@ Android 宿主已在共同源码 S 完成 API34 x86_64 模拟器联合验收。�
 下一版的六个工作包与并行边界见 [原生阅读核心路线](docs/CORE-ROADMAP.md)；历史能力积压见 [版本路线记录](docs/VERSIONING.md#后续兼容目标与验收顺序)。
 轻量阅读 SDK 的构建命令见 [阅读 SDK preset](#阅读-sdk-preset)。
 
+宿主开发入口：[完整 API 参考](docs/API.md)、[接入指南与时序图](docs/INTEGRATION.md)、
+[格式能力矩阵](docs/CAPABILITY-MATRIX.md)、[可编译 C 示例与编译记录](docs/examples/README.md)。
+
 版本按更新规模递增：超大更新升主版本，中等更新升次版本，小 bug 修复升补丁版本；升级前两段时，后续段归零。全部历史已按此规则重编，见 [完整更新日志](CHANGELOG.md)；编号口径见 [版本规则](docs/VERSIONING.md)。
 
 2.4.1（原编号0.12.1）修复全库审计确认的七项缺陷，覆盖长附标塑形、重复章节标注、备注长度、XML 导出、跨行塑形、RTF fallback 和 HTML script/style。每项有独立回归测试与提交；[验证记录](docs/NATIVE_VALIDATION.md#0121-audit-fixes) 列出覆盖范围与资源上限。

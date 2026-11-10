@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MIT
+# Included by the SDK's existing EXR_FULL_TESTS build, including normal PR CI.
+set(sdk_doc_examples base document formats pagination render font search annotation
+  toc library graphics dictionary textindex pdf audio)
+foreach(example IN LISTS sdk_doc_examples)
+  add_executable(exreader-doc-${example} ${example}.c)
+  target_link_libraries(exreader-doc-${example} PRIVATE exreader)
+  set_target_properties(exreader-doc-${example} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+  if(MSVC)
+    target_compile_options(exreader-doc-${example} PRIVATE /W4 /WX)
+  else()
+    target_compile_options(exreader-doc-${example} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endif()
+endforeach()
+set(doc_fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures")
+foreach(example base document formats search annotation library graphics textindex audio)
+  add_test(NAME sdk-doc-${example} COMMAND exreader-doc-${example})
+endforeach()
+add_test(NAME sdk-doc-pagination COMMAND exreader-doc-pagination "${doc_fixtures}/fonts/primary.ttf")
+add_test(NAME sdk-doc-render COMMAND exreader-doc-render "${doc_fixtures}/fonts/primary.ttf" "${CMAKE_CURRENT_BINARY_DIR}/render.png")
+add_test(NAME sdk-doc-font COMMAND exreader-doc-font "${doc_fixtures}/fonts")
+add_test(NAME sdk-doc-toc COMMAND exreader-doc-toc "${doc_fixtures}/toc-nav.epub")
+add_test(NAME sdk-doc-pdf COMMAND exreader-doc-pdf "${doc_fixtures}/pdf-public.pdf" "${CMAKE_CURRENT_BINARY_DIR}/pdf.png")
+add_test(NAME sdk-doc-dictionary COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/smoke_dictionary.py" "$<TARGET_FILE:exreader-doc-dictionary>")
+add_test(NAME sdk-doc-coverage COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/check_sdk_docs.py")
