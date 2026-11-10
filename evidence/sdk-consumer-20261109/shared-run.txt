@@ -1,0 +1,3 @@
+{"name": "shared-run", "cwd": "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\build-shared", "argv": ["C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\build-shared\\consumer.exe", "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\assets\\smoke.epub", "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\assets\\font.otf", "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\shared.png"], "exit_code": 0}
+PASS version header=3.42.0 library=3.42.0 abi=1
+PASS mode=shared title="Platform delivery smoke" pages=216 render=C:\Users\Oscar\AppData\Local\Temp\exreader-consumer-n4hry411\shared.png

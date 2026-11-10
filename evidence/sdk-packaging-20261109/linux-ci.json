@@ -1,0 +1,13 @@
+{
+  "run_id": 42651755941,
+  "job_id": 129279653109,
+  "job_conclusion": "success",
+  "head_sha": "ad851342bc44138541ac07e503d45328f3de7721",
+  "artifact_id": 13691715997,
+  "artifact_name": "EXReader-C-Linux",
+  "artifact_sha256": "3dd0a9cb84643f391167e087189c32860d7f8ff332e2f61bf907516594508a54",
+  "package_name": "exreader-3.42.0-linux-x64.tar.gz",
+  "package_bytes": 14262286,
+  "package_sha256": "38af223308e00bd3a01fc3d19c1f850a00b40c380fe08b051751b5a0c395727d",
+  "job_url": "https://github.com/NoGod3524/EXReader/actions/runs/42651755941/job/129279653109"
+}
