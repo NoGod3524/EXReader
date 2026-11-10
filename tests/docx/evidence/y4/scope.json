@@ -50,5 +50,16 @@
   "scope": "PASS",
   "forbidden_paths_unchanged": true,
   "x1_x6_and_124_ancestors": true,
-  "mergeable_into_124": true
+  "mergeable_into_124": true,
+  "latest_target": "139e0ad5215b49776b96dd19620c83766ec20557",
+  "latest_target_native_trees_unchanged": [
+    "src",
+    "include",
+    "cmake",
+    "CMakeLists.txt",
+    "tests",
+    "tools/docx",
+    "tools/release"
+  ],
+  "mergeable_into_latest_target": true
 }
