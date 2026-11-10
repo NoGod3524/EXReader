@@ -1,0 +1,45 @@
+{
+  "matrices_before": {
+    "noop": {
+      "passed": 531,
+      "total": 540,
+      "payload_exact": 21,
+      "failed_documents": 9
+    },
+    "edited": {
+      "passed": 531,
+      "total": 540,
+      "payload_exact": 21,
+      "failed_documents": 9
+    }
+  },
+  "matrices_after": {
+    "noop": {
+      "passed": 540,
+      "total": 540,
+      "payload_exact": 30,
+      "failed_documents": 0
+    },
+    "edited": {
+      "passed": 540,
+      "total": 540,
+      "payload_exact": 30,
+      "failed_documents": 0
+    }
+  },
+  "ctest": 391,
+  "new_ctest": 70,
+  "books": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11318,
+    "total_glyphs": 8648571,
+    "wall_seconds": 49.341529,
+    "sum_book_seconds": 94.075796,
+    "fastest_book": "the-house-on-mango-street",
+    "slowest_book": "the-autobiography-of-malcolm-x."
+  },
+  "final_dll_sha256": "e88a4045a6d191066782ff35a7baf95bed338773c7d8673144bce21d2c426476",
+  "manifest_sha256": "2056d32818ed2948071e89a640b3e9d7afc328061e89b6e470a78c32c515ab21"
+}
