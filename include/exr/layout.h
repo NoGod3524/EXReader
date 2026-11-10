@@ -141,6 +141,10 @@ EXR_API exr_status exr_publication_open_memory_ex(exr_format format, const void 
                                                   const char *passphrase, exr_publication **out, exr_error *error);
 EXR_API void exr_publication_free(exr_publication *publication);
 EXR_API const char *exr_publication_title(const exr_publication *publication);
+/* Same policy as document_page_progression; custom publications default LTR.
+   Host left/right keys and spread placement should use this, never reverse the
+   logical spine directory or pager_next order. NULL returns LTR. */
+EXR_API exr_direction exr_publication_page_progression(const exr_publication *publication);
 EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
 /* Borrowed until publication_free; EPUB navigation is decoded on first request.
    Custom publications copy navigation through exr_publication_input. */
