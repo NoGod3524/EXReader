@@ -35,6 +35,8 @@ class Section(c.Structure):
     _fields_ = [('id', ID)] + [(n, c.c_int32) for n in
                 ('width', 'height', 'top', 'right', 'bottom', 'left', 'header', 'footer')] + [
                 ('landscape', c.c_uint), ('headers', (c.c_char * 128) * 3), ('footers', (c.c_char * 128) * 3)]
+class Part(c.Structure):
+    _fields_ = [('id', ID), ('name', c.c_char_p), ('data', c.c_void_p), ('size', c.c_size_t)]
 
 class Bridge:
     def __init__(self, library):
@@ -48,6 +50,7 @@ class Bridge:
             ('edit_doc_free', None, [ptr]), ('free', None, [ptr]),
             ('edit_block_count', size, [ptr]), ('edit_block_at', c.POINTER(Block), [ptr, size]),
             ('edit_sections', c.POINTER(Section), [ptr, c.POINTER(size)]),
+            ('edit_parts', c.POINTER(Part), [ptr, c.POINTER(size)]),
             ('edit_doc_create', c.c_int, [c.POINTER(Section), size, c.POINTER(Block), size, ptr, size, ptr, c.POINTER(ptr)]),
             ('edit_insert_paragraph', c.c_int, [ptr, ID, c.POINTER(Run), size, c.POINTER(PP), c.POINTER(ID)]),
             ('edit_set_paragraph_props', c.c_int, [ptr, ID, c.POINTER(PP)]),
@@ -297,6 +300,94 @@ def test(group, api):
                     api.doc_free(again)
                 finally:
                     api.doc_free(model)
+        elif group == 'section-scope':
+            section = ('<q:sectPr><q:pgSz q:w="12240" q:h="15840"/>'
+                       '<q:pgMar q:top="1440" q:right="1440" q:bottom="1440" q:left="1440"/>'
+                       '<x:opaque v:flag="keep"><q:cols q:num="2"/></x:opaque></q:sectPr>')
+            body = ('<w:p xmlns:q="' + W + '" xmlns:v="' + R + '" xmlns:x="urn:section-only">'
+                    '<w:pPr>' + section + '</w:pPr><w:r><w:t>alpha</w:t></w:r></w:p>'
+                    '<w:p><w:r><w:t>beta</w:t></w:r></w:p><w:sectPr/>')
+            original = package(body=body)
+            for action in ('insert', 'split', 'delete'):
+                model = api.read(original)
+                try:
+                    first = api.paragraphs(model)[0]
+                    if action == 'insert':
+                        new_id = ID()
+                        assert api.insert_paragraph(model, first.id, None, 0, None, c.byref(new_id)) == 0
+                    elif action == 'split':
+                        assert api.split_paragraph(model, first.id, 0, 2) == 0
+                    else:
+                        assert api.delete_block(model, first.id) == 0
+                    saved = api.write(model)
+                    xml = unzip(saved)['word/document.xml']
+                    root = ET.fromstring(xml)
+                    assert len(list(root.iter('{%s}sectPr' % W))) == 2
+                    opaque = list(root.iter('{urn:section-only}opaque'))
+                    assert len(opaque) == 1 and opaque[0].get('{%s}flag' % R) == 'keep'
+                    assert b'<x:opaque v:flag="keep"><q:cols q:num="2"/></x:opaque>' in xml
+                    reopened = api.read(saved)
+                    api.doc_free(reopened)
+                finally:
+                    api.doc_free(model)
+        elif group == 'section-edits':
+            parts = unzip(source)
+            parts['word/document.xml'] = parts['word/document.xml'].replace(
+                b'<w:sectPr>', b'<w:sectPr><w:headerReference w:type="default" r:id="headerOld" x:extra="keep"/>'
+                b'<w:footerReference w:type="default" r:id="footerOld"/>').replace(
+                b'<w:pgMar ', b'<w:pgMar w:gutter="120" ')
+            xml = parts['word/document.xml']
+            boundary = xml.rfind(b'<w:sectPr>')
+            parts['word/document.xml'] = xml[:boundary] + xml[boundary:].replace(
+                b'<w:pgSz w:w="12240" w:h="15840"/>', b'').replace(
+                b'<w:pgMar w:gutter="120" w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>', b'')
+            for kind, refs in (('header', ('Old', 'New', 'First', 'Even')), ('footer', ('Old', 'First', 'Even'))):
+                for suffix in refs:
+                    ref = kind + suffix
+                    relationship = f'<Relationship Id="{ref}" Type="{R}/{kind}" Target="{ref}.xml"/>'
+                    parts['word/_rels/document.xml.rels'] = parts['word/_rels/document.xml.rels'].replace(
+                        b'</Relationships>', relationship.encode() + b'</Relationships>')
+                    parts['word/' + ref + '.xml'] = f'<w:{"hdr" if kind == "header" else "ftr"} xmlns:w="{W}"/>'
+            original = api.read(repack(parts))
+            try:
+                ns, np = c.c_size_t(), c.c_size_t()
+                old = api.sections(original, c.byref(ns))
+                sections = (Section * ns.value)(*[old[i] for i in range(ns.value)])
+                for s in sections:
+                    s.width, s.height, s.landscape = 15840, 12240, 1
+                    s.top, s.right, s.bottom, s.left = -360, 900, -720, 1800
+                    s.header, s.footer = 360, 480
+                    for i, ref in enumerate((b'headerNew', b'headerFirst', b'headerEven')):
+                        s.headers[i].value = ref
+                    for i, ref in enumerate((b'', b'footerFirst', b'footerEven')):
+                        s.footers[i].value = ref
+                count = api.block_count(original)
+                blocks = (Block * count)(*[api.block_at(original, i).contents for i in range(count)])
+                retained = api.parts(original, c.byref(np))
+                seeded = c.c_void_p()
+                assert api.doc_create(sections, ns, blocks, count, retained, np, None, c.byref(seeded)) == 0
+                try:
+                    saved = api.write(seeded)
+                    reopened = api.read(saved)
+                    try:
+                        actual = api.sections(reopened, c.byref(ns))
+                        for i in range(ns.value):
+                            for field, _ in Section._fields_[1:-2]:
+                                assert getattr(actual[i], field) == getattr(sections[i], field), field
+                            for field in ('headers', 'footers'):
+                                assert [r.value for r in getattr(actual[i], field)] == [r.value for r in getattr(sections[i], field)]
+                        xml = unzip(saved)['word/document.xml']
+                        assert xml.count(b'x:extra="keep"') == 5  # three spacing nodes plus two references
+                        assert xml.count(b'w:gutter="120"') == 1
+                        for section in ET.fromstring(xml).iter('{%s}sectPr' % W):
+                            order = [n.tag.rsplit('}', 1)[-1] for n in section]
+                            assert order.index('pgSz') < order.index('pgMar') < order.index('cols'), order
+                    finally:
+                        api.doc_free(reopened)
+                finally:
+                    api.doc_free(seeded)
+            finally:
+                api.doc_free(original)
         elif group == 'new':
             new = c.c_void_p()
             assert api.doc_create(None, 0, None, 0, None, 0, None, c.byref(new)) == 0
@@ -353,6 +444,6 @@ def test(group, api):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--library', required=True, type=Path)
-    parser.add_argument('group', choices=('roundtrip', 'parts', 'unknown', 'sections', 'properties', 'edits', 'split', 'namespaces', 'new', 'errors'))
+    parser.add_argument('group', choices=('roundtrip', 'parts', 'unknown', 'sections', 'properties', 'edits', 'split', 'namespaces', 'section-scope', 'section-edits', 'new', 'errors'))
     args = parser.parse_args()
     test(args.group, Bridge(args.library.resolve()))
