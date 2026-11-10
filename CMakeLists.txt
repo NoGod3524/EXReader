@@ -182,6 +182,7 @@ if(EXR_BUILD_TOOLS)
 endif()
 if(EXR_FULL_TESTS)
   enable_testing()
+  add_subdirectory(tests/docx-edit)
   if(EXR_BUILD_TOOLS AND EXR_BUILD_SHARED_COMPAT AND NOT EXR_SANITIZE AND NOT ANDROID AND NOT CMAKE_CROSSCOMPILING)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     add_test(NAME sdk-release COMMAND ${Python3_EXECUTABLE}
