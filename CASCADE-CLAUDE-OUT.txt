@@ -1,0 +1,9 @@
+PR #127 已没有冲突。我已推送，没有合并 PR，也没有动 main。
+
+- **冲突:** 没有要解的。`origin/main`(`fe3d46e1`)早已在本地 HEAD 的历史里,`git merge origin/main` 显示 "Already up to date"。冲突提示是因为远端 PR 分支停在 `f90f0b43`,落后了 18 个提交。把 HEAD(`0c65fde7`)推到 `codex/large-book-2-20261110` 后,GitHub 显示 `MERGEABLE`。
+- **API 文档:** 不用补。`python -X utf8 tools\check_sdk_docs.py` 退出码为 0,457 个公开函数全部有文档(覆盖率 100%),`errors` 为空,`passed` 为 true。
+- **CI:** 推送后刚触发,我查看时除 `apple-packaging`(skipping)外都还是 pending。目前没有失败项,最终结果要等跑完。
+
+我没碰受保护的文件。`CASCADE-CLAUDE-OUT.txt` 本来就是未跟踪文件,我没动它。新写的 `RESOLVE-OUT.txt` 也没有提交。
+
+报告写在 `RESOLVE-OUT.txt`。
