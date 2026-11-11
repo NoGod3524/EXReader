@@ -7,7 +7,7 @@
 ### A) 解冲突（它现在 `Cannot update PR branch due to conflicts`）
 
 ```powershell
-cd C:\Users\Oscar\Documents\Codex\EXReader-resolve-127-20261111
+cd C:\Users\Oscar\Documents\Codex\EXReader-fix-127-20261111
 git fetch origin main
 git merge origin/main
 ```
