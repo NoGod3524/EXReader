@@ -1,0 +1,13 @@
+Still configuring in the background (freetype and the other deps now come from the local `exr-build-argon` copies, because the network download fails with an SSL error). The merge is committed locally, with `OUT.txt` as the only conflict. I'll build, run ctest and push once configure finishes.
+
+Configure hasn't finished yet. I'm watching for it to end and will build once it does.
+
+The configure step finished. A full build is now running in the background, and I'll run ctest when it completes.
+
+That monitor expiring doesn't matter, since configure already finished. The build is still running, and I'll wait for its completion notice.
+
+The build succeeded. ctest is now running in the background, and I'll report the results when it finishes.
+
+The earlier ctest result (300 of 306 failed) doesn't count. The build had stopped partway, so most tests never ran. I've restarted the build and will run ctest again once it finishes.
+
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
