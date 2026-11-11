@@ -256,6 +256,22 @@ static void shell_toc_recover_chapters(void) {
     shell_toc_owned=recovered;shell_toc_nav=recovered;shell_toc_nav_count=count;
   } else if(recovered) exr_navigation_free(recovered,count);
 }
+/* Label of the TOC entry the page is in: whitespace runs (U+3000 included)
+   folded to one space, cut with an ellipsis. 0 when the book has no entry here. */
+static const wchar_t *shell_toc_current_label(wchar_t *out, size_t capacity) {
+  enum { LIMIT = 28 };
+  if(shell_toc_current<0 || (size_t)shell_toc_current>=shell_toc_count || capacity<LIMIT+2) return NULL;
+  const char *label=shell_toc_nav[shell_toc_rows[shell_toc_current]].label;
+  wchar_t *wide=label ? host_wide(label,strlen(label)):NULL;size_t used=0;int gap=0;
+  for(const wchar_t *p=wide;p && *p;p++) {
+    if(*p==L' ' || *p==L'\t' || *p==L'\r' || *p==L'\n' || *p==0x3000 || *p==0x00a0) {gap=used!=0;continue;}
+    if(used+gap>=LIMIT) {out[used++]=0x2026;break;}
+    if(gap) out[used++]=L' ';
+    out[used++]=*p;gap=0;
+  }
+  free(wide);out[used]=0;
+  return used ? out:NULL;
+}
 static void shell_toc_load(void) {
   shell_toc_hide();SendMessageW(shell_toc_list,LB_RESETCONTENT,0,0);shell_d2d_toc_clear(host_shell);
   if(shell_toc_owned) exr_navigation_free(shell_toc_owned,shell_toc_nav_count);

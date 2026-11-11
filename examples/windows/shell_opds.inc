@@ -276,7 +276,7 @@ static void opds_finish(opds_job *j) {
       /* Same path as the shelf's open-book button, so import adds metadata and
          cover and then opens the book. */
       g.auto_open_imported=1;opds_imports_started++;
-      if(opds_visible){ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_recent();}
+      if(opds_visible){ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_shelf_visibility(1);}
       import_path(opds_download_path,0);
     } else {
       if(r.code==ONET_CANCELLED)opds_downloads_cancelled++;else opds_downloads_failed++;
@@ -372,8 +372,6 @@ static void opds_hide(void) {
 }
 static void opds_show(void) {
   if(!opds_view || !shelf_visible)return;
-  HWND controls[]={shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_sources};
-  for(size_t i=0;i<sizeof(controls)/sizeof(*controls);i++)if(controls[i])ShowWindow(controls[i],SW_HIDE);
   if(sm_view)ShowWindow(sm_view,SW_HIDE);
   opds_visible=1;opds_layout();ShowWindow(opds_view,SW_SHOW);opds_controls_enable();
   SetFocus(opds_url_edit);
@@ -399,8 +397,7 @@ static LRESULT CALLBACK opds_view_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
     case WM_DRAWITEM: {
       const DRAWITEMSTRUCT *d=(const DRAWITEMSTRUCT *)lp;wchar_t label[32];
       GetWindowTextW(d->hwndItem,label,32);
-      shell_d2d_control(host_shell,d->hDC,&d->rcItem,label,shell_is_dark(),d->CtlID==OPDS_ID_ACTION ? 1:2,
-        (d->itemState&ODS_SELECTED ? 2:0)|(d->itemState&ODS_FOCUS ? 4:0)|(d->itemState&ODS_DISABLED ? 8:0));
+      shell_draw_control(d,label,d->CtlID==OPDS_ID_ACTION ? SHELL_CONTROL_PRIMARY:SHELL_CONTROL_STANDARD,shell_colors->layer_page);
       return TRUE;
     }
     case WM_COMMAND:

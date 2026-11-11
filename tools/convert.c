@@ -252,17 +252,6 @@ static void set_message(char **target, const char *format, ...) {
   }
   va_end(args);
 }
-static void take_error(char **target, char **error, const char *fallback) {
-  if (*error) { *target = *error; *error = NULL; }
-  else if (fallback) *target = duplicate_string(fallback);
-}
-static void set_cancelled_error(cv_result *r) {
-  free(r->error_message);
-  r->error_message = duplicate_string("cancelled");
-  r->error_code = EXR_CANCELLED;
-  r->stage = "convert";
-  r->status = "cancelled";
-}
 
 /* ---------- manifest ---------- */
 typedef struct {
