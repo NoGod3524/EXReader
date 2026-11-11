@@ -1,0 +1,9 @@
+已推送，但没有冲突要解，也没有文档要补。
+
+- **冲突**:`git merge origin/main` 返回 "Already up to date"，没有 `U` 标记，不需要处理。
+- **文档门禁**:`python -X utf8 tools/check_sdk_docs.py` 退出码为 0，输出里 `"errors": []`、`"passed": true`，没有缺失的 API 条目。
+- **推送**:`git push origin HEAD:codex/webdav-sync-20261110` 是快进，`a35bb0c0..d8dafff4`。推上去的 HEAD 是已有提交 `d8dafff4 "wip: 切引擎前保存"`，不是我新建的。
+
+PR #131 此前报冲突，可能是因为 GitHub 那边的状态还没刷新。我没查 CI，所以不知道 CI 上有没有别的失败项。
+
+报告在 `RESOLVE-OUT.txt`，该文件未提交。我没有合并 PR，也没动 main。
