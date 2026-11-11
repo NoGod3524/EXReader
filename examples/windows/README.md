@@ -23,12 +23,13 @@ the top-level install rule copies the whole `examples` directory.
 ```powershell
 python tools/build_windows_host.py --sdk stage --binary build/win-host/Release/EXReader.exe --output build/wp13-windows
 python tests/windows_host/make_fixtures.py --output build/wp13-fixtures
-python tools/check_windows_host.py --package build/wp13-windows/EXReader --output build/wp13-evidence --sdk stage --manifest build/wp13-windows/build.json --fixtures build/wp13-fixtures --selftest-report build/wp13-windows/report.json
+python tools/quality/check_cleanup2_shelf.py build/win-test/EXReader.exe path/to/Reader.otf build/shelf-evidence
 ```
 
-The acceptance driver sends real `WM_COMMAND`/`BM_CLICK`/`WM_KEYDOWN`/`WM_LBUTTONDOWN`
-messages to the created controls and records what the application observed. It is not a
-replacement for the SDK's unit tests and does not claim a screen-reader audit.
+The acceptance driver sends real HWND messages and records the application state.
+The old phase-a/b/c and 17-control accessibility checks are retired; their history
+is in `docs/ui/archive/legacy-17-control/`. The current shelf runner checks the
+single grid/list shelf, scrollbar, empty state, tags and five book roundtrips.
 
 ## Runtime files
 
@@ -67,3 +68,16 @@ point `font_file` at Reader.otf, and set `serif = Noto Serif SC` and
 Build with an SDK exposing `exr/font_manager.h` and its 12 symbols. Measured
 startup, real-book page hashes and DPI-aware UI captures are documented in
 [`font-manager-host evidence`](../../docs/ui/evidence/font-manager-host/README.md).
+
+## Acceptance-only executable
+
+Product builds default to `EXR_READER_TEST_DRIVERS=OFF`. To run the existing
+acceptance scripts, configure a separate build with
+`-DEXR_READER_WINDOWS_SHELL=ON -DEXR_READER_TEST_DRIVERS=ON`. Script paths and
+`--drive` arguments stay unchanged. The driver unit and its command strings are
+excluded from the product. This option belongs only to this consumer project;
+the root build and SDK logic are unchanged.
+
+The native 17-control screen and its numeric command IDs 101–117 have been removed.
+Both consumer projects always use the shell. `shell_shelf.inc` is the single
+bookshelf painter; `shell_recent.inc` retains content-anchor persistence.

@@ -1,49 +1,133 @@
-PR #132 ?????????,?????????????,?????CI ? core ???????,?? core ?????????
+已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
 
-**????**
-- PR #132(?? `codex/dx-realworld-argon-20261110`)????????????:`5947ab96`?`2f6db544`?`63da4607`?
-- PR ?? head ? `c37f5228`,?????? main?PR ??? OPEN????,???????
-- ?????? `codex/fix132-crossplatform` ? PR ????,????,??????
-- ????? `OUT.txt` ???,???????????
-- ??????? `--check` ? ctest,??????????????
+- **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。
+- **签名**：GPG 测试密钥实签、验签及篡改拒绝通过；minisign、Authenticode dry-run 通过，EV/OV 证书命令模板已提供。
+- **Manifest**：包含 GCC 16.2.0、CMake 4.4.2、expat/freetype/miniz 版本与源码哈希，以及配置、环境等输入。
+- **回归**：ctest 从 234/234 到 235/235；19 本、11,318 页，页数及逐页哈希零变化。
+- `.github/` 未改；workflow 仅提供片段；`SIGN-OUT.txt` 已追加并提交。
 
-**? ???**
-- ?????? `--check`,? `codex/generate.py` ? `argon/make_fixtures.py`,?????,?? exit 0?
-- ????? `build/verification/reproducible.log`?
-
-**? ?????????**
-- `ZipInfo.create_system` ????? Windows ? Unix ???,?? ZIP ????????
-- zlib-ng ? zlib ???????? DEFLATE ????,ZIP ? PNG ???????????
-- ??:?? ZIP ????,ZIP ?? stored(???),PNG ???????????XML ????? RGB ?????
-
-**? ASan ? 6 ???**
-
-| ?? | ???? | ?? |
+| 产物 | 第一次 SHA256 | 第二次 SHA256 |
 |---|---|---|
-| native-docx-real-paragraph-markers | ctypes ??? ASan ???? | ????? libasan |
-| native-docx-real-section-tail | ?? | ?? |
-| native-docx-real-text-history | ?? | ?? |
-| native-docx-real-text-alias | ?? | ?? |
-| native-docx-real-text-validation | ?? | ?? |
-| native-docx-real-text-transaction | ?? | ?? |
+| DLL | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` |
+| SDK 包 | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` |
 
-6 ?????????????????????
+[完整验收记录与命令](/C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/evidence/artifact-signing-20261109/README.md)
+[2026-11-10 PR107 收尾 step 1] 首查 UNKNOWN/UNKNOWN、checks=[]；复查 OPEN，head=da91831345e24f5a738a28c51ec52a4d7dfc1ac4，mergeable=CONFLICTING，mergeStateStatus=DIRTY，core 未出现。工作树 clean，但处于 detached HEAD。目标 merge，接下来恢复 PR 分支并合并 origin/main。
+[step 2] 已 fetch origin main 和 PR 分支，开始本地 merge origin/main；冲突详情以 git 输出及后续记录为准。
 
-**? ??**
-- `tests/fixtures/docx-real/**`:???????`manifest.json`,?????? 60 ????
-- `tests/fixtures/docx-real/codex/register.cmake`:??,??? DOCX ctypes ??????? libasan?
-- ??????:`check_reading_release.py`?`version_literal_exceptions.json`,???? PR ????
+---
 
-**? ctest**
-- CI ? `63da4607` ????:Linux 403/403,Windows 403/403,ASan 393/393,6 ????
-- ?? MinGW ? 402/403,????? `sdk-release`?????? MSVC ? `.lib`,? MinGW ??? `.dll.a` ???,????????
+已提交并推送至 `codex/sdk-docs-20261109`，draft PR：[**#109**](https://github.com/NoGod3524/EXReader/pull/109)。
 
-**? core**
-- ????? `reading-required-core`?
-- PR ?? head ? GitHub ????????????????? `RESOLVE-OUT.txt` ????????,PR ?????????
-- ? head ?? CI ??? Actions ?????????,????? core ?????
+- 覆盖：**15/15 模块，427/427 公开函数，100%**；当前实际为 17 个公开头文件。
+- 示例：**15/15 编译、链接、运行通过**；文档一致性检查 **1/1**。[编译输出](C:/Users/Oscar/Documents/Codex/EXReader-S4-20261109/docs/examples/compile-output.txt)
+- 接入指南：五个接入点及文本时序图齐全。
+- 能力矩阵：**41 行**，明确标出不支持项。
+- ABI：稳定 **394**、实验 **33**、公开函数中的内部入口 **0**；私有实现明确禁止外部调用。
+- `S4-OUT.txt` 已逐步记录并提交。最新提交 `f191e99f`；PR CI 已自动触发，目前排队或运行中。
+[2026-11-10T16:24:55.8568014-05:00] Step 1: gh pr view 109: head=codex/sdk-docs-20261109; mergeable=UNKNOWN; mergeStateStatus=UNKNOWN; statusCheckRollup=[]. Local HEAD detached at 979a4025; working tree clean. Re-querying full PR state before branch mutation.
+[2026-11-10T16:25:25.9151276-05:00] Step 2: PR OPEN, mergeable=CONFLICTING, mergeStateStatus=DIRTY, core absent. Confirmed true conflict. Fetching main and PR head before union merge.
+[2026-11-10T16:25:52.3370459-05:00] Step 3: fetch completed; PR head remains 979a4025. Named branch is attached to EXReader-S4-20261109, so keeping this authorized workspace detached and will push HEAD explicitly to codex/sdk-docs-20261109. OUT.txt is the only local modification.
+[2026-11-10T16:26:29.0939032-05:00] Step 4: merge stopped before modifying files because tracked OUT.txt has this session's required progress entries. Committing progress first, then retrying merge; both histories will be retained.
+D1 is finished. The engine now renders fixed-layout EPUB pages as fixed pages instead of treating them as reflowable text. Eight books cover all six book types, every item passes on every book where it applies, the 19 reflowable books are unchanged, and draft **PR #120** is open: https://github.com/NoGod3524/EXReader/pull/120
 
-??????? `build/verification/RESULT.md`?
+**What changed:** fixed-layout pages used to be reflowed (Haruko had 14 pages at one size and 15 at another). Now each fixed page is laid out once at its own declared size and scaled evenly to fit the screen, centred, never stretched or cropped. It is always exactly one page. The page size comes from, in order:
+1. the page's own `<meta name="viewport">`
+2. the book-level `rendition:viewport`
+3. the size of the page's first image
+4. the screen size
 
-Permission deny rule "computer" matches no known tool - check for typos.
-exit=0
+Absolute positioning (`position:absolute` with top/right/bottom/left) is applied on fixed pages only. I added four public functions; no existing function signatures changed.
+
+## Corpus (8 books)
+| Book | Type | Pages at 720×1040 |
+|---|---|---|
+| page-blanche (real IDPF sample) | comic | 10 |
+| haruko-html-jpeg (real IDPF sample) | right-to-left two-page spreads + per-page fixed/reflowable mix | 16 |
+| fxl-picturebook | picture book | 4 |
+| fxl-magazine | magazine (columns + rotated vertical text) | 4 |
+| fxl-toc | fixed layout + table of contents | 5 |
+| fxl-spread-ltr | left-to-right spreads | 7 |
+| fxl-mixed | per-item `rendition:layout` | 17 |
+| fxl-noviewport | no viewport declared | 2 |
+
+The six synthetic books are generated by `tools/fixed_layout/make_corpus.py`. Each book has at least 2 screenshots plus a two-page spread image, all in `evidence/fixed-layout-20261110/screenshots/`.
+
+## Six items: 6/6
+Every item passes on all books where it applies. Two entries are N/A because there is nothing to test: Haruko has no positioned elements (item 3), and the magazine has no full-page image (item 2).
+
+| Item | How it was checked |
+|---|---|
+| 1. Page size matches the screen | Scale is min(width ratio, height ratio) and content is centred, at both portrait and landscape sizes |
+| 2. Full-page images not cropped | Each generated image has a red frame; all 4 edges are visible in the render |
+| 3. Absolute positions correct | Box positions match the declared offsets within 1px, and pixel colours inside each box match its background |
+| 4. Spread order correct | Haruko's right-to-left spreads (p02 right, p03 left, …) and the left-to-right/center/auto cases match the expected order |
+| 5. Mixed: fixed pages fixed, reflowable pages reflowed | Fixed parts stay at 1 page at every size; reflowable parts re-wrap when the screen narrows |
+| 6. Zoom with and without `rendition:viewport` | All four page-size sources are tested |
+
+## Mixed book: which pages are fixed
+- **fxl-mixed:** parts 1, 3 and 5 are fixed (1 page each at every size). Parts 2 and 4 reflow (7 / 8 / 14 pages at 720×1040, 1040×720 and 480×800). In the whole book at 720×1040, pages 1, 9 and 17 are fixed; pages 2–8 and 10–16 reflow.
+- **Haruko:** p01–p12 are fixed (one page each); the "About this document" page reflows into 4 pages.
+
+## 19-book regression
+Compared against an unmodified build of 3076d3dd: 19/19 books, 11,426 pages, 8,648,571 glyphs. Changes in page count, glyph count and per-page hash are all 0. I re-ran this on the final DLL after the last code change.
+
+## ctest
+- **MSVC full suite:** 254/254 pass, including 4 new test groups `native-fixed-layout-{rendition,viewport,absolute,mixed}`. Turning absolute positioning off makes the `absolute` group fail, as expected.
+- **MinGW build:** only `sdk-release` fails there. That test compiles the README quickstart with MSVC and needs `exreader.lib`, which a MinGW build doesn't produce, so I ran the full suite on MSVC.
+
+## Limits and changes to existing items
+- **Not supported:** CSS `transform` (the magazine's `rotate(-8deg)` caption renders unrotated), `z-index`, and SVG pages in the reading order. Opening a whole EPUB with `exr_document_open` still lays everything out as reflow; fixed layout applies on the per-part publication path the reader uses.
+- **Changed one verifier criterion:** I first required a reflowable page's page count to change between two sizes. Haruko's About page happens to be 4 pages at both sizes, so that rule failed a page that does reflow. The check now requires that text lines narrow when the screen narrows.
+- **No new `src/*.h`,** so `tools/layers.json` is unchanged (the layer check reports 0 violations). Nothing under `.github/` was touched.
+
+`FIXED-OUT.txt` has entries for steps 0–11. The full write-up is in `docs/FIXED-LAYOUT.md`.
+
+
+已接通增量重排、缓存复用与锚点恢复，未修改 `src/docx_edit.c`。
+
+| 100 页场景 | 重排页数 | p50 / p95 |
+|---|---:|---:|
+| 页首插入一段 | 101 | 0.92 / 2.15ms |
+| 页中插入一段 | 51 | 0.82 / 5.71ms |
+| 末段修改一字符 | **1** | 0.78 / 1.64ms |
+| 文末追加 50 段 | **5** | 2.05 / 4.75ms |
+
+含冷缓存首帧渲染，四场景 p95 均低于 **6.3ms**。
+
+**268/268 ctest 全绿，新增 12 组用例。19 本真书共 11,318 页，页数与逐页像素哈希不变。**
+
+[验收记录：缓存命中数、4 个锚点示例及原始数据](evidence/x2-reflow-20261110/README.md) · [接口说明](docs/X2_REFLOW.md)
+
+X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
+[2026-11-10T16:24:42.3840678-05:00] Step 1: gh pr view 113 initial: headRefName=claude/review-cleanup-20261109; mergeable=UNKNOWN; mergeStateStatus=UNKNOWN; statusCheckRollup=[]. Local worktree clean, detached HEAD cf233f7e. Querying full PR lifecycle before branch mutation.
+[2026-11-10T16:25:03.6336657-05:00] Step 2: Full PR query resolved OPEN / CONFLICTING / DIRTY, core absent, head cf233f7e20e77471a8a2206fd9676438f782c3f4. No merge performed. Fetching main and PR branch for union conflict resolution.
+[2026-11-10T16:26:51.4208259-05:00] Step 3: Fetched origin/main=59a9e5a92f9462fb7022cc9cf568ef03cb862366 and PR head=cf233f7e. git diff --name-status --diff-filter=D origin/main...HEAD: 0 deleted paths (rename detection enabled), confirming the 296 deletions are absent. #121 is OPEN head a8b36c9c, describes 133 workflows + 163 test files. Target local branch is occupied by C:/Users/Oscar/exreader-agents/g01-windows-account/EXReader; keeping isolated detached worktree, will push HEAD explicitly to authorized PR ref. Started git merge origin/main.
+
+[2026-11-10T16:28:02.4616797-05:00] Step 4: Initial merge aborted safely because main tracks OUT.txt. Preserved local log in temporary backup, retried merge, then appended local log to main OUT.txt.
+[2026-11-10T16:29:05.4828525-05:00] Step 5: Resolved examples/reader.c by preserving extracted EXR_READER_TEST_DRIVERS include and porting main RTL probe_key left/right support into examples/windows/shell_drive_test.inc (main's only change inside moved driver). Retained all other auto-merged main changes: settings_write, cached frame dispatch, RTL page navigation, accepted-buffer repaint and synced-title cleanup. Resolved examples/windows/shell_settings.inc with PR pixels bound plus main 256-entry shades lookup. No side selected wholesale; main functionality retained in extracted structure. git diff --check passed.
+[2026-11-10T16:32:05.5233764-05:00] Step 6: No unresolved paths. Protected release test and registry have zero diff versus main. No deleted paths under .github or tests. Full staged whitespace check reports existing whitespace in incoming main evidence; conflict-edit check passes except pre-existing moved-driver EOF blank line. Local host compile against old review/stage SDK found missing exr_publication_page_progression declaration (SDK predates main RTL API); validating against current repo headers, no code workaround. main branch has no classic branch protection (API 404 Branch not protected).
+[2026-11-10T16:32:56.0218407-05:00] Step 7: Product and test-driver syntax validation both PASS using current include/: gcc -fsyntax-only -std=gnu11 -DEXR_READER_WINDOWS_SHELL=1 [-DEXR_READER_TEST_DRIVERS=1] -I include examples/reader.c. Created union merge 3ef9c3ca, pushed only HEAD:refs/heads/claude/review-cleanup-20261109 (cf233f7e -> 3ef9c3ca). Awaiting fresh CI.
+[2026-11-10T16:33:26.7982726-05:00] Step 8: After push: MERGEABLE / BLOCKED; fresh CI queued/in progress for head 3ef9c3ca (required workflow run 42906053174). Local version gate PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions. No test assertions or checks weakened.
+[2026-11-10T16:36:25.7861150-05:00] Step 9: Cleared stale EXReader_DIR CMake cache and selected current Y1 installed SDK containing RTL API. Windows product build PASS (all 5 compile/link steps); test-driver build in progress. Remote CI: 6 successes, 0 failures, 9 running, 21 queued; mergeable MERGEABLE, state BLOCKED pending checks.
+[2026-11-10T16:37:44.4817846-05:00] Step 10: Windows product + explicit test-driver builds PASS against current Y1 SDK. Existing check_cleanup2_binary.py PASS: product command literals/--drive/drive.log absent; test command literals complete. Evidence build/pr113-command-audit.json.
+[2026-11-10T16:39:39.7895854-05:00] Step 11: Binary audit exact counts: product 0/144 acceptance command literals, test 144/144; product --drive=false and drive.log=false. No remote CI failures at last completed poll; required workflow still queued/in progress. Waiting, no merge before core success.
+[2026-11-10T16:41:51.9658780-05:00] Step 12: Required core workflow 42906053174: 12 passing jobs, zero failures, 7 remaining at preceding poll (native Windows/Linux/fuzz/sanitizers, native macOS/Apple, macOS library profile). Continue waiting.
+[2026-11-10T16:46:05.9453294-05:00] Step 13: Required native Windows job 130144203200 failed. Fetched full job log via gh run view --job 130144203200 --log to build/pr113-windows-ci.log; inspecting real errors before edits.
+[2026-11-10T16:48:43.0600106-05:00] Step 15: Full include-path search also found shell_annotations.inc includes ../../tools/convert_json.c. Added both convert_json.h and convert_json.c to same install rule, preserving source-relative layout. No other examples includes from tools/.
+[2026-11-10T16:54:44.6177846-05:00] Step 14: gh run view --job --log refused while parent run active, so fetched completed-job logs with gh api actions/jobs/130144203200/logs --allow-escape-sequences. Actual failure: stage/examples/reader.c(30,1): error C1083: Cannot open include file: '../tools/convert_json.h': No such file or directory. Fixed packaging root cause with single install(FILES tools/convert_json.h DESTINATION tools); no test changes. Validating installed-layout example build with isolated staging.
+[2026-11-10T16:53:52.5557176-05:00] Step 16: Pushed packaging fix 19b40ef203289e01f1db264c22b8bd1ef4c4a959 to PR branch. During push main advanced; preceding PR query reported BEHIND. Following requested procedure: gh pr update-branch 113.
+
+[2026-11-10T16:55:17.2833805-05:00] Step 17: gh pr update-branch succeeded; new remote head 105ebcfd803bfbf68da2fa985c05bba57b296c9a, MERGEABLE / BLOCKED, fresh checks queued. Preserved append-only local OUT tail, fast-forwarding isolated worktree to remote updated head.
+[2026-11-10T16:55:37.6320388-05:00] Step 18: Installed-layout examples build PASS: all 35 compile/link steps completed, including exreader-reader-example.exe. This reproduces the CI consumer layout with examples plus tools/convert_json.h and .c; fixes actual C1083 missing include without modifying checks.
+[2026-11-10T16:56:04.2787190-05:00] Step 19: Latest main d89877f8 merged #121. Post-update PR diff still has 0 deleted paths; release test and exception registry identical to main. Canceled only superseded PR113 runs 42909300694,42909300415 (19b40ef2) and 42906053365,42906053174 (3ef9c3ca) to free runner queue; current head 105ebcfd core run 42909488186 retained.
+[2026-11-10T17:00:01.8715345-05:00] Step 20: Current head 105ebcfd: 22 total CI successes, no failures, 12 remaining at prior poll. Required core runner queue includes macOS/Apple jobs; keeping PR unmerged until exact-head core succeeds.
+[2026-11-10T17:04:25.6906901-05:00] Step 21: Current core 42909488186 has 14 successes, no failures. Sanitizers PASS; Windows native tests completed and job proceeded to installed static components. Four macOS/Apple core jobs remain queued with no steps started.
+[2026-11-10T17:08:59.3776105-05:00] Step 22: Latest required Windows job 130156061329 failed at installed examples. Fetching exact new failure log to build/pr113-windows-ci-105ebcfd.log; no assumptions from earlier failure.
+[2026-11-10T17:12:38.9859970-05:00] Step 23: New real error: shell_shelf.inc(38,62) C2628 HFONT followed by char; same in shell_shelfmeta.inc. Windows RPC small macro collides with HFONT small identifiers. Renamed only those identifiers to small_font in both renderers. Regression reproduction gcc -Dsmall=char failed before change; product and driver syntax checks repeated after change. Checking with installed MSVC too.
+[2026-11-10T17:13:07.7201718-05:00] Step 24: MSVC 14.44 syntax check PASS for both product and EXR_READER_TEST_DRIVERS=1 using current repo headers and Windows SDK. gcc macro regression: before rename exit=1, after rename both product/driver exit=0 with -Dsmall=char. git diff --check for edited renderers PASS. Committing and pushing identifier-only fix.
+[step 3] 冲突取并集完成：.gitignore 保留根 /release/ 与 tools/release 例外；OUT.txt 完整保留双方记录；tools/release/README.md 先保留 main SDK 使用/打包说明，再附完整签名/复现说明。tests/check_reading_release.py 未改，SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。登记表未改。
+[step 4] 已取历史失败 job 129316736854 日志：check_reading_release.py:23/43/125 evidence bytes changed，24/44/126 版本字面量无有效豁免。当前文件哈希与原登记一致，未更改测试或登记表。git diff --check 通过；本地版本门禁运行中，先推送已解决冲突以启动 CI。
+
+[2026-11-10T16:28:26.5792754-05:00] Step 5: resolved both conflicts by union. CMakeLists.txt retains docs/examples under EXR_FULL_TESTS, main's build_manifest include, and simplified-observer with its Python guard. OUT.txt retains the complete SDK report/progress plus main's fixed-layout and X2 reports. No test assertions or version exception entries changed.
+[2026-11-10T16:33:39.6469176-05:00] Step 6: main adds 30 public declarations; updated docs/API.md to 457/457 (100%), 19 headers, stable 394 / experimental 63, keeping 15 compiled examples. Header-only X1 model availability and X2 fallback are explicitly documented. python tools/check_sdk_docs.py passed with no errors. Version consistency check is running; neither byte-bound tests/check_reading_release.py nor its exception registry was edited. Started an independent MinGW full-component build with existing dependency sources and optional image/JPX codecs disabled.
