@@ -1,0 +1,19 @@
+The conflict markers are cleared, `tools\check_sdk_docs.py` exits 0, and I pushed to `codex/sdk-batch-perf-20261109` (`d3119f0e..783b8f1d`). I couldn't compile the C sources or run any tests locally. The FreeType download fails offline, so the merge of `pager.c`, `fonts.c` and `opentype.c` has only been read through, not built.
+
+**Conflicts**
+- **No merge needed:** `git merge origin/main` said "Already up to date".
+- **The actual problem:** the `wip` commit `d5994835` had committed raw `<<<<<<<` markers into 7 files, which is what broke PR #112.
+- **Union where both sides had something to keep:**
+  - **`CMakeLists.txt`:** both tool targets (`bench_batch` and `exr-info`) and both test blocks stay.
+  - **`include/exr/layout.h`:** I kept the new `exr_pager_cache_stats` struct (adds `struct_size` and `requests`) and main's `exr_pager_cache_statistics()` function. The old and new struct definitions could not both stay under the same name, so the function now returns the new struct. Its `.hits` and `.misses` fields still work for the existing test.
+  - **`src/pager.c`:** I kept the new counters, main's fixed-page fields and edit-page branch, and both stats functions. The auto-merge had left a duplicate `cache_hits, cache_misses` member and a double `cache_hits++`, so I removed those.
+- **Took this branch's side:** `src/fonts.c`, `src/font_internal.h`, `src/opentype.c` and `tests/test_shaping.c`. Their versions are the newer form of main's cache code, including the stats counters and the 2 MiB glyph-cache limit, and main's side had nothing unique.
+
+**Docs**
+I added `docs/API.md` entries for `exr_font_cache_stats_get`, `exr_pager_cache_stats_get` and `exr_publication_warmup`, all with ABI `??`. I also updated the return description of `exr_pager_cache_statistics` to mention `requests`.
+
+I did not touch `tools/check_sdk_docs.py`, `tests/check_reading_release.py` or `tools/version_literal_exceptions.json`, and I did not launch any GUI. The report is in `RESOLVE-OUT.txt`. I did not merge the PR or touch main. The CI result is still unknown until it runs on this push.
+
+Permission deny rule "computer" matches no known tool - check for typos.
+exit=0
+
