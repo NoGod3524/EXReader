@@ -1,0 +1,703 @@
+{
+  "library_sha256": "a3aea9b258e6626b48633e6e1b4f50604dae0983a407691cf01363e5cbabf9a5",
+  "documents": [
+    {
+      "id": "minitab-ch10",
+      "source_sha256": "e73c211e12cbd07e467d6c2f5b731a71d9b831d871f055a46e3de087f5b55d4d",
+      "before": {
+        "paragraphs": 336,
+        "characters": 13865,
+        "tables": 10,
+        "images": 17,
+        "footnotes": 0,
+        "section_margins": [
+          {
+            "top": "1440",
+            "right": "2160",
+            "bottom": "1440",
+            "left": "3240"
+          }
+        ],
+        "text_sha256": "fc8e9202332b72bc75af75ecfd609029fd5e5477781927e392e1550384f2f5fb",
+        "image_sha256": [
+          "097582afdc4308111ff5a6b76d75ce6aaaeb68713fb9ab7da55df408ba3d477c",
+          "0b4b3384f17315412b08d04e499e1b6d44cf921488e5ef84e117ecb3936c454e",
+          "17edb78459f0ada3ed1e56257d1d321d4b3106d0445bf7e57d74ee9cf934b0ee",
+          "247a32454be5d2920c1b0567c3d15e9a85add8057da5f563835400791af68d5a",
+          "2ebd386536c60f66b0fd13b4aee58bf2d47b1c7267904373e87bf0099b5eb55b",
+          "342d432c280c49c4f7b4d0b57ff844651df7c7e5abd8ff1a606ab8c42e28be50",
+          "349155c2940438075c91f0694844fd96ecf355905f1a55db1ed83e488c0811c7",
+          "50001e69885779402c107c32841319a449bf34d2515a06478787eed017dfb278",
+          "53b5ae321c146f70c60fb1ae47ad267bf5006f6d2cd76df01e41e99ff7f91168",
+          "650e3ad6d5e7bad45a4b6f50410f0da213f608de601cb935037453a20a31963e",
+          "8717570570ced4b5c354222488a135001acc9c0a0de764cb37f02f5955fc1532",
+          "bbe0cbd58a1a600bb60212872134cb78a1402f4e717f1b570a61d8dfd3047ea5",
+          "e5118f0a26ddc8701c1ad51eef484f2f4147b50096b40e3b0b4970c398a03209",
+          "e8aae6a81b7babdd88a1d9f1c4e0e5c2d2333db20ea77203d99464ec4f011530",
+          "ec6a0cb7834e6585f7a38e7c0c68a0d547aa786c314c272ec806ab79e5fba137",
+          "f296f5457e224faed43c248ce8a9fc66d4173ed5f71c69262ea038d469e61ed4",
+          "f369ea941c0cc54d9be6441a7faff426e475e5445aaf176ef07ac3057c915210"
+        ]
+      },
+      "sdk_reread": {
+        "before": {
+          "characters": 13909,
+          "sha256": "b1cca650115aeacab0935193c80f3073b5b3e443ca5fbd2c3ab26498c692ad70"
+        },
+        "after": {
+          "characters": 13909,
+          "sha256": "b1cca650115aeacab0935193c80f3073b5b3e443ca5fbd2c3ab26498c692ad70"
+        },
+        "status": "PASS"
+      },
+      "after": {
+        "paragraphs": 189,
+        "characters": 13721,
+        "tables": 0,
+        "images": 0,
+        "footnotes": 0,
+        "section_margins": [
+          {
+            "top": null,
+            "right": null,
+            "bottom": null,
+            "left": null
+          }
+        ],
+        "text_sha256": "f404677f80a0bfe50f910a581f7636e5fd958708fe3237bce55c30cf415b1b4d",
+        "image_sha256": []
+      },
+      "metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 336,
+          "after": 189,
+          "status": "FAIL",
+          "delta": -147,
+          "lost": 147
+        },
+        {
+          "metric": "characters",
+          "before": 13865,
+          "after": 13721,
+          "status": "FAIL",
+          "delta": -144,
+          "lost": 144
+        },
+        {
+          "metric": "tables",
+          "before": 10,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -10,
+          "lost": 10
+        },
+        {
+          "metric": "images",
+          "before": 17,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -17,
+          "lost": 17
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "after": [
+            {
+              "top": null,
+              "right": null,
+              "bottom": null,
+              "left": null
+            }
+          ],
+          "status": "FAIL",
+          "lost_sections": 0,
+          "changed_sections": [
+            1
+          ]
+        }
+      ],
+      "failed_metrics": 5,
+      "content_hashes_equal": {
+        "text_sha256": false,
+        "image_sha256": false
+      },
+      "verification": [
+        {
+          "check": "package_xml",
+          "status": "PASS",
+          "detail": "ZIP CRC, unique parts, XML syntax, document/body",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "content_types",
+          "status": "PASS",
+          "detail": "DOCX main-part content type",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "root_relationship",
+          "status": "PASS",
+          "detail": "officeDocument points to word/document.xml",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "section_present",
+          "status": "PASS",
+          "detail": "1 sections",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "section_nonempty",
+          "status": "FAIL",
+          "detail": "1 empty sections",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "paragraph_properties",
+          "status": "FAIL",
+          "detail": "189/189 body paragraphs lack pPr (including table cells)",
+          "local_xml_contexts": 189
+        },
+        {
+          "check": "double_spacing",
+          "status": "FAIL",
+          "detail": "189 paragraphs differ from 480/auto",
+          "local_xml_contexts": 189
+        },
+        {
+          "check": "font_times_new_roman",
+          "status": "FAIL",
+          "detail": "189/189 text runs differ (ascii + hAnsi)",
+          "local_xml_contexts": 189
+        },
+        {
+          "check": "font_size_12pt",
+          "status": "FAIL",
+          "detail": "189/189 text runs differ from sz=24",
+          "local_xml_contexts": 189
+        },
+        {
+          "check": "letter_page_size",
+          "status": "FAIL",
+          "detail": "all sections 12240 x 15840 twips",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "one_inch_margins",
+          "status": "FAIL",
+          "detail": "all sections: top/right/bottom/left=1440",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_part",
+          "status": "WARN",
+          "detail": "0 linked header parts",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_used",
+          "status": "WARN",
+          "detail": "0 section-linked headers",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_page_field",
+          "status": "FAIL",
+          "detail": "PAGE field in each used header (PAGEREF does not count)",
+          "local_xml_contexts": 1
+        }
+      ],
+      "pdf": {
+        "status": "SKIP",
+        "reason": "soffice or pdftotext unavailable"
+      },
+      "status": "FAIL"
+    },
+    {
+      "id": "soci-syllabus",
+      "source_sha256": "dbc1fe7c9f99521074ed300e224f3d4ec906aedfc60d917220d2ffcc882913d9",
+      "before": {
+        "paragraphs": 117,
+        "characters": 5555,
+        "tables": 2,
+        "images": 0,
+        "footnotes": 0,
+        "section_margins": [
+          {
+            "top": "1440",
+            "right": "1440",
+            "bottom": "1440",
+            "left": "1440"
+          },
+          {
+            "top": "1440",
+            "right": "1440",
+            "bottom": "1440",
+            "left": "1440"
+          },
+          {
+            "top": "1440",
+            "right": "1440",
+            "bottom": "1440",
+            "left": "1440"
+          },
+          {
+            "top": "1440",
+            "right": "1440",
+            "bottom": "1440",
+            "left": "1440"
+          },
+          {
+            "top": "1440",
+            "right": "1440",
+            "bottom": "1440",
+            "left": "1440"
+          }
+        ],
+        "text_sha256": "d92ee325a5f5c5e6b81129af175a03cc14f68b45d2818600b909ac0381486b5b",
+        "image_sha256": []
+      },
+      "sdk_reread": {
+        "before": {
+          "characters": 5659,
+          "sha256": "4ff88b1e413515ee498975917d1c4f39d2cf4d05b5b272bab223ab9d61cd972d"
+        },
+        "after": {
+          "characters": 5659,
+          "sha256": "4ff88b1e413515ee498975917d1c4f39d2cf4d05b5b272bab223ab9d61cd972d"
+        },
+        "status": "PASS"
+      },
+      "after": {
+        "paragraphs": 103,
+        "characters": 5557,
+        "tables": 0,
+        "images": 0,
+        "footnotes": 0,
+        "section_margins": [
+          {
+            "top": null,
+            "right": null,
+            "bottom": null,
+            "left": null
+          }
+        ],
+        "text_sha256": "4665101df3ee60fb8fa84e67ad8d4f28297bbe69aeb8d3396dba140b39f602a6",
+        "image_sha256": []
+      },
+      "metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 117,
+          "after": 103,
+          "status": "FAIL",
+          "delta": -14,
+          "lost": 14
+        },
+        {
+          "metric": "characters",
+          "before": 5555,
+          "after": 5557,
+          "status": "FAIL",
+          "delta": 2,
+          "lost": 0
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -2,
+          "lost": 2
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "after": [
+            {
+              "top": null,
+              "right": null,
+              "bottom": null,
+              "left": null
+            }
+          ],
+          "status": "FAIL",
+          "lost_sections": 4,
+          "changed_sections": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "failed_metrics": 4,
+      "content_hashes_equal": {
+        "text_sha256": false,
+        "image_sha256": true
+      },
+      "verification": [
+        {
+          "check": "package_xml",
+          "status": "PASS",
+          "detail": "ZIP CRC, unique parts, XML syntax, document/body",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "content_types",
+          "status": "PASS",
+          "detail": "DOCX main-part content type",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "root_relationship",
+          "status": "PASS",
+          "detail": "officeDocument points to word/document.xml",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "section_present",
+          "status": "PASS",
+          "detail": "1 sections",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "section_nonempty",
+          "status": "FAIL",
+          "detail": "1 empty sections",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "paragraph_properties",
+          "status": "FAIL",
+          "detail": "103/103 body paragraphs lack pPr (including table cells)",
+          "local_xml_contexts": 103
+        },
+        {
+          "check": "double_spacing",
+          "status": "FAIL",
+          "detail": "103 paragraphs differ from 480/auto",
+          "local_xml_contexts": 103
+        },
+        {
+          "check": "font_times_new_roman",
+          "status": "FAIL",
+          "detail": "103/103 text runs differ (ascii + hAnsi)",
+          "local_xml_contexts": 103
+        },
+        {
+          "check": "font_size_12pt",
+          "status": "FAIL",
+          "detail": "103/103 text runs differ from sz=24",
+          "local_xml_contexts": 103
+        },
+        {
+          "check": "letter_page_size",
+          "status": "FAIL",
+          "detail": "all sections 12240 x 15840 twips",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "one_inch_margins",
+          "status": "FAIL",
+          "detail": "all sections: top/right/bottom/left=1440",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_part",
+          "status": "WARN",
+          "detail": "0 linked header parts",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_used",
+          "status": "WARN",
+          "detail": "0 section-linked headers",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_page_field",
+          "status": "FAIL",
+          "detail": "PAGE field in each used header (PAGEREF does not count)",
+          "local_xml_contexts": 1
+        }
+      ],
+      "pdf": {
+        "status": "SKIP",
+        "reason": "soffice or pdftotext unavailable"
+      },
+      "status": "FAIL"
+    },
+    {
+      "id": "ohchr-40-69",
+      "source_sha256": "ca0701fe199aae7f35de67bfff4c66c70d7db3c65029a74ac96b8587fd42e214",
+      "before": {
+        "paragraphs": 209,
+        "characters": 71205,
+        "tables": 2,
+        "images": 0,
+        "footnotes": 5,
+        "section_margins": [
+          {
+            "top": "1417",
+            "right": "1134",
+            "bottom": "1134",
+            "left": "1134"
+          }
+        ],
+        "text_sha256": "a6f51252bd71e70302b86dcfee08571aa0af519a2f0ab2627d85b3adc3246e43",
+        "image_sha256": []
+      },
+      "sdk_reread": {
+        "before": {
+          "characters": 71522,
+          "sha256": "7569fdda50104dbf66e97acdd690dfce3c741500dfaa33ee8e9b0f954611dc27"
+        },
+        "after": {
+          "characters": 71522,
+          "sha256": "7569fdda50104dbf66e97acdd690dfce3c741500dfaa33ee8e9b0f954611dc27"
+        },
+        "status": "PASS"
+      },
+      "after": {
+        "paragraphs": 208,
+        "characters": 71315,
+        "tables": 0,
+        "images": 0,
+        "footnotes": 0,
+        "section_margins": [
+          {
+            "top": null,
+            "right": null,
+            "bottom": null,
+            "left": null
+          }
+        ],
+        "text_sha256": "a0f6132e3b967cce82bdab0d9e22e01c6d8e395140a489b4e477db04f977a246",
+        "image_sha256": []
+      },
+      "metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 209,
+          "after": 208,
+          "status": "FAIL",
+          "delta": -1,
+          "lost": 1
+        },
+        {
+          "metric": "characters",
+          "before": 71205,
+          "after": 71315,
+          "status": "FAIL",
+          "delta": 110,
+          "lost": 0
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -2,
+          "lost": 2
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 5,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -5,
+          "lost": 5
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "after": [
+            {
+              "top": null,
+              "right": null,
+              "bottom": null,
+              "left": null
+            }
+          ],
+          "status": "FAIL",
+          "lost_sections": 0,
+          "changed_sections": [
+            1
+          ]
+        }
+      ],
+      "failed_metrics": 5,
+      "content_hashes_equal": {
+        "text_sha256": false,
+        "image_sha256": true
+      },
+      "verification": [
+        {
+          "check": "package_xml",
+          "status": "PASS",
+          "detail": "ZIP CRC, unique parts, XML syntax, document/body",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "content_types",
+          "status": "PASS",
+          "detail": "DOCX main-part content type",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "root_relationship",
+          "status": "PASS",
+          "detail": "officeDocument points to word/document.xml",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "section_present",
+          "status": "PASS",
+          "detail": "1 sections",
+          "local_xml_contexts": 0
+        },
+        {
+          "check": "section_nonempty",
+          "status": "FAIL",
+          "detail": "1 empty sections",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "paragraph_properties",
+          "status": "FAIL",
+          "detail": "208/208 body paragraphs lack pPr (including table cells)",
+          "local_xml_contexts": 208
+        },
+        {
+          "check": "double_spacing",
+          "status": "FAIL",
+          "detail": "208 paragraphs differ from 480/auto",
+          "local_xml_contexts": 208
+        },
+        {
+          "check": "font_times_new_roman",
+          "status": "FAIL",
+          "detail": "208/208 text runs differ (ascii + hAnsi)",
+          "local_xml_contexts": 208
+        },
+        {
+          "check": "font_size_12pt",
+          "status": "FAIL",
+          "detail": "208/208 text runs differ from sz=24",
+          "local_xml_contexts": 208
+        },
+        {
+          "check": "letter_page_size",
+          "status": "FAIL",
+          "detail": "all sections 12240 x 15840 twips",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "one_inch_margins",
+          "status": "FAIL",
+          "detail": "all sections: top/right/bottom/left=1440",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_part",
+          "status": "WARN",
+          "detail": "0 linked header parts",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_used",
+          "status": "WARN",
+          "detail": "0 section-linked headers",
+          "local_xml_contexts": 1
+        },
+        {
+          "check": "header_page_field",
+          "status": "FAIL",
+          "detail": "PAGE field in each used header (PAGEREF does not count)",
+          "local_xml_contexts": 1
+        }
+      ],
+      "pdf": {
+        "status": "SKIP",
+        "reason": "soffice or pdftotext unavailable"
+      },
+      "status": "FAIL"
+    }
+  ],
+  "source_revision": "3076d3dd",
+  "scope": "tools/tests only; full XML contexts remain in ignored build/w3-roundtrip/report.json",
+  "failed_metric_comparisons": 14
+}

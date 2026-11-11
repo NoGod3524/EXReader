@@ -1,0 +1,1501 @@
+{
+  "build": {
+    "cache": {
+      "AMALGAMATE_SOURCES": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "BUILD_FUZZERS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "BUILD_HEADER_ONLY": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "BUILD_NO_STDIO\" Build a without stdio version\"": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "CMAKE_ADDR2LINE": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/addr2line.exe"
+      },
+      "CMAKE_ADDR2LINE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_AR": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ar.exe"
+      },
+      "CMAKE_AR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_BUILD_TYPE": {
+        "type": "STRING",
+        "value": "Release"
+      },
+      "CMAKE_CACHEFILE_DIR": {
+        "type": "INTERNAL",
+        "value": "c:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-repro"
+      },
+      "CMAKE_CACHE_MAJOR_VERSION": {
+        "type": "INTERNAL",
+        "value": "4"
+      },
+      "CMAKE_CACHE_MINOR_VERSION": {
+        "type": "INTERNAL",
+        "value": "4"
+      },
+      "CMAKE_CACHE_PATCH_VERSION": {
+        "type": "INTERNAL",
+        "value": "2"
+      },
+      "CMAKE_COMMAND": {
+        "type": "INTERNAL",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/cmake.exe"
+      },
+      "CMAKE_CPACK_COMMAND": {
+        "type": "INTERNAL",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/cpack.exe"
+      },
+      "CMAKE_CTEST_COMMAND": {
+        "type": "INTERNAL",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ctest.exe"
+      },
+      "CMAKE_C_COMPILER": {
+        "type": "STRING",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe"
+      },
+      "CMAKE_C_COMPILER-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_COMPILER_AR": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc-ar.exe"
+      },
+      "CMAKE_C_COMPILER_AR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_COMPILER_RANLIB": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc-ranlib.exe"
+      },
+      "CMAKE_C_COMPILER_RANLIB-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_FLAGS": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_C_FLAGS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_FLAGS_DEBUG": {
+        "type": "STRING",
+        "value": "-g"
+      },
+      "CMAKE_C_FLAGS_DEBUG-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_FLAGS_MINSIZEREL": {
+        "type": "STRING",
+        "value": "-Os -DNDEBUG"
+      },
+      "CMAKE_C_FLAGS_MINSIZEREL-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_FLAGS_RELEASE": {
+        "type": "STRING",
+        "value": "-O3 -DNDEBUG"
+      },
+      "CMAKE_C_FLAGS_RELEASE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_FLAGS_RELWITHDEBINFO": {
+        "type": "STRING",
+        "value": "-O2 -g -DNDEBUG"
+      },
+      "CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_C_STANDARD_LIBRARIES": {
+        "type": "STRING",
+        "value": "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32"
+      },
+      "CMAKE_C_STANDARD_LIBRARIES-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_DIAGNOSTIC_INIT": {
+        "type": "INTERNAL",
+        "value": "CMD_AUTHOR=WARN;CMD_DEPRECATED=WARN;CMD_EXPERIMENTAL=WARN;CMD_INSTALL_ABSOLUTE_DESTINATION=IGNORE;CMD_POLICY=WARN;CMD_UNINITIALIZED=IGNORE;CMD_UNUSED_CLI=WARN"
+      },
+      "CMAKE_DLLTOOL": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/dlltool.exe"
+      },
+      "CMAKE_DLLTOOL-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_ERROR_DEPRECATED": {
+        "type": "INTERNAL",
+        "value": "OFF"
+      },
+      "CMAKE_EXECUTABLE_FORMAT": {
+        "type": "INTERNAL",
+        "value": "Unknown"
+      },
+      "CMAKE_EXE_LINKER_FLAGS": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_EXE_LINKER_FLAGS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_EXE_LINKER_FLAGS_DEBUG": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_EXE_LINKER_FLAGS_DEBUG-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_EXE_LINKER_FLAGS_RELEASE": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_EXE_LINKER_FLAGS_RELEASE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_EXPORT_BUILD_DATABASE": {
+        "type": "BOOL",
+        "value": ""
+      },
+      "CMAKE_EXPORT_BUILD_DATABASE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_EXPORT_COMPILE_COMMANDS": {
+        "type": "BOOL",
+        "value": ""
+      },
+      "CMAKE_EXPORT_COMPILE_COMMANDS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_EXTRA_GENERATOR": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-repro/CMakeFiles/pkgRedirects"
+      },
+      "CMAKE_GENERATOR": {
+        "type": "INTERNAL",
+        "value": "Ninja"
+      },
+      "CMAKE_GENERATOR_INSTANCE": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "CMAKE_GENERATOR_PLATFORM": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "CMAKE_GENERATOR_TOOLSET": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "CMAKE_GNUtoMS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "CMAKE_HOME_DIRECTORY": {
+        "type": "INTERNAL",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109"
+      },
+      "CMAKE_INSTALL_BINDIR": {
+        "type": "PATH",
+        "value": "bin"
+      },
+      "CMAKE_INSTALL_BINDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_DATADIR": {
+        "type": "PATH",
+        "value": ""
+      },
+      "CMAKE_INSTALL_DATADIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_DATAROOTDIR": {
+        "type": "PATH",
+        "value": "share"
+      },
+      "CMAKE_INSTALL_DATAROOTDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_DOCDIR": {
+        "type": "PATH",
+        "value": ""
+      },
+      "CMAKE_INSTALL_DOCDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_INCLUDEDIR": {
+        "type": "PATH",
+        "value": "include"
+      },
+      "CMAKE_INSTALL_INCLUDEDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_INFODIR": {
+        "type": "PATH",
+        "value": ""
+      },
+      "CMAKE_INSTALL_INFODIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_LIBDIR": {
+        "type": "PATH",
+        "value": "lib"
+      },
+      "CMAKE_INSTALL_LIBDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_LIBEXECDIR": {
+        "type": "PATH",
+        "value": "libexec"
+      },
+      "CMAKE_INSTALL_LIBEXECDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_LOCALEDIR": {
+        "type": "PATH",
+        "value": ""
+      },
+      "CMAKE_INSTALL_LOCALEDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_LOCALSTATEDIR": {
+        "type": "PATH",
+        "value": "var"
+      },
+      "CMAKE_INSTALL_LOCALSTATEDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_MANDIR": {
+        "type": "PATH",
+        "value": ""
+      },
+      "CMAKE_INSTALL_MANDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_OLDINCLUDEDIR": {
+        "type": "PATH",
+        "value": "/usr/include"
+      },
+      "CMAKE_INSTALL_OLDINCLUDEDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_PREFIX": {
+        "type": "PATH",
+        "value": "C:/Program Files (x86)/EXReader"
+      },
+      "CMAKE_INSTALL_RUNSTATEDIR": {
+        "type": "PATH",
+        "value": ""
+      },
+      "CMAKE_INSTALL_RUNSTATEDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_SBINDIR": {
+        "type": "PATH",
+        "value": "sbin"
+      },
+      "CMAKE_INSTALL_SBINDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_SHAREDSTATEDIR": {
+        "type": "PATH",
+        "value": "com"
+      },
+      "CMAKE_INSTALL_SHAREDSTATEDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_INSTALL_SYSCONFDIR": {
+        "type": "PATH",
+        "value": "etc"
+      },
+      "CMAKE_INSTALL_SYSCONFDIR-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_LINKER": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ld.exe"
+      },
+      "CMAKE_LINKER-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_LIST_FILE_NAME": {
+        "type": "INTERNAL",
+        "value": "CMakeLists.txt"
+      },
+      "CMAKE_MAKE_PROGRAM": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ninja.exe"
+      },
+      "CMAKE_MAKE_PROGRAM-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_MODULE_LINKER_FLAGS": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_MODULE_LINKER_FLAGS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_DEBUG": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_DEBUG-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_RELEASE": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_RELEASE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_NM": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/nm.exe"
+      },
+      "CMAKE_NM-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_NUMBER_OF_MAKEFILES": {
+        "type": "INTERNAL",
+        "value": "4"
+      },
+      "CMAKE_OBJCOPY": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/objcopy.exe"
+      },
+      "CMAKE_OBJCOPY-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_OBJDUMP": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/objdump.exe"
+      },
+      "CMAKE_OBJDUMP-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_PLATFORM_INFO_INITIALIZED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_PROJECT_COMPAT_VERSION": {
+        "type": "STATIC",
+        "value": ""
+      },
+      "CMAKE_PROJECT_DESCRIPTION": {
+        "type": "STATIC",
+        "value": ""
+      },
+      "CMAKE_PROJECT_HOMEPAGE_URL": {
+        "type": "STATIC",
+        "value": ""
+      },
+      "CMAKE_PROJECT_NAME": {
+        "type": "STATIC",
+        "value": "EXReader"
+      },
+      "CMAKE_PROJECT_SPDX_LICENSE": {
+        "type": "STATIC",
+        "value": ""
+      },
+      "CMAKE_PROJECT_VERSION": {
+        "type": "STATIC",
+        "value": "3.42.0"
+      },
+      "CMAKE_PROJECT_VERSION_MAJOR": {
+        "type": "STATIC",
+        "value": "3"
+      },
+      "CMAKE_PROJECT_VERSION_MINOR": {
+        "type": "STATIC",
+        "value": "42"
+      },
+      "CMAKE_PROJECT_VERSION_PATCH": {
+        "type": "STATIC",
+        "value": "0"
+      },
+      "CMAKE_PROJECT_VERSION_TWEAK": {
+        "type": "STATIC",
+        "value": ""
+      },
+      "CMAKE_RANLIB": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ranlib.exe"
+      },
+      "CMAKE_RANLIB-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_RC_COMPILER": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/windres.exe"
+      },
+      "CMAKE_RC_COMPILER-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_RC_COMPILER_WORKS": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_RC_FLAGS": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_RC_FLAGS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_RC_FLAGS_DEBUG": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_RC_FLAGS_DEBUG-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_RC_FLAGS_MINSIZEREL": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_RC_FLAGS_MINSIZEREL-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_RC_FLAGS_RELEASE": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_RC_FLAGS_RELEASE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_RC_FLAGS_RELWITHDEBINFO": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_RC_FLAGS_RELWITHDEBINFO-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_READELF": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/readelf.exe"
+      },
+      "CMAKE_READELF-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_ROOT": {
+        "type": "INTERNAL",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4"
+      },
+      "CMAKE_SHARED_LINKER_FLAGS": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_SHARED_LINKER_FLAGS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_DEBUG": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_DEBUG-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_RELEASE": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_RELEASE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_SKIP_INSTALL_RPATH": {
+        "type": "BOOL",
+        "value": "NO"
+      },
+      "CMAKE_SKIP_INSTALL_RPATH-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_SKIP_RPATH": {
+        "type": "BOOL",
+        "value": "NO"
+      },
+      "CMAKE_SKIP_RPATH-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_STATIC_LINKER_FLAGS": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_STATIC_LINKER_FLAGS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_DEBUG": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_DEBUG-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_RELEASE": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_RELEASE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": {
+        "type": "STRING",
+        "value": ""
+      },
+      "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_STRIP": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/strip.exe"
+      },
+      "CMAKE_STRIP-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_TAPI": {
+        "type": "FILEPATH",
+        "value": "CMAKE_TAPI-NOTFOUND"
+      },
+      "CMAKE_TAPI-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_VERBOSE_MAKEFILE": {
+        "type": "BOOL",
+        "value": "FALSE"
+      },
+      "CMAKE_VERBOSE_MAKEFILE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CMAKE_WARN_DEPRECATED": {
+        "type": "INTERNAL",
+        "value": "ON"
+      },
+      "COMPILER_HAS_DEPRECATED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "COMPILER_HAS_DEPRECATED_ATTR": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CPACK_SOURCE_7Z": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "CPACK_SOURCE_7Z-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "CPACK_SOURCE_ZIP": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "CPACK_SOURCE_ZIP-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "DOCBOOK_TO_MAN": {
+        "type": "FILEPATH",
+        "value": "DOCBOOK_TO_MAN-NOTFOUND"
+      },
+      "EXPAT_ATTR_INFO": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_ATTR_INFO-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_BUILD_DOCS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_BUILD_EXAMPLES": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_BUILD_FUZZERS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_BUILD_PKGCONFIG": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXPAT_BUILD_TESTS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_BUILD_TOOLS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_CHAR_TYPE": {
+        "type": "STRING",
+        "value": "char"
+      },
+      "EXPAT_CONTEXT_BYTES": {
+        "type": "STRING",
+        "value": "1024"
+      },
+      "EXPAT_CONTEXT_BYTES-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_DEBUG_POSTFIX": {
+        "type": "STRING",
+        "value": "d"
+      },
+      "EXPAT_DEBUG_POSTFIX-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_DTD": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXPAT_DTD-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_ENABLE_INSTALL": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_GE": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXPAT_GE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_LARGE_SIZE": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_LARGE_SIZE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_MINSIZEREL_POSTFIX": {
+        "type": "STRING",
+        "value": ""
+      },
+      "EXPAT_MINSIZEREL_POSTFIX-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_MIN_SIZE": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_MIN_SIZE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_MSVC_STATIC_CRT": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXPAT_NS": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXPAT_NS-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_OSSFUZZ_BUILD": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_OSSFUZZ_BUILD-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_RELEASE_POSTFIX": {
+        "type": "STRING",
+        "value": ""
+      },
+      "EXPAT_RELEASE_POSTFIX-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_RELWITHDEBINFO_POSTFIX": {
+        "type": "STRING",
+        "value": ""
+      },
+      "EXPAT_RELWITHDEBINFO_POSTFIX-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "EXPAT_SHARED_LIBS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_SYMBOL_VERSIONING": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXPAT_WARNINGS_AS_ERRORS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_BUILD_FUZZ": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_BUILD_JNI": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_BUILD_SHARED_COMPAT": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_BUILD_TESTS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_BUILD_TEXT_INDEX": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_BUILD_TOOLS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_AAC": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_AUDIO": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_ENABLE_ICC": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_IMAGE_AVIF": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_IMAGE_TIFF": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_IMAGE_WEBP": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_LIBRARY": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_ENABLE_MP3": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_PDF": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_ENABLE_PDF_CRYPTO": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXR_ENABLE_PDF_EDIT": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_ENABLE_PDF_JPX": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_ENABLE_TEXT_INDEX": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_REPRODUCIBLE": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "EXR_SANITIZE": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "EXReader_BINARY_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-repro"
+      },
+      "EXReader_IS_TOP_LEVEL": {
+        "type": "STATIC",
+        "value": "ON"
+      },
+      "EXReader_SOURCE_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109"
+      },
+      "FETCHCONTENT_BASE_DIR": {
+        "type": "PATH",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-repro/_deps"
+      },
+      "FETCHCONTENT_FULLY_DISCONNECTED": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "FETCHCONTENT_QUIET": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "FETCHCONTENT_SOURCE_DIR_EXPAT": {
+        "type": "PATH",
+        "value": "C:/Users/Oscar/exr-deps/expat"
+      },
+      "FETCHCONTENT_SOURCE_DIR_FREETYPE": {
+        "type": "PATH",
+        "value": "C:/Users/Oscar/exr-deps/freetype-VER-2-15-0"
+      },
+      "FETCHCONTENT_SOURCE_DIR_MINIZ": {
+        "type": "PATH",
+        "value": "C:/Users/Oscar/exr-deps/miniz"
+      },
+      "FETCHCONTENT_SOURCE_DIR_OPENJPEG": {
+        "type": "PATH",
+        "value": "C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4"
+      },
+      "FETCHCONTENT_SOURCE_DIR_SQLITE": {
+        "type": "PATH",
+        "value": "C:/Users/Oscar/exr-deps/sqlite"
+      },
+      "FETCHCONTENT_SOURCE_DIR_STB": {
+        "type": "PATH",
+        "value": "C:/Users/Oscar/exr-deps/stb"
+      },
+      "FETCHCONTENT_UPDATES_DISCONNECTED": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "FIND_PACKAGE_MESSAGE_DETAILS_PkgConfig": {
+        "type": "INTERNAL",
+        "value": "[C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/pkgconf.exe][v3.0.5()]"
+      },
+      "FLAG_VISIBILITY": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "FLAG_WIMPLICIT_FALLTHROUGH": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "FLAG_WSTRICT_ALIASING": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "FT_DISABLE_BROTLI": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "FT_DISABLE_BZIP2": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "FT_DISABLE_HARFBUZZ": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "FT_DISABLE_HVF": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "FT_DISABLE_PNG": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "FT_DISABLE_STREAM_SUPPORT": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "FT_DISABLE_ZLIB": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "FT_ENABLE_ERROR_STRINGS": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "HAVE_ARC4RANDOM": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_ARC4RANDOM_BUF": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_DLFCN_H": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_FCNTL_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_GETENTROPY": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_GETPAGESIZE": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_GETRANDOM": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_INTTYPES_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_MEMORY_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_MMAP": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_OFF_T": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_STDINT_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_STDLIB_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_STRINGS_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_STRING_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_SYSCALL_GETRANDOM": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "HAVE_SYS_STAT_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_SYS_TYPES_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "HAVE_UNISTD_H": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "PKG_CONFIG_ARGN": {
+        "type": "STRING",
+        "value": ""
+      },
+      "PKG_CONFIG_ARGN-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "PKG_CONFIG_EXECUTABLE": {
+        "type": "FILEPATH",
+        "value": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/pkgconf.exe"
+      },
+      "PKG_CONFIG_EXECUTABLE-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "SKIP_INSTALL_ALL": {
+        "type": "BOOL",
+        "value": "ON"
+      },
+      "STDC_HEADERS": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "_EXPAT_LIBM_FOUND": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "_EXPAT_M32": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "_EXPAT_M32-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "_EXPAT_MSVC_ASAN": {
+        "type": "BOOL",
+        "value": "OFF"
+      },
+      "_EXPAT_MSVC_ASAN-ADVANCED": {
+        "type": "INTERNAL",
+        "value": "1"
+      },
+      "_FLAG_DETECTION_UNUSABLE": {
+        "type": "INTERNAL",
+        "value": ""
+      },
+      "_GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX": {
+        "type": "INTERNAL",
+        "value": "C:/Program Files (x86)/EXReader"
+      },
+      "expat_BINARY_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-repro/_deps/expat-build"
+      },
+      "expat_IS_TOP_LEVEL": {
+        "type": "STATIC",
+        "value": "OFF"
+      },
+      "expat_SOURCE_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/exr-deps/expat/expat"
+      },
+      "freetype_BINARY_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-repro/_deps/freetype-build"
+      },
+      "freetype_IS_TOP_LEVEL": {
+        "type": "STATIC",
+        "value": "OFF"
+      },
+      "freetype_SOURCE_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/exr-deps/freetype-VER-2-15-0"
+      },
+      "miniz_BINARY_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-repro/_deps/miniz-build"
+      },
+      "miniz_IS_TOP_LEVEL": {
+        "type": "STATIC",
+        "value": "OFF"
+      },
+      "miniz_SOURCE_DIR": {
+        "type": "STATIC",
+        "value": "C:/Users/Oscar/exr-deps/miniz"
+      }
+    },
+    "configuration": "Release",
+    "configure_arguments": [
+      "-S",
+      ".",
+      "-B",
+      "build/c4-repro",
+      "-G",
+      "Ninja",
+      "-DCMAKE_BUILD_TYPE:STRING=Release",
+      "-DCMAKE_C_COMPILER:FILEPATH=C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+      "-DEXR_BUILD_FUZZ:BOOL=OFF",
+      "-DEXR_BUILD_JNI:BOOL=OFF",
+      "-DEXR_BUILD_SHARED_COMPAT:BOOL=ON",
+      "-DEXR_BUILD_TESTS:BOOL=OFF",
+      "-DEXR_BUILD_TEXT_INDEX:BOOL=ON",
+      "-DEXR_BUILD_TOOLS:BOOL=OFF",
+      "-DEXR_ENABLE_AAC:BOOL=OFF",
+      "-DEXR_ENABLE_AUDIO:BOOL=ON",
+      "-DEXR_ENABLE_ICC:BOOL=OFF",
+      "-DEXR_ENABLE_IMAGE_AVIF:BOOL=OFF",
+      "-DEXR_ENABLE_IMAGE_TIFF:BOOL=OFF",
+      "-DEXR_ENABLE_IMAGE_WEBP:BOOL=OFF",
+      "-DEXR_ENABLE_LIBRARY:BOOL=ON",
+      "-DEXR_ENABLE_MP3:BOOL=OFF",
+      "-DEXR_ENABLE_PDF:BOOL=ON",
+      "-DEXR_ENABLE_PDF_CRYPTO:BOOL=OFF",
+      "-DEXR_ENABLE_PDF_EDIT:BOOL=ON",
+      "-DEXR_ENABLE_PDF_JPX:BOOL=ON",
+      "-DEXR_ENABLE_TEXT_INDEX:BOOL=ON",
+      "-DEXR_SANITIZE:BOOL=OFF",
+      "-DFETCHCONTENT_SOURCE_DIR_EXPAT:PATH=C:/Users/Oscar/exr-deps/expat",
+      "-DFETCHCONTENT_SOURCE_DIR_FREETYPE:PATH=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0",
+      "-DFETCHCONTENT_SOURCE_DIR_MINIZ:PATH=C:/Users/Oscar/exr-deps/miniz",
+      "-DFETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH=C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4",
+      "-DFETCHCONTENT_SOURCE_DIR_SQLITE:PATH=C:/Users/Oscar/exr-deps/sqlite",
+      "-DFETCHCONTENT_SOURCE_DIR_STB:PATH=C:/Users/Oscar/exr-deps/stb",
+      "-DEXR_REPRODUCIBLE=ON"
+    ],
+    "directory": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-C4-20261109\\build\\c4-repro",
+    "generated_inputs": {
+      "exr-stb": {
+        "files": 1,
+        "sha256": "9102b2426a63d385930acb3aa0cd44d74199204d239e79486e1f060ee65c2560"
+      },
+      "generated": {
+        "files": 1,
+        "sha256": "4bf2d834aef27af78ab0ef68f889d26a23b0649f882d029f7fac03d7ceadaf25"
+      }
+    },
+    "generator": "Ninja"
+  },
+  "cmake": {
+    "path": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\cmake.exe",
+    "sha256": "377bfebf3c15a48860c1149375c9be83b1b51cd7d302a9e596abf1c5b49dacc7",
+    "version": "cmake version 4.4.2"
+  },
+  "compiler": {
+    "C": {
+      "configuration": {
+        "CMAKE_AR": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ar.exe",
+        "CMAKE_C11_COMPILE_FEATURES": "c_std_11;c_static_assert",
+        "CMAKE_C17_COMPILE_FEATURES": "c_std_17",
+        "CMAKE_C23_COMPILE_FEATURES": "c_std_23",
+        "CMAKE_C90_COMPILE_FEATURES": "c_std_90;c_function_prototypes",
+        "CMAKE_C99_COMPILE_FEATURES": "c_std_99;c_restrict;c_variadic_macros",
+        "CMAKE_CL_SHOWINCLUDES_PREFIX": "${CMAKE_C_CL_SHOWINCLUDES_PREFIX}",
+        "CMAKE_C_BYTE_ORDER": "LITTLE_ENDIAN",
+        "CMAKE_C_CL_SHOWINCLUDES_PREFIX": "",
+        "CMAKE_C_COMPILER": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+        "CMAKE_C_COMPILER_ABI": "",
+        "CMAKE_C_COMPILER_APPLE_SYSROOT": "",
+        "CMAKE_C_COMPILER_AR": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc-ar.exe",
+        "CMAKE_C_COMPILER_ARCHITECTURE_ID": "x86_64",
+        "CMAKE_C_COMPILER_ARG1": "",
+        "CMAKE_C_COMPILER_ENV_VAR": "CC",
+        "CMAKE_C_COMPILER_FRONTEND_VARIANT": "GNU",
+        "CMAKE_C_COMPILER_ID": "GNU",
+        "CMAKE_C_COMPILER_LINKER": "Configured with: ../configure --prefix=/c/Prog/winlibs_staging_ucrt/home64/inst_gcc-16.2.0/share/gcc --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --enable-offload-targets=nvptx-none --with-pkgversion='MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1' --with-tune=generic --enable-checking=release --enable-threads=posix --disable-sjlj-exceptions --disable-libunwind-exceptions --disable-serial-configure --disable-bootstrap --enable-host-shared --enable-plugin --disable-default-ssp --disable-rpath --disable-libstdcxx-debug --disable-version-specific-runtime-libs --disable-symvers --enable-languages=c,c++,fortran,lto,objc,obj-c++ --disable-gold --disable-nls --disable-stage1-checking --disable-win32-registry --disable-multilib --enable-ld --enable-libquadmath --enable-libada --enable-libssp --enable-libstdcxx --enable-lto --enable-fully-dynamic-string --enable-libgomp --enable-graphite --enable-mingw-wildcard --enable-libstdcxx-time --enable-libstdcxx-pch --with-mpc=/c/Prog/winlibs_staging_ucrt/custombuilt64 --with-mpfr=/c/Prog/winlibs_staging_ucrt/custombuilt64 --with-gmp=/c/Prog/winlibs_staging_ucrt/custombuilt64 --with-isl=/c/Prog/winlibs_staging_ucrt/custombuilt64 --disable-libstdcxx-backtrace --enable-install-libiberty --enable-__cxa_atexit --without-included-gettext --with-diagnostics-color=auto --enable-clocale=generic --enable-libgdiagnostics --with-libiconv --with-system-zlib --with-build-sysroot=/c/Prog/winlibs_staging_ucrt/home64/gcc-16.2.0/build_mingw/mingw-w64 CFLAGS='-I/c/Prog/winlibs_staging_ucrt/custombuilt64/include/libdl-win32   -march=nocona -msahf -mtune=generic -O2 -Wno-error=format' CXXFLAGS='-Wno-int-conversion  -march=nocona -msahf -mtune=generic -O2' LDFLAGS='-pthread -Wl,--no-insert-timestamp -Wl,--dynamicbase -Wl,--high-entropy-va -Wl,--nxcompat -Wl,--tsaware' LD=/c/Prog/winlibs_staging_ucrt/custombuilt64/share/binutils/bin/ld.exe",
+        "CMAKE_C_COMPILER_LINKER_ARCHITECTURE_FLAGS": "",
+        "CMAKE_C_COMPILER_LINKER_FRONTEND_VARIANT": "",
+        "CMAKE_C_COMPILER_LINKER_ID": "",
+        "CMAKE_C_COMPILER_LINKER_VERSION": "",
+        "CMAKE_C_COMPILER_RANLIB": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc-ranlib.exe",
+        "CMAKE_C_COMPILER_VERSION": "16.2.0",
+        "CMAKE_C_COMPILER_VERSION_INTERNAL": "",
+        "CMAKE_C_COMPILER_WRAPPER": "",
+        "CMAKE_C_COMPILE_FEATURES": "c_std_90;c_function_prototypes;c_std_99;c_restrict;c_variadic_macros;c_std_11;c_static_assert;c_std_17;c_std_23",
+        "CMAKE_C_EXTENSIONS_COMPUTED_DEFAULT": "ON",
+        "CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/lib/gcc/x86_64-w64-mingw32/16.2.0/include;C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/include;C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/lib/gcc/x86_64-w64-mingw32/16.2.0/include-fixed;C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/x86_64-w64-mingw32/include",
+        "CMAKE_C_IMPLICIT_LINK_DIRECTORIES": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/lib/gcc/x86_64-w64-mingw32/16.2.0;C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/lib/gcc;C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/x86_64-w64-mingw32/lib;C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/lib",
+        "CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES": "",
+        "CMAKE_C_IMPLICIT_LINK_LIBRARIES": "mingw32;gcc;mingwex;kernel32;pthread;advapi32;shell32;user32;kernel32;mingw32;gcc;mingwex;kernel32",
+        "CMAKE_C_LIBRARY_ARCHITECTURE": "",
+        "CMAKE_C_PLATFORM_ID": "MinGW",
+        "CMAKE_C_SIMULATE_ID": "",
+        "CMAKE_C_SIMULATE_VERSION": "",
+        "CMAKE_C_SIZEOF_DATA_PTR": "8",
+        "CMAKE_C_STANDARD_COMPUTED_DEFAULT": "23",
+        "CMAKE_C_STANDARD_LATEST": "23",
+        "CMAKE_INTERNAL_PLATFORM_ABI": "${CMAKE_C_COMPILER_ABI}",
+        "CMAKE_LIBRARY_ARCHITECTURE": "",
+        "CMAKE_LINKER": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ld.exe",
+        "CMAKE_LINKER_LINK": "",
+        "CMAKE_LINKER_LLD": "",
+        "CMAKE_MT": "",
+        "CMAKE_RANLIB": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ranlib.exe",
+        "CMAKE_SIZEOF_VOID_P": "${CMAKE_C_SIZEOF_DATA_PTR}",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND"
+      },
+      "id": "GNU",
+      "path": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\gcc.exe",
+      "sha256": "52370b1776e129d6562753af441a5f2b2b3edc0a3181cb05a78550dab8d70e85",
+      "version": "16.2.0"
+    }
+  },
+  "dependencies": {
+    "expat": {
+      "archive_sha256": "6e8ce7b52ebbaa423c59becc7cf1e6875c42e49228c062ac8123c10e700cec27",
+      "local_override": true,
+      "revision": "R_2_9_0",
+      "source_dir": "C:\\Users\\Oscar\\exr-deps\\expat",
+      "source_tree": {
+        "files": 232,
+        "sha256": "3976c0019c734859d939a344c96ace4484781a2b75d38da41607c60b747a9a48"
+      },
+      "url": "https://codeload.github.com/libexpat/libexpat/tar.gz/refs/tags/R_2_9_0"
+    },
+    "freetype": {
+      "archive_sha256": "87c7f1f8699b91e89f773f7dcfa505b044e1dae67f62a55d4e29c3afdcac4fb8",
+      "local_override": true,
+      "revision": "VER-2-15-0",
+      "source_dir": "C:\\Users\\Oscar\\exr-deps\\freetype-VER-2-15-0",
+      "source_tree": {
+        "files": 775,
+        "sha256": "926fde495d5c13d85c55a5e5c1e0632de9f312ef33082490589b36b630a01093"
+      },
+      "url": "https://codeload.github.com/freetype/freetype/tar.gz/refs/tags/VER-2-15-0"
+    },
+    "miniz": {
+      "archive_sha256": "98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb",
+      "local_override": true,
+      "revision": "3.1.2",
+      "source_dir": "C:\\Users\\Oscar\\exr-deps\\miniz",
+      "source_tree": {
+        "files": 52,
+        "sha256": "d8c7798a831dbd182ef44e62d5e1fe163c3606a609d39b34d33dffc6351227ff"
+      },
+      "url": "https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2"
+    },
+    "openjpeg": {
+      "archive_sha256": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a",
+      "local_override": true,
+      "revision": "v2.5.4",
+      "source_dir": "C:\\Users\\Oscar\\Documents\\Codex\\cjk-punctuation-compression-20261106\\deps\\openjpeg-2.5.4",
+      "source_tree": {
+        "files": 466,
+        "sha256": "759b2988bec4e49ab2df8a1765a75454b572a094d3b833c0ec9cab262c6c54cd"
+      },
+      "url": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4"
+    },
+    "sqlite": {
+      "archive_sha256": "68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d",
+      "local_override": true,
+      "revision": "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip",
+      "source_dir": "C:\\Users\\Oscar\\exr-deps\\sqlite",
+      "source_tree": {
+        "files": 4,
+        "sha256": "f0633ee830c7010abc6c776312bcb83e73351ad100ea475d77ad07afea8a05ad"
+      },
+      "url": "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip"
+    },
+    "stb": {
+      "archive_sha256": "9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515",
+      "local_override": true,
+      "revision": "2c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "source_dir": "C:\\Users\\Oscar\\exr-deps\\stb",
+      "source_tree": {
+        "files": 431,
+        "sha256": "19df80f6f652b6e7d32483d043492b63feac2063ea1fbb2cdea3694c325c5577"
+      },
+      "url": "https://codeload.github.com/nothings/stb/tar.gz/2c980bb59875b0d32144a71867fbdebb2f77cd20"
+    }
+  },
+  "environment": {
+    "CC": null,
+    "CFLAGS": null,
+    "CL": null,
+    "CPPFLAGS": null,
+    "CXX": null,
+    "CXXFLAGS": null,
+    "INCLUDE": null,
+    "LDFLAGS": null,
+    "LIB": null,
+    "LIBPATH": null,
+    "LINK": null,
+    "MACOSX_DEPLOYMENT_TARGET": null,
+    "PATH": "C:\\Program Files\\PowerShell\\7;C:\\Users\\Oscar\\.codex\\tmp\\arg0-windows\\codex-arg0tOinL2;C:\\Program Files\\PowerShell\\7;C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.9.0_x64__8wekyb3d8bbwe;C:\\Program Files\\PowerShell\\7;C:\\Python314\\Scripts\\;C:\\Python314\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Windows\\system32;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\Bandizip\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Tailscale\\;C:\\Program Files\\Calibre2\\;C:\\Program Files\\PowerShell\\7\\;C:\\Users\\Oscar\\.dsh\\tools\\jdk\\jdk-21.0.13+9\\bin;C:\\Users\\Oscar\\.cargo\\bin;C:\\Python314\\Scripts\\;C:\\Python314\\;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Windows\\system32;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\PowerShell\\7\\;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Oscar\\AppData\\Roaming\\npm;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0-full_build\\bin;C:\\Users\\Oscar\\AppData\\Roaming\\npm;C:\\Users\\Oscar\\AppData\\Roaming\\Python\\Python314\\Scripts;C:\\Users\\Oscar\\.dsh\\tools\\bin;C:\\Users\\Oscar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin;C:\\Users\\Oscar\\.dotnet\\tools;C:\\Users\\Oscar\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\copilot-shim;C:\\Users\\Oscar\\.codex\\plugins\\.plugin-appserver;",
+    "SDKROOT": null,
+    "SOURCE_DATE_EPOCH": null,
+    "VCToolsInstallDir": null,
+    "WindowsSDKVersion": null,
+    "WindowsSdkDir": null,
+    "_CL_": null,
+    "_LINK_": null
+  },
+  "host": {
+    "machine": "AMD64",
+    "release": "11",
+    "system": "Windows",
+    "version": "10.0.26200"
+  },
+  "package": {
+    "file_order": "relative path sorted",
+    "format": "tar.gz",
+    "gzip_filename": "",
+    "signing": "after unsigned reproducibility comparison",
+    "source_date_epoch": 1794242236,
+    "tar_gid": 0,
+    "tar_uid": 0
+  },
+  "python": {
+    "path": "C:\\Python314\\python.exe",
+    "sha256": "4942b86a6597e5aee0128daa00050ed79bc21f6e709a78eb19cbfeb0c2f39ac9",
+    "version": "3.14.7"
+  },
+  "schema": 1,
+  "scope": "same machine, same absolute source/build paths, unsigned Release DLL and installed SDK package",
+  "source": {
+    "directory": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-C4-20261109",
+    "excluded": [
+      "evidence/",
+      "docs/ui/evidence/",
+      "archive/",
+      ".github/",
+      "tools/release/build_manifest.json",
+      "root OUT.txt and *-OUT.txt progress logs"
+    ],
+    "git_tree": "23243da434ce9d86bf09d0c55a9cc46385f11571",
+    "overrides": {
+      "tests/check_reading_release.py": "1775c2630dc567b9ba8a212bea9dfd6f474f5bb43d6dd26aa9be249cb7090bb0",
+      "tests/check_release_artifacts.py": "38ccefb3631a957c7117f22a40f01e080229410b2b83e464e98f09ace933300f",
+      "tools/release/README.md": "fa310890cdccf253f0eb88486e0f9225ef5b657d6ff71395f5e1884ed27cf23e",
+      "tools/release/build_manifest.py": "c1c028d670e938b72b5024afe07083b2a8991a10ecc22b825f3a100eeadaf0f5"
+    },
+    "revision": "12fb48a2332d01be1e55aa68bcb4fa37b7e8763d",
+    "tree": {
+      "files": 5950,
+      "sha256": "f0f7ff128ba8b00b4c726b26ea9d0fc293b921c598b1713071ba33b9dfae61ef"
+    }
+  },
+  "toolchain": {
+    "CMAKE_AR": {
+      "path": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ar.exe",
+      "sha256": "d8a0ef3666ad64e7ff38aae12963b14212e177f7545e7329b1a3eb6108e865e3"
+    },
+    "CMAKE_LINKER": {
+      "path": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ld.exe",
+      "sha256": "779a1721ab3764167e1fe9bebbd742d2eddbadd630bc14b37f3e84d76c6faae0"
+    },
+    "CMAKE_MAKE_PROGRAM": {
+      "path": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ninja.exe",
+      "sha256": "b4b31398249586b2341191d35d0c237a4f3997fc3d35f8e303598fe32197da73"
+    },
+    "CMAKE_OBJCOPY": {
+      "path": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\objcopy.exe",
+      "sha256": "954e04a85f63585de3c5b48ba6a1c04dcc5e3018a0d93b6bee2e0a64931e5206"
+    },
+    "CMAKE_RANLIB": {
+      "path": "C:\\Users\\Oscar\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\ranlib.exe",
+      "sha256": "6f2a69ee70977d9b7c93dd91b998c14f6fec887744a84a3343c338589f1be20d"
+    }
+  }
+}
