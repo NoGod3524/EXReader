@@ -1,0 +1,13 @@
+① 冲突文件
+- OUT.txt: 删除冲突标记，双方内容全部保留（并集）。
+- RESOLVE.md: 本分支是 PR #128 的任务说明，保留本分支版本（main 侧是 #107 的同名任务文件，无需保留）。
+- 其余（CMakeLists.txt、.gitignore 等）自动合并，无冲突；tools/layers.json 无冲突。
+  合并前先把本地未提交的 RESOLVE.md 改动单独提交（df33633a），避免丢失。
+② API 文档：无需补充，门禁已通过（errors: []），未新增条目。
+③ python -X utf8 tools/check_sdk_docs.py exit=0；最后三行：
+  "binary": null,
+  "errors": [],
+  "passed": true
+④ 其他失败项：本地未跑 CI；未见其他失败。tests/check_reading_release.py SHA256=6eb22a30…（未改），
+   check_sdk_docs.py 与 version_literal_exceptions.json 相对 main 无改动。
+推送：7e9b2ff7 -> codex/media-epub-2-20261110（未合并 PR，未动 main）。
