@@ -1,0 +1,1 @@
+DRY-RUN: minisign -S -s <MINISIGN_SECRET_KEY> -m C:\Users\Oscar\Documents\Codex\EXReader-C4-20261109\build\c4-complete-proof\run-2\artifacts\SHA256SUMS -x C:\Users\Oscar\Documents\Codex\EXReader-C4-20261109\build\c4-complete-proof\run-2\artifacts\SHA256SUMS.minisig

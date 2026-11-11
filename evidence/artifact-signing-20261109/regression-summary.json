@@ -1,0 +1,47 @@
+{
+  "baseline_revision": "ed252fb6",
+  "before": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11318,
+    "total_glyphs": 8648571,
+    "wall_seconds": 79.83854,
+    "sum_book_seconds": 267.00066,
+    "fastest_book": "tangshi300-52323",
+    "slowest_book": "the-autobiography-of-malcolm-x."
+  },
+  "after": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11318,
+    "total_glyphs": 8648571,
+    "wall_seconds": 345.446758,
+    "sum_book_seconds": 1304.804472,
+    "fastest_book": "tangshi300-52323",
+    "slowest_book": "black-boy"
+  },
+  "compared_books": 19,
+  "compared_pages": 11318,
+  "hash_changed_pages": 0,
+  "page_count_changed_books": [],
+  "candidate_dll_sha256": "b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632",
+  "baseline_dll_sha256": "de732f980a76430cfcda5a2385be4af2fcc17c4a2ae8cb5d715b4dfe8df81485",
+  "font_path": "C:/Users/Oscar/Documents/Codex/EXReader-Windows-delivery-20261104/payload/Reader.otf",
+  "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "layout": {
+    "width": 720,
+    "height": 1040,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "driver_sha256": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b",
+  "content_fingerprint": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434"
+}
