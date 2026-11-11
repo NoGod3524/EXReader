@@ -1,0 +1,8 @@
+PR #132 的分支已推送到 `codex/dx-realworld-argon-20261110`(`817a7f31..c3f72f96`),合并 `origin/main` 没有产生冲突。我没有查 CI,所以 CI 上是否还有别的失败项不确定。
+
+- **合并**:`git merge origin/main` 自动完成,合并提交是 `98ca706e`,没有 U 标记。唯一的阻碍是我工作区里未跟踪的任务说明 `RESOLVE.md`,它和 main 上已跟踪的同名文件冲突。我把本地那份移到了 `%TEMP%\RESOLVE-task.md`,保留 main 的版本。
+- **API 文档**:`python -X utf8 tools\check_sdk_docs.py` 退出码为 0,输出 `"errors": []`、`"passed": true`。469 个公开函数全部有文档(100%),其中 ABI 稳定 394、实验 75、内部 0,所以不需要补文档。
+- **报告和提交**:报告写在 `RESOLVE-OUT.txt`,已随一个提交推送。提交信息里没有 CI 跳过标记。
+- **没动的东西**:`tools/check_sdk_docs.py`、`tests/check_reading_release.py` 和 `tools/version_literal_exceptions.json` 都没改。没有启动 GUI,也没有合并 PR 或动 main。
+
+`CASCADE-CLAUDE-OUT.txt` 仍是未跟踪文件,我没提交它。
