@@ -1,0 +1,7 @@
+[GNUPG:] NEWSIG
+[GNUPG:] KEY_CONSIDERED 9F4FA4A91FFB167C8E3EEECE19FC78ABA24F4924 0
+[GNUPG:] BADSIG 19FC78ABA24F4924 EXReader C4 TEST ONLY <c4-test@example.invalid>
+[GNUPG:] FAILURE gpg-exit 33554433
+gpg: Signature made Mon Nov  9 12:12:18 2026 EST
+gpg:                using EDDSA key 9F4FA4A91FFB167C8E3EEECE19FC78ABA24F4924
+gpg: BAD signature from "EXReader C4 TEST ONLY <c4-test@example.invalid>" [unknown]

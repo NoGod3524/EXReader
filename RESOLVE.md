@@ -72,3 +72,6 @@ git push origin HEAD:codex/webdav-sync-20261110
 ④ 还有没有别的失败项（列出 CI 里看到的名字）
 ```
 
+---
+
+> 合并备注：main 上同名文件为 PR #107 版本（工作目录 EXReader-resolve-107-20261111，推送目标 codex/artifact-signing-20261109），其余内容相同；此处保留 PR #131 版本，PR #107 的差异记录于此。
