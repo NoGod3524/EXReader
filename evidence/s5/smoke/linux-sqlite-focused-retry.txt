@@ -1,0 +1,315 @@
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 3.25.1
+-- 
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... /usr/local
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix ....... 
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     arc4random ............... 1
+--     arc4random_buf ........... 1
+--     getentropy ............... 1
+--     getrandom ................ 1
+--     syscall SYS_getrandom .... 1
+--     /dev/urandom ............. OFF
+-- 
+-- ===========================================================================
+-- Could NOT find OpenGL (missing: OPENGL_opengl_LIBRARY OPENGL_glx_LIBRARY OPENGL_INCLUDE_DIR) 
+-- Adding -lm flag.
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Failed
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Success
+-- Performing Test WEBP_HAVE_FLAG_SSE2
+-- Performing Test WEBP_HAVE_FLAG_SSE2 - Success
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+-- Building tiff version 4.7.0
+-- Could NOT find Deflate (missing: Deflate_LIBRARY Deflate_INCLUDE_DIR) 
+-- Could NOT find JPEG (missing: JPEG_LIBRARY JPEG_INCLUDE_DIR) 
+-- Could NOT find JBIG (missing: JBIG_LIBRARY JBIG_INCLUDE_DIR) 
+-- Could NOT find LERC (missing: LERC_LIBRARY LERC_INCLUDE_DIR) 
+-- Could NOT find liblzma (missing: LIBLZMA_LIBRARY LIBLZMA_INCLUDE_DIR LIBLZMA_HAS_AUTO_DECODER LIBLZMA_HAS_EASY_ENCODER LIBLZMA_HAS_LZMA_PRESET) 
+-- Could NOT find ZSTD (missing: ZSTD_LIBRARY ZSTD_INCLUDE_DIR) 
+-- Could NOT find WebP (missing: WebP_LIBRARY WebP_INCLUDE_DIR) 
+-- Could NOT find OpenGL (missing: OPENGL_opengl_LIBRARY OPENGL_INCLUDE_DIR OpenGL) 
+-- Could NOT find GLUT (missing: GLUT_glut_LIBRARY GLUT_INCLUDE_DIR) 
+-- 
+-- Libtiff is now configured for Linux-6.12.115-0-virt
+-- 
+--   Libtiff build version:       4.7.0
+--   Libtiff library version:     6.1.0
+--   Libtiff release date:        20240911
+-- 
+--   Installation directory:             /usr/local
+--   Documentation directory:            share/doc/tiff
+--   C compiler:                         /usr/bin/cc
+--   C++ compiler:                       /usr/bin/c++
+--   Build shared libraries:             OFF
+--   Build tools:                        OFF
+--   Build tests:                        OFF
+--   Build contrib:                      OFF
+--   Build docs:                         OFF
+--   Build deprecated features:          OFF
+--   Enable linker symbol versioning:    TRUE
+--   Support Microsoft Document Imaging: ON
+--   Use win32 IO:                       OFF
+-- 
+--  Support for internal codecs:
+--   CCITT Group 3 & 4 algorithms:       ON
+--   Macintosh PackBits algorithm:       ON
+--   LZW algorithm:                      ON
+--   ThunderScan 4-bit RLE algorithm:    ON
+--   NeXT 2-bit RLE algorithm:           ON
+--   LogLuv high dynamic range encoding: ON
+-- 
+--  Support for external codecs:
+--   ZLIB support:                       Requested:ON Availability:TRUE Support:TRUE
+--   libdeflate support:                 Requested:OFF Availability:FALSE Support:FALSE
+--   Pixar log-format algorithm:         Requested:ON Availability:TRUE Support:TRUE
+--   JPEG support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   Old JPEG support:                   Requested:OFF Availability:FALSE Support:FALSE (Depends on JPEG Support)
+--   JPEG 8/12 bit dual mode:            Requested:OFF Availability:FALSE Support:FALSE
+--   ISO JBIG support:                   Requested:OFF Availability:FALSE Support:FALSE
+--   LERC support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   LZMA2 support:                      Requested:OFF Availability:FALSE Support:FALSE
+--   ZSTD support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   WEBP support:                       Requested:OFF Availability:FALSE Support:FALSE
+-- 
+--   C++ support:                        ON (requested) TRUE (availability)
+-- 
+--   OpenGL support:                     Requested:OFF Availability:FALSE Support:FALSE
+-- 
+--- aom_configure: Detected CPU: generic
+CONFIG_PIC enabled for position independent executable (PIE) build
+-- libavif: Enabling warnings for GCC
+-- libavif: Codec enabled: aom (decode only)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /repo/out
+[0/2] Re-checking globbed directories...
+[1/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/sha512.c.o
+[2/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/md5.c.o
+[3/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/platform.c.o
+[4/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/sha256.c.o
+[5/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/platform_util.c.o
+[6/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/aes.c.o
+[7/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/constant_time.c.o
+[8/160] Building C object CMakeFiles/exr_crypto.dir/_deps/mbedtls-src/library/base64.c.o
+[9/160] Linking C static library libexr_crypto.a
+[10/160] Building C object CMakeFiles/exr_base_objects.dir/src/map.c.o
+[11/160] Building C object CMakeFiles/exr_base_objects.dir/src/memory.c.o
+[12/160] Building C object CMakeFiles/exr_base_objects.dir/src/core.c.o
+[13/160] Building C object CMakeFiles/exr_base_objects.dir/src/source.c.o
+[14/160] Building C object CMakeFiles/exr_base_objects.dir/src/numbering.c.o
+[15/160] Building C object CMakeFiles/exr_base_objects.dir/src/common.c.o
+[16/160] Building C object CMakeFiles/exr_base_objects.dir/src/normalize.c.o
+[17/160] Building C object CMakeFiles/exr_base_objects.dir/src/viewport.c.o
+[18/160] Building C object CMakeFiles/exr_base_objects.dir/src/transfer.c.o
+[19/160] Linking C static library libexr_base.a
+[20/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_cache.c.o
+[21/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_color.c.o
+[22/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_bitmap.c.o
+[23/160] Building C object CMakeFiles/exr_text_objects.dir/src/bidi.c.o
+[24/160] Building C object CMakeFiles/exr_text_objects.dir/src/dictionary.c.o
+[25/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_path.c.o
+[26/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_outline.c.o
+[27/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_colr_v1.c.o
+[28/160] Building C object CMakeFiles/exr_text_objects.dir/src/fonts.c.o
+[29/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_scan.c.o
+[30/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_manager.c.o
+[31/160] Building C object CMakeFiles/exr_text_objects.dir/src/text.c.o
+[32/160] Building C object CMakeFiles/exr_text_objects.dir/src/variable.c.o
+[33/160] Building C object CMakeFiles/exr_text_objects.dir/src/font_svg.c.o
+[34/160] Building C object CMakeFiles/exr_doc_objects.dir/src/anchor.c.o
+[35/160] Building C object CMakeFiles/exr_doc_objects.dir/src/annotation.c.o
+[36/160] Building C object CMakeFiles/exr_text_objects.dir/src/hyphen.c.o
+[37/160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_offset.c.o
+[38/160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_syntax.c.o
+[39/160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi.c.o
+[40/160] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_text.c.o
+[41/160] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_index.c.o
+[42/160] Building C object CMakeFiles/exr_doc_objects.dir/src/construct.c.o
+[43/160] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_window.c.o
+[44/160] Building C object CMakeFiles/exr_doc_objects.dir/src/document.c.o
+[45/160] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed.c.o
+[46/160] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed_text.c.o
+[47/160] Building C object CMakeFiles/exr_formats_objects.dir/src/book.c.o
+[48/160] Building C object CMakeFiles/exr_formats_objects.dir/src/epub_write.c.o
+[49/160] Building C object CMakeFiles/exr_text_objects.dir/src/opentype.c.o
+[50/160] Building C object CMakeFiles/exr_formats_objects.dir/src/export_text.c.o
+[51/160] Building C object CMakeFiles/exr_formats_objects.dir/src/export_epub.c.o
+[52/160] Building C object CMakeFiles/exr_formats_objects.dir/src/docx.c.o
+[53/160] Building C object CMakeFiles/exr_formats_objects.dir/src/fb2.c.o
+[54/160] Building C object CMakeFiles/exr_formats_objects.dir/src/huff.c.o
+[55/160] Building C object CMakeFiles/exr_formats_objects.dir/src/lzma.c.o
+[56/160] Building C object CMakeFiles/exr_formats_objects.dir/src/lcp.c.o
+[57/160] Building C object CMakeFiles/exr_formats_objects.dir/src/navigation.c.o
+[58/160] Building C object CMakeFiles/exr_formats_objects.dir/src/formats.c.o
+[59/160] Building C object CMakeFiles/exr_formats_objects.dir/src/kf8.c.o
+[60/160] Building C object CMakeFiles/exr_formats_objects.dir/src/xmp.c.o
+[61/160] Building C object CMakeFiles/exr_formats_objects.dir/src/sevenz.c.o
+[62/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotations.c.o
+[63/160] Building C object CMakeFiles/exr_formats_objects.dir/src/rtf.c.o
+[64/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotation_paint.c.o
+[65/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_ccitt.c.o
+[66/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/cbz.c.o
+[67/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_cmap.c.o
+[68/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_calculator.c.o
+[69/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_color.c.o
+[70/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_document.c.o
+[71/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_crypto.c.o
+[72/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_encoding.c.o
+[73/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_face.c.o
+[74/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_content.c.o
+[75/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_function.c.o
+[76/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_font.c.o
+[77/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_jpx.c.o
+[78/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_image.c.o
+[79/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_raster.c.o
+[80/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_pages.c.o
+[81/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_paint.c.o
+[82/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading.c.o
+[83/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask.c.o
+[84/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask_parse.c.o
+[85/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_view.c.o
+[86/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading_mesh.c.o
+[87/160] Updating version info if necessary.
+[88/160] Building C object _deps/libaom-build/CMakeFiles/aom_version.dir/gen_src/aom_version_no_op.c.o
+[89/160] Linking C static library _deps/libaom-build/libaom_version.a
+[90/160] Building C object CMakeFiles/exr_textindex_objects.dir/src/text_index.c.o
+[91/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/affine_image.c.o
+[92/160] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_objects.c.o
+[93/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/blend.c.o
+[94/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/curves.c.o
+[95/160] Building C object CMakeFiles/exr_library_objects.dir/src/library.c.o
+[96/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/canvas.c.o
+[97/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/dash.c.o
+[98/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/stroke.c.o
+[99/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/image_formats.c.o
+[100/160] Linking C static library libexr_textindex.a
+[101/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/vector.c.o
+[102/160] Building C object CMakeFiles/exreader-library-stream-test.dir/tests/test_library_stream.c.o
+[103/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/icc.c.o
+[104/160] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/aom_scale/aom_scale_rtcd.c.o
+[105/160] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/aom_dsp/aom_dsp_rtcd.c.o
+[106/160] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/av1/common/av1_rtcd.c.o
+[107/160] Building C object CMakeFiles/exreader-text-index-test.dir/tests/test_text_index.c.o
+[108/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_hmask.c.o
+[109/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_vmask.c.o
+[110/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/aom_convolve.c.o
+[111/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_mask.c.o
+[112/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp.dir/gen_src/aom_av1_no_op.c.o
+[113/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp.dir/gen_src/aom_dsp_no_op.c.o
+[114/160] Building C object _deps/libaom-build/CMakeFiles/aom_scale.dir/aom_scale/generic/yv12extend.c.o
+[115/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/alloccommon.c.o
+[116/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_inv_txfm2d.c.o
+[117/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/loopfilter.c.o
+[118/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_txfm.c.o
+[119/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/blockd.c.o
+[120/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cdef.c.o
+[121/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_loopfilter.c.o
+[122/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cdef_block.c.o
+[123/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/convolve.c.o
+[124/160] Building C object CMakeFiles/exr_graphics_objects.dir/src/images.c.o
+[125/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/debugmodes.c.o
+[126/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropy.c.o
+[127/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropymode.c.o
+[128/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropymv.c.o
+[129/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/idct.c.o
+[130/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/pred_common.c.o
+[131/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/quant_common.c.o
+[132/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cfl.c.o
+[133/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/mvref_common.c.o
+[134/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/reconinter.c.o
+[135/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/resize.c.o
+[136/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/scale.c.o
+[137/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/scan.c.o
+[138/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/reconintra.c.o
+[139/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/tile_common.c.o
+[140/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/txb_common.c.o
+[141/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/restoration.c.o
+[142/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/thread_common.c.o
+[143/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/warped_motion.c.o
+[144/160] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/intrapred.c.o
+[145/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/av1_dx_iface.c.o
+[146/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decoder.c.o
+[147/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/detokenize.c.o
+[148/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodetxb.c.o
+[149/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/obu.c.o
+[150/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodemv.c.o
+[151/160] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodeframe.c.o
+[152/160] Linking C static library _deps/libaom-build/libaom.a
+[153/160] Linking C static library libexr_graphics.a
+[154/160] Linking C static library libexr_text.a
+[155/160] Linking C static library libexr_doc.a
+[156/160] Linking C static library libexr_formats.a
+[157/160] Linking C static library libexr_pdf.a
+[158/160] Linking C static library libexr_library.a
+[159/160] Linking C executable exreader-library-stream-test
+[160/160] Linking C executable exreader-text-index-test
+Internal ctest changing into directory: /repo/out
+Test project /repo/out
+    Start 37: native-library-stream
+1/1 Test #37: native-library-stream ............   Passed    3.23 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   3.24 sec
+Internal ctest changing into directory: /repo/out
+Test project /repo/out
+    Start 86: native-text-index
+1/1 Test #86: native-text-index ................   Passed    0.10 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.11 sec
+out/exreader-library-stream-test:
+	linux-vdso.so.1 (0x00007f9f16d51000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f9f16c68000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f9f1621e000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f9f16d53000)
+out/exreader-text-index-test:
+	linux-vdso.so.1 (0x00007fa7405fb000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fa740512000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fa73fa1e000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fa7405fd000)
