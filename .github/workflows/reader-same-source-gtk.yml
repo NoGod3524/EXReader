@@ -1,0 +1,98 @@
+name: GTK raw retained navigation and folder import
+on:
+  push:
+    branches: [codex/reader-same-source-integration]
+permissions:
+  contents: read
+jobs:
+  retained:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Admit exact integration source
+        run: python3 tests/reader_same_source/guard.py --source "$GITHUB_SHA" --report build/gtk-source-admission.json
+      - name: Install GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11 ninja-build
+      - name: Build installed raw family and real packaged host
+        run: |
+          python3 -m py_compile tests/reader_gtk_raw_wave3/run.py tests/reader_gtk_navigation/*.py tests/reader_gtk_batch_import/*.py
+          python3 - <<'PY'
+          import importlib.util
+          spec = importlib.util.spec_from_file_location('raw', 'tests/reader_gtk_raw_wave3/run.py')
+          raw = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(raw)
+          raw.build_sdk()
+          raw.install_family('raw', raw.PREFIX, True)
+          assert raw.installed('raw', raw.PREFIX)['accepted']
+          raw.cmake('raw-batch-import', raw.ROOT / 'apps/reader/batch-import', raw.OUT / 'raw-batch-import', raw.PREFIX, install=True)
+          raw.cmake('raw-preferences', raw.ROOT / 'apps/reader/preferences', raw.OUT / 'raw-preferences', raw.PREFIX, install=True)
+          options = raw.host_options(raw.PREFIX) + ['-DEXR_READER_GTK_RAW3=ON', '-DREADER_GTK_RAW3_PREFIX=' + str(raw.PREFIX), '-DEXR_READER_GTK_BATCH_IMPORT=ON', '-DREADER_BATCH_IMPORT_PREFIX=' + str(raw.PREFIX), '-DEXR_READER_GTK_PREFERENCES=ON', '-DREADER_PREFERENCES_PREFIX=' + str(raw.PREFIX)]
+          raw.cmake('retained-host', raw.ROOT / 'apps/reader/desktop', raw.OUT / 'retained-host', raw.PREFIX, extra=options, targets=('exreader-linux', 'reader-gtk-navigation-backend', 'reader-gtk-batch-import-backend', 'reader-gtk-batch-owner-faults'))
+          raw.run('retained-package', [raw.sys.executable, 'tools/build_linux_host.py', '--sdk', raw.SDK, '--sdk-version', '3.41.0', '--binary', raw.OUT / 'retained-host/gtk-host/exreader-linux', '--output', raw.OUT / 'retained-package'])
+          import json
+          binary = raw.OUT / 'retained-host/gtk-host/exreader-linux'
+          packaged = raw.OUT / 'retained-package/EXReader-Linux/bin/exreader-linux'
+          assert raw.sha(binary) == raw.sha(packaged)
+          (raw.OUT / 'retained-identity.json').write_text(json.dumps({'source': raw.run('retained-source', ['git', 'rev-parse', 'HEAD']).stdout.strip(), 'binary_sha256': raw.sha(binary), 'package_sha256': raw.sha(packaged)}, indent=2) + '\n')
+          PY
+      - name: Prepare original fixtures
+        run: |
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_gtk_navigation/make_inputs.py build/gtk-navigation-fixtures
+          python3 tests/linux_host/generate_fixed.py build/gtk-fixed-inputs
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-backend-fixtures
+          python3 tests/reader_gtk_batch_import/make_inputs.py build/gtk-batch-ui-fixtures
+          mkdir -p build/gtk-navigation-backend build/gtk-batch-backend/profile build/gtk-batch-owner-faults build/gtk-atspi-client
+          chmod 700 build/gtk-navigation-backend build/gtk-batch-backend/profile
+          git show 67e2f8c4941205c5581e82fd5a1469d18f696019:tests/reader_a11y_gtk/atspi_client.py > build/gtk-atspi-client/atspi_client.py
+      - name: Original navigation backend
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend "$PWD/build/gtk-navigation-backend/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-navigation-fixtures" "$PWD/build/gtk-fixed-inputs" 2>&1 | tee build/gtk-navigation-backend/checks.log
+      - name: Original folder backend and owner faults
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend "$PWD/build/gtk-batch-backend/profile/library.sqlite" "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-backend-fixtures" "$PWD/build/gtk-batch-backend/originals.tsv" exercise 2>&1 | tee build/gtk-batch-backend/checks.log
+          build/gtk-raw-wave3/retained-host/reader-gtk-batch-owner-faults "$PWD/build/gtk-raw-wave3/retained-package/EXReader-Linux/Reader.otf" "$PWD/build/gtk-batch-owner-faults" 2>&1 | tee build/gtk-batch-owner-faults/checks.log
+      - name: Original navigation and folder GUI suites
+        if: ${{ !cancelled() }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            export PYTHONPATH="$PWD/build/gtk-atspi-client"
+            openbox >build/gtk-raw-wave3/retained-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            gsettings set org.gnome.desktop.interface toolkit-accessibility true
+            gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true
+            failed=0
+            /usr/bin/python3 tests/reader_gtk_navigation/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-navigation-fixtures --fixed-inputs build/gtk-fixed-inputs --output build/gtk-navigation-ui || failed=1
+            /usr/bin/python3 tests/reader_gtk_batch_import/check_ui.py --payload build/gtk-raw-wave3/retained-package/EXReader-Linux --fixtures build/gtk-batch-ui-fixtures --output build/gtk-batch-ui --backend build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend || failed=1
+            exit "$failed"
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtk-raw-retained-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/gtk-raw-wave3/*.log
+            build/gtk-raw-wave3/*.json
+            build/gtk-raw-wave3/retained-host/CMakeCache.txt
+            build/gtk-raw-wave3/retained-host/gtk-host/exreader-linux
+            build/gtk-raw-wave3/retained-host/reader-gtk-navigation-backend
+            build/gtk-raw-wave3/retained-host/reader-gtk-batch-import-backend
+            build/gtk-raw-wave3/retained-package/
+            build/gtk-navigation-backend/
+            build/gtk-navigation-ui/
+            build/gtk-batch-backend/
+            build/gtk-batch-owner-faults/
+            build/gtk-batch-ui/
+            build/gtk-navigation-fixtures/manifest.json
+            build/gtk-batch-backend-fixtures/manifest.json
+            build/gtk-batch-ui-fixtures/manifest.json
+          if-no-files-found: error
