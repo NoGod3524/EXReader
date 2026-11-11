@@ -1,0 +1,20 @@
+{
+  "documents": [
+    {
+      "id": "minitab-ch10",
+      "path": "../../build/docx-inputs/minitab-ch10.docx",
+      "sha256": "e73c211e12cbd07e467d6c2f5b731a71d9b831d871f055a46e3de087f5b55d4d"
+    },
+    {
+      "id": "soci-syllabus",
+      "path": "../../build/docx-inputs/soci-syllabus.docx",
+      "sha256": "dbc1fe7c9f99521074ed300e224f3d4ec906aedfc60d917220d2ffcc882913d9"
+    },
+    {
+      "id": "ohchr-40-69",
+      "path": "../../build/docx-inputs/ohchr-40-69.docx",
+      "sha256": "ca0701fe199aae7f35de67bfff4c66c70d7db3c65029a74ac96b8587fd42e214",
+      "source_url": "https://www.ohchr.org/sites/default/files/HRBodies/HRC/RegularSessions/Session40/Documents/A_HRC_40_69.docx"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+Configure/build for the merged tree is still running. I'll continue when the monitor reports.
+
+The merge is staged with all conflicts resolved, but it is not committed or pushed, and it has not been built or tested. The local configure and build in `exr-build-cf129` was still running when I stopped. The 227-file "still to do" items below are therefore all open.
+
+**① Conflicts and how each was resolved**
+
+| File | Resolution |
+|---|---|
+| `OUT.txt` | Both sides kept, markers removed. |
+| `tools/layers.json` | Both kept (`opds.h` and `edit.h`). |
+| `examples/reader.c` | Main moved all the acceptance-driver code into the new `windows/shell_drive_test.inc`, so I took main's side. I re-added our `opds_` and `sync_` dispatch, the extra includes and the `opds_busy` idle check into `shell_drive_test.inc`. |
+| `shell_screen.inc` | Took main's command-ID table and added `IDC_SHELL_SYNC`. |
+| `shell_search.inc` | Took main's IDs. Our 196 workaround is dropped because main fixed the same clash differently. |
+| `shell_settings.inc` | Took main's panel layout. The cloud-sync button shares the dictionary row, so the panel-height token is unchanged. |
+| `shell_dictionary.inc` | Took main's `shell_card_paint` and `shell_draw_control`. Re-added the sync panel title and the primary style for the sync "now" button. |
+| `shell_shelf.inc`, `shell_shelfmeta.inc` | Main replaced the old shelf buttons with one drawn shelf view. Our "书源" button is now a toolbar item in that view. I rewired `opds_show` and `opds_hide` to it. |
+| `shell_d2d.cpp` | Took main's control-drawing API and re-applied our high-contrast theme (`theme_of`, `line_alpha`). |
+
+I did not touch `tests/check_reading_release.py`, `tools/version_literal_exceptions.json` or `tools/check_ci_hygiene.py`. I did not open any GUI or create a branch. `OUT-CF.txt` has a note for this step only.
+
+**② Local ctest:** none yet.
+
+The build dir had no downloaded dependencies and the network download failed on a certificate error. I reconfigured offline using the dependency sources from the `cf128` build, and the build is not done.
+
+**③ PR mergeable state:** unchanged (conflicting), since nothing has been pushed.
+
+**④ Still to do**
+1. Finish the build and fix any compile errors from the adaptations. The riskiest are `shell_opds.inc`, `shell_opds_drive.inc`, `shell_sync.inc` and the check programs, which may still use the old shelf or control-draw APIs.
+2. Run `ctest -E "^sdk-release$"`.
+3. Commit the merge and push to `codex/opds-catalog-20261110`.
+4. Report the PR mergeable state after the push.
+
+The merge is staged with every conflict resolved, but it is not committed or pushed. I haven't built or tested it. The configure step was still running at the last check, about 25 minutes in, so there is no ctest result yet and the PR is still conflicting.
+
+Configure is slow here because it runs many dependency probes one after another. I reused the offline dependency sources from the `cf128` build, since the download from GitHub failed with an SSL certificate error. The build log in `/tmp` is stale, left by another session, so I can't tell build progress from it.
+
+**① Conflict files and how each was resolved**
+- **`OUT.txt` and `tools/layers.json`:** both sides kept. `layers.json` has both `opds.h` and `edit.h`.
+- **`examples/reader.c`:** main moved all the acceptance-driver code into the new `shell_drive_test.inc`, so I took main's side. In `shell_drive_test.inc` I re-added our `opds_` and `sync_` action dispatch, the two extra drive includes, and the `opds_busy` idle check.
+- **`shell_screen.inc`:** main's command-ID table, plus `IDC_SHELL_SYNC`.
+- **`shell_search.inc`:** main's IDs. Our 196 workaround is dropped because main fixed the same ID clash differently.
+- **`shell_settings.inc`:** main's panel layout. The cloud-sync button shares the dictionary row, so the panel-height token is unchanged.
+- **`shell_dictionary.inc`:** main's card and control drawing, with the sync panel title and the primary style for the sync "now" button added back.
+- **`shell_shelf.inc` and `shell_shelfmeta.inc`:** main replaced the old shelf buttons with one drawn shelf view. Our "书源" button is now a toolbar item in that view. I rewired `opds_show` and `opds_hide` to match.
+- **`shell_d2d.cpp`:** main's new control-drawing API, with our high-contrast theme re-applied.
+
+**② ctest:** not run yet.
+
+**③ PR mergeable state:** still conflicting, since nothing is pushed.
+
+**④ What's left**
+1. Finish configure and build in `exr-build-cf129`, then fix compile errors from the adaptations. The riskiest files are `shell_opds.inc`, `shell_opds_drive.inc`, `shell_sync.inc` and the check programs, which may still use the old shelf or control-draw APIs.
+2. Run `ctest -E "^sdk-release$"`.
+3. Commit the merge and push to `codex/opds-catalog-20261110`.
+4. Report the PR's mergeable state after the push.
+
+I didn't touch the three protected files, didn't open a GUI, and didn't create a branch. `OUT-CF.txt` has a note for the merge step only.
+
+That expiry is another old monitor timing out. Configure is still running (it's now at compiler-flag probes), and `build.ninja` doesn't exist yet, so nothing has been built or tested.
+
+The merge is still staged and uncommitted, and the PR is still conflicting. The conflict resolutions and the remaining steps are as in my last summary.
+
+I'll leave the configure and build running and not poll it. When the background task finishes, I'll fix any compile errors, run `ctest -E "^sdk-release$"`, commit the merge, push to `codex/opds-catalog-20261110`, and report the PR's mergeable state.
+
+== step 2: local full build not completed (cmake configure >1h on this machine); gcc -fsyntax-only on reader.c (shell+drivers) and shell_d2d.cpp: 0 errors. ctest NOT run locally. ==

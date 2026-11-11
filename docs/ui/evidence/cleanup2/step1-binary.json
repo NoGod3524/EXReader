@@ -1,0 +1,44 @@
+[
+  {
+    "build": "before",
+    "bytes": 2244404,
+    "drive_lines": 81,
+    "commands": {
+      "--drive": true,
+      "shell_measure": true,
+      "shelf_dump": true,
+      "select_pointer": true,
+      "annot_dump": true,
+      "unknown action": true,
+      "drive.log": true
+    }
+  },
+  {
+    "build": "product",
+    "bytes": 2145098,
+    "drive_lines": 57,
+    "commands": {
+      "--drive": false,
+      "shell_measure": false,
+      "shelf_dump": false,
+      "select_pointer": false,
+      "annot_dump": false,
+      "unknown action": false,
+      "drive.log": false
+    }
+  },
+  {
+    "build": "test",
+    "bytes": 2244404,
+    "drive_lines": 81,
+    "commands": {
+      "--drive": true,
+      "shell_measure": true,
+      "shelf_dump": true,
+      "select_pointer": true,
+      "annot_dump": true,
+      "unknown action": true,
+      "drive.log": true
+    }
+  }
+]

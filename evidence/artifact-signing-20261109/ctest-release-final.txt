@@ -1,0 +1,7 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/build/c4-baseline
+    Start 213: release-artifacts
+1/1 Test #213: release-artifacts ................   Passed    3.14 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   3.15 sec

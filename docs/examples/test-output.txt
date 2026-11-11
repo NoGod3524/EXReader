@@ -1,0 +1,44 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S4-20261109/build/s4-native
+      Start 242: sdk-doc-base
+ 1/15 Test #242: sdk-doc-base .....................   Passed    6.58 sec
+      Start 243: sdk-doc-document
+ 2/15 Test #243: sdk-doc-document .................   Passed    0.12 sec
+      Start 244: sdk-doc-formats
+ 3/15 Test #244: sdk-doc-formats ..................   Passed    0.47 sec
+      Start 245: sdk-doc-search
+ 4/15 Test #245: sdk-doc-search ...................   Passed    0.33 sec
+      Start 246: sdk-doc-annotation
+ 5/15 Test #246: sdk-doc-annotation ...............   Passed    0.10 sec
+      Start 247: sdk-doc-library
+ 6/15 Test #247: sdk-doc-library ..................   Passed    0.98 sec
+      Start 248: sdk-doc-graphics
+ 7/15 Test #248: sdk-doc-graphics .................   Passed    0.17 sec
+      Start 249: sdk-doc-textindex
+ 8/15 Test #249: sdk-doc-textindex ................   Passed    0.13 sec
+      Start 250: sdk-doc-audio
+ 9/15 Test #250: sdk-doc-audio ....................   Passed    1.03 sec
+      Start 251: sdk-doc-pagination
+10/15 Test #251: sdk-doc-pagination ...............   Passed    0.95 sec
+      Start 252: sdk-doc-render
+11/15 Test #252: sdk-doc-render ...................   Passed    0.81 sec
+      Start 253: sdk-doc-font
+12/15 Test #253: sdk-doc-font .....................   Passed    0.68 sec
+      Start 254: sdk-doc-toc
+13/15 Test #254: sdk-doc-toc ......................   Passed    1.01 sec
+      Start 255: sdk-doc-pdf
+14/15 Test #255: sdk-doc-pdf ......................   Passed    0.82 sec
+      Start 256: sdk-doc-dictionary
+15/15 Test #256: sdk-doc-dictionary ...............   Passed    0.67 sec
+
+100% tests passed out of 15
+
+Total Test time (real) =  15.35 sec
+
+Separate coverage/signature/snippet check:
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S4-20261109/build/s4-native
+    Start 257: sdk-doc-coverage
+1/1 Test #257: sdk-doc-coverage .................   Passed    1.19 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   1.21 sec

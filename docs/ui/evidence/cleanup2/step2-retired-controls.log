@@ -1,0 +1,10 @@
+HOST	phase=1	engine=3.42.0	pid=22384
+STEP	1	check	PASS	retired_controls=absent;window_status=书架为空：输入文件路径后点击“导入”。
+STEP	2	import	PASS	page=0;status=已导入《紅樓夢》并写入书架。
+STEP	3	wait_idle	PASS	page=0;status=已导入《紅樓夢》并写入书架。
+STEP	4	open	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	5	wait_idle	PASS	page=1;status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	6	check	PASS	retired_controls=absent;window_status=已打开《紅樓夢》 · 从首个阅读章节开始。
+STEP	7	quit	PASS	closing
+DONE	7	eof	PASS	script finished
+
