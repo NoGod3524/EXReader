@@ -17,240 +17,240 @@
       "id": "01-table-merged-grid-vmerge",
       "category": "tables",
       "path": "01-table-merged-grid-vmerge.docx",
-      "bytes": 2719,
-      "sha256": "1b096d06cdfd76317f3493b3254715f1f49fa3f36c9b6a3fc5e062c373e2f740",
+      "bytes": 9679,
+      "sha256": "5166bfad41088a6d24778e33f260ab875208f9628ea29006732394a8bdfd89ef",
       "description": "4x3 table with horizontal w:gridSpan=2 and vertical w:vMerge restart/continue merged cells."
     },
     {
       "id": "02-table-merged-hmerge-vmerge",
       "category": "tables",
       "path": "02-table-merged-hmerge-vmerge.docx",
-      "bytes": 2708,
-      "sha256": "14d8baef6c6468a76b63b063aa714ccf5de58e2fc75e300228f550036647997b",
+      "bytes": 8663,
+      "sha256": "f1ccc938401a9a4af79a731f707889d105aa2f005c62d16a9c94279b9054700d",
       "description": "4x3 table combining legacy horizontal w:hMerge restart/continue with vertical w:vMerge across rows."
     },
     {
       "id": "03-table-nested-subtable",
       "category": "tables",
       "path": "03-table-nested-subtable.docx",
-      "bytes": 2675,
-      "sha256": "34c5a5d3adee080e72f30d55f686e76454fe14b48ff507ab1072b777dc520924",
+      "bytes": 8952,
+      "sha256": "4db71f94025f23a9bb8fbc73d562630741ed2b88c19a35ea213ba2a3959eae34",
       "description": "Outer 2x2 table containing a nested 2x2 w:tbl inside cell (0,1) alongside cell paragraphs."
     },
     {
       "id": "04-table-repeating-header-multipar-list",
       "category": "tables",
       "path": "04-table-repeating-header-multipar-list.docx",
-      "bytes": 3181,
-      "sha256": "b7269b3b65c8201583e0300cd9da2001546912551c59c7e24829b2a6f27bb252",
+      "bytes": 9926,
+      "sha256": "f5f4644a45d1d5be1c575603e32ab82b2eae41aa7b049465551deeb19abc89aa",
       "description": "Multi-row table with w:tblHeader repeating header row and cells containing multiple paragraphs and lists."
     },
     {
       "id": "05-field-page-numpages",
       "category": "fields",
       "path": "05-field-page-numpages.docx",
-      "bytes": 3121,
-      "sha256": "01d0914b0f65c8370a89870aea808f3b14531d158d24e412f24ec9de885f761b",
+      "bytes": 9231,
+      "sha256": "d47fbc18f10a2e9b715b33fa67e512f3d2babfecb2ee95eb21d78266bf15ffd2",
       "description": "Simple (w:fldSimple) and complex (w:fldChar/w:instrText) PAGE and NUMPAGES fields in header and body."
     },
     {
       "id": "06-field-date-formatted",
       "category": "fields",
       "path": "06-field-date-formatted.docx",
-      "bytes": 2649,
-      "sha256": "c707b1d918cfca5906aaf3ccdc0380fcbfb61b3d028b712265444ac2e0fb84b4",
+      "bytes": 8223,
+      "sha256": "3f2a86b9fa0a390604d0e90f261fd1ceedcdac5b08b95bc0cf89f972fc9872ee",
       "description": "Complex DATE \\@ \"yyyy-MM-dd\" and CREATEDATE \\@ \"HH:mm\" fields with cached result runs."
     },
     {
       "id": "07-field-ref-crossref",
       "category": "fields",
       "path": "07-field-ref-crossref.docx",
-      "bytes": 2687,
-      "sha256": "57d604f06b5b647fcc4951690284d10082e12bd7352cf7531d8cf63a2145e90f",
+      "bytes": 8436,
+      "sha256": "e71746d5444e24419e508a7d45d119b1fca3bb75c2f6bac59608b0db1c7f8c46",
       "description": "Complex REF and PAGEREF cross-reference fields (\\h switch) targeting body bookmark anchors."
     },
     {
       "id": "08-field-toc-complex",
       "category": "fields",
       "path": "08-field-toc-complex.docx",
-      "bytes": 2728,
-      "sha256": "2acedf899177f1f649620f0000fec70d1a468ebafb1a758859a63b49b79c973a",
+      "bytes": 7715,
+      "sha256": "b0e3b23e3d4a46c21020484dc04e5c0ed02acec16a9ff0c89a5c511c73f8e3d2",
       "description": "Multi-entry TOC \\o \"1-3\" \\h \\z \\u complex field with begin/separate/end fldChar and internal links."
     },
     {
       "id": "09-numbering-multilevel-nested",
       "category": "numbering",
       "path": "09-numbering-multilevel-nested.docx",
-      "bytes": 3045,
-      "sha256": "4a62f500fa385715f0ee00400f3a0364cd28eb9204669ebbc3e33c79713601f1",
+      "bytes": 8395,
+      "sha256": "226a3a5a9651273cde729c561eb6b7cf7cded4a54061845233a3ccfa91fc61d3",
       "description": "3-level nested numbering (w:ilvl 0/1/2 with decimal, lowerLetter, lowerRoman) and bullet sub-items."
     },
     {
       "id": "10-numbering-restart-override",
       "category": "numbering",
       "path": "10-numbering-restart-override.docx",
-      "bytes": 3006,
-      "sha256": "879d4703ff2215c74b3fc1cb04e9184b87ebc5d5aa46606a3900b18825dbb7f7",
+      "bytes": 8178,
+      "sha256": "1cfb858862975dad434e3050875308d4f331494595127a80d5747620af08576c",
       "description": "Mid-list numbering restart using w:lvlRestart val=1 and w:lvlOverride with w:startOverride val=1."
     },
     {
       "id": "11-numbering-style-bound",
       "category": "numbering",
       "path": "11-numbering-style-bound.docx",
-      "bytes": 3065,
-      "sha256": "5956eb1c04539588ca411f99da90964f8e70157e52877dbec4ff8a6085e1f7ce",
+      "bytes": 7830,
+      "sha256": "99108b6bf99619146cc2bd79c69df4abb1dd41658ef07d0769172ef509eeb6ff",
       "description": "Style-bound numbering linking paragraph style NumberedHeading via styles.xml w:numPr and w:numStyleLink."
     },
     {
       "id": "12-numbering-chinese-counting",
       "category": "numbering",
       "path": "12-numbering-chinese-counting.docx",
-      "bytes": 3083,
-      "sha256": "1dbfc19d202f7547c1ab9af4557bf294b3295d4ede75446b4e4e4ee1589cf047",
+      "bytes": 7782,
+      "sha256": "3dafd8b5de910d41f44d55159a26cfb28264414710a0b491e7665f05f28651ed",
       "description": "Chinese numbering levels using chineseCounting, chineseLegalSimplified, and decimalEnclosedCircle."
     },
     {
       "id": "13-style-inheritance-chain",
       "category": "styles",
       "path": "13-style-inheritance-chain.docx",
-      "bytes": 2672,
-      "sha256": "2959644f8aacb74eda3d10b6e937edff12b84b5a60a31aae3549c4d84216c1e6",
+      "bytes": 7058,
+      "sha256": "d7681516d63a0b10f0bfe46ba16703e2be123371bd3341443fd65db152b2d9ca",
       "description": "3-level paragraph and character style inheritance chain (Normal -> Heading1 -> SubHeading -> CalloutLeaf)."
     },
     {
       "id": "14-style-direct-override-unbold",
       "category": "styles",
       "path": "14-style-direct-override-unbold.docx",
-      "bytes": 2527,
-      "sha256": "cb0bfcd363f21b11f24653cb6f3b80cb754ce0d4b90f7fdfd9ba3e1bbdc5d23c",
+      "bytes": 5933,
+      "sha256": "d5295f804e885f649c66d249183c406d69522e953d5eca3f4436c49151843d72",
       "description": "Direct run w:b val=0 / w:i val=0 overriding bold/italic style plus w:spacing before/after inheriting line=480."
     },
     {
       "id": "15-style-direct-indent-override",
       "category": "styles",
       "path": "15-style-direct-indent-override.docx",
-      "bytes": 2548,
-      "sha256": "12bd21d0f3461a953606457cc4b71233ce08e3e4088f83314991ebbf4cf15784",
+      "bytes": 6067,
+      "sha256": "1f9ef547b4ceb525ff6105bb248fe9dade23a0f963de1a285b28e1adb536a0ac",
       "description": "Direct paragraph w:ind firstLine=480 overriding style left=720 while inheriting line=480 from Normal."
     },
     {
       "id": "16-style-theme-fonts",
       "category": "styles",
       "path": "16-style-theme-fonts.docx",
-      "bytes": 3204,
-      "sha256": "057127a4feca50ee95dc695a38c9dda0f608bc2688e37dfeb8ad5da7905127c5",
+      "bytes": 7848,
+      "sha256": "71fb847dfc52ffc2d1268feade9709522e3e58dcd90c90b652e92a9ee080f60b",
       "description": "Theme font attributes (w:asciiTheme/w:hAnsiTheme/w:eastAsiaTheme) paired with word/theme/theme1.xml."
     },
     {
       "id": "17-section-multi-margins",
       "category": "sections",
       "path": "17-section-multi-margins.docx",
-      "bytes": 2605,
-      "sha256": "1de91a8364ccc16c526ec69eb2445198f20cc3987777c49f7d927a01681cb745",
+      "bytes": 6895,
+      "sha256": "db2e89e71e4127fe7aec24de8acfd93f2f7fe215373912b9cf5f2a7b96656eb4",
       "description": "3-section document with distinct w:pgMar page margins per section (1440, 1800/1080, 720/720 twips)."
     },
     {
       "id": "18-section-portrait-landscape-mix",
       "category": "sections",
       "path": "18-section-portrait-landscape-mix.docx",
-      "bytes": 2585,
-      "sha256": "c50417dbbba1d9c51b70dc9e71cc66fa007afeba23a5adf1bcc45f4531f238e5",
+      "bytes": 6915,
+      "sha256": "f060c91ba65b1a12a1f748fd83b5f25fe1bc80f36e06f83a559201dc8bb587bf",
       "description": "3-section document alternating Portrait -> Landscape (w:pgSz w=15840 h=12240 orient=landscape) -> Portrait."
     },
     {
       "id": "19-section-columns-1-2-3",
       "category": "sections",
       "path": "19-section-columns-1-2-3.docx",
-      "bytes": 2638,
-      "sha256": "6dc485474d8a552724d91cff3b093858c4d163904fab75922d28ea340b8056c5",
+      "bytes": 7077,
+      "sha256": "2c21168edba5bbbe4662b7e2f4e24275eb7ac02ab77c0ea8aa4cec52fef7ed8c",
       "description": "3-section document switching between 1-column, 2-column (w:cols num=2), and unequal 3-column layouts."
     },
     {
       "id": "20-section-headers-first-even",
       "category": "sections",
       "path": "20-section-headers-first-even.docx",
-      "bytes": 4922,
-      "sha256": "1ec737d374cb20642728605f7ed358709a1d542217ffe220b4d482c7e93b568f",
+      "bytes": 14835,
+      "sha256": "d542006bf35d7ebd93a182120250456708ec0067c680228a4037943b61ed1a72",
       "description": "Multi-section document with w:titlePg and distinct default, first, and even header and footer parts."
     },
     {
       "id": "21-footnote-restart-each-page",
       "category": "footnotes",
       "path": "21-footnote-restart-each-page.docx",
-      "bytes": 3310,
-      "sha256": "f8c7a2d794ccea193989d075781485beaea1f4ac0185cbf094071b1d25fb0562",
+      "bytes": 8364,
+      "sha256": "890dc16a3c0e8e220a3de2b9aece4f8978842d31b23f21c870ace83b411c6dce",
       "description": "Footnotes configured with per-page numbering restart (w:footnotePr/w:numRestart val=eachPage)."
     },
     {
       "id": "22-footnote-containing-table",
       "category": "footnotes",
       "path": "22-footnote-containing-table.docx",
-      "bytes": 3110,
-      "sha256": "23041876ce8f900304c855da8de83de239dc2f1e76df2bddd755b54f2d447c3a",
+      "bytes": 8769,
+      "sha256": "b0b0239e5369ba50a945ec00eed3226d8d9ca071f5a57628e968116bac611f61",
       "description": "Footnote in word/footnotes.xml containing an embedded 2x2 w:tbl alongside footnote text paragraphs."
     },
     {
       "id": "23-footnote-endnote-mixed-formatted",
       "category": "footnotes",
       "path": "23-footnote-endnote-mixed-formatted.docx",
-      "bytes": 3406,
-      "sha256": "c6224a1171e43f195ddd8839ec40abcc5850445e3124bc7df9d43934a0b2e2b0",
+      "bytes": 8770,
+      "sha256": "ca815214e38deda0671090b0147dbf252f4aa77107b2bf2129f40f1cfc7889bc",
       "description": "Mixed footnotes (word/footnotes.xml) and endnotes (word/endnotes.xml) with multi-paragraph formatted notes."
     },
     {
       "id": "24-graphic-inline-drawing",
       "category": "graphics",
       "path": "24-graphic-inline-drawing.docx",
-      "bytes": 3204,
-      "sha256": "e16712388b6a34e1a264b1f88fd742c73de5ba54f68627f49bc71ca1a78e8c82",
+      "bytes": 7127,
+      "sha256": "ad09c2b634f4820815374a2cf9f38cf38084940d850e1875e071759f25ce7be9",
       "description": "Inline DrawingML image (wp:inline + pic:pic + a:blip referencing word/media/inline1.png)."
     },
     {
       "id": "25-graphic-floating-anchor-wrap",
       "category": "graphics",
       "path": "25-graphic-floating-anchor-wrap.docx",
-      "bytes": 3404,
-      "sha256": "658ee06f3dd16d81964b190e150a0965a1d4f02becea9515055dd5d34ae4feb2",
+      "bytes": 7594,
+      "sha256": "6d81f7c8162fd4f44fba9db8b9a78f02216fb9aca1f116c1de462e6341384837",
       "description": "Floating anchored DrawingML image (wp:anchor + wp:wrapSquare wrapText=bothSides + positionH/positionV)."
     },
     {
       "id": "26-graphic-group-shapes",
       "category": "graphics",
       "path": "26-graphic-group-shapes.docx",
-      "bytes": 3417,
-      "sha256": "7824b50dab75933852a30741a2fdbd96a3a5817aafc8a147b0c8f3b9d480c656",
+      "bytes": 8082,
+      "sha256": "fc63e452f36c3a74793179fc3531e30f77fc842c55df6f73adf5b1a28696fdf7",
       "description": "Grouped shapes using DrawingML wpg:wgp (multiple wps:wsp shapes + pic:pic) and VML v:group fallback."
     },
     {
       "id": "27-other-textbox-txbxcontent",
       "category": "other",
       "path": "27-other-textbox-txbxcontent.docx",
-      "bytes": 3265,
-      "sha256": "288080c6abd1b41f05a85fe4b60cab23b3e71a29309adf7f1528ecb61cfcf916",
+      "bytes": 8414,
+      "sha256": "ec355ef9b7acee2a8ab37975e5f1b9591e8c8f532814b245ca2380aaf497ae6b",
       "description": "DrawingML shape with embedded textbox (wps:txbx/w:txbxContent) containing styled paragraphs and a list."
     },
     {
       "id": "28-other-comment-anchors",
       "category": "other",
       "path": "28-other-comment-anchors.docx",
-      "bytes": 3061,
-      "sha256": "26c3e269727d46e3ea81c82e0a3ec78e26d7eda9ff3d8f98357fb57ac2ff32bd",
+      "bytes": 8298,
+      "sha256": "72c4a80aaafdc201671724ab418abe409cc9b6e2cf387ac57d05d67e413a9157",
       "description": "Comment range anchors (w:commentRangeStart, w:commentRangeEnd, w:commentReference) with word/comments.xml."
     },
     {
       "id": "29-other-bookmarks-and-vanish",
       "category": "other",
       "path": "29-other-bookmarks-and-vanish.docx",
-      "bytes": 2642,
-      "sha256": "2257b9bb26e4251a3e9ae6d3faa44c6f18a867822dbee835a0bf8c469a473b77",
+      "bytes": 6798,
+      "sha256": "9d56b0a449b29191bbf4ddbd8e4737087b608e8392e1526a83ad83d329f6cdd2",
       "description": "Intra-paragraph and cross-paragraph bookmarks (w:bookmarkStart/End) plus hidden text runs (w:vanish)."
     },
     {
       "id": "30-other-header-table-chinese-fields",
       "category": "other",
       "path": "30-other-header-table-chinese-fields.docx",
-      "bytes": 3417,
-      "sha256": "67dd7dbea054af9550b0c4abbcedb5046e95b8e0fbef521eea73a0ad9ac6db40",
+      "bytes": 11954,
+      "sha256": "830a515fc5a8ee5719442b86ee918fb9b91eb6c31d9d0044637b17b2f4065279",
       "description": "Header (word/header1.xml) with 2x2 w:tbl + PAGE field, body Chinese DATE/TOC fields, and ideograph numbering."
     }
   ]

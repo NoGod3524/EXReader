@@ -7,7 +7,7 @@ import io
 import json
 from pathlib import Path
 from xml.sax.saxutils import escape, quoteattr
-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+from zipfile import ZipFile, ZipInfo, ZIP_STORED
 
 HERE = Path(__file__).resolve().parent
 W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
@@ -15,17 +15,18 @@ R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
 WP = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'
 PIC = 'http://schemas.openxmlformats.org/drawingml/2006/picture'
-NS = dict(w=W, r=R, a=A, wp=WP, pic=PIC, v='urn:schemas-microsoft-com:vml',
-          mc='http://schemas.openxmlformats.org/markup-compatibility/2006',
-          wpg='http://schemas.microsoft.com/office/word/2010/wordprocessingGroup',
-          wps='http://schemas.microsoft.com/office/word/2010/wordprocessingShape')
+NS_ITEMS = (('w', W), ('r', R), ('a', A), ('wp', WP), ('pic', PIC), ('v', 'urn:schemas-microsoft-com:vml'),
+            ('mc', 'http://schemas.openxmlformats.org/markup-compatibility/2006'),
+            ('wpg', 'http://schemas.microsoft.com/office/word/2010/wordprocessingGroup'),
+            ('wps', 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape'))
+NS = dict(NS_ITEMS)
 DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 MARKER = 'Draft estimate: 42 units.'
 REPLACEMENT = 'Reviewed estimate: 57 units; 中文 & <checked>.'
 
 
 def root(tag, content):
-    return DECL + '<' + tag + ' ' + ' '.join('xmlns:' + k + '=' + quoteattr(v) for k, v in NS.items()) + '>' + content + '</' + tag + '>'
+    return DECL + '<' + tag + ' ' + ' '.join('xmlns:' + k + '=' + quoteattr(v) for k, v in NS_ITEMS) + '>' + content + '</' + tag + '>'
 
 
 def run(text, props=''):
@@ -92,17 +93,24 @@ def png():
     def chunk(name, data):
         return struct.pack('>I', len(data)) + name + data + struct.pack('>I', zlib.crc32(name + data))
     width, height, scanlines = 160, 96, bytearray()
+    # Four-bit palette keeps the same RGB pixels and stored packages below 60 KiB.
+    palette = bytes((255, 255, 255, 100, 110, 120, 35, 87, 137, 58, 125, 68, 229, 143, 101))
     for y in range(height):
         scanlines.append(0)
         for x in range(width):
-            color = (255, 255, 255)
+            color = 0
             if x == 18 and 10 <= y <= 82 or y == 82 and 18 <= x <= 148:
-                color = (100, 110, 120)
-            for top, length, ink in ((14, 118, (35, 87, 137)), (38, 84, (58, 125, 68)), (62, 52, (229, 143, 101))):
+                color = 1
+            for top, length, ink in ((14, 118, 2), (38, 84, 3), (62, 52, 4)):
                 if top <= y < top+14 and 19 <= x < 19+length:
                     color = ink
-            scanlines.extend(color)
-    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(scanlines)) + chunk(b'IEND', b'')
+            if x % 2 == 0:
+                scanlines.append(color << 4)
+            else:
+                scanlines[-1] |= color
+    # One explicit stored DEFLATE block: zlib and zlib-ng choose different compressed bytes.
+    data = b'\x78\x01\x01' + struct.pack('<HH', len(scanlines), 0xffff ^ len(scanlines)) + scanlines + struct.pack('>I', zlib.adler32(scanlines))
+    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 4, 3, 0, 0, 0)) + chunk(b'PLTE', palette) + chunk(b'IDAT', data) + chunk(b'IEND', b'')
 
 
 def styles():
@@ -272,11 +280,12 @@ def package(index):
 
 def pack(parts):
     out = io.BytesIO()
-    with ZipFile(out, 'w', compression=ZIP_DEFLATED, compresslevel=9) as z:
+    # Stored members avoid implementation-dependent DEFLATE output.
+    with ZipFile(out, 'w', compression=ZIP_STORED) as z:
         for name, data in sorted(parts.items()):
             info = ZipInfo(name, (2026, 11, 10, 0, 0, 0))
             info.create_system = 0  # Match the committed DOS ZIP headers on every host.
-            info.compress_type, info.external_attr = ZIP_DEFLATED, 0o100644 << 16
+            info.compress_type, info.external_attr = ZIP_STORED, 0o100644 << 16
             z.writestr(info, data)
     return out.getvalue()
 
