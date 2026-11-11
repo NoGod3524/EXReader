@@ -420,6 +420,9 @@ static void shell_edit_paint(HWND window) {
       MoveToEx(dc,x,y,NULL); LineTo(dc,x,y+(int)lroundf(box[3])); SelectObject(dc,previous); DeleteObject(pen);
     }
   }
+  if (GetFocus()==window && !(SendMessageW(window,WM_QUERYUISTATE,0,0)&UISF_HIDEFOCUS)) {
+    RECT focus=area; InflateRect(&focus,-2,-2); DrawFocusRect(dc,&focus);
+  }
   BitBlt(screen,0,0,area.right,area.bottom,dc,0,0,SRCCOPY);
   SelectObject(dc,old); DeleteObject(bitmap); DeleteDC(dc); EndPaint(window,&paint);
 }
@@ -470,6 +473,7 @@ static int shell_edit_translate(const MSG *message) {
   /* Dispatch editing keys directly before IsDialogMessage consumes arrows or
      Enter. TranslateMessage still produces WM_CHAR for printable input. */
   if (editor.model.doc && message->hwnd==g.page) {
+    if (message->wParam==VK_TAB && !editor.composing) return 0;
     TranslateMessage(message); DispatchMessageW(message); return 1;
   }
   return 0;
@@ -480,7 +484,7 @@ static int shell_edit_message(HWND window,UINT message,WPARAM wp,LPARAM lp,LRESU
   switch (message) {
     case WM_PAINT: shell_edit_paint(window); return 1;
     case WM_SIZE: shell_edit_relayout(); return 1;
-    case WM_GETDLGCODE: *result=DLGC_WANTARROWS|DLGC_WANTCHARS|(editor.enabled ? DLGC_WANTTAB:0); return 1;
+    case WM_GETDLGCODE: *result=DLGC_WANTARROWS|DLGC_WANTCHARS; return 1;
     case WM_SETCURSOR: SetCursor(LoadCursorW(NULL,editor.enabled ? IDC_IBEAM:IDC_ARROW)); *result=TRUE; return 1;
     case WM_SETFOCUS:
       edit_native_caret();

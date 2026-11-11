@@ -1,0 +1,191 @@
+[
+  {
+    "step": "keys-before",
+    "text": "X3 host editing\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-home",
+    "text": "X3 host editing\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-right",
+    "text": "X3 host editing\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-left",
+    "text": "X3 host editing\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-down",
+    "text": "X3 host editing\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-up",
+    "text": "X3 host editing\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-end",
+    "text": "X3 host editing\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-backspace",
+    "text": "X3 host editin\nSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  },
+  {
+    "step": "keys-delete",
+    "text": "X3 host editinSelect this line, then type here.\n",
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ],
+    "foreground": 198390
+  }
+]

@@ -1,0 +1,14 @@
+
+LanguageTag     : zh-Hans-CN
+InputMethodTips : {0804:{81D4E9C9-1D3B-41BC-9E6C-4B40BF79E35E}{FA550B04-5AD7-411F-A5AC-CA038EC515D7}}
+
+LanguageTag     : en-US
+InputMethodTips : {0409:00000409}
+
+
+PSPath      : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\CTF\TIP\{6a498709-e00b-4c45-a018-8f9e4081ae40}\LanguageProfile\0x00000804\{82590C13-F4DD-44f4-BA1D-8667246FDF8E}
+Description : Microsoft Wubi
+
+PSPath      : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\CTF\TIP\{81d4e9c9-1d3b-41bc-9e6c-4b40bf79e35e}\LanguageProfile\0x00000804\{FA550B04-5AD7-411f-A5AC-CA038EC515D7}
+Description : Microsoft Pinyin
+

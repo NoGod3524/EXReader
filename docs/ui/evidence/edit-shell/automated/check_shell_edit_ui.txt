@@ -1,0 +1,31 @@
+PASS (not physical IME): HWND WM_CHAR CJK before=empty result=你好世界 one Ctrl+Z=empty
+PASS: Tab delegated without text mutation; Home=0 Right=1 Left=0 End=10; Backspace=012345678 Delete=12345678
+PASS: readonly switch; WM_CHAR burst; keys/graphemes; clipboard paragraphs; hit-test/drag; DPI/zoom; preview isolation/IME coordinates; DOCX save/reopen; 20 HWND undo/redo; close save/discard/cancel; locked-file preservation
+DIALOG choice=2 title=保存更改
+CHILD 6 &Yes
+CHILD 7 &No
+CHILD 2 Cancel
+CHILD 20 
+CHILD 65535 文档有未保存的更改。是否保存？
+
+是：保存　否：放弃　取消：继续编辑
+DIALOG choice=7 title=保存更改
+CHILD 6 &Yes
+CHILD 7 &No
+CHILD 2 Cancel
+CHILD 20 
+CHILD 65535 文档有未保存的更改。是否保存？
+
+是：保存　否：放弃　取消：继续编辑
+DIALOG choice=1 title=无法保存
+CHILD 2 OK
+CHILD 20 
+CHILD 65535 保存失败，原文件保留。请检查路径和磁盘后重试。
+DIALOG choice=6 title=保存更改
+CHILD 6 &Yes
+CHILD 7 &No
+CHILD 2 Cancel
+CHILD 20 
+CHILD 65535 文档有未保存的更改。是否保存？
+
+是：保存　否：放弃　取消：继续编辑

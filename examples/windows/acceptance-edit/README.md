@@ -1,5 +1,10 @@
 # X3 验收记录 · 2026-11-10
 
+Y3 后续补录见 [真实窗口证据与限制](../../../docs/ui/evidence/edit-shell/README.md)：
+已取得拖选反白、脏标题与原生关闭弹窗，修复 Tab 写入正文和编辑区缺少焦点提示；
+微软拼音、可见光标与焦点环仍未通过，不能视为 X3 全项验收完成。
+下文保留 X3 当次原始记录。
+
 实现和证据均位于 `examples/windows/`；入口接线位于 `examples/reader.c`。
 未修改 `src/`。本机测试使用 `.build-sdk` 中带 #119 与 X1 DOCX 双向桥的 SDK、
 GNU 16.2.0、Release 构建。

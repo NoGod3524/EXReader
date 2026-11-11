@@ -1,0 +1,187 @@
+{
+  "date": "2026-11-10",
+  "branch": "codex/dx-shell-edit-20261110",
+  "overall": "incomplete",
+  "capture_method": "DPI-aware PrintWindow; unmodified PNGs; native HWNDs; no mockups or compositing",
+  "screenshots": [
+    {
+      "file": "01-caret-attempt.png",
+      "resolution_px": [
+        1180,
+        900
+      ],
+      "dpi": 120,
+      "dpi_scale": 1.25,
+      "window_position_px": [
+        -32000,
+        -32000
+      ],
+      "sha256": "ad5e471d53c74a6cfed4606a0c50667c4a6f90225e032306d3342c0e5c48e78e"
+    },
+    {
+      "file": "02-selection.png",
+      "resolution_px": [
+        1180,
+        900
+      ],
+      "dpi": 120,
+      "dpi_scale": 1.25,
+      "window_position_px": [
+        -32000,
+        -32000
+      ],
+      "sha256": "b2378a64713fbc5f5878e2c7c49b9f0803855876d7d57ed9add83bac4ae05350"
+    },
+    {
+      "file": "03-ime-attempt.png",
+      "resolution_px": [
+        1180,
+        900
+      ],
+      "dpi": 120,
+      "dpi_scale": 1.25,
+      "window_position_px": [
+        -32000,
+        -32000
+      ],
+      "sha256": "0212d39568c55ac5c4545eb74cdd68d8d36ae727b51c4699661d9236e71b06b2"
+    },
+    {
+      "file": "04-unsaved-dialog.png",
+      "resolution_px": [
+        382,
+        220
+      ],
+      "dpi": 120,
+      "dpi_scale": 1.25,
+      "window_position_px": [
+        772,
+        492
+      ],
+      "sha256": "c788a4475ee25ea892c954cc87a1c1e3af6874c72a790e2f045463effffba894"
+    },
+    {
+      "file": "04-unsaved-title.png",
+      "resolution_px": [
+        1180,
+        900
+      ],
+      "dpi": 120,
+      "dpi_scale": 1.25,
+      "window_position_px": [
+        -32000,
+        -32000
+      ],
+      "sha256": "41ccf9a7d5a2509de72b166519e0468ff1923fe658d2dd7dfbe400c3974cc9ea"
+    },
+    {
+      "file": "05-focus-attempt.png",
+      "resolution_px": [
+        1180,
+        900
+      ],
+      "dpi": 120,
+      "dpi_scale": 1.25,
+      "window_position_px": [
+        -32000,
+        -32000
+      ],
+      "sha256": "5aa50d2c593980b953912399e69da203c46a77bd220aeb08eb035288f94e0481"
+    },
+    {
+      "file": "tab-before-fix.png",
+      "resolution_px": [
+        1180,
+        900
+      ],
+      "dpi": 120,
+      "dpi_scale": 1.25,
+      "window_position_px": [
+        -32000,
+        -32000
+      ],
+      "sha256": "9c0a8ee08900c6b741092bc0d7a1d831299e1d7460f00868a813ff98687b94c3"
+    }
+  ],
+  "results": {
+    "selection": "pass",
+    "unsaved_title_and_native_dialog": "pass (separate original HWND captures)",
+    "arrows_home_end_backspace_delete": "pass at HWND message/model level",
+    "tab_routing_regression": "pass",
+    "caret_visible": "not verified",
+    "tab_actual_focus_movement_and_visible_ring": "not verified",
+    "microsoft_pinyin_preedit_candidate_commit_ctrl_z": "not verified; posted romanization became body text",
+    "cjk_model_and_isolated_hwnd_one_undo": "pass; alternative evidence only"
+  },
+  "test_instances_closed": {
+    "31492": true,
+    "22208": true,
+    "32764": true
+  },
+  "sha256_executable": "b2d65732c5e892a423b7dff98cde32ae4866722e6d1c44ea9a20b7cd188d5474",
+  "text_evidence_sha256": {
+    "automated\\cjk-hwnd-before.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "automated\\cjk-hwnd-one-ctrl-z.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "automated\\cjk-hwnd-wmchar.utf8": "beca6335b20ff57ccc47403ef4d9e0b8fccb4442b3151c2e7d50050673d43172",
+    "automated\\cjk-model-before.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "automated\\cjk-model-one-undo.utf8": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "automated\\cjk-model-result.utf8": "beca6335b20ff57ccc47403ef4d9e0b8fccb4442b3151c2e7d50050673d43172",
+    "automated\\process-after-reopen.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "automated\\redo-after.utf8": "7de791617fe076faac10d5415bc6d73fc5810f3418a24a85960f9ff92a325c56",
+    "automated\\redo-before.utf8": "7de791617fe076faac10d5415bc6d73fc5810f3418a24a85960f9ff92a325c56",
+    "automated\\ui-after-reopen.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "automated\\ui-before-save.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "automated\\ui-redo-after.utf8": "5ccd0688f0515a3333bda893fd79e748a747601e20dde6db3c3ef778d79eb2a4",
+    "automated\\ui-redo-before.utf8": "5ccd0688f0515a3333bda893fd79e748a747601e20dde6db3c3ef778d79eb2a4",
+    "automated\\ui-undo-after.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "automated\\ui-undo-before.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "automated\\undo-after.utf8": "2fdf7a63aaebb4c0da24bbec9e51fdee669dce3d71a6d4ebbd78ea4a445ad28d",
+    "automated\\undo-before.utf8": "2fdf7a63aaebb4c0da24bbec9e51fdee669dce3d71a6d4ebbd78ea4a445ad28d",
+    "keys-backspace.utf8": "181e67dd260f3bd0763b412e13700f73a05408d67c44acc3ec0e6477f0ba8e01",
+    "keys-before.utf8": "3602121dce60710476cff228030c6e932c36f3aad203652d56f96167d037d9a3",
+    "keys-delete.utf8": "38b97993e94838638e516e87bcbcd68c1efd6e40af41dbe28c739b366c2dd6f3",
+    "keys-down.utf8": "3602121dce60710476cff228030c6e932c36f3aad203652d56f96167d037d9a3",
+    "keys-end.utf8": "3602121dce60710476cff228030c6e932c36f3aad203652d56f96167d037d9a3",
+    "keys-home.utf8": "3602121dce60710476cff228030c6e932c36f3aad203652d56f96167d037d9a3",
+    "keys-left.utf8": "3602121dce60710476cff228030c6e932c36f3aad203652d56f96167d037d9a3",
+    "keys-right.utf8": "3602121dce60710476cff228030c6e932c36f3aad203652d56f96167d037d9a3",
+    "keys-up.utf8": "3602121dce60710476cff228030c6e932c36f3aad203652d56f96167d037d9a3",
+    "real-ime-attempt-after.utf8": "7569e3cabb0663a10735d78c26b1683ed3b913be37b503cef665f179023f8064",
+    "real-ime-attempt-before.utf8": "333bb04d4a6313a64c476459ea2c614429aeeec9a12d46f80dd7e5477192bb2e",
+    "real-ime-attempt-one-undo-command.utf8": "333bb04d4a6313a64c476459ea2c614429aeeec9a12d46f80dd7e5477192bb2e"
+  },
+  "automated_checks": {
+    "automated_checks": "pass",
+    "warnings": 0,
+    "undo": 20,
+    "redo": 20,
+    "sha256": {
+      "undo-before.utf8": "2fdf7a63aaebb4c0da24bbec9e51fdee669dce3d71a6d4ebbd78ea4a445ad28d",
+      "undo-after.utf8": "2fdf7a63aaebb4c0da24bbec9e51fdee669dce3d71a6d4ebbd78ea4a445ad28d",
+      "redo-before.utf8": "7de791617fe076faac10d5415bc6d73fc5810f3418a24a85960f9ff92a325c56",
+      "redo-after.utf8": "7de791617fe076faac10d5415bc6d73fc5810f3418a24a85960f9ff92a325c56",
+      "ui-undo-before.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+      "ui-undo-after.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+      "ui-redo-before.utf8": "5ccd0688f0515a3333bda893fd79e748a747601e20dde6db3c3ef778d79eb2a4",
+      "ui-redo-after.utf8": "5ccd0688f0515a3333bda893fd79e748a747601e20dde6db3c3ef778d79eb2a4",
+      "ui-before-save.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+      "ui-after-reopen.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+      "process-after-reopen.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+      "roundtrip.docx": "b70f9721a8da2c6f74559bb03a70b10d845e1b59d778541ca667ecf52ff098a5"
+    },
+    "interactive_checks": "pending: real-window caret/selection/IME/close-prompt screenshots and Microsoft Pinyin input"
+  },
+  "source_sha256": {
+    "examples/windows/shell_edit.inc": "1432be094d10580897cda02352370bdcf418bc9caf996cec9b1207f966369805",
+    "examples/windows/check_shell_edit_ui.c": "561e878e8cc9c3a5d3f2bc3d6118089e4134d0c04f57bca95c0bb97b8446347f",
+    "examples/windows/check_shell_edit_model.c": "776de3aa804ead7c330fa935eb8c25f535666b30aae755b1503e11af84892f3c",
+    "ops/capture_window.py": "d2e85e6d93c98efef3a67f4c7ec14854214f8607768d32771d79a0e96ec37b51",
+    "ops/send_keys.py": "41b451d33e34ab67542566d1252bf2be45e8bdffe1f7ac52b36dbe52fe008004"
+  },
+  "log_sha256": {
+    "automated\\build.txt": "1ce4fef79942fcaa1225e963b386ac542eed33f1df3da5423fd4df1c76142c90",
+    "automated\\check_shell_edit_model.txt": "e7b00e634d0d670da11ecaad1dcac4fb55b0e27c67b2bae14c567153e708650c",
+    "automated\\check_shell_edit_ui.txt": "d0c6d017bf9a76bfe63c5e43975a60dec758d7999bc62c1f64e3c22d6ce4dde1",
+    "automated\\fresh-process-reopen.txt": "a913d2a29602198028b16f98238692a547a28e632a09d1b044e6c91aabd44bf6"
+  }
+}
