@@ -1,0 +1,105 @@
+W2 DOCX 写出保真验收
+基线：3076d3ddd21a444a1cc2d89f396368f3224953e9
+修改：src/export_text.c；CMake 新增 native-docx-write；新增独立 tests/check_docx_write.py。
+源模型首段为标题时居中并紧接 DATE 域；无标题时 DATE 放在正文前，不重复插入元数据标题。
+References / Works Cited / Bibliography 标题（不区分大小写）前写显式分页符。
+正文、标题、DATE/PAGE 结果与 Normal 默认字体均为 Times New Roman 12pt。
+Word 会重新生成 DATE 结果 run；styles.xml 的 docDefaults/Normal 确保字段更新后字体不回退 Aptos。
+
+独立校验：python-docx 1.2.0，读 verified.docx，不调用 EXReader 解读代码。
+字段 | 期望 | 实际 | 通过
+font.name | Times New Roman | Times New Roman | PASS
+font.size (pt) | 12 | 12.0 | PASS
+line_spacing (multiple) | 2.0 | 2.0 | PASS
+line_spacing_rule | DOUBLE (2) | DOUBLE (2) | PASS
+first_line_indent (in) | 0.5 | 0.5 | PASS
+space_after (pt) | 6 | 6.0 | PASS
+alignment | LEFT (0) | LEFT (0) | PASS
+page_width (in) | 8.5 | 8.5 | PASS
+page_height (in) | 11 | 11.0 | PASS
+top_margin (in) | 1 | 1.0 | PASS
+right_margin (in) | 1 | 1.0 | PASS
+bottom_margin (in) | 1 | 1.0 | PASS
+left_margin (in) | 1 | 1.0 | PASS
+header_distance (in) | 0.5 | 0.5 | PASS
+footer_distance (in) | 0.5 | 0.5 | PASS
+
+实际 OOXML
+<w:pPr>
+  <w:spacing w:before="0" w:after="120" w:line="480" w:lineRule="auto"/>
+  <w:ind w:firstLine="0"/>
+  <w:jc w:val="center"/>
+  <w:rPr>
+    <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/>
+    <w:sz w:val="24"/>
+    <w:szCs w:val="24"/>
+  </w:rPr>
+</w:pPr>
+
+<w:rPr>
+  <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/>
+  <w:sz w:val="24"/>
+  <w:szCs w:val="24"/>
+</w:rPr>
+
+<w:sectPr>
+  <w:headerReference w:type="default" r:id="rId1"/>
+  <w:pgSz w:w="12240" w:h="15840"/>
+  <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
+</w:sectPr>
+
+页眉独立 part
+<?xml version="1.0" ?>
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr>
+      <w:spacing w:after="0" w:line="240" w:lineRule="auto"/>
+      <w:jc w:val="right"/>
+      <w:rPr>
+        <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/>
+        <w:sz w:val="24"/>
+        <w:szCs w:val="24"/>
+      </w:rPr>
+    </w:pPr>
+    <w:fldSimple w:instr=" PAGE " w:dirty="true">
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman"/>
+          <w:sz w:val="24"/>
+          <w:szCs w:val="24"/>
+        </w:rPr>
+        <w:t>1</w:t>
+      </w:r>
+    </w:fldSimple>
+  </w:p>
+</w:hdr>
+
+OPC 登记：word/header1.xml + word/styles.xml 各有 Content Types Override；
+word/_rels/document.xml.rels 的 rId1 指向 header1.xml，rId2 指向 styles.xml。
+节引用 default/rId1。PAGE/DATE 都为 fldSimple 域，PAGE 缓存值 1，DATE 无静态日期。
+
+Word 桌面实际打开并更新域后逐项截图：
+01-body-font-and-page-number.jpg 正文字体、字号及右上角页码
+02-font-dialog.jpg Times New Roman / Regular / 12
+03-paragraph-double-indent-spacing.jpg Double=2.0、First line 1.27cm=0.5in、After 6pt、Left
+04-letter-margins-one-inch.jpg 四边 2.54cm=1in
+05-letter-paper.jpg Letter 21.59x27.94cm=8.5x11in
+06-final-first-page-fields.jpg 标题后日期与页眉页码
+07-updated-date-font.jpg DATE 更新后仍为 Times New Roman / 12
+08-date-and-page-field-codes.jpg Alt+F9 同屏显示 { DATE } 和 { PAGE }
+09-references-page-two.jpg References 单独第2页、右上角自动页码2
+
+最终验证：ctest 251/251 PASS，205.68s；含 native-docx-write 及 sdk-release。
+本地构建：Windows x64 MinGW Release，ICC/WebP/TIFF/AVIF/PDF crypto/MP3 OFF，LCP/JPX ON。
+本地依赖固定到已安装源码；具体配置见 configure.txt；层次检查逆向符号/头依赖均0。
+SDK 发布测试执行 MSVC README；从 build/exreader.def 生成带 LIBRARY libexreader.dll 的
+MSVC exreader.lib，并将 MinGW .dll.a 隔离到 build/w2-importlib，包选择 MSVC 导入库。
+未改既有测试断言、超时或 .github/；未改 src/docx.c 或 src/docx_edit.c；没有新增 src/*.h。
+
+真书：同一19本、字体、布局和构建配置，修改前后均9995页、8662386字形。
+页数变化0、字形变化0、逐页SHA-256变化0。完整逐页结果见 books-before/after.json。
+content_fingerprint: 5153b991b9fdeec43b5b79af90269fbf2cfdebe579c3fe2db673465cfea438d2
+verified.docx SHA256: bf1a924ca0bf0bced3a33ded7e1690466e1528961014d9e02465cf731639268b
+src/export_text.c SHA256: 708d7ae3ae8fb089ad47fdc677d1e79ede32c35df0a5e14ec479e5320124365d
+
+复现独立检查：python tests/check_docx_write.py build/exreader-convert.exe build/docx-proof --independent
