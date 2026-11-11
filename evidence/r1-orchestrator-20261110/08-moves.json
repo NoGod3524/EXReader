@@ -1,0 +1,21 @@
+{
+  "ref": "4d14e5eb",
+  "exact_renames": 91,
+  "directories": [
+    "cfi-acceptance-20261108",
+    "font-coverage-20261109",
+    "search-acceptance-20261108",
+    "search-fix-20261108",
+    "search-index-20261109"
+  ],
+  "old_path_hits": [
+    "HEAD:CFI-OUT.txt:6:Step 5: final-binary acceptance collected in tests/cfi-acceptance-20261108.json and companion artifacts. Parse 63/63 (25 valid + 38 invalid, with explicit diagnostics); serialize 25/25 exact scheme data; anchor/range 100/100 (100% lossless); cross-part 10/10; 紅樓夢 20/20; 19/19 real books, 11,296 pages, 8,648,640 glyphs, 0 page-count changes and 0 changed pixel hashes. Final DLL SHA-256 87b6b6f9c9b2cdc5c3ea297bc369583e0cb1015931aa436f42fe2474b8bd5a34 matches the render. Full ctest 218/218 (212 + 6); layer check clean. Protected-tree ledger appended, no new src header, examples/ and .github/ unchanged. origin/main db9bab66 adds platform docs/tools only; engine/test/build inputs remain identical to the tested baseline.",
+    "HEAD:tests/collect_cfi_acceptance.py:114:    (ROOT / 'tests/cfi-acceptance-20261108.json').write_text(",
+    "HEAD:FONTCOV-OUT.txt:7:[步骤 6 完成] tests/font-coverage-20261109 已封存完整640行前后矩阵、236项修复前缺口/27项最终缺口、独立字体oracle、四张实际渲染PNG、8条ZWJ参考、19书逐页结果、ctest/层检查/反例证据、构建记录和PROVENANCE哈希。report_font_coverage.py已核验三项最终测量使用同一DLL。样本EPUB SHA256 da3ce098c0098de162e636abfb3668817e2cf8cff81b80874016bcfcd1a002a0，仅生成脚本/哈希入库。examples/.github无改动，无新增src头文件。",
+    "HEAD:SEARCH-OUT.txt:6:步骤 6：最终快照版宿主六组6/6通过，中文13989/英文10/竖排11/PDF612/MOBI9/整书中文13989，命中均落在实际文字。十字总701.432ms（含输入间隔/200ms防抖/投递），实际搜索1次2.870ms，输入处理最长4.8961ms。最终引擎冷搜三轮中位：的88.6829ms、賈寶玉92.8251ms，全部样本<200ms；缓存中位4.4362/19.6073ms。tests/search-acceptance-20261108已保存压缩逐页报告、203项日志、六组窗口日志、三截图、计时及构建/源码哈希。",
+    "HEAD:SEARCH-FIX-OUT.txt:4:步骤 5：三本真书各 5 词 15/15 命中数与原验收及独立 oracle 一致；20/20 真书命中通过定位/锚点/实际字形，含 6 个竖排。原始结果 tests/search-fix-20261108/search.json。",
+    "HEAD:SEARCH-FIX-OUT.txt:5:步骤 4：Windows Release 全量构建通过；ctest 全量通过，原始日志 tests/search-fix-20261108/ctest.txt（含 PDF 深化与流式搜索）。",
+    "HEAD:SEARCH-FIX-OUT.txt:6:步骤 6：19 本真书重新逐页渲染，页数与逐页像素哈希均不变；完整结果 build/search-fix-realbooks.json，diff 将归档至 tests/search-fix-20261108。",
+    "HEAD:SEARCH-FIX-OUT.txt:9:步骤 9：已归档 tests/search-fix-20261108：API 撞名审计与签名、208 项测试日志、三书搜索、19 本前后逐页压缩报告与零变化 diff、六组宿主日志及三张截图、构建日志与源码/DLL/EXE 哈希。"
+  ]
+}

@@ -1,0 +1,1 @@
+exr_font sizeof=72 alignof=8 raster_cache=56 manager_required=64

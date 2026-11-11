@@ -1,0 +1,8 @@
+exr_edit_block sizeof=112 alignof=8
+exr_edit_run sizeof=200 alignof=8
+exr_edit_section sizeof=816 alignof=8
+exr_edit_part sizeof=32 alignof=8
+edit_allocation sizeof=32 alignof=16
+long double sizeof=16 alignof=16
+max_align_t sizeof=32 alignof=16
+4096 allocations: model misalignments=0, header misalignments=0, retained=0

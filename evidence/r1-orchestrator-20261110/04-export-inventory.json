@@ -1,0 +1,33 @@
+{
+  "expected": 24,
+  "missing": [],
+  "symbols": [
+    "exr_edit_anchor_capture",
+    "exr_edit_anchor_restore",
+    "exr_edit_begin",
+    "exr_edit_block_at",
+    "exr_edit_block_count",
+    "exr_edit_commit",
+    "exr_edit_defaults",
+    "exr_edit_delete_block",
+    "exr_edit_doc_create",
+    "exr_edit_doc_free",
+    "exr_edit_find_block",
+    "exr_edit_insert_paragraph",
+    "exr_edit_layout_after",
+    "exr_edit_memory_bytes",
+    "exr_edit_pager_create",
+    "exr_edit_parts",
+    "exr_edit_redo",
+    "exr_edit_reflow_statistics",
+    "exr_edit_rollback",
+    "exr_edit_sections",
+    "exr_edit_set_paragraph_props",
+    "exr_edit_set_run_props",
+    "exr_edit_split_paragraph",
+    "exr_edit_undo"
+  ],
+  "actual_dll_missing": [],
+  "actual_dll_export_count": 454,
+  "dll_sha256": "2f59c42766a74b0701fdcc1f3db6f94270cea4d79b05a96f1984065401b7ac3a"
+}

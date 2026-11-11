@@ -1,0 +1,3 @@
+HEAD:tests/collect_cfi_acceptance.py:34:    evidence = ROOT / 'evidence/cfi-acceptance-20261108'
+HEAD:tests/collect_cfi_acceptance.py:114:    (ROOT / 'tests/cfi-acceptance-20261108.json').write_text(
+HEAD:tests/report_font_coverage.py:27:    parser.add_argument('--output', type=Path, default=ROOT / 'evidence/font-coverage-20261109')

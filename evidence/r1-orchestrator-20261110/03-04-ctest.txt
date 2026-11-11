@@ -1,0 +1,41 @@
+Test project C:/tmp/exr-r1-review-20261110/build
+      Start 204: native-font
+      Start 210: native-reflow-basic
+ 1/18 Test #204: native-font .......................   Passed    0.53 sec
+      Start 211: native-reflow-insertions
+ 2/18 Test #210: native-reflow-basic ...............   Passed    0.60 sec
+      Start 212: native-reflow-convergence
+ 3/18 Test #212: native-reflow-convergence .........   Passed    0.24 sec
+      Start 213: native-reflow-history
+ 4/18 Test #211: native-reflow-insertions ..........   Passed    0.61 sec
+ 5/18 Test #213: native-reflow-history .............   Passed    0.28 sec
+      Start 214: native-reflow-anchors
+      Start 215: native-reflow-failures
+ 6/18 Test #215: native-reflow-failures ............   Passed    0.46 sec
+      Start 216: native-reflow-formatting
+ 7/18 Test #214: native-reflow-anchors .............   Passed    0.57 sec
+      Start 217: native-reflow-unicode
+ 8/18 Test #217: native-reflow-unicode .............   Passed    0.23 sec
+ 9/18 Test #216: native-reflow-formatting ..........   Passed    0.26 sec
+      Start 218: native-reflow-long
+      Start 219: native-reflow-revision
+10/18 Test #219: native-reflow-revision ............   Passed    0.26 sec
+      Start 220: native-reflow-empty
+11/18 Test #220: native-reflow-empty ...............   Passed    0.37 sec
+      Start 221: native-reflow-disjoint
+12/18 Test #221: native-reflow-disjoint ............   Passed    0.53 sec
+      Start 223: native-page-cache
+13/18 Test #223: native-page-cache .................   Passed    1.75 sec
+      Start 263: native-font-manager-discovery
+14/18 Test #263: native-font-manager-discovery .....   Passed    2.16 sec
+      Start 264: native-font-manager-selection
+15/18 Test #264: native-font-manager-selection .....   Passed    2.67 sec
+      Start 265: native-font-manager-cache
+16/18 Test #265: native-font-manager-cache .........   Passed    2.52 sec
+      Start 266: native-font-manager-integration
+17/18 Test #266: native-font-manager-integration ...   Passed    3.36 sec
+18/18 Test #218: native-reflow-long ................   Passed   29.35 sec
+
+100% tests passed out of 18
+
+Total Test time (real) =  31.38 sec

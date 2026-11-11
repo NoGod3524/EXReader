@@ -4267,7 +4267,7 @@
   },
   {
     "file": "tests/check_reading_release.py",
-    "line": 23,
+    "line": 24,
     "literal": "3.40.0",
     "line_sha256": "1df328e7553c287a56d358d5d3c856b632332279fb21680c4e1f7f3c7a5fca40",
     "purpose": "frozen_baseline",
@@ -4286,7 +4286,7 @@
   },
   {
     "file": "tests/check_reading_release.py",
-    "line": 43,
+    "line": 44,
     "literal": "3.40.0",
     "line_sha256": "b9d5176c0f33d00df8b8c6cdb33b722a5b2a601e8f20f6b542f46c7b4dfa99e8",
     "purpose": "frozen_baseline",
@@ -4305,7 +4305,7 @@
   },
   {
     "file": "tests/check_reading_release.py",
-    "line": 125,
+    "line": 126,
     "literal": "3.40.0",
     "line_sha256": "1431e3330272a521ab8c7d120b690898b05a0355d3115a66a40c533211f91ab4",
     "purpose": "frozen_baseline",

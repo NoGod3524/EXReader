@@ -1,0 +1,3 @@
+opaque block create status=0
+opaque block reflow status=11 (Reflow supports text paragraphs/breaks; opaque content, numbering and keep-next require a richer projection)
+PASS: opaque XML retained across history; empty opaque block rejected

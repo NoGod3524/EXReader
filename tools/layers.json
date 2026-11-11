@@ -223,7 +223,6 @@
     "include/exr/edit.h": "doc",
     "include/exr/formats.h": "formats",
     "include/exr/layout.h": "layout",
-    "include/exr/edit.h": "doc",
     "include/exr/reflow.h": "layout",
     "src/reflow_internal.h": "layout",
     "include/exr/render.h": "render",
