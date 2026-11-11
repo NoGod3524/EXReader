@@ -1,0 +1,106 @@
+[
+  {
+    "check": "package_xml",
+    "status": "PASS",
+    "detail": "ZIP CRC, unique parts, XML syntax, document/body",
+    "xml": []
+  },
+  {
+    "check": "content_types",
+    "status": "PASS",
+    "detail": "DOCX main-part content type",
+    "xml": []
+  },
+  {
+    "check": "root_relationship",
+    "status": "PASS",
+    "detail": "officeDocument points to word/document.xml",
+    "xml": []
+  },
+  {
+    "check": "section_present",
+    "status": "PASS",
+    "detail": "1 sections",
+    "xml": []
+  },
+  {
+    "check": "section_nonempty",
+    "status": "FAIL",
+    "detail": "1 empty sections",
+    "xml": [
+      "<w:sectPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" />"
+    ]
+  },
+  {
+    "check": "paragraph_properties",
+    "status": "FAIL",
+    "detail": "1/1 body paragraphs lack pPr (including table cells)",
+    "xml": [
+      "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:r><w:t xml:space=\"preserve\">Title alpha</w:t></w:r></w:p>\n"
+    ]
+  },
+  {
+    "check": "double_spacing",
+    "status": "FAIL",
+    "detail": "1 paragraphs differ from 480/auto",
+    "xml": [
+      "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:r><w:t xml:space=\"preserve\">Title alpha</w:t></w:r></w:p>\n"
+    ]
+  },
+  {
+    "check": "font_times_new_roman",
+    "status": "FAIL",
+    "detail": "1/1 text runs differ (ascii + hAnsi)",
+    "xml": [
+      "<w:r xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:t xml:space=\"preserve\">Title alpha</w:t></w:r>"
+    ]
+  },
+  {
+    "check": "font_size_12pt",
+    "status": "FAIL",
+    "detail": "1/1 text runs differ from sz=24",
+    "xml": [
+      "<w:r xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:t xml:space=\"preserve\">Title alpha</w:t></w:r>"
+    ]
+  },
+  {
+    "check": "letter_page_size",
+    "status": "FAIL",
+    "detail": "all sections 12240 x 15840 twips",
+    "xml": [
+      "<w:sectPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" />"
+    ]
+  },
+  {
+    "check": "one_inch_margins",
+    "status": "FAIL",
+    "detail": "all sections: top/right/bottom/left=1440",
+    "xml": [
+      "<w:sectPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" />"
+    ]
+  },
+  {
+    "check": "header_part",
+    "status": "WARN",
+    "detail": "0 linked header parts",
+    "xml": [
+      "(missing XML element)"
+    ]
+  },
+  {
+    "check": "header_used",
+    "status": "WARN",
+    "detail": "0 section-linked headers",
+    "xml": [
+      "<w:sectPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" />"
+    ]
+  },
+  {
+    "check": "header_page_field",
+    "status": "FAIL",
+    "detail": "PAGE field in each used header (PAGEREF does not count)",
+    "xml": [
+      "<w:sectPr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" />"
+    ]
+  }
+]
