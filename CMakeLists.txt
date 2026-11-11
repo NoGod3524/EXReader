@@ -1303,6 +1303,10 @@ if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
   endforeach()
 endif()
 
+if(EXR_FULL_TESTS)
+  add_subdirectory(docs/examples)
+endif()
+
 include(cmake/build_manifest.cmake)
 
 if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND)
