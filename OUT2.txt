@@ -1,22 +1,17 @@
-`deck.pdf` now opens and renders all 15 pages, and every PDF and fixed-layout test passes. Draft PR #133 is open, and I did not merge it.
+`deck.pdf` now opens and renders all 15 pages, and draft PR #133 is open (not merged). The branch is pushed and matches origin. I didn't change any code or rerun the build or tests this session. The test results below are from the previous session's output (`OUT2.txt`).
 
-**Probe output** (`exreader-pdf-hybrid-test`): `pages=15 rendered=15 failures=0 first_paint_ms=5329.0`.
+- **`deck.pdf`:** the hybrid probe test reported `pages=15 rendered=15 failures=0 first_paint_ms=5329.0`.
+- **Existing tests:** `ctest -R "pdf|fixed"` passed 48 of 48, which includes all `native-pdf-*` and `native-fixed-*` groups.
+- **The fix:** `src/pdf_objects.c:341` now skips the object-number-versus-`/Size` check for a hybrid `/XRefStm` stream. Office writes that stream after counting `/Size`, so its own number can equal `/Size`, and that was what rejected `deck.pdf`.
+- **Already in the tree:** the `/XRefStm` handling in the traditional-table branch (`src/pdf_objects.c:471`) was already there when the previous session resumed, so it wasn't changed.
+- **New ctest groups (4):**
+  - `native-pdf-hybrid-deck`: the basic `deck.pdf` case.
+  - `native-pdf-hybrid-merge`: merge order of table and stream entries.
+  - `native-pdf-hybrid-chain`: a `/Prev` chain together with `/XRefStm`.
+  - `native-pdf-hybrid-bad-offset`: an invalid `/XRefStm` offset gives a clear error without crashing.
+- **Not done:** the pixel comparison against a reference implementation (acceptance item 5). Neither `pdftoppm` nor `pdfinfo` is installed here, and `tools/check_pdf_reference.py` was never run.
+- **Slow test:** `native-pdf-hybrid-deck` took about 140 seconds in the ctest run.
+- **Stray file:** `OUT2.txt` shows as modified in the working tree. It is a leftover session-output file that earlier commits added to the branch, and the previous session couldn't restore it. I left it alone and didn't commit it.
 
-**Tests:** `ctest -R "pdf|fixed"` passed 48 of 48, including all `native-pdf-*` and `native-fixed-*` groups. The `native-pdf-hybrid-deck` test took about 140 seconds in that run.
-
-**What was already there:** the `/XRefStm` handling in the traditional-table branch (`src/pdf_objects.c:471`) was already in the tree when I resumed. I didn't change it.
-
-**The change this branch makes** (`src/pdf_objects.c:341`): a hybrid `/XRefStm` stream may carry an object number equal to `/Size`, because Office writes it after counting `/Size`. That is what rejected `deck.pdf`. The size check is now skipped when `hybrid` is set.
-
-**New ctest groups (4):**
-- `native-pdf-hybrid-deck` is the `deck.pdf` basic case.
-- `native-pdf-hybrid-merge` checks the order in which table and stream entries are merged.
-- `native-pdf-hybrid-chain` covers a `/Prev` chain together with `/XRefStm`.
-- `native-pdf-hybrid-bad-offset` checks that an invalid `/XRefStm` offset gives a clear error and doesn't crash.
-
-**Not done:**
-- **Reference comparison:** I did not run the `tools/check_pdf_reference.py` or `pdftoppm` comparison of the first pages, so acceptance item 5 is still open.
-- **Stray file:** `OUT2.txt` shows as modified, and I couldn't restore it (git can't unlink it on Windows). I did not commit it.
-
-exit=0
 Permission deny rule "computer" matches no known tool - check for typos.
+exit=0
