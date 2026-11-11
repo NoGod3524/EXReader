@@ -111,3 +111,9 @@ Total Test time (real) = 2.39 sec
 - `CASCADE-CLAUDE-OUT.txt` 是先前会话的历史记录；完成状态以本报告及原始验收数据为准。
 
 复现：`python -X utf8 evidence/pdf-hybrid-20261111/verify.py`。该脚本使用现有 `build/h`、MinGW、NumPy、Pillow 和 PyMuPDF，所有基线编译产物写入忽略的 `build/hybrid-validation/`。
+
+## 再次恢复收尾
+
+从 `923d85c2` 恢复时，源码和以上验收数据均已提交并推送，PR #133 为 open/draft、未合并。该恢复点仅把完整会话输出重新写入了 `OUT2.txt`，工作树中随后又被限流提示覆盖。完整输出保留在该提交中，当前提示另存为 [recovered-rate-limit.txt](recovered-rate-limit.txt)；将 `OUT2.txt` 再次与 `origin/main` 对齐，消除无关日志冲突。实现未重做。
+
+重新执行 `ctest --test-dir build/h -R '^native-pdf-hybrid-' --output-on-failure -V`，四组全部通过，总耗时 129.12 秒。deck 输出 `pages=15 rendered=15 failures=0 first_paint_ms=14620.0`（测试内 `clock()` 口径）。原始 CTest 日志见 [ctest-recovery.txt](ctest-recovery.txt)。本次 DLL 的 SHA256 仍为 `22b20bcc4c59624f11f5bf3b1ee41ddfc7c8cf3f8adf9f5d855bef76f2997909`，与前述独立探针及回归验收使用的文件相同。
