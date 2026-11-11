@@ -1,0 +1,44 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-y1-api-20261110/build/y1/baseline
+    Start 1: sdk-release
+1/1 Test #1: sdk-release ......................***Timeout 180.56 sec
+[package wrapper] ['C:\\Program Files\\PowerShell\\7\\pwsh.EXE', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-y1-api-20261110\\build\\y1\\baseline-source\\tools\\release\\build_packages.ps1', '-BuildDir', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-y1-api-20261110\\build\\y1\\baseline', '-OutputDir', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke r9to2m8f\\packages', '-Configuration', 'Release', '-Python', 'C:\\Python314\\python.exe']
+PASS package files and safe paths: 50 ordinary files; 15347510 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 17 API headers + version.h = 18 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 49 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [454]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke r9to2m8f\packages\.exreader-package-31extpbo\exreader-3.42.0-win-x64
+PASS package files and safe paths: 50 ordinary files; 15347510 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 17 API headers + version.h = 18 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 49 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [454]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke r9to2m8f\packages\.exreader-package-31extpbo\exreader-3.42.0-win-x64.zip
+Package: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke r9to2m8f\packages\exreader-3.42.0-win-x64.zip
+Archive bytes: 7646630
+Archive SHA256: a44c2491516260164de1204eade57517e6296ddbf637d418550b960a110592a1
+Unpacked: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke r9to2m8f\packages\exreader-3.42.0-win-x64
+exit: 0
+
+
+
+0% tests passed, 1 tests failed out of 1
+
+Label Time Summary:
+release    = 180.56 sec*proc (1 test)
+
+Total Test time (real) = 180.59 sec
+
+The following tests FAILED:
+	  1 - sdk-release (Timeout)                             release
+Errors while running CTest

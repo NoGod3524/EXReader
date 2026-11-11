@@ -1,6 +1,6 @@
-HEAD:include/exr/layout.h:506:EXR_API exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);
-HEAD:src/pager.c:1796:exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *p) {
-HEAD:tests/test_docx_reflow.c:69:  CHECK(exr_pager_cache_statistics(p).hits==1);
-HEAD:tests/test_docx_reflow.c:216:      before=exr_pager_cache_statistics(p);
-HEAD:tests/test_docx_reflow.c:223:      after=exr_pager_cache_statistics(p);hits+=after.hits-before.hits;misses+=after.misses-before.misses;
-HEAD:tools/reflow_baseline.py:38:exports = [x for x in exports if not x.strip().startswith(('exr_edit_', 'exr_pager_cache_statistics'))]
+6000a89d:include/exr/layout.h:506:EXR_API exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);
+6000a89d:src/pager.c:1796:exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *p) {
+6000a89d:tests/test_docx_reflow.c:69:  CHECK(exr_pager_cache_statistics(p).hits==1);
+6000a89d:tests/test_docx_reflow.c:216:      before=exr_pager_cache_statistics(p);
+6000a89d:tests/test_docx_reflow.c:223:      after=exr_pager_cache_statistics(p);hits+=after.hits-before.hits;misses+=after.misses-before.misses;
+6000a89d:tools/reflow_baseline.py:38:exports = [x for x in exports if not x.strip().startswith(('exr_edit_', 'exr_pager_cache_statistics'))]

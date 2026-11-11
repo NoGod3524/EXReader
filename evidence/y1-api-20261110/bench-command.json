@@ -1,0 +1,13 @@
+[
+  "build/y1/candidate/bench_batch.exe",
+  "C:/Users/Oscar/Documents/Codex/exr-cjk-corpus/hongloumeng-24264.epub",
+  "C:/Users/Oscar/exr-deps/reader-font/Reader.otf",
+  "--runs",
+  "5",
+  "--turns",
+  "20",
+  "--warmup",
+  "21",
+  "--json",
+  "evidence\\y1-api-20261110\\bench-batch-final.json"
+]

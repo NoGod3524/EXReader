@@ -1,0 +1,49 @@
+{
+  "implementation_revision": "923f1c6eaa1a18bb6bc4bdd05cc3ca6ca2d31efe",
+  "main_revision": "6000a89d373db03c3414f13a5ab10eb3d6819ad6",
+  "frozen_abi_exports": 389,
+  "candidate_exports": 456,
+  "missing_frozen_symbols": [],
+  "main_exports": 454,
+  "added_exports": [
+    "exr_font_cache_stats_get",
+    "exr_pager_cache_stats_get"
+  ],
+  "legacy_calls": [
+    "tests/test_docx_reflow.c:69",
+    "tests/test_docx_reflow.c:216",
+    "tests/test_docx_reflow.c:223"
+  ],
+  "pager_checks_passed": 187,
+  "shaping_checks_passed": 297036,
+  "ten_page_two_passes": {
+    "requests": 20,
+    "legacy_hits": 10,
+    "extended_hits": 10,
+    "legacy_misses": 10,
+    "extended_misses": 10
+  },
+  "ctest": {
+    "baseline_registered": 275,
+    "candidate_registered": 277,
+    "passed": 277,
+    "failed": 0,
+    "single_full_run_all_green": true,
+    "seconds": 83.78,
+    "windows_task_priority": "AboveNormal",
+    "test_timeouts_changed": false
+  },
+  "realbooks": {
+    "successful_books": 19,
+    "total_pages": 11318,
+    "changed_page_counts": 0,
+    "changed_pixel_hashes": 0
+  },
+  "benchmark": {
+    "runs": 5,
+    "turns_per_run": 20,
+    "exit_code": 0,
+    "sixteen_ms_gate_passed": false
+  },
+  "docx_source_changes": ""
+}

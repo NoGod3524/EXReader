@@ -1,0 +1,24 @@
+{
+  "main_revision": "6000a89d373db03c3414f13a5ab10eb3d6819ad6",
+  "pr112_revision": "d3119f0e132d7a412e0542f393f876d96c298c97",
+  "candidate_revision": "923f1c6eaa1a18bb6bc4bdd05cc3ca6ca2d31efe",
+  "files_sha256": {
+    "include/exr/layout.h": "7dfd38b7aea5c170afe0d10efe1b937fce04ca467bcbc4a8dd05da9549e6c527",
+    "include/exr/text.h": "e03ff8b2cd2e9d78e96f747911b2307304ab1fe08c3e4370ca1f0b1a47d72111",
+    "src/pager.c": "83a1e34ed7a90b1cb36b04658bc7324dba907b11e655ef13e842cbe37603a255",
+    "src/fonts.c": "e3d84935b68060863d1b8243d56ecd5a58c430569b470f08fb97b26283ff9966",
+    "src/opentype.c": "d113e61379fa98dd5cd209ffb94945596ba8ee7e558a62d84e88f4ae07ea39f3",
+    "src/font_internal.h": "2ea3fe96e16173000ca8bb936df691c784e625204e00e488146f7e24864073b6",
+    "examples/bench_batch.c": "fce85a26409f71ccb703c19e6fb42ab3eaa7e6fa6f4a90242a51b681451fc594",
+    "tests/test_cache_stats.c": "aeebe99c014a8691e02aec3cde2a1ee2dc46268421be04d5ed4539cd746c25bc",
+    "tests/test_shaping.c": "875f46d36b827dc70682a2ff0b94cc240d0b12fdf3c1f0744d00ebc8ba1bf34e",
+    "CMakeLists.txt": "764b4853e34560ce4d6ecdee0756b2d0a40d1d6dbb90d1f2a5594842cd66a1d3"
+  },
+  "candidate_dll_sha256": "e54784a7d851cdf1b549990b203de9a907d876e2d1c06da22fcc7021ac86f2e5",
+  "before_realbooks_dll_sha256": "6cca81e687713a4b3fb7e3b97812d41793aeaa2e8348580a3b5501a8791818c2",
+  "old_header_matches_main": true,
+  "docx_source_changes": "",
+  "extended_pager_type": "exr_pager_cache_stats_v1",
+  "legacy_pager_type": "exr_pager_cache_stats",
+  "font": "C:/Users/Oscar/exr-deps/reader-font/Reader.otf"
+}

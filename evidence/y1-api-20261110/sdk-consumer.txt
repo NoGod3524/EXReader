@@ -1,0 +1,2 @@
+Installed SDK external CMake consumer: exreader-bench_batch-example
+bench_batch self-test passed
