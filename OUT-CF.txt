@@ -62,6 +62,26 @@ The merge is still staged and uncommitted, and the PR is still conflicting. The 
 
 I'll leave the configure and build running and not poll it. When the background task finishes, I'll fix any compile errors, run `ctest -E "^sdk-release$"`, commit the merge, push to `codex/opds-catalog-20261110`, and report the PR's mergeable state.
 
-== step 2: local full build not completed (cmake configure >1h on this machine); gcc -fsyntax-only on reader.c (shell+drivers) and shell_d2d.cpp: 0 errors. ctest NOT run locally. ==
+PR #129 is now `MERGEABLE`, but its merge state is `BLOCKED`, most likely waiting on CI or required checks. I pushed to `codex/opds-catalog-20261110` (head `53d37850`) and did not merge the PR or touch main. I didn't run ctest. Only a gcc syntax check was clean on `reader.c` and `shell_d2d.cpp`.
 
-== step 3: merged remote PR branch + main again (35 newer commits); only report files conflicted (both kept); layers.json = main + opds.c/opds.h ==
+**① Conflicts and how each was resolved**
+- **First merge of main** (conflicts in `reader.c`, `shell_*.inc`, `shell_d2d.cpp`, `OUT.txt`, `tools/layers.json`; details in the earlier summary):
+  - **Report files and `layers.json`:** both sides kept.
+  - **Shell UI files:** main's refactored version, with our features re-added on top.
+  - **`reader.c` driver code:** main's `shell_drive_test.inc`, with our `opds_` and `sync_` dispatch re-added.
+  - **OPDS "书源" button:** now a toolbar item in the unified bookshelf view.
+  - **Cloud-sync button:** shares the settings dictionary row.
+  - **High-contrast theme:** re-applied to the new control-drawing API.
+- **Push rejected:** the PR branch had 7 commits I didn't have, including its own earlier merge of main. I merged them in. `OUT.txt`, `RESOLVE-OUT.txt` and `RESOLVE.md` kept both sides.
+- **`tools/layers.json`:** that merge duplicated the `edit.h` key and had dropped main's `docx_edit*` entries. I reset the file to main's version and added `opds.c` and `opds.h`.
+- **Main moved again** by 35 commits. Only `RESOLVE-OUT.txt` conflicted, and I kept both sides.
+
+I didn't touch the three protected files, open a GUI, or create a branch.
+
+**② Local test results:** no ctest run. The full CMake configure on this machine hit the one-hour limit without finishing, so there is no build. A gcc `-fsyntax-only` check on `reader.c` (with shell and test drivers on) and on `shell_d2d.cpp` reported no errors. The other files I edited were not compiled, and none of the check programs were built.
+
+**③ PR state:** `MERGEABLE`, `BLOCKED`.
+
+**④ Still open**
+- CI is the first real build and test of the merged tree. Check `shell_opds.inc`, `shell_opds_drive.inc`, `shell_sync.inc`, `check_shell_opds.c` and `check_shell_sync.inc` first. If any still use the old shelf or control-drawing API, they could fail there.
+- Some of my commit messages lack the Claude co-author line.
