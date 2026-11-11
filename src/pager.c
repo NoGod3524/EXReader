@@ -136,6 +136,8 @@ struct exr_pager {
   checkpoint *checkpoints[64]; /* Most recently recorded first. */
   size_t checkpoint_count, checkpoint_bytes, checkpoint_capacity, checkpoint_budget, interval;
   size_t generated_pages, restored_checkpoints;
+  exr_layout_options fixed_target; /* Requested page of a pre-paginated part. */
+  exr_fixed_viewport fixed; /* fixed=0 for reflow pagers. */
 };
 static exr_status advance(exr_pager *p);
 static exr_status seal(exr_pager *p,int partial);
@@ -945,6 +947,61 @@ static exr_status table_beside(exr_pager *p,frame *v) {
   }
   return failure(p,EXR_LIMIT,"Table BFC fitting retry limit exceeded");
 }
+/* CSS position:absolute on a fixed-layout page. The containing block is the
+   page (native viewport) or, inside an absolutely positioned box, that box.
+   Auto insets keep the static position. The box leaves the normal flow. */
+static exr_status absolute(exr_pager *p,frame *v) {
+  flow *f=&p->f; const exr_style *s=exr_doc_style(f->doc,p->styles,v->node);
+  const exr_node *n=(const exr_node[]){exr_doc_node(f->doc,v->node)};
+  float cw=p->config.page.width,ch=p->config.page.height,in[4],margin[4],insets,width,available,x,y,height;
+  exr_pager *unit=NULL; exr_layout *part=NULL; exr_status status; int side;
+  for(side=0;side<4;side++) {
+    in[side]=s->inset_percent[side] ? s->inset[side]*((side&1) ? cw : ch) : s->inset[side];
+    margin[side]=used(s->margin[side],cw);
+  }
+  status=finish_run(p); if(status!=EXR_OK) return status;
+  status=exr_flow_page(f,0,n->start); if(status!=EXR_OK) return status;
+  insets=used(s->padding[1],cw)+used(s->padding[3],cw)+exr_border_extent(s,1)+exr_border_extent(s,3);
+  x=(s->inset_set&8) ? in[3]+margin[3] : v->x+margin[3];
+  available=((s->inset_set&2) ? cw-in[1]-margin[1] : cw)-x;
+  if(s->width.value>=0) width=used(s->width,cw)+(n->kind==EXR_NODE_IMAGE ? 0 : insets);
+  else if((s->inset_set&10)==10 || n->kind==EXR_NODE_IMAGE) width=available;
+  else {
+    status=exr_flow_intrinsic(f,v->node,fmaxf(1,available),2,&width); if(status!=EXR_OK) return status;
+    width=fminf(width,available);
+  }
+  if(s->max_width.value>=0 && n->kind!=EXR_NODE_IMAGE) width=fminf(width,used(s->max_width,cw)+insets);
+  width=fmaxf(1,width);
+  status=context_create(f,v->node,width,ch,f->writing_mode,2,&unit);
+  if(status!=EXR_OK) return status;
+  status=next_page(unit,&part,f->error);
+  if(status==EXR_OK && part) {
+    float outer=fmaxf(width,part->flow_inline);
+    if(n->kind==EXR_NODE_IMAGE) {
+      size_t i; outer=0;
+      for(i=0;i<part->box_count;i++) outer=fmaxf(outer,part->boxes[i].x+part->boxes[i].width);
+    }
+    float declared=-1; size_t first=f->layout->box_count,i;
+    if(s->height.value>=0 && n->kind!=EXR_NODE_IMAGE)
+      declared=used(s->height,ch)+used(s->padding[0],cw)+used(s->padding[2],cw)+exr_border_extent(s,0)+exr_border_extent(s,2);
+    height=fmaxf(fmaxf(unit->f.y,part->flow_block),declared);
+    if(!(s->inset_set&8) && (s->inset_set&2)) x=cw-in[1]-margin[1]-outer;
+    y=(s->inset_set&1) ? in[0]+margin[0] : (s->inset_set&4) ? ch-in[2]-margin[2]-height : f->y+margin[0];
+    status=float_copy(f,part,v->node,x,y,height);
+    /* The box's own background spans its declared CSS extent, not only content. */
+    for(i=first;status==EXR_OK && i<f->layout->box_count;i++) {
+      exr_box *b=&f->layout->boxes[i];
+      if(b->node!=v->node || b->kind!=EXR_BOX_BLOCK || (b->flags&EXR_BOX_BORDER)) continue;
+      if(declared>b->height) b->height=declared;
+      if(s->width.value>=0 && n->kind!=EXR_NODE_IMAGE && width>b->width) b->width=width;
+    }
+  }
+  exr_layout_free(part); exr_pager_free(unit);
+  if(status!=EXR_OK) return status;
+  exr_inline_rescan(&p->line);
+  if(n->end>p->position) p->position=n->end;
+  p->depth--; return EXR_OK;
+}
 static exr_status advance(exr_pager *p) {
   flow *f = &p->f;
   exr_status status = exr_control_poll(&p->config.control, EXR_STAGE_LAYOUT, p->position,
@@ -1014,6 +1071,12 @@ static exr_status advance(exr_pager *p) {
     case 0:
       if (s->display == EXR_CSS_NONE || n->start == SIZE_MAX) {
         p->depth--;
+        break;
+      }
+      if(f->fixed_layout && s->position && n->kind!=EXR_NODE_TEXT && n->kind!=EXR_NODE_BREAK &&
+         f->writing_mode==EXR_WRITING_HORIZONTAL_TB && !(p->local && v->node==p->local_root)) {
+        if(f->intrinsic) { p->depth--; break; } /* Out of flow: no intrinsic contribution. */
+        status=absolute(p,v); if(status!=EXR_OK) return status;
         break;
       }
       if(s->float_side && !f->intrinsic && n->kind!=EXR_NODE_TEXT && n->kind!=EXR_NODE_BREAK &&
@@ -1491,8 +1554,72 @@ static exr_status writing_mode(exr_pager *p, exr_error *e) {
   p->f.origin_x = p->writing_mode == EXR_WRITING_VERTICAL_RL ? p->physical_page.width : 0;
   return EXR_OK;
 }
+/* A part document whose single reading chapter is EPUB pre-paginated gets one
+   native viewport: content <meta name="viewport">, package rendition:viewport,
+   first image intrinsic size, then the requested page. */
+static int fixed_chapter(const exr_document *doc,size_t *chapter) {
+  size_t i,found=SIZE_MAX;
+  if(!doc->renditions || doc->view) return 0;
+  for(i=0;i<doc->chapter_count;i++) if(doc->chapters[i].in_spine && doc->chapters[i].linear) {
+    if(found!=SIZE_MAX) return 0;
+    found=i;
+  }
+  if(found==SIZE_MAX || found>=doc->rendition_count || !doc->renditions[found].fixed) return 0;
+  *chapter=found; return 1;
+}
+static void fixed_viewport(const exr_document *doc,size_t chapter,const exr_layout_options *target,
+                           exr_fixed_viewport *out) {
+  size_t i; float w=0,h=0;
+  memset(out,0,sizeof(*out)); out->fixed=1;
+  for(i=0;i<doc->node_count && !out->source;i++) {
+    const exr_node *n=&doc->nodes[i]; const char *name,*content;
+    if(n->chapter!=chapter || n->kind==EXR_NODE_TEXT || strcmp(exr_html_tag(doc,n),"meta")) continue;
+    name=exr_node_attribute(n,"name"); content=exr_node_attribute(n,"content");
+    if(name && content && !strcmp(name,"viewport") && exr_viewport_parse(content,&w,&h)) out->source=EXR_VIEWPORT_CONTENT;
+  }
+  if(!out->source && doc->renditions[chapter].viewport_width>0) {
+    w=doc->renditions[chapter].viewport_width; h=doc->renditions[chapter].viewport_height; out->source=EXR_VIEWPORT_PACKAGE;
+  }
+  for(i=0;i<doc->node_count && !out->source;i++) {
+    const exr_node *n=&doc->nodes[i]; const char *src; size_t resource=SIZE_MAX,target_node,size=0;
+    void *data=NULL; uint32_t iw=0,ih=0; exr_error ignored={0};
+    if(n->chapter!=chapter || n->kind!=EXR_NODE_IMAGE) continue;
+    src=exr_node_attribute(n,"src"); if(!src) src=exr_node_attribute(n,"http://www.w3.org/1999/xlink|href");
+    if(!src || exr_document_resolve(doc,chapter,src,&resource,&target_node,&ignored)!=EXR_OK || resource==SIZE_MAX) continue;
+    if(exr_document_resource(doc,resource,&data,&size,&ignored)==EXR_OK &&
+       exr_image_dimensions(data,size,&iw,&ih,&ignored)==EXR_OK && iw && ih) {
+      w=(float)iw; h=(float)ih; out->source=EXR_VIEWPORT_IMAGE;
+    }
+    exr_free(data);
+    break;
+  }
+  if(!out->source) { w=target->width; h=target->height; out->source=EXR_VIEWPORT_PAGE; }
+  w=fminf(16384,fmaxf(32,w)); h=fminf(16384,fmaxf(32,h));
+  out->width=w; out->height=h;
+  out->scale=fminf(target->width/w,target->height/h);
+  out->x=(target->width-w*out->scale)/2; out->y=(target->height-h*out->scale)/2;
+}
+/* Map a page laid out at the native viewport into the requested page. */
+static void fixed_map(exr_layout *l,const exr_fixed_viewport *v,const exr_layout_options *target) {
+  size_t i; float k=v->scale;
+  for(i=0;i<l->glyph_count;i++) {
+    exr_glyph *g=&l->glyphs[i]; int vertical=!!(g->flags&EXR_GLYPH_VERTICAL);
+    g->x=g->x*k+v->x; g->baseline=g->baseline*k+v->y; g->advance*=k; g->size*=k; g->line_height*=k;
+    g->offset_x*=k; g->offset_y*=k;
+    g->clip_left=g->clip_left*k+(vertical ? v->y : v->x); g->clip_right=g->clip_right*k+(vertical ? v->y : v->x);
+  }
+  for(i=0;i<l->line_count;i++) {
+    exr_line *n=&l->lines[i]; n->x=n->x*k+v->x; n->y=n->y*k+v->y; n->width*=k; n->height*=k;
+  }
+  for(i=0;i<l->box_count;i++) {
+    exr_box *b=&l->boxes[i]; b->x=b->x*k+v->x; b->y=b->y*k+v->y; b->width*=k; b->height*=k; b->border_width*=k;
+  }
+  l->flow_inline*=k; l->flow_block*=k; l->first_baseline=l->first_baseline*k+v->y;
+  l->options=*target; l->fixed=*v;
+}
 exr_status exr_pager_create(const exr_document *doc, exr_font *font,
                              const exr_layout_config *config, exr_pager **out, exr_error *e) {
+  size_t fixed_part = SIZE_MAX;
   exr_layout_config defaults = exr_layout_config_defaults();
   exr_pager *p;
   exr_status status;
@@ -1518,7 +1645,17 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   p->f.doc = doc;
   p->style_count = doc->node_count;
   p->config.user_css = NULL;
-  if (config->user_css) {
+  if (fixed_chapter(doc, &fixed_part)) {
+    /* Publisher geometry is authoritative: CSS px at the native viewport, CSS
+       initial font metrics, document CSS on, reader overrides off. */
+    p->fixed_target = config->page;
+    fixed_viewport(doc, fixed_part, &config->page, &p->fixed);
+    p->config.page = (exr_layout_options){p->fixed.width, p->fixed.height, 0, 16, 1.2f, 0};
+    p->config.document_css = 1;
+    p->physical_page = p->config.page;
+    p->f.fixed_layout = 1;
+  }
+  if (config->user_css && !p->fixed.fixed) {
     while (size <= 1024*1024 && config->user_css[size])
       size++;
     if (size > 1024*1024) {
@@ -1558,8 +1695,8 @@ exr_status exr_pager_create(const exr_document *doc, exr_font *font,
   p->f.bidi = &p->bidi;p->f.plan_cursor=p;p->f.plan_resolve=resolve_plan;
   p->f.paragraph = exr_doc_style(p->f.doc,p->styles,0);
   p->f.paginate = p->f.page_limit = 1;
-  p->f.x = p->f.y = config->page.margin;
-  p->f.width = p->config.page.width - 2 * config->page.margin;
+  p->f.x = p->f.y = p->config.page.margin;
+  p->f.width = p->config.page.width - 2 * p->config.page.margin;
   p->cache_capacity = 1;
   p->checkpoint_capacity = 4;
   p->checkpoint_budget = 2*1024*1024;
@@ -1626,6 +1763,11 @@ static exr_status next_page(exr_pager *p, exr_layout **out, exr_error *e) {
     if (!e || !e->message[0])
       exr_fail(e, status, "Page layout failed");
     return status;
+  }
+  if (l->page_count && p->fixed.fixed && !p->local) {
+    /* A pre-paginated part is exactly one page; overflow stays on it. */
+    fixed_map(l, &p->fixed, &p->fixed_target);
+    p->finished = 1; p->position = p->f.doc->size;
   }
   if (l->page_count) {
     p->emitted++;

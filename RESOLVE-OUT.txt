@@ -1,0 +1,22 @@
+① 冲突文件（merge origin/main，f9df2377）
+- OUT.txt：main 侧文件本身带有已提交的冲突标记；本分支的行全部已在 main 侧，故取 main 内容并仅删除 <<<<<<< / ======= / >>>>>>> 标记行，两侧内容零丢失。
+- tools/layers.json：两侧新增并集——保留 include/exr/opds.h（本分支），edit.h 条目（main）保留，无重复键；JSON 解析通过。
+- 另：未跟踪的任务说明 RESOLVE.md 与 main 新增的同名文件冲突，已移至仓库外 ..\RESOLVE-task-130.md（未删除），main 的 RESOLVE.md 原样保留。
+- CMakeLists.txt 自动合并，无冲突。
+
+② 补的 API 文档（均写入 docs/API.md「格式与转换」，签名由 check_sdk_docs.declarations() 从头文件取得）
+- exr_opds_parse：ABI 实验
+- exr_opds_feed_free：ABI 实验
+- exr_opds_parse_search：ABI 实验
+- exr_opds_search_url：ABI 实验
+- exr_opds_resolve_url：ABI 实验
+（模块索引表「格式与转换」函数数 29→34）
+
+③ python -X utf8 tools\check_sdk_docs.py：exit=0
+最后三行：
+  "errors": [],
+  "passed": true
+}
+
+④ 其他失败项：本地未运行完整 ctest/CI（仅跑了 sdk-doc-coverage 门禁）；CI 中的其他检查名待推送后确认。
+未改动：tools/check_sdk_docs.py、tests/check_reading_release.py（SHA256 6eb22a30…）；version_literal_exceptions.json 仅为 main 合入的变更，未手动重排。
