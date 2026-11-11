@@ -1,0 +1,3 @@
+Authenticode requires an EV/OV code-signing certificate and its private key.
+DRY-RUN: signtool sign /sha1 <EV_OR_OV_CERTIFICATE_THUMBPRINT> /fd SHA256 /tr <RFC3161_TIMESTAMP_URL> /td SHA256 C:\Users\Oscar\Documents\Codex\EXReader-C4-20261109\build\c4-resumed-authenticode\libexreader.dll
+DRY-RUN: signtool verify /pa /all /v C:\Users\Oscar\Documents\Codex\EXReader-C4-20261109\build\c4-resumed-authenticode\libexreader.dll
