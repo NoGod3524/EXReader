@@ -1,0 +1,143 @@
+name: Unicode paths names and cross-platform product regression
+on:
+  push:
+    branches: [codex/reader-unicode-interop]
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  unicode:
+    name: installed Unicode consumers (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require this source the fixed start and unchanged shared trees
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          start=f43baf9182d75907c0cb5d6f77048f27bca8c950
+          git merge-base --is-ancestor "$start" HEAD
+          sdk=9854061be331fe603a1822d9b2b36ee357154927
+          git diff --exit-code "$sdk" HEAD -- src include cmake CMakeLists.txt tests/fixtures bindings .github/workflows/native.yml .github/workflows/reliability.yml
+          git diff --exit-code "$start" HEAD -- apps/reader/store/001_catalog.sql
+          git diff --exit-code "$start" HEAD -- apps/reader/revisions apps/reader/commands apps/reader/store
+          git diff --name-only "$start" HEAD > build/logs/changed-paths.txt
+          allowed='^(tests/reader_unicode_interop/|\.github/workflows/reader-unicode-interop\.yml$|docs/READER-UNICODE-INTEROP\.md$|docs/validation/reader-unicode-interop\.json$)'
+          if grep -Ev "$allowed" build/logs/changed-paths.txt; then
+            echo 'changed paths outside this package' >&2
+            exit 1
+          fi
+          cat build/logs/changed-paths.txt | tee build/logs/owned-paths.txt
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Install macOS build dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install ninja
+      - name: Enter the Windows native compiler environment
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+          cmd /c "`"$bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          'CC=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'CXX=cl' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and install the unchanged public components
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then ws=$(cygpath -m "$PWD"); else ws="$PWD"; fi
+          echo "G14_WORKSPACE=$ws" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ws/build/stage-product" 2>&1 | tee build/logs/product-configure.log
+          cmake --build build/product --verbose 2>&1 | tee build/logs/product-build.log
+          cmake --install build/product 2>&1 | tee build/logs/product-install.log
+          cmake -S apps/reader/revisions -B build/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$ws/build/stage-product" -DCMAKE_INSTALL_PREFIX="$ws/build/stage-revisions" 2>&1 | tee build/logs/revisions-configure.log
+          cmake --build build/revisions --verbose 2>&1 | tee build/logs/revisions-build.log
+          cmake --install build/revisions 2>&1 | tee build/logs/revisions-install.log
+          cmake -S apps/reader/commands -B build/commands -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ws/build/stage-revisions;$ws/build/stage-product" -DCMAKE_INSTALL_PREFIX="$ws/build/stage-commands" 2>&1 | tee build/logs/commands-configure.log
+          cmake --build build/commands --verbose 2>&1 | tee build/logs/commands-build.log
+          cmake --install build/commands 2>&1 | tee build/logs/commands-install.log
+      - name: Build the independent installed consumers
+        run: |
+          set -euo pipefail
+          prefixes="$G14_WORKSPACE/build/stage-commands;$G14_WORKSPACE/build/stage-revisions;$G14_WORKSPACE/build/stage-product"
+          cmake -S tests/reader_unicode_interop/consumer -B build/consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefixes" 2>&1 | tee build/logs/consumer-configure.log
+          cmake --build build/consumer --verbose 2>&1 | tee build/logs/consumer-build.log
+      - name: Write the frozen request container and expectations
+        run: |
+          set -euo pipefail
+          python3 tests/reader_unicode_interop/fixtures.py --base build --out build/fixtures 2>&1 | tee build/logs/fixtures.log
+      - name: Run the installed consumers on a Unicode path
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          mkdir -p build/evidence
+          "build/consumer/unicode-consumer$exe" --input build/fixtures/cases.bin --output build/evidence/observations.txt 2>&1 | tee build/logs/consumer-run.log
+          "build/consumer/unicode-c-consumer$exe" --input build/fixtures/cases.bin --output build/evidence/c-observations.txt 2>&1 | tee build/logs/c-consumer-run.log
+      - name: Compare every observation with the frozen expectation
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          platform=$(echo "$RUNNER_OS" | tr 'A-Z' 'a-z')
+          python3 tests/reader_unicode_interop/check_interop.py --fixtures build/fixtures --observations build/evidence/observations.txt --c-observations build/evidence/c-observations.txt --consumer "build/consumer/unicode-consumer$exe" --c-consumer "build/consumer/unicode-c-consumer$exe" --platform "$platform" --source "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --output build/evidence 2>&1 | tee build/logs/check.log
+      - name: Preserve the per-platform evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-unicode-interop-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/logs/
+            build/evidence/
+            build/fixtures/cases.bin
+            build/fixtures/expected.json
+            build/fixtures/meta.json
+            build/consumer/unicode-consumer*
+            build/consumer/unicode-c-consumer*
+            build/consumer/*.map
+          if-no-files-found: error
+  compare:
+    name: cross-platform byte equality
+    needs: unicode
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Collect the three installed runs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: reader-unicode-interop-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/platforms
+      - name: Require identical bytes and passing reports on all hosts
+        run: |
+          set -euo pipefail
+          run="$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          base=build/platforms
+          python3 tests/reader_unicode_interop/compare_platforms.py --source "$GITHUB_SHA" --run "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --output build/compare --observations "Windows=$base/reader-unicode-interop-Windows-$run/evidence/observations.txt" --observations "Linux=$base/reader-unicode-interop-Linux-$run/evidence/observations.txt" --observations "macOS=$base/reader-unicode-interop-macOS-$run/evidence/observations.txt" --c-observations "Windows=$base/reader-unicode-interop-Windows-$run/evidence/c-observations.txt" --c-observations "Linux=$base/reader-unicode-interop-Linux-$run/evidence/c-observations.txt" --c-observations "macOS=$base/reader-unicode-interop-macOS-$run/evidence/c-observations.txt" --report "Windows=$base/reader-unicode-interop-Windows-$run/evidence/report.json" --report "Linux=$base/reader-unicode-interop-Linux-$run/evidence/report.json" --report "macOS=$base/reader-unicode-interop-macOS-$run/evidence/report.json" 2>&1 | tee build/compare.log
+      - name: Preserve the comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reader-unicode-interop-compare-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/compare/
+            build/compare.log
+          if-no-files-found: error
