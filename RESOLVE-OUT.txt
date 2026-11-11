@@ -1,7 +1,11 @@
-① 冲突文件：无。git fetch origin main 后 git merge origin/main 为 "Already up to date"（本分支此前已合入 origin/main，且 origin/codex/opds-catalog-20261110 是本分支祖先）。git status 无 U 标记。
-② 补了 docs/API.md 条目（均 ABI: 实验）：exr_opds_parse, exr_opds_feed_free, exr_opds_parse_search, exr_opds_search_url, exr_opds_resolve_url（声明于 include/exr/opds.h，签名从头文件提取）。
-③ python -X utf8 tools/check_sdk_docs.py exit=0；最后三行：
+RESOLVE-OUT (PR #129)
+1) Conflicts after merging origin/main:
+- RESOLVE.md (add/add): kept this task's brief (PR #129 / opds branch); main's PR #107 brief remains in main history.
+- tools/layers.json: kept include/exr/opds.h; main's include/exr/edit.h entry already exists lower in the file, so I did not duplicate the key. JSON parses.
+- Auto-merged, no conflict: CMakeLists.txt, OUT.txt, .gitignore.
+2) API docs added: none needed in this step. Earlier commit 93c3e231 already documented the exr_opds_* functions. Gate shows 462/462 documented.
+3) check_sdk_docs.py exit=0, last three lines:
   "errors": [],
   "passed": true
 }
-④ 未在本地看到其他失败项（未查看 CI）。未改 check_sdk_docs.py / check_reading_release.py / version_literal_exceptions.json。
+4) Other failures: not checked, CI not observed from here.
