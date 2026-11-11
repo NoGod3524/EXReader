@@ -23,6 +23,8 @@ static int sm_drive_dump(const char *name) {
   cv_text_format(&j,",\"writable\":%d,\"saves\":%d,\"save_failures\":%d,\"view\":\"%s\",\"mode\":%d,\"filter\":%d,\"visible\":%d,\"edit_open\":%d,",
     sm_writable,sm_saves,sm_save_failures,sm_list ? "list":"grid",sm_mode,sm_filter,sm_view && IsWindowVisible(sm_view),
     sm_edit_panel && IsWindowVisible(sm_edit_panel));
+  SCROLLINFO scroll={.cbSize=sizeof(scroll),.fMask=SIF_ALL};GetScrollInfo(sm_view,SB_VERT,&scroll);
+  cv_text_format(&j,"\"scroll\":%d,\"scroll_max\":%d,\"scroll_page\":%u,",sm_scroll,scroll.nMax,scroll.nPage);
   char today[11];sm_date(sm_now(),today);
   uint64_t total=0;for(int i=0;i<sm_count;i++)total+=sm_entries[i].read_ms;
   cv_text_format(&j,"\"today\":\"%s\",\"streak\":%llu,\"total_read_ms\":%llu,\"days\":[",today,(unsigned long long)sm_streak(),(unsigned long long)total);
@@ -61,6 +63,9 @@ static int sm_drive_dump(const char *name) {
 static int sm_drive(const char *action) {
   if(!strcmp(action,"sm_show")){sm_show(atoi(drive_args[1]));return IsWindowVisible(sm_view)!=0 || shelf_exit_pending;}
   if(!strcmp(action,"sm_hide")){sm_hide();return !IsWindowVisible(sm_view);}
+  if(!strcmp(action,"sm_scroll")) {
+    SendMessageW(sm_view,WM_VSCROLL,atoi(drive_args[1]) ? SB_BOTTOM:SB_TOP,0);UpdateWindow(sm_view);return 1;
+  }
   if(!strcmp(action,"sm_dump"))return sm_drive_dump(drive_args[1]);
   if(!strcmp(action,"sm_click")) {
     const char *k=drive_args[1];
