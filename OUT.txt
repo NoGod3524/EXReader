@@ -16,6 +16,25 @@
 
 [完整报告与截图](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/tests/vertical-expand-20261109/REPORT.md) · [VERT-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/VERT-OUT.txt)
 
+已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
+
+- **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。
+- **签名**：GPG 测试密钥实签、验签及篡改拒绝通过；minisign、Authenticode dry-run 通过，EV/OV 证书命令模板已提供。
+- **Manifest**：包含 GCC 16.2.0、CMake 4.4.2、expat/freetype/miniz 版本与源码哈希，以及配置、环境等输入。
+- **回归**：ctest 从 234/234 到 235/235；19 本、11,318 页，页数及逐页哈希零变化。
+- `.github/` 未改；workflow 仅提供片段；`SIGN-OUT.txt` 已追加并提交。
+
+| 产物 | 第一次 SHA256 | 第二次 SHA256 |
+|---|---|---|
+| DLL | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` |
+| SDK 包 | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` |
+
+[完整验收记录与命令](/C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/evidence/artifact-signing-20261109/README.md)
+[2026-11-10 PR107 收尾 step 1] 首查 UNKNOWN/UNKNOWN、checks=[]；复查 OPEN，head=da91831345e24f5a738a28c51ec52a4d7dfc1ac4，mergeable=CONFLICTING，mergeStateStatus=DIRTY，core 未出现。工作树 clean，但处于 detached HEAD。目标 merge，接下来恢复 PR 分支并合并 origin/main。
+[step 2] 已 fetch origin main 和 PR 分支，开始本地 merge origin/main；冲突详情以 git 输出及后续记录为准。
+
+---
+
 已提交并推送至 `codex/sdk-docs-20261109`，draft PR：[**#109**](https://github.com/NoGod3524/EXReader/pull/109)。
 
 - 覆盖：**15/15 模块，427/427 公开函数，100%**；当前实际为 17 个公开头文件。
@@ -99,6 +118,8 @@ Compared against an unmodified build of 3076d3dd: 19/19 books, 11,426 pages, 8,6
 [验收记录：缓存命中数、4 个锚点示例及原始数据](evidence/x2-reflow-20261110/README.md) · [接口说明](docs/X2_REFLOW.md)
 
 X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
+[step 3] 冲突取并集完成：.gitignore 保留根 /release/ 与 tools/release 例外；OUT.txt 完整保留双方记录；tools/release/README.md 先保留 main SDK 使用/打包说明，再附完整签名/复现说明。tests/check_reading_release.py 未改，SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。登记表未改。
+[step 4] 已取历史失败 job 129316736854 日志：check_reading_release.py:23/43/125 evidence bytes changed，24/44/126 版本字面量无有效豁免。当前文件哈希与原登记一致，未更改测试或登记表。git diff --check 通过；本地版本门禁运行中，先推送已解决冲突以启动 CI。
 
 [2026-11-10T16:28:26.5792754-05:00] Step 5: resolved both conflicts by union. CMakeLists.txt retains docs/examples under EXR_FULL_TESTS, main's build_manifest include, and simplified-observer with its Python guard. OUT.txt retains the complete SDK report/progress plus main's fixed-layout and X2 reports. No test assertions or version exception entries changed.
 [2026-11-10T16:33:39.6469176-05:00] Step 6: main adds 30 public declarations; updated docs/API.md to 457/457 (100%), 19 headers, stable 394 / experimental 63, keeping 15 compiled examples. Header-only X1 model availability and X2 fallback are explicitly documented. python tools/check_sdk_docs.py passed with no errors. Version consistency check is running; neither byte-bound tests/check_reading_release.py nor its exception registry was edited. Started an independent MinGW full-component build with existing dependency sources and optional image/JPX codecs disabled.

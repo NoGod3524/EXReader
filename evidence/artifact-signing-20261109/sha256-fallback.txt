@@ -1,0 +1,4 @@
+UNSIGNED: publish SHA256SUMS with the packages and paste its hashes on the release page.
+b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632  bin/libexreader.dll
+c1d5b26b6de9624f419bf0bc1ba6d94b019416494fc9beec9a200dca682dfc6d  build_manifest.json
+e6c9b9467e2a17576f646c0d8567e236cde3fcd67086139a422ad0783bac4bfe  EXReader-SDK.tar.gz
