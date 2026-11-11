@@ -25,6 +25,7 @@ typedef struct {
   onet_result result;
   char error[256];
 } opds_job;
+static void opds_back_to_shelf(void);
 static HWND opds_view,opds_url_edit,opds_query_edit,opds_list;
 static exr_opds_feed opds_feed;
 static char opds_url[2048],opds_stack[OPDS_STACK][2048],opds_search_template[2048],opds_search_description[2048];
@@ -276,7 +277,7 @@ static void opds_finish(opds_job *j) {
       /* Same path as the shelf's open-book button, so import adds metadata and
          cover and then opens the book. */
       g.auto_open_imported=1;opds_imports_started++;
-      if(opds_visible){ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_recent();}
+      if(opds_visible){ShowWindow(opds_view,SW_HIDE);opds_visible=0;opds_back_to_shelf();}
       import_path(opds_download_path,0);
     } else {
       if(r.code==ONET_CANCELLED)opds_downloads_cancelled++;else opds_downloads_failed++;
@@ -343,6 +344,9 @@ static void opds_paint(HDC dc) {
   }
   opds_rect_text(dc,opds_status,line,13,400,shell_colors->text_secondary,DT_LEFT|DT_SINGLELINE);
 }
+static void opds_back_to_shelf(void) {
+  if(sm_view){ShowWindow(sm_view,SW_SHOWNA);sm_layout();SetFocus(sm_view);}
+}
 static void opds_layout(void) {
   if(!opds_view || !opds_visible)return;
   RECT c;GetClientRect(shelf_panel,&c);
@@ -368,12 +372,10 @@ static void opds_layout(void) {
 static void opds_hide(void) {
   if(!opds_view || !opds_visible)return;
   if(opds_busy)InterlockedExchange(&opds_cancel,1);
-  ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_recent();
+  ShowWindow(opds_view,SW_HIDE);opds_visible=0;opds_back_to_shelf();
 }
 static void opds_show(void) {
   if(!opds_view || !shelf_visible)return;
-  HWND controls[]={shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_sources};
-  for(size_t i=0;i<sizeof(controls)/sizeof(*controls);i++)if(controls[i])ShowWindow(controls[i],SW_HIDE);
   if(sm_view)ShowWindow(sm_view,SW_HIDE);
   opds_visible=1;opds_layout();ShowWindow(opds_view,SW_SHOW);opds_controls_enable();
   SetFocus(opds_url_edit);

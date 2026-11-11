@@ -1,8 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* One private search worker and immutable source snapshot, separate from pagers. */
-/* IDC_SHELL_SEARCH shared 180 with IDC_SHELL_BACK, so its click went back to the shelf. */
-enum { IDC_SHELL_SEARCH=196 };
-enum { IDC_SEARCH_EDIT=181,IDC_SEARCH_PREV,IDC_SEARCH_NEXT,
+/* Children of the search bar; IDC_SHELL_SEARCH (the top-bar button) is in shell_screen.inc. */
+enum { IDC_SEARCH_EDIT=200,IDC_SEARCH_PREV,IDC_SEARCH_NEXT,
        IDC_SEARCH_CASE,IDC_SEARCH_WORD,IDC_SEARCH_CLOSE,IDC_SEARCH_COUNT };
 static HWND shell_search_button,shell_search_bar,shell_search_edit,shell_search_count,shell_search_label_control;
 static HWND shell_search_prev,shell_search_next,shell_search_case,shell_search_word,shell_search_close;
@@ -13,8 +12,6 @@ static int shell_search_pending,shell_search_jump_pending;
 static unsigned shell_search_revision,shell_search_calls;
 static int shell_search_test_shift;
 static double shell_search_input_start,shell_search_last_ms,shell_search_last_total_ms;
-static HFONT shell_search_font;
-static HBRUSH shell_search_brush;
 typedef struct {
   volatile LONG cancel;
   unsigned revision,flags;
@@ -176,21 +173,35 @@ static void shell_search_label(void) {
   SetWindowTextW(shell_search_count,text);
   EnableWindow(shell_search_prev,shell_search_count_value!=0);EnableWindow(shell_search_next,shell_search_count_value!=0);
 }
+/* Bar children from the right: close, next, previous, the count, two toggles;
+   the field takes the rest. Visual boxes are 8 apart, so their 4-wide frames
+   meet without overlapping. */
+static RECT shell_search_field; /* the field's frame box, in bar coordinates */
 static void shell_search_layout(void) {
   if(!shell_search_bar) return;
-  RECT r;GetClientRect(g.window,&r);int h=shell_px(48,shell_dpi);
-  MoveWindow(shell_search_bar,0,shell_px(SHELL_TOPBAR_H,shell_dpi),r.right,h,TRUE);
-  int y=shell_px(8,shell_dpi),ch=shell_px(32,shell_dpi),right=r.right-shell_px(12,shell_dpi);
-  HWND buttons[]={shell_search_close,shell_search_next,shell_search_prev};
-  for(int i=0;i<3;i++) {right-=ch;MoveWindow(buttons[i],right,y,ch,ch,TRUE);right-=shell_px(4,shell_dpi);}
-  int countw=shell_px(156,shell_dpi);right-=countw;MoveWindow(shell_search_count,right,y,countw,ch,TRUE);
-  int bw=shell_px(64,shell_dpi);right-=bw;MoveWindow(shell_search_word,right,y,bw,ch,TRUE);
-  right-=bw;MoveWindow(shell_search_case,right,y,bw,ch,TRUE);
-  MoveWindow(shell_search_label_control,shell_px(20,shell_dpi),y,shell_px(40,shell_dpi),ch,TRUE);
-  MoveWindow(shell_search_edit,shell_px(64,shell_dpi),y,right-shell_px(72,shell_dpi),ch,TRUE);
-  if(shell_search_font) DeleteObject(shell_search_font);
-  shell_search_font=CreateFontW(-shell_px(14,shell_dpi),0,0,0,FW_NORMAL,0,0,0,DEFAULT_CHARSET,0,0,CLEARTYPE_QUALITY,0,L"Segoe UI");
-  for(HWND child=GetWindow(shell_search_bar,GW_CHILD);child;child=GetWindow(child,GW_HWNDNEXT)) SendMessageW(child,WM_SETFONT,(WPARAM)shell_search_font,TRUE);
+  RECT r;GetClientRect(g.window,&r);int bar=shell_px(48,shell_dpi);
+  MoveWindow(shell_search_bar,0,shell_px(SHELL_TOPBAR_H,shell_dpi),r.right,bar,TRUE);
+  int frame=shell_px(SHELL_CONTROL_FRAME,shell_dpi),gap=shell_px(SHELL_SPACE_1,shell_dpi);
+  int height=shell_px(SHELL_CONTROL_H,shell_dpi),y=(bar-height)/2,right=r.right-shell_px(SHELL_BAR_RIGHT,shell_dpi);
+  HFONT font=shell_gdi_font(SHELL_VALUE_FONT,FW_NORMAL);int line=shell_gdi_line(font),text_y=y+(height-line)/2;
+  struct {HWND control;int width;} boxes[5]={{shell_search_close,32},{shell_search_next,32},{shell_search_prev,32},
+    {shell_search_word,52},{shell_search_case,40}};
+  for(int i=0;i<5;i++) {
+    if(i==3) {
+      int width=shell_px(132,shell_dpi);right-=width;
+      MoveWindow(shell_search_count,right,text_y,width,line,TRUE);right-=gap;
+    }
+    int width=shell_px((float)boxes[i].width,shell_dpi);right-=width;
+    MoveWindow(boxes[i].control,right-frame,y-frame,width+2*frame,height+2*frame,TRUE);right-=gap;
+  }
+  int left=shell_px(SHELL_TITLE_LEFT,shell_dpi),label=shell_px(32,shell_dpi),inset=shell_px(12,shell_dpi);
+  MoveWindow(shell_search_label_control,left,text_y,label,line,TRUE);
+  left+=label+gap;
+  shell_search_field=(RECT){left-frame,y-frame,max(left,right)+frame,y+height+frame};
+  MoveWindow(shell_search_edit,left+inset,text_y,max(0,right-left-2*inset),line,TRUE);
+  HWND texts[3]={shell_search_label_control,shell_search_count,shell_search_edit};
+  for(int i=0;i<3;i++) SendMessageW(texts[i],WM_SETFONT,(WPARAM)font,TRUE);
+  InvalidateRect(shell_search_bar,NULL,FALSE);
 }
 static void shell_search_changed(void) {
   shell_search_revision++;shell_search_pending=shell_search_open;shell_search_jump_pending=0;
@@ -287,21 +298,38 @@ static LRESULT CALLBACK shell_search_proc(HWND window,UINT message,WPARAM wp,LPA
     case WM_COMMAND: {
       int id=LOWORD(wp),code=HIWORD(wp);
       if(id==IDC_SEARCH_EDIT && code==EN_CHANGE) {shell_search_changed();return 0;}
+      if(id==IDC_SEARCH_EDIT && (code==EN_SETFOCUS || code==EN_KILLFOCUS)) {InvalidateRect(window,&shell_search_field,FALSE);return 0;}
       if(id==IDC_SEARCH_CASE || id==IDC_SEARCH_WORD) {shell_search_changed();return 0;}
       if(id==IDC_SEARCH_PREV) {shell_search_step(-1);return 0;}
       if(id==IDC_SEARCH_NEXT) {shell_search_step(1);return 0;}
       if(id==IDC_SEARCH_CLOSE) {shell_search_set(0);return 0;}break;
     }
     case WM_ERASEBKGND: return 1;
+    case WM_DRAWITEM: {
+      const DRAWITEMSTRUCT *item=(const DRAWITEMSTRUCT *)lp;wchar_t text[8];GetWindowTextW(item->hwndItem,text,8);
+      shell_draw_control(item,text,SHELL_CONTROL_GHOST,shell_colors->layer_side);return TRUE;
+    }
     case WM_PAINT: {
       PAINTSTRUCT ps;HDC dc=BeginPaint(window,&ps);RECT r;GetClientRect(window,&r);
       shell_toc_fill(dc,r,shell_colors->layer_side);r.top=r.bottom-1;
-      shell_toc_fill(dc,r,shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));EndPaint(window,&ps);return 0;
+      shell_toc_fill(dc,r,shell_blend(shell_colors->layer_side,shell_colors->line_rgb,SHELL_LINE_ALPHA));
+      if(host_shell && shell_search_field.right>shell_search_field.left) {
+        shell_d2d_look look={SHELL_CONTROL_FIELD,GetFocus()==shell_search_edit ? SHELL_STATE_FOCUS:0,shell_colors->layer_side,0,1};
+        shell_d2d_control(host_shell,dc,&shell_search_field,L"",shell_is_dark(),&look);
+      }
+      EndPaint(window,&ps);return 0;
     }
-    case WM_CTLCOLORSTATIC:case WM_CTLCOLOREDIT:case WM_CTLCOLORBTN:
-      SetTextColor((HDC)wp,shell_colorref(shell_colors->text));SetBkColor((HDC)wp,shell_colorref(shell_colors->layer_side));
-      if(shell_search_brush) DeleteObject(shell_search_brush);
-      shell_search_brush=CreateSolidBrush(shell_colorref(shell_colors->layer_side));return (LRESULT)shell_search_brush;
+    case WM_CTLCOLORSTATIC:case WM_CTLCOLOREDIT: {
+      /* The field is a float surface; the labels sit on the bar itself. */
+      static HBRUSH brushes[2];static uint32_t colors[2];
+      int edit=message==WM_CTLCOLOREDIT;uint32_t color=edit ? shell_colors->layer_float:shell_colors->layer_side;
+      if(!brushes[edit] || colors[edit]!=color) {
+        if(brushes[edit]) DeleteObject(brushes[edit]);
+        colors[edit]=color;brushes[edit]=CreateSolidBrush(shell_colorref(color));
+      }
+      SetTextColor((HDC)wp,shell_colorref(edit ? shell_colors->text:shell_colors->text_secondary));
+      SetBkColor((HDC)wp,shell_colorref(color));return (LRESULT)brushes[edit];
+    }
   }
   return DefWindowProcW(window,message,wp,lp);
 }
@@ -310,13 +338,18 @@ static void shell_search_create(HWND parent) {
   WNDCLASSW wc={0};wc.lpfnWndProc=shell_search_proc;wc.hInstance=GetModuleHandleW(NULL);wc.lpszClassName=L"EXReaderSearchBar";wc.hCursor=LoadCursorW(NULL,IDC_ARROW);RegisterClassW(&wc);
   shell_search_bar=CreateWindowExW(0,wc.lpszClassName,L"全文搜索",WS_CHILD|WS_CLIPCHILDREN,0,0,0,0,parent,NULL,wc.hInstance,NULL);
   shell_search_label_control=CreateWindowExW(0,L"STATIC",L"搜索",WS_CHILD|WS_VISIBLE|SS_CENTERIMAGE,0,0,0,0,shell_search_bar,NULL,NULL,NULL);
-  shell_search_edit=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,0,0,0,0,shell_search_bar,(HMENU)IDC_SEARCH_EDIT,NULL,NULL);
-  SendMessageW(shell_search_edit,EM_SETLIMITTEXT,1024,0);SendMessageW(shell_search_edit,0x1501,TRUE,(LPARAM)L"搜索全文");
+  /* Borderless: the bar paints the field frame around it. */
+  shell_search_edit=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_AUTOHSCROLL,0,0,0,0,shell_search_bar,(HMENU)IDC_SEARCH_EDIT,NULL,NULL);
+  SendMessageW(shell_search_edit,EM_SETLIMITTEXT,1024,0);
   shell_search_count=CreateWindowExW(0,L"STATIC",L"第 0 / 共 0 个",WS_CHILD|WS_VISIBLE|SS_CENTER|SS_CENTERIMAGE,0,0,0,0,shell_search_bar,(HMENU)IDC_SEARCH_COUNT,NULL,NULL);
   HWND *controls[]={&shell_search_prev,&shell_search_next,&shell_search_case,&shell_search_word,&shell_search_close};
   int ids[]={IDC_SEARCH_PREV,IDC_SEARCH_NEXT,IDC_SEARCH_CASE,IDC_SEARCH_WORD,IDC_SEARCH_CLOSE};
   const wchar_t *names[]={L"↑",L"↓",L"Aa",L"全词",L"×"};
-  for(int i=0;i<5;i++) *controls[i]=CreateWindowExW(0,L"BUTTON",names[i],WS_CHILD|WS_VISIBLE|WS_TABSTOP|((i==2 || i==3) ? BS_AUTOCHECKBOX:BS_PUSHBUTTON),0,0,0,0,shell_search_bar,(HMENU)(INT_PTR)ids[i],NULL,NULL);
+  for(int i=0;i<5;i++) {
+    int toggle=i==2 || i==3;
+    *controls[i]=CreateWindowExW(0,L"BUTTON",names[i],WS_CHILD|WS_VISIBLE|WS_TABSTOP|(toggle ? BS_AUTOCHECKBOX:BS_OWNERDRAW),0,0,0,0,shell_search_bar,(HMENU)(INT_PTR)ids[i],NULL,NULL);
+    if(toggle) shell_adopt_toggle(*controls[i]);else shell_adopt_button(*controls[i]);
+  }
   shell_search_label();
 }
 static int shell_search_key(const MSG *m) {
@@ -336,8 +369,6 @@ static void shell_search_destroy(void) {
   if(shell_search_thread) {WaitForSingleObject(shell_search_thread,INFINITE);CloseHandle(shell_search_thread);shell_search_thread=NULL;}
   if(shell_search_working) {free(shell_search_working->hits);free(shell_search_working->path);free(shell_search_working->needle);free(shell_search_working);shell_search_working=NULL;}
   shell_search_cache_free();free(shell_search_hits);shell_search_hits=NULL;
-  if(shell_search_font) DeleteObject(shell_search_font);
-  if(shell_search_brush) DeleteObject(shell_search_brush);
 }
 
 static void shell_search_shade(HDC dc,HRGN region,int current) {

@@ -44,6 +44,22 @@ typedef struct {
 EXR_API const exr_layout_block *exr_layout_blocks(const exr_layout *layout, size_t *count);
 /* Invalid pages return a zero record. Borrowed blocks live until layout_free. */
 EXR_API exr_page_structure exr_layout_page_structure(const exr_layout *layout, size_t page);
+/* A pager over a pre-paginated EPUB part lays its content document out once at
+   the native CSS viewport (content <meta name="viewport">, else the package
+   rendition:viewport, else the first image's intrinsic size, else the requested
+   page) and maps it into the requested page with one uniform scale, centred:
+   page = native * scale + (x, y). It always yields exactly one page; CSS
+   position:absolute with top/right/bottom/left is honoured on such pages.
+   Reflow pages return a zero record. */
+typedef enum {
+  EXR_VIEWPORT_NONE = 0, EXR_VIEWPORT_CONTENT, EXR_VIEWPORT_PACKAGE, EXR_VIEWPORT_IMAGE, EXR_VIEWPORT_PAGE
+} exr_viewport_source;
+typedef struct {
+  int fixed;
+  exr_viewport_source source;
+  float width, height, scale, x, y;
+} exr_fixed_viewport;
+EXR_API exr_fixed_viewport exr_layout_fixed_viewport(const exr_layout *layout);
 
 typedef enum { EXR_BOX_BLOCK = 1, EXR_BOX_IMAGE, EXR_BOX_CELL } exr_box_kind;
 /* Solid table-border rectangles, including collapsed grids and split cells.
@@ -146,6 +162,33 @@ EXR_API const char *exr_publication_title(const exr_publication *publication);
    logical spine directory or pager_next order. NULL returns LTR. */
 EXR_API exr_direction exr_publication_page_progression(const exr_publication *publication);
 EXR_API const exr_part *exr_publication_parts(const exr_publication *publication, size_t *count);
+/* EPUB 3 Fixed Layout (rendition: vocabulary). An itemref
+   rendition:layout-pre-paginated/-reflowable overrides the package default, so
+   one publication may mix fixed and reflowable parts. spread is the declared
+   page-spread-left/right/center; viewport_* is the package rendition:viewport
+   ("width=W, height=H"), zero when absent. Non-EPUB parts are reflowable. */
+typedef enum { EXR_RENDITION_REFLOWABLE = 0, EXR_RENDITION_PRE_PAGINATED = 1 } exr_rendition_layout;
+typedef enum { EXR_SPREAD_AUTO = 0, EXR_SPREAD_LEFT, EXR_SPREAD_RIGHT, EXR_SPREAD_CENTER } exr_spread_side;
+typedef struct {
+  exr_rendition_layout layout;
+  exr_spread_side spread;
+  float viewport_width, viewport_height;
+} exr_part_rendition;
+EXR_API exr_status exr_publication_rendition(const exr_publication *publication, size_t part,
+                                             exr_part_rendition *out, exr_error *error);
+/* Two-page screens in reading order. left/right are physical slots holding
+   part indices, SIZE_MAX when empty. Pre-paginated parts pair by declared
+   page-spread sides; an unspecified side alternates from the previous page
+   and the first page is recto (right for ltr, left for rtl). Reflowable and
+   page-spread-center parts, and every part under rendition:spread none, are
+   single screens (EXR_SPREAD_SINGLE, part in left). Free with exr_free(). */
+#define EXR_SPREAD_SINGLE 1u
+typedef struct {
+  size_t left, right;
+  unsigned flags;
+} exr_spread;
+EXR_API exr_status exr_publication_spreads(const exr_publication *publication, exr_spread **spreads,
+                                           size_t *count, exr_error *error);
 /* Borrowed until publication_free; EPUB navigation is decoded on first request.
    Custom publications copy navigation through exr_publication_input. */
 EXR_API exr_status exr_publication_navigation(exr_publication *publication,
