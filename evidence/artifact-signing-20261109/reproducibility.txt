@@ -1,0 +1,5 @@
+Run 1: clean build and install
+Run 1: PASS (3 release files verified)
+Run 2: clean build and install
+Run 2: PASS (3 release files verified)
+PASS: both clean builds have identical DLL/package and installed-file hashes
