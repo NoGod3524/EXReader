@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import struct
 from xml.sax.saxutils import escape
-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+from zipfile import ZipFile, ZipInfo, ZIP_STORED
 import zlib
 
 W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
@@ -113,7 +113,9 @@ def make_png(width=8, height=8, seed=1):
     return (
         b'\x89PNG\r\n\x1a\n'
         + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))
-        + chunk(b'IDAT', zlib.compress(raw, 9))
+        # One explicit stored DEFLATE block, independent of zlib/zlib-ng compression.
+        + chunk(b'IDAT', b'\x78\x01\x01' + struct.pack('<HH', len(raw), 0xffff ^ len(raw))
+                + raw + struct.pack('>I', zlib.adler32(raw)))
         + chunk(b'IEND', b'')
     )
 
@@ -897,7 +899,7 @@ def build_fixture(spec_id, category, description):
         for name, content in sorted(parts.items()):
             info = ZipInfo(name, (2026, 1, 1, 0, 0, 0))
             info.create_system = 0  # Match the committed DOS ZIP headers on every host.
-            info.compress_type = ZIP_DEFLATED
+            info.compress_type = ZIP_STORED  # Avoid implementation-dependent DEFLATE output.
             info.external_attr = 0o100644 << 16
             raw = content.encode('utf-8') if isinstance(content, str) else content
             zf.writestr(info, raw)
