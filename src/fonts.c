@@ -7,8 +7,13 @@
 #include FT_SYNTHESIS_H
 #include FT_PARAMETER_TAGS_H
 /* Font instances own their immutable face/variation identities. The LRU shares
+<<<<<<< HEAD
    a 2 MiB ceiling across all faces, including metadata, and is optional on OOM. */
 #define GLYPH_CACHE_LIMIT (2u * 1024u * 1024u)
+=======
+   a 1 MiB ceiling across all faces, including metadata, and is optional on OOM. */
+#define GLYPH_CACHE_LIMIT (1024u * 1024u)
+>>>>>>> origin/main
 struct exr_glyph_cache {
   exr_cached_glyph *buckets[256], *first, *last;
   size_t bytes;
@@ -28,6 +33,7 @@ static void glyph_front(struct exr_glyph_cache *cache,exr_cached_glyph *entry) {
 exr_cached_glyph *exr_glyph_cache_find(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags) {
   struct exr_glyph_cache *cache=font->raster_cache;
   exr_cached_glyph *entry;
+<<<<<<< HEAD
   font->cache_stats.glyph_requests++;
   if(!cache) { font->cache_stats.glyph_misses++;return NULL; }
   for(entry=cache->buckets[glyph_bucket(face,glyph,size,flags)];entry;entry=entry->hash_next)
@@ -36,6 +42,13 @@ exr_cached_glyph *exr_glyph_cache_find(exr_font *font,size_t face,uint32_t glyph
       glyph_unlink(cache,entry);glyph_front(cache,entry);return entry;
     }
   font->cache_stats.glyph_misses++;
+=======
+  if(!cache) return NULL;
+  for(entry=cache->buckets[glyph_bucket(face,glyph,size,flags)];entry;entry=entry->hash_next)
+    if(entry->face==face && entry->glyph==glyph && entry->size==size && entry->flags==flags) {
+      glyph_unlink(cache,entry);glyph_front(cache,entry);return entry;
+    }
+>>>>>>> origin/main
   return NULL;
 }
 void exr_glyph_cache_store(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags,
@@ -58,7 +71,10 @@ void exr_glyph_cache_store(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 
     exr_cached_glyph *old=cache->last,**link=&cache->buckets[old->bucket];
     while(*link!=old) link=&(*link)->hash_next;
     *link=old->hash_next;glyph_unlink(cache,old);cache->bytes-=old->bytes;free(old);
+<<<<<<< HEAD
     font->cache_stats.glyph_evictions++;
+=======
+>>>>>>> origin/main
   }
   memset(entry,0,sizeof(*entry));
   entry->face=face;entry->glyph=glyph;entry->size=size;entry->flags=flags;entry->bucket=bucket;

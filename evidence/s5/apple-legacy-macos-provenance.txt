@@ -1,0 +1,49 @@
+2026-11-08T11:11:21.1150420Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +65b663a4428d14467865e772ac5702c970ae4a50:refs/remotes/pull/86/merge
+2026-11-08T11:11:26.5086710Z  * [new ref]         65b663a4428d14467865e772ac5702c970ae4a50 -> pull/86/merge
+2026-11-08T11:11:29.3767500Z HEAD is now at 65b663a Merge bd15cddb4d0928abde07c90e34b52f567a169d2d into f351f9a682a05981ffde3d5867c0ed66f4e0277d
+2026-11-08T11:11:29.3988910Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-08T11:11:29.4051660Z 65b663a4428d14467865e772ac5702c970ae4a50
+2026-11-08T11:11:29.4313910Z ##[group]Run cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON -DEXR_ENABLE_AAC=OFF
+2026-11-08T11:11:29.4314610Z cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON -DEXR_ENABLE_AAC=OFF
+2026-11-08T11:11:31.0324250Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:11:38.2751400Z -- CMake version in use ......... 4.4.5
+2026-11-08T11:11:50.2115150Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:11:52.4741440Z -- Found ZLIB: zlibstatic (found version "1.3.1")
+2026-11-08T11:12:28.9655280Z [ 22%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random.c.o
+2026-11-08T11:12:29.0804420Z [ 22%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random_buf.c.o
+2026-11-08T11:12:29.1407120Z [ 22%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getentropy.c.o
+2026-11-08T11:16:05.0866180Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:16:05.2382830Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:16:07.6607340Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:16:16.3192380Z -- CMake version in use ......... 4.4.5
+2026-11-08T11:16:27.3003980Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:16:30.4615620Z -- Found ZLIB: zlibstatic (found version "1.3.1")
+2026-11-08T11:17:05.7790440Z [ 34%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random.c.o
+2026-11-08T11:17:06.4540430Z [ 35%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_arc4random_buf.c.o
+2026-11-08T11:17:06.5173180Z [ 35%] Building C object _deps/expat-build/CMakeFiles/expat.dir/lib/random_getentropy.c.o
+2026-11-08T11:17:33.9563840Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:17:34.1509320Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:17:37.2331250Z -- CMake version in use ......... 4.4.5
+2026-11-08T11:18:09.8664590Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:11.4952470Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:26.0613490Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:26.1454720Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:43.0264330Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:43.1622720Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:46.5726300Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:46.6808310Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:48.9330220Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:49.2966120Z -- The OBJCXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:51.0008420Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:53.2736910Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:54.9021010Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:55.4852040Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:55.5690980Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:56.8191040Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:56.9109100Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:58.3383780Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:18:58.4450380Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:19:00.2678680Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:19:00.3909260Z -- The CXX compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:19:01.9474960Z -- The C compiler identification is AppleClang 17.0.0.17000013
+2026-11-08T11:19:02.0391000Z -- The CXX compiler identification is AppleClang 17.0.0.17000013

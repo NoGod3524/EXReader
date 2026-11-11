@@ -1,0 +1,10 @@
+{"name": "newer-static-configure", "cwd": "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411", "argv": ["cmake", "-S", "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\project", "-B", "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\build-newer-static", "-DSDK_ROOT=C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\newer-headers", "-DMODE=static", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-G", "Ninja"], "exit_code": 0}
+-- The C compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Configuring done (2.7s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Users/Oscar/AppData/Local/Temp/exreader-consumer-n4hry411/build-newer-static

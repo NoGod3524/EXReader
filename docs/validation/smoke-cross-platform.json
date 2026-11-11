@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "probe_source_sha256": "f3723cd1ae30f085fd6fbe4ddebf1c092b26875f8cd17e00dd6063f2f8ff8d25",
+  "layout": {
+    "width": 360,
+    "height": 480,
+    "margin": 24,
+    "font_size": 18,
+    "line_height": 1.5,
+    "paragraph_spacing": 8,
+    "font_dpi": 72
+  },
+  "search": {
+    "needle": "deliveryneedle",
+    "case_sensitive": true,
+    "expected_hits": 1000
+  },
+  "pixels": "SHA-256 over row-major RGBA bytes, excluding stride padding and PNG metadata",
+  "platforms": {
+    "windows": {
+      "pages": 215,
+      "search_hits": 1000,
+      "pixel_sha256": "c1a085e1c0292c666fd6fdf4d4001254c1171ca5584e5c636d18e819c128c3ef",
+      "png_sha256": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+      "width": 360,
+      "height": 480,
+      "ink_pixels": 20543,
+      "pixel_bytes": 691200,
+      "raw_log_sha256": "d5234dbff39c7c5316cd1c8f61b822cc9d4d84c84f1bb6c0e697eaea711e1bcc",
+      "book_sha256": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "library_sha256": "59970583c1af96405b9be57763a4af0b4550682b3771a5e7a6894b832dd594dc",
+      "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+      "environment": {
+        "os": "Windows 11 Home 10.0.26200 x86_64",
+        "sdk_toolchain": "MSVC CI artifact",
+        "probe_compiler": "MinGW GCC 16.2.0 -O2"
+      }
+    },
+    "linux": {
+      "pages": 215,
+      "search_hits": 1000,
+      "pixel_sha256": "c1a085e1c0292c666fd6fdf4d4001254c1171ca5584e5c636d18e819c128c3ef",
+      "png_sha256": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+      "width": 360,
+      "height": 480,
+      "ink_pixels": 20543,
+      "pixel_bytes": 691200,
+      "raw_log_sha256": "dd072ce455452b995bda4f6ab0f312c58898ce544c556ebc82ddc641726d33db",
+      "book_sha256": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "library_sha256": "07ac839f69ab4343d16de18fc5b64f8f47c02de7dab70aa40975d94845ace615",
+      "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+      "environment": {
+        "os": "Debian 12 glibc 2.36, QEMU Linux 6.12.115 x86_64",
+        "user": "probe uid=1000",
+        "sdk_toolchain": "Ubuntu 22.04 CI artifact",
+        "probe_compiler": "GCC 12.2.0 -O2"
+      }
+    },
+    "android": {
+      "pages": 215,
+      "search_hits": 1000,
+      "pixel_sha256": "c1a085e1c0292c666fd6fdf4d4001254c1171ca5584e5c636d18e819c128c3ef",
+      "png_sha256": "0ede4b1e517d2d86b0333f3c36a4e316aa15479d6cea95845c2c5062252958fa",
+      "width": 360,
+      "height": 480,
+      "ink_pixels": 20543,
+      "pixel_bytes": 691200,
+      "raw_log_sha256": "dd072ce455452b995bda4f6ab0f312c58898ce544c556ebc82ddc641726d33db",
+      "book_sha256": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "library_sha256": "cac0119bb5aed6249d5c6b28f46c23eddad0b2b8e89fde1109a6dba511478bc5",
+      "source_commit": "2325b63cbf4068fba7ae2761ad10678b0274bab6",
+      "environment": {
+        "os": "AOSP Android 11 API 30 x86_64 emulator",
+        "kernel": "5.4.86-android11-2",
+        "execution": "adb shell native ELF, API 24 target",
+        "probe_compiler": "NDK 27.2.12479018 Clang 18.0.3 -O2"
+      }
+    }
+  },
+  "equal": {
+    "source_commit": true,
+    "book_sha256": true,
+    "font_sha256": true,
+    "pages": true,
+    "search_hits": true,
+    "pixel_sha256": true
+  }
+}

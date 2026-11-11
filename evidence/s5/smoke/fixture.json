@@ -1,0 +1,14 @@
+{
+  "generator": "tools/abi/prepare_smoke.py",
+  "book": {
+    "sha256": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+    "paragraphs": 1000,
+    "parts": 1
+  },
+  "font": {
+    "name": "Noto Sans CJK SC Regular",
+    "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf",
+    "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b"
+  },
+  "probe_source_sha256": "f3723cd1ae30f085fd6fbe4ddebf1c092b26875f8cd17e00dd6063f2f8ff8d25"
+}

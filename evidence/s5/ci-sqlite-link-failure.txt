@@ -1,0 +1,11 @@
+PR108 Native C engine run42650735317 / Linux full tests 246/248.
+Both white-box tests linked a private SQLite copy and the aggregate DSO; hiding vendor exports removed ELF symbol interposition.
+Test assertions are retained. The two targets will use static SDK components so injection and SDK connections share one SQLite implementation.
+2026-11-09T16:08:38.4410164Z  37/248 Test  #37: native-library-stream ..................***Failed    0.05 sec
+2026-11-09T16:08:38.4410879Z line 113: exr_library_import_source(library,EXR_CBZ,&source,"Locked",&dup,&error)==EXR_DATABASE (0: )
+2026-11-09T16:08:38.4411589Z 
+2026-11-09T16:08:38.4412008Z         Start  38: native-m4b-metadata
+2026-11-09T16:09:10.0163311Z  86/248 Test  #86: native-text-index ......................***Failed    0.02 sec
+2026-11-09T16:09:10.0164423Z line 42: (exr_text_index_put(i,"book1","a","new text",8,((void *)0),&error))==EXR_OK (7: forced write failure)
+2026-11-09T16:09:10.0165192Z 
+2026-11-09T16:09:10.0165368Z         Start  87: native-abi

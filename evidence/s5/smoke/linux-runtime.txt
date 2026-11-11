@@ -1,0 +1,21 @@
+07ac839f69ab4343d16de18fc5b64f8f47c02de7dab70aa40975d94845ace615  lib/libexreader.so
+f3723cd1ae30f085fd6fbe4ddebf1c092b26875f8cd17e00dd6063f2f8ff8d25  tools/platforms/probe.c
+9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c  /repo/smoke/smoke.epub
+2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b  /repo/smoke/font.otf
+	linux-vdso.so.1 (0x00007f3d04c38000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f3d04b4f000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f3d0401e000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f3d04c3a000)
+PASS explicit_load version=3.42.0
+ARGV: ['cc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-I/s5-source/include', '/s5-source/tools/platforms/probe.c', '/s5-source/lib/libexreader.so', '-o', '/s5-source/result/platform-probe', '-Wl,-rpath,/s5-source/lib']
+ARGV: ['/s5-source/result/platform-probe', '/repo/smoke/smoke.epub', '/repo/smoke/font.otf', '/s5-source/result', 'create']
+ARGV: ['/s5-source/result/platform-probe', '/repo/smoke/smoke.epub', '/repo/smoke/font.otf', '/s5-source/result', 'reopen']
+ARGV: ['/s5-source/result/platform-probe', '/repo/smoke/smoke.epub', '/repo/smoke/font.otf', '/s5-source/result/negative', 'reopen']
+PASS load version=3.42.0 abi=1 mode=reopen
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS search_all needle=deliveryneedle hits=1000
+PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=45 changed_pixels=2553
+PASS platform checks=5/5
+PASS negative control rejected moved annotation

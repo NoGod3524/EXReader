@@ -1,0 +1,7 @@
+pg27166-hans verified
+pg24042-hans verified
+pg25271-hans verified
+pg25242-hans verified
+pg52323-hans verified
+python-howto-hans verified
+byte-of-python-hans verified

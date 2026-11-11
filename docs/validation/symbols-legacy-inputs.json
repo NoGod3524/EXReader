@@ -1,0 +1,34 @@
+[
+  {
+    "platform": "windows",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\windows\\x86_64\\libexreader.dll",
+    "source_commit": null,
+    "provenance": "Reused local annotation Release build; no atomic build commit recorded. Prior source-tree comparison matched reference commit, see evidence/platforms-20261108/provenance.json. Annotation metadata base f351f9a682a05981ffde3d5867c0ed66f4e0277d. Not the CI merge checkout.",
+    "source_reference_commit": "93f9d8bb1ab5ed700bc8dbad47eef650eeb5bca9",
+    "normalized_source_sha256": "b3cc096dac675410a256d2895abe33b63d7175947c2233ee61c05dd03e2bee7d"
+  },
+  {
+    "platform": "linux",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\linux\\x86_64\\libexreader.so",
+    "source_commit": "65b663a4428d14467865e772ac5702c970ae4a50",
+    "provenance": "GitHub PR merge checkout, run 42474080320; head bd15cddb4d0928abde07c90e34b52f567a169d2d"
+  },
+  {
+    "platform": "macos",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\macos\\arm64\\libexreader.dylib",
+    "source_commit": "65b663a4428d14467865e772ac5702c970ae4a50",
+    "provenance": "GitHub PR merge checkout, run 42474080320; head bd15cddb4d0928abde07c90e34b52f567a169d2d"
+  },
+  {
+    "platform": "android",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\android\\arm64-v8a\\libexreader.so",
+    "source_commit": "65b663a4428d14467865e772ac5702c970ae4a50",
+    "provenance": "GitHub PR merge checkout, run 42474080320; head bd15cddb4d0928abde07c90e34b52f567a169d2d"
+  },
+  {
+    "platform": "ios",
+    "path": "C:\\Users\\Oscar\\Documents\\Codex\\tmp\\platform-delivery-20261108\\delivery\\ios\\arm64-device\\libexreader.dylib",
+    "source_commit": "65b663a4428d14467865e772ac5702c970ae4a50",
+    "provenance": "GitHub PR merge checkout, run 42474080320; head bd15cddb4d0928abde07c90e34b52f567a169d2d"
+  }
+]

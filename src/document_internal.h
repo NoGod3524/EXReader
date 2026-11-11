@@ -27,10 +27,21 @@ typedef struct {
   exr_status (*prepare)(void *context,size_t node,const exr_control *control,exr_error *error);
   exr_status (*status)(void *context,exr_error *error);
 } exr_document_view;
+/* EPUB 3 Fixed Layout rendition of one chapter (package default plus itemref
+   override). spread: 0 unspecified, 1 left, 2 right, 3 center. The package
+   rendition:viewport is a fallback; a content <meta name="viewport"> wins. */
+typedef struct {
+  unsigned char fixed, spread;
+  float viewport_width, viewport_height;
+} exr_rendition;
+/* Parse "width=W, height=H" (HTML/EPUB viewport syntax). Returns 1 when both
+   dimensions are finite and in 1..16384 CSS px; outputs are unchanged otherwise. */
+int exr_viewport_parse(const char *content, float *width, float *height);
 struct exr_document {
   const exr_document_view *view;
   exr_status (*load_package)(const exr_document *,const exr_control *,exr_document **,exr_error *);
   char *text, *title,*language; /* Optional publication-level fallback; element lang wins. */
+  exr_direction page_progression; /* OPF spine; independent of paragraph direction. */
   size_t size, text_capacity;
   exr_block *blocks;
   size_t count, capacity;
@@ -41,6 +52,9 @@ struct exr_document {
   size_t last_capacity;
   exr_chapter *chapters;
   size_t chapter_count, chapter_capacity;
+  exr_rendition *renditions; /* NULL unless the EPUB package declares rendition data. */
+  size_t rendition_count;     /* Entries, indexed by chapter. */
+  int spread_none; /* rendition:spread none. */
   exr_resource *resources;
   size_t resource_count, resource_capacity;
   exr_resource_data *resource_data; /* Copied resources from public construction inputs. */

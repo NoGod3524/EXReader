@@ -1,0 +1,5 @@
+scenario,trials,pages_before,pages_after,repaginated,p50_ms,p95_ms,cache_hits,cache_misses,cache_invalidated,cache_hit_rate
+head_insert,31,100,101,101,47.0630,97.8509,0,186,186,0.0000
+middle_insert,31,100,101,52,36.9494,66.7628,62,124,124,0.3333
+last_character,31,100,100,1,0.8712,3.2783,155,31,31,0.8333
+append_50,31,100,105,6,2.4807,22.1427,155,31,31,0.8333

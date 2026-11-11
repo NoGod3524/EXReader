@@ -1,0 +1,63 @@
+{
+  "package": "/tmp/exreader SDK smoke 1snpxrxt/independent extraction/exreader-3.42.0-linux-x64",
+  "checks": [
+    {
+      "check": "package files and safe paths",
+      "passed": true,
+      "detail": "55 ordinary files; 31282097 bytes"
+    },
+    {
+      "check": "package name and archive format",
+      "passed": true,
+      "detail": "exreader-3.42.0-linux-x64"
+    },
+    {
+      "check": "required SDK files",
+      "passed": true,
+      "detail": "LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.so"
+    },
+    {
+      "check": "version identity",
+      "passed": true,
+      "detail": "package name = VERSION = version.h = source VERSION = cmake: 3.42.0"
+    },
+    {
+      "check": "public headers",
+      "passed": true,
+      "detail": "15 API headers + version.h = 16 files"
+    },
+    {
+      "check": "minimal example line limit",
+      "passed": true,
+      "detail": "64 lines <= 80"
+    },
+    {
+      "check": "SHA256SUMS coverage and content",
+      "passed": true,
+      "detail": "54 SHA256 digests; exact coverage of all files except SHA256SUMS"
+    },
+    {
+      "check": "library and CLI architecture",
+      "passed": true,
+      "detail": "library and CLI: ELF linux-x64"
+    },
+    {
+      "check": "public export count",
+      "passed": true,
+      "detail": "lib/libexreader.so: exr_* exports [868]; minimum 389"
+    },
+    {
+      "check": "CLI runtime layout and import library",
+      "passed": true,
+      "detail": "POSIX CLI has executable permission"
+    }
+  ],
+  "passed": true,
+  "version": "3.42.0",
+  "platform": "linux-x64",
+  "file_count": 55,
+  "size_bytes": 31282097,
+  "export_counts": [
+    868
+  ]
+}

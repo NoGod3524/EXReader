@@ -1,5 +1,7 @@
 # EXReader — native C reading engine & SDK
 
+共享库发布包与三平台最小接入命令见 [SDK 快速开始](tools/release/README.md)。
+
 默认分支为 `main`；`codex/framework` 为 SDK 化之前的归档历史，不再接受新提交。台账与证据入口见 [docs/reader-total-progress/](docs/reader-total-progress/) 与 [evidence/INDEX.md](evidence/INDEX.md)。
 
 EXReader 是面向桌面和移动阅读应用的 **C11 原生阅读引擎与可嵌入 SDK**，当前为 **3.42.0 开发版**，ABI epoch 1、书库 schema 7。核心自有代码使用 MIT 协议，可构建静态组件或 DLL / SO / dylib，以 C 接口供 C/C++、Swift 和 JNI 宿主调用。
@@ -21,6 +23,9 @@ Android 宿主已在共同源码 S 完成 API34 x86_64 模拟器联合验收。�
 [支持矩阵](docs/SUPPORT_MATRIX.md)；新增独立包的验收与待集成状态另见项目概述，不将单包通过视为产品整体完成。
 下一版的六个工作包与并行边界见 [原生阅读核心路线](docs/CORE-ROADMAP.md)；历史能力积压见 [版本路线记录](docs/VERSIONING.md#后续兼容目标与验收顺序)。
 轻量阅读 SDK 的构建命令见 [阅读 SDK preset](#阅读-sdk-preset)。
+
+宿主开发入口：[完整 API 参考](docs/API.md)、[接入指南与时序图](docs/INTEGRATION.md)、
+[格式能力矩阵](docs/CAPABILITY-MATRIX.md)、[可编译 C 示例与编译记录](docs/examples/README.md)。
 
 版本按更新规模递增：超大更新升主版本，中等更新升次版本，小 bug 修复升补丁版本；升级前两段时，后续段归零。全部历史已按此规则重编，见 [完整更新日志](CHANGELOG.md)；编号口径见 [版本规则](docs/VERSIONING.md)。
 

@@ -1,0 +1,16 @@
+cac0119bb5aed6249d5c6b28f46c23eddad0b2b8e89fde1109a6dba511478bc5  libexreader.so
+9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c  smoke.epub
+2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b  font.otf
+PASS load version=3.42.0 abi=1 mode=create
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS search_all needle=deliveryneedle hits=1000
+STORED highlight; awaiting independent process reopen
+PASS load version=3.42.0 abi=1 mode=reopen
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=20543 pixel_fnv1a64=08df71efa5a325a2
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS search_all needle=deliveryneedle hits=1000
+PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=45 changed_pixels=2553
+PASS platform checks=5/5

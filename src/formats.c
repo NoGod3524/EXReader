@@ -311,6 +311,7 @@ typedef struct {
 typedef struct {
   char *id;
   int linear;
+  int layout, side; /* EPUB 3 itemref rendition overrides; see exr_rendition. */
 } spine_item;
 typedef struct {
   XML_Parser parser;
@@ -320,9 +321,25 @@ typedef struct {
   size_t count, capacity;
   spine_item *spine;
   size_t spine_count, spine_cap;
-  exr_buffer title,language;
+  exr_buffer title,language,meta;
+  exr_direction page_progression;
   int in_title,in_language,have_language,failed,depth;
+  /* Package-level EPUB 3 Fixed Layout metadata (rendition: vocabulary). */
+  int in_meta,meta_kind,layout,spread_none;
+  float viewport_width,viewport_height;
 } package;
+/* Space-separated property token test (OPF properties attribute). */
+static int has_token(const char *list,const char *token) {
+  size_t n=strlen(token);
+  while(list && *list) {
+    size_t k=0;
+    while(*list && space((unsigned char)*list)) list++;
+    while(list[k] && !space((unsigned char)list[k])) k++;
+    if(k==n && !strncmp(list,token,n)) return 1;
+    list+=k;
+  }
+  return 0;
+}
 static void XMLCALL package_start(void *user, const char *full, const char **attrs) {
   package *p = user;
   const char *tag = local(full), *a, *b;
@@ -365,6 +382,13 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
     } else {
       p->spine[p->spine_count].id = exr_copy(a, strlen(a));
       p->spine[p->spine_count].linear = !b || strcmp(b, "no");
+      b = attribute(attrs, "properties");
+      p->spine[p->spine_count].layout = has_token(b,"rendition:layout-pre-paginated") ? 1 :
+                                        has_token(b,"rendition:layout-reflowable") ? 2 : 0;
+      p->spine[p->spine_count].side =
+        has_token(b,"page-spread-left") || has_token(b,"rendition:page-spread-left") ? 1 :
+        has_token(b,"page-spread-right") || has_token(b,"rendition:page-spread-right") ? 2 :
+        has_token(b,"rendition:page-spread-center") || has_token(b,"page-spread-center") ? 3 : 0;
       if (!p->spine[p->spine_count++].id)
         p->failed = 1;
     }
@@ -372,6 +396,14 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
   if (!strcmp(tag, "spine") && !p->toc_id) {
     a = attribute(attrs, "toc");
     if (a && !(p->toc_id = exr_copy(a, strlen(a)))) p->failed = 1;
+    a = attribute(attrs, "page-progression-direction");
+    if(a && !strcmp(a,"rtl")) p->page_progression=EXR_DIRECTION_RTL;
+    else if(a && !strcmp(a,"ltr")) p->page_progression=EXR_DIRECTION_LTR;
+  }
+  if (!strcmp(tag, "meta") && !attribute(attrs, "refines") && (a = attribute(attrs, "property"))) {
+    int kind = !strcmp(a, "rendition:layout") ? 1 : !strcmp(a, "rendition:viewport") ? 2 :
+               !strcmp(a, "rendition:spread") ? 3 : 0;
+    if (kind) { p->meta.size = 0; p->meta_kind = kind; p->in_meta = p->depth; }
   }
   if (!strcmp(tag, "title"))
     p->in_title = 1;
@@ -383,6 +415,18 @@ static void XMLCALL package_start(void *user, const char *full, const char **att
 }
 static void XMLCALL package_end(void *user, const char *tag) {
   package *p = user;
+  if (p->in_meta && p->in_meta == p->depth) {
+    char value[256]; size_t first = 0, last = p->meta.size;
+    while (first < last && space((unsigned char)p->meta.data[first])) first++;
+    while (last > first && space((unsigned char)p->meta.data[last - 1])) last--;
+    if (last - first < sizeof(value)) {
+      memcpy(value, p->meta.data ? p->meta.data + first : "", last - first); value[last - first] = 0;
+      if (p->meta_kind == 1) p->layout = !strcmp(value, "pre-paginated") ? 1 : !strcmp(value, "reflowable") ? 2 : 0;
+      else if (p->meta_kind == 2) exr_viewport_parse(value, &p->viewport_width, &p->viewport_height);
+      else if (p->meta_kind == 3) p->spread_none = !strcmp(value, "none");
+    }
+    p->in_meta = 0;
+  }
   if (!strcmp(local(tag), "title"))
     p->in_title = 0;
   if(p->in_language==p->depth) {
@@ -401,6 +445,9 @@ static void XMLCALL package_text(void *user, const XML_Char *s, int n) {
     XML_StopParser(p->parser, XML_FALSE);
   }
   if(p->in_language && ((size_t)n>4096-p->language.size || !exr_append(&p->language,s,(size_t)n))) {
+    p->failed=1; XML_StopParser(p->parser,XML_FALSE);
+  }
+  if(p->in_meta && ((size_t)n>4096-p->meta.size || !exr_append(&p->meta,s,(size_t)n))) {
     p->failed=1; XML_StopParser(p->parser,XML_FALSE);
   }
 }
@@ -537,6 +584,7 @@ static void package_free(package *p) {
   free(p->toc_id);
   free(p->title.data);
   free(p->language.data);
+  free(p->meta.data);
 }
 static exr_status archive_open(archive *z, const void *data, size_t n, exr_error *e) {
   if (!mz_zip_reader_init_mem(&z->archive, data, n, 0))
@@ -725,6 +773,7 @@ static exr_status epub_metadata(exr_document *d, archive *z, int strict, const c
     d->language=exr_copy(p.language.data,p.language.size);
     if(!d->language) { result=exr_fail(e,EXR_MEMORY,"Publication language allocation failed"); goto done; }
   }
+  d->page_progression=p.page_progression;
   for (i = 0; i < p.count; i++) {
     exr_resource r;
     if (!exr_resolve_path(p.root, p.items[i].href, path) || !p.items[i].id[0]) {
@@ -775,6 +824,24 @@ static exr_status epub_metadata(exr_document *d, archive *z, int strict, const c
     result = epub_chapter(d, j, 0, 0, e);
     if (result != EXR_OK)
       goto done;
+  }
+  d->spread_none = p.spread_none;
+  for (i = 0; i < p.spine_count && !p.layout; i++)
+    if (p.spine[i].layout || p.spine[i].side) break;
+  /* Rendition data exists only for packages that declare it, so reflowable
+     books keep a NULL table and their original layout path. */
+  if (p.layout || i < p.spine_count || p.viewport_width > 0) {
+    free(d->renditions); d->rendition_count = 0;
+    d->renditions = calloc(d->chapter_count, sizeof(*d->renditions));
+    if (!d->renditions) { result = exr_fail(e, EXR_MEMORY, "Rendition table allocation failed"); goto done; }
+    d->rendition_count = d->chapter_count;
+    for (i = 0; i < d->chapter_count; i++) {
+      exr_rendition *r = &d->renditions[i];
+      int item = i < p.spine_count ? p.spine[i].layout : 0;
+      r->fixed = i < p.spine_count && (item ? item == 1 : p.layout == 1);
+      r->spread = i < p.spine_count ? (unsigned char)p.spine[i].side : 0;
+      r->viewport_width = p.viewport_width; r->viewport_height = p.viewport_height;
+    }
   }
   result = EXR_OK;
 done:
@@ -1120,6 +1187,7 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   }
   d->format = EXR_EPUB;
   d->load_package = index->load_package;
+  d->page_progression = index->page_progression;
   d->shared_archive = index->shared_archive;
   d->archive = index->archive;
   d->archive_size = index->archive_size;
@@ -1142,6 +1210,14 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   }
   /* A requested auxiliary chapter is an independent reading unit. The index
      retains its original spine/linear flags, while this snapshot can be laid out. */
+  d->page_progression = index->page_progression;
+  d->spread_none = index->spread_none;
+  if (index->renditions && part < index->rendition_count) {
+    d->renditions = malloc(sizeof(*d->renditions));
+    if (!d->renditions) { result = exr_fail(e, EXR_MEMORY, "Rendition allocation failed"); goto done; }
+    *d->renditions = index->renditions[part];
+    d->rendition_count = 1;
+  }
   result = epub_parse_chapter(d, &z, index->chapters[part].resource, 1, 1, e);
   if (result == EXR_OK)
     result = exr_model_finish(d, e);

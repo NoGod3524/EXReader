@@ -1,0 +1,70 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 182
+    Start 182: native-bidi
+
+182: Test command: C:\Users\Oscar\Documents\Codex\EXReader-A3-20261109\build-msvc\exreader-bidi-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/tests/fixtures/bidi"
+182: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc
+182: Test timeout computed to be: 10000000
+182: 861948 Unicode 17 bidi conformance cases, 24401500 checks passed
+1/6 Test #182: native-bidi ......................   Passed    0.72 sec
+test 183
+    Start 183: native-rtl-paragraph
+
+183: Test command: C:\Users\Oscar\Documents\Codex\EXReader-A3-20261109\build-msvc\exreader-rtl-verify-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/tests/fixtures/rtl" "paragraph"
+183: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc
+183: Test timeout computed to be: 10000000
+183: script 0: lines=19 first=(20.000,256.000) last=(218.000,82.000)
+183: script 1: lines=16 first=(20.000,256.000) last=(47.000,253.000)
+183: RTL paragraph: 54 checks passed
+2/6 Test #183: native-rtl-paragraph .............   Passed    0.21 sec
+test 184
+    Start 184: native-rtl-numbers
+
+184: Test command: C:\Users\Oscar\Documents\Codex\EXReader-A3-20261109\build-msvc\exreader-rtl-verify-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/tests/fixtures/rtl" "numbers"
+184: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc
+184: Test timeout computed to be: 10000000
+184: RTL numbers: 39 checks passed
+3/6 Test #184: native-rtl-numbers ...............   Passed    0.02 sec
+test 185
+    Start 185: native-rtl-punctuation
+
+185: Test command: C:\Users\Oscar\Documents\Codex\EXReader-A3-20261109\build-msvc\exreader-rtl-verify-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/tests/fixtures/rtl" "punctuation"
+185: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc
+185: Test timeout computed to be: 10000000
+185: RTL punctuation: 36 checks passed
+4/6 Test #185: native-rtl-punctuation ...........   Passed    0.01 sec
+test 186
+    Start 186: native-rtl-mixed
+
+186: Test command: C:\Users\Oscar\Documents\Codex\EXReader-A3-20261109\build-msvc\exreader-rtl-verify-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/tests/fixtures/rtl" "mixed"
+186: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc
+186: Test timeout computed to be: 10000000
+186: RTL mixed: 56 checks passed
+5/6 Test #186: native-rtl-mixed .................   Passed    0.01 sec
+test 187
+    Start 187: native-rtl-progression
+
+187: Test command: C:\Users\Oscar\Documents\Codex\EXReader-A3-20261109\build-msvc\exreader-rtl-verify-test.exe "C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/tests/fixtures/rtl" "progression"
+187: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-A3-20261109/build-msvc
+187: Test timeout computed to be: 10000000
+187: RTL progression: 40 checks passed
+6/6 Test #187: native-rtl-progression ...........   Passed    0.02 sec
+
+The following tests passed:
+	native-bidi
+	native-rtl-paragraph
+	native-rtl-numbers
+	native-rtl-punctuation
+	native-rtl-mixed
+	native-rtl-progression
+
+100% tests passed out of 6
+
+Total Test time (real) =   1.01 sec

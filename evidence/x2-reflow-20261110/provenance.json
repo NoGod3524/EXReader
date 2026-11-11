@@ -1,0 +1,31 @@
+{
+  "head": "aaf8aeccdf8ea83b35c65846f7989cae14613dd5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "configuration": "Release / all SDK components; WebP, TIFF, AVIF disabled",
+  "source_sha256": {
+    "CMakeLists.txt": "291963f6e26f066d95321a8a40e47a9c10101375a3b03e0a192d7be0f4d0ea40",
+    "cmake/modules.cmake": "f491c396745155afacae684ffc978ceecc07207b9d2324ca6321c964f440b8c3",
+    "include/exr/edit.h": "7a040f372053261ca4524f98a5a47847687b89c6049063a3167566b9019fd03d",
+    "include/exr/reflow.h": "6328e91a41ac5eb917f6b430b9931ea4e6d47399d93a2de923eb5917cb4482e0",
+    "include/exr/layout.h": "bea06132d3f988306d55c3c9a36f466d8b67e3ee18e0d46f42f8073bf7b97f8a",
+    "src/pager.c": "999c094d0dd97ab4be82763dbb33d8c7f6cc89d410f7f2637edce2f3e1efedb3",
+    "src/docx_reflow.c": "114bf72a2e88f8fb61048b5ac8f167eaeb07e43b53ea972e34c18d1756094bb1",
+    "src/reflow_internal.h": "83e6288eaf34791d7370f5115f17434bc943cbf121ffa18d37be56c00f55b5a8",
+    "tools/layers.json": "f7e525a0682dc96794ae4288a7a62fd0d84b0684dc643ff61459367c85bceaf1",
+    "tools/reflow_baseline.py": "cd48d2feb26a15be5a387723a49f97cb2e0506f2fada2113dd8e8ef1fb4d9c45",
+    "tools/release/check_release.py": "97db615c2818130b294b65bfc474eee9d8d96aab5d5ded3b4fbe8f65873386f7",
+    "tests/test_docx_reflow.c": "bf72dec0ca7488fb07ce265b4759742390f2355d760b6ce8ab513b13df6808ec"
+  },
+  "x1_external_source": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-x1-bridge-20261110\\src\\docx_edit.c",
+  "x1_external_sha256": "c279253281c015ee0330bef2259ae8bfb70904494693efc0244782ac697c49cd",
+  "candidate_dll_sha256": "0c80a031dae3c60e53e69d69eee3c1edaa3d66484ca4c38805613ff2203d61f6",
+  "control_dll_sha256": "8ddaad8ba103d5e9a776149c37f2cca74526434fd37b64894105e99c83cc0e32",
+  "font_sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed",
+  "benchmark_trials_per_scenario": 31,
+  "ctest_passed": 268,
+  "new_test_groups": 12,
+  "readonly_books": 19,
+  "readonly_pages": 11318,
+  "hash_changed_pages": 0
+}

@@ -1,0 +1,30 @@
+2026-11-09T16:21:39.5106183Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2325b63cbf4068fba7ae2761ad10678b0274bab6:refs/remotes/pull/108/merge
+2026-11-09T16:21:47.9852978Z  * [new ref]         2325b63cbf4068fba7ae2761ad10678b0274bab6 -> pull/108/merge
+2026-11-09T16:21:49.3180474Z HEAD is now at 2325b63 Merge 30595c2107ef934c962b64401e60865dfd266b24 into b0af2a5537fdf83158750e42d0fce412c4359429
+2026-11-09T16:21:49.3253506Z [command]/usr/bin/git log -1 --format=%H
+2026-11-09T16:21:49.3273425Z 2325b63cbf4068fba7ae2761ad10678b0274bab6
+2026-11-09T16:21:49.4401839Z -- The C compiler identification is GNU 11.4.0
+2026-11-09T16:21:55.5387359Z -- The CXX compiler identification is GNU 11.4.0
+2026-11-09T16:23:48.1513280Z         Start  37: native-library-stream
+2026-11-09T16:23:51.2396848Z  37/248 Test  #37: native-library-stream ..................   Passed    3.09 sec
+2026-11-09T16:24:11.4581069Z         Start  86: native-text-index
+2026-11-09T16:24:11.4975617Z  86/248 Test  #86: native-text-index ......................   Passed    0.04 sec
+2026-11-09T16:24:52.0145935Z         Start 248: native-build-manifest
+2026-11-09T16:24:52.0653393Z 248/248 Test #248: native-build-manifest ..................   Passed    0.05 sec
+2026-11-09T16:24:52.0661000Z 100% tests passed, 0 tests failed out of 248
+2026-11-09T16:25:14.7381193Z ##[group]Run cmake --install build/native --config Release --prefix stage
+2026-11-09T16:25:14.7381746Z [36;1mcmake --install build/native --config Release --prefix stage[0m
+2026-11-09T16:25:15.0284673Z manifest linux: 427 exports; SHA256 07ac839f69ab4343d16de18fc5b64f8f47c02de7dab70aa40975d94845ace615
+2026-11-09T16:25:15.0807777Z -- The C compiler identification is GNU 11.4.0
+2026-11-09T16:25:15.1156542Z -- The CXX compiler identification is GNU 11.4.0
+2026-11-09T16:25:15.7144418Z 100% tests passed, 0 tests failed out of 6
+2026-11-09T16:25:15.7180373Z [36;1mcmake --install build/core-only --config Release --prefix stage-core[0m
+2026-11-09T16:25:15.7556089Z -- The C compiler identification is GNU 11.4.0
+2026-11-09T16:25:21.0671219Z -- The CXX compiler identification is GNU 11.4.0
+2026-11-09T16:26:06.9516039Z 100% tests passed, 0 tests failed out of 23
+2026-11-09T16:26:07.0295739Z -- The C compiler identification is GNU 11.4.0
+2026-11-09T16:26:07.0695442Z -- The CXX compiler identification is GNU 11.4.0
+2026-11-09T16:26:07.5258017Z 100% tests passed, 0 tests failed out of 3
+2026-11-09T16:26:34.4814910Z 100% tests passed, 0 tests failed out of 26
+2026-11-09T16:26:34.5223403Z -- The C compiler identification is GNU 11.4.0
+2026-11-09T16:26:34.9562028Z -- The CXX compiler identification is GNU 11.4.0

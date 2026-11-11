@@ -353,6 +353,7 @@ static int visit_document(window_parser *p,const exr_document *metadata) {
   p->doc->resource_count = metadata->resource_count; p->doc->resource_data = metadata->resource_data;
   p->doc->shared_archive = metadata->shared_archive; p->doc->archive = metadata->archive;
   p->doc->archive_size = metadata->archive_size; p->doc->language = metadata->language; p->doc->title = metadata->title;
+  p->doc->page_progression = metadata->page_progression;
   p->doc->load_package = metadata->load_package;
   p->doc->chapters = allocate(p,sizeof(*p->doc->chapters));
   if (!p->doc->chapters) return 0;
@@ -468,6 +469,7 @@ exr_status exr_chapter_window_load(const exr_chapter_index *index,const exr_docu
   p->doc->resource_count = metadata->resource_count; p->doc->resource_data = metadata->resource_data;
   p->doc->shared_archive = metadata->shared_archive; p->doc->archive = metadata->archive;
   p->doc->archive_size = metadata->archive_size; p->doc->language = metadata->language; p->doc->title = metadata->title;
+  p->doc->page_progression = metadata->page_progression;
   p->doc->load_package = metadata->load_package;
   p->doc->chapters = allocate(p,sizeof(*p->doc->chapters));
   if (!p->doc->chapters) goto done;

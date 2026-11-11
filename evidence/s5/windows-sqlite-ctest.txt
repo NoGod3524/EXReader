@@ -1,0 +1,9 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S5-20261109/build/s5-check
+    Start 37: native-library-stream
+1/2 Test #37: native-library-stream ............   Passed    5.96 sec
+    Start 86: native-text-index
+2/2 Test #86: native-text-index ................   Passed    0.57 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   7.54 sec

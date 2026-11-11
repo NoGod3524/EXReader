@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "platform": "Linux",
+  "commands": [
+    "cc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -Wl,-rpath,'$ORIGIN/lib' -o minimal",
+    "./minimal examples/minimal/sample.epub examples/minimal/font.ttf page-1.pgm",
+    "./bin/exr-info examples/minimal/sample.epub examples/minimal/font.ttf"
+  ],
+  "archive_sha256": "38af223308e00bd3a01fc3d19c1f850a00b40c380fe08b051751b5a0c395727d",
+  "archive_name": "exreader-3.42.0-linux-x64.tar.gz",
+  "command_results": [
+    {
+      "command": "cc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -Wl,-rpath,'$ORIGIN/lib' -o minimal",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "command": "./minimal examples/minimal/sample.epub examples/minimal/font.ttf page-1.pgm",
+      "exit_code": 0,
+      "output": "Title: Native styled sample\nPages: 2\nTOC entries: 1\nOutput: page-1.pgm (720 x 1040, PGM)\n"
+    },
+    {
+      "command": "./bin/exr-info examples/minimal/sample.epub examples/minimal/font.ttf",
+      "exit_code": 0,
+      "output": "Version: 3.42.0\nFormat: EPUB\nTitle: Native styled sample\nPages: 2\nTOC entries: 1\n"
+    }
+  ],
+  "pgm": {
+    "width": 720,
+    "height": 1040,
+    "bytes": 748816,
+    "nonwhite_pixels": 129549
+  },
+  "sample": {
+    "Title": "Native styled sample",
+    "Pages": 2,
+    "TOC entries": 1
+  },
+  "cli": {
+    "Version": "3.42.0",
+    "Format": "EPUB",
+    "Title": "Native styled sample",
+    "Pages": 2,
+    "TOC entries": 1
+  },
+  "version": "3.42.0"
+}

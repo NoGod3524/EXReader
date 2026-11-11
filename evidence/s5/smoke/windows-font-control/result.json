@@ -1,0 +1,54 @@
+{
+  "checks": {
+    "load": true,
+    "open": true,
+    "render": true,
+    "search": true,
+    "annotation": true
+  },
+  "passed": 5,
+  "version": "3.42.0",
+  "library": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\ci\\windows\\bin\\exreader.dll",
+  "library_sha256": "59970583c1af96405b9be57763a4af0b4550682b3771a5e7a6894b832dd594dc",
+  "negative_moved_annotation_exit": 1,
+  "commands": [
+    [
+      "gcc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\source\\include",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\source\\tools\\platforms\\probe.c",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\ci\\windows\\bin\\exreader.dll",
+      "-o",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe"
+    ],
+    [
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\smoke.epub",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\font.otf",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control",
+      "create"
+    ],
+    [
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\smoke.epub",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\font.otf",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control",
+      "reopen"
+    ],
+    [
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\smoke.epub",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\font.otf",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\negative",
+      "reopen"
+    ]
+  ],
+  "input_sha256": {
+    "smoke.epub": "9d7c41ce3173ce1e844d82f995de8aab98bc25a456b0f5a01da7a0e9cc86342c",
+    "font.otf": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+  }
+}

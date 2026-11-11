@@ -1,0 +1,7 @@
+{
+  "head": "aaf8aeccdf8ea83b35c65846f7989cae14613dd5",
+  "pager_sha256": "05b3b1c9d2d067d850be1e84ddabaf59c61f3310cd7eac7d485024ffb139b576",
+  "dll_sha256": "8ddaad8ba103d5e9a776149c37f2cca74526434fd37b64894105e99c83cc0e32",
+  "method": "HEAD pager.c + identical candidate objects/dependencies, excluding docx_reflow.c",
+  "compiler": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe"
+}

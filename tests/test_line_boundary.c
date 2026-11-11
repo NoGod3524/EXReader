@@ -500,6 +500,36 @@ static void cjk_justification(void) {
   exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
 }
 
+static void simplified_mixed_punctuation(void) {
+  const char *texts[]={
+    "\u53d1\u540e\u91cc\u53f0\u5e72\u4e91\uff0c\u56fd\u6c49\u4e66\u95e8\u98ce\u4e1c\u8f66\u9a6c\uff01",
+    "\u4ed6\u95ee\uff1a\u201c\u5934\u53d1\u540e\u9762\u6709\u4ec0\u4e48\uff1f\u201d\u5979\u8bf4\uff1a\u201c\u662f123\u4e2a\u5b57\u3002\u201d",
+    "\u7b2c12\u7ae0,\u4e00\u4e8c\u4e09.\u56db\u4e94\u516d!\u4e03\u516b\u4e5d?\uff08\u7b2c2026\u5e74\uff09\u3002",
+    "\u7b80\u4f53\uff0c\u201c\u6df7\u7528\u3002\u201d\u201c\u5168\u89d2\uff01\u201d\u534a\u89d2,\u6807\u70b9;\u6d4b\u8bd5:\u7ed3\u675f\u3002"};
+  size_t t,w,mode;
+  scenario="simplified mixed punctuation: edges and identical whole/pager/session output";
+  for(t=0;t<sizeof(texts)/sizeof(texts[0]);t++)for(w=83;w<=123;w+=20)for(mode=0;mode<2;mode++) {
+    char style[128];exr_layout_config c=config();exr_document *doc;exr_layout *l;
+    size_t count,i,j;const exr_line *lines;const exr_glyph *g;
+    snprintf(style,sizeof(style),mode ? "height:%zupx;margin:0;writing-mode:vertical-rl":"width:%zupx;margin:0",w);
+    doc=document(texts[t],style,0);l=layout(doc,&c);
+    lines=exr_layout_lines(l,&count);g=exr_layout_glyphs(l,NULL);
+    for(i=0;i<count;i++) {
+      const exr_glyph *first=NULL,*last=NULL;
+      for(j=0;j<lines[i].glyph_count;j++) {
+        const exr_glyph *v=g+lines[i].glyph_start+j;
+        if(!(v->flags&EXR_GLYPH_HIDDEN) && v->codepoint>32) {if(!first)first=v;last=v;}
+      }
+      if(!first)continue;
+      CHECK(first->codepoint!=0xff0c && first->codepoint!=0x3002 && first->codepoint!=0xff01 &&
+            first->codepoint!=0xff1f && first->codepoint!=0x201d && first->codepoint!=0xff09);
+      CHECK(first->codepoint>=128 || !strchr(",.!?:;)",(int)first->codepoint));
+      CHECK(last->codepoint!=0x201c && last->codepoint!=0xff08);
+    }
+    exr_layout_free(l);modes(doc,&c);exr_document_free(doc);
+  }
+}
+
 int main(int argc, char **argv) {
   scenario = "setup"; CHECK(argc == 3);
   font = open_font(argv[1], "line-boundary.ttf");
@@ -509,6 +539,7 @@ int main(int argc, char **argv) {
   font = open_font(argv[2], "cjk-punctuation.ttf");
   cjk_space_kinsoku_set();cjk_opening_space_text();
   cjk_justification();cjk_punctuation_pair();cjk_punctuation_three();cjk_punctuation_wrap();cjk_punctuation_exclusions();
+  simplified_mixed_punctuation();
   exr_font_free(font);
   font = open_font(argv[2], "latin-punctuation.ttf");
   latin_quote_spaces();

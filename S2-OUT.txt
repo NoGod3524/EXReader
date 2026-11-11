@@ -1,0 +1,367 @@
+[S2 2026-11-09 / Step 1: repository and toolchain]
+Branch: codex/sdk-packaging-20261109; initial worktree clean.
+Canonical version: cmake/versions.cmake = 3.42.0; include/exr/version.h = 3.42.0.
+Header inventory: 15 public API headers plus version.h (16 files total); all will ship.
+Native GCC/MinGW, CMake, Python and gh are available. WSL is not installed.
+Existing .github/workflows/native.yml has pull_request trigger and Windows/Linux/macOS matrix.
+Plan: use CMake/CTest release smoke for native PR coverage; no .github changes.
+
+[S2 sample/CLI implementation] 2026-11-09T10:49:06.8840316-05:00
+Added examples/minimal/main.c (61 lines): EPUB title, full-document default-layout page count, publication TOC count, first page as binary PGM; only public <exr/core.h>. Added tools/exr_info.c for reflow format/version/title/page/TOC inspection and --version. Implemented cleanup and write error reporting. Execution validation pending build by root.
+
+[S2 sample/CLI syntax validation] 2026-11-09T10:49:15.9665080-05:00
+PASS: gcc -std=c11 -Wall -Wextra -Werror -Iinclude -fsyntax-only examples/minimal/main.c tools/exr_info.c (exit 0). minimal/main.c is 61 lines.
+
+[Packaging scripts implemented]
+Added native PowerShell/POSIX entrypoints and shared stdlib Python collector under tools/release/.
+Collector preserves all 15 API headers plus generated version.h, shared/import libraries, exr-info, standalone minimal inputs, notices/licenses, and per-file SHA256SUMS. Windows also places the DLL beside exr-info for direct execution.
+Reuses existing dependency-license manifest; validates staged directory and final archive with check_release.py before replacing only its exact output child.
+Validated: python -m py_compile tools/release/build_packages.py; python tools/release/build_packages.py --help; PowerShell parser reports zero errors. Full archive execution awaits native build.
+[Packaging source-root correction]
+License collection now resolves FetchContent archive roots (including FETCHCONTENT_BASE_DIR and explicit source overrides), not nested upstream CMake project source directories. This covers Expat's expat/COPYING and root COPYING correctly.
+Validated POSIX script with Git Bash -n and recompiled Python collector successfully.
+[S2 Step: version, README and CMake integration]
+Added VERSION=3.42.0, preserving canonical cmake/versions.cmake and generated public version.h.
+Added tools/release/README.md: exact three-command quickstarts for Windows MSVC/Linux/macOS; self-contained bundled EPUB/font, release build commands, CLI, loader and checksum instructions.
+Added exr-info CMake target with relocatable POSIX runtime lookup; connected sdk-release and sdk-release-checker CTest cases to the existing full native test configuration.
+Added root README quickstart link. No src/*.h or .github/ files added/modified.
+[checker] Implemented tools/release/check_release.py: package paths/layout, platform archive suffix, VERSION/header/package/source/CMake identity, 15 API headers plus version.h, <=80-line example, exact SHA256SUMS coverage and hashes, library/CLI architecture, >=389 exr_* exports, Windows import library and identical CLI DLL / POSIX executable mode.
+[checker] python tools/release/test_check_release.py
+PASS release gate: directory/ZIP/tar.gz; rejects tampering, missing header, version mismatch, 81 lines, 388 exports, wrong CPU, traversal
+Checker regression uses synthetic PE/Mach-O bytes; actual release binary/runtime validation is recorded separately after the build.
+
+[S2 SDK smoke implementation] 2026-11-09T10:53:44.3780354-05:00
+Added tools/release/smoke_release.py: native packaging wrapper, independent extraction in a path containing spaces, extracted package checks, exact platform README three-command execution with early failure, PGM payload/nonwhite pixel validation, CLI/sample count agreement and runtime VERSION agreement. Handles MSVC vcvars discovery from compiler/vswhere and records smoke.log, smoke.json, check-release.json, page-1.pgm. Python syntax compilation passed; end-to-end run pending native build/README.
+
+[S2 smoke parser validation] 2026-11-09T10:54:43.2612796-05:00
+PASS: Windows/Linux/macOS three-command README block extraction and title/page/TOC output parsing via direct Python assertions. End-to-end packaging/compilation remains pending build completion.
+
+[Independent packaging review completed]
+Reviewed SDK README, CMake target/test integration, release checker and native configure progress. Found and reported a real Windows LF/CRLF version-header mismatch; checker now normalizes line endings with a positive CRLF regression.
+Confirmed the Windows configure was progressing through dependency downloads and compiler probes while other independent builds used the host; no build/process cancellation performed.
+Kept native MSVC exreader.dll/exreader.lib naming because import-library references require the DLL name. Collector now explicitly rejects missing public SDK components (PDF/edit/audio/library/textindex/shared), avoiding packages that ship headers without their link symbols; optional codec switches remain configurable.
+Python collector syntax validation passed.
+[S2 MSVC environment validation] 2026-11-09T10:56:09.2670758-05:00
+PASS: smoke_release.py discovered VS 2022 BuildTools vcvars64 and cl.exe without a developer shell; real Windows README block contains exactly 3 commands. Extra /W4 /WX /Zs check found standard fopen deprecation warning C4996 in minimal/main.c; portable CRT declaration adjustment pending. tools/exr_info.c produced no diagnostics.
+
+[CI platform review]
+Confirmed the unchanged native PR workflow uses Windows, Ubuntu x64 and macos-15. GitHub's current runner documentation lists macos-15 as arm64, matching native package auto-detection: https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job
+Actual command-execution evidence will come from the PR-triggered sdk-release CTest.
+[checker follow-up] Accepted LF/CRLF equivalence in generated version.h; added positive CRLF regression. Enforced README starter assets (sample EPUB, font and font license), exact archive root and correct .zip/.tar.gz platform suffix. Re-ran python tools/release/test_check_release.py successfully, including missing-font rejection.
+[packaging review] Checked default static dependency linkage and enabled-license inventory. Recommended rejecting partial component builds that still ship every public header; root authorized and packaging agent is implementing. Found tools/release was ignored by existing release/ rule and notified root.
+[S2 review corrections]
+Release test evidence is installed optionally into share/exreader/release-validation so existing PR artifact upload preserves exact commands/output without workflow edits.
+Scoped .gitignore release output to /release/ so tools/release scripts are versioned.
+Excluded sanitizer-instrumented builds from distributable SDK smoke; native Release matrix remains covered.
+PASS release checker regression including normalized LF/CRLF version identity (actual local execution).
+[S2 portable MSVC example update] 2026-11-09T10:57:26.5008820-05:00
+Added guarded _CRT_SECURE_NO_WARNINGS for MSVC standard fopen; minimal/main.c is now 64 lines and SDK README count matches. Existing CMake definition is respected by the guard.
+
+[S2 MSVC strict syntax validation] 2026-11-09T10:57:35.3997864-05:00
+PASS: cl /nologo /W4 /WX /Iinclude /Zs examples/minimal/main.c tools/exr_info.c with automatically imported x64 developer environment. Actual output: main.c; exr_info.c; MSVC syntax exit: 0. smoke_release.py Python syntax compilation passed.
+
+[S2 repository version validation]
+Command: python tools/check_version_consistency.py
+Actual output: PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+Exit code: 0. git diff --check also passed.
+[independent source review] Reviewed release scripts, CMake test/CLI additions, main.c and exr_info.c for MSVC, ELF and Mach-O. No concrete blocker found. Confirmed NULL-safe cleanup APIs, grayscale render channel, row-stride PGM writes, MSVC environment discovery, PATH/RPATH relocation, copied SONAME variants, and sanitizer/cross-build exclusion. This is source review; native execution results are recorded separately.
+[independent source review] Confirmed existing macos-15 CI label is arm64 in current official GitHub runner documentation: https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job
+[S2 native configure completed]
+MSVC x64, Visual Studio 2022 BuildTools, full default components (AAC OFF).
+Initial CMake configure completed successfully; pinned sources fetched and hash-verified by CMake.
+Local CMake used explicit Git CA bundle because this CMake installation has no default trust anchors.
+Reconfiguring with EXR_BUILD_TESTS=ON to exercise the same sdk-release CTest entry as PR CI; building exr-info and its aggregate SDK dependency.
+Packaging rejects EXR_SANITIZE=ON to keep README consumer commands valid for distributed libraries.
+[S2 CI artifact retention]
+Native release smoke now preserves its actual platform archive and SHA256 alongside command outputs. Optional install includes those archives in existing native SDK artifacts, enabling Windows/Linux/macOS package retrieval without changing .github/.
+
+[S2 native release CTest]
+Command: ctest --test-dir build/sdk-release -C Release -R sdk-release --output-on-failure
+Exit: 0
+Test project C:/Users/Oscar/Documents/Codex/EXReader-S2-20261109/build/sdk-release
+    Start 1: sdk-release
+1/2 Test #1: sdk-release ......................   Passed   24.77 sec
+    Start 2: sdk-release-checker
+2/2 Test #2: sdk-release-checker ..............   Passed    3.21 sec
+
+100% tests passed out of 2
+
+Label Time Summary:
+release    =  24.77 sec*proc (1 test)
+
+Total Test time (real) =  28.07 sec
+
+[S2 DLL native export verification]
+Command: dumpbin /exports build/sdk-release/Release/exreader.dll
+Actual exr_* export rows: 427 (minimum 389). Raw output: build/windows-exports.txt
+
+[S2 Windows archive delivered]
+Archive: exreader-3.42.0-win-x64.zip
+Archive bytes: 7943427
+Archive SHA256: ac86179d3a9509bdb2fd47da5d5789e6bc0201e4d2e9a947467b7c1132fd82ec
+Unpacked files: 55
+Unpacked bytes: 16166807
+
+bin/exr-info.exe  142336 bytes
+bin/exreader.dll  7792128 bytes
+examples/minimal/FONT-LICENSE.md  5279 bytes
+examples/minimal/font.ttf  1176 bytes
+examples/minimal/main.c  2264 bytes
+examples/minimal/sample.epub  3054 bytes
+include/exr/audio.h  15544 bytes
+include/exr/base.h  4952 bytes
+include/exr/core.h  121 bytes
+include/exr/dictionary.h  2350 bytes
+include/exr/document.h  22561 bytes
+include/exr/font_manager.h  13044 bytes
+include/exr/formats.h  10884 bytes
+include/exr/graphics.h  15209 bytes
+include/exr/layout.h  37337 bytes
+include/exr/library.h  14136 bytes
+include/exr/pdf.h  2111 bytes
+include/exr/pdf_edit.h  6445 bytes
+include/exr/render.h  1539 bytes
+include/exr/text.h  18252 bytes
+include/exr/textindex.h  2899 bytes
+include/exr/version.h  209 bytes
+include/exreader.h  254 bytes
+lib/exreader.dll  7792128 bytes
+lib/exreader.lib  99266 bytes
+LICENSE  1078 bytes
+README.md  5085 bytes
+SHA256SUMS  5222 bytes
+share/exreader/LICENSE  1078 bytes
+share/exreader/licenses/default-cmyk-profile.txt  507 bytes
+share/exreader/licenses/expat/COPYING  1144 bytes
+share/exreader/licenses/expat/upstream-root/COPYING  1144 bytes
+share/exreader/licenses/freetype/FTL.TXT  6743 bytes
+share/exreader/licenses/freetype/LICENSE.TXT  2149 bytes
+share/exreader/licenses/lcms/LICENSE  1080 bytes
+share/exreader/licenses/libaom/LICENSE  1316 bytes
+share/exreader/licenses/libaom/PATENTS  5701 bytes
+share/exreader/licenses/libavif/LICENSE  20415 bytes
+share/exreader/licenses/libtiff/LICENSE.md  1164 bytes
+share/exreader/licenses/libwebp/COPYING  1496 bytes
+share/exreader/licenses/libwebp/PATENTS  1436 bytes
+share/exreader/licenses/mbedtls/LICENSE  29852 bytes
+share/exreader/licenses/minimp3/LICENSE  6556 bytes
+share/exreader/licenses/miniz/LICENSE  1184 bytes
+share/exreader/licenses/openjpeg/LICENSE  2112 bytes
+share/exreader/licenses/pdf-font-data/adobe-glyph-list.txt  1456 bytes
+share/exreader/licenses/pdf-font-data/pdfjs.txt  10209 bytes
+share/exreader/licenses/sqlite/sqlite-public-domain.txt  761 bytes
+share/exreader/licenses/stb/LICENSE  2510 bytes
+share/exreader/licenses/unicode/LICENSE.txt  1995 bytes
+share/exreader/licenses/wp7-fonts/noto-sans-test-fonts.txt  4383 bytes
+share/exreader/licenses/zlib/LICENSE  1002 bytes
+share/exreader/THIRD_PARTY_NOTICES.md  21272 bytes
+THIRD_PARTY_NOTICES.md  21272 bytes
+VERSION  7 bytes
+
+[Windows SHA256SUMS contents]
+f4d9b0f5afb33259eb1f425c4e204503c7b406f224b6891286488c9bec9eff86  bin/exr-info.exe
+defb6b82be118c40ba952f41ac01b84737834db52844569df51fa8051ba79b16  bin/exreader.dll
+56d7fbe798506d0e48000c06fc578d45aec7575524513eaa1fc34b79253186bd  examples/minimal/FONT-LICENSE.md
+ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed  examples/minimal/font.ttf
+abfe05bc19698f66db9d25ad3001a65559374582feed5c07cc3079ef1c87d64a  examples/minimal/main.c
+555232f55a9f2dc0414ea0a36bb749ce027af67457d11d5924393a7cac787714  examples/minimal/sample.epub
+cac99ff20ece707958be51ac5c8f0d6d96eef15adb4e368ba4104cc9bcb4a201  include/exr/audio.h
+1e60b148a247c1ef0d2caf386682815f503300e38537e518dd0a32d70e0e1b61  include/exr/base.h
+927283b6ec31dbf2c495a88725fc98ed7af75879cdaa3502d5f54e5144679990  include/exr/core.h
+582e027509fc37264029b767554d99df21ceaca38a27d855e4db3fa86d005111  include/exr/dictionary.h
+1a6f4026db6b3d46e920c2e50f0c2712ce821c931bdd7901da14e6617ce36f60  include/exr/document.h
+e01295b3db4caef11f353e8fabf9992f6c43dabef70c22e96a8c9b48b81f597a  include/exr/font_manager.h
+2db22b658c3c826d727facb96ca219821913e738aa36dc6f0661c76b1a45bafc  include/exr/formats.h
+3b383a57d542fdbc9553334ba33e4abf8274b3b5c4090b8a0f8d78b45c4f74b1  include/exr/graphics.h
+a27f2fa2f82fe6dff66ae9e22becc5aa7182d72bed2dbebce16d8c2e76080791  include/exr/layout.h
+b131f24db63b71385a74c5b5a9713cad7b39d6ab321191364da3cc312a130f95  include/exr/library.h
+b62c6b5e7bb483fd7d87af48d1d3ccd792a9b4e43ce1f0cbea11e46385eef448  include/exr/pdf.h
+1865e5a4a2c5dca06b9e3d7cb5f5f7b1267f74301676af79adc6f8f4d5ebc0e1  include/exr/pdf_edit.h
+ad90ca6713937076a7b6b1d5ac9aa4eaf97a8517ea65b134f94e1ab972289436  include/exr/render.h
+9ca0a82dce68758722205edd932dd0d5a6f4a4b57f6c9ae34fd32368a808af27  include/exr/text.h
+d0f51a23480542adc4865601ca5bf5ece26ab334a20efc7cc0fe71aa748c5e79  include/exr/textindex.h
+d2dc3bb30ee0954a04b6888d7f4cf71db2eb433f1f9f23e564a070cfd256b3f0  include/exr/version.h
+4d23697bfbc9fc372fe8a1b1ef09aa102d4e999705016be10a161825b50f0237  include/exreader.h
+defb6b82be118c40ba952f41ac01b84737834db52844569df51fa8051ba79b16  lib/exreader.dll
+d576a614e7b2e439775441366de4912dc77be8c0c66bf98a6d410b518ee41a01  lib/exreader.lib
+34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b  LICENSE
+f43b5e5f7ff514966d0e868a3ccf6335bb0c820c7396d37c34307447b1c7e3ac  README.md
+34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b  share/exreader/LICENSE
+45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da  share/exreader/licenses/default-cmyk-profile.txt
+31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87  share/exreader/licenses/expat/COPYING
+73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e  share/exreader/licenses/expat/upstream-root/COPYING
+5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f  share/exreader/licenses/freetype/FTL.TXT
+bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b  share/exreader/licenses/freetype/LICENSE.TXT
+6dbd60437f8ef91d8de1f08ad75882547fd4931bfcc3566a0735f28db1484d31  share/exreader/licenses/lcms/LICENSE
+4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2  share/exreader/licenses/libaom/LICENSE
+661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61  share/exreader/licenses/libaom/PATENTS
+165abf92cc04b39e80d29cadea7a6a7e8fddf59407d4ad2616507a7ebe8216f9  share/exreader/licenses/libavif/LICENSE
+0780558a8bfba0af1160ec1ff11ade4f41c0d7deafd6ecfc796b492a788e380d  share/exreader/licenses/libtiff/LICENSE.md
+5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf  share/exreader/licenses/libwebp/COPYING
+cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c  share/exreader/licenses/libwebp/PATENTS
+9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b  share/exreader/licenses/mbedtls/LICENSE
+6a1ee543e5282cd9061881edf462e6fdab181f328da71fc2c9a6950a80e94d01  share/exreader/licenses/minimp3/LICENSE
+0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3  share/exreader/licenses/miniz/LICENSE
+a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6  share/exreader/licenses/openjpeg/LICENSE
+c85f2b0da9de3e0a96cb42594708d19f7696945bb185cfd98c262f8f2d6f3aa7  share/exreader/licenses/pdf-font-data/adobe-glyph-list.txt
+8d1fb64269e430755e4f12c2eb113d71b4b2a33ad11db0069e09ebb47415ca53  share/exreader/licenses/pdf-font-data/pdfjs.txt
+abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc  share/exreader/licenses/sqlite/sqlite-public-domain.txt
+bebfe904b14301657e4e5d655c811d51fd31b97c455b9cc2d8600d6bac6cff63  share/exreader/licenses/stb/LICENSE
+e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96  share/exreader/licenses/unicode/LICENSE.txt
+754f0e221aa7d5a915489f3bf1f20fe53ddc35ab2834a4d91656d78f9622de70  share/exreader/licenses/wp7-fonts/noto-sans-test-fonts.txt
+845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243  share/exreader/licenses/zlib/LICENSE
+459be995165743d141ed3c1adae6bbfade0d308f78b1d4a3e1c839ac24ff94db  share/exreader/THIRD_PARTY_NOTICES.md
+459be995165743d141ed3c1adae6bbfade0d308f78b1d4a3e1c839ac24ff94db  THIRD_PARTY_NOTICES.md
+f0682e1cc6929d5d780eddd4a249c32b27c1f0cb050d400d09517fe121a65df8  VERSION
+
+[README exact Windows commands and actual outputs]
+> $env:PATH = "$PWD\lib;$env:PATH"
+Exit: 0
+> cl /nologo /W4 /Iinclude examples\minimal\main.c lib\exreader.lib /Feminimal.exe
+main.c
+Exit: 0
+> .\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+Exit: 0
+
+[PGM pixel verification]
+{"width": 720, "height": 1040, "bytes": 748816, "nonwhite_pixels": 129549}
+
+[check_release.py complete check list]
+PASS package files and safe paths: 55 ordinary files; 16166807 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/exreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 15 API headers + version.h = 16 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 54 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/exreader.dll: exr_* exports [427]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+[S2 local acceptance complete]
+Delivered dist/exreader-3.42.0-win-x64.zip: 7,943,427 bytes; 55 unpacked files, 16,166,807 bytes.
+Archive was copied unchanged from the tested CTest package and revalidated successfully.
+All 10 package checks pass; MSVC dumpbin independently confirms 427 exr_* exports; minimal is 64 lines.
+Preserved Windows command transcripts, package tree, all SHA256SUMS entries, PGM, and native export dump under evidence/sdk-packaging-20261109/.
+Next: commit, push requested branch, create draft PR; PR-triggered native CI will execute Linux/macOS README commands.
+
+[S2 commit completed]
+Commit 3f9f06d2: Add portable SDK release packages and minimal C example.
+[S2 push completed]
+Pushed codex/sdk-packaging-20261109 to origin with upstream tracking (5d72dcc5).
+Registered PGM artifacts as binary so Git preserves rendered pixel bytes.
+[S2 draft PR created]
+Command: gh pr create --draft --base main --head codex/sdk-packaging-20261109 --title 'Package the SDK with verified minimal C quickstarts' --body-file build/s2-pr-body.md
+Result: https://github.com/NoGod3524/EXReader/pull/111
+Head: ad851342. Awaiting PR-triggered native Windows/Linux/macOS runs; no workflow_dispatch, cancellation, or .github changes performed.
+[S2 PR-triggered CI observed]
+Native C engine workflow run: https://github.com/NoGod3524/EXReader/actions/runs/42651755703
+Event: pull_request; source head ad851342bc44138541ac07e503d45328f3de7721.
+Other PR-triggered checks queued: SDK version consistency, Required native reading SDK core, Native reading profiles, Reading license materials, Bounded library source.
+[PR CI SDK version] PR #111 head ad851342bc44138541ac07e503d45328f3de7721; PR merge checkout 471d7dda91dcc84384ca89d79449ecf4e31e5b16.
+https://github.com/NoGod3524/EXReader/actions/runs/42651755772 completed success: identity job 129279651960 and reject-version-drift job 129279651427 both success.
+Actual identity output: PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+Actual regression output: PASS: valid manifest and 7 refusal cases; all source bytes restored
+Version-policy CI accepted the committed S2 evidence files. No PR workflow failure observed at this check; other native/library/license workflows still running or queued.
+[PR CI companion checks] Reading license materials run 42651756936 completed success (reading-core and reading-library). Native reading profiles run 42651755718 completed success. Observed through GitHub read-only tools for PR #111 head ad851342bc44138541ac07e503d45328f3de7721.
+[PR CI companion checks] Bounded library source run 42651755775 completed success. Required-core native Windows job 129279652845 passed its native CTest step and advanced to the platform-font table test; full workflow remained in progress at observation.
+[S2 PR Windows native tests passed]
+Native workflow 42651755703, job 129279655546 (desktop windows-latest) successfully completed Configure, Build and Native parsing/pagination/rendering/bookshelf CTest step (includes sdk-release).
+Job is continuing installed/static/core-only consumer checks. Same-head required workflow 42651755941 Windows job 129279652845 also passed native CTests.
+
+[S2 Linux PR-CI native CTest success] 2026-11-09T11:21:39.5782610-05:00
+Observed GitHub required workflow run 42651755941, job 129279653109 (native / desktop ubuntu-22.04), head ad851342bc44138541ac07e503d45328f3de7721: native CTests completed successfully, including sdk-release; portable SDK install completed successfully. Exact README commands/output and package archive will be recorded from EXReader-C-Linux artifact after upload. Job URL: https://github.com/NoGod3524/EXReader/actions/runs/42651755941/job/129279653109
+
+[S2 Linux PR-CI native job completed] 2026-11-09T11:23:00.8763770-05:00
+PASS: required workflow run 42651755941, Linux job 129279653109 completed successfully. EXReader-C-Linux artifact 13691715997 uploaded (38,255,963 bytes), source head ad851342bc44138541ac07e503d45328f3de7721. Retrieving release-validation evidence and package.
+
+[PR CI required-core native] Workflow 42651755941 desktop Windows job 129279652845 and Linux job 129279653109 completed success, including the SDK release CTest plus installed-consumer/core-only checks. Remaining required-core jobs were still queued/running at observation; no failures observed.
+
+[S2 Linux exact README execution and package retrieval] 2026-11-09T16:24:26.554571+00:00
+PASS: PR-triggered required workflow 42651755941, Linux job 129279653109, source head ad851342bc44138541ac07e503d45328f3de7721
+Artifact 13691715997 downloaded and SHA256 verified: 3dd0a9cb84643f391167e087189c32860d7f8ff332e2f61bf907516594508a54
+COMMAND: cc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -Wl,-rpath,'$ORIGIN/lib' -o minimal
+EXIT: 0
+OUTPUT:
+(no output)
+COMMAND: ./minimal examples/minimal/sample.epub examples/minimal/font.ttf page-1.pgm
+EXIT: 0
+OUTPUT:
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+COMMAND: ./bin/exr-info examples/minimal/sample.epub examples/minimal/font.ttf
+EXIT: 0
+OUTPUT:
+Version: 3.42.0
+Format: EPUB
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+PGM: {"width": 720, "height": 1040, "bytes": 748816, "nonwhite_pixels": 129549}
+PACKAGE: dist\exreader-3.42.0-linux-x64.tar.gz
+PACKAGE BYTES: 14262286
+PACKAGE SHA256: 38af223308e00bd3a01fc3d19c1f850a00b40c380fe08b051751b5a0c395727d
+Saved Linux smoke log/report/check report/PGM and source-bound CI metadata under evidence/sdk-packaging-20261109/linux-*
+
+[S2 Linux downloaded archive independent validation] 2026-11-09T11:24:38.0742975-05:00
+PASS: python tools/release/check_release.py dist/exreader-3.42.0-linux-x64.tar.gz --json evidence/sdk-packaging-20261109/linux-downloaded-package-check.json. All 10 checks passed; 55 ordinary files / 31,282,097 unpacked bytes, 54 SHA256 entries, 15 API headers plus version.h, 64-line sample, 868 exr_* exports, ELF linux-x64, version 3.42.0 consistent in source/header/package/cmake. Exact check details saved to JSON.
+
+[S2 continuation / repository audit]
+Current branch codex/sdk-packaging-20261109 at 85f938ce; worktree initially clean. Existing draft PR #111 targets main and remains open.
+Reviewed existing collectors, minimal example, README quickstarts and native smoke integration. Windows and Linux native evidence already exists; continuing with independent local package validation and macOS CI evidence retrieval.
+
+[S2 delivered Windows archive revalidation]
+Command: python tools/release/check_release.py dist/exreader-3.42.0-win-x64.zip
+Exit: 0
+PASS package files and safe paths: 55 ordinary files; 16166807 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/exreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 15 API headers + version.h = 16 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 54 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/exreader.dll: exr_* exports [427]; minimum 389
+PASS CLI runtime layout and import library: import library lib/exreader.lib; bin DLL matches lib DLL
+PASS release: dist\exreader-3.42.0-win-x64.zip
+
+[S2 fresh native Windows revalidation]
+Command: python tools/release/smoke_release.py --build-dir build/sdk-release --config Release --output-dir build/s2-revalidation
+Exit: 0
+Full actual console transcript: build/s2-revalidation-console.log; independent repack/extract/README compile/runtime outputs: build/s2-revalidation/.
+
+[S2 fresh Windows README results]
+COMMAND: $env:PATH = "$PWD\lib;$env:PATH"
+EXIT: 0
+OUTPUT:
+COMMAND: cl /nologo /W4 /Iinclude examples\minimal\main.c lib\exreader.lib /Feminimal.exe
+EXIT: 0
+OUTPUT:
+main.c
+COMMAND: .\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
+EXIT: 0
+OUTPUT:
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+PGM: {"width":720,"height":1040,"bytes":748816,"nonwhite_pixels":129549}
+Fresh test archive SHA256: 80c37a267e2a758462400a9dfa65e8393218315de331e1ac0ca59facf299ff90. Delivered dist archive is unchanged; all payload bytes and packaged checksums remain validated.
+
+
+[S2 independent packaged DLL export verification]
+Command: dumpbin /exports dist/exreader-3.42.0-win-x64/lib/exreader.dll
+Actual exr_* export rows: 427; minimum 389. Exit: 0
+
+[S2 checker regression and canonical version revalidation]
+PASS: python tools/release/test_check_release.py (directory/ZIP/tar.gz, CRLF; rejects tampering, missing header/assets, version drift, 81 lines, 388 exports, wrong CPU, traversal).
+PASS: python tools/check_version_consistency.py -> SDK 3.42.0; ABI 1; 587 live exact literal exceptions.
+
+[S2 CI source binding]
+PASS: git diff --exit-code ad851342 HEAD -- CMakeLists.txt cmake include src tools examples/minimal VERSION (exit 0). The recorded Linux and queued macOS PR jobs build the same SDK/release source as the current branch; intervening commits add evidence only.
+

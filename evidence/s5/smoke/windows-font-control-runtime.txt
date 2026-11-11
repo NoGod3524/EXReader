@@ -1,0 +1,13 @@
+PASS explicit_load version=3.42.0
+ARGV: ['gcc', '-std=c11', '-O2', '-Wall', '-Wextra', '-Werror', '-IC:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\source\\include', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\source\\tools\\platforms\\probe.c', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\ci\\windows\\bin\\exreader.dll', '-o', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe']
+ARGV: ['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\smoke.epub', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\font.otf', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control', 'create']
+ARGV: ['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\smoke.epub', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\font.otf', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control', 'reopen']
+ARGV: ['C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\platform-probe.exe', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\smoke.epub', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\work\\font-control\\font.otf', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S5-20261109\\evidence\\s5\\smoke\\windows-font-control\\negative', 'reopen']
+PASS load version=3.42.0 abi=1 mode=reopen
+PASS open pages=215
+PASS render width=360 height=480 ink_pixels=19358 pixel_fnv1a64=79f07d9c1e495f6a
+PASS search hits_at_least=1 part=0 offset=0 length=14
+PASS search_all needle=deliveryneedle hits=1000
+PASS annotation independent_process=1 part=0 start=0 end=14 page=0 x=24 baseline=44 changed_pixels=2456
+PASS platform checks=5/5
+PASS negative control rejected moved annotation

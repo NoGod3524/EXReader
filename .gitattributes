@@ -1,6 +1,7 @@
 * text=auto eol=lf
 *.png binary
 *.bmp binary
+*.pgm binary
 *.epub binary
 *.docx binary
 *.mobi binary
@@ -10,3 +11,6 @@
 *.pdf binary
 *.rgba binary
 *.mask binary
+# Preserve measured evidence bytes (including Windows CRLF) for SHA-256 replay.
+evidence/s5/**/*.log -text
+evidence/s5/**/build-manifest-original.json -text

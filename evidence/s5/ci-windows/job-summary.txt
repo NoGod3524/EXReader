@@ -1,0 +1,27 @@
+2026-11-09T16:16:50.7500087Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +2325b63cbf4068fba7ae2761ad10678b0274bab6:refs/remotes/pull/108/merge
+2026-11-09T16:16:59.8622220Z  * [new ref]         2325b63cbf4068fba7ae2761ad10678b0274bab6 -> pull/108/merge
+2026-11-09T16:17:04.2328911Z HEAD is now at 2325b63 Merge 30595c2107ef934c962b64401e60865dfd266b24 into b0af2a5537fdf83158750e42d0fce412c4359429
+2026-11-09T16:17:04.3368892Z 2325b63cbf4068fba7ae2761ad10678b0274bab6
+2026-11-09T16:17:15.8338513Z -- The C compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:18:20.0296773Z -- The CXX compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:22:25.5134148Z         Start  37: native-library-stream
+2026-11-09T16:22:29.4710221Z  37/248 Test  #37: native-library-stream ..................   Passed    3.96 sec
+2026-11-09T16:23:11.6553040Z         Start  86: native-text-index
+2026-11-09T16:23:11.7099487Z  86/248 Test  #86: native-text-index ......................   Passed    0.05 sec
+2026-11-09T16:24:29.6012089Z         Start 248: native-build-manifest
+2026-11-09T16:24:30.0224134Z 248/248 Test #248: native-build-manifest ..................   Passed    0.42 sec
+2026-11-09T16:24:30.0240470Z 100% tests passed out of 248
+2026-11-09T16:25:15.2035696Z manifest windows: 427 exports; SHA256 59970583c1af96405b9be57763a4af0b4550682b3771a5e7a6894b832dd594dc
+2026-11-09T16:25:16.5426517Z -- The C compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:25:17.3308101Z -- The CXX compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:25:25.2663333Z 100% tests passed out of 6
+2026-11-09T16:25:26.7121462Z -- The C compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:26:23.0244725Z -- The CXX compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:28:07.1198775Z 100% tests passed out of 23
+2026-11-09T16:28:08.5784905Z -- The C compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:28:09.2752374Z -- The CXX compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:28:14.7953659Z 100% tests passed out of 3
+2026-11-09T16:29:12.4107956Z 100% tests passed out of 26
+2026-11-09T16:29:13.5658091Z -- The C compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:29:14.9716320Z -- The CXX compiler identification is MSVC 19.51.36260.0
+2026-11-09T16:29:23.4381416Z -- The CXX compiler identification is MSVC 19.51.36260.0

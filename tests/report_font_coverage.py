@@ -24,7 +24,7 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', type=Path, default=ROOT / 'build')
-    parser.add_argument('--output', type=Path, default=ROOT / 'tests/font-coverage-20261109')
+    parser.add_argument('--output', type=Path, default=ROOT / 'evidence/font-coverage-20261109')
     args = parser.parse_args()
     build, output = args.build.resolve(), args.output.resolve()
     before = read(build / 'fontcov-before/matrix.json')
@@ -159,3 +159,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

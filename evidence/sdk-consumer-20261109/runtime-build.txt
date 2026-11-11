@@ -1,0 +1,7 @@
+{"name": "runtime-build", "cwd": "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411", "argv": ["cmake", "--build", "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader-consumer-n4hry411\\build-runtime", "--config", "Release", "--verbose"], "exit_code": 0}
+Change Dir: 'C:/Users/Oscar/AppData/Local/Temp/exreader-consumer-n4hry411/build-runtime'
+
+Run Build Command(s): C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ninja.exe -v
+[1/2] C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\gcc.exe -DCONSUMER_MODE=\"runtime\" -DCONSUMER_RUNTIME -DEXR_STATIC -IC:/Users/Oscar/AppData/Local/Temp/exreader-consumer-n4hry411/sdk/include -O3 -DNDEBUG -std=c11 -Wall -Wextra -Wpedantic -Werror -MD -MT CMakeFiles/consumer.dir/main.c.obj -MF CMakeFiles\consumer.dir\main.c.obj.d -o CMakeFiles/consumer.dir/main.c.obj -c C:/Users/Oscar/AppData/Local/Temp/exreader-consumer-n4hry411/project/main.c
+[2/2] C:\Windows\system32\cmd.exe /C "cd . && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\gcc.exe -O3 -DNDEBUG  CMakeFiles/consumer.dir/main.c.obj -o consumer.exe -Wl,--out-implib,libconsumer.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 && cd ."
+

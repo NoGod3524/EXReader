@@ -1,0 +1,5 @@
+scenario,trials,pages_before,pages_after,repaginated,p50_ms,p95_ms,cache_hits,cache_misses,cache_invalidated,cache_hit_rate,cold_frame_p50_ms,cold_frame_p95_ms,reflow_and_frame_p50_ms,reflow_and_frame_p95_ms,full_rebuild_p50_ms,full_rebuild_p95_ms
+head_insert,31,100,101,101,0.9231,2.1470,0,186,186,0.0000,0.6121,3.1112,1.5636,4.0216,27.0155,53.3823
+middle_insert,31,100,101,51,0.8231,5.7075,93,93,93,0.5000,0.6237,0.8274,1.4238,6.2724,29.8893,39.4482
+last_character,31,100,100,1,0.7771,1.6382,155,31,31,0.8333,0.6143,1.1900,1.4854,2.2939,31.2089,40.0783
+append_50,31,100,105,5,2.0484,4.7486,186,0,0,1.0000,0.5928,2.0990,2.6690,5.6371,31.2493,48.3955

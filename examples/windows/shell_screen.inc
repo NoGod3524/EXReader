@@ -21,6 +21,7 @@
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, SHELL_HIDDEN_MAX = 128 };
 enum { IDC_SHELL_BACK=180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
 static HWND shell_back;
+static char *shell_synced_title;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
 enum { SHELL_BUTTON_BOX = SHELL_ICON_SIZE + 2 * SHELL_CONTROL_FRAME };
 
@@ -314,10 +315,18 @@ static void shell_sync(void) {
   if (want && !shell_active) shell_enter();
   else if (!want && shell_active) shell_leave();
   else if (shell_active) {
-    RECT bar;
-    GetClientRect(g.window, &bar);
-    bar.bottom = shell_px(SHELL_TOPBAR_H, shell_dpi);
-    InvalidateRect(g.window, &bar, FALSE); /* the title may have changed */
+    int row = shelf_index(g.current.id);
+    const char *title = row >= 0 ? sm_title((size_t)row) : g.current.title;
+    if (!title) title = "";
+    if (!shell_synced_title || strcmp(shell_synced_title, title)) {
+      char *copy = malloc(strlen(title) + 1);
+      if (copy) strcpy(copy, title);
+      free(shell_synced_title); shell_synced_title = copy;
+      RECT bar;
+      GetClientRect(g.window, &bar);
+      bar.bottom = shell_px(SHELL_TOPBAR_H, shell_dpi);
+      InvalidateRect(g.window, &bar, FALSE);
+    }
     if(shell_panel_open) InvalidateRect(shell_panel,NULL,FALSE);
   }
   if(!want && host_shell && !shell_legacy && (!g.drive_mode || shell_drive_on)) shelf_show(1);
