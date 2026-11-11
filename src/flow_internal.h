@@ -85,6 +85,7 @@ typedef struct {
   const exr_display_view *display_bidi; /* Borrowed only while emitting a line. */
   size_t display_first,display_count;
   exr_writing_mode writing_mode;
+  int fixed_layout; /* EPUB pre-paginated page: CSS position:absolute is honoured. */
 } flow;
 typedef struct {
   exr_layout run, raw, line;

@@ -685,12 +685,35 @@ int exr_add_block(exr_document *d, const char *text, size_t n, unsigned heading)
   d->text[d->size] = 0;
   return 1;
 }
+int exr_viewport_parse(const char *content, float *width, float *height) {
+  float w = 0, h = 0;
+  const char *at = content;
+  while (at && *at) {
+    char key[16]; size_t k = 0; double value; char *end;
+    while (*at == ' ' || *at == ',' || *at == ';' || *at == '\t' || *at == '\n' || *at == '\r') at++;
+    while (*at && *at != '=' && *at != ',' && *at != ';' && *at != ' ' && k + 1 < sizeof(key)) key[k++] = *at++;
+    key[k] = 0;
+    while (*at == ' ') at++;
+    if (*at != '=') { while (*at && *at != ',' && *at != ';') at++; continue; }
+    at++; while (*at == ' ') at++;
+    value = strtod(at, &end);
+    if (end != at && isfinite(value)) {
+      if (!strcmp(key, "width")) w = (float)value;
+      else if (!strcmp(key, "height")) h = (float)value;
+    }
+    at = end != at ? end : at + (*at != 0);
+    while (*at && *at != ',' && *at != ';') at++;
+  }
+  if (!(w >= 1 && w <= 16384 && h >= 1 && h <= 16384)) return 0;
+  *width = w; *height = h; return 1;
+}
 void exr_document_free(exr_document *d) {
   if (d) {
     free(d->text);
     free(d->title);
     free(d->language);
     free(d->blocks);
+    free(d->renditions);
     exr_model_free(d);
     free(d);
   }
