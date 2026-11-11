@@ -709,9 +709,19 @@ static int write_run(exr_buffer *b,const source_xml *x,const exr_edit_run *r,siz
   return exr_edit_xml_end(b,x,n,"r");
 }
 int exr_edit_xml_paragraph(exr_buffer *b,const source_xml *x,const exr_edit_block *p,size_t section,const exr_buffer *section_data) {
-  size_t i,n=exr_edit_xml_locate(x,p->opaque_xml,p->opaque_size,"p",NONE),pr=exr_edit_xml_child(x,n,"pPr");
-  if (!exr_edit_xml_start(b,x,n,"p") || !write_properties(b,x,pr,&p->props,1,section,section_data)) return 0;
-  for (i=0;i<p->run_count;i++) if (!write_run(b,x,p->runs+i,n)) return 0;
+  size_t i=0,n=exr_edit_xml_locate(x,p->opaque_xml,p->opaque_size,"p",NONE),pr=exr_edit_xml_child(x,n,"pPr");
+  if (!exr_edit_xml_start(b,x,n,"p")) return 0;
+  /* The decoder retains lexical bytes preceding pPr as the first opaque run.
+     Emit that run before the properties, without moving comments/PIs across it.
+     A split that no longer owns the run must not duplicate the source trivia. */
+  if (pr!=NONE && p->run_count && p->runs[0].kind==EXR_EDIT_OPAQUE_RUN &&
+      p->runs[0].opaque_size==x->spans[pr].start-x->spans[n].open &&
+      !memcmp(p->runs[0].opaque_xml,x->bytes+x->spans[n].open,p->runs[0].opaque_size)) {
+    if (!write_run(b,x,p->runs,n)) return 0;
+    i=1;
+  }
+  if (!write_properties(b,x,pr,&p->props,1,section,section_data)) return 0;
+  for (;i<p->run_count;i++) if (!write_run(b,x,p->runs+i,n)) return 0;
   return exr_edit_xml_end(b,x,n,"p");
 }
 static int reference_slot(const exr_node *n) {
@@ -868,12 +878,25 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
     while (j<nb) {
       const exr_edit_block *b=exr_edit_block_at(doc,j); size_t next=j+1;
       if (b->section_id!=sections[si].id) break;
+      /* Final body trivia was decoded after sectPr. Keep it there instead of
+         silently pulling comments/PIs across the final section boundary. */
+      if (!paragraph_break && si+1==ns && sn[si]!=NONE && j+1==nb && trivia_block(b) &&
+          b->opaque_size==x.spans[x.body].close-x.spans[sn[si]].end &&
+          !memcmp(b->opaque_xml,x.bytes+x.spans[sn[si]].end,b->opaque_size)) {
+        if (!exr_append(&xml,section.data,section.size) || !exr_append(&xml,b->opaque_xml,b->opaque_size)) goto done;
+        emitted=1; j++; continue;
+      }
       while (next<nb && exr_edit_block_at(doc,next)->section_id==b->section_id &&
           trivia_block(exr_edit_block_at(doc,next))) next++;
       if (b->kind==EXR_EDIT_PARAGRAPH) {
         int last=paragraph_break && (next==nb || exr_edit_block_at(doc,next)->section_id!=b->section_id);
         if (last) {
-          if (!exr_edit_xml_paragraph(&xml,&x,b,sn[si],&section)) goto done;
+          size_t node=exr_edit_xml_locate(&x,b->opaque_xml,b->opaque_size,"p",NONE);
+          /* Its original paragraph still supplies every namespace binding.
+             Only relocated or changed sections need the expanded template. */
+          const exr_buffer *replacement=sn[si]!=NONE && !memcmp(&original,sections+si,sizeof(original)) &&
+            exr_edit_xml_child(&x,exr_edit_xml_child(&x,node,"pPr"),"sectPr")==sn[si] ? NULL : &section;
+          if (!exr_edit_xml_paragraph(&xml,&x,b,sn[si],replacement)) goto done;
           emitted=1;
         } else if (!exr_edit_xml_paragraph(&xml,&x,b,NONE,NULL)) goto done;
       } else if (b->kind==EXR_EDIT_PAGE_BREAK) {
@@ -888,7 +911,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
     if (paragraph_break && !emitted) {
       if (!put(&xml,"<w:p xmlns:w=\"") || !put(&xml,exr_edit_xml_ns(&x)) || !put(&xml,"\"><w:pPr>") ||
           !exr_append(&xml,section.data,section.size) || !put(&xml,"</w:pPr></w:p>")) goto done;
-    } else if (si+1==ns && !paragraph_break &&
+    } else if (si+1==ns && !paragraph_break && !emitted &&
         (!p || sn[si]!=NONE || memcmp(&original,sections+si,sizeof(original))) &&
         !exr_append(&xml,section.data,section.size)) goto done;
   }

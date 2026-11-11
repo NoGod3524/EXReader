@@ -2,13 +2,6 @@
 
 Each of the 30 fixtures in `tests/fixtures/docx-real/` is read via `exr_edit_docx_read`, edited in a transaction (modifying target body paragraph properties via `exr_edit_set_paragraph_props`, inserting a new body paragraph via `exr_edit_insert_paragraph`, verifying table multi-paragraph cell protection and row-insertion `<w:pPr>` preservation, and testing `undo`/`redo`), written via `exr_edit_docx_write`, and compared against `MATRIX-A` to measure extra edit side-effect losses (`Matrix B - Matrix A`).
 
-## Before vs. After Fixes Summary
-
-| Stage | Fixtures 18/18 PASS | Total Metric Cells PASS | Extra Edit Losses (`Matrix B - Matrix A`) | Root Causes of Extra Losses |
-| --- | --- | --- | --- | --- |
-| **Before Fixes (`c04560b7`)** | 21/30 | 442/540 | 8 cells across 4 fixtures | `04-table-repeating-header-multipar-list (M08,M10)`; `13-style-inheritance-chain (M08,M09)`; `14-style-direct-override-unbold (M08,M09)`; `15-style-direct-indent-override (M08,M09)` |
-| **After Fixes** | **30/30** | **540/540** | **0 cells across 0 fixtures** | None (0 edit side-effect losses) |
-
 ## Per-Fixture Edit Side-Effect Table (30 Fixtures × 18 Metrics = 540 Cells)
 
 | Fixture | Category | Matrix A | Matrix B | Extra Loss (`B - A`) | `M01` | `M02` | `M03` | `M04` | `M05` | `M06` | `M07` | `M08` | `M09` | `M10` | `M11` | `M12` | `M13` | `M14` | `M15` | `M16` | `M17` | `M18` |

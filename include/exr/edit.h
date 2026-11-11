@@ -153,6 +153,12 @@ EXR_API exr_status exr_edit_set_paragraph_props(exr_edit_doc *doc,exr_edit_id bl
   const exr_edit_para_props *props);
 EXR_API exr_status exr_edit_set_run_props(exr_edit_doc *doc,exr_edit_id block_id,
   size_t run_index,const exr_edit_run_props *props);
+/* Replace one TEXT run with valid UTF-8/XML text (byte length, not characters).
+   IDs, direct properties, original XML template and neighbouring opaque runs
+   are retained. Buffers may alias borrowed text; NULL/0 clears the run.
+   Opaque runs return EXR_UNSUPPORTED. Participates in transactions/undo/redo. */
+EXR_API exr_status exr_edit_set_run_text(exr_edit_doc *doc,exr_edit_id block_id,
+  size_t run_index,const char *text,size_t text_size);
 EXR_API exr_status exr_edit_delete_block(exr_edit_doc *doc,exr_edit_id block_id);
 
 /* Zero-based physical row/cell indices. SIZE_MAX inserts before the first row.

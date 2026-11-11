@@ -200,6 +200,9 @@ if(EXR_FULL_TESTS)
   add_test(NAME native-docx-realworld-matrix COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/docx/check_realworld_matrix.py
     --library $<TARGET_FILE:exreader> --strict)
+  add_test(NAME native-docx-real-argon-reproducible COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/docx-real/argon/make_fixtures.py --check)
+  include(tests/fixtures/docx-real/codex/register.cmake)
   add_executable(exreader-docx-edit-test tests/test_docx_edit.c)
   target_link_libraries(exreader-docx-edit-test PRIVATE exreader)
   if(WIN32)

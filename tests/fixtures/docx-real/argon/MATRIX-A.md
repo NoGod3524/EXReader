@@ -2,13 +2,6 @@
 
 Each of the 30 original synthetic real-world `.docx` fixtures in `tests/fixtures/docx-real/` is read via `exr_edit_docx_read`, held in `exr_edit_doc` without edits, written back via `exr_edit_docx_write`, and evaluated against the 18-metric verification suite (`M01`–`M18`, combining all 14 `tools/docx/verify_docx.py` checks, all 6 `tools/docx/roundtrip.py` metrics, SDK reread text hash parity, and structural XML fidelity).
 
-## Before vs. After Fixes Summary
-
-| Stage | Fixtures 18/18 PASS | Total Metric Cells PASS | Failing Fixtures & Root Causes |
-| --- | --- | --- | --- |
-| **Before Fixes (`c04560b7`)** | 25/30 | 450/540 | `02-table-merged-hmerge-vmerge` (0/18 EXR_FORMAT), `10-numbering-restart-override` (0/18 EXR_FORMAT), `11-numbering-style-bound` (0/18 EXR_FORMAT), `12-numbering-chinese-counting` (0/18 EXR_FORMAT), `30-other-header-table-chinese-fields` (0/18 EXR_FORMAT) |
-| **After Fixes** | **30/30** | **540/540** | None (0 failures) |
-
 ## 18 Metric Definitions (`M01`–`M18`)
 
 | Metric ID | Description |

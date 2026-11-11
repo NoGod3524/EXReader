@@ -581,6 +581,24 @@ exr_status exr_edit_set_paragraph_props(exr_edit_doc *d,exr_edit_id id,const exr
 exr_status exr_edit_set_run_props(exr_edit_doc *d,exr_edit_id id,size_t run,const exr_edit_run_props *p) {
   return set_props(d,id,run,NULL,p);
 }
+exr_status exr_edit_set_run_text(exr_edit_doc *d,exr_edit_id id,size_t run,const char *text,size_t size) {
+  size_t index; edit_block *b; exr_edit_run *r; char *copy; edit_change change; exr_status s=ready(d);
+  if (s) return s;
+  if (size==SIZE_MAX || !utf8(text,size)) return command_failure(d,EXR_ARGUMENT);
+  index=find_index(d,id);
+  if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
+  if (d->blocks[index]->view.kind!=EXR_EDIT_PARAGRAPH) return command_failure(d,EXR_UNSUPPORTED);
+  if (run>=d->blocks[index]->view.run_count) return command_failure(d,EXR_ARGUMENT);
+  if (d->blocks[index]->view.runs[run].kind!=EXR_EDIT_TEXT) return command_failure(d,EXR_UNSUPPORTED);
+  b=block_copy(d,&d->blocks[index]->view);
+  if (!b) return command_failure(d,EXR_MEMORY);
+  copy=copy_bytes(d,text,size,1);
+  if (!copy) { block_unref(d,b); return command_failure(d,EXR_MEMORY); }
+  r=(exr_edit_run *)b->view.runs+run;
+  release(d,r->text); r->text=copy; r->text_size=size;
+  change.index=index; change.before=d->blocks[index]; change.after=b;
+  s=modify(d,&change,1); block_unref(d,b); return s;
+}
 exr_status exr_edit_delete_block(exr_edit_doc *d,exr_edit_id id) {
   size_t index; edit_change c; exr_status s=ready(d);
   if (s) return s;

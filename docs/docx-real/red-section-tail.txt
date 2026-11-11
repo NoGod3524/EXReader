@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-t1-docxreal-20261110\tests\fixtures\docx-real\regressions.py", line 92, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-t1-docxreal-20261110\tests\fixtures\docx-real\regressions.py", line 87, in main
+    check(rt.RealBridge(args.library.resolve()), args.name)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-t1-docxreal-20261110\tests\fixtures\docx-real\regressions.py", line 74, in check
+    assert b'</w:sectPr><!-- end-of-body audit marker --><?audit tail?></w:body>' in actual, 'body trailer moved before final sectPr'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: body trailer moved before final sectPr

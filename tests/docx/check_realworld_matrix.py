@@ -450,7 +450,7 @@ def format_matrix_b_md(report, before_summary=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--library', type=Path, required=True)
-    parser.add_argument('--fixtures', type=Path, default=ROOT / 'tests' / 'fixtures' / 'docx-real')
+    parser.add_argument('--fixtures', type=Path, default=ROOT / 'tests' / 'fixtures' / 'docx-real' / 'argon')
     parser.add_argument('--output-json', type=Path)
     parser.add_argument('--before-json', type=Path, help='Optional pre-fix baseline JSON for before/after table')
     parser.add_argument('--write-matrices', action='store_true', help='Write MATRIX-A.md and MATRIX-B.md')
