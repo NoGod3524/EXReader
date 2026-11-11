@@ -1,0 +1,92 @@
+[
+  {
+    "field": "font.name",
+    "expected": "Times New Roman",
+    "actual": "Times New Roman",
+    "passed": true
+  },
+  {
+    "field": "font.size (pt)",
+    "expected": 12,
+    "actual": 12.0,
+    "passed": true
+  },
+  {
+    "field": "line_spacing (multiple)",
+    "expected": 2.0,
+    "actual": 2.0,
+    "passed": true
+  },
+  {
+    "field": "line_spacing_rule",
+    "expected": "DOUBLE (2)",
+    "actual": "DOUBLE (2)",
+    "passed": true
+  },
+  {
+    "field": "first_line_indent (in)",
+    "expected": 0.5,
+    "actual": 0.5,
+    "passed": true
+  },
+  {
+    "field": "space_after (pt)",
+    "expected": 6,
+    "actual": 6.0,
+    "passed": true
+  },
+  {
+    "field": "alignment",
+    "expected": "LEFT (0)",
+    "actual": "LEFT (0)",
+    "passed": true
+  },
+  {
+    "field": "page_width (in)",
+    "expected": 8.5,
+    "actual": 8.5,
+    "passed": true
+  },
+  {
+    "field": "page_height (in)",
+    "expected": 11,
+    "actual": 11.0,
+    "passed": true
+  },
+  {
+    "field": "top_margin (in)",
+    "expected": 1,
+    "actual": 1.0,
+    "passed": true
+  },
+  {
+    "field": "right_margin (in)",
+    "expected": 1,
+    "actual": 1.0,
+    "passed": true
+  },
+  {
+    "field": "bottom_margin (in)",
+    "expected": 1,
+    "actual": 1.0,
+    "passed": true
+  },
+  {
+    "field": "left_margin (in)",
+    "expected": 1,
+    "actual": 1.0,
+    "passed": true
+  },
+  {
+    "field": "header_distance (in)",
+    "expected": 0.5,
+    "actual": 0.5,
+    "passed": true
+  },
+  {
+    "field": "footer_distance (in)",
+    "expected": 0.5,
+    "actual": 0.5,
+    "passed": true
+  }
+]

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Console-only check of the real JOB_LAYOUT branches; creates no HWND. */
 #define WinMain reader_WinMain
+#define EXR_READER_TEST_DRIVERS 1
 #include "../reader.c"
 #undef WinMain
 #include <assert.h>

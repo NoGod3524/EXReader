@@ -1,0 +1,10 @@
+① 冲突文件（git merge origin/main）：
+- OUT.txt：报告文件，两侧内容全部保留（仅删除冲突标记，未丢任何行）。
+- RESOLVE.md：add/add 冲突，同样两侧全部保留（仅删除冲突标记）。
+- CMakeLists.txt：自动合并，无冲突。
+② 补的 API 文档：无（check_sdk_docs.py 已通过，没有 undocumented functions）。
+③ check_sdk_docs.py exit=0；最后三行：
+  "binary": null,
+  "errors": [],
+  "passed": true
+④ 其他失败项：本地未运行 CI，不知道 CI 上是否还有别的失败；需推送后看 CI。
