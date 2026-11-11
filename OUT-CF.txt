@@ -22,3 +22,10 @@ I haven't pushed anything, and I haven't touched main or merged the PR.
 The build is at step 16 of 268, so it's still early. I'll report once the build and ctest finish.
 
 You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+[Recovered working-tree interruption message]
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+[2026-11-11 recovery step] Verified branch codex/large-book-2-20261110 at 77cc7682; prior configure/build/ctest completed successfully (303/303, sdk-release excluded, cf127.log CF127-DONE rc=0). Fetched main now at fe9adf43: 35 commits behind, 14 ahead; merge latest main required before final validation.
+
+[Latest-main merge step] Merged fe9adf43 on existing PR branch. Only conflict: RESOLVE-OUT.txt; removed marker lines only, retaining both sides. OUT.txt and CMakeLists.txt auto-merged; tools/layers.json includes both new DOCX internal headers. No changes to protected reading-release test, CI hygiene checker or version exception file.
