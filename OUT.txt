@@ -1,6 +1,6 @@
-?????:?????????,??????? `63da4607`?GitHub ???? [PR #132](https://github.com/NoGod3524/EXReader/pull/132) ???;??????,?????????
+??????:???? `63da4607` ???????,??????????GitHub ???? [#132 ???](https://github.com/NoGod3524/EXReader/pull/132);???????????,??????? `OUT.txt`?
 
-? **???**
+**? ???**
 
 ??? Windows ????,??? **exit 0**:
 
@@ -9,16 +9,16 @@
 | `codex/generate.py --check` | `30 original fixtures: deterministic bytes verified` |
 | `argon/make_fixtures.py --check` | `Verified 30 DOCX fixtures . (max size 14835 bytes < 60000).` |
 
-? **????**
+**? ????**
 
-- `ZipInfo.create_system` ????????:Windows ? 0,Unix ? 3?
-- Windows ? zlib-ng ? Linux ? zlib ?????? DEFLATE ??,?? ZIP ??? PNG IDAT?
+- `ZipInfo.create_system` ????????:Windows ? `0`,Unix ? `3`?
+- Windows Python ? zlib-ng ? Linux zlib ???? DEFLATE ??,?? ZIP ??? PNG IDAT?
 
-??? ZIP ????,?? `ZIP_STORED` ??? stored DEFLATE ?,????????XML ????????,????????;??????????
+???? creator OS,ZIP ?? `ZIP_STORED`,PNG ???? stored DEFLATE ?;????????????????????,????????????????
 
-? **ASan ??**
+**? ASan ??**
 
-[??????](https://github.com/NoGod3524/EXReader/actions/runs/43074571383/job/130710914112)????,????:
+????[?? CI ??](https://github.com/NoGod3524/EXReader/actions/runs/43074571383/job/130710914112),???????:
 
 ```text
 ASan runtime does not come first in initial library list
@@ -26,29 +26,34 @@ ASan runtime does not come first in initial library list
 
 | ??? | ???? | ?? |
 |---|---|---|
-| native-docx-real-paragraph-markers | Python/ctypes ?????? | ????? GCC ? libasan |
+| native-docx-real-paragraph-markers | Python/ctypes ?? ASan ?? | ????? GCC ? libasan |
 | native-docx-real-section-tail | ?? | ?? |
 | native-docx-real-text-history | ?? | ?? |
 | native-docx-real-text-alias | ?? | ?? |
 | native-docx-real-text-validation | ?? | ?? |
 | native-docx-real-text-transaction | ?? | ?? |
 
-? **????**
+CMake ?? Linux/GCC sanitizer ??????? `LD_PRELOAD`?`PYTHONMALLOC=malloc`,?? ASan?UBSan ??????
 
-???????60 ? DOCX??? manifest,????? `register.cmake`?CMake ?? Linux/GCC sanitizer ??? Python ???? `LD_PRELOAD` ? `PYTHONMALLOC=malloc`,?? ASan?UBSan ??????
+**? ????**
 
-`tests/check_reading_release.py` ???? `6eb22a30.`;??????? core ?????
+???????60 ? DOCX??? manifest,?? `codex/register.cmake`????????????,CMake ???????????
 
-? **?? CTest**
+`tests/check_reading_release.py` SHA256 ?? `6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b`??????? core ???????
+
+**? ?? CTest**
+
+??????????????? CI ??:
 
 | ?? | ?? |
 |---|---|
-| [Linux Release](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116579) | **403/403 PASS** |
-| [Windows Release](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116370) | **403/403 PASS** |
-| [ASan/UBSan](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116485) | **393/393 PASS**,?????? |
-| ???? MinGW | 402/403;????? `sdk-release` ?? MSVC ? `exreader.lib` |
+| [Linux Release](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116579) | **403/403 PASS**,135.58s |
+| [Windows Release](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116370) | **403/403 PASS**,153.93s |
+| [ASan/UBSan](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116485) | **393/393 PASS**,672.01s,?????? |
 
-?? ASan ????????,?????? CI ????? `OUT.txt` ??????????
+????? MinGW ??? **402/403**,????? `sdk-release` ? MSVC ?????;???? ASan ???????,ASan ?????? CI?
+
+?? PR head ? [core run](https://github.com/NoGod3524/EXReader/actions/runs/43098216089) ???? **queued**,????????????
 
 OpenAI Codex v0.167.0-alpha.3.2
 --------
@@ -59,7 +64,7 @@ approval: never
 sandbox: danger-full-access
 reasoning effort: high
 reasoning summaries: none
-session id: 01a1ccad-a11d-7a40-a735-8a49951a8bac
+session id: 01a1ccb7-395b-7533-8a71-815be7722880
 --------
 user
 # ? #132 ????????(Linux ??? + ASan ????)
@@ -184,23 +189,256 @@ python tests/fixtures/docx-real/argon/make_fixtures.py --check
 ????????????
 
 codex
-??????????????,?????????,????????;??? core ??????? PR?
+???? git ???????????????,??????????????????? ponytail ?????????
 
 exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short --branch; git log -8 --oneline; git diff --stat; Get-Content C:/Users/Oscar/.codex/skills/ponytail/SKILL.md' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
- succeeded in 11234ms:
-## codex/fix132-crossplatform...origin/codex/dx-realworld-argon-20261110 [ahead 14, behind 17]
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -LiteralPath 'C:\\Users\\Oscar\\.codex\\skills\\ponytail\\SKILL.md'; git status --short --branch; git log -6 --oneline; git diff --stat; rg --files -g AGENTS.md -g '*132*' -g '*handoff*' -g '*resume*' -g '*asan*' -g '*result*' -g '*session*'" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command 'git status --short --branch' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ succeeded in 9895ms:
+## codex/fix132-crossplatform...origin/codex/dx-realworld-argon-20261110 [ahead 15, behind 17]
  M OUT.txt
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command 'git log -6 --oneline; git diff --stat; git remote -v; Get-ChildItem -Force -Name; rg --files -g AGENTS.md' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ exited 1 in 43491ms:
+---
+name: ponytail
+description: >
+  Forces the laziest solution that actually works, simplest, shortest, most
+  minimal. Channels a senior dev who has seen everything: question whether the
+  task needs to exist at all (YAGNI), reach for the standard library before
+  custom code, native platform features before dependencies, one line before
+  fifty. Supports intensity levels: lite, full (default), ultra. Use on ANY
+  coding task: writing, adding, refactoring, fixing, reviewing, or designing
+  code, and choosing libraries or dependencies. Also use whenever the user
+  says "ponytail", "be lazy", "lazy mode", "simplest solution", "minimal
+  solution", "yagni", "do less", or "shortest path", or complains about
+  over-engineering, bloat, boilerplate, or unnecessary dependencies. Do NOT
+  use for non-coding requests (general knowledge, prose, translation,
+  summaries, recipes).
+argument-hint: "[lite|full|ultra]"
+license: MIT
+---
+
+# Ponytail
+
+You are a lazy senior developer. Lazy means efficient, not careless. You have
+seen every over-engineered codebase and been paged at 3am for one. The best
+code is the code never written.
+
+## Persistence
+
+ACTIVE EVERY RESPONSE. No drift back to over-building. Still active if
+unsure. Off only: "stop ponytail" / "normal mode". Default: **full**.
+Switch: `/ponytail lite|full|ultra`.
+
+## The ladder
+
+Stop at the first rung that holds:
+
+1. **Does this need to exist at all?** Speculative need = skip it, say so in one line. (YAGNI)
+2. **Already in this codebase?** A helper, util, type, or pattern that already lives here  reuse it. Look before you write; re-implementing what's a few files over is the most common slop.
+3. **Stdlib does it?** Use it.
+4. **Native platform feature covers it?** `<input type="date">` over a picker lib, CSS over JS, DB constraint over app code.
+5. **Already-installed dependency solves it?** Use it. Never add a new one for what a few lines can do.
+6. **Can it be one line?** One line.
+7. **Only then:** the minimum code that works.
+
+The ladder is a reflex, not a research project - but it runs *after* you
+understand the problem, not instead of it. Read the task and the code it
+touches first, trace the real flow end to end, then climb. Two rungs work 
+take the higher one and move on. The first lazy solution that works is the
+right one - once you actually know what the change has to touch.
+
+**Bug fix = root cause, not symptom.** A report names a symptom. Before you
+edit, grep every caller of the function you're about to touch. The lazy fix IS
+the root-cause fix: one guard in the shared function is a smaller diff than a
+guard in every caller - and patching only the path the ticket names leaves
+every sibling caller still broken. Fix it once, where all callers route through.
+
+## Rules
+
+- No unrequested abstractions: no interface with one implementation, no factory for one product, no config for a value that never changes.
+- No boilerplate, no scaffolding "for later", later can scaffold for itself.
+- Deletion over addition. Boring over clever, clever is what someone decodes at 3am.
+- Fewest files possible. Shortest working diff wins - but only once you understand the problem. The smallest change in the wrong place isn't lazy, it's a second bug.
+- Complex request? Ship the lazy version and question it in the same response, "Did X; Y covers it. Need full X? Say so." Never stall on an answer you can default.
+- Two stdlib options, same size? Take the one that's correct on edge cases. Lazy means writing less code, not picking the flimsier algorithm.
+- Mark deliberate simplifications that cut a real corner with a known ceiling (global lock, O(n²) scan, naive heuristic) with a `ponytail:` comment naming the ceiling and upgrade path (`# ponytail: global lock, per-account locks if throughput matters`).
+
+## Output
+
+Code first. Then at most three short lines: what was skipped, when to add it.
+No essays, no feature tours, no design notes. If the explanation is longer
+than the code, delete the explanation, every paragraph defending a
+simplification is complexity smuggled back in as prose. Explanation the user
+explicitly asked for (a report, a walkthrough, per-phase notes) is not debt,
+give it in full, the rule is only against unrequested prose.
+
+Pattern: `[code]  skipped: [X], add when [Y].`
+
+## Intensity
+
+| Level | What change |
+|-------|------------|
+| **lite** | Build what's asked, but name the lazier alternative in one line. User picks. |
+| **full** | The ladder enforced. Stdlib and native first. Shortest diff, shortest explanation. Default. |
+| **ultra** | YAGNI extremist. Deletion before addition. Ship the one-liner and challenge the rest of the requirement in the same breath. |
+
+Example: "Add a cache for these API responses."
+- lite: "Done, cache added. FYI: `functools.lru_cache` covers this in one line if you'd rather not own a cache class."
+- full: "`@lru_cache(maxsize=1000)` on the fetch function. Skipped custom cache class, add when lru_cache measurably falls short."
+- ultra: "No cache until a profiler says so. When it does: `@lru_cache`. A hand-rolled TTL cache class is a bug farm with a hit rate."
+
+## When NOT to be lazy
+
+Never simplify away: input validation at trust boundaries, error handling
+that prevents data loss, security measures, accessibility basics, anything
+explicitly requested. User insists on the full version  build it, no
+re-arguing.
+
+Never lazy about understanding the problem. The ladder shortens the
+solution, never the reading. Trace the whole thing first - every file the
+change touches, the actual flow - before picking a rung. Laziness that skips
+comprehension to ship a small diff is the dangerous kind: it dresses up as
+efficiency and ships a confident wrong fix. Read fully, then be lazy.
+
+Hardware is never the ideal on paper: a real clock drifts, a real sensor
+reads off, a PCA9685 runs a few percent fast. Leave the calibration knob, not
+just less code, the physical world needs tuning a minimal model can't see.
+
+Lazy code without its check is unfinished. Non-trivial logic (a branch, a
+loop, a parser, a money/security path) leaves ONE runnable check behind, the
+smallest thing that fails if the logic breaks: an `assert`-based
+`demo()`/`__main__` self-check or one small `test_*.py`. No frameworks, no
+fixtures, no per-function suites unless asked. Trivial one-liners need no
+test, YAGNI applies to tests too.
+
+## Boundaries
+
+Ponytail governs what you build, not how you talk (pair with Caveman for
+terse prose). "stop ponytail" / "normal mode": revert. Level persists until
+changed or session end.
+
+The shortest path to done is the right path.
+## codex/fix132-crossplatform...origin/codex/dx-realworld-argon-20261110 [ahead 15, behind 17]
+ M OUT.txt
+ccadefd1 wip: ???
 7091e67d wip: ???
 94acbbbd wip: ???
 04ce57f8 wip: ???
 7d1f4b5c wip: ???
 e11758ca wip: ???
-d69668ac wip: ???
-c2d87e43 wip: ???
-68639a6c wip: ???
- OUT.txt | 5338 ---------------------------------------------------------------
- 1 file changed, 5338 deletions(-)
+ OUT.txt | 1147 ---------------------------------------------------------------
+ 1 file changed, 1147 deletions(-)
+rg: 
+Line |
+   2 |  . s --short --branch; git log -6 --oneline; git diff --stat; rg --files .
+     |                                                               ~~
+     | The term 'rg' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command "Get-Content -LiteralPath OUT.txt -Tail 160; Get-Content -LiteralPath 'C:\\Users\\Oscar\\.codex\\skills\\ponytail\\SKILL.md' -Tail 120" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ exited 1 in 25863ms:
+ccadefd1 wip: ???
+7091e67d wip: ???
+94acbbbd wip: ???
+04ce57f8 wip: ???
+7d1f4b5c wip: ???
+e11758ca wip: ???
+ OUT.txt | 1147 ---------------------------------------------------------------
+ 1 file changed, 1147 deletions(-)
+origin	https://github.com/NoGod3524/EXReader.git (fetch)
+origin	https://github.com/NoGod3524/EXReader.git (push)
+.github
+apps
+archive
+bindings
+cmake
+data
+docs
+evidence
+examples
+extras
+include
+licenses
+ops
+src
+tests
+tools
+.clang-format
+.git
+.gitattributes
+.gitignore
+ANCHOR-OUT.txt
+ANNOT-OUT.txt
+CFI-OUT.txt
+CHANGELOG.md
+CHAP-OUT2.txt
+CMakeLists.txt
+CMakePresets.json
+DICT-OUT.txt
+DRM-OUT.txt
+FIXED-OUT.txt
+FONT-FIX-OUT.txt
+FONT-OUT3.txt
+FONTCOV-OUT.txt
+FONTHOST-OUT.txt
+HANDOFF-RESULT-C11.md
+HANDOFF-RESULT-S14.md
+HANDOFF-RESULT-S15.md
+HANDOFF-RESULT-S16.md
+HANDOFF-RESULT-S17.md
+HYPH-OUT.txt
+INTEG-OUT.txt
+INTEG-OUT2.txt
+LICENSE
+MOBI-OUT.txt
+native-configure.log
+OUT.txt
+OUT2.txt
+OUT3.txt
+PDF-OUT.txt
+PERF-OPT-OUT.txt
+PERFGATE-OUT.txt
+PLATFORMS2-OUT.txt
+README.md
+RESOLVE-OUT.txt
+RESOLVE.md
+RTL-OUT.txt
+S2-OUT.txt
+S3-OUT.txt
+S4-OUT.txt
+S5-OUT.txt
+SAN-FINAL-OUT.txt
+SEARCH-FIX-OUT.txt
+SEARCH-OUT.txt
+SEARCHIDX-OUT.txt
+SELECT-OUT.txt
+SEVENZ-OUT.txt
+SHELF-OUT.txt
+SHELFMETA-OUT.txt
+SIGN-OUT.txt
+SIMP-OUT.txt
+STYLE-FN-OUT.txt
+THIRD_PARTY_NOTICES.md
+TOCPAGE-OUT.txt
+TTS-OUT.txt
+VERSION
+W1-OUT.txt
+W2-OUT.txt
+W3-OUT.txt
+rg: 
+Line |
+   2 |  . it diff --stat; git remote -v; Get-ChildItem -Force -Name; rg --files .
+     |                                                               ~~
+     | The term 'rg' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+ succeeded in 4386ms:
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
 ---
 name: ponytail
 description: >
@@ -323,18 +561,14 @@ changed or session end.
 The shortest path to done is the right path.
 
 exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "git remote -v; git log -25 --oneline --decorate; git diff c3f72f96 HEAD --stat; rg --files -g AGENTS.md -g '*132*' -g '*asan*' -g '*handoff*' -g '*??*' -g '*STATE*'; Get-ChildItem -Force | Select-Object Mode,Name; Get-Content OUT.txt -TotalCount 80" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
-codex
-???????? `OUT.txt` ???,????????????,??????????????????????????,???????????????????? ponytail ??,???????
-
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command "git log -22 --format='%h %s'; git diff c3f72f96 HEAD --stat; git log -8 --format='%h %ad %s' --date=iso-strict; Get-ChildItem -LiteralPath evidence -Name; Get-Content native-configure.log -Tail 25" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
 exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-ChildItem -Force | Select-Object Mode,Name; rg --files -g AGENTS.md -g '*132*' -g '*asan*' -g '*handoff*' -g '*??*' -g '*STATE*'; Get-Content tests/fixtures/docx-real/codex/generate.py -TotalCount 90; Get-Content tests/fixtures/docx-real/argon/make_fixtures.py -TotalCount 80" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
-mcp: codex_apps/github.get_pr_info started
-mcp: codex_apps/github.get_pr_info (completed)
- succeeded in 52289ms:
-origin	https://github.com/NoGod3524/EXReader.git (fetch)
-origin	https://github.com/NoGod3524/EXReader.git (push)
-7091e67d (HEAD -> codex/fix132-crossplatform, origin/codex/fix132-crossplatform) wip: ???
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command "Get-ChildItem -LiteralPath .. -Force -Name; rg -n 'create_system|external_attr|ZIP_|writestr|newline' tests/fixtures/docx-real/codex/generate.py tests/fixtures/docx-real/argon/make_fixtures.py; rg -n 'asan|ASan|132|sanitiz' .github/workflows CMakeLists.txt cmake; Get-Command cmake,ctest,python,gh,gcc,clang,ninja -ErrorAction SilentlyContinue | Select-Object Name,Source" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command "Get-ChildItem -LiteralPath 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-fix132b-merge' -Force | Select-Object Mode,Name; Get-ChildItem -LiteralPath 'C:\\Users\\Oscar\\Documents\\Codex\\evidence' -Name | Where-Object { "'$_ -match '"'132|asan' }; Get-ChildItem -LiteralPath evidence -Recurse -File | Where-Object { "'$_.Name -match '"'132|asan|sanit|repro' } | Select-Object FullName" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ succeeded in 55178ms:
+ccadefd1 wip: ???
+7091e67d wip: ???
 94acbbbd wip: ???
 04ce57f8 wip: ???
 7d1f4b5c wip: ???
@@ -355,11 +589,7 @@ c2d87e43 wip: ???
 5947ab96 fix(docx): pin fixture ZIP creator OS across platforms
 c3f72f96 docs(out): log merge-with-main resolution for PR #132
 98ca706e Merge remote-tracking branch 'origin/main' into codex/fix132-20261111
-f9df2377 Merge pull request #124 from NoGod3524/codex/dx-integration-20261110
-ec14bb99 Merge pull request #107 from NoGod3524/codex/artifact-signing-20261109
-a0fc9e8c (origin/codex/artifact-signing-20261109) wip: ??????
-817a7f31 docs(api): document the twelve new edit, table and image entry points
- OUT.txt                                            | 5402 +++++++++++++++++++-
+ OUT.txt                                            | 1213 ++++++++++++++++++--
  .../argon/01-table-merged-grid-vmerge.docx         |  Bin 2719 -> 9679 bytes
  .../argon/02-table-merged-hmerge-vmerge.docx       |  Bin 2708 -> 8663 bytes
  .../docx-real/argon/03-table-nested-subtable.docx  |  Bin 2675 -> 8952 bytes
@@ -425,388 +655,724 @@ a0fc9e8c (origin/codex/artifact-signing-20261109) wip: ??????
  tests/fixtures/docx-real/codex/generate.py         |   36 +-
  tests/fixtures/docx-real/codex/manifest.json       |  120 +-
  tests/fixtures/docx-real/codex/register.cmake      |   17 +
- 66 files changed, 5480 insertions(+), 224 deletions(-)
+ 66 files changed, 1290 insertions(+), 225 deletions(-)
+ccadefd1 2026-11-11T17:24:26-05:00 wip: ???
+7091e67d 2026-11-11T17:14:14-05:00 wip: ???
+94acbbbd 2026-11-11T17:06:30-05:00 wip: ???
+04ce57f8 2026-11-11T17:01:49-05:00 wip: ???
+7d1f4b5c 2026-11-11T16:59:23-05:00 wip: ???
+e11758ca 2026-11-11T16:56:47-05:00 wip: ???
+d69668ac 2026-11-11T16:52:00-05:00 wip: ???
+c2d87e43 2026-11-11T16:47:12-05:00 wip: ???
+artifact-signing-20261109
+cfi-acceptance-20261108
+ci-packaging-20261103
+cjk-corpus-20261105
+cjk-host-open-fix-20261106
+cjk-justify-20261106
+cjk-kinsoku-20261106
+cjk-punctuation-compression-20261106
+cjk-space-collapse-20261106
+cjk-u3000-20261107
+corpus-version-20261104
+custody-20261103
+drm-lcp-20261109
+engine-chapter-layout-20261107
+engine-combine-upright-20261107
+final-gate-probe-20261103
+fixed-layout-20261110
+font-coverage-20261109
+font-manager-20261107
+formats-20261107
+main-transition-20261104
+malformed-input-20261107
+malformed-triage-20261107
+mobi-kf8-fb2-20261108
+pdf-deepening-20261107
+perf-e1-20261107
+perf-gate-20261107
+perf-gate-final-20261109
+perf-gate2-20261108
+perf-gate3-20261108
+platforms-20261108
+platforms2-20261109
+quality-20261108
+real-books-20261105
+realbooks-baseline-20261107
+runtime-20261109
+s5
+sdk-consumer-20261109
+sdk-packaging-20261109
+sdk-version-20261103
+search-acceptance-20261108
+search-fix-20261108
+search-index-20261109
+simplified-20261110
+toc-links-20261107
+toc-page-20261108
+typography-bench-20261107
+w1
+w2-docx-write
+x2-reflow-20261110
+C-HANDOFF-20261103.md
+C-PR-TRIGGERS-20261103.md
+C-PR33-BASELINE-20261103.md
+default-branch-decision-20261103.md
+default-branch-protection-inventory-20261103.md
+INDEX.md
+R-ENVIRONMENT-BLOCKER-20261103.md
+refreeze-scope-20261103.md
+RESULT.md
+  closing connection #0
+
+
+
+          --- LOG END ---
+          
+    
+
+
+FAILED: [code=1] mbedtls-populate-prefix/src/mbedtls-populate-stamp/mbedtls-populate-download C:/Users/Oscar/Documents/Codex/EXReader-fix132b-20261111/build/native/_deps/mbedtls-subbuild/mbedtls-populate-prefix/src/mbedtls-populate-stamp/mbedtls-populate-download 
+C:\Windows\system32\cmd.exe /C "cd /D C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111\build\native\_deps && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/Documents/Codex/EXReader-fix132b-20261111/build/native/_deps/mbedtls-subbuild/mbedtls-populate-prefix/src/mbedtls-populate-stamp/download-mbedtls-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/Documents/Codex/EXReader-fix132b-20261111/build/native/_deps/mbedtls-subbuild/mbedtls-populate-prefix/src/mbedtls-populate-stamp/verify-mbedtls-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/Documents/Codex/EXReader-fix132b-20261111/build/native/_deps/mbedtls-subbuild/mbedtls-populate-prefix/src/mbedtls-populate-stamp/extract-mbedtls-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -E touch C:/Users/Oscar/Documents/Codex/EXReader-fix132b-20261111/build/native/_deps/mbedtls-subbuild/mbedtls-populate-prefix/src/mbedtls-populate-stamp/mbedtls-populate-download"
+ninja: build stopped: subcommand failed.
+
+CMake Error at C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1933 (message):
+  Build step for mbedtls failed: 1
+Call Stack (most recent call first):
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1622 (__FetchContent_populateSubbuild)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160:EVAL:2 (__FetchContent_doPopulation)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160 (cmake_language)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2401 (__FetchContent_Populate)
+  cmake/deps.cmake:183 (FetchContent_MakeAvailable)
+  CMakeLists.txt:63 (include)
+
+
+-- Configuring incomplete, errors occurred!
+
+codex
+?????????????:?? ZIP creator OS?????????????????? DOCX ? Python ????? ASan????? `OUT.txt` ???;?????????,?????????,????????????
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command "python -c \"from pathlib import Path; import subprocess; p=Path('.'); print('GIT', (p/'.git').read_text()); print('EVIDENCE'); print('\\n'.join(str(x) for x in (p/'evidence').rglob('*') if any(s in x.name.lower() for s in ('132','asan','sanit','repro')))); print('TMP'); print('\\n'.join(str(x) for x in Path('../tmp').glob('*132*'))); print('MERGE'); print('\\n'.join(x.name for x in Path('../EXReader-fix132b-merge').iterdir())); print('OUT HEAD'); print(subprocess.check_output(['git','show','HEAD:OUT.txt']).decode('utf-8','replace')[-18000:])\"" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ exited 1 in 80282ms:
+__pycache__
+2026-08-29
+2026-08-30
+2026-08-31
+2026-09-01
+2026-09-02
+2026-09-09
+2026-09-11
+2026-09-12
+2026-09-13
+2026-09-14
+2026-09-17
+2026-09-19
+2026-09-22
+2026-09-23
+2026-09-26
+2026-09-27
+2026-09-29
+2026-09-30
+2026-10-02
+2026-10-03
+2026-10-04
+2026-10-05
+2026-10-06
+2026-10-07
+2026-10-10
+2026-10-11
+2026-10-13
+2026-10-14
+2026-10-15
+2026-10-16
+2026-10-17
+2026-10-18
+2026-10-19
+2026-10-20
+2026-10-21
+2026-10-22
+2026-10-23
+2026-10-26
+2026-10-27
+2026-10-28
+2026-10-29
+2026-10-30
+2026-10-31
+2026-11-02
+2026-11-05
+2026-11-06
+2026-11-07
+2026-11-08
+2026-11-09
+2026-11-10
+2026-11-11
+a11y_base
+a11y_scratch
+BetterHuskyCT-progress
+chapter-layout-20261107
+cjk-host-open-fix-20261106
+cjk-justify-20261106
+cjk-kinsoku-20261106
+cjk-kinsoku-generalization-20261106
+cjk-punctuation-compression-20261106
+cjk-space-collapse-20261106
+cjk-u3000-20261107
+combine-upright-20261107
+css-alias-20261105
+d2m-base
+d2m-build
+d2m-corpus
+d2m-intermediate-evidence
+d2m-report
+engine-triage-verify-20261107
+evidence
+exr-build-argon
+exr-build-cascade
+exr-build-cf112
+exr-build-cf116
+exr-build-cf127
+exr-build-cf128
+exr-build-cf129
+exr-build-cf130
+exr-build-cf131
+exr-build-main
+exr-build-opus
+exr-build-opus-deps
+exr-cjk-corpus
+exr-demo
+exr-demo-2a
+exr-demo-fix
+exr-demo-main
+exr-demo-step6
+exr-deps
+exr-opds-build
+exr-opds-host
+exr-opds-sdk
+exr-paint-host-build
+exr-paint-measure-20261104
+exr-paint-sdk
+exr-shell-demo-build
+exr-step5-build
+exr-v-build-20261103
+exr-v-consumer-20261103
+exr-v-consumer-build-20261103
+exr-v-package-probe-20261103
+exr-v-search-negative-20261103
+exr-v-search-positive-20261103
+exr-v-stage-20261103
+exr-visual-20261105
+EXReader-A1-20261109
+EXReader-A2-20261109
+EXReader-A3-20261109
+EXReader-A4-20261109
+EXReader-A5-20261109
+EXReader-anchors-20261107
+EXReader-annot-20261108
+EXReader-aragorn-docx-20261110
+EXReader-archive-apply-probe-20261105
+EXReader-argon-merge-20261110
+EXReader-b1-baseline-20261110
+EXReader-b1-webdav-20261110
+EXReader-b2-opds-20261110
+EXReader-branch-archive-20261105
+EXReader-c2-a11y-20261110
+EXReader-C4-20261109
+EXReader-cfi-20261108
+EXReader-chapter-layout-20261107
+EXReader-ci-manual-20261105
+EXReader-ci-packaging-20261103
+EXReader-cicleanup-20261110
+EXReader-cjk-20261105
+EXReader-cjk-hostfix-20261106
+EXReader-combine-upright-20261107
+EXReader-D1-20261109
+EXReader-D1-base-src
+EXReader-D1-work
+EXReader-D2-20261109
+EXReader-d2-media-20261110
+EXReader-D2-work
+EXReader-D3-20261109
+EXReader-d3-large-20261110
+EXReader-dict-20261108
+EXReader-docs-claims-20261105
+EXReader-dxmodel-20261110
+EXReader-dxverify-20261110
+EXReader-dxwrite-20261110
+EXReader-evidence-20261105
+EXReader-evmove-20261110
+EXReader-fix-112-20261111
+EXReader-fix-113-20261111
+EXReader-fix-116-20261111
+EXReader-fix-125-20261111
+EXReader-fix-126-20261111
+EXReader-fix-127-20261111
+EXReader-fix-128-20261111
+EXReader-fix-129-20261111
+EXReader-fix-130-20261111
+EXReader-fix-131-20261111
+EXReader-fix-132-20261111
+EXReader-fix132b-20261111
+EXReader-fix132b-merge
+EXReader-fixdoc-20261111
+EXReader-fontcov-20261109
+EXReader-fonthost-20261107
+EXReader-fontmgr-20261107
+EXReader-formats-20261107
+EXReader-hyph-20261108
+EXReader-hyph-base
+EXReader-integ-20261108
+EXReader-intx-20261110
+EXReader-ledger-c-20261103
+EXReader-ledger-guard-20261103
+EXReader-malformed-triage-20261107
+EXReader-merge-preview-20261103
+EXReader-mobi-20261108
+EXReader-opus-docx-20261110
+EXReader-pdf-20261107
+EXReader-pdfxref-20261111
+EXReader-perf2-20261108
+EXReader-perf3-20261108
+EXReader-perffinal-20261109
+EXReader-perfgate-20261107
+EXReader-perfopt-20261109
+EXReader-plat2-20261109
+EXReader-platforms-20261108
+EXReader-pr107-20261110
+EXReader-pr109-20261110
+EXReader-pr112-20261110
+EXReader-pr113-20261110
+EXReader-pr116-20261110
+EXReader-pr117-20261110
+EXReader-pr118-20261110
+EXReader-pr119-20261110
+EXReader-pr120-20261110
+EXReader-pr121-20261110
+EXReader-pr124-20261110
+EXReader-preview-results-20261103
+EXReader-probe-baseline-20261103
+EXReader-probe-framework-20261103
+EXReader-qual-20261108
+EXReader-r1-review-20261110
+EXReader-real-books-20261105
+EXReader-resolve-107-20261111
+EXReader-resolve-112-20261111
+EXReader-resolve-113-20261111
+EXReader-resolve-116-20261111
+EXReader-resolve-127-20261111
+EXReader-resolve-128-20261111
+EXReader-resolve-129-20261111
+EXReader-resolve-129-workflow-backup-20261111
+EXReader-resolve-131-20261111
+EXReader-runtime-20261109
+EXReader-S1-20261109
+EXReader-S2-20261109
+EXReader-S3-20261109
+EXReader-S4-20261109
+EXReader-S5-20261109
+EXReader-S6-20261109
+EXReader-san2-20261108
+EXReader-san3-20261108
+EXReader-sanitize-20261107
+EXReader-sdk-version-20261103
+EXReader-sdk-version-negative-20261103
+EXReader-search-20261108
+EXReader-select-20261108
+EXReader-sevenz-20261108
+EXReader-shelf-20261108
+EXReader-shelfmeta-20261108
+EXReader-step6-20261107
+EXReader-stylefn-20261108
+EXReader-t1-docxreal-20261110
+EXReader-toc-links-20261107
+EXReader-tocpage-20261108
+EXReader-tts-20261108
+EXReader-typo-20261106
+EXReader-typo-bench-20261107
+EXReader-typo-rescue-20261107
+EXReader-u3000-20261107
+EXReader-ui-2a-20261105
+EXReader-ui-step4-20261106
+EXReader-ui-step5-20261106
+EXReader-uifix-20261107
+EXReader-w2-baseline-20261107
+EXReader-w3-perf-20261107
+EXReader-w5-fuzz-20261107
+EXReader-Windows-delivery-20261104
+EXReader-workflow-archive-20261105
+EXReader-workflow-closure-20261105
+EXReader-x1-bridge-20261110
+EXReader-x2-reflow-20261110
+EXReader-x3-shell-20261110
+EXReader-x4-save-20261110
+EXReader-x5-e2e-20261110
+EXReader-x6-table-20261110
+EXReader-y1-api-20261110
+EXReader-y2-prfinish-20261110
+EXReader-y4-editor-20261110
+fmt-build-20261107
+fontmgr-20261107
+formats-build-20261107
+formats-samples-20261107
+hyph-build-base
+hyph-build-new
+hyph-dl-20261108
+hyph-pydeps
+hyph-run
+large-book-d3
+malformed-build-20261107
+malformed-triage-before
+malformed-triage-before-build
+malformed-triage-build
+mobi-samples-20261108
+Module4_Pollution_Draft
+opds-accept-1
+opds-codex-accept-1
+opds-codex-accept-2
+opds-mingw-smoke
+opds-net-run
+opds-release-smoke-no-telemetry
+opds-release-smoke-retry
+pdf-deepening-samples-20261107
+quant-luna-20d
+real-books-pass-a-20261105
+sanitize-audit-build-20261107
+sanitize-build-20261107
+sanitize-current-build-20261108
+sanitize-current-work-20261108
+sanitize-final-build-20261107
+sanitize-measured-build-20261107
+sanitize-measured-work-20261107
+sanitize-toolchain-20261107
+sanitize-verified-build-20261107
+sanitize-verified-work-20261107
+SlayTheSpire
+steady-english
+steady-english-audio-data
+steady-english-course-data
+steady-english-research-data
+tmp
+tocpage-after
+tocpage-before
+tocpage-build
+typo-bench-work-20261107
+typo-tools
+typography-bench-build-20261107
+verify-20261106
+w2-realbooks-build-20261107
+a11y_build_sdk.py
+a11y_host.ps1
+a11y_sdk_build.log
+audio-finalize.cjs
+build.log
+cf127.log
+cf127.sh
+cf128-build.log
+cf128-build2.log
+cf128-ctest.log
+cf129-failfast.log
+cf129-hygiene-acceptance.log
+cf129-hygiene-fixed.log
+cf129-hygiene-local.log
+cf129-identity.log
+cf129-merge-audit.diff
+cf129-merge-latest-audit.diff
+cf129-merge-remote-audit.diff
+cf129-version-fixed.log
+cfg.log
+cfg2.log
+cjk-kinsoku-generalization-run.py
+core-pr-corpus-41774219995.log
+core-pr-summary-41774219995.log
+corpus-core-summary-41782427456.log
+corpus-version-pr-20261104.md
+corpus-version-regression-20261104.txt
+corpus-version-selftest-20261104.txt
+ctest.log
+d2m-build-1.log
+d2m-build-2.log
+d2m-build-3.log
+d2m-build-4.log
+d2m-build-5.log
+d2m-build-6.log
+d2m-build-configure.log
+d2m-build-re.log
+d2m-codex-build.log
+d2m-ctest.log
+d2m-main-integration-check.txt
+d2m-mine.txt
+d2m-real-after.diff.json
+d2m-real-after.json
+d2m-real-after.log
+d2m-real-before.diff.json
+d2m-real-before.json
+d2m-real-before.log
+dbg.c
+dbg.exe
+dbg2.c
+dbg2.exe
+dbg3.py
+engine-triage-audit.log
+engine-triage-build.log
+engine-triage-configure.log
+engine-triage-corpus.log
+engine-triage-ctest.log
+engine-triage-incremental.log
+exr-build-opus-configure.log
+exr-opds-build-all.log
+exr-opds-build1.log
+exr-opds-configure.log
+exr-opds-install.log
+formats-build-20261107.txt
+formats-configure-20261107.txt
+formats-reconfigure-20261107.txt
+hyph-build-base.log
+hyph-build-new.log
+hyph-cfg-base.log
+hyph-cfg-new.log
+hyph-cfg.log
+hyph-cmake-edit.py
+hyph-ctest-base.log
+hyph-ctest-new.log
+hyph-opts.txt
+import-course-data.cjs
+ledger_check_temp.py
+ledger-guard-selftest.txt
+main-core-summary-41786091768.log
+main-transition-ruleset-before.json
+main-transition-s4-api.json
+malformed-triage-before-build.log
+malformed-triage-before-configure.log
+malformed-triage-build.log
+malformed-triage-configure.log
+malformed-triage-initial.patch
+opds-accept-1.log
+opds-realbooks-after.diff.json
+opds-realbooks-after.json
+opds-realbooks-baseline.json
+p-hygiene-check.txt
+p-hygiene-initial.txt
+p-hygiene-ref-check.txt
+p-narrowed-check.txt
+p-self-defects-hygiene.txt
+p-self-defects-lifecycle.txt
+p-self-defects-postmerge-check.txt
+p-self-defects-pr.md
+p-shell-semantics-check.txt
+patch-mobile-audio.cjs
+RESOLVE-116-local.md
+RESOLVE-task-130.md
+s5-final-verification.json
+s5-followup-pr-body.md
+s5-positive-required-checks.json
+s5-required-query.graphql
+s5-ruleset-after.json
+s5-ruleset-before.json
+sanitize-verified-books-20261107.txt
+sanitize-verified-build-20261107.txt
+sanitize-verified-malformed-20261107.txt
+sanitize-verified-rebuild-20261107.txt
+sanitize-verified-seeds-20261107.txt
+steady-english-release.tar.gz
+stylefn-build.log
+stylefn-configure.log
+tocpage-build.log
+tocpage-build2.log
+tocpage-ctest.log
+tocpage-tail.c
+update-course-app.cjs
+windows-release-draft-20261104.json
+windows-release-notes-20261104.md
 rg: 
 Line |
-   2 |  . g -25 --oneline --decorate; git diff c3f72f96 HEAD --stat; rg --files .
+   2 |  Get-ChildItem -LiteralPath .. -Force -Name; rg -n 'create_system|exte .
+     |                                              ~~
+     | The term 'rg' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+rg: 
+Line |
+   2 |  . nerate.py tests/fixtures/docx-real/argon/make_fixtures.py; rg -n 'asa .
      |                                                               ~~
      | The term 'rg' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
 
-Mode  Name
-----  ----
-d---- .github
-d---- apps
-d---- archive
-d---- bindings
-d---- build
-d---- cmake
-d---- data
-d---- docs
-d---- evidence
-d---- examples
-d---- extras
-d---- include
-d---- licenses
-d---- ops
-d---- src
-d---- tests
-d---- tools
--a--- .clang-format
--a-h- .git
--a--- .gitattribut.
--a--- .gitignore
--a--- ANCHOR-OUT.t.
--a--- ANNOT-OUT.txt
--a--- CFI-OUT.txt
--a--- CHANGELOG.md
--a--- CHAP-OUT2.txt
--a--- CMakeLists.t.
--a--- CMakePresets.
--a--- DICT-OUT.txt
--a--- DRM-OUT.txt
--a--- FIXED-OUT.txt
--a--- FONT-FIX-OUT.
--a--- FONT-OUT3.txt
--a--- FONTCOV-OUT..
--a--- FONTHOST-OUT.
--a--- HANDOFF-RESU.
--a--- HANDOFF-RESU.
--a--- HANDOFF-RESU.
--a--- HANDOFF-RESU.
--a--- HANDOFF-RESU.
--a--- HYPH-OUT.txt
--a--- INTEG-OUT.txt
--a--- INTEG-OUT2.t.
--a--- LICENSE
--a--- MOBI-OUT.txt
--a--- native-confi.
--a--- OUT.txt
--a--- OUT2.txt
--a--- OUT3.txt
--a--- PDF-OUT.txt
--a--- PERF-OPT-OUT.
--a--- PERFGATE-OUT.
--a--- PLATFORMS2-O.
--a--- README.md
--a--- RESOLVE-OUT..
--a--- RESOLVE.md
--a--- RTL-OUT.txt
--a--- S2-OUT.txt
--a--- S3-OUT.txt
--a--- S4-OUT.txt
--a--- S5-OUT.txt
--a--- SAN-FINAL-OU.
--a--- SEARCH-FIX-O.
--a--- SEARCH-OUT.t.
--a--- SEARCHIDX-OU.
--a--- SELECT-OUT.t.
--a--- SEVENZ-OUT.t.
--a--- SHELF-OUT.txt
--a--- SHELFMETA-OU.
--a--- SIGN-OUT.txt
--a--- SIMP-OUT.txt
--a--- STYLE-FN-OUT.
--a--- THIRD_PARTY_.
--a--- TOCPAGE-OUT..
--a--- TTS-OUT.txt
--a--- VERSION
--a--- W1-OUT.txt
--a--- W2-OUT.txt
--a--- W3-OUT.txt
-You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+Name      Source
+----      ------
+cmake.exe C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Sou.
+ctest.exe C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Sou.
+python.e. C:\Python314\python.exe
+gh.exe    C:\Users\Oscar\.dsh\tools\bin\gh.exe
+gcc.exe   C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Sou.
+ninja.exe C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Sou.
 
 
-mcp: codex_apps/github.fetch_commit_workflow_runs started
-mcp: codex_apps/github.fetch_commit_workflow_runs (failed)
- succeeded in 43592ms:
+mcp: codex_apps/github.fetch_pr started
+ succeeded in 24878ms:
+GIT gitdir: C:/Users/Oscar/OneDrive/??/ChatGPT/EXReader/.git/worktrees/EXReader-fix132b-20261111
 
-Mode  Name
-----  ----
-d---- .github
-d---- apps
-d---- archive
-d---- bindings
-d---- build
-d---- cmake
-d---- data
-d---- docs
-d---- evidence
-d---- examples
-d---- extras
-d---- include
-d---- licenses
-d---- ops
-d---- src
-d---- tests
-d---- tools
--a--- .clang-format
--a-h- .git
--a--- .gitattributes
--a--- .gitignore
--a--- ANCHOR-OUT.txt
--a--- ANNOT-OUT.txt
--a--- CFI-OUT.txt
--a--- CHANGELOG.md
--a--- CHAP-OUT2.txt
--a--- CMakeLists.txt
--a--- CMakePresets.json
--a--- DICT-OUT.txt
--a--- DRM-OUT.txt
--a--- FIXED-OUT.txt
--a--- FONT-FIX-OUT.txt
--a--- FONT-OUT3.txt
--a--- FONTCOV-OUT.txt
--a--- FONTHOST-OUT.txt
--a--- HANDOFF-RESULT-C.
--a--- HANDOFF-RESULT-S.
--a--- HANDOFF-RESULT-S.
--a--- HANDOFF-RESULT-S.
--a--- HANDOFF-RESULT-S.
--a--- HYPH-OUT.txt
--a--- INTEG-OUT.txt
--a--- INTEG-OUT2.txt
--a--- LICENSE
--a--- MOBI-OUT.txt
--a--- native-configure.
--a--- OUT.txt
--a--- OUT2.txt
--a--- OUT3.txt
--a--- PDF-OUT.txt
--a--- PERF-OPT-OUT.txt
--a--- PERFGATE-OUT.txt
--a--- PLATFORMS2-OUT.t.
--a--- README.md
--a--- RESOLVE-OUT.txt
--a--- RESOLVE.md
--a--- RTL-OUT.txt
--a--- S2-OUT.txt
--a--- S3-OUT.txt
--a--- S4-OUT.txt
--a--- S5-OUT.txt
--a--- SAN-FINAL-OUT.txt
--a--- SEARCH-FIX-OUT.t.
--a--- SEARCH-OUT.txt
--a--- SEARCHIDX-OUT.txt
--a--- SELECT-OUT.txt
--a--- SEVENZ-OUT.txt
--a--- SHELF-OUT.txt
--a--- SHELFMETA-OUT.txt
--a--- SIGN-OUT.txt
--a--- SIMP-OUT.txt
--a--- STYLE-FN-OUT.txt
--a--- THIRD_PARTY_NOTI.
--a--- TOCPAGE-OUT.txt
--a--- TTS-OUT.txt
--a--- VERSION
--a--- W1-OUT.txt
--a--- W2-OUT.txt
--a--- W3-OUT.txt
-rg: 
-Line |
-   2 |  Get-ChildItem -Force | Select-Object Mode,Name; rg --files -g AGENTS. .
-     |                                                  ~~
-     | The term 'rg' is not recognized as a name of a cmdlet, function, script file, or executable program.
-Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
-#!/usr/bin/env python3
-# SPDX-License-Identifier: MIT
-"""Thirty original mixed Word packages. Stdlib only; byte reproducible, <60 KiB."""
-import argparse
-import hashlib
-import io
-import json
-from pathlib import Path
-from xml.sax.saxutils import escape, quoteattr
-from zipfile import ZipFile, ZipInfo, ZIP_STORED
+EVIDENCE
+evidence\artifact-signing-20261109\reproducibility.json
+evidence\artifact-signing-20261109\reproducibility.txt
+evidence\quality-20261108\analyzer-132.json.gz
+evidence\runtime-20261109\asan-benchmark-after.json
+evidence\runtime-20261109\asan-benchmark-before.json
+evidence\runtime-20261109\asan-benchmark-inventory.json
+evidence\runtime-20261109\asan-benchmark.json
+evidence\runtime-20261109\asan-benchmark.txt
+evidence\runtime-20261109\asan-benchmark.xml
+evidence\runtime-20261109\asan-book-00-stderr.txt
+evidence\runtime-20261109\asan-book-01-stderr.txt
+evidence\runtime-20261109\asan-book-02-stderr.txt
+evidence\runtime-20261109\asan-book-03-stderr.txt
+evidence\runtime-20261109\asan-book-04-stderr.txt
+evidence\runtime-20261109\asan-book-05-stderr.txt
+evidence\runtime-20261109\asan-book-06-stderr.txt
+evidence\runtime-20261109\asan-book-07-stderr.txt
+evidence\runtime-20261109\asan-book-08-stderr.txt
+evidence\runtime-20261109\asan-book-09-stderr.txt
+evidence\runtime-20261109\asan-book-10-stderr.txt
+evidence\runtime-20261109\asan-book-11-stderr.txt
+evidence\runtime-20261109\asan-book-12-stderr.txt
+evidence\runtime-20261109\asan-book-13-stderr.txt
+evidence\runtime-20261109\asan-book-14-stderr.txt
+evidence\runtime-20261109\asan-book-15-stderr.txt
+evidence\runtime-20261109\asan-book-16-stderr.txt
+evidence\runtime-20261109\asan-book-17-stderr.txt
+evidence\runtime-20261109\asan-book-18-stderr.txt
+evidence\runtime-20261109\asan-bridge.json
+evidence\runtime-20261109\asan-bridge.txt
+evidence\runtime-20261109\asan-build-attempt1.json
+evidence\runtime-20261109\asan-build-attempt1.txt
+evidence\runtime-20261109\asan-build-attempt2.json
+evidence\runtime-20261109\asan-build-attempt2.txt
+evidence\runtime-20261109\asan-build-config.txt
+evidence\runtime-20261109\asan-build.json
+evidence\runtime-20261109\asan-build.txt
+evidence\runtime-20261109\asan-compile-commands.json.gz
+evidence\runtime-20261109\asan-configure-attempt1.json
+evidence\runtime-20261109\asan-configure-attempt1.txt
+evidence\runtime-20261109\asan-configure-attempt2.json
+evidence\runtime-20261109\asan-configure-attempt2.txt
+evidence\runtime-20261109\asan-configure.json
+evidence\runtime-20261109\asan-configure.txt
+evidence\runtime-20261109\asan-ctest-inventory.json
+evidence\runtime-20261109\asan-ctest.json
+evidence\runtime-20261109\asan-ctest.txt
+evidence\runtime-20261109\asan-ctest.xml
+evidence\runtime-20261109\asan-final-compile-commands.json.gz
+evidence\runtime-20261109\asan-fixtures-inventory.json
+evidence\runtime-20261109\asan-fixtures-summary.json
+evidence\runtime-20261109\asan-fixtures.jsonl
+evidence\runtime-20261109\asan-fuzz-inventory.json
+evidence\runtime-20261109\asan-fuzz.json
+evidence\runtime-20261109\asan-fuzz.txt
+evidence\runtime-20261109\asan-fuzz.xml
+evidence\runtime-20261109\asan-imports.txt
+evidence\runtime-20261109\asan-initial-artifacts.json
+evidence\runtime-20261109\asan-probe-build.json
+evidence\runtime-20261109\asan-probe-build.txt
+evidence\runtime-20261109\asan-realbooks.diff.json
+evidence\runtime-20261109\asan-realbooks.json.gz
+evidence\runtime-20261109\asan-txt-anchor-build.json
+evidence\runtime-20261109\asan-txt-anchor-build.txt
+evidence\runtime-20261109\asan-txt-anchor.json
+evidence\runtime-20261109\asan-txt-anchor.txt
+evidence\runtime-20261109\asan-txt-scan-build.json
+evidence\runtime-20261109\asan-txt-scan-build.txt
+evidence\runtime-20261109\asan-txt-scan.json
+evidence\runtime-20261109\asan-txt-scan.txt
+evidence\runtime-20261109\asan-txt-view-build.json
+evidence\runtime-20261109\asan-txt-view-build.txt
+evidence\runtime-20261109\asan-txt-view.json
+evidence\runtime-20261109\asan-txt-view.txt
+evidence\runtime-20261109\asan-vs-control-realbooks.diff.json
+evidence\runtime-20261109\asan-vs-coverage-realbooks.diff.json
+evidence\sdk-version-20261103\generated-reproducibility.txt
+evidence\search-fix-20261108\sanitizer-ctest.txt
+TMP
 
-HERE = Path(__file__).resolve().parent
-W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
-A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
-WP = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'
-PIC = 'http://schemas.openxmlformats.org/drawingml/2006/picture'
-NS_ITEMS = (('w', W), ('r', R), ('a', A), ('wp', WP), ('pic', PIC), ('v', 'urn:schemas-microsoft-com:vml'),
-            ('mc', 'http://schemas.openxmlformats.org/markup-compatibility/2006'),
-            ('wpg', 'http://schemas.microsoft.com/office/word/2010/wordprocessingGroup'),
-            ('wps', 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape'))
-NS = dict(NS_ITEMS)
-DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-MARKER = 'Draft estimate: 42 units.'
-REPLACEMENT = 'Reviewed estimate: 57 units; ?? & <checked>.'
-
-
-def root(tag, content):
-    return DECL + '<' + tag + ' ' + ' '.join('xmlns:' + k + '=' + quoteattr(v) for k, v in NS_ITEMS) + '>' + content + '</' + tag + '>'
-
-
-def run(text, props=''):
-    return '<w:r>' + ('<w:rPr>' + props + '</w:rPr>' if props else '') + '<w:t xml:space="preserve">' + escape(text) + '</w:t></w:r>'
-
-
-def p(text='', props='', extra='', before=''):
-    return '<w:p w:rsidR="00112233">' + ('<w:pPr>' + props + '</w:pPr>' if props else '') + before + run(text) + extra + '</w:p>'
-
-
-def field(code, result, simple=False):
-    if simple:
-        return '<w:fldSimple w:instr=' + quoteattr(code) + ' w:dirty="true">' + run(result) + '</w:fldSimple>'
-    return ('<w:r><w:fldChar w:fldCharType="begin" w:dirty="true"/></w:r>'
-            '<w:r><w:instrText xml:space="preserve">' + escape(code) + '</w:instrText></w:r>'
-            '<w:r><w:fldChar w:fldCharType="separate"/></w:r>' + run(result) +
-            '<w:r><w:fldChar w:fldCharType="end"/></w:r>')
-
-
-def cell(content, props=''):
-    return '<w:tc><w:tcPr><w:tcW w:w="2880" w:type="dxa"/>' + props + '</w:tcPr>' + content + '</w:tc>'
-
-
-def row(cells, props=''):
-    return '<w:tr>' + ('<w:trPr>' + props + '</w:trPr>' if props else '') + ''.join(cells) + '</w:tr>'
-
-
-def table(rows=None):
-    if rows is None:
-        rows = [row([cell(p('Workstream')), cell(p('Units'))], '<w:tblHeader/>'),
-                row([cell(p('Original sample analysis')), cell(p('42'))]),
-                row([cell(p('Original sample review')), cell(p('15'))])]
-    return ('<w:tbl><w:tblPr><w:tblW w:w="5760" w:type="dxa"/>'
-            '<w:tblBorders><w:top w:val="single" w:sz="4"/><w:bottom w:val="single" w:sz="4"/></w:tblBorders>'
-            '</w:tblPr><w:tblGrid><w:gridCol w:w="2880"/><w:gridCol w:w="2880"/></w:tblGrid>' + ''.join(rows) + '</w:tbl>')
-
-
-def sect(extra='', landscape=False, margin=1440):
-    return ('<w:sectPr><w:headerReference w:type="default" r:id="header"/>'
-            '<w:footerReference w:type="default" r:id="footer"/>' + (extra if '<w:footnotePr>' in extra else '') +
-            ('<w:pgSz w:w="15840" w:h="12240" w:orient="landscape"/>' if landscape else '<w:pgSz w:w="12240" w:h="15840"/>') +
-            f'<w:pgMar w:top="{margin}" w:right="{margin}" w:bottom="{margin}" w:left="{margin}" w:header="720" w:footer="720" w:gutter="0"/>' + ('' if '<w:footnotePr>' in extra else extra) + '</w:sectPr>')
-
-
-def picture(floating=False, graphic=None, drawing_id=1):
-    graphic = graphic or ('<a:graphicData uri="' + PIC + '"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="Original color tile"/>'
-        '<pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="image"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
-        '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="609600"/></a:xfrm>'
-        '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData>')
-    if floating:
-        tag = 'wp:anchor'
-        start = '<wp:anchor distT="91440" distB="91440" distL="91440" distR="91440" simplePos="0" relativeHeight="1" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="column"><wp:posOffset>182880</wp:posOffset></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>91440</wp:posOffset></wp:positionV>'
-    else:
-        tag, start = 'wp:inline', '<wp:inline distT="0" distB="0" distL="0" distR="0">'
-    return ('<w:r><w:drawing>' + start + '<wp:extent cx="914400" cy="609600"/>'
-            '<wp:effectExtent l="0" t="0" r="0" b="0"/>' + ('<wp:wrapSquare wrapText="bothSides"/>' if floating else '') +
-            f'<wp:docPr id="{drawing_id}" name="Original diagram" descr="Original three-bar estimate chart"/><wp:cNvGraphicFramePr/>'
-            '<a:graphic>' + graphic + '</a:graphic></' + tag + '></w:drawing></w:r>')
-
-
-def png():
-#!/usr/bin/env python3
-"""Generate 30 deterministic real-world structural DOCX fixtures (< 60 KB each)."""
-# SPDX-License-Identifier: MIT
-import argparse
-import hashlib
-import io
-import json
-from pathlib import Path
-import struct
-from xml.sax.saxutils import escape
-from zipfile import ZipFile, ZipInfo, ZIP_STORED
-import zlib
-
-W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
-REL = 'http://schemas.openxmlformats.org/package/2006/relationships'
-CT = 'http://schemas.openxmlformats.org/package/2006/content-types'
-A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
-WP = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'
-PIC = 'http://schemas.openxmlformats.org/drawingml/2006/picture'
-WPG = 'http://schemas.microsoft.com/office/word/2010/wordprocessingGroup'
-WPS = 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape'
-VML = 'urn:schemas-microsoft-com:vml'
-
-# 30 fixtures across 8 categories (>= 3 per category), each with a 1-line description.
-FIXTURE_SPECS = [
-    # Category 1: ?? (Tables) - 4 fixtures
-    ('01-table-merged-grid-vmerge', 'tables',
-     '4x3 table with horizontal w:gridSpan=2 and vertical w:vMerge restart/continue merged cells.'),
-    ('02-table-merged-hmerge-vmerge', 'tables',
-     '4x3 table combining legacy horizontal w:hMerge restart/continue with vertical w:vMerge across rows.'),
-    ('03-table-nested-subtable', 'tables',
-     'Outer 2x2 table containing a nested 2x2 w:tbl inside cell (0,1) alongside cell paragraphs.'),
-    ('04-table-repeating-header-multipar-list', 'tables',
-     'Multi-row table with w:tblHeader repeating header row and cells containing multiple paragraphs and lists.'),
-    # Category 2: ? (Fields) - 4 fixtures
-    ('05-field-page-numpages', 'fields',
-     'Simple (w:fldSimple) and complex (w:fldChar/w:instrText) PAGE and NUMPAGES fields in header and body.'),
-    ('06-field-date-formatted', 'fields',
-     'Complex DATE \\@ "yyyy-MM-dd" and CREATEDATE \\@ "HH:mm" fields with cached result runs.'),
-    ('07-field-ref-crossref', 'fields',
-     'Complex REF and PAGEREF cross-reference fields (\\h switch) targeting body bookmark anchors.'),
-    ('08-field-toc-complex', 'fields',
-     'Multi-entry TOC \\o "1-3" \\h \\z \\u complex field with begin/separate/end fldChar and internal links.'),
-    # Category 3: ?? (Numbering) - 4 fixtures
-    ('09-numbering-multilevel-nested', 'numbering',
-     '3-level nested numbering (w:ilvl 0/1/2 with decimal, lowerLetter, lowerRoman) and bullet sub-items.'),
-    ('10-numbering-restart-override', 'numbering',
-     'Mid-list numbering restart using w:lvlRestart val=1 and w:lvlOverride with w:startOverride val=1.'),
-    ('11-numbering-style-bound', 'numbering',
-     'Style-bound numbering linking paragraph style NumberedHeading via styles.xml w:numPr and w:numStyleLink.'),
-    ('12-numbering-chinese-counting', 'numbering',
-     'Chinese numbering levels using chineseCounting, chineseLegalSimplified, and decimalEnclosedCircle.'),
-    # Category 4: ?? (Styles) - 4 fixtures
-    ('13-style-inheritance-chain', 'styles',
-     '3-level paragraph and character style inheritance chain (Normal -> Heading1 -> SubHeading -> CalloutLeaf).'),
-    ('14-style-direct-override-unbold', 'styles',
-     'Direct run w:b val=0 / w:i val=0 overriding bold/italic style plus w:spacing before/after inheriting line=480.'),
-    ('15-style-direct-indent-override', 'styles',
-     'Direct paragraph w:ind firstLine=480 overriding style left=720 while inheriting line=480 from Normal.'),
-    ('16-style-theme-fonts', 'styles',
-     'Theme font attributes (w:asciiTheme/w:hAnsiTheme/w:eastAsiaTheme) paired with word/theme/theme1.xml.'),
-    # Category 5: ? (Sections) - 4 fixtures
-    ('17-section-multi-margins', 'sections',
-     '3-section document with distinct w:pgMar page margins per section (1440, 1800/1080, 720/720 twips).'),
-    ('18-section-portrait-landscape-mix', 'sections',
-     '3-section document alternating Portrait -> Landscape (w:pgSz w=15840 h=12240 orient=landscape) -> Portrait.'),
-    ('19-section-columns-1-2-3', 'sections',
-     '3-section document switching between 1-column, 2-column (w:cols num=2), and unequal 3-column layouts.'),
-    ('20-section-headers-first-even', 'sections',
-     'Multi-section document with w:titlePg and distinct default, first, and even header and footer parts.'),
-    # Category 6: ?? (Footnotes) - 3 fixtures
-    ('21-footnote-restart-each-page', 'footnotes',
-     'Footnotes configured with per-page numbering restart (w:footnotePr/w:numRestart val=eachPage).'),
-    ('22-footnote-containing-table', 'footnotes',
-     'Footnote in word/footnotes.xml containing an embedded 2x2 w:tbl alongside footnote text paragraphs.'),
-    ('23-footnote-endnote-mixed-formatted', 'footnotes',
-     'Mixed footnotes (word/footnotes.xml) and endnotes (word/endnotes.xml) with multi-paragraph formatted notes.'),
-    # Category 7: ?? (Graphics) - 3 fixtures
-    ('24-graphic-inline-drawing', 'graphics',
-
-
-codex
-??????,??????????????? PR ??;Linux?Windows ? ASan ?????????????????:GitHub ?? #132 ???????????????????? `--check`,?????????????
-
-exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command 'python tests/fixtures/docx-real/codex/generate.py --check; Write-Output "codex run 1 exit=$LASTEXITCODE"; python tests/fixtures/docx-real/argon/make_fixtures.py --check; Write-Output "argon run 1 exit=$LASTEXITCODE"; python tests/fixtures/docx-real/codex/generate.py --check; Write-Output "codex run 2 exit=$LASTEXITCODE"; python tests/fixtures/docx-real/argon/make_fixtures.py --check; Write-Output "argon run 2 exit=$LASTEXITCODE"; Get-FileHash tests/check_reading_release.py -Algorithm SHA256; Get-ChildItem build -Force | Select-Object -ExpandProperty Name; git diff c3f72f96 63da4607 -- tests/fixtures/docx-real/codex/register.cmake tests/fixtures/docx-real/codex/generate.py tests/fixtures/docx-real/argon/make_fixtures.py; git log -1 --format=fuller origin/codex/dx-realworld-argon-20261110; git merge-base --is-ancestor 63da4607 origin/codex/dx-realworld-argon-20261110; Write-Output "repair is upstream ancestor exit=$LASTEXITCODE"' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
-mcp: codex_apps/github.fetch_workflow_job_logs started
-mcp: codex_apps/github.fetch_workflow_job_logs (completed)
-mcp: codex_apps/github.fetch_workflow_job_logs started
-mcp: codex_apps/github.fetch_workflow_job_logs started
-mcp: codex_apps/github.fetch_workflow_job_logs started
-mcp: codex_apps/github.fetch_workflow_job_logs (completed)
-mcp: codex_apps/github.fetch_workflow_job_logs (completed)
-mcp: codex_apps/github.fetch_workflow_job_logs (completed)
-exec
-"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command "git show HEAD:OUT.txt | Select-String -Pattern 'asan_interface|libasan|libubsan|402/403|687.55|build-asan|EXR_SANITIZE' -Context 2,2 | Select-Object -Last 25; Get-ChildItem build -Recurse -File -Filter LastTestsFailed.log | Select-Object FullName; Get-ChildItem .. -Filter AGENTS.md; Get-ChildItem -Path tests -Filter AGENTS.md -Recurse | Select-Object FullName; git diff --name-only c3f72f96 63da4607 -- tests/check_reading_release.py tools/version_literal_exceptions.json CMakeLists.txt .github" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
-codex
-????? CI ????:??????? `ASan runtime does not come first in initial library list`,?????????????????? ASan ??????????,??? 393/393;Linux ? Windows Release ?? 403/403??????????? `--check` ????? 0,????????
-
- succeeded in 271104ms:
-30 original fixtures: deterministic bytes verified
-codex run 1 exit=0
-Verified 30 DOCX fixtures in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111\tests\fixtures\docx-real\argon (max size 14835 bytes < 60000).
-argon run 1 exit=0
-30 original fixtures: deterministic bytes verified
-codex run 2 exit=0
-Verified 30 DOCX fixtures in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111\tests\fixtures\docx-real\argon (max size 14835 bytes < 60000).
-argon run 2 exit=0
+MERGE
+.clang-format
+.git
+.gitattributes
+.github
+.gitignore
+ANCHOR-OUT.txt
+ANNOT-OUT.txt
+apps
+archive
+bindings
+CFI-OUT.txt
+CHANGELOG.md
+CHAP-OUT2.txt
+CLEANUP2-OUT.txt
+cmake
+CMakeLists.txt
+CMakePresets.json
+data
+DICT-OUT.txt
+docs
+DRM-OUT.txt
+evidence
+examples
+extras
+FIXED-OUT.txt
+FONT-FIX-OUT.txt
+FONT-OUT3.txt
+FONTCOV-OUT.txt
+FONTHOST-OUT.txt
+HANDOFF-RESULT-C11.md
+HANDOFF-RESULT-S14.md
+HANDOFF-RESULT-S15.md
+HANDOFF-RESULT-S16.md
+HANDOFF-RESULT-S17.md
+HYG-OUT.txt
+HYPH-OUT.txt
+include
+INTEG-OUT.txt
+INTEG-OUT2.txt
+LICENSE
+licenses
+MOBI-OUT.txt
+ops
+OUT.txt
+OUT2.txt
+OUT3.txt
+PDF-OUT.txt
+PERF-OPT-OUT.txt
+PERFGATE-OUT.txt
+PLATFORMS2-OUT.txt
+README.md
+RESOLVE-OUT.txt
+RESOLVE.md
+RTL-OUT.txt
+S2-OUT.txt
+S3-OUT.txt
+S4-OUT.txt
+S5-OUT.txt
+SAN-FINAL-OUT.txt
+SEARCH-FIX-OUT.txt
+SEARCH-OUT.txt
+SEARCHIDX-OUT.txt
+SELECT-OUT.txt
+SEVENZ-OUT.txt
+SHELF-OUT.txt
+SHELFMETA-OUT.txt
+SIGN-OUT.txt
+SIMP-OUT.txt
+src
+STYLE-FN-OUT.txt
+tests
+THIRD_PARTY_NOTICES.md
+TOCPAGE-OUT.txt
+tools
+TTS-OUT.txt
+VERSION
+W1-OUT.txt
+W2-OUT.txt
+W3-OUT.txt
+OUT HEAD
+gon run 2 exit=0
 
 Algorithm       Hash                                                                   Path
 ---------       ----                                                                   ----
@@ -1145,4 +1711,537 @@ ASan runtime does not come first in initial library list
 ?? ASan ????????,?????? CI ????? `OUT.txt` ??????????
 tokens used
 59,218
+exit=0
+
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command 'git diff c3f72f96 HEAD -- tests/fixtures/docx-real/codex/generate.py tests/fixtures/docx-real/argon/make_fixtures.py tests/fixtures/docx-real/codex/register.cmake; Get-Content native-configure.log -Tail 12; Get-Command cmake,ctest,python,gh,gcc,clang,ninja -ErrorAction SilentlyContinue | Select-Object Name,Source' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+mcp: codex_apps/github.fetch_pr (completed)
+mcp: codex_apps/github.get_pr_info started
+mcp: codex_apps/github.get_pr_info (failed)
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command 'python -u tests/fixtures/docx-real/codex/generate.py --check; Write-Output "codex check 1 exit=$LASTEXITCODE"; python -u tests/fixtures/docx-real/argon/make_fixtures.py --check; Write-Output "argon check 1 exit=$LASTEXITCODE"; python -u tests/fixtures/docx-real/codex/generate.py --check; Write-Output "codex check 2 exit=$LASTEXITCODE"; python -u tests/fixtures/docx-real/argon/make_fixtures.py --check; Write-Output "argon check 2 exit=$LASTEXITCODE"; Get-FileHash tests/check_reading_release.py -Algorithm SHA256; git merge-base --is-ancestor 63da4607 origin/codex/dx-realworld-argon-20261110; Write-Output "repair ancestor of origin exit=$LASTEXITCODE"; git diff c3f72f96 HEAD -- tests/check_reading_release.py tools/version_literal_exceptions.json CMakeLists.txt; git status --short --branch' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ exited 1 in 46511ms:
+diff --git a/tests/fixtures/docx-real/argon/make_fixtures.py b/tests/fixtures/docx-real/argon/make_fixtures.py
+index 31272ab5..36f97200 100644
+--- a/tests/fixtures/docx-real/argon/make_fixtures.py
++++ b/tests/fixtures/docx-real/argon/make_fixtures.py
+@@ -8,7 +8,7 @@ import json
+ from pathlib import Path
+ import struct
+ from xml.sax.saxutils import escape
+-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
++from zipfile import ZipFile, ZipInfo, ZIP_STORED
+ import zlib
+ 
+ W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+@@ -113,7 +113,9 @@ def make_png(width=8, height=8, seed=1):
+     return (
+         b'\x89PNG\r\n\x1a\n'
+         + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))
+-        + chunk(b'IDAT', zlib.compress(raw, 9))
++        # One explicit stored DEFLATE block, independent of zlib/zlib-ng compression.
++        + chunk(b'IDAT', b'\x78\x01\x01' + struct.pack('<HH', len(raw), 0xffff ^ len(raw))
++                + raw + struct.pack('>I', zlib.adler32(raw)))
+         + chunk(b'IEND', b'')
+     )
+ 
+@@ -896,7 +898,8 @@ def build_fixture(spec_id, category, description):
+     with ZipFile(buf, 'w') as zf:
+         for name, content in sorted(parts.items()):
+             info = ZipInfo(name, (2026, 1, 1, 0, 0, 0))
+-            info.compress_type = ZIP_DEFLATED
++            info.create_system = 0  # Match the committed DOS ZIP headers on every host.
++            info.compress_type = ZIP_STORED  # Avoid implementation-dependent DEFLATE output.
+             info.external_attr = 0o100644 << 16
+             raw = content.encode('utf-8') if isinstance(content, str) else content
+             zf.writestr(info, raw)
+diff --git a/tests/fixtures/docx-real/codex/generate.py b/tests/fixtures/docx-real/codex/generate.py
+index 759daee5..63387aa9 100644
+--- a/tests/fixtures/docx-real/codex/generate.py
++++ b/tests/fixtures/docx-real/codex/generate.py
+@@ -7,7 +7,7 @@ import io
+ import json
+ from pathlib import Path
+ from xml.sax.saxutils import escape, quoteattr
+-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
++from zipfile import ZipFile, ZipInfo, ZIP_STORED
+ 
+ HERE = Path(__file__).resolve().parent
+ W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+@@ -15,17 +15,18 @@ R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+ A = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+ WP = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing'
+ PIC = 'http://schemas.openxmlformats.org/drawingml/2006/picture'
+-NS = dict(w=W, r=R, a=A, wp=WP, pic=PIC, v='urn:schemas-microsoft-com:vml',
+-          mc='http://schemas.openxmlformats.org/markup-compatibility/2006',
+-          wpg='http://schemas.microsoft.com/office/word/2010/wordprocessingGroup',
+-          wps='http://schemas.microsoft.com/office/word/2010/wordprocessingShape')
++NS_ITEMS = (('w', W), ('r', R), ('a', A), ('wp', WP), ('pic', PIC), ('v', 'urn:schemas-microsoft-com:vml'),
++            ('mc', 'http://schemas.openxmlformats.org/markup-compatibility/2006'),
++            ('wpg', 'http://schemas.microsoft.com/office/word/2010/wordprocessingGroup'),
++            ('wps', 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape'))
++NS = dict(NS_ITEMS)
+ DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+ MARKER = 'Draft estimate: 42 units.'
+ REPLACEMENT = 'Reviewed estimate: 57 units; ?? & <checked>.'
+ 
+ 
+ def root(tag, content):
+-    return DECL + '<' + tag + ' ' + ' '.join('xmlns:' + k + '=' + quoteattr(v) for k, v in NS.items()) + '>' + content + '</' + tag + '>'
++    return DECL + '<' + tag + ' ' + ' '.join('xmlns:' + k + '=' + quoteattr(v) for k, v in NS_ITEMS) + '>' + content + '</' + tag + '>'
+ 
+ 
+ def run(text, props=''):
+@@ -92,17 +93,24 @@ def png():
+     def chunk(name, data):
+         return struct.pack('>I', len(data)) + name + data + struct.pack('>I', zlib.crc32(name + data))
+     width, height, scanlines = 160, 96, bytearray()
++    # Four-bit palette keeps the same RGB pixels and stored packages below 60 KiB.
++    palette = bytes((255, 255, 255, 100, 110, 120, 35, 87, 137, 58, 125, 68, 229, 143, 101))
+     for y in range(height):
+         scanlines.append(0)
+         for x in range(width):
+-            color = (255, 255, 255)
++            color = 0
+             if x == 18 and 10 <= y <= 82 or y == 82 and 18 <= x <= 148:
+-                color = (100, 110, 120)
+-            for top, length, ink in ((14, 118, (35, 87, 137)), (38, 84, (58, 125, 68)), (62, 52, (229, 143, 101))):
++                color = 1
++            for top, length, ink in ((14, 118, 2), (38, 84, 3), (62, 52, 4)):
+                 if top <= y < top+14 and 19 <= x < 19+length:
+                     color = ink
+-            scanlines.extend(color)
+-    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(scanlines)) + chunk(b'IEND', b'')
++            if x % 2 == 0:
++                scanlines.append(color << 4)
++            else:
++                scanlines[-1] |= color
++    # One explicit stored DEFLATE block: zlib and zlib-ng choose different compressed bytes.
++    data = b'\x78\x01\x01' + struct.pack('<HH', len(scanlines), 0xffff ^ len(scanlines)) + scanlines + struct.pack('>I', zlib.adler32(scanlines))
++    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 4, 3, 0, 0, 0)) + chunk(b'PLTE', palette) + chunk(b'IDAT', data) + chunk(b'IEND', b'')
+ 
+ 
+ def styles():
+@@ -272,10 +280,12 @@ def package(index):
+ 
+ def pack(parts):
+     out = io.BytesIO()
+-    with ZipFile(out, 'w', compression=ZIP_DEFLATED, compresslevel=9) as z:
++    # Stored members avoid implementation-dependent DEFLATE output.
++    with ZipFile(out, 'w', compression=ZIP_STORED) as z:
+         for name, data in sorted(parts.items()):
+             info = ZipInfo(name, (2026, 11, 10, 0, 0, 0))
+-            info.compress_type, info.external_attr = ZIP_DEFLATED, 0o100644 << 16
++            info.create_system = 0  # Match the committed DOS ZIP headers on every host.
++            info.compress_type, info.external_attr = ZIP_STORED, 0o100644 << 16
+             z.writestr(info, data)
+     return out.getvalue()
+ 
+diff --git a/tests/fixtures/docx-real/codex/register.cmake b/tests/fixtures/docx-real/codex/register.cmake
+index f5e7dd20..1e87cab7 100644
+--- a/tests/fixtures/docx-real/codex/register.cmake
++++ b/tests/fixtures/docx-real/codex/register.cmake
+@@ -28,5 +28,22 @@ function(exr_docx_real_tests)
+   target_include_directories(exreader-docx-real-alloc-test PRIVATE "${CMAKE_SOURCE_DIR}/include")
+   target_compile_definitions(exreader-docx-real-alloc-test PRIVATE EXR_STATIC)
+   add_test(NAME native-docx-real-text-allocation COMMAND exreader-docx-real-alloc-test)
++  if(EXR_SANITIZE AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
++    # These Python hosts load the instrumented SDK through ctypes. Load the same
++    # compiler's runtime at process startup so ASan can intercept allocations.
++    execute_process(COMMAND "${CMAKE_C_COMPILER}" -print-file-name=libasan.so
++      OUTPUT_VARIABLE asan_runtime OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
++    if(NOT EXISTS "${asan_runtime}")
++      message(FATAL_ERROR "DOCX ctypes tests require the compiler's shared ASan runtime")
++    endif()
++    get_property(docx_tests DIRECTORY PROPERTY TESTS)
++    foreach(test IN LISTS docx_tests)
++      if(test MATCHES "^native-docx-(edit-io-|edit-x6-|editor-e2e$|realworld-matrix$|real-)"
++          AND NOT test MATCHES "(reproducible|oracle-mutations|text-allocation)$")
++        set_property(TEST "${test}" APPEND PROPERTY ENVIRONMENT_MODIFICATION
++          "LD_PRELOAD=path_list_prepend:${asan_runtime}" "PYTHONMALLOC=set:malloc")
++      endif()
++    endforeach()
++  endif()
+ endfunction()
+ cmake_language(DEFER CALL exr_docx_real_tests)
+CMake Error at C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1933 (message):
+  Build step for mbedtls failed: 1
+Call Stack (most recent call first):
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1622 (__FetchContent_populateSubbuild)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160:EVAL:2 (__FetchContent_doPopulation)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160 (cmake_language)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2401 (__FetchContent_Populate)
+  cmake/deps.cmake:183 (FetchContent_MakeAvailable)
+  CMakeLists.txt:63 (include)
+
+
+-- Configuring incomplete, errors occurred!
+
+Name       Source
+----       ------
+cmake.exe  C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.So.
+ctest.exe  C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.So.
+python.exe C:\Python314\python.exe
+gh.exe     C:\Users\Oscar\.dsh\tools\bin\gh.exe
+gcc.exe    C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.So.
+ninja.exe  C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.So.
+
+
+ succeeded in 114601ms:
+
+Mode  Name
+----  ----
+d---- .github
+d---- apps
+d---- archive
+d---- bindin.
+d---- cmake
+d---- data
+d---- docs
+d---- eviden.
+d---- exampl.
+d---- extras
+d---- include
+d---- licens.
+d---- ops
+d---- src
+d---- tests
+d---- tools
+-a--- .clang.
+-a-h- .git
+-a--- .gitat.
+-a--- .gitig.
+-a--- ANCHOR.
+-a--- ANNOT-.
+-a--- CFI-OU.
+-a--- CHANGE.
+-a--- CHAP-O.
+-a--- CLEANU.
+-a--- CMakeL.
+-a--- CMakeP.
+-a--- DICT-O.
+-a--- DRM-OU.
+-a--- FIXED-.
+-a--- FONT-F.
+-a--- FONT-O.
+-a--- FONTCO.
+-a--- FONTHO.
+-a--- HANDOF.
+-a--- HANDOF.
+-a--- HANDOF.
+-a--- HANDOF.
+-a--- HANDOF.
+-a--- HYG-OU.
+-a--- HYPH-O.
+-a--- INTEG-.
+-a--- INTEG-.
+-a--- LICENSE
+-a--- MOBI-O.
+-a--- OUT.txt
+-a--- OUT2.t.
+-a--- OUT3.t.
+-a--- PDF-OU.
+-a--- PERF-O.
+-a--- PERFGA.
+-a--- PLATFO.
+-a--- README.
+-a--- RESOLV.
+-a--- RESOLV.
+-a--- RTL-OU.
+-a--- S2-OUT.
+-a--- S3-OUT.
+-a--- S4-OUT.
+-a--- S5-OUT.
+-a--- SAN-FI.
+-a--- SEARCH.
+-a--- SEARCH.
+-a--- SEARCH.
+-a--- SELECT.
+-a--- SEVENZ.
+-a--- SHELF-.
+-a--- SHELFM.
+-a--- SIGN-O.
+-a--- SIMP-O.
+-a--- STYLE-.
+-a--- THIRD_.
+-a--- TOCPAG.
+-a--- TTS-OU.
+-a--- VERSION
+-a--- W1-OUT.
+-a--- W2-OUT.
+-a--- W3-OUT.
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command "python -u -c \"from pathlib import Path; p=Path('C:/Users/Oscar/Documents/Codex'); print('LOGS'); print('\\n'.join(str(x) for x in p.glob('*132*') if x.is_file())); print('EVIDENCE'); print('\\n'.join(str(x) for x in Path('evidence').glob('*'))); print('BUILD'); print('\\n'.join(str(x) for x in Path('build').glob('*'))); print('LOG FILES'); print('\\n'.join(str(x) for x in Path('.').glob('*.log')))\"" in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+codex
+??????,???? `63da4607` ???,Linux/Windows ????? ASan ??????????GitHub ???? #132 ????;??????????????????????,??????????????????
+
+mcp: codex_apps/github.fetch_pr started
+mcp: codex_apps/github.fetch_pr (completed)
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command 'git fetch origin codex/dx-realworld-argon-20261110' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ succeeded in 52030ms:
+LOGS
+
+EVIDENCE
+evidence\artifact-signing-20261109
+evidence\C-HANDOFF-20261103.md
+evidence\C-PR-TRIGGERS-20261103.md
+evidence\C-PR33-BASELINE-20261103.md
+evidence\cfi-acceptance-20261108
+evidence\ci-packaging-20261103
+evidence\cjk-corpus-20261105
+evidence\cjk-host-open-fix-20261106
+evidence\cjk-justify-20261106
+evidence\cjk-kinsoku-20261106
+evidence\cjk-punctuation-compression-20261106
+evidence\cjk-space-collapse-20261106
+evidence\cjk-u3000-20261107
+evidence\corpus-version-20261104
+evidence\custody-20261103
+evidence\default-branch-decision-20261103.md
+evidence\default-branch-protection-inventory-20261103.md
+evidence\drm-lcp-20261109
+evidence\engine-chapter-layout-20261107
+evidence\engine-combine-upright-20261107
+evidence\final-gate-probe-20261103
+evidence\fixed-layout-20261110
+evidence\font-coverage-20261109
+evidence\font-manager-20261107
+evidence\formats-20261107
+evidence\INDEX.md
+evidence\main-transition-20261104
+evidence\malformed-input-20261107
+evidence\malformed-triage-20261107
+evidence\mobi-kf8-fb2-20261108
+evidence\pdf-deepening-20261107
+evidence\perf-e1-20261107
+evidence\perf-gate-20261107
+evidence\perf-gate-final-20261109
+evidence\perf-gate2-20261108
+evidence\perf-gate3-20261108
+evidence\platforms-20261108
+evidence\platforms2-20261109
+evidence\quality-20261108
+evidence\R-ENVIRONMENT-BLOCKER-20261103.md
+evidence\real-books-20261105
+evidence\realbooks-baseline-20261107
+evidence\refreeze-scope-20261103.md
+evidence\RESULT.md
+evidence\runtime-20261109
+evidence\s5
+evidence\sdk-consumer-20261109
+evidence\sdk-packaging-20261109
+evidence\sdk-version-20261103
+evidence\search-acceptance-20261108
+evidence\search-fix-20261108
+evidence\search-index-20261109
+evidence\simplified-20261110
+evidence\toc-links-20261107
+evidence\toc-page-20261108
+evidence\typography-bench-20261107
+evidence\w1
+evidence\w2-docx-write
+evidence\x2-reflow-20261110
+BUILD
+
+LOG FILES
+native-configure.log
+
+mcp: codex_apps/github.fetch_workflow_job_logs started
+mcp: codex_apps/github.fetch_workflow_job_logs started
+mcp: codex_apps/github.fetch_workflow_job_logs started
+mcp: codex_apps/github.fetch_workflow_job_logs started
+mcp: codex_apps/github.fetch_workflow_job_logs (completed)
+mcp: codex_apps/github.fetch_workflow_job_logs (completed)
+mcp: codex_apps/github.fetch_workflow_job_logs (completed)
+mcp: codex_apps/github.fetch_workflow_job_logs (completed)
+ succeeded in 89496ms:
+30 original fixtures: deterministic bytes verified
+codex check 1 exit=0
+Verified 30 DOCX fixtures in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111\tests\fixtures\docx-real\argon (max size 14835 bytes < 60000).
+argon check 1 exit=0
+30 original fixtures: deterministic bytes verified
+codex check 2 exit=0
+Verified 30 DOCX fixtures in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111\tests\fixtures\docx-real\argon (max size 14835 bytes < 60000).
+argon check 2 exit=0
+
+Algorithm       Hash                                                                   Path
+---------       ----                                                                   ----
+SHA256          6EB22A304686B2160D1F283A709936BFDFD65C3B0F5E10BB060F457C4FAFFB2B       C:\Users\Oscar\Documents\Codex\.
+repair ancestor of origin exit=0
+## codex/fix132-crossplatform...origin/codex/dx-realworld-argon-20261110 [ahead 15, behind 17]
+ M OUT.txt
+
+
+ succeeded in 33047ms:
+From https://github.com/NoGod3524/EXReader
+ * branch              codex/dx-realworld-argon-20261110 -> FETCH_HEAD
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -NoProfile -Command 'git diff --stat HEAD origin/codex/dx-realworld-argon-20261110 -- tests/fixtures/docx-real; git show --stat --oneline 5947ab96; git show --stat --oneline 2f6db544; git show --format=oneline --no-patch 63da4607; git status --short; Get-Content native-configure.log -Tail 12' in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111
+ succeeded in 9476ms:
+5947ab96 fix(docx): pin fixture ZIP creator OS across platforms
+ tests/fixtures/docx-real/argon/make_fixtures.py | 1 +
+ tests/fixtures/docx-real/codex/generate.py      | 1 +
+ 2 files changed, 2 insertions(+)
+2f6db544 fix(cmake): preload ASan for DOCX ctypes test hosts
+ tests/fixtures/docx-real/codex/register.cmake | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+63da4607d133ef67f69c7a4fc460e377571b3d26 fix(docx): remove host compressor input from fixture bytes
+ M OUT.txt
+CMake Error at C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1933 (message):
+  Build step for mbedtls failed: 1
+Call Stack (most recent call first):
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1622 (__FetchContent_populateSubbuild)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160:EVAL:2 (__FetchContent_doPopulation)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160 (cmake_language)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2401 (__FetchContent_Populate)
+  cmake/deps.cmake:183 (FetchContent_MakeAvailable)
+  CMakeLists.txt:63 (include)
+
+
+-- Configuring incomplete, errors occurred!
+
+mcp: codex_apps/github.fetch_commit_workflow_runs started
+mcp: codex_apps/github.fetch_commit_workflow_runs (completed)
+codex
+??????:???? `63da4607` ???????,??????????GitHub ???? [#132 ???](https://github.com/NoGod3524/EXReader/pull/132);???????????,??????? `OUT.txt`?
+
+**? ???**
+
+??? Windows ????,??? **exit 0**:
+
+| ?? | ???? |
+|---|---|
+| `codex/generate.py --check` | `30 original fixtures: deterministic bytes verified` |
+| `argon/make_fixtures.py --check` | `Verified 30 DOCX fixtures . (max size 14835 bytes < 60000).` |
+
+**? ????**
+
+- `ZipInfo.create_system` ????????:Windows ? `0`,Unix ? `3`?
+- Windows Python ? zlib-ng ? Linux zlib ???? DEFLATE ??,?? ZIP ??? PNG IDAT?
+
+???? creator OS,ZIP ?? `ZIP_STORED`,PNG ???? stored DEFLATE ?;????????????????????,????????????????
+
+**? ASan ??**
+
+????[?? CI ??](https://github.com/NoGod3524/EXReader/actions/runs/43074571383/job/130710914112),???????:
+
+```text
+ASan runtime does not come first in initial library list
+```
+
+| ??? | ???? | ?? |
+|---|---|---|
+| native-docx-real-paragraph-markers | Python/ctypes ?? ASan ?? | ????? GCC ? libasan |
+| native-docx-real-section-tail | ?? | ?? |
+| native-docx-real-text-history | ?? | ?? |
+| native-docx-real-text-alias | ?? | ?? |
+| native-docx-real-text-validation | ?? | ?? |
+| native-docx-real-text-transaction | ?? | ?? |
+
+CMake ?? Linux/GCC sanitizer ??????? `LD_PRELOAD`?`PYTHONMALLOC=malloc`,?? ASan?UBSan ??????
+
+**? ????**
+
+???????60 ? DOCX??? manifest,?? `codex/register.cmake`????????????,CMake ???????????
+
+`tests/check_reading_release.py` SHA256 ?? `6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b`??????? core ???????
+
+**? ?? CTest**
+
+??????????????? CI ??:
+
+| ?? | ?? |
+|---|---|
+| [Linux Release](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116579) | **403/403 PASS**,135.58s |
+| [Windows Release](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116370) | **403/403 PASS**,153.93s |
+| [ASan/UBSan](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130753116485) | **393/393 PASS**,672.01s,?????? |
+
+????? MinGW ??? **402/403**,????? `sdk-release` ? MSVC ?????;???? ASan ???????,ASan ?????? CI?
+
+?? PR head ? [core run](https://github.com/NoGod3524/EXReader/actions/runs/43098216089) ???? **queued**,????????????
+tokens used
+70,204
 exit=0
