@@ -1,0 +1,7 @@
+① 冲突文件：无。git fetch origin main 后 git merge origin/main 为 "Already up to date"（本分支此前已合入 origin/main，且 origin/codex/opds-catalog-20261110 是本分支祖先）。git status 无 U 标记。
+② 补了 docs/API.md 条目（均 ABI: 实验）：exr_opds_parse, exr_opds_feed_free, exr_opds_parse_search, exr_opds_search_url, exr_opds_resolve_url（声明于 include/exr/opds.h，签名从头文件提取）。
+③ python -X utf8 tools/check_sdk_docs.py exit=0；最后三行：
+  "errors": [],
+  "passed": true
+}
+④ 未在本地看到其他失败项（未查看 CI）。未改 check_sdk_docs.py / check_reading_release.py / version_literal_exceptions.json。
