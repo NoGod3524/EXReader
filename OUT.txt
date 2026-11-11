@@ -16,6 +16,18 @@
 
 [完整报告与截图](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/tests/vertical-expand-20261109/REPORT.md) · [VERT-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/VERT-OUT.txt)
 
+已提交并推送至 `codex/sdk-docs-20261109`，draft PR：[**#109**](https://github.com/NoGod3524/EXReader/pull/109)。
+
+- 覆盖：**15/15 模块，427/427 公开函数，100%**；当前实际为 17 个公开头文件。
+- 示例：**15/15 编译、链接、运行通过**；文档一致性检查 **1/1**。[编译输出](C:/Users/Oscar/Documents/Codex/EXReader-S4-20261109/docs/examples/compile-output.txt)
+- 接入指南：五个接入点及文本时序图齐全。
+- 能力矩阵：**41 行**，明确标出不支持项。
+- ABI：稳定 **394**、实验 **33**、公开函数中的内部入口 **0**；私有实现明确禁止外部调用。
+- `S4-OUT.txt` 已逐步记录并提交。最新提交 `f191e99f`；PR CI 已自动触发，目前排队或运行中。
+[2026-11-10T16:24:55.8568014-05:00] Step 1: gh pr view 109: head=codex/sdk-docs-20261109; mergeable=UNKNOWN; mergeStateStatus=UNKNOWN; statusCheckRollup=[]. Local HEAD detached at 979a4025; working tree clean. Re-querying full PR state before branch mutation.
+[2026-11-10T16:25:25.9151276-05:00] Step 2: PR OPEN, mergeable=CONFLICTING, mergeStateStatus=DIRTY, core absent. Confirmed true conflict. Fetching main and PR head before union merge.
+[2026-11-10T16:25:52.3370459-05:00] Step 3: fetch completed; PR head remains 979a4025. Named branch is attached to EXReader-S4-20261109, so keeping this authorized workspace detached and will push HEAD explicitly to codex/sdk-docs-20261109. OUT.txt is the only local modification.
+[2026-11-10T16:26:29.0939032-05:00] Step 4: merge stopped before modifying files because tracked OUT.txt has this session's required progress entries. Committing progress first, then retrying merge; both histories will be retained.
 D1 is finished. The engine now renders fixed-layout EPUB pages as fixed pages instead of treating them as reflowable text. Eight books cover all six book types, every item passes on every book where it applies, the 19 reflowable books are unchanged, and draft **PR #120** is open: https://github.com/NoGod3524/EXReader/pull/120
 
 **What changed:** fixed-layout pages used to be reflowed (Haruko had 14 pages at one size and 15 at another). Now each fixed page is laid out once at its own declared size and scaled evenly to fit the screen, centred, never stretched or cropped. It is always exactly one page. The page size comes from, in order:
@@ -87,3 +99,6 @@ Compared against an unmodified build of 3076d3dd: 19/19 books, 11,426 pages, 8,6
 [验收记录：缓存命中数、4 个锚点示例及原始数据](evidence/x2-reflow-20261110/README.md) · [接口说明](docs/X2_REFLOW.md)
 
 X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
+
+[2026-11-10T16:28:26.5792754-05:00] Step 5: resolved both conflicts by union. CMakeLists.txt retains docs/examples under EXR_FULL_TESTS, main's build_manifest include, and simplified-observer with its Python guard. OUT.txt retains the complete SDK report/progress plus main's fixed-layout and X2 reports. No test assertions or version exception entries changed.
+[2026-11-10T16:33:39.6469176-05:00] Step 6: main adds 30 public declarations; updated docs/API.md to 457/457 (100%), 19 headers, stable 394 / experimental 63, keeping 15 compiled examples. Header-only X1 model availability and X2 fallback are explicitly documented. python tools/check_sdk_docs.py passed with no errors. Version consistency check is running; neither byte-bound tests/check_reading_release.py nor its exception registry was edited. Started an independent MinGW full-component build with existing dependency sources and optional image/JPX codecs disabled.
