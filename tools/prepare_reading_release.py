@@ -251,6 +251,9 @@ def main():
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError, tarfile.TarError, zipfile.BadZipFile) as error:
         result['problems'].append(str(error))
     (args.output / 'plan.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n', encoding='utf-8')
+    if result['prepared']:
+        from release.verify_artifacts import write_sums
+        write_sums(args.output)
     print(json.dumps(result, allow_nan=False))
     return 0 if result['prepared'] else 1
 
