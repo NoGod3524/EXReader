@@ -28,5 +28,22 @@ function(exr_docx_real_tests)
   target_include_directories(exreader-docx-real-alloc-test PRIVATE "${CMAKE_SOURCE_DIR}/include")
   target_compile_definitions(exreader-docx-real-alloc-test PRIVATE EXR_STATIC)
   add_test(NAME native-docx-real-text-allocation COMMAND exreader-docx-real-alloc-test)
+  if(EXR_SANITIZE AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    # These Python hosts load the instrumented SDK through ctypes. Load the same
+    # compiler's runtime at process startup so ASan can intercept allocations.
+    execute_process(COMMAND "${CMAKE_C_COMPILER}" -print-file-name=libasan.so
+      OUTPUT_VARIABLE asan_runtime OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+    if(NOT EXISTS "${asan_runtime}")
+      message(FATAL_ERROR "DOCX ctypes tests require the compiler's shared ASan runtime")
+    endif()
+    get_property(docx_tests DIRECTORY PROPERTY TESTS)
+    foreach(test IN LISTS docx_tests)
+      if(test MATCHES "^native-docx-(edit-io-|edit-x6-|editor-e2e$|realworld-matrix$|real-)"
+          AND NOT test MATCHES "(reproducible|oracle-mutations|text-allocation)$")
+        set_property(TEST "${test}" APPEND PROPERTY ENVIRONMENT_MODIFICATION
+          "LD_PRELOAD=path_list_prepend:${asan_runtime}" "PYTHONMALLOC=set:malloc")
+      endif()
+    endforeach()
+  endif()
 endfunction()
 cmake_language(DEFER CALL exr_docx_real_tests)
