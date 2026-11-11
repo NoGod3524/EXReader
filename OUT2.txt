@@ -1,0 +1,22 @@
+**#120 已合并；其余四个均无当前失败检查，阻塞于新 CI 未完成，含 Apple 作业排队。**
+
+| PR | 结论 | mergeable / core 前后对比 |
+|---|---|---|
+| #120 | 已合并，`59a9e5a9` | `CONFLICTING / 无结果` → `MERGEABLE / SUCCESS` |
+| #116 | 阻塞于[新 CI、Apple 排队](https://github.com/NoGod3524/EXReader/actions/runs/42910410735) | `CONFLICTING / 无结果` → `MERGEABLE / 待完成` |
+| #113 | 阻塞于[修复后的 CI 复验](https://github.com/NoGod3524/EXReader/actions/runs/42909488186) | `MERGEABLE / 上游 Windows 失败` → `MERGEABLE / 待完成` |
+| #109 | 阻塞于[新 CI、Apple 排队](https://github.com/NoGod3524/EXReader/actions/runs/42910184740) | `MERGEABLE`，期间 `BEHIND` → 已同步，core 待完成 |
+| #107 | 阻塞于[新 CI、Apple 排队](https://github.com/NoGod3524/EXReader/actions/runs/42909670146) | `MERGEABLE / 待完成`；版本门禁已通过 |
+
+四个阻塞 PR 的检查快照均包含：`native / desktop (macos-15): QUEUED`。未启动作业尚无步骤日志。自动合并请求均被拒绝：`Auto merge is not allowed for this repository`。
+
+具体修复：
+
+- **#120**：`src/formats.c` 保留双方 metadata、方向解析；`OUT.txt` 保留双方记录。修复 `duplicate member ‘page_progression’` 和同名 API 的 `conflicting types`，统一方向 API并保留 spread 能力，最终 core 绿。
+- **#116**：`CMakeLists.txt` 同时保留竖排三组测试和 `simplified-observer`，各自运行条件不变；`OUT.txt` 完整拼接。最新同步提交为 `9cc310a3`。
+- **#113**：报错原文为 `Cannot open include file: '../tools/convert_json.h'`。采用远端 `19b40ef2` 补装 JSON 头文件及源文件的修复，当前 CI 仍在复验。
+- **#107**：当前文件 SHA-256 与登记表 **3/3 匹配**，未修改例外表。
+
+#120 有一处检查修正：**这个检查错了，因为**原断言要求缺省方向返回 `0`，而 main 的公开契约要求返回解析后的 `EXR_DIRECTION_LTR`。已改为精确断言并提交理由，其他方向及 spread 断言保留。
+
+全部推进、日志原文和快照已追加到 [OUT.txt](C:/Users/Oscar/Documents/Codex/EXReader-y2-prfinish-20261110/OUT.txt)。

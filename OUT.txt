@@ -14,3 +14,80 @@
 [验收记录：缓存命中数、4 个锚点示例及原始数据](evidence/x2-reflow-20261110/README.md) · [接口说明](docs/X2_REFLOW.md)
 
 X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
+## Y2 PR #120 推进（2026-11-10）
+- 修复前：CONFLICTING / DIRTY；statusCheckRollup=[]（无当前 core 结果）。
+- 工作树：C:/Users/Oscar/Documents/Codex/EXReader-D1-20261109。
+- 冲突：src/formats.c 同时保留 title,language,meta 缓冲区与 page_progression 字段；OUT.txt 拼接双方完整记录。
+- 已 merge origin/main 并推送 d23dd36d；未改测试断言或版本例外登记表；等待新 CI。
+- CI 首轮失败原文：src/document_internal.h:57:7: error: duplicate member ‘page_progression’；include/exr/layout.h:180:13: error: conflicting types for ‘exr_publication_page_progression’。
+- ef2aaa25 修复：统一 main 已有 exr_direction 字段/API，保留 fixed-layout rendition/spread，去除重复解析/覆盖。这个检查错了，因为 fixed-layout 的默认方向 ==0 断言违背 main 已发布的 resolved-direction 契约；改为精确 EXR_DIRECTION_LTR（无语言 fixture），保留所有显式 LTR/RTL、物理 spread 断言，提交说明附理由。
+- 失败日志：https://github.com/NoGod3524/EXReader/actions/runs/42900947796/job/130126426695；本地副本 pr120-sanitizers.log / pr120-profile.log。
+- 最终：#120 已合并，merge commit 59a9e5a92f9462fb7022cc9cf568ef03cb862366，mergedAt 2026-11-10T21:22:42Z。
+- 修复后：MERGEABLE；reading-required-core=SUCCESS，https://github.com/NoGod3524/EXReader/actions/runs/42901607625/job/130137896745；合并时无失败检查；本地版本一致性 PASS（587 exact exceptions）。
+
+## Y2 PR #116 推进（2026-11-10）
+- 修复前：首次 UNKNOWN，重查 CONFLICTING / DIRTY；当前 statusCheckRollup 无 core，无失败记录。
+- 工作树：C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109。
+- 冲突：CMakeLists.txt 将 native-vertical-expand-{boundaries,ruby,images} 与 simplified-observer 保留为独立 if 块，保留各自 NOT EXR_SANITIZE 条件；OUT.txt 保留双方完整记录。
+- 已合并最新 origin/main 并推送 a7528271096b487ab1ed357edb37cc494b264892，未更改测试断言或门禁；等待 CI。
+- 当前外部阻塞：GitHub Apple runner 排队超过20分钟；其余 core 作业均 success。待启动 jobs：130140529705 platforms / reading macos-15 (reading-core)，130140529802 native / apple-mobile，130140529815 native / desktop (macos-15)，均 status=queued, conclusion=null。
+- 日志/API片段：{"name":"native / apple-mobile","status":"queued","conclusion":null}。未启动的作业尚无步骤日志。https://github.com/NoGod3524/EXReader/actions/runs/42904987549 。暂记阻塞并推进下一 PR，最终回查。
+
+## Y2 PR #113 推进（2026-11-10）
+- 修复前（当前远端3ef9c3ca）：MERGEABLE / BLOCKED，draft；core尚无汇总，native / desktop (windows-latest) FAILURE，job 130144203200。
+- 原文：stage/examples/reader.c(30,1): error C1083: Cannot open include file: '../tools/convert_json.h': No such file or directory。
+- 核对调用：shell_style_store.inc / shell_annotations.inc / shell_shelfmeta.inc 等仍使用 cv_json/cv_text；shell_annotations.inc 已 include ../../tools/convert_json.c，不应移除 include 或重复链接。
+- 此期间远端新增19b40ef203289e01f1db264c22b8bd1ef4c4a959（由另一操作提交）：install(FILES tools/convert_json.h tools/convert_json.c DESTINATION tools)。已采纳此最小修复，未重复改代码。
+- 本地cf233f7e旧树合并main的reader.c和shell_settings.inc冲突尝试已abort，随后ff-only同步远端已有整合，未覆盖远端冲突解决或本地handoff目录。
+- 失败日志：https://github.com/NoGod3524/EXReader/actions/runs/42906053174/job/130144203200 。gh --log因run仍进行拒绝下载，已通过job logs API获取并核对原文。等待19b40ef2的新CI。
+- #113 已标记 ready；19b40ef2 版本一致性已 PASS，新 core 尚在运行，Apple 四作业 QUEUED。已取并采纳远端打包修复；继续等待并最终回查。
+
+## Y2 PR #109 推进（2026-11-10）
+- 实查：head 65445326954a9bcdba5a2f717d019c3f79869a5b，MERGEABLE / BLOCKED，无失败检查；用户清单中的DIRTY已由远端更新解除，本次无本地冲突或代码修改。
+- required core run 42906529734：15个作业success（含Windows/Linux完整native、sanitizers、fuzz、Android、profiles、protocol、corpus）；4个Apple作业queued，故reading-required-core尚无成功汇总。
+- 阻塞原文/API片段：{"name":"native / desktop (macos-15)","status":"queued","conclusion":null}；另有reading macos-15两profile、native/apple-mobile同为queued。未启动作业没有步骤日志。
+- https://github.com/NoGod3524/EXReader/actions/runs/42906529734 ；无BEHIND无需update，无DIRTY无需解冲突，保持原测试与门禁。
+
+## Y2 PR #107 推进（2026-11-10）
+- 实查：head 2365ffd0a249d121182427440008aa40315649ab，MERGEABLE / BLOCKED，无失败检查；core run 42906008559当前17个作业success，只剩Apple两作业queued。
+- 版本门禁已通过：SDK version consistency run42906008762，identity job130144052202=success、reject-version-drift job130144051499=success。没有为变绿修改check_reading_release.py或放宽例外检查，也没有重排version_literal_exceptions.json。
+- 阻塞原文/API片段：{"name":"native / desktop (macos-15)","status":"queued","conclusion":null}；job130144054805；native / apple-mobile job130144055125同为queued。未启动作业没有步骤日志。
+- https://github.com/NoGod3524/EXReader/actions/runs/42906008559 。等待Apple runner，最终回查。
+- 并发主线变化：main推进至d89877f8，#113已由远端再次同步为105ebcfd，#107为a30270d8；#109变为BEHIND已请求update-branch；#116与新main冲突，正在A5树重新取并集解决。
+- 只取消已经被新head取代的旧运行：#113的3ef9c3ca/19b40ef2旧core与native，#107的2365ffd0旧core/native，避免已过期Apple作业继续占用队列；不取消当前head验收。
+- #107旧head2365ffd0的check_reading_release.py实际Git blob sha256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b，登记表3项（23/43/125行）全部匹配，未修改文件/登记表。
+- #116 主线二次同步完成：gh重查真实为MERGEABLE / BEHIND（先前connector的mergeable=false不能当作冲突结论），本地merge origin/main由ort自动取并集，无新增手工冲突；已推送9cc310a3674d6e407c9659c0e750972f26d986d8。
+- 旧运行取消请求实际全部返回Cannot cancel a workflow run that is completed，因此未取消任何仍需验收的当前运行。最终状态改用gh直接逐PR重查并保存pr-final-snapshot.json，避免将旧head/旧job状态当成当前验收。
+#116 自动合并请求退出码=1，绑定head=9cc310a3674d6e407c9659c0e750972f26d986d8
+#113 自动合并请求退出码=1，绑定head=105ebcfd803bfbf68da2fa985c05bba57b296c9a
+#109 自动合并请求退出码=1，绑定head=14b0dc76b972930b46240d5a9f2fbf62e5369ea2
+#107 自动合并请求退出码=1，绑定head=a30270d8ce49a296f141ab191c5aee7d1d89245e
+
+## Y2 最终验收快照 2026-11-10T22:06:23.7493046Z
+#120: 已合并，59a9e5a92f9462fb7022cc9cf568ef03cb862366；合并前MERGEABLE，reading-required-core SUCCESS。https://github.com/NoGod3524/EXReader/actions/runs/42901607625/job/130137896745
+#116: 阻塞于最新head的core上游尚未完成（含Apple runner排队）；head=9cc310a3674d6e407c9659c0e750972f26d986d8；mergeable=MERGEABLE/BLOCKED；core尚无汇总；当前失败项0；证据：https://github.com/NoGod3524/EXReader/actions/runs/42910410735/job/130159298696；片段：name=native / desktop (macos-15),status=QUEUED
+#113: 阻塞于最新head的core上游尚未完成（含Apple runner排队）；head=105ebcfd803bfbf68da2fa985c05bba57b296c9a；mergeable=MERGEABLE/BLOCKED；core尚无汇总；当前失败项0；证据：https://github.com/NoGod3524/EXReader/actions/runs/42909488186/job/130156061263；片段：name=native / desktop (macos-15),status=QUEUED
+#109: 阻塞于最新head的core上游尚未完成（含Apple runner排队）；head=14b0dc76b972930b46240d5a9f2fbf62e5369ea2；mergeable=MERGEABLE/BLOCKED；core尚无汇总；当前失败项0；证据：https://github.com/NoGod3524/EXReader/actions/runs/42910184740/job/130158512809；片段：name=native / desktop (macos-15),status=QUEUED
+#107: 阻塞于最新head的core上游尚未完成（含Apple runner排队）；head=a30270d8ce49a296f141ab191c5aee7d1d89245e；mergeable=MERGEABLE/BLOCKED；core尚无汇总；当前失败项0；证据：https://github.com/NoGod3524/EXReader/actions/runs/42909670146/job/130156687855；片段：name=native / desktop (macos-15),status=QUEUED
+
+修复前后对比（以本次实际查询为准，不把清单里的历史green套用到新head）：
+- #120 CONFLICTING/DIRTY、core无当前结果 → 编译失败 → MERGEABLE、core SUCCESS → MERGED。
+- #116 CONFLICTING/DIRTY、core无当前结果 → a7528271无失败但Apple排队 → main推进后二次自动merge为9cc310a3 → MERGEABLE/BLOCKED，新core上游运行/排队。
+- #113 MERGEABLE/BLOCKED、Windows C1083 FAILURE → 采纳远端19b40ef2安装JSON源文件修复并同步105ebcfd → MERGEABLE/BLOCKED，新CI无失败但尚未完成。
+- #109 初查MERGEABLE/BLOCKED → main推进后MERGEABLE/BEHIND → update-branch时远端已同步14b0dc76 → MERGEABLE/BLOCKED，新CI无失败且未完成。
+- #107 初查MERGEABLE/BLOCKED、版本门禁SUCCESS → 远端同步main到a30270d8 → MERGEABLE/BLOCKED，新版本门禁SUCCESS，core未完成。
+
+取并集的具体文件：
+- #120 src/formats.c：同时保留fixed-layout meta缓冲/metadata解析、main page_progression字段和方向解析；OUT.txt保留双方完整报告。随后统一document_internal.h、layout.h、publication.c内同名方向字段/API，spread继续使用该统一API，消除自动合并引入的重复定义，保留main语言方向回退与fixed-layout全部spread能力。
+- #116 CMakeLists.txt：vertical-expand三组测试及原NOT EXR_SANITIZE条件完整保留；另立原条件的simplified-observer测试块，二者均注册；OUT.txt拼接双方记录。第二次主线同步由ort自动完成，无新增手工冲突。
+- #113 旧本地树reader.c/shell_settings.inc的合并尝试已abort，ff-only同步远端已有整合，未以ours/theirs丢弃任一实现；未对远端解决重复编辑。handoff-h01-h05和handoff-k01-k03保持未跟踪原状。
+
+CI报错与修复：
+- #120：error: duplicate member ‘page_progression’；error: conflicting types for ‘exr_publication_page_progression’。ef2aaa25统一已有exr_direction API与字段，删除重复定义/覆盖；core最终SUCCESS。
+- #120 检查修正：这个检查错了，因为tests/test_fixed_layout.c原先要求无语言、无方向的书返回0，而main已公开的resolved-direction契约要求EXR_DIRECTION_LTR。改为精确EXR_DIRECTION_LTR断言；显式LTR/RTL及spread物理槽位断言全部保留，未放宽检查。提交说明和docs/FIXED-LAYOUT.md均附契约理由。
+- #113：stage/examples/reader.c(30,1): error C1083: Cannot open include file: '../tools/convert_json.h': No such file or directory。远端19b40ef2在CMakeLists.txt安装tools/convert_json.h与tools/convert_json.c；已核对真实cv_json/cv_text调用与shell_annotations.inc对.c的包含，采用该修复，最新CI仍复验中。
+- #107当前a30270d8的Git blob SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b，登记3/3绑定匹配；当前版本门禁run42909670193 SUCCESS。未改版本例外登记表、未重排格式、未动check_reading_release.py。
+
+自动合并：对四个当前head分别以--auto --merge --match-head-commit请求，GitHub均拒绝：GraphQL: Auto merge is not allowed for this repository (enablePullRequestAutoMerge)。未更改仓库设置或门禁。未直接推main，未因本机sdk-release已知环境失败修改代码。
+
+完整状态证据：pr-final-snapshot.json（含已合并#120）、pr-final-open-snapshot.json（四个开放PR最新head）；#120失败日志保存在pr120-sanitizers.log、pr120-profile.log。当前排队作业尚未启动，因此没有步骤日志，以上引用的status=QUEUED来自gh原始检查快照。
