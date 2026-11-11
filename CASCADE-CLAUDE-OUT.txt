@@ -1,0 +1,10 @@
+PR #113 的冲突已解决并推送到 `claude/review-cleanup-20261109`(`e6b9f3f2..494324a6`)。我没有合并 PR,也没动 main。
+
+- **冲突:** 只有 `OUT.txt` 和 `RESOLVE.md` 冲突。两个都是报告文件,我只删了冲突标记,两侧内容全部保留。`CMakeLists.txt` 自动合并,没有冲突。
+- **API 文档:** 不用补。`python -X utf8 tools\check_sdk_docs.py` 的 exit code 是 0,输出里 `errors` 为空、`passed` 为 `true`。
+- **CI:** 我没在本地跑 CI,不知道推送后 CI 上是否还有别的失败项。
+- **报告:** 已写进 `RESOLVE-OUT.txt`,并和合并提交一起推送。
+
+我没有改 `tools/check_sdk_docs.py`、`tests/check_reading_release.py` 和 `tools/version_literal_exceptions.json`。
+
+`CASCADE-CLAUDE-OUT.txt` 还是未跟踪文件,我没有提交它。
