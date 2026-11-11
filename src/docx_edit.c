@@ -24,10 +24,12 @@ struct exr_edit_doc {
 };
 typedef union {
   size_t size;
-#ifdef _MSC_VER
-  /* MSVC's C headers omit max_align_t; same shim as images.c and
-     base_internal.h: preserve the 16-byte malloc alignment. */
+#if defined(_MSC_VER) && defined(_WIN64)
+  /* MSVC's C headers omit max_align_t. Match the CRT heap alignment. */
   __declspec(align(16)) unsigned char alignment[16];
+#elif defined(_MSC_VER)
+  /* The x86 CRT guarantees only 8-byte alignment, including this header. */
+  __declspec(align(8)) unsigned char alignment[8];
 #else
   max_align_t alignment;
 #endif
@@ -101,11 +103,11 @@ static int para_props_valid(const exr_edit_para_props *p) {
 }
 static int block_valid(const exr_edit_block *b) {
   size_t i;
-  if (b->kind<EXR_EDIT_PARAGRAPH || b->kind>EXR_EDIT_PAGE_BREAK ||
+  if (b->kind<EXR_EDIT_PARAGRAPH || b->kind>EXR_EDIT_OPAQUE_BLOCK ||
       !para_props_valid(&b->props) || (b->opaque_size && !b->opaque_xml) ||
       b->run_count>SIZE_MAX/sizeof(exr_edit_run) || (b->run_count && !b->runs) ||
       (b->kind!=EXR_EDIT_PARAGRAPH && b->run_count) ||
-      (b->kind==EXR_EDIT_TABLE && !b->opaque_size)) return 0;
+      ((b->kind==EXR_EDIT_TABLE || b->kind==EXR_EDIT_OPAQUE_BLOCK) && !b->opaque_size)) return 0;
   for (i=0;i<b->run_count;i++) {
     const exr_edit_run *r=b->runs+i;
     if (!run_props_valid(&r->props) || (r->opaque_size && !r->opaque_xml)) return 0;

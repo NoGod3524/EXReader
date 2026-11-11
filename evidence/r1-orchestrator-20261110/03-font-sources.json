@@ -1,0 +1,26 @@
+{
+  "src/font_internal.h": {
+    "sha256": "36d26859dd9751218ca46e1412a6f78651c87dccea091d2e54573d50ae8d3d91",
+    "matches_pinned_commit": true
+  },
+  "src/fonts.c": {
+    "sha256": "3ab735d32d027b45cfe3f08ccb7f122af1fed4943a59231a4cfdf3b671c3c4ef",
+    "matches_pinned_commit": true
+  },
+  "src/raster.c": {
+    "sha256": "1c7279ca4fa2da6575bcddc9bf1e32f458081b017c1e7e468c3cd0eed904e1fa",
+    "matches_pinned_commit": true
+  },
+  "src/font_manager.c": {
+    "sha256": "7bfc5184320eef68eefd99b0d30432426f2819bfc34ddbd2c3c271de03341bfa",
+    "matches_pinned_commit": true
+  },
+  "src/layout.c": {
+    "sha256": "7727b1e86618815cc3061ac46700f90a8f2d9b81e23a8e38799a447db2e4a5cc",
+    "matches_pinned_commit": true
+  },
+  "include/exr/text.h": {
+    "sha256": "9ca0a82dce68758722205edd932dd0d5a6f4a4b57f6c9ae34fd32368a808af27",
+    "matches_pinned_commit": true
+  }
+}

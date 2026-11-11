@@ -1,0 +1,12 @@
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX64\x64\cl.exe" /nologo /W4 C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\dispatch_argv_echo.c /FeC:\tmp\exr-r1-review-20261110\argv-echo.exe
+dispatch_argv_echo.c
+
+exit=0
+$ pwsh -NoProfile -File C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_dispatch_args.ps1 -DispatchPath C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\dispatch.ps1 -EchoExe C:\tmp\exr-r1-review-20261110\argv-echo.exe -OutputPath C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\evidence\r1-orchestrator-20261110\09-args-before.json
+Exception: C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_dispatch_args.ps1:32
+Line |
+  32 |  â€¦ actual[$i],[StringComparison]::Ordinal)) { throw "argv[$i] differs" }
+     |                                               ~~~~~~~~~~~~~~~~~~~~~~~~
+     | argv[139] differs
+
+exit=1

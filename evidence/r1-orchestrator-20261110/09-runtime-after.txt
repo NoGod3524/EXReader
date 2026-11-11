@@ -1,0 +1,6 @@
+[{"engine": "codex", "exit": 7, "prompt_matches": false, "metadata": {"priority": 16384, "affinity": 12, "startup_flags": 1, "show_window": 0, "jobs": "2"}, "priority_ok": true, "affinity_ok": true, "hidden_ok": true}, {"engine": "claude", "exit": 7, "prompt_matches": true, "metadata": {"priority": 16384, "affinity": 12, "startup_flags": 257, "show_window": 0, "jobs": "2"}, "priority_ok": true, "affinity_ok": true, "hidden_ok": true}]
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_dispatch_runtime.py", line 39, in <module>
+    assert all(r['exit']==7 and r['prompt_matches'] and r['priority_ok'] and r['affinity_ok'] and r['hidden_ok'] for r in results)
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

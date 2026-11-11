@@ -1,0 +1,81 @@
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX86\x86\cl.exe" /nologo /std:c11 /W4 /DEXR_STATIC /IC:\tmp\exr-r1-review-20261110\generated /IC:\tmp\exr-r1-review-20261110\model\include /DEXR_EDIT_MODEL_SOURCE=\"C:/tmp/exr-r1-review-20261110/model/src/docx_edit.c\" C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_orchestrator_alignment.c /FoC:\tmp\exr-r1-review-20261110\alignment-x86.obj /FeC:\tmp\exr-r1-review-20261110\alignment-x86.exe
+check_orchestrator_alignment.c
+C:/tmp/exr-r1-review-20261110/model/src/docx_edit.c(30): warning C4324: '<unnamed-tag>': structure was padded due to alignment specifier
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\alignment-x86.exe
+exr_edit_block sizeof=96 alignof=8
+exr_edit_run sizeof=176 alignof=8
+exr_edit_section sizeof=816 alignof=8
+exr_edit_part sizeof=24 alignof=8
+edit_allocation sizeof=16 alignof=16
+long double sizeof=8 alignof=8
+4096 allocations: model misalignments=0, retained=0
+
+exit=0
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX86\x86\cl.exe" /nologo /std:c11 /W4 /DEXR_STATIC /IC:\tmp\exr-r1-review-20261110\generated /IC:\tmp\exr-r1-review-20261110\model\include C:\tmp\exr-r1-review-20261110\model\src\docx_edit.c C:\tmp\exr-r1-review-20261110\model\tests\test_docx_edit.c /FeC:\tmp\exr-r1-review-20261110\edit-x86.exe /link psapi.lib
+docx_edit.c
+C:\tmp\exr-r1-review-20261110\model\src\docx_edit.c(30): warning C4324: '<unnamed-tag>': structure was padded due to alignment specifier
+test_docx_edit.c
+C:\tmp\exr-r1-review-20261110\model\tests\test_docx_edit.c(67): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\tmp\exr-r1-review-20261110\model\tests\test_docx_edit.c(71): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\tmp\exr-r1-review-20261110\model\tests\test_docx_edit.c(126): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+Generating Code...
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe insert
+docx-edit-insert: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe split
+docx-edit-split: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe para-props
+docx-edit-para-props: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe run-props
+docx-edit-run-props: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe delete
+docx-edit-delete: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe transaction
+transaction: 20 inserts -> 1 undo = 0 blocks -> 1 redo = 20 blocks
+docx-edit-transaction: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe rollback
+rollback: command 10 failed; 9 inserts reverted; 4 blocks + all runs/sections/parts identical
+docx-edit-rollback: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe history
+history: 120 edits, exactly 100 undo/redo; 20 blocks remain at oldest state
+docx-edit-history: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe preservation
+docx-edit-preservation: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe boundaries
+docx-edit-boundaries: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-x86.exe mixed
+docx-edit-mixed: passed
+
+exit=0
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX86\x86\cl.exe" /nologo /std:c11 /W4 /DEXR_STATIC /IC:\tmp\exr-r1-review-20261110\generated /IC:\tmp\exr-r1-review-20261110\model\include C:\tmp\exr-r1-review-20261110\model\tests\test_docx_edit_alloc.c /FeC:\tmp\exr-r1-review-20261110\edit-alloc-x86.exe
+test_docx_edit_alloc.c
+C:\tmp\exr-r1-review-20261110\model\tests\../src/docx_edit.c(30): warning C4324: '<unnamed-tag>': structure was padded due to alignment specifier
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-alloc-x86.exe
+docx-edit-allocation: 62 injected failures, all atomic/rolled back, zero live allocations
+
+exit=0

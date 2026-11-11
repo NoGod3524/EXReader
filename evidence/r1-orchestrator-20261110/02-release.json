@@ -1,0 +1,15 @@
+{
+  "hashes": {
+    "95100501": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+    "ff3fa0cb": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+    "66bcbe37": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+    "HEAD": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+    "6cb452da": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b"
+  },
+  "patches": {
+    "ff3fa0cb": "diff --git a/tests/check_reading_release.py b/tests/check_reading_release.py\nindex e532715e..fe5e5e5a 100644\n--- a/tests/check_reading_release.py\n+++ b/tests/check_reading_release.py\n@@ -2,7 +2,6 @@\n # SPDX-License-Identifier: MIT\n \"\"\"Small positive/rejection checks; synthetic validator fixtures, never SDK evidence.\"\"\"\n import copy\n-from contextlib import closing\n import json\n from pathlib import Path\n import sqlite3\n@@ -44,7 +43,7 @@ def fixture(root, profile):\n     write(runtime, {'sdk_version': '3.40.0', 'abi': 1, 'library_header_version': '3.34.0' if library else None})\n     db = root / 'library.sqlite' if library else None\n     if db:\n-        with closing(sqlite3.connect(db)) as connection, connection:\n+        with sqlite3.connect(db) as connection:\n             connection.execute('PRAGMA application_id=1163416131')\n             connection.execute('PRAGMA user_version=7')\n     return stage, reports, runtime, db\n",
+    "66bcbe37": "diff --git a/tests/check_reading_release.py b/tests/check_reading_release.py\nindex e532715e..fe5e5e5a 100644\n--- a/tests/check_reading_release.py\n+++ b/tests/check_reading_release.py\n@@ -2,7 +2,6 @@\n # SPDX-License-Identifier: MIT\n \"\"\"Small positive/rejection checks; synthetic validator fixtures, never SDK evidence.\"\"\"\n import copy\n-from contextlib import closing\n import json\n from pathlib import Path\n import sqlite3\n@@ -44,7 +43,7 @@ def fixture(root, profile):\n     write(runtime, {'sdk_version': '3.40.0', 'abi': 1, 'library_header_version': '3.34.0' if library else None})\n     db = root / 'library.sqlite' if library else None\n     if db:\n-        with closing(sqlite3.connect(db)) as connection, connection:\n+        with sqlite3.connect(db) as connection:\n             connection.execute('PRAGMA application_id=1163416131')\n             connection.execute('PRAGMA user_version=7')\n     return stage, reports, runtime, db\n"
+  },
+  "bound_exceptions": 3,
+  "exit": 1
+}

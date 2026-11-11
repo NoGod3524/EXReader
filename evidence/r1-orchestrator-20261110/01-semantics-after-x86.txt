@@ -1,0 +1,53 @@
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX64\x86\cl.exe" /nologo /std:c11 /DEXR_STATIC /IC:\tmp\exr-r1-review-20261110\generated /IC:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\include C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\src\docx_edit.c C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\test_docx_edit.c /FeC:\tmp\exr-r1-review-20261110\edit-final-x86.exe /link psapi.lib
+docx_edit.c
+test_docx_edit.c
+Generating Code...
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe insert
+docx-edit-insert: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe split
+docx-edit-split: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe para-props
+docx-edit-para-props: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe run-props
+docx-edit-run-props: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe delete
+docx-edit-delete: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe transaction
+transaction: 20 inserts -> 1 undo = 0 blocks -> 1 redo = 20 blocks
+docx-edit-transaction: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe rollback
+rollback: command 10 failed; 9 inserts reverted; 4 blocks + all runs/sections/parts identical
+docx-edit-rollback: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe history
+history: 120 edits, exactly 100 undo/redo; 20 blocks remain at oldest state
+docx-edit-history: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe preservation
+docx-edit-preservation: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe boundaries
+docx-edit-boundaries: passed
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\edit-final-x86.exe mixed
+docx-edit-mixed: passed
+
+exit=0

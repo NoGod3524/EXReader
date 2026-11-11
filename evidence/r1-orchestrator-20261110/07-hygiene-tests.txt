@@ -1,0 +1,5 @@
+PASS: Actions explicit bash is strict; default compound requires preamble; PowerShell requires both settings; masking remains rejected
+PASS: single/heredoc/quoted/continued commands exempt; multi/pipeline/and/semicolon/control strict
+PASS: clean workflow accepted; one-change failfast control rejected
+expected=command success; actual=exit 37 command=python -c "raise SystemExit(37)"; candidate=C:/Users/Oscar/AppData/Local/Temp/exr-ci-shell-l_i3x55k/step.sh:1
+PASS: runtime failfast

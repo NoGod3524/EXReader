@@ -1,0 +1,2 @@
+opaque block create status=1
+line 13: status==EXR_OK && doc

@@ -1,0 +1,10 @@
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX64\x64\cl.exe" /nologo /W4 C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\dispatch_argv_echo.c /FeC:\tmp\exr-r1-review-20261110\argv-echo.exe
+dispatch_argv_echo.c
+C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\dispatch_argv_echo.c(14): warning C4996: '_wfopen': This function or variable may be unsafe. Consider using _wfopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\dispatch_argv_echo.c(17): warning C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+
+exit=0
+$ C:\Python314\python.exe C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_dispatch_runtime.py C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\dispatch.ps1 C:\tmp\exr-r1-review-20261110\argv-echo.exe C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\evidence\r1-orchestrator-20261110\09-runtime-before.json
+[{"engine": "codex", "exit": 0, "prompt_matches": true, "metadata": {"priority": 16384, "affinity": 12, "startup_flags": 256, "show_window": 0, "jobs": "2"}, "priority_ok": true, "affinity_ok": true, "hidden_ok": false}, {"engine": "claude", "exit": 0, "prompt_matches": true, "metadata": {"priority": 16384, "affinity": 12, "startup_flags": 256, "show_window": 0, "jobs": "2"}, "priority_ok": true, "affinity_ok": true, "hidden_ok": false}]
+
+exit=0

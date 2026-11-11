@@ -1,0 +1,28 @@
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX86\x86\cl.exe" /nologo /std:c11 /DEXR_STATIC /IC:\tmp\exr-r1-review-20261110\generated /IC:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\include /DEXR_EDIT_MODEL_SOURCE=\"C:/tmp/exr-r1-review-20261110/model/src/docx_edit.c\" C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_orchestrator_alignment.c /FeC:\tmp\exr-r1-review-20261110\header-check-x86.exe
+check_orchestrator_alignment.c
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\header-check-x86.exe
+exr_edit_block sizeof=96 alignof=8
+exr_edit_run sizeof=176 alignof=8
+exr_edit_section sizeof=816 alignof=8
+exr_edit_part sizeof=24 alignof=8
+edit_allocation sizeof=16 alignof=16
+long double sizeof=8 alignof=8
+4096 allocations: model misalignments=0, header misalignments=1109, retained=0
+
+exit=1
+$ "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\HostX64\x86\cl.exe" /nologo /std:c11 /DEXR_STATIC /IC:\tmp\exr-r1-review-20261110\generated /IC:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\include /DEXR_EDIT_MODEL_SOURCE=\"C:/tmp/exr-r1-review-20261110/model/src/docx_edit.c\" C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_orchestrator_alignment.c /FeC:\tmp\exr-r1-review-20261110\header-check-x86.exe
+check_orchestrator_alignment.c
+
+exit=0
+$ C:\tmp\exr-r1-review-20261110\header-check-x86.exe
+exr_edit_block sizeof=96 alignof=8
+exr_edit_run sizeof=176 alignof=8
+exr_edit_section sizeof=816 alignof=8
+exr_edit_part sizeof=24 alignof=8
+edit_allocation sizeof=16 alignof=16
+long double sizeof=8 alignof=8
+4096 allocations: model misalignments=0, header misalignments=17, retained=0
+
+exit=1

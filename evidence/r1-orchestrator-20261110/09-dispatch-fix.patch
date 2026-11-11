@@ -1,0 +1,82 @@
+--- a/ops/dispatch.ps1
++++ b/ops/dispatch.ps1
+@@ -75,7 +75,11 @@
+   if ($running -ge $limit) {
+     throw "claude 并发会话已达上限 $limit（当前 $running）。等现有会话结束再派；或改用 -Engine codex。"
+   }
+-  $argv = @('--print', '--model', $Model, '--effort', $Effort)
++  $argv = @('--print', '--model', $Model, '--effort', $Effort, '--no-chrome',
++    '--disallowedTools', 'computer', 'mcp__windows-mcp__*', 'mcp__windows_mcp__*',
++    'mcp__computer-use__*', 'mcp__computer_use__*',
++    'mcp__unified-computer-use__*', 'mcp__unified_computer_use__*',
++    'mcp__browser__*', 'mcp__node_repl__*')
+   if ($Permissive) { $argv += @('--permission-mode', 'bypassPermissions') }
+   if ($AddDir) {
+     foreach ($d in ($AddDir -split ';')) { if ($d.Trim()) { $argv += @('--add-dir', $d.Trim()) } }
+@@ -94,7 +98,7 @@
+ }
+ 
+ # Background-first launch:
+-#  - hidden window, Idle priority, restricted CPU affinity so a build never takes the
++#  - hidden window, BelowNormal priority, restricted CPU affinity so a build never takes the
+ #    desk back while the owner is using the machine
+ #  - CMAKE_BUILD_PARALLEL_LEVEL / MAKEFLAGS cap the agent's own build parallelism
+ $affinityCores = if ($env:DSH_AGENT_CORES) { [int]$env:DSH_AGENT_CORES } else { 4 }
+@@ -104,6 +108,8 @@
+ $env:MAKEFLAGS = "-j$buildJobs"
+ $env:NINJAFLAGS = "-j$buildJobs"
+ 
++$stdoutCapture = [IO.Path]::GetTempFileName()
++$stderrCapture = [IO.Path]::GetTempFileName()
+ Push-Location $Worktree
+ try {
+   # Start-Process flattens an argument array into one command line, so every
+@@ -111,14 +117,16 @@
+   function ConvertTo-ArgLine([string]$value) {
+     if ($value -match '^[A-Za-z0-9_\-./:=@\\]+$') { return $value }
+     $escaped = [regex]::Replace($value, '(\\*)"', '$1$1\"')
+-    $escaped = [regex]::Replace($escaped, '(\\+)$', '$1$1')
++    $escaped = [regex]::Replace($escaped, '(\\+)\z', '$1$1')
+     return '"' + $escaped + '"'
+   }
+   $argLine = ($argv | ForEach-Object { ConvertTo-ArgLine $_ }) -join ' '
+   $startArgs = @{
+     FilePath = $exe; ArgumentList = $argLine; WorkingDirectory = $Worktree
+-    NoNewWindow = $true; PassThru = $true
++    WindowStyle = 'Hidden'; PassThru = $true
++    RedirectStandardOutput = $stdoutCapture; RedirectStandardError = $stderrCapture
+   }
++  if ($Out -and $Engine -eq 'claude') { $startArgs.RedirectStandardOutput = $Out }
+   $proc = Start-Process @startArgs
+   try {
+     $proc.PriorityClass = $priority
+@@ -131,19 +139,15 @@
+   } catch { "affinity/priority not applied: $($_.Exception.Message)" }
+   $proc.WaitForExit()
+   $code = $proc.ExitCode
+-} finally { Pop-Location }
++  $outputPath = if ($Out -and $Engine -eq 'claude') { $Out } else { $stdoutCapture }
++  $resultText = Get-Content -LiteralPath $outputPath -Raw -Encoding UTF8
++  $errorText = Get-Content -LiteralPath $stderrCapture -Raw -Encoding UTF8
++} finally {
++  Pop-Location
++  Remove-Item -LiteralPath $stdoutCapture, $stderrCapture -ErrorAction SilentlyContinue
++}
+ 
+-if ($Out -and $Engine -eq 'claude') { $resultText | Set-Content -Path $Out -Encoding UTF8 }
++$resultText
++if ($errorText) { [Console]::Error.Write($errorText) }
+ "exit=$code"
+-$resultText
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
++exit $code

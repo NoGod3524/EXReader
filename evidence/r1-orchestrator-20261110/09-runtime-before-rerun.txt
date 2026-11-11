@@ -1,0 +1,4 @@
+$ C:\Python314\python.exe C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_dispatch_runtime.py C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\evidence\r1-orchestrator-20261110\09-dispatch-before.ps1 C:\tmp\exr-r1-review-20261110\argv-echo.exe C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\evidence\r1-orchestrator-20261110\09-runtime-before.json
+[{"engine": "codex", "exit": 0, "prompt_matches": true, "metadata": {"priority": 16384, "affinity": 12, "startup_flags": 256, "show_window": 0, "jobs": "2"}, "priority_ok": true, "affinity_ok": true, "hidden_ok": false}, {"engine": "claude", "exit": 0, "prompt_matches": true, "metadata": {"priority": 16384, "affinity": 12, "startup_flags": 256, "show_window": 0, "jobs": "2"}, "priority_ok": true, "affinity_ok": true, "hidden_ok": false}]
+
+exit=0

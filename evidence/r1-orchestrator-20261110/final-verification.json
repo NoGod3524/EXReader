@@ -1,0 +1,13 @@
+{
+  "base_commit": "6cb452dac207186bd94ecd60cede35fdf848db82",
+  "build_exit": 0,
+  "ctest_passed": 18,
+  "ctest_failed": 0,
+  "layer_check_exit": 0,
+  "raster_probe_exit": 0,
+  "opaque_reflow_probe_exit": 0,
+  "dispatch_sha256": "d0cc30b3936b62305763f8ee29dbdebbb444e2d2443a3b140196ecb56409484c",
+  "dispatch_copies_equal": true,
+  "out_of_scope_tool_unchanged": true,
+  "github_unchanged": true
+}

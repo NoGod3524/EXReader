@@ -1,0 +1,109 @@
+cmake -S C:\Users\Oscar\Documents\Codex\EXReader-intx-20261110 -B C:/tmp/exr-r1-review-20261110/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI:BOOL=OFF -DEXR_BUILD_SHARED_COMPAT:BOOL=ON -DEXR_BUILD_TESTS:BOOL=ON -DEXR_BUILD_TEXT_INDEX:BOOL=ON -DEXR_BUILD_TOOLS:BOOL=ON -DEXR_ENABLE_AAC:BOOL=OFF -DEXR_ENABLE_AUDIO:BOOL=ON -DEXR_ENABLE_ICC:BOOL=ON -DEXR_ENABLE_IMAGE_AVIF:BOOL=OFF -DEXR_ENABLE_IMAGE_TIFF:BOOL=OFF -DEXR_ENABLE_IMAGE_WEBP:BOOL=OFF -DEXR_ENABLE_LCP:BOOL=ON -DEXR_ENABLE_LIBRARY:BOOL=ON -DEXR_ENABLE_MP3:BOOL=ON -DEXR_ENABLE_PDF:BOOL=ON -DEXR_ENABLE_PDF_CRYPTO:BOOL=ON -DEXR_ENABLE_PDF_EDIT:BOOL=ON -DEXR_ENABLE_PDF_JPX:BOOL=ON -DEXR_ENABLE_TEXT_INDEX:BOOL=ON -DFETCHCONTENT_SOURCE_DIR_EXPAT:PATH=C:/Users/Oscar/exr-deps/expat -DFETCHCONTENT_SOURCE_DIR_FREETYPE:PATH=C:/Users/Oscar/exr-deps/freetype-VER-2-15-0 -DFETCHCONTENT_SOURCE_DIR_LCMS:PATH=C:/Users/Oscar/exr-deps/lcms -DFETCHCONTENT_SOURCE_DIR_MBEDTLS:PATH=C:/Users/Oscar/exr-deps/mbedtls -DFETCHCONTENT_SOURCE_DIR_MINIMP3:PATH=C:/Users/Oscar/exr-deps/minimp3 -DFETCHCONTENT_SOURCE_DIR_MINIZ:PATH=C:/Users/Oscar/exr-deps/miniz -DFETCHCONTENT_SOURCE_DIR_OPENJPEG:PATH=C:/Users/Oscar/Documents/Codex/cjk-punctuation-compression-20261106/deps/openjpeg-2.5.4 -DFETCHCONTENT_SOURCE_DIR_SQLITE:PATH=C:/Users/Oscar/exr-deps/sqlite -DFETCHCONTENT_SOURCE_DIR_STB:PATH=C:/Users/Oscar/exr-deps/stb -DEXR_BUILD_FUZZ=OFF
+-- The C compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Found PkgConfig: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/pkgconf.exe (found version "3.0.5")
+-- Looking for dlfcn.h
+-- Looking for dlfcn.h - not found
+-- Looking for fcntl.h
+-- Looking for fcntl.h - found
+-- Looking for inttypes.h
+-- Looking for inttypes.h - found
+-- Looking for memory.h
+-- Looking for memory.h - found
+-- Looking for stdint.h
+-- Looking for stdint.h - found
+-- Looking for stdlib.h
+-- Looking for stdlib.h - found
+-- Looking for strings.h
+-- Looking for strings.h - found
+-- Looking for string.h
+-- Looking for string.h - found
+-- Looking for sys/stat.h
+-- Looking for sys/stat.h - found
+-- Looking for sys/types.h
+-- Looking for sys/types.h - found
+-- Looking for unistd.h
+-- Looking for unistd.h - found
+-- Looking for getpagesize
+-- Looking for getpagesize - not found
+-- Looking for mmap
+-- Looking for mmap - not found
+-- Looking for getrandom
+-- Looking for getrandom - not found
+-- Performing Test HAVE_ARC4RANDOM_BUF
+-- Performing Test HAVE_ARC4RANDOM_BUF - Failed
+-- Performing Test HAVE_ARC4RANDOM
+-- Performing Test HAVE_ARC4RANDOM - Failed
+-- Looking for 4 include files stdlib.h, ..., float.h
+-- Looking for 4 include files stdlib.h, ..., float.h - found
+-- Performing Test HAVE_OFF_T
+-- Performing Test HAVE_OFF_T - Success
+-- Performing Test HAVE_GETENTROPY
+-- Performing Test HAVE_GETENTROPY - Failed
+-- Performing Test HAVE_SYSCALL_GETRANDOM
+-- Performing Test HAVE_SYSCALL_GETRANDOM - Failed
+-- Performing Test _FLAG_DETECTION_UNUSABLE
+-- Performing Test _FLAG_DETECTION_UNUSABLE - Failed
+-- Performing Test FLAG_WSTRICT_ALIASING
+-- Performing Test FLAG_WSTRICT_ALIASING - Success
+-- Performing Test FLAG_WIMPLICIT_FALLTHROUGH
+-- Performing Test FLAG_WIMPLICIT_FALLTHROUGH - Success
+-- Performing Test FLAG_VISIBILITY
+-- Performing Test FLAG_VISIBILITY - Success
+-- Looking for cos in m
+-- Looking for cos in m - found
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 4.4.2
+-- 
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix ....... 
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     rand_s ................... ON
+-- 
+-- ===========================================================================
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR
+-- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Success
+-- Found Python3: C:/Python314/python.exe (found version "3.14.7") found components: Interpreter
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (299.8s)
+-- Generating done (33.0s)
+-- Build files have been written to: C:/tmp/exr-r1-review-20261110/build
+CMake Warning (deprecated) at C:/Users/Oscar/exr-deps/miniz/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+

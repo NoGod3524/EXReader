@@ -1,0 +1,2 @@
+opaque block create status=0
+PASS: opaque XML retained across history; empty opaque block rejected

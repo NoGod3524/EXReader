@@ -1,0 +1,1 @@
+PASS: raster_cache initialized by raster.c, retained on second render

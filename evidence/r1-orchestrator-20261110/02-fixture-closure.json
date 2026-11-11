@@ -1,0 +1,10 @@
+[
+  {
+    "phase": "before",
+    "delete_database_error": "[WinError 32] The process cannot access the file because it is being used by another process: 'C:\\\\Users\\\\Oscar\\\\AppData\\\\Local\\\\Temp\\\\exr-r1-fixture-qcva38jq\\\\library.sqlite'"
+  },
+  {
+    "phase": "after",
+    "delete_database_error": null
+  }
+]

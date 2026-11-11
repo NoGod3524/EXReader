@@ -1,0 +1,5 @@
+Exception: C:\Users\Oscar\Documents\Codex\EXReader-r1-review-20261110\tests\check_dispatch_args.ps1:36
+Line |
+  36 |  … es.Count) { throw "$($mismatches.Count) argument mismatches; see $Out …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | 5 argument mismatches; see evidence/r1-orchestrator-20261110/09-args-before.json
