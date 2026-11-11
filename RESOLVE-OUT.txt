@@ -1,0 +1,10 @@
+① 冲突文件清单：无。本地 HEAD (a0fc9e8c) 已是包含 origin/main (fe3d46e1，含 PR #109) 的合并提交；
+   git merge origin/main 返回 Already up to date，git ls-files -u 为空。冲突来自远端分支停在 a30270d8、
+   落后于 main 的 PR #109；推送 a0fc9e8c 后 PR #107 由 CONFLICTING/DIRTY 变为 MERGEABLE/BLOCKED（仅等 CI）。
+② 补的 API 文档：无需补。公开函数 457 个，已文档 457 个，覆盖 100%（稳定 394 / 实验 63 / 内部 0）。
+③ check_sdk_docs.py exit=0；最后三行：
+     "errors": [],
+     "passed": true
+   }
+④ 其他失败项：推送后 CI 全部 pending（android、apple-mobile、ci-hygiene x4、corpus、desktop x3、fuzz、identity、native/*、platforms/*、profiles/*、protocol 等），尚无失败。
+硬约束核对：check_sdk_docs.py 未改；tests/check_reading_release.py SHA256 仍为 6eb22a30…；未推送任何新提交，推的是已有的 a0fc9e8c。

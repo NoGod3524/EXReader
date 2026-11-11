@@ -1,0 +1,9 @@
+PR #107 现在是 MERGEABLE,但状态为 BLOCKED,因为 CI 刚启动,全部检查还在 pending,目前没有失败项。
+
+- **冲突:** 没有要解的。本地 HEAD `a0fc9e8c` 已经合并了 origin/main(`fe3d46e1`,含 PR #109)。远端 PR 分支停在 `a30270d8`,落后于 main,所以显示冲突。
+- **推送:** 我把 `a0fc9e8c` 推到了 `codex/artifact-signing-20261109`,没有新建提交。
+- **文档门禁:** `python -X utf8 tools\check_sdk_docs.py` 返回 exit 0,457 个公开函数全部有文档,不用补。
+- **硬约束:** `tests/check_reading_release.py` 的 SHA256 仍以 `6eb22a30` 开头;我没改 `check_sdk_docs.py`,也没启动 GUI。
+- **报告:** 已写入 `RESOLVE-OUT.txt`。
+
+我没有合并 PR,也没动 main。
