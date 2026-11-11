@@ -1,0 +1,273 @@
+Window: "verified.docx - Compatibility Mode - Word", App: WINWORD.EXE.
+	0 window (disabled) verified.docx - Compatibility Mode - Word Secondary Actions: Raise
+		351 window Paragraph Secondary Actions: Raise
+			352 edit (settable, string) RichEdit Control Value: 0 cm ID: 1934
+			353 edit (settable, string) RichEdit Control Value: 0 cm ID: 1935
+			354 edit (settable, string) RichEdit Control Value: 1.27 cm ID: 1936
+			355 edit (settable, string) RichEdit Control Value: 0 pt ID: 1937
+			356 edit (settable, string) RichEdit Control Value: 6 pt ID: 1938
+			357 edit (settable, string) RichEdit Control ID: 1939
+			358 pane ID: 80
+			359 title bar (settable, string) Value: Paragraph
+				360 button Context help
+				361 button Close
+			362 tab (settable, string) Value: Indents and Spacing
+				363 tab item (selectable) Indents and Spacing
+				364 tab item (selectable) Line and Page Breaks
+				365 tab item (selectable) Asian Typography
+			366 text General
+			367 text Alignment:
+			368 combo box (settable, string) Alignment: Value: Left
+			369 text Outline level:
+			370 combo box (settable, string) Outline level: Value: Body Text
+			371 check box (disabled) Collapsed by default
+			372 text Indentation
+			373 text Left:
+			374 spinner (settable, string) Left: Value: 0 cm
+			375 text Right:
+			376 spinner (settable, string) Right: Value: 0 cm
+			377 text Special:
+			378 combo box (settable, string) Special: Value: First line
+			379 text By:
+			380 spinner (settable, string) By: Value: 1.27 cm
+			381 check box Mirror indents
+			382 check box Automatically adjust right indent when document grid is defined
+			383 text Spacing
+			384 text Before:
+			385 spinner (settable, string) Before: Value: 0 pt
+			386 text After:
+			387 spinner (settable, string) After: Value: 6 pt
+			388 text Line spacing:
+			389 combo box (settable, string) Line spacing: Value: Double
+			390 text At:
+			391 spinner At:
+			392 check box Don't add space between paragraphs of the same style
+			393 check box Snap to grid when document grid is defined
+			394 text Preview
+			395 button Tabs...
+			396 button Set As Default
+			397 button OK
+			398 button Cancel
+			399 image
+		1 pane (disabled) DropShadowTop
+		2 pane (disabled) MsoDockTop
+			3 tool bar Description: Ribbon toolbar
+				4 pane Ribbon
+					5 pane (disabled)
+						6 Pane Secondary Actions: Raise
+							7 Pane Ribbon
+								8 ToolBar Quick Access Toolbar
+									9 Toggle Switch AutoSave ID: AutoSaveSwitch
+									10 Button Save ID: FileSave
+									11 SplitButton (disabled) Can't Undo ID: Undo
+										12 Button (disabled) Can't Undo
+										13 Menu Item (disabled) More Options ID: Undo_Dropdown
+									14 Button (disabled) Can't Repeat ID: RedoOrRepeat
+									15 Menu Item Customize Quick Access Toolbar
+								16 Title Bar ‪verified.docx - Compatibility Mode‬ - Saved to this PC
+									17 Menu Item (disabled) ‪verified.docx - Compatibility Mode‬ - Saved to this PC
+								18 Menu Item Type to search and use the up and down arrow keys to navigate ID: TellMeControlAnchor
+									19 Edit Box (settable, string) Microsoft search Value: Search ID: TellMeTextBoxAutomationId
+								20 Menu Item 一诺 许 ID: MeControlWidget
+								21 Button Minimize
+								22 Button Maximize
+								23 Button Close
+								24 Button File Tab ID: FileTabButton
+								25 Pane Ribbon Tabs
+									26 Tab Item (selectable) Home ID: TabHome
+									27 Tab Item (selectable) Insert ID: TabInsert
+									28 Tab Item (selectable) Draw ID: TabDrawInk
+									29 Tab Item (selectable) Design ID: TabWordDesign
+									30 Tab Item (selectable) Layout ID: TabPageLayoutWord
+									31 Tab Item (selectable) References ID: TabReferences
+									32 Tab Item (selectable) Mailings ID: TabMailings
+									33 Tab Item (selectable) Review ID: TabReviewWord
+									34 Tab Item (selectable) View ID: TabView
+									35 Tab Item (selectable) Help ID: HelpTab
+									36 Button Comments
+									37 ComboBox (settable, string) Editing Value: Editing
+									38 Menu Item Share
+								39 Pane Lower Ribbon
+									40 Group Home
+										41 Group Clipboard
+											42 SplitButton (settable, string) Paste
+												43 Button Paste ID: Paste
+												44 Menu Item More Options ID: PasteMenu_Dropdown
+											45 Button (disabled) Cut ID: Cut
+											46 Button (disabled) Copy ID: Copy
+											47 Button Format Painter ID: FormatPainter
+											48 Button Office Clipboard... ID: ShowClipboard
+										49 Group Font
+											50 ComboBox (settable, string) Font Value: Times New Roman ID: Font
+												51 Edit Box (settable, string) Font Value: Times New Roman
+												52 Button Open
+											53 ComboBox (settable, string) Font Size Value: 12 ID: FontSize
+												54 Edit Box (settable, string) Font Size Value: 12
+												55 Button Open
+											56 Button Grow Font ID: FontSizeIncreaseWord
+											57 Button Shrink Font ID: FontSizeDecreaseWord
+											58 Menu Item Change Case ID: ChangeCaseGallery
+											59 Button Clear Formatting ID: ClearFormatting
+											60 Button Phonetic Guide... ID: AsianLayoutPhoneticGuide
+											61 Button Character Border ID: CharacterBorder
+											62 Button Bold ID: Bold
+											63 Button Italic ID: Italic
+											64 SplitButton (settable, string) Underline ID: UnderlineGallery
+												65 Button Underline
+												66 Menu Item More Options ID: UnderlineGallery_Dropdown
+											67 Button Strikethrough ID: Strikethrough
+											68 Button Subscript ID: Subscript
+											69 Button Superscript ID: Superscript
+											70 Menu Item (disabled) Text Effects and Typography ID: TextEffectsGallery
+											71 SplitButton (settable, string) Text Highlight Color Value: Yellow ID: TextHighlightColorPicker
+												72 Button Text Highlight Color Yellow
+												73 Menu Item More Options ID: TextHighlightColorPicker_Dropdown
+											74 SplitButton (settable, string) Font Color Value: RGB(255, 0, 0) ID: FontColorPicker
+												75 Button Font Color RGB(255, 0, 0)
+												76 Menu Item More Options ID: FontColorPicker_Dropdown
+											77 Button Character Shading ID: CharacterShading
+											78 Button Enclose Characters... ID: AsianLayoutCharactersEnclose
+											79 Button Font... ID: FontDialog
+										80 Group Paragraph
+											81 SplitButton (settable, string) Bullets ID: BulletsGalleryWord
+												82 Button Bullets
+												83 Menu Item More Options ID: BulletsGalleryWord_Dropdown
+											84 SplitButton (settable, string) Numbering ID: NumberingGalleryWord
+												85 Button Numbering
+												86 Menu Item More Options ID: NumberingGalleryWord_Dropdown
+											87 Menu Item Multilevel List ID: MultilevelListGallery
+											88 Button Decrease Indent ID: IndentDecreaseWord
+											89 Button Increase Indent ID: IndentIncreaseWord
+											90 Menu Item Asian Layout ID: AsianLayoutMenu
+											91 Button Sort... ID: SortDialogClassic
+											92 Button Show All ID: ParagraphMarks
+											93 Button Align Left ID: AlignLeft
+											94 Button Center ID: AlignCenter
+											95 Button Align Right ID: AlignRight
+											96 Button Justify ID: AlignJustify
+											97 Button Distributed ID: ParagraphDistributed
+											98 Menu Item Line and Paragraph Spacing ID: LineSpacingGallery
+											99 SplitButton (settable, string) Shading Value: RGB(0, 0, 0) ID: ShadingColorPicker
+												100 Button Shading RGB(0, 0, 0)
+												101 Menu Item More Options ID: ShadingColorPicker_Dropdown
+											102 SplitButton (settable, string) Borders ID: BordersSelectionGallery
+												103 Button Borders
+												104 Menu Item More Options ID: BordersSelectionGallery_Dropdown
+											105 Button Paragraph... ID: ParagraphDialog
+										106 Group Styles
+											107 Menu Item Styles ID: QuickStylesGallery
+											108 Button Styles... ID: StylesPane
+										109 Group Editing
+											110 Menu Item Editing
+										111 Group Voice
+											112 SplitButton (settable, string) Dictate
+												113 Button Dictate ID: Dictate
+												114 Menu Item More Options ID: DictationMenu_Dropdown
+										115 Group Sensitivity
+											116 Menu Item (disabled) Sensitivity ID: ClassifyLabelProtect
+										117 Group Editor
+											118 Button Editor ID: WritingAssistanceCheckDocument
+										119 Group Add-ins
+											120 Button Add‑ins ID: OfficeExtensionsShowAddinFlyout
+								121 Menu Item Ribbon Display Options
+		122 pane (disabled) MsoDockBottom
+			123 tool bar Description: Status Bar toolbar
+				124 pane Status Bar
+					125 pane (disabled)
+						126 Pane Secondary Actions: Raise
+							127 Status Bar Status Bar
+								169 Button Page Number Page 2 of 2
+								170 Text Word Count 83 words
+								171 Button Coauthoring Mode
+								172 Button Spelling and Grammar Check Errors
+								173 Button Language English (United States)
+								174 Button Text Predictions Text Predictions: Off
+								175 Button Accessibility Checker Accessibility: Unavailable
+								129 Button Focus
+								130 Button Read Mode
+								131 Button Print Layout
+								132 Button Web Layout
+								133 Button Zoom Out (Ctrl -) Value: 100
+								134 Slider (settable, float) Zoom Value: 1000
+									135 Button Zoom Out
+									136 Thumb Position
+									137 Button Zoom In
+								138 Button Zoom In (Ctrl +) Value: 100
+								139 Button Zoom 100%
+								140 Thumb Size box
+		141 pane
+			142 pane verified.docx - Compatibility Mode
+				143 document verified.docx - Compatibility Mode
+					144 page Page 1 ID: UIA_AutomationId_Word_Page_1
+						145 edit Header -Section 1-
+							146 Field page
+						147 edit Page 1 content ID: Body
+							148 Field date
+						149 edit Footer -Section 1-
+					150 page Page 2 ID: UIA_AutomationId_Word_Page_2
+						151 edit Header -Section 1-
+							152 Field page
+						153 edit Page 2 content ID: Body
+						154 edit Footer -Section 1-
+				155 pane (disabled) Vertical
+					156 Pane Secondary Actions: Raise
+						157 ScrollBar (settable, float) Value: 0
+		163 title bar (settable, string) Value: verified.docx - Compatibility Mode - Word
+			164 menu bar System ID: MenuBar
+				165 menu item System
+			166 button Minimize
+			167 button Maximize
+			168 button Close
+		351 window Paragraph Secondary Actions: Raise
+			352 edit (settable, string) RichEdit Control Value: 0 cm ID: 1934
+			353 edit (settable, string) RichEdit Control Value: 0 cm ID: 1935
+			354 edit (settable, string) RichEdit Control Value: 1.27 cm ID: 1936
+			355 edit (settable, string) RichEdit Control Value: 0 pt ID: 1937
+			356 edit (settable, string) RichEdit Control Value: 6 pt ID: 1938
+			357 edit (settable, string) RichEdit Control ID: 1939
+			358 pane ID: 80
+			359 title bar (settable, string) Value: Paragraph
+				360 button Context help
+				361 button Close
+			400 tab (settable, string) Value: Indents and Spacing
+				401 tab item (selectable) Indents and Spacing
+				402 tab item (selectable) Line and Page Breaks
+				403 tab item (selectable) Asian Typography
+			366 text General
+			367 text Alignment:
+			404 combo box (settable, string) Alignment: Value: Left
+			369 text Outline level:
+			405 combo box (settable, string) Outline level: Value: Body Text
+			371 check box (disabled) Collapsed by default
+			372 text Indentation
+			373 text Left:
+			374 spinner (settable, string) Left: Value: 0 cm
+			375 text Right:
+			376 spinner (settable, string) Right: Value: 0 cm
+			377 text Special:
+			406 combo box (settable, string) Special: Value: First line
+			379 text By:
+			380 spinner (settable, string) By: Value: 1.27 cm
+			381 check box Mirror indents
+			382 check box Automatically adjust right indent when document grid is defined
+			383 text Spacing
+			384 text Before:
+			385 spinner (settable, string) Before: Value: 0 pt
+			386 text After:
+			387 spinner (settable, string) After: Value: 6 pt
+			388 text Line spacing:
+			407 combo box (settable, string) Line spacing: Value: Double
+			390 text At:
+			391 spinner At:
+			392 check box Don't add space between paragraphs of the same style
+			393 check box Snap to grid when document grid is defined
+			394 text Preview
+			395 button Tabs...
+			396 button Set As Default
+			397 button OK
+			398 button Cancel
+			399 image
+
+Document text: ```
+6 pt
+```

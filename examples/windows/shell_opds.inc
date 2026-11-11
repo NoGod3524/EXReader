@@ -368,12 +368,10 @@ static void opds_layout(void) {
 static void opds_hide(void) {
   if(!opds_view || !opds_visible)return;
   if(opds_busy)InterlockedExchange(&opds_cancel,1);
-  ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_recent();
+  ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_recent();sm_shelf_visibility(1);
 }
 static void opds_show(void) {
   if(!opds_view || !shelf_visible)return;
-  HWND controls[]={shelf_list,shelf_add,shelf_organize,shelf_stats,shelf_sources};
-  for(size_t i=0;i<sizeof(controls)/sizeof(*controls);i++)if(controls[i])ShowWindow(controls[i],SW_HIDE);
   if(sm_view)ShowWindow(sm_view,SW_HIDE);
   opds_visible=1;opds_layout();ShowWindow(opds_view,SW_SHOW);opds_controls_enable();
   SetFocus(opds_url_edit);
