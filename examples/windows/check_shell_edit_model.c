@@ -27,9 +27,12 @@ int main(int argc,char **argv) {
 
   assert(edit_seed(&m,"",0)==EXR_OK);
   const char *chinese="\xe4\xbd\xa0\xe5\xa5\xbd\xe4\xb8\x96\xe7\x95\x8c";
+  write_text(argv[1],"cjk-model-before",&m);
   assert(edit_replace(&m,0,0,chinese,strlen(chinese),0)==EXR_OK);
   equal(&m,chinese); assert(m.cursor==1 && !m.tx);
+  write_text(argv[1],"cjk-model-result",&m);
   assert(edit_history_move(&m,0)==EXR_OK); equal(&m,"");
+  write_text(argv[1],"cjk-model-one-undo",&m);
   assert(edit_history_move(&m,1)==EXR_OK); equal(&m,chinese);
   edit_model_free(&m);
 

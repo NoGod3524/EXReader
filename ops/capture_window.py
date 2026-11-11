@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PID-scoped, physical-pixel PrintWindow capture (also works offscreen).
 
-Usage: python -X utf8 capture_window.py PID OUT.png
+Usage: python -X utf8 capture_window.py PID OUT.png [--hwnd HWND]
 """
 import ctypes as C
 from ctypes import wintypes as W
@@ -55,8 +55,11 @@ def window(pid):
     return hits[0]
 
 
-def capture(pid, output):
-    hwnd = window(pid)
+def capture(pid, output, hwnd=None):
+    hwnd = hwnd or window(pid)
+    found = W.DWORD()
+    U.GetWindowThreadProcessId(hwnd, C.byref(found))
+    assert found.value == pid, (pid, hwnd, found.value)
     outer, client, origin = W.RECT(), W.RECT(), W.POINT()
     assert U.GetWindowRect(hwnd, C.byref(outer))
     assert U.GetClientRect(hwnd, C.byref(client))
@@ -85,4 +88,10 @@ def capture(pid, output):
 
 
 if __name__ == '__main__':
-    print(json.dumps(capture(int(sys.argv[1]), Path(sys.argv[2]))))
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('pid', type=int)
+    parser.add_argument('output', type=Path)
+    parser.add_argument('--hwnd', type=lambda value: int(value, 0))
+    args = parser.parse_args()
+    print(json.dumps(capture(args.pid, args.output, args.hwnd)))

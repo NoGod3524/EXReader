@@ -1,0 +1,1453 @@
+{
+  "capture": {
+    "window": [
+      1180,
+      900
+    ],
+    "client": [
+      1162,
+      828
+    ],
+    "client_box": [
+      9,
+      63,
+      1162,
+      828
+    ],
+    "position": [
+      -32000,
+      -32000
+    ],
+    "dpi": 120
+  },
+  "state": {
+    "foreground": 198390,
+    "windows": [
+      {
+        "hwnd": 462704,
+        "parent": null,
+        "thread": 8240,
+        "title": "* fixture.txt — EXReader [编辑]",
+        "cls": "EXReaderHost",
+        "id": 0,
+        "visible": true,
+        "enabled": true,
+        "rect": [
+          -32000,
+          -32000,
+          -30820,
+          -31100
+        ]
+      },
+      {
+        "hwnd": 3608242,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "目录",
+        "cls": "EXReaderTOC",
+        "id": 0,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -32341,
+          -31867,
+          -31991,
+          -31109
+        ]
+      },
+      {
+        "hwnd": 39522000,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "目录列表",
+        "cls": "ListBox",
+        "id": 168,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -32328,
+          -31808,
+          -32004,
+          -31109
+        ]
+      },
+      {
+        "hwnd": 397016,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "这本书没有目录",
+        "cls": "Static",
+        "id": 169,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -32306,
+          -31739,
+          -32026,
+          -31714
+        ]
+      },
+      {
+        "hwnd": 6360806,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "阅读设置",
+        "cls": "EXReaderSettings",
+        "id": 0,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31379,
+          -31867,
+          -30769,
+          -31867
+        ]
+      },
+      {
+        "hwnd": 397002,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1800,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31777,
+          -31048,
+          -31737
+        ]
+      },
+      {
+        "hwnd": 17895084,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1801,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31777,
+          -30903,
+          -31737
+        ]
+      },
+      {
+        "hwnd": 26346850,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1802,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31773,
+          -30956,
+          -31740
+        ]
+      },
+      {
+        "hwnd": 2362594,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1803,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31724,
+          -31048,
+          -31684
+        ]
+      },
+      {
+        "hwnd": 1183492,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1804,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31724,
+          -30903,
+          -31684
+        ]
+      },
+      {
+        "hwnd": 4656860,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1805,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31721,
+          -30956,
+          -31688
+        ]
+      },
+      {
+        "hwnd": 202116754,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1806,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31672,
+          -31048,
+          -31632
+        ]
+      },
+      {
+        "hwnd": 593552,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1807,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31672,
+          -30903,
+          -31632
+        ]
+      },
+      {
+        "hwnd": 41422176,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1808,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31668,
+          -30956,
+          -31635
+        ]
+      },
+      {
+        "hwnd": 17763532,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1809,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31619,
+          -31048,
+          -31579
+        ]
+      },
+      {
+        "hwnd": 41749606,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1810,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31619,
+          -30903,
+          -31579
+        ]
+      },
+      {
+        "hwnd": 88017784,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1811,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31616,
+          -30956,
+          -31583
+        ]
+      },
+      {
+        "hwnd": 7735854,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1812,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31567,
+          -31048,
+          -31527
+        ]
+      },
+      {
+        "hwnd": 30147790,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1813,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31567,
+          -30903,
+          -31527
+        ]
+      },
+      {
+        "hwnd": 723080,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1814,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31563,
+          -30956,
+          -31530
+        ]
+      },
+      {
+        "hwnd": 3999774,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1815,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31514,
+          -31048,
+          -31474
+        ]
+      },
+      {
+        "hwnd": 6359048,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1816,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31514,
+          -30903,
+          -31474
+        ]
+      },
+      {
+        "hwnd": 2295654,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1817,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31511,
+          -30956,
+          -31478
+        ]
+      },
+      {
+        "hwnd": 79433180,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1818,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31462,
+          -31048,
+          -31422
+        ]
+      },
+      {
+        "hwnd": 18026356,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1819,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31462,
+          -30903,
+          -31422
+        ]
+      },
+      {
+        "hwnd": 12454376,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1820,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31458,
+          -30956,
+          -31425
+        ]
+      },
+      {
+        "hwnd": 462030,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "−",
+        "cls": "Button",
+        "id": 1821,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31091,
+          -31409,
+          -31048,
+          -31369
+        ]
+      },
+      {
+        "hwnd": 4132376,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "+",
+        "cls": "Button",
+        "id": 1822,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30946,
+          -31409,
+          -30903,
+          -31369
+        ]
+      },
+      {
+        "hwnd": 331592,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1823,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31039,
+          -31406,
+          -30956,
+          -31373
+        ]
+      },
+      {
+        "hwnd": 1050400,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "浅色",
+        "cls": "Button",
+        "id": 164,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31274,
+          -31344,
+          -31159,
+          -31304
+        ]
+      },
+      {
+        "hwnd": 190385718,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "深色",
+        "cls": "Button",
+        "id": 165,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31154,
+          -31344,
+          -31039,
+          -31304
+        ]
+      },
+      {
+        "hwnd": 180751188,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "跟随系统",
+        "cls": "Button",
+        "id": 166,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31034,
+          -31344,
+          -30919,
+          -31304
+        ]
+      },
+      {
+        "hwnd": 331596,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "ComboBox",
+        "id": 1842,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31274,
+          -31272,
+          -31036,
+          -31248
+        ]
+      },
+      {
+        "hwnd": 331580,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 1001,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31271,
+          -31269,
+          -31060,
+          -31251
+        ]
+      },
+      {
+        "hwnd": 41881400,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "保存为预设",
+        "cls": "Button",
+        "id": 1841,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31024,
+          -31277,
+          -30884,
+          -31234
+        ]
+      },
+      {
+        "hwnd": 331572,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "恢复默认",
+        "cls": "Button",
+        "id": 1840,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31274,
+          -31204,
+          -31089,
+          -31161
+        ]
+      },
+      {
+        "hwnd": 331594,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "20 / 60 / 20",
+        "cls": "Button",
+        "id": 181,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31274,
+          -31104,
+          -31089,
+          -31064
+        ]
+      },
+      {
+        "hwnd": 397136,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "25 / 50 / 25",
+        "cls": "Button",
+        "id": 182,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31079,
+          -31104,
+          -30894,
+          -31064
+        ]
+      },
+      {
+        "hwnd": 4460338,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "词典与生词本",
+        "cls": "Button",
+        "id": 183,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31079,
+          -31204,
+          -30884,
+          -31161
+        ]
+      },
+      {
+        "hwnd": 9047366,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "书架",
+        "cls": "EXReaderShelf",
+        "id": 0,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31991,
+          -31937,
+          -30829,
+          -31109
+        ]
+      },
+      {
+        "hwnd": 2494208,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "最近阅读",
+        "cls": "ListBox",
+        "id": 190,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31961,
+          -31782,
+          -30859,
+          -31139
+        ]
+      },
+      {
+        "hwnd": 10161700,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "＋ 打开书籍",
+        "cls": "Button",
+        "id": 191,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31064,
+          -31893,
+          -30889,
+          -31843
+        ]
+      },
+      {
+        "hwnd": 50269964,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "系列 / 标签",
+        "cls": "Button",
+        "id": 192,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31379,
+          -31893,
+          -31229,
+          -31843
+        ]
+      },
+      {
+        "hwnd": 397104,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "阅读统计",
+        "cls": "Button",
+        "id": 193,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31219,
+          -31893,
+          -31074,
+          -31843
+        ]
+      },
+      {
+        "hwnd": 102633010,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "系列、标签与阅读统计",
+        "cls": "EXReaderShelfMeta",
+        "id": 0,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31991,
+          -31937,
+          -31991,
+          -31937
+        ]
+      },
+      {
+        "hwnd": 40243142,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "导入路径",
+        "cls": "Static",
+        "id": 100,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31925,
+          -31921,
+          -31905
+        ]
+      },
+      {
+        "hwnd": 331850,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 101,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31919,
+          -31929,
+          -31101,
+          -31903
+        ]
+      },
+      {
+        "hwnd": 1249344,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "导入(&I)",
+        "cls": "Button",
+        "id": 102,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31097,
+          -31929,
+          -31017,
+          -31903
+        ]
+      },
+      {
+        "hwnd": 1248562,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "打开(&O)",
+        "cls": "Button",
+        "id": 103,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31005,
+          -31929,
+          -30925,
+          -31903
+        ]
+      },
+      {
+        "hwnd": 1379902,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "删除(&D)",
+        "cls": "Button",
+        "id": 104,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -30921,
+          -31929,
+          -30841,
+          -31903
+        ]
+      },
+      {
+        "hwnd": 1183800,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "上一页(&P)",
+        "cls": "Button",
+        "id": 105,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31983,
+          -31897,
+          -31907,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 1314704,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "下一页(&N)",
+        "cls": "Button",
+        "id": 106,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31901,
+          -31897,
+          -31825,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 1052660,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "全选本页(&A)",
+        "cls": "Button",
+        "id": 107,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31819,
+          -31897,
+          -31735,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 462120,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "复制引用(&C)",
+        "cls": "Button",
+        "id": 108,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31729,
+          -31897,
+          -31645,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 725074,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "添加标注(&T)",
+        "cls": "Button",
+        "id": 109,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31639,
+          -31897,
+          -31559,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 7015962,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "更新标注(&U)",
+        "cls": "Button",
+        "id": 110,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31553,
+          -31897,
+          -31489,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 200794,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "删除标注(&R)",
+        "cls": "Button",
+        "id": 111,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31483,
+          -31897,
+          -31403,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 41225126,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "跳转标注(&J)",
+        "cls": "Button",
+        "id": 112,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31397,
+          -31897,
+          -31333,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 34148234,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "字号-",
+        "cls": "Button",
+        "id": 113,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31327,
+          -31897,
+          -31263,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 1576534,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "字号+",
+        "cls": "Button",
+        "id": 114,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31257,
+          -31897,
+          -31193,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 13373018,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "缩放-",
+        "cls": "Button",
+        "id": 115,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31187,
+          -31897,
+          -31123,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 4132578,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "缩放+",
+        "cls": "Button",
+        "id": 116,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31117,
+          -31897,
+          -31053,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 26280062,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "取消(&X)",
+        "cls": "Button",
+        "id": 117,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -31047,
+          -31897,
+          -30987,
+          -31869
+        ]
+      },
+      {
+        "hwnd": 1510982,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "书架",
+        "cls": "Static",
+        "id": 118,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31861,
+          -31709,
+          -31843
+        ]
+      },
+      {
+        "hwnd": 396522,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "书架",
+        "cls": "ListBox",
+        "id": 119,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31841,
+          -31709,
+          -31533
+        ]
+      },
+      {
+        "hwnd": 16256398,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "标注（双击跳转）",
+        "cls": "Static",
+        "id": 120,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31529,
+          -31709,
+          -31511
+        ]
+      },
+      {
+        "hwnd": 658642,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "标注列表",
+        "cls": "ListBox",
+        "id": 121,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31509,
+          -31709,
+          -31225
+        ]
+      },
+      {
+        "hwnd": 1707550,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "标注内容(&M)",
+        "cls": "Static",
+        "id": 151,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31219,
+          -31709,
+          -31201
+        ]
+      },
+      {
+        "hwnd": 396508,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 122,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31199,
+          -31709,
+          -31147
+        ]
+      },
+      {
+        "hwnd": 14683206,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "阅读区域",
+        "cls": "EXReaderPage",
+        "id": 123,
+        "visible": true,
+        "enabled": true,
+        "rect": [
+          -31991,
+          -31867,
+          -30829,
+          -31109
+        ]
+      },
+      {
+        "hwnd": 1445710,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "未打开书籍",
+        "cls": "Static",
+        "id": 124,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31983,
+          -31137,
+          -31653,
+          -31115
+        ]
+      },
+      {
+        "hwnd": 11012548,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "文档已保存。",
+        "cls": "Static",
+        "id": 125,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31645,
+          -31137,
+          -30837,
+          -31115
+        ]
+      },
+      {
+        "hwnd": 136580688,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "← 书架",
+        "cls": "Button",
+        "id": 180,
+        "visible": true,
+        "enabled": true,
+        "rect": [
+          -31976,
+          -31927,
+          -31866,
+          -31877
+        ]
+      },
+      {
+        "hwnd": 70255742,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "目录",
+        "cls": "Button",
+        "id": 160,
+        "visible": true,
+        "enabled": false,
+        "rect": [
+          -30937,
+          -31927,
+          -30887,
+          -31877
+        ]
+      },
+      {
+        "hwnd": 65802288,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "设置",
+        "cls": "Button",
+        "id": 161,
+        "visible": true,
+        "enabled": true,
+        "rect": [
+          -30889,
+          -31927,
+          -30839,
+          -31877
+        ]
+      },
+      {
+        "hwnd": 11864196,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "全文搜索",
+        "cls": "Button",
+        "id": 180,
+        "visible": true,
+        "enabled": false,
+        "rect": [
+          -30984,
+          -31927,
+          -30934,
+          -31877
+        ]
+      },
+      {
+        "hwnd": 397072,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "全文搜索",
+        "cls": "EXReaderSearchBar",
+        "id": 0,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31991,
+          -31867,
+          -30829,
+          -31807
+        ]
+      },
+      {
+        "hwnd": 331578,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "搜索",
+        "cls": "Static",
+        "id": 0,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31966,
+          -31857,
+          -31916,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 74714286,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "",
+        "cls": "Edit",
+        "id": 181,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31911,
+          -31857,
+          -31344,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 10882744,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "第 0 / 共 0 个",
+        "cls": "Static",
+        "id": 187,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31174,
+          -31857,
+          -30979,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 38604448,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "↑",
+        "cls": "Button",
+        "id": 182,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -30974,
+          -31857,
+          -30934,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 41618504,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "↓",
+        "cls": "Button",
+        "id": 183,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          -30929,
+          -31857,
+          -30889,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 2296862,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "Aa",
+        "cls": "Button",
+        "id": 184,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31334,
+          -31857,
+          -31254,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 340790290,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "全词",
+        "cls": "Button",
+        "id": 185,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -31254,
+          -31857,
+          -31174,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 17567038,
+        "parent": 462704,
+        "thread": 8240,
+        "title": "×",
+        "cls": "Button",
+        "id": 186,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          -30884,
+          -31857,
+          -30844,
+          -31817
+        ]
+      },
+      {
+        "hwnd": 921324,
+        "parent": null,
+        "thread": 8240,
+        "title": "",
+        "cls": "ComboLBox",
+        "id": 1000,
+        "visible": false,
+        "enabled": true,
+        "rect": [
+          0,
+          24,
+          238,
+          250
+        ]
+      },
+      {
+        "hwnd": 200568,
+        "parent": null,
+        "thread": 8240,
+        "title": "MSCTFIME UI",
+        "cls": "MSCTFIME UI",
+        "id": 0,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "hwnd": 856038,
+        "parent": null,
+        "thread": 8240,
+        "title": "Default IME",
+        "cls": "IME",
+        "id": 0,
+        "visible": false,
+        "enabled": false,
+        "rect": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "threads": [
+      {
+        "thread": 8240,
+        "okay": true,
+        "active": 462704,
+        "focus": 462704,
+        "caret": null,
+        "caret_rect": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "keyboard_layout": "0x8040804"
+      }
+    ]
+  },
+  "result": "No caret visible; actual GetGUIThreadInfo focus is top-level, not edit page."
+}

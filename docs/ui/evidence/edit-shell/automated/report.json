@@ -1,0 +1,21 @@
+{
+  "automated_checks": "pass",
+  "warnings": 0,
+  "undo": 20,
+  "redo": 20,
+  "sha256": {
+    "undo-before.utf8": "2fdf7a63aaebb4c0da24bbec9e51fdee669dce3d71a6d4ebbd78ea4a445ad28d",
+    "undo-after.utf8": "2fdf7a63aaebb4c0da24bbec9e51fdee669dce3d71a6d4ebbd78ea4a445ad28d",
+    "redo-before.utf8": "7de791617fe076faac10d5415bc6d73fc5810f3418a24a85960f9ff92a325c56",
+    "redo-after.utf8": "7de791617fe076faac10d5415bc6d73fc5810f3418a24a85960f9ff92a325c56",
+    "ui-undo-before.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "ui-undo-after.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "ui-redo-before.utf8": "5ccd0688f0515a3333bda893fd79e748a747601e20dde6db3c3ef778d79eb2a4",
+    "ui-redo-after.utf8": "5ccd0688f0515a3333bda893fd79e748a747601e20dde6db3c3ef778d79eb2a4",
+    "ui-before-save.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "ui-after-reopen.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "process-after-reopen.utf8": "393cb862d18809a79850af1dc946c400f3cdb74e3f767edf3bc178d3aab2c3df",
+    "roundtrip.docx": "b70f9721a8da2c6f74559bb03a70b10d845e1b59d778541ca667ecf52ff098a5"
+  },
+  "interactive_checks": "pending: real-window caret/selection/IME/close-prompt screenshots and Microsoft Pinyin input"
+}

@@ -1,0 +1,2 @@
+[1/2] Building C object CMakeFiles/check_shell_edit_ui.dir/check_shell_edit_ui.c.obj
+[2/2] Linking CXX executable check_shell_edit_ui.exe
