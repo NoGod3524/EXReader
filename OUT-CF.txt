@@ -1,3 +1,6 @@
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+[恢复 Git 历史中的既有记录；前面的额度提示保留]
 构建和测试正在后台运行,完成后我会收到通知,到时再汇报结果并继续推送。
 
 目前的进展:
@@ -14,3 +17,9 @@ Configure 正在后台重跑,以便拿到完整的报错,目前还没有输出�
 构建已用本地依赖源码重新启动(只加了 cmake 的依赖目录覆盖,仓库没动)。完成后会通知我,结果出来前不推送。
 
 You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+[2026-11-11 恢复核对]
+工作树和分支均符合要求；HEAD=f2aad42a，与 PR 远端 head 一致。既有合并 37d54bd5 已在历史中，不重做。
+fetch 后 origin/main=fe9adf43；当前领先 12 / 落后 35，需要继续合并新增 main 提交。
+已有 LastTest.log 只有开始/结束记录，没有测试结果，不能视为验证完成。
+tests/check_reading_release.py SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。
