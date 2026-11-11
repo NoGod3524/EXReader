@@ -1,0 +1,4 @@
+① 冲突文件: 无。origin/main(fe3d46e1) 已在本地 HEAD 3435e099 合并完成且无冲突/无 U 标记；该合并此前未推送，本次推送后 PR 即可更新。
+② 补文档(ABI 均为 实验): exr_document_media, exr_publication_media_overlay, exr_media_overlay_free
+③ check_sdk_docs.py exit=0; 最后三行: "binary": null, / "errors": [], / "passed": true
+④ 未在 CI 看到其他失败项(未查询 CI 结果，推送后需主控确认)。

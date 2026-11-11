@@ -1,0 +1,10 @@
+PR #128 的分支已推送到 `codex/media-epub-2-20261110`（`d6194d04..0352498d`），本地没有 U 冲突标记，`check_sdk_docs.py` 现在通过。我还没看推送后的 CI 结果，所以其他 CI 项是否通过还不知道。
+
+- **冲突**：没有文件需要解。`origin/main`（fe3d46e1）在本地 HEAD `3435e099` 里已经无冲突合并过，只是之前一直没推送。PR 头还停在 `d6194d04`，所以 GitHub 才显示 CONFLICTING。这次一推送就把合并带上去了。
+- **API 文档**：`docs/API.md` 补了 3 个条目，ABI 都标为 `实验`，签名从头文件复制，没动检查脚本：
+  - `exr_document_media`
+  - `exr_publication_media_overlay`
+  - `exr_media_overlay_free`
+- **检查结果**：`check_sdk_docs.py` 的 `errors` 为空，`passed: true`。
+
+报告写在 `RESOLVE-OUT.txt`，没有提交，和 `CASCADE-CLAUDE-OUT.txt` 一样还是未跟踪文件。我没有合并 PR，也没动 main。
