@@ -244,7 +244,8 @@ def run_group(group, api, output=None):
         vertical = '<w:tr>' + cell('start', '<w:vMerge w:val="restart"/>') + cell('side0') + '</w:tr>'
         continuation = '<w:tr>' + cell('', '<w:vMerge/>') + cell('side1') + '</w:tr>'
         horizontal = '<w:tr>' + cell('h', '<w:hMerge w:val="restart"/>') + cell('', '<w:hMerge/>') + '</w:tr>'
-        for protected in (MERGED, '<w:tr>' + SHADED + cell('side') + '</w:tr>', vertical + continuation, horizontal):
+        multipara = '<w:tr><w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/></w:tcPr>' + paragraph('P1') + paragraph('P2') + '</w:tc>' + cell('side') + '</w:tr>'
+        for protected in (MERGED, '<w:tr>' + SHADED + cell('side') + '</w:tr>', vertical + continuation, horizontal, multipara):
             source = package(body='<w:tbl>' + GRID + protected + row(1) + row(2) + '</w:tbl>' + SECT)
             doc = api.read(source)
             try:
@@ -252,6 +253,8 @@ def run_group(group, api, output=None):
                 target = t.count - 1
                 api.text(doc, tid, target, 0, 'Z2')
                 assert api.table_insert_row(doc, tid, target) == 0
+                with_inserted = api.write(doc)
+                assert all(p.find('w:pPr', NS) is not None for p in xml(with_inserted).findall('.//w:tc/w:p', NS))
                 assert api.table_delete_row(doc, tid, target + 1) == 0
                 saved = api.write(doc)
                 assert protected.encode() in unzip(saved)['word/document.xml']
@@ -268,6 +271,16 @@ def run_group(group, api, output=None):
                 api.doc_free(reopened)
             finally:
                 api.doc_free(doc)
+        style_cell = '<w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr><w:r><w:t>Styled</w:t></w:r></w:p></w:tc>'
+        styled_tbl = package(body='<w:tbl>' + GRID + '<w:tr>' + style_cell + style_cell + '</w:tr></w:tbl>' + SECT)
+        doc = api.read(styled_tbl)
+        try:
+            tid, _ = api.table(doc)
+            assert api.table_insert_row(doc, tid, 0) == 0
+            saved = api.write(doc)
+            assert all(p.find('w:pPr', NS) is not None for p in xml(saved).findall('.//w:tc/w:p', NS))
+        finally:
+            api.doc_free(doc)
     elif group == 'table-rows':
         doc = api.read(fixture())
         try:

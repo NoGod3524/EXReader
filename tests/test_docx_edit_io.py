@@ -218,6 +218,20 @@ def test(group, api):
                 assert api.paragraphs(model)[0].runs[0].props.present == 0
             finally:
                 api.doc_free(model)
+            inherited = package(body='<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:spacing w:before="120"/><w:ind w:firstLine="240"/></w:pPr><w:r><w:t>inherit</w:t></w:r></w:p><w:sectPr/>')
+            model = api.read(inherited)
+            try:
+                q = api.paragraphs(model)[0]
+                pp = PP.from_buffer_copy(q.props)
+                pp.present |= 1
+                pp.align = 1
+                pp.before = 180
+                pp.first = 360
+                assert api.set_paragraph_props(model, q.id, c.byref(pp)) == 0
+                out_xml = unzip(api.write(model))['word/document.xml']
+                assert b'w:line="0"' not in out_xml and b'w:left="0"' not in out_xml and b'w:right="0"' not in out_xml
+            finally:
+                api.doc_free(model)
         elif group == 'edits':
             paragraphs = api.paragraphs(doc)
             ids = [p.id for p in paragraphs]
