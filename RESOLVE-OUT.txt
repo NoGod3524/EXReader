@@ -1,0 +1,7 @@
+① 冲突文件: OUT.txt — 两侧内容全部保留(仅删冲突标记); RESOLVE.md — 保留本分支版本(任务说明文件, 非报告); CMakeLists.txt 自动合并无冲突。
+② 补 API 文档: 无 (check_sdk_docs.py 已通过, 无 undocumented functions)。
+③ check_sdk_docs.py exit=0; 最后三行:
+  "errors": [],
+  "passed": true
+}
+④ 未查看 CI (未联网查 Actions); 本地无其他失败项已知。已推送 a8b3e75b 到 codex/vertical-expand-20261109。
