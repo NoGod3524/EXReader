@@ -1,0 +1,13 @@
+test_each_contract_mutation (test_verify_docx.VerifyTests.test_each_contract_mutation) ... ok
+test_good_then_deliberately_broken_cli (test_verify_docx.VerifyTests.test_good_then_deliberately_broken_cli) ... ok
+test_header_must_be_used_and_page_is_not_pageref (test_verify_docx.VerifyTests.test_header_must_be_used_and_page_is_not_pageref) ... ok
+test_inherited_format_and_direct_override (test_verify_docx.VerifyTests.test_inherited_format_and_direct_override) ... ok
+test_later_section_and_later_paragraph_are_checked (test_verify_docx.VerifyTests.test_later_section_and_later_paragraph_are_checked) ... ok
+test_malformed_zip_xml_and_missing_part_fail (test_verify_docx.VerifyTests.test_malformed_zip_xml_and_missing_part_fail) ... ok
+test_metrics_exclude_separator_notes_and_detect_all_six_losses (test_verify_docx.VerifyTests.test_metrics_exclude_separator_notes_and_detect_all_six_losses) ... ok
+test_pdf_compares_page_count_and_each_pages_text (test_verify_docx.VerifyTests.test_pdf_compares_page_count_and_each_pages_text) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 16.831s
+
+OK

@@ -31,6 +31,58 @@ static int escaped(exr_buffer *b, const char *text, size_t n) {
   return 1;
 }
 static int literal(exr_buffer *b, const char *s) { return exr_append(b, s, strlen(s)); }
+/* OOXML uses half-points for sizes, twips for distances, and 240ths of a
+   line for automatic line spacing. Keep direct formatting on field runs too. */
+#define DOCX_RPR "<w:rPr><w:rFonts w:ascii=\"Times New Roman\" " \
+  "w:hAnsi=\"Times New Roman\" w:eastAsia=\"Times New Roman\"/>" \
+  "<w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr>"
+#define DOCX_SPACING "<w:spacing w:before=\"0\" w:after=\"120\" " \
+  "w:line=\"480\" w:lineRule=\"auto\"/>"
+#define DOCX_CENTER "<w:p><w:pPr>" DOCX_SPACING \
+  "<w:ind w:firstLine=\"0\"/><w:jc w:val=\"center\"/>" DOCX_RPR "</w:pPr>"
+#define DOCX_DATE DOCX_CENTER "<w:fldSimple w:instr=\" DATE \" w:dirty=\"true\">" \
+  "<w:r>" DOCX_RPR "</w:r></w:fldSimple></w:p>\n"
+static int docx_references(const exr_document *d, const exr_block *block) {
+  const char *names[] = {"references", "works cited", "bibliography"};
+  size_t i, j, n = block->end - block->start;
+  if (!block->heading) return 0;
+  for (i = 0; i < sizeof(names) / sizeof(*names); i++) {
+    if (strlen(names[i]) != n) continue;
+    for (j = 0; j < n; j++) {
+      unsigned char c = (unsigned char)d->text[block->start + j];
+      if (c >= 'A' && c <= 'Z') c += 'a' - 'A';
+      if (c != (unsigned char)names[i][j]) break;
+    }
+    if (j == n) return 1;
+  }
+  return 0;
+}
+static int docx_body(exr_buffer *b, const exr_document *d, const exr_control *control,
+                     exr_error *e, exr_status *status) {
+  size_t i;
+  int title = d->count && d->blocks[0].heading;
+  /* Do not invent a title or duplicate metadata in text-only conversions. */
+  if (!title && !literal(b, DOCX_DATE)) return 0;
+  for (i = 0; i < d->count; i++) {
+    const exr_block *block = &d->blocks[i];
+    if (!(i & 63)) {
+      *status = exr_control_poll(control, EXR_STAGE_EXPORT, i, d->count, e);
+      if (*status != EXR_OK) return 0;
+    }
+    if (i && docx_references(d, block) &&
+        !literal(b, "<w:p><w:r>" DOCX_RPR "<w:br w:type=\"page\"/></w:r></w:p>\n"))
+      return 0;
+    if (!literal(b, block->heading ? DOCX_CENTER :
+        "<w:p><w:pPr>" DOCX_SPACING
+        "<w:ind w:firstLine=\"720\"/><w:jc w:val=\"left\"/></w:pPr>") ||
+        !literal(b, "<w:r>" DOCX_RPR "<w:t xml:space=\"preserve\">") ||
+        !escaped(b, d->text + block->start, block->end - block->start) ||
+        !literal(b, "</w:t></w:r></w:p>\n")) return 0;
+    if (!i && title && !literal(b, DOCX_DATE)) return 0;
+  }
+  *status = exr_control_poll(control, EXR_STAGE_EXPORT, d->count, d->count, e);
+  return *status == EXR_OK;
+}
 /* The text exporter has no per-byte control hook. Cancellation is observed
    before/after each block batch and before publication; see CONVERSION.md. */
 static int body(exr_buffer *b, const exr_document *d, const char *before, const char *after,
@@ -149,10 +201,14 @@ exr_status exr_document_export_control(const exr_document *d, exr_format f,
   } else if (f == EXR_DOCX) {
     if (!literal(&b, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><w:document "
                      "xmlns:w=\"http://schemas.openxmlformats.org/"
-                     "wordprocessingml/2006/main\"><w:body>") ||
-        !body(&b, d, "<w:p><w:r><w:t xml:space=\"preserve\">", "</w:t></w:r></w:p>\n",
-              control, e, &status) ||
-        !literal(&b, "<w:sectPr/></w:body></w:document>"))
+                     "wordprocessingml/2006/main\" "
+                     "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><w:body>") ||
+        !docx_body(&b, d, control, e, &status) ||
+        !literal(&b, "<w:sectPr><w:headerReference w:type=\"default\" r:id=\"rId1\"/>"
+                     "<w:pgSz w:w=\"12240\" w:h=\"15840\"/>"
+                     "<w:pgMar w:top=\"1440\" w:right=\"1440\" w:bottom=\"1440\" w:left=\"1440\" "
+                     "w:header=\"720\" w:footer=\"720\" w:gutter=\"0\"/>"
+                     "</w:sectPr></w:body></w:document>"))
       goto failed;
   } else
     return exr_fail(e, EXR_FORMAT, "This export format is not implemented");
@@ -177,15 +233,40 @@ exr_status exr_document_export_control(const exr_document *d, exr_format f,
                         "PartName=\"/word/document.xml\" "
                         "ContentType=\"application/"
                         "vnd.openxmlformats-officedocument.wordprocessingml.document.main+"
-                        "xml\"/></Types>";
+                        "xml\"/><Override PartName=\"/word/header1.xml\" "
+                        "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml\"/>"
+                        "<Override PartName=\"/word/styles.xml\" "
+                        "ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/>"
+                        "</Types>";
     const char *rels = "<?xml version=\"1.0\"?><Relationships "
                        "xmlns=\"http://schemas.openxmlformats.org/package/2006/"
                        "relationships\"><Relationship Id=\"r1\" "
                        "Type=\"http://schemas.openxmlformats.org/"
                        "officeDocument/2006/relationships/officeDocument\" "
                        "Target=\"word/document.xml\"/></Relationships>";
+    const char *document_rels = "<?xml version=\"1.0\"?><Relationships "
+        "xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+        "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/header\" "
+        "Target=\"header1.xml\"/><Relationship Id=\"rId2\" "
+        "Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" "
+        "Target=\"styles.xml\"/></Relationships>";
+    /* Word creates new result runs when it evaluates an empty DATE field.
+       Supply document defaults so they cannot inherit the host's Normal font. */
+    const char *styles = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        "<w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+        "<w:docDefaults><w:rPrDefault>" DOCX_RPR "</w:rPrDefault></w:docDefaults>"
+        "<w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"Normal\">"
+        "<w:name w:val=\"Normal\"/><w:qFormat/>" DOCX_RPR "</w:style></w:styles>";
+    const char *header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        "<w:hdr xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\">"
+        "<w:p><w:pPr><w:spacing w:after=\"0\" w:line=\"240\" w:lineRule=\"auto\"/>"
+        "<w:jc w:val=\"right\"/>" DOCX_RPR "</w:pPr><w:fldSimple w:instr=\" PAGE \" w:dirty=\"true\">"
+        "<w:r>" DOCX_RPR "<w:t>1</w:t></w:r></w:fldSimple></w:p></w:hdr>";
     if (!add(&zip, "[Content_Types].xml", types, strlen(types), 6) ||
         !add(&zip, "_rels/.rels", rels, strlen(rels), 6) ||
+        !add(&zip, "word/_rels/document.xml.rels", document_rels, strlen(document_rels), 6) ||
+        !add(&zip, "word/header1.xml", header, strlen(header), 6) ||
+        !add(&zip, "word/styles.xml", styles, strlen(styles), 6) ||
         !add(&zip, "word/document.xml", b.data, b.size, 6))
       goto failed;
   } else {
