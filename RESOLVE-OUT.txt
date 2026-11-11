@@ -1,0 +1,8 @@
+① 冲突文件：无。origin/main 已是 HEAD 祖先（git merge origin/main = Already up to date），PR 分支也是 HEAD 祖先，无 U 标记。
+② 补的 API 文档：无需补（documented 457 / public 457，100%）。
+③ check_sdk_docs.py exit=0；末三行：
+  "errors": [],
+  "passed": true
+  }
+④ 本地无其他失败项；未查看 CI 实际名称（未联网查询 CI）。
+推送：HEAD(e6b9f3f2) -> claude/review-cleanup-20261109（领先原远端 8 个提交）。
