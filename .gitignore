@@ -2,6 +2,8 @@ build/
 node_modules/
 dist/
 /release/
+!tools/release/
+!tools/release/**
 src-tauri/target/
 src-tauri/gen/
 test-results/

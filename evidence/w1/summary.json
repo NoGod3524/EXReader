@@ -1,0 +1,147 @@
+{
+  "base_revision": "3076d3dd",
+  "model_files": [
+    "src/docx_edit.c",
+    "include/exr/edit.h"
+  ],
+  "layer": "doc",
+  "internal_headers_added": 0,
+  "model": "deep-owned sections, ordered blocks, paragraph runs, opaque table/drawing XML, OPC parts; explicit properties, uint64 IDs",
+  "history": "local immutable block versions + splice journal; one transaction = one history entry; poisoned commit auto-rolls back",
+  "transaction": {
+    "inserts": 20,
+    "undo_calls": 1,
+    "remaining_blocks": 0,
+    "redo_calls": 1,
+    "restored_blocks": 20
+  },
+  "rollback": {
+    "failure_command": 10,
+    "prior_inserts_reverted": 9,
+    "seed_blocks_compared": 4,
+    "comparison": "all blocks, run IDs/text/properties/XML, sections, OPC names/IDs/bytes"
+  },
+  "history_limit": {
+    "modifications": 120,
+    "undo_successes": 100,
+    "oldest_remaining_blocks": 20,
+    "extra_undo": "EXR_ARGUMENT",
+    "redo_successes": 100,
+    "extra_redo": "EXR_ARGUMENT",
+    "configured_depths_checked": [
+      100,
+      3,
+      0
+    ]
+  },
+  "fault_injection": {
+    "allocation_failures": 62,
+    "live_allocations_after_free": 0,
+    "all_five_commands": "automatic and inside transaction"
+  },
+  "sanitizers": {
+    "compiler": "Clang 23.1.5",
+    "instrumentation": "address,undefined; no recovery",
+    "semantic_groups_passed": 11
+  },
+  "stress": {
+    "logical_pages": 100,
+    "base_paragraphs": 2000,
+    "page_breaks": 99,
+    "text_bytes_per_paragraph": 120,
+    "insertions": 200,
+    "history_depth": 100,
+    "p50_us": 1.599983,
+    "p95_us": 1.700013,
+    "model_bytes_before": 928376,
+    "model_bytes_after": 1039776,
+    "model_delta_bytes": 111400,
+    "rss_before": 5705728,
+    "rss_after": 5718016,
+    "rss_delta_bytes": 12288,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+    "build_type": "Release",
+    "link": "shared SDK",
+    "insertion_position": "middle",
+    "quantile": "nearest rank over 200 single insertions, wall clock incl. API overhead",
+    "memory_contract": "model: requested retained allocation bytes incl. history/capacity, excludes allocator overhead; RSS: Windows working set",
+    "page_contract": "100 logical pages explicitly delimited by 99 page-break blocks; no layout/export"
+  },
+  "realbooks": {
+    "books": 19,
+    "pages": 11318,
+    "glyphs": 8648571,
+    "changed_page_hashes": 0,
+    "changed_page_counts": 0,
+    "content_fingerprint": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434",
+    "baseline_provenance": "../EXReader-perfopt-20261109/build/integration-realbooks.json; original source 761085eb; git diff 761085eb..3076d3dd -- src include empty",
+    "dll_sha256": "dfcd1e0634a457cbcb672f1058d800d79a8a0fcd158e549ac8d094d1702e0b63",
+    "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+    "layout": {
+      "width": 720,
+      "height": 1040,
+      "margin": 36,
+      "font_size": 28,
+      "line_height": 1.5,
+      "paragraph_spacing": 10,
+      "document_css": 1,
+      "embedded_fonts": 1,
+      "direction": 0,
+      "fixed_max_dimension": 720
+    }
+  },
+  "protected_paths_unchanged": [
+    "src/docx.c",
+    "src/export_text.c",
+    ".github/"
+  ],
+  "limitations": "Seed-model construction from decoder-supplied values/opaque bytes; no DOCX parsing, writing, table editing or image insertion in this change.",
+  "test_groups": [
+    "native-docx-edit-insert",
+    "native-docx-edit-split",
+    "native-docx-edit-para-props",
+    "native-docx-edit-run-props",
+    "native-docx-edit-delete",
+    "native-docx-edit-transaction",
+    "native-docx-edit-rollback",
+    "native-docx-edit-history",
+    "native-docx-edit-preservation",
+    "native-docx-edit-boundaries",
+    "native-docx-edit-mixed",
+    "native-docx-edit-benchmark",
+    "native-docx-edit-allocation"
+  ],
+  "layer_audit": {
+    "objects": 120,
+    "symbol_references": 1366,
+    "source_header_dependencies": 1046,
+    "inverse_references": 0,
+    "inverse_includes": 0
+  },
+  "source_sha256": {
+    "src/docx_edit.c": "969a7ec17b45ed6ff7460949bbe937c6c77cf4142e1206d30c874eef4baa0c03",
+    "include/exr/edit.h": "679cae3909cd52ad18a08e5de62d2c1be8fb28cda2f7dcb4832661b2ca94c89a",
+    "tests/test_docx_edit.c": "0c92b17b5e21799f82108cc90d7eed4c39e93fa7d31f1c7e816b1e7fcffde820",
+    "tests/test_docx_edit_alloc.c": "a386c0220ab287a61393166556d7b7b6d3ecc93997cab527a2332d17195c68e4",
+    "CMakeLists.txt": "63c2755a9a48011d03ff6d37dd9365cb4c61b499445cfd683d660dab3be9e9b7",
+    "cmake/modules.cmake": "1db41ccda889cd61675ab6e5c57b327d7c611c3c182380d6780f2afbf8c1f948",
+    "tools/layers.json": "c8cd63f8e23bc7b074dc633d64f26a673179a226eb735ad6fe45da6525900c7b",
+    "tools/release/check_release.py": "bf12590968c36fef101a2983bb8728aa3887113bf8dbc2d569ac52f3d2652e45"
+  },
+  "release_test_scheduling": {
+    "run_serial": true,
+    "timeout_seconds": 180,
+    "passed_seconds": 9.97,
+    "assertions_unchanged": true
+  },
+  "ctest": {
+    "passed": 270,
+    "total": 270,
+    "existing": 257,
+    "new_groups": 13,
+    "wall_seconds": 74.36,
+    "report": "ctest.txt"
+  }
+}
