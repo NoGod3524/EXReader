@@ -23,3 +23,9 @@ You've hit your 5-hour limit · resets 5:40pm (America/New_York)
 fetch 后 origin/main=fe9adf43；当前领先 12 / 落后 35，需要继续合并新增 main 提交。
 已有 LastTest.log 只有开始/结束记录，没有测试结果，不能视为验证完成。
 tests/check_reading_release.py SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。
+
+[步骤 1 完成：合并最新 main]
+本轮唯一冲突 RESOLVE-OUT.txt：保留两侧全部行，仅删除冲突标记。
+核验上轮 37d54bd5：OUT.txt、RESOLVE-OUT.txt 两侧保留；RESOLVE.md 漏掉 main 中 PR #107 的一句任务说明，本轮已补回。三个文件均通过双方逐行计数保留核验。
+CMakeLists.txt 自动合并，双方新增测试均保留；tools/layers.json 含 main 新增两个 src/*.h 登记，无 API 命名冲突。
+git diff --check 只报告 main 既有配置日志的尾空白、并集报告的末尾空行；按报告内容保留要求不清理。

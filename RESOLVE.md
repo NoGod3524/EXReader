@@ -9,6 +9,7 @@
 ## 你的任务
 
 让 PR #116 变成 CI 可绿的状态。两件事，按需做：
+让 PR #107 变成 CI 可绿的状态。两件事，按需做：
 
 ### A) 解冲突（它现在 `Cannot update PR branch due to conflicts`）
 

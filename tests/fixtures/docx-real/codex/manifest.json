@@ -1,0 +1,305 @@
+{
+  "license": "MIT; all prose, numeric data and image pixels are original",
+  "documents": [
+    {
+      "id": "01-table-horizontal",
+      "label": "表格：横向合并",
+      "path": "01-table-horizontal.docx",
+      "bytes": 28318,
+      "sha256": "094998e489109970a928f295ca252dcc159a885ea1ffb6604dbd96ce398ca718",
+      "feature": ".//w:gridSpan",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "02-table-vertical",
+      "label": "表格：纵向合并",
+      "path": "02-table-vertical.docx",
+      "bytes": 28457,
+      "sha256": "f92d2e433f0e3aeb30bd957ebb45ef4afa9004d89528c01bdc0432c5f12f3eb0",
+      "feature": ".//w:vMerge",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "03-table-nested",
+      "label": "表格：嵌套表",
+      "path": "03-table-nested.docx",
+      "bytes": 29408,
+      "sha256": "45ee8561ad2a9686332b0b18d25ecbe0d674bc3a49c00a0f4e84815476a73240",
+      "feature": ".//w:tc/w:tbl",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "04-table-repeat-header",
+      "label": "表格：跨页重复表头",
+      "path": "04-table-repeat-header.docx",
+      "bytes": 60444,
+      "sha256": "8df8596f71f902d28569d1ec94754cf3d856b4b92bcc28f150bb330bd42577f3",
+      "feature": ".//w:tblHeader",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "05-table-multi-paragraph",
+      "label": "表格：单元格多段",
+      "path": "05-table-multi-paragraph.docx",
+      "bytes": 28324,
+      "sha256": "550912e1092367b50c2dcd58493db95fa7e1b4da6bdb30697c739221f505655b",
+      "feature": ".//w:tc/w:p[2]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "06-field-page",
+      "label": "域：PAGE",
+      "path": "06-field-page.docx",
+      "bytes": 28858,
+      "sha256": "4f8e449c23c526218efef442cf578ea058e7c44faae271ae492224a4186511aa",
+      "feature": ".//w:fldSimple",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "07-field-numpages",
+      "label": "域：NUMPAGES",
+      "path": "07-field-numpages.docx",
+      "bytes": 29027,
+      "sha256": "1656cc0839c354919daf122f0ece1cf2dbf1a459790d64346932bbc3afb98ee0",
+      "feature": ".//w:instrText",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "08-field-date",
+      "label": "域：DATE",
+      "path": "08-field-date.docx",
+      "bytes": 29052,
+      "sha256": "10f05eefd43e345dfb51ddd7c977b10300f2e05ee1505d2e51098024a6663714",
+      "feature": ".//w:instrText",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "09-field-ref",
+      "label": "域：REF 交叉引用",
+      "path": "09-field-ref.docx",
+      "bytes": 29140,
+      "sha256": "17d45efdbdd39f8d43a3908530bccaf72a4ff48784d277a3e2d85a68e5507f34",
+      "feature": ".//w:bookmarkStart",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "10-field-toc",
+      "label": "域：TOC",
+      "path": "10-field-toc.docx",
+      "bytes": 29044,
+      "sha256": "717e8149124b10026da327883e7d6acc27ddc9b8b54cabf4e50433df356a66ab",
+      "feature": ".//w:instrText",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "11-list-multilevel",
+      "label": "编号：多级",
+      "path": "11-list-multilevel.docx",
+      "bytes": 29978,
+      "sha256": "62cc27e4d3d02fa7fdc02e2308b7d69826ca57134d1615fe96c3d44c397ab4af",
+      "feature": ".//w:ilvl",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "12-list-restart",
+      "label": "编号：重启",
+      "path": "12-list-restart.docx",
+      "bytes": 29978,
+      "sha256": "7131a0880fd19cdc2e05feb028513398143b4d0e3966a74b3a420f54b6ba24c8",
+      "feature": ".//w:numId[@w:val=\"2\"]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "13-list-style-bound",
+      "label": "编号：样式绑定",
+      "path": "13-list-style-bound.docx",
+      "bytes": 29962,
+      "sha256": "02c51c71604ad3fd49faf79c38c7bcf33705d19b6fa2fea4c89ae99bc8ccb95d",
+      "feature": ".//w:pStyle[@w:val=\"ActionList\"]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "14-style-inheritance",
+      "label": "样式：三级继承",
+      "path": "14-style-inheritance.docx",
+      "bytes": 28882,
+      "sha256": "8dc32f2a57e28d37ad52339f7942fbe5b95e2124748bd215793366b4ecaaaddd",
+      "feature": ".//w:pStyle[@w:val=\"ProjectHeading\"]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "15-style-direct-override",
+      "label": "样式：直接格式覆盖",
+      "path": "15-style-direct-override.docx",
+      "bytes": 29062,
+      "sha256": "ee8568b7a3e110eeacca76248212835b453313bacaa2f8eb8e4e20b0c345cfe8",
+      "feature": ".//w:rPr/w:b[@w:val=\"0\"]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "16-style-theme-fonts",
+      "label": "样式：主题字体与空格式 run",
+      "path": "16-style-theme-fonts.docx",
+      "bytes": 29109,
+      "sha256": "18c5bba233b6b67bd363d0d3309a46827468ca90d9319634dd5e72fcb333caeb",
+      "feature": ".//w:rFonts[@w:asciiTheme=\"majorHAnsi\"]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "17-section-margins",
+      "label": "节：不同页边距",
+      "path": "17-section-margins.docx",
+      "bytes": 29552,
+      "sha256": "1062064fd0cd7ab3de862f6f218577c795a1dfc6ad991a9e50da08fbe703f525",
+      "feature": ".//w:pPr/w:sectPr",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "18-section-landscape",
+      "label": "节：横向页混排",
+      "path": "18-section-landscape.docx",
+      "bytes": 29573,
+      "sha256": "a51d982f7f65d7105d898af5a0608fee4d9da45ee8eb2186843c2d79e9c84b10",
+      "feature": ".//w:pgSz[@w:orient=\"landscape\"]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "19-section-columns",
+      "label": "节：一二三栏混排",
+      "path": "19-section-columns.docx",
+      "bytes": 29572,
+      "sha256": "6dd57b97d4ae58ceb4d4b47accae4549a562b92ac6d24639421b7e38e8f6add3",
+      "feature": ".//w:cols[@w:num=\"3\"]",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "20-footnote-restart",
+      "label": "脚注：每页重编号",
+      "path": "20-footnote-restart.docx",
+      "bytes": 29317,
+      "sha256": "5a3bedb873396e006b3e23677783f98187b207317fd6fdcd3fea024f7fa05525",
+      "feature": ".//w:footnotePr/w:numRestart",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "21-footnote-table",
+      "label": "脚注：带表格",
+      "path": "21-footnote-table.docx",
+      "bytes": 30046,
+      "sha256": "5926071fe0d014c4cb8103eeb3c4c761e352b7e7cf76a77cc241e82feffea67c",
+      "feature": ".//w:footnoteReference",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "22-image-inline",
+      "label": "图形：内联 PNG",
+      "path": "22-image-inline.docx",
+      "bytes": 28773,
+      "sha256": "a838fbe1e6e4db22360a29f712c769cfe7b0300f3af97c2ba7b05bbdd69dca70",
+      "feature": ".//wp:inline",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "23-image-floating",
+      "label": "图形：四周环绕",
+      "path": "23-image-floating.docx",
+      "bytes": 29856,
+      "sha256": "d7ab99e80ffb3d493685cbfdba26f17b2a7a232b213da036b8bd33b98516acb7",
+      "feature": ".//wp:wrapSquare",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "24-shape-group",
+      "label": "图形：组合图形",
+      "path": "24-shape-group.docx",
+      "bytes": 30575,
+      "sha256": "3c0b46376333d909dcf46b463a2b807a83d34b4a128e52745515c6bc12223e52",
+      "feature": ".//wpg:wgp",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "25-textbox",
+      "label": "其他：文本框",
+      "path": "25-textbox.docx",
+      "bytes": 30316,
+      "sha256": "259eeb6b05c30fb00302da726631f40996fa83741e5b8f0016aff5aa74589f1a",
+      "feature": ".//w:txbxContent",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "26-comment-anchors",
+      "label": "其他：批注锚点",
+      "path": "26-comment-anchors.docx",
+      "bytes": 28934,
+      "sha256": "804e9b40e5f09e05bfda1ccb20a63e73d8cc02967e46cff1d79fec84c3c043c8",
+      "feature": ".//w:commentRangeStart",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "27-bookmarks",
+      "label": "其他：跨 run 书签",
+      "path": "27-bookmarks.docx",
+      "bytes": 28996,
+      "sha256": "4d55c1e7065b4e989ecb438ffd507a517a33ac0eceba34d67421d586f35e1597",
+      "feature": ".//w:bookmarkStart",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "28-hidden-text",
+      "label": "其他：隐藏文字",
+      "path": "28-hidden-text.docx",
+      "bytes": 28958,
+      "sha256": "aa00d690f6236ffc8627c09691177e91e1028497b58bfaaf08a5cf9e13baf38e",
+      "feature": ".//w:vanish",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "29-header-table",
+      "label": "其他：页眉表格",
+      "path": "29-header-table.docx",
+      "bytes": 28789,
+      "sha256": "002d115ad5728475f332c237334579edb74ca63257ee3b2ec7100e24c54460c5",
+      "feature": ".//w:headerReference",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    },
+    {
+      "id": "30-chinese-field-code",
+      "label": "其他：中文域代码",
+      "path": "30-chinese-field-code.docx",
+      "bytes": 29158,
+      "sha256": "560abdd9eb774c030e871f972a2e22036730fa79b162fdfa9014dfe416b169d8",
+      "feature": ".//w:instrText",
+      "edit_from": "Draft estimate: 42 units.",
+      "edit_to": "Reviewed estimate: 57 units; 中文 & <checked>."
+    }
+  ]
+}
