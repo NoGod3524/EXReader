@@ -1,0 +1,482 @@
+{
+  "library_sha256": "bf8fd70e9f2604013d22e857b4b287a1ba8b12b5f892a02e98e9acf73b4d6d77",
+  "documents": [
+    {
+      "id": "minitab-ch10",
+      "source_sha256": "e73c211e12cbd07e467d6c2f5b731a71d9b831d871f055a46e3de087f5b55d4d",
+      "legacy_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 336,
+          "after": 190,
+          "status": "FAIL",
+          "delta": -146,
+          "lost": 146
+        },
+        {
+          "metric": "characters",
+          "before": 13865,
+          "after": 13721,
+          "status": "FAIL",
+          "delta": -144,
+          "lost": 144
+        },
+        {
+          "metric": "tables",
+          "before": 10,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -10,
+          "lost": 10
+        },
+        {
+          "metric": "images",
+          "before": 17,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -17,
+          "lost": 17
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "status": "FAIL",
+          "lost_sections": 0,
+          "changed_sections": [
+            1
+          ]
+        }
+      ],
+      "legacy_sdk_reread": {
+        "before": {
+          "characters": 13909,
+          "sha256": "b1cca650115aeacab0935193c80f3073b5b3e443ca5fbd2c3ab26498c692ad70"
+        },
+        "after": {
+          "characters": 13909,
+          "sha256": "b1cca650115aeacab0935193c80f3073b5b3e443ca5fbd2c3ab26498c692ad70"
+        },
+        "status": "PASS"
+      },
+      "editable_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 336,
+          "after": 336,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 13865,
+          "after": 13865,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 10,
+          "after": 10,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 17,
+          "after": 17,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "content_hashes_equal": true,
+      "sdk_reread": "PASS",
+      "formatting_results_preserved": true
+    },
+    {
+      "id": "soci-syllabus",
+      "source_sha256": "dbc1fe7c9f99521074ed300e224f3d4ec906aedfc60d917220d2ffcc882913d9",
+      "legacy_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 117,
+          "after": 104,
+          "status": "FAIL",
+          "delta": -13,
+          "lost": 13
+        },
+        {
+          "metric": "characters",
+          "before": 5555,
+          "after": 5557,
+          "status": "FAIL",
+          "delta": 2,
+          "lost": 0
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -2,
+          "lost": 2
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "status": "FAIL",
+          "lost_sections": 4,
+          "changed_sections": [
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "legacy_sdk_reread": {
+        "before": {
+          "characters": 5659,
+          "sha256": "4ff88b1e413515ee498975917d1c4f39d2cf4d05b5b272bab223ab9d61cd972d"
+        },
+        "after": {
+          "characters": 5659,
+          "sha256": "4ff88b1e413515ee498975917d1c4f39d2cf4d05b5b272bab223ab9d61cd972d"
+        },
+        "status": "PASS"
+      },
+      "editable_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 117,
+          "after": 117,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 5555,
+          "after": 5555,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 2,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "content_hashes_equal": true,
+      "sdk_reread": "PASS",
+      "formatting_results_preserved": true
+    },
+    {
+      "id": "ohchr-40-69",
+      "source_sha256": "ca0701fe199aae7f35de67bfff4c66c70d7db3c65029a74ac96b8587fd42e214",
+      "legacy_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 209,
+          "after": 209,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 71205,
+          "after": 71315,
+          "status": "FAIL",
+          "delta": 110,
+          "lost": 0
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -2,
+          "lost": 2
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 5,
+          "after": 0,
+          "status": "FAIL",
+          "delta": -5,
+          "lost": 5
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "status": "FAIL",
+          "lost_sections": 0,
+          "changed_sections": [
+            1
+          ]
+        }
+      ],
+      "legacy_sdk_reread": {
+        "before": {
+          "characters": 71522,
+          "sha256": "7569fdda50104dbf66e97acdd690dfce3c741500dfaa33ee8e9b0f954611dc27"
+        },
+        "after": {
+          "characters": 71522,
+          "sha256": "7569fdda50104dbf66e97acdd690dfce3c741500dfaa33ee8e9b0f954611dc27"
+        },
+        "status": "PASS"
+      },
+      "editable_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 209,
+          "after": 209,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 71205,
+          "after": 71205,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 2,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 5,
+          "after": 5,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "after": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "content_hashes_equal": true,
+      "sdk_reread": "PASS",
+      "formatting_results_preserved": true
+    }
+  ],
+  "baseline_library_sha256": "706dd69abfbfcb2daa653bf7eed4d5096d71a72d91ac4a70e20622a4b3c272e8",
+  "total": 18,
+  "legacy_passed": 5,
+  "editable_passed": 18
+}
