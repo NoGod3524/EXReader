@@ -1,0 +1,127 @@
+{
+  "reference": "PyMuPDF",
+  "version": "1.28.2",
+  "scale": 1,
+  "pages": [
+    {
+      "page": 1,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.510102,
+      "max_error": 136,
+      "pixels_differ_percent": 99.331983
+    },
+    {
+      "page": 2,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.517249,
+      "max_error": 136,
+      "pixels_differ_percent": 99.333912
+    },
+    {
+      "page": 3,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.516635,
+      "max_error": 136,
+      "pixels_differ_percent": 99.333719
+    },
+    {
+      "page": 4,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.514214,
+      "max_error": 136,
+      "pixels_differ_percent": 99.329475
+    },
+    {
+      "page": 5,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.517391,
+      "max_error": 136,
+      "pixels_differ_percent": 99.333333
+    },
+    {
+      "page": 6,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.516267,
+      "max_error": 136,
+      "pixels_differ_percent": 99.332369
+    },
+    {
+      "page": 7,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.511218,
+      "max_error": 136,
+      "pixels_differ_percent": 99.33314
+    },
+    {
+      "page": 8,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.518981,
+      "max_error": 136,
+      "pixels_differ_percent": 99.333526
+    },
+    {
+      "page": 9,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.516975,
+      "max_error": 136,
+      "pixels_differ_percent": 99.331404
+    },
+    {
+      "page": 10,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.521001,
+      "max_error": 137,
+      "pixels_differ_percent": 99.322338
+    },
+    {
+      "page": 11,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.512085,
+      "max_error": 140,
+      "pixels_differ_percent": 99.319059
+    },
+    {
+      "page": 12,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.523048,
+      "max_error": 137,
+      "pixels_differ_percent": 99.326775
+    },
+    {
+      "page": 13,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.522703,
+      "max_error": 137,
+      "pixels_differ_percent": 99.326775
+    },
+    {
+      "page": 14,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.520355,
+      "max_error": 137,
+      "pixels_differ_percent": 99.322338
+    },
+    {
+      "page": 15,
+      "width": 960,
+      "height": 540,
+      "mean_absolute_error": 1.523418,
+      "max_error": 137,
+      "pixels_differ_percent": 99.326196
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "path": "tests/fixtures/pdf-graphics.pdf",
+    "page": 1,
+    "sha256": "46149223a1dcdfbcf4ed84173104820f33741a00282d27b21a5e43f56c43761f"
+  },
+  {
+    "path": "tests/fixtures/pdf-xref-stream.pdf",
+    "page": 1,
+    "sha256": "5ce76aa3a308a60ece0ad1dbf72fdbe5f74c9195c372b2caf8bf10f324b18298"
+  },
+  {
+    "path": "tests/fixtures/pdf-hybrid.pdf",
+    "page": 1,
+    "sha256": "5ce76aa3a308a60ece0ad1dbf72fdbe5f74c9195c372b2caf8bf10f324b18298"
+  }
+]

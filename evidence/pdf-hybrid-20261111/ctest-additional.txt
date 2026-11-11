@@ -1,0 +1,9 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h
+    Start 256: native-pdf_edit-component
+1/2 Test #256: native-pdf_edit-component ........   Passed    1.56 sec
+    Start 305: sdk-doc-pdf
+2/2 Test #305: sdk-doc-pdf ......................   Passed    0.28 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   2.39 sec
