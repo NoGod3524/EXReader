@@ -1,17 +1,13 @@
-? 5 ??????????????,????????,??????
+The five failures are already fixed on the PR branch, so I made no code changes and pushed nothing.
 
-**??**
-- ??? `EXReader-fix132-hyg-20261111` ???,???? `EXReader-aragorn-docx-20261110` ??????? PR #132 ??? `codex/dx-realworld-argon-20261110`,HEAD `c37f5228`,? origin ???
-- ?? HEAD ????????? `34c84e47`(?? origin/main)??? `wip: ???` ???`c37f5228` ?? `34c84e47` ??? `HYG-OUT.txt` ? 17 ??
+- **Branch:** the `EXReader-fix132-hyg-20261111` worktree doesn't exist. I worked in `EXReader-aragorn-docx-20261110`, which is on `codex/dx-realworld-argon-20261110`. Its HEAD `80f86ff9` equals origin.
+- **ci-hygiene (items 1-4):** `python -X utf8 tools\check_ci_hygiene.py` exits 0 and ends with `PASS: CI hygiene; violations=0; existing debt={'failfast': 242, 'negative': 9, 'diagnostic': 4, 'packaging': 4}`. I didn't need `--remap-baseline`, so there is no baseline change and no entry-count change. The merge of main (`34c84e47`) already carried the correct baseline.
+- **desktop ubuntu-22.04 (item 5):** in CI run 43093283763 on `34c84e47`, the four `ci-hygiene` jobs and `desktop (ubuntu-22.04)` all succeeded. The exit 8 did not recur, so there is no failing ctest case to name and nothing to compare against main. I ran no local ctest.
+- **Core status (item 5 of the acceptance list):** core is not green yet. The "Required native reading SDK core" runs on `80f86ff9` (43096887590) and on `c37f5228` (43095538842) are still queued. In run 43093283763, `desktop (windows-latest)`, `desktop (macos-15)`, `apple-mobile` and `sanitizers` were still in progress.
+- **Not pushed:** pushing the `OUT.txt` note would restart CI and could use up Actions budget. I appended the note to `OUT.txt` locally instead.
+- **Stray file change:** `HYG-OUT.txt` showed as modified with a blank-looking diff (an index/line-ending mismatch). Its content matches HEAD and `git status` still lists it as modified, so I left it alone.
 
-**??**
-1. `check_ci_hygiene.py` ? `c37f5228` ???? 0,????? `PASS: CI hygiene; violations=0; existing debt={'failfast': 242, 'negative': 9, 'diagnostic': 4, 'packaging': 4}`?
-2. ??????,`tools/ci_hygiene_baseline.json` ? `.meta.json` ?????? main ?????????????
-3. ? `34c84e47` ? CI run 43093283763 ?,`ci-hygiene` ? diagnostic?failfast?packaging?negative ??? `desktop (ubuntu-22.04)` ?? success??? exit 8 ????,??????????,????"????"??"? PR ??"????
-4. ??????? ctest?
-5. PR #132 ???? BLOCKED,`gh pr checks` ?????????? run ? `desktop (windows-latest)` ? `desktop (macos-15)` ????`c37f5228` ??? 4 ? run ????,?? `Required native reading SDK core` ? 43095538842,????????? core ???
-
-?? `OUT.txt` ???????,?????`HYG-OUT.txt` ?????????????,??????????????,PR ?????
+Once the queued core runs finish, I can check them again. If a job fails, I'd read its log and fix it.
 
 Permission deny rule "computer" matches no known tool - check for typos.
 exit=0
