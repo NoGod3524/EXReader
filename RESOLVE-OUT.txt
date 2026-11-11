@@ -1,0 +1,9 @@
+① 冲突文件清单: 无。git fetch origin main 后 git merge origin/main 返回 "Already up to date"，没有 U 标记。
+② 补的 API 文档: 无需补。check_sdk_docs.py 未报 undocumented functions。
+③ check_sdk_docs.py exit=0。最后三行输出:
+  "binary": null,
+  "errors": [],
+  "passed": true
+④ 其他失败项: 未查看 CI（只在本地跑了门禁），不清楚 CI 上还有无别的失败。
+推送: git push origin HEAD:codex/webdav-sync-20261110 (快进) a35bb0c0..d8dafff4。
+注意: 推上去的 HEAD 是 d8dafff4 "wip: 切引擎前保存"，是已有提交，不是我新建的。
