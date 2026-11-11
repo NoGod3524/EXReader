@@ -48,6 +48,18 @@ static exr_status command(exr_edit_doc *d,unsigned op) {
     default: return exr_edit_delete_block(d,20);
   }
 }
+static exr_status make_table_image(exr_edit_doc **out) {
+  exr_edit_run run={0}; exr_edit_block p={0},blocks[2]={{0}};
+  exr_edit_cell cell={0}; exr_edit_row row={0}; exr_edit_table table={0}; exr_edit_image image={0};
+  run.text="cell"; run.text_size=4; p.runs=&run; p.run_count=1;
+  cell.blocks=&p; cell.block_count=1; cell.opaque_xml="<w:tc/>"; cell.opaque_size=7;
+  row.cells=&cell; row.cell_count=1; row.opaque_xml="<w:tr/>"; row.opaque_size=7;
+  table.rows=&row; table.row_count=table.column_count=1;
+  blocks[0].kind=EXR_EDIT_TABLE; blocks[0].table=&table;
+  image.data="payload"; image.size=7; image.width_emu=image.height_emu=12700;
+  blocks[1].kind=EXR_EDIT_IMAGE; blocks[1].image=&image;
+  return exr_edit_doc_create(NULL,0,blocks,2,NULL,0,NULL,out);
+}
 int main(void) {
   size_t fail_at,covered=0; unsigned op,transaction;
   for (fail_at=0;fail_at<64;fail_at++) {
@@ -57,6 +69,19 @@ int main(void) {
     CHECK(s==EXR_MEMORY && !d && !live); covered++;
   }
   CHECK(fail_at<64);
+  /* Failed nested model copies must release partially copied rows, cells,
+     paragraphs, runs and payloads, without publishing a partial document. */
+  for (fail_at=0;fail_at<128;fail_at++) {
+    exr_edit_doc *d=(exr_edit_doc *)(uintptr_t)1; exr_status s;
+    remaining=fail_at; s=make_table_image(&d); remaining=SIZE_MAX;
+    if (!s) {
+      CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].blocks[0].runs[0].text_size==4);
+      CHECK(exr_edit_block_at(d,1)->image->size==7);
+      exr_edit_doc_free(d); CHECK(!live); break;
+    }
+    CHECK(s==EXR_MEMORY && !d && !live); covered++;
+  }
+  CHECK(fail_at<128);
   for (transaction=0;transaction<2;transaction++) for (op=0;op<5;op++) {
     for (fail_at=0;fail_at<64;fail_at++) {
       exr_edit_doc *d=NULL; exr_edit_tx *t=NULL; exr_status s;

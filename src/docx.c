@@ -408,13 +408,14 @@ static int numbering_read(docx *x) {
 invalid:
   x->status=exr_fail(x->error,EXR_FORMAT,"Invalid or duplicate DOCX numbering ID"); return 0;
 }
+static int number_style(docx *x,const char *id,int *num,int *level,unsigned depth);
 static int level_read(docx *x,size_t node,int level,number_level *out) {
   const exr_document *d=x->numbering_xml; const char *s; int n;
   *out=(number_level){1,level-1,0,"decimal",NULL,"tab",SIZE_MAX};
   if((s=value(d,node,"start"))) { if(!number(s,&out->start)) goto invalid; }
   if((s=value(d,node,"lvlRestart"))) {
-    if(!number(s,&n) || n<0 || n>level) goto invalid;
-    out->restart=n-1;
+    if(!number(s,&n) || n<0 || n>level+1) goto invalid;
+    out->restart=(n>level ? level : n)-1;
   }
   if((s=value(d,node,"numFmt"))) out->format=s;
   if((s=value(d,node,"lvlText"))) out->pattern=s;
@@ -437,6 +438,19 @@ static number_instance *number_prepare(docx *x,int id) {
   if(lo==x->abstract_count || x->abstracts[lo].id!=out->abstract_id) goto invalid;
   out->levels=calloc(9,sizeof(*out->levels)); if(!out->levels) { x->status=EXR_MEMORY; return NULL; }
   d=x->numbering_xml; node=x->abstracts[lo].node;
+  {
+    unsigned hop=0; const char *link;
+    while((link=value(d,node,"numStyleLink")) && hop++<8) {
+      int lnum=0,llvl=0,labs=-1; size_t j;
+      if(!number_style(x,link,&lnum,&llvl,0) || lnum<=0) goto invalid;
+      for(j=0;j<x->number_count;j++) if(x->numbers[j].id==lnum) { labs=x->numbers[j].abstract_id; break; }
+      if(labs<0) goto invalid;
+      for(j=0;j<x->abstract_count && x->abstracts[j].id!=labs;j++) {}
+      if(j==x->abstract_count) goto invalid;
+      node=x->abstracts[j].node;
+    }
+    if(hop>8) goto invalid;
+  }
   for(i=d->nodes[node].first_child;i!=SIZE_MAX;i=d->nodes[i].next_sibling) {
     int level;
     if(++x->work>20000000) { x->status=EXR_LIMIT; return NULL; }
@@ -607,10 +621,20 @@ static int table(docx *x,size_t parent,size_t source,unsigned depth) {
       column=(size_t)before;
     }
     for(cell=x->xml->nodes[row].first_child;cell!=SIZE_MAX;cell=x->xml->nodes[cell].next_sibling) if(word(&x->xml->nodes[cell],"tc")) {
-      size_t properties_node=child(x->xml,cell,"tcPr"),merge=child(x->xml,properties_node,"vMerge"),td,k;
+      size_t properties_node=child(x->xml,cell,"tcPr"),merge=child(x->xml,properties_node,"vMerge"),hmerge=child(x->xml,properties_node,"hMerge"),last_cell=cell,td,k;
       int columns=1; const char *merge_value=merge==SIZE_MAX ? NULL : attr(&x->xml->nodes[merge],"val"); char value_buffer[48];
-      const char *grid=value(x->xml,properties_node,"gridSpan");
+      const char *grid=value(x->xml,properties_node,"gridSpan"),*hval=hmerge==SIZE_MAX ? NULL : attr(&x->xml->nodes[hmerge],"val");
       if(grid && (!number(grid,&columns) || columns<1)) goto invalid;
+      if(hmerge!=SIZE_MAX && columns==1) {
+        if(!hval || !strcmp(hval,"continue")) goto invalid;
+        if(strcmp(hval,"restart")) goto invalid;
+        for(k=x->xml->nodes[cell].next_sibling;k!=SIZE_MAX;k=x->xml->nodes[k].next_sibling) if(word(&x->xml->nodes[k],"tc")) {
+          size_t npr=child(x->xml,k,"tcPr"),nhm=child(x->xml,npr,"hMerge");
+          const char *nhv=nhm==SIZE_MAX ? NULL : attr(&x->xml->nodes[nhm],"val");
+          if(nhm!=SIZE_MAX && (!nhv || !strcmp(nhv,"continue"))) { columns++; last_cell=k; }
+          else break;
+        }
+      }
       if(columns>256 || column+(size_t)columns>256) { x->status=EXR_LIMIT; return 0; }
       if(merge!=SIZE_MAX && (!merge_value || !strcmp(merge_value,"continue"))) {
         td=owner[column]; if(td==SIZE_MAX || span[column]!=(size_t)columns) goto invalid;
@@ -624,6 +648,7 @@ static int table(docx *x,size_t parent,size_t source,unsigned depth) {
       }
       for(k=column;k<column+(size_t)columns;k++) touched[k]=1;
       if(!children(x,td,cell,depth+1)) return 0;
+      cell=last_cell;
       column+=(size_t)columns;
     }
     {

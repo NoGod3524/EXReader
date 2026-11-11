@@ -34,3 +34,9 @@ I've started the build and tests again with all cached dependencies. I'll report
 You've hit your 5-hour limit · resets 5:40pm (America/New_York)
 
 You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+[2026-11-11 recovery step 1]
+Verified branch codex/sdk-batch-perf-20261109 at 8d34bbc6, tracking the same remote head. Prior merge 2a314a41 retained. Restored truncated OUT-CF history, preserving current text. Fetched origin/main fe9adf43: 35 incoming commits remain; no completed CTest result exists in exr-build-cf112. Protected reading-release SHA256 verified: 6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b.
+
+[2026-11-11 recovery step 2: main merge resolved]
+Merged origin/main fe9adf43 into the existing PR head branch. Conflicts: OUT2.txt (add/add) and RESOLVE-OUT.txt (content); removed only conflict marker lines, retained both sides in order, verified each side as a line subsequence. CMakeLists.txt, docs/API.md and tools/layers.json merged automatically. No source/API conflict. Prior merge 2a314a41 conflict records RESOLVE.md and RESOLVE-OUT.txt retained.
