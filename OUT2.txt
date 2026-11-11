@@ -1,0 +1,3 @@
+The full-library build is still compiling. I'll continue once it finishes.
+
+The build of the three test targets is running in the background (the first full-library build was killed at its time limit). I'll check the results when it finishes.
