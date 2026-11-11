@@ -1,0 +1,126 @@
+<?xml version='1.0' encoding='utf-8'?>
+<w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="480" w:lineRule="auto" />
+        <w:ind w:firstLine="0" />
+        <w:jc w:val="center" />
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+        <w:t xml:space="preserve">DOCX fidelity verification</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="480" w:lineRule="auto" />
+        <w:ind w:firstLine="0" />
+        <w:jc w:val="center" />
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+      </w:pPr>
+      <w:fldSimple w:instr=" DATE " w:dirty="true">
+        <w:r>
+          <w:rPr>
+            <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+            <w:sz w:val="24" />
+            <w:szCs w:val="24" />
+          </w:rPr>
+        </w:r>
+      </w:fldSimple>
+    </w:p>
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="480" w:lineRule="auto" />
+        <w:ind w:firstLine="720" />
+        <w:jc w:val="left" />
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+        <w:t xml:space="preserve">Body paragraph one verifies Times New Roman twelve point type, double line spacing, a half inch first line indent, six points after each paragraph, and left alignment. The paper is US Letter with one inch margins on all four sides.</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="480" w:lineRule="auto" />
+        <w:ind w:firstLine="720" />
+        <w:jc w:val="left" />
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+        <w:t xml:space="preserve">Body paragraph two preserves XML characters &amp; &lt; &gt; and Unicode café 中文. The date below the title and the number at the upper right are Word fields.</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+        <w:br w:type="page" />
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="480" w:lineRule="auto" />
+        <w:ind w:firstLine="0" />
+        <w:jc w:val="center" />
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+        <w:t xml:space="preserve">References</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="480" w:lineRule="auto" />
+        <w:ind w:firstLine="720" />
+        <w:jc w:val="left" />
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" />
+          <w:sz w:val="24" />
+          <w:szCs w:val="24" />
+        </w:rPr>
+        <w:t xml:space="preserve">EXReader DOCX export verification. References begin on a separate page.</w:t>
+      </w:r>
+    </w:p>
+    <w:sectPr>
+      <w:headerReference w:type="default" r:id="rId1" />
+      <w:pgSz w:w="12240" w:h="15840" />
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0" />
+    </w:sectPr>
+  </w:body>
+</w:document>
