@@ -1,0 +1,27 @@
+PR #130 的分支已经合入 `origin/main`、补完 API 文档并推送(`b1303e65`)。`check_sdk_docs.py` 退出码为 0。我只跑了这一项门禁,没跑完整 ctest,也没看 CI 结果,所以其他失败项我不确定。
+
+**冲突**
+- **`OUT.txt`**:main 上这个文件本身就带着已提交的冲突标记。本分支的每一行在 main 里都有,所以我取 main 的内容,只删掉标记行,两侧内容都没丢。
+- **`tools/layers.json`**:两侧新增的条目都留下了,`opds.h` 来自本分支,`edit.h` 来自 main。JSON 能正常解析,没有重复键。
+- **`RESOLVE.md`**:这是任务说明,但 main 上也有同名文件,会挡住合并。我把它移到仓库外的 `..\RESOLVE-task-130.md`,没有删,main 的那份原样保留。
+- **`CMakeLists.txt`**:自动合并,没有冲突。
+
+**API 文档**
+- 补了 5 条,都写在 `docs/API.md` 的「格式与转换」下,**ABI** 都是 `实验`:
+  - `exr_opds_parse`
+  - `exr_opds_feed_free`
+  - `exr_opds_parse_search`
+  - `exr_opds_search_url`
+  - `exr_opds_resolve_url`
+- 签名都是用 `check_sdk_docs.py` 里的 `declarations()` 从头文件取的,没有手打。
+- 模块索引表里「格式与转换」的函数数从 29 改成 34。
+
+**硬约束**
+- `tools/check_sdk_docs.py` 和 `tests/check_reading_release.py` 没动,后者 SHA256 仍以 `6eb22a30` 开头。
+- `tools/version_literal_exceptions.json` 我没有手动改,它的变动都来自合入的 main。
+- 没有启动任何 GUI。
+- 提交信息里没有 CI 跳过标记。
+
+报告写在 `RESOLVE-OUT.txt`,已和合并一起提交。
+
+工作区里还有一个未跟踪的 `CASCADE-CLAUDE-OUT.txt`,是开始前就有的,我没碰。我没有合并 PR,也没动 main。
