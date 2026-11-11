@@ -1,49 +1,45 @@
-PR #132 ?????????,?????????????,?????CI ? core ???????,?? core ?????????
+The temporary-worktree merge is still running. The fixture `--check` runs and the 72 native DOCX tests pass locally, but the push was rejected and nothing is on the PR yet.
 
-**????**
-- PR #132(?? `codex/dx-realworld-argon-20261110`)????????????:`5947ab96`?`2f6db544`?`63da4607`?
-- PR ?? head ? `c37f5228`,?????? main?PR ??? OPEN????,???????
-- ?????? `codex/fix132-crossplatform` ? PR ????,????,??????
-- ????? `OUT.txt` ???,???????????
-- ??????? `--check` ? ctest,??????????????
+- **Fixes already in the branch:**
+  - **Fixture bytes:** the generators now write stored (uncompressed) ZIP members and PNG data. ZIP headers are pinned to the MS-DOS creator system.
+  - **XML order:** namespace order comes from an ordered tuple list instead of a dict.
+  - **ASan:** `tests/fixtures/docx-real/codex/register.cmake` preloads the compiler's ASan runtime for the DOCX ctypes test hosts on Linux.
+  - **Protected files:** `tests/check_reading_release.py` still hashes to `6eb22a30.` and `tools/version_literal_exceptions.json` is untouched.
+- **Verified here (Windows):** both `--check` runs exit 0, and the 72 `native-docx-real*` tests pass in `build/native`.
+- **Not verified:** Linux and ASan behavior. This machine can't build ASan, so that part still needs CI after the push.
+- **Why the push failed:** the remote branch gained 13 commits (merges from `main`), so I'm merging them in rather than force-pushing.
+- **Workaround:** another process holds `OUT.txt` open, so the merge can't run in this worktree and I'm doing it in `EXReader-fix132b-merge`. I won't kill that process.
+- **Still to do:** push the merge, then collect the ASan failure classification for the six tests from the CI logs. I haven't seen those logs yet, so there's no per-test table.
 
-**? ???**
-- ?????? `--check`,? `codex/generate.py` ? `argon/make_fixtures.py`,?????,?? exit 0?
-- ????? `build/verification/reproducible.log`?
+The merge is still running. I'll wait for its completion notice.
 
-**? ?????????**
-- `ZipInfo.create_system` ????? Windows ? Unix ???,?? ZIP ????????
-- zlib-ng ? zlib ???????? DEFLATE ????,ZIP ? PNG ???????????
-- ??:?? ZIP ????,ZIP ?? stored(???),PNG ???????????XML ????? RGB ?????
+The merge and push are running in the background. I'll report once they finish.
 
-**? ASan ? 6 ???**
+The push went through: `codex/dx-realworld-argon-20261110` is now at `a525c94e`, so PR #132 will update. I did not merge it. I have no Linux or ASan evidence yet, so failures 1 and 2 are still unconfirmed on the platforms where they failed.
 
-| ?? | ???? | ?? |
-|---|---|---|
-| native-docx-real-paragraph-markers | ctypes ??? ASan ???? | ????? libasan |
-| native-docx-real-section-tail | ?? | ?? |
-| native-docx-real-text-history | ?? | ?? |
-| native-docx-real-text-alias | ?? | ?? |
-| native-docx-real-text-validation | ?? | ?? |
-| native-docx-real-text-transaction | ?? | ?? |
+**? Reproducibility (Windows):** both checks exit 0, run before I merged in the remote's new commits.
+- `codex/generate.py --check` prints "30 original fixtures: deterministic bytes verified".
+- `argon/make_fixtures.py --check` prints "Verified 30 DOCX fixtures".
 
-6 ?????????????????????
+**? Root cause of the cross-platform byte mismatch.** The old generators wrote bytes that depended on the machine, in three ways:
+- **Compressor output:** DEFLATE bytes differ between zlib implementations. This covered both the ZIP members and the PNG `IDAT` data from `zlib.compress`. That's likely the Linux difference, since zlib-ng (a zlib variant that picks different compressed bytes) is a known cause, but I haven't reproduced it on Linux.
+- **ZIP creator system:** `ZipInfo.create_system` defaults to the host OS, so the ZIP header bytes differ on Linux.
+- **Namespace order:** in `codex/generate.py`, the namespace declarations were written by iterating a dict. They now come from an ordered tuple list.
 
-**? ??**
-- `tests/fixtures/docx-real/**`:???????`manifest.json`,?????? 60 ????
-- `tests/fixtures/docx-real/codex/register.cmake`:??,??? DOCX ctypes ??????? libasan?
-- ??????:`check_reading_release.py`?`version_literal_exceptions.json`,???? PR ????
+**? Changes:**
+- **Generator scripts:** both now write stored (uncompressed) ZIP members, pin `create_system = 0`, and emit PNG data as one explicit stored block. The `codex` PNG is now 4-bit palette, which keeps the stored packages under the 60 KB cap. I regenerated all 60 `.docx` files and both manifests.
+- **`tests/fixtures/docx-real/codex/register.cmake`:** on Linux with GCC and `EXR_SANITIZE`, it preloads the compiler's `libasan.so` for the DOCX ctypes Python hosts. The reproducible, oracle-mutations and text-allocation tests are excluded from this.
+- **Protected files:** I did not touch the `--check` assertions, `tests/check_reading_release.py` (still `6eb22a30.`) or `tools/version_literal_exceptions.json`.
 
-**? ctest**
-- CI ? `63da4607` ????:Linux 403/403,Windows 403/403,ASan 393/393,6 ????
-- ?? MinGW ? 402/403,????? `sdk-release`?????? MSVC ? `.lib`,? MinGW ??? `.dll.a` ???,????????
+**? ASan classification table:** I don't have it. I never read the CI logs for tests 370-375. The `LD_PRELOAD` change targets the "ASan runtime does not come first" failure class. That is the same class as #96, which you said this failure is different from. It is a hypothesis until CI shows otherwise. This machine has no ASan build (`build/asan-unavailable`), so I couldn't reproduce it locally.
 
-**? core**
-- ????? `reading-required-core`?
-- PR ?? head ? GitHub ????????????????? `RESOLVE-OUT.txt` ????????,PR ?????????
-- ? head ?? CI ??? Actions ?????????,????? core ?????
+**? ctest:** the 72 `native-docx-real*` tests pass in `build/native` on Windows. I did not run the full suite.
 
-??????? `build/verification/RESULT.md`?
+**Housekeeping:**
+- **Merge:** the remote branch had gained commits from `main` and from another session's log-only `wip` commits, so I merged them. The only conflict was `OUT.txt`, where I took the remote's version.
+- **Worktree:** another process holds `OUT.txt` open in the original worktree, so I did the merge and push from `EXReader-fix132b-merge`. That worktree and its `codex/fix132-merge` branch are still there if you want to remove them.
 
-Permission deny rule "computer" matches no known tool - check for typos.
+**Next:** read the CI results on the new head. If tests 370-375 still fail, I'll classify them from the logs.
+
 exit=0
+Permission deny rule "computer" matches no known tool - check for typos.
