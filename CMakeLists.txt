@@ -92,7 +92,6 @@ if(EXR_BUILD_JNI)
   install(TARGETS exreader-jni RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 endif()
 if(EXR_BUILD_TOOLS)
-<<<<<<< HEAD
   add_executable(bench_batch examples/bench_batch.c)
   target_link_libraries(bench_batch PRIVATE exreader)
   if(WIN32)
@@ -103,7 +102,6 @@ if(EXR_BUILD_TOOLS)
     set_target_properties(bench_batch PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
   endif()
   install(TARGETS bench_batch RUNTIME DESTINATION bin)
-=======
   add_executable(exr-info tools/exr_info.c)
   target_link_libraries(exr-info PRIVATE exreader)
   if(APPLE)
@@ -112,7 +110,6 @@ if(EXR_BUILD_TOOLS)
     set_target_properties(exr-info PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "$ORIGIN/../lib")
   endif()
   install(TARGETS exr-info RUNTIME DESTINATION bin)
->>>>>>> origin/main
   add_executable(exreader-render tools/render.c)
   target_link_libraries(exreader-render PRIVATE exreader)
   if(APPLE)
@@ -1295,7 +1292,6 @@ if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
   endforeach()
 endif()
 
-<<<<<<< HEAD
 if(EXR_BUILD_TESTS)
   add_executable(exreader-batch-test tests/test_batch.c)
   target_link_libraries(exreader-batch-test PRIVATE exreader)
@@ -1305,7 +1301,8 @@ if(EXR_BUILD_TESTS)
   if(EXR_BUILD_TOOLS)
     add_test(NAME native-bench-batch-statistics COMMAND bench_batch --self-test)
   endif()
-=======
+endif()
+
 if(EXR_FULL_TESTS)
   add_subdirectory(docs/examples)
 endif()
@@ -1315,5 +1312,4 @@ include(cmake/build_manifest.cmake)
 if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND)
   add_test(NAME simplified-observer COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/regress/check_simplified.py --self-check)
->>>>>>> origin/main
 endif()

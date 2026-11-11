@@ -40,10 +40,7 @@ struct exr_font {
   struct exr_font *fallback;
   unsigned manager_order; /* Preserve the manager's explicit base-face chain. */
   struct exr_glyph_cache *raster_cache;
-<<<<<<< HEAD
   exr_font_cache_stats cache_stats;
-=======
->>>>>>> origin/main
   size_t manager_required; /* Prefix before automatically discovered faces. */
 };
 exr_cached_glyph *exr_glyph_cache_find(exr_font *font,size_t face,uint32_t glyph,FT_F26Dot6 size,unsigned flags);
