@@ -1,0 +1,16 @@
+[2026-11-10T02:39:55.4377945-05:00] 初始检查完成：HEAD=3076d3ddd21a444a1cc2d89f396368f3224953e9，分支 codex/dx-write-20261110，工作区干净。只改 DOCX 导出路径；src/docx.c 与 src/docx_edit.c 不动，.github/ 不动。复用现有 ZIP 和缓冲区，不新增 src/*.h。
+[2026-11-10T02:42:53.1543607-05:00] 实现完成：DOCX 正文直接格式 TNR/12pt、auto+480、720 首行缩进、120 段后；Letter 与 1440 边距及非空 sectPr；新增独立 header1.xml、关系和 Content Types，PAGE 域；标题后 DATE 域，References/Works Cited/Bibliography 标题前分页。fldSimple 使用合法段落子节点结构。构建依赖 mbedTLS 下载失败已改为复用本地固定版本。
+[2026-11-10T02:43:54.5489099-05:00] 新增独立包检查 tests/check_docx_write.py 和 native-docx-write ctest：通过转换 CLI 生成样本，以标准库解析所有 part，校验数值、域、关系、转义、引用分页；可选 --independent 用 python-docx 输出期望/实际/通过表。未修改既有断言、未新增 src 头文件。
+[2026-11-10T02:44:39.9835101-05:00] 修改前基线构建完成。export_text 对象在源码修改前已编译，完整构建日志保留于 build/w2-baseline/build.txt；原始 libexreader.dll 已复制到独立目录用于 19 本真书修改前渲染。
+[2026-11-10T02:47:28.9356731-05:00] 独立 python-docx 验收 15/15：TNR、12pt、line_spacing=2.0/DOUBLE、首行 0.5in、段后 6pt、左对齐、Letter 8.5x11in、四边 1in、页眉页脚距 0.5in。XML 包检查通过。修改前真书 19/19、9995 页、8662386 字形，修改后回归及全量 ctest 正在运行。层次检查 119 objects/1355 refs/1046 includes，逆向依赖 0。
+[2026-11-10T02:50:16.5319025-05:00] 真书回归通过：修改前后均 19 本、9995 页、8662386 字形，页数/字形/逐页 SHA-256 变化均 0。Word 已实际打开样本并更新 PAGE/DATE，显示右上角页码 1 和首页日期。界面检查发现空 DATE 结果更新需继承段落标记字体，已为标题/日期和页眉段落标记补 rPr。
+[2026-11-10T02:51:33.1028187-05:00] Word 字体对话框确认 Times New Roman / Regular / 12；段落对话框确认 Double（2.0）、First line 1.27cm=0.5in、After 6pt、Left，截图已存 evidence/w2-docx-write。首次全量 ctest 249/251，通过项保留；sdk-release 超时与 native-docx-write 失败正在定位。
+[2026-11-10T02:59:02.0397235-05:00] 隔离输出目录后完整 250 项非发布测试全绿（231.65s），含 native-docx-write；sdk-release 单测重试证实因 MinGW 产物缺少 MSVC README 指定的 exreader.lib 而失败（包文件与架构检查均通过）。将从最终 DLL 导出生成 MSVC 导入库后复测，不改源码测试或断言。DATE 结果改为空白格式占位，避免 Word 忽略空 run 的字体。
+[2026-11-10T03:02:49.1521552-05:00] SDK 发布单测通过 1/1（151.30s）：从最终 DLL 的导出清单以 MSVC lib.exe 生成注明 LIBRARY libexreader.dll 的 exreader.lib；仅 build 内隔离 MinGW .dll.a 以选择 MSVC 导入库，代码和断言不改。包检查、MSVC README 三命令、独立 CLI 运行全部通过。最终代码真书再次 19/19、9995 页、逐页哈希变化 0。
+[2026-11-10T03:03:57.9692351-05:00] Word 再验发现空白占位仍会回退 Aptos，已修到根因：新增 styles.xml 的 docDefaults 与 Normal 字体 TNR/12pt，登记样式关系及 Content Types，DATE 保持真正无静态结果的域。新增测试校验文档默认字体；CLI 构建和 python-docx 15/15 通过。
+[2026-11-10T03:04:44.4671109-05:00] 最终 Word 校验使用独立 verified.docx；styles.xml 增量已由标准库 XML 与 python-docx 独立检查。此前最终代码测试 250/250（109.27s）及发布 1/1 全绿，默认字体修复后再做对应完整构建与验收。
+[2026-11-10T03:07:19.0628458-05:00] Word 最终验证成功：styles.xml 修复后，更新 DATE 的实际字体仍为 Times New Roman 12；Alt+F9 同屏显示 { DATE } 与 { PAGE }，引用独立第 2 页且右上角页码自动为 2。截图 06/07/08/09 已保存；基线 DLL 又通过独立 ctypes 导出核实确为旧版裸段落+空 sectPr。
+[2026-11-10T03:09:00.8255849-05:00] 最终单次全量 ctest 251/251 全绿（205.68s），其中 sdk-release 18.53s；未调整超时或断言。最终 19 本/9995 页/8662386 字形，页数/逐页哈希变化 0，独立 python-docx 15/15。完整日志与逐页前后结果已入 evidence/w2-docx-write。读取器、模型及 .github/ 均无改动。
+[2026-11-10T03:10:46.4303022-05:00] 最终 verified.docx 的字体、段落、边距、纸张截图已全部重拍；DATE/PAGE 域代码与引用第2页截图齐全。REPORT.txt 附真实 OOXML、python-docx 15项比较表、复现命令及本地 MSVC 导入库准备方法。准备提交与推送。
+[2026-11-10T03:11:40.0091896-05:00] 实现及验收证据已提交 f607f024 并推送 origin/codex/dx-write-20261110。提交后发现 Word 生成的临时锁文件混入，已从版本控制移除；证据文本日志清理行尾空格，build 中保留原始日志。接着创建 draft PR。
+[2026-11-10T03:12:10.2756299-05:00] draft PR #118 已创建：https://github.com/NoGod3524/EXReader/pull/118；base main，head codex/dx-write-20261110。已按要求由 PR 触发 CI，未手动 dispatch 或取消运行。
