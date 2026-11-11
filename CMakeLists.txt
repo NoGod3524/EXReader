@@ -201,6 +201,27 @@ if(EXR_BUILD_TOOLS)
 endif()
 if(EXR_FULL_TESTS)
   enable_testing()
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
+    add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
+  foreach(group table-roundtrip table-properties table-preserve table-rows table-new
+      history image-small image-large image-delete image-shared image-cell table-delete errors image-package)
+    add_test(NAME native-docx-edit-x6-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_table_image.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
+  add_test(NAME native-docx-editor-e2e COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_editor_e2e.py
+    --library $<TARGET_FILE:exreader>)
+  add_test(NAME native-docx-realworld-matrix COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/docx/check_realworld_matrix.py
+    --library $<TARGET_FILE:exreader> --strict)
+  add_test(NAME native-docx-real-argon-reproducible COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/docx-real/argon/make_fixtures.py --check)
+  include(tests/fixtures/docx-real/codex/register.cmake)
   add_executable(exreader-docx-edit-test tests/test_docx_edit.c)
   target_link_libraries(exreader-docx-edit-test PRIVATE exreader)
   if(WIN32)
