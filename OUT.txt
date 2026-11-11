@@ -1,33 +1,30 @@
-I didn't change or push anything this session. The three fixes for #132 were already committed on the PR branch, and you merged #132 into `main` as `fe9adf43` on 2026-11-11 21:04 UTC.
+The three #132 fixes were already finished and pushed before the interruption, and PR #132 is merged into `main`. I didn't redo any of it. Nothing needs pushing: the fix commits are on `origin/codex/fix132-crossplatform` and `origin/main`. The only leftover change in the worktree is `OUT.txt`, a scratch notes file that was blanked.
 
-The only uncommitted change in this worktree is `OUT.txt` (the scratch summary file), which has been blanked. It isn't part of the fix, so I left it alone. This branch (`codex/fix132-crossplatform`) holds only `OUT.txt` wip commits, so there's nothing on it to push.
+**? Reproducibility (re-run now on Windows)**
+- `generate.py --check` exits 0: "30 original fixtures: deterministic bytes verified".
+- `make_fixtures.py --check` exits 0: "Verified 30 DOCX fixtures".
+- I can't run Linux here. That half relies on having removed the platform-dependent inputs, so the Linux result is unconfirmed.
 
-**? Reproducibility (Windows, run now on this tree)**
-- `generate.py --check` exits 0 with "30 original fixtures: deterministic bytes verified".
-- `make_fixtures.py --check` exits 0 with "Verified 30 DOCX fixtures".
-- I can't run Linux here. That half rests on removing the platform-dependent inputs. I haven't seen a post-merge CI result for it.
+**? Root cause of the byte mismatch**
+- **ZIP creator OS** (`5947ab96`): Python's `zipfile` writes `create_system` as 0 on Windows and 3 on Linux. Both generators now set `info.create_system = 0`.
+- **Host compressor** (`63da4607`): the PNG bytes came from `zlib.compress`, and its DEFLATE output depends on the host's zlib build. The fixture bytes no longer depend on it.
 
-**? Root cause (two sources, commits `5947ab96` and `63da4607`)**
-- **ZIP creator OS:** Python's `zipfile` writes `create_system` as 0 on Windows and 3 on Linux, so the ZIP headers differed. Both generators now set `info.create_system = 0`.
-- **Host compressor:** PNG bytes came from `zlib.compress`, and the DEFLATE output depends on the host's zlib build. They no longer depend on it.
-
-**? ASan failures (tests 370-375)**
-- I did not find a per-test error report in the repo or in what I looked at.
-- The cause recorded in `OUT.txt` is that the DOCX ctypes tests load the native library without ASan preloaded. The fix, `2f6db544`, makes `register.cmake` preload `libasan` for those test hosts and set `PYTHONMALLOC=malloc`.
-- That is a build-config fix, not a product or test bug. The reasoning behind it is not verified against a CI log in this session.
-- The earlier table classified all six tests the same way, so I'm not repeating it.
+**? ASan tests 370-375**
+- I couldn't find an actual per-test error log from CI or a local ASan run, so the per-test classification table you asked for doesn't exist.
+- The cause recorded in the earlier notes is that the DOCX ctypes tests load the native library without ASan preloaded. `2f6db544` makes `register.cmake` preload `libasan` for those test hosts and sets `PYTHONMALLOC=malloc`.
+- That is a build-config fix, not a product or test bug. I haven't checked it against a CI log.
 
 **? Changes**
 - `5947ab96`: pin the ZIP creator OS.
-- `63da4607`: remove the host compressor dependency from fixture bytes.
+- `63da4607`: remove the host-compressor dependency from the fixture bytes.
 - `2f6db544`: ASan preload in CMake.
-- Untouched: `tests/check_reading_release.py` and `tools/version_literal_exceptions.json`.
+- I did not touch `tests/check_reading_release.py` or `tools/version_literal_exceptions.json`.
 
-**? Full ctest and CI**
-- I did not run the full ctest suite this session.
-- `gh pr checks` returned nothing for the merged branch, so I can't confirm the Linux and sanitizer jobs went green.
+**? ctest and CI**
+- I haven't run the full ctest suite, and I haven't seen a post-merge CI result.
+- To close this out, check the CI run on `main` at `fe9adf43`: the Linux native job, the sanitizers job and `reading-required-core`. If any are still red, I'll work from the actual log.
 
-To close this out, look at the CI run on `main` at `fe9adf43`, specifically the Linux native job, the sanitizers job and the `reading-required-core` aggregate. If any of those are still red, I'll work from the actual log.
+I left the `OUT.txt` change uncommitted. It isn't part of the fix.
 
 Permission deny rule "computer" matches no known tool - check for typos.
 exit=0
