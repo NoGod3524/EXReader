@@ -1,0 +1,9 @@
+① 冲突文件清单：无。origin/main 已是 HEAD(b5b647e6) 的祖先（git merge origin/main -> Already up to date），
+   HEAD 也已包含 origin/codex/vertical-expand-20261109 (9cc310a3)，无需合并、无冲突、无 U 标记。
+② 补的 API 文档：无需补。documented_functions=457 / public_functions=457，覆盖 100%（稳定 394 / 实验 63 / 内部 0）。
+③ python -X utf8 tools\check_sdk_docs.py exit=0；最后三行：
+     "errors": [],
+     "passed": true
+   }
+④ 未在本地看到其他失败项（未查询 CI）。
+推送：git push origin HEAD:codex/vertical-expand-20261109  9cc310a3..b5b647e6（快进，未强推）。未合并 PR、未动 main。

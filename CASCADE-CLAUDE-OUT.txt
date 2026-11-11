@@ -1,0 +1,9 @@
+PR #116 的分支已经推上去了。我这边没有冲突要解，也没有 API 文档要补，所以没改任何源码或文档。
+
+- **冲突：** `git merge origin/main` 返回 "Already up to date"。当前 HEAD(`b5b647e6`)已经包含 `origin/main`，也包含 PR 分支原来的 `9cc310a3`。
+- **文档门禁：** `python -X utf8 tools\check_sdk_docs.py` 的 exit 是 0，457 个公开函数全部有文档，覆盖 100%（稳定 394，实验 63，内部 0）。
+- **推送：** `git push origin HEAD:codex/vertical-expand-20261109` 是快进推送（`9cc310a3..b5b647e6`），没有强推。我没有合并 PR，也没动 main。
+- **CI：** 我没去查 CI，所以其他失败项我没看到。
+- **报告：** 四项内容都写进了 `RESOLVE-OUT.txt`。
+
+工作区里还有一个没跟踪的 `CASCADE-CLAUDE-OUT.txt`，我没碰它，也没提交。
