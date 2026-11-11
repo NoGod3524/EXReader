@@ -299,19 +299,8 @@ static void dict_place(HWND parent,int id,int x,int y,int width,int height) {
   MoveWindow(GetDlgItem(parent,id),shell_px(x,shell_dpi),shell_px(y,shell_dpi),shell_px(width,shell_dpi),shell_px(height,shell_dpi),TRUE);
 }
 static void dict_card_paint(HWND window,HDC dc) {
-  RECT box;GetClientRect(window,&box);BITMAPINFO info={0};void *bits=NULL;
-  info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=box.right;
-  info.bmiHeader.biHeight=-box.bottom;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
-  HDC underlay=CreateCompatibleDC(dc);HBITMAP bitmap=CreateDIBSection(dc,&info,DIB_RGB_COLORS,&bits,NULL,0);
-  if(underlay && bitmap) {
-    HGDIOBJ old=SelectObject(underlay,bitmap);RECT place;GetWindowRect(window,&place);MapWindowPoints(NULL,g.page,(POINT *)&place,2);
-    HBRUSH bg=CreateSolidBrush(shell_colorref(shell_colors->layer_page));FillRect(underlay,&box,bg);DeleteObject(bg);
-    if(page_buffer_dc)BitBlt(underlay,0,0,box.right,box.bottom,page_buffer_dc,place.left,place.top,SRCCOPY);
-    GdiFlush();SelectObject(underlay,old);
-  }
-  shell_d2d_card(host_shell,dc,&box,shell_is_dark(),bits,window==dict_popup ? L"查词":window==dict_manager ? L"词典设置":L"生词本");
-  if(bitmap)DeleteObject(bitmap);
-  if(underlay)DeleteDC(underlay);
+  RECT box;GetClientRect(window,&box);
+  shell_card_paint(window,dc,&box,window==dict_popup ? L"查词":window==dict_manager ? L"词典设置":L"生词本");
 }
 static LRESULT CALLBACK dict_procedure(HWND window,UINT message,WPARAM wp,LPARAM lp);
 static HWND dict_card_create(const wchar_t *title) {
@@ -525,8 +514,7 @@ static LRESULT CALLBACK dict_procedure(HWND window,UINT message,WPARAM wp,LPARAM
         InflateRect(&box,-shell_px(6,shell_dpi),-shell_px(3,shell_dpi));DrawTextW(item->hDC,text,-1,&box,DT_WORDBREAK|DT_NOPREFIX);
         SelectObject(item->hDC,old);if(item->itemState&ODS_FOCUS)DrawFocusRect(item->hDC,&item->rcItem);return TRUE;
       }
-      shell_d2d_control(host_shell,item->hDC,&item->rcItem,text,shell_is_dark(),item->CtlID==DICT_SAVE ? 1:2,
-        (item->itemState&ODS_SELECTED ? 2:0)|(item->itemState&ODS_FOCUS ? 4:0)|(item->itemState&ODS_DISABLED ? 8:0));return TRUE;
+      shell_draw_control(item,text,item->CtlID==DICT_SAVE ? SHELL_CONTROL_PRIMARY:SHELL_CONTROL_STANDARD,shell_colors->layer_float);return TRUE;
     }
     case WM_PAINT:case WM_PRINTCLIENT: {
       PAINTSTRUCT paint;HDC dc=message==WM_PAINT ? BeginPaint(window,&paint):(HDC)wp;

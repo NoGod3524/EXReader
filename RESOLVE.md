@@ -1,4 +1,11 @@
 # 通用收尾：解冲突 + 补 API 文档 + 推送（PR #112）
+---
+# 通用收尾：解冲突 + 补 API 文档 + 推送（PR #113）
+
+## 你的任务
+
+让 PR #113 变成 CI 可绿的状态。两件事，按需做：
+# 通用收尾：解冲突 + 补 API 文档 + 推送（PR #107）
 
 ## 你的任务
 
@@ -8,6 +15,9 @@
 
 ```powershell
 cd C:\Users\Oscar\Documents\Codex\EXReader-fix-112-20261111
+---
+cd C:\Users\Oscar\Documents\Codex\EXReader-resolve-113-20261111
+cd C:\Users\Oscar\Documents\Codex\EXReader-resolve-107-20261111
 git fetch origin main
 git merge origin/main
 ```
@@ -57,6 +67,9 @@ git status --porcelain          # 无 U 标记
 python -X utf8 tools\check_sdk_docs.py    # exit=0
 # 3. 推送
 git push origin HEAD:codex/sdk-batch-perf-20261109
+---
+git push origin HEAD:claude/review-cleanup-20261109
+git push origin HEAD:codex/artifact-signing-20261109
 ```
 
 **不要合并 PR，不要动 main。** 推完就停，主控会接着合。

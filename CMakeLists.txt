@@ -1205,6 +1205,7 @@ install(FILES README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md DESTINATION 
 install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/WP7-SCRIPTS.md docs/WP8_COLR_V1.md docs/WP8_SVG_FONTS.md docs/WP12A-FORMATS.md docs/WP12A-STREAMING.md docs/CONVERSION.md docs/WP6-BOUNDED-READER.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
 install(FILES licenses/noto-sans-test-fonts.txt DESTINATION share/exreader/licenses/wp7-fonts)
 install(DIRECTORY examples DESTINATION .)
+install(FILES tools/convert_json.h tools/convert_json.c DESTINATION tools)
 install(FILES apps/reader/desktop/windows_accessibility.inc DESTINATION apps/reader/desktop)
 install(FILES tests/fixtures/pdf-public.pdf tests/fixtures/pdf-public-text.pdf DESTINATION examples/fixed-pages)
 install(FILES tests/fixtures/comic.cbz DESTINATION examples/fixed-pages)
