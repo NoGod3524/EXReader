@@ -1,0 +1,46 @@
+{
+  "roundtrips": "5/5",
+  "rows": [
+    {
+      "id": 19,
+      "title": "草枕",
+      "entered": true,
+      "returned": true
+    },
+    {
+      "id": 18,
+      "title": "唐诗三百首",
+      "entered": true,
+      "returned": true
+    },
+    {
+      "id": 17,
+      "title": "醒世恆言",
+      "entered": true,
+      "returned": true
+    },
+    {
+      "id": 16,
+      "title": "紅樓夢",
+      "entered": true,
+      "returned": true
+    },
+    {
+      "id": 15,
+      "title": "Zami: A New Spelling of my Name",
+      "entered": true,
+      "returned": true
+    }
+  ],
+  "books": 19,
+  "scroll": 584,
+  "tag_filter_count": 1,
+  "retired_controls": "absent at shelf and all five books",
+  "captures": [
+    "empty/empty.png",
+    "acceptance/grid.png",
+    "acceptance/list.png",
+    "acceptance/scrollbar.png",
+    "acceptance/tag-filter.png"
+  ]
+}

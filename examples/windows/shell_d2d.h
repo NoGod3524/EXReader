@@ -39,13 +39,27 @@ typedef struct shell_d2d_button {
   float offset_y;
 } shell_d2d_button;
 
-/* variant: 0 standard, 1 primary, 2 ghost. State bits: hover=1,
-   pressed=2, focus=4, disabled=8. Retains each BUTTON's native UIA proxy. */
-HRESULT shell_d2d_control(shell_d2d *, HDC, const RECT *, const wchar_t *,
-                          int dark, int variant, unsigned state);
-HRESULT shell_d2d_note(shell_d2d *, HDC, const RECT *, int dark, const uint32_t *background);
-HRESULT shell_d2d_card(shell_d2d *, HDC, const RECT *, int dark, const uint32_t *background, const wchar_t *title);
-HRESULT shell_d2d_panel(shell_d2d *, HDC, const RECT *, int dark, const wchar_t *font, const wchar_t *family, const wchar_t *path, const uint32_t *background);
+/* Text controls. Kinds are the DECKMARK-TOKENS buttons; a SEGMENT is one slice
+   of a segmented track, laid out as `count` equal boxes edge to edge. A
+   SELECTED ghost is a toggle that is on. Each control keeps its own BUTTON
+   window, and so its native UIA proxy. */
+enum { SHELL_CONTROL_STANDARD, SHELL_CONTROL_PRIMARY, SHELL_CONTROL_GHOST, SHELL_CONTROL_SEGMENT,
+       SHELL_CONTROL_FIELD /* the frame around a borderless EDIT; no text */ };
+enum { SHELL_STATE_HOVER = 1, SHELL_STATE_PRESSED = 2, SHELL_STATE_FOCUS = 4, SHELL_STATE_DISABLED = 8,
+       SHELL_STATE_SELECTED = 16 };
+typedef struct shell_d2d_look {
+  int kind;
+  unsigned state;
+  uint32_t under;   /* 0xRRGGBB of the surface the control sits on */
+  int index, count; /* SEGMENT: this box's place in its track */
+} shell_d2d_look;
+HRESULT shell_d2d_control(shell_d2d *, HDC, const RECT *, const wchar_t *, int dark, const shell_d2d_look *);
+/* Floating surface with its static text. x/y/width/height are DIPs from the
+   visible surface's corner; width 0 runs to the right padding. The style is
+   SHELL_TEXT_TITLE (text colour) or SHELL_TEXT_LABEL (secondary). */
+typedef struct shell_d2d_label { const wchar_t *text; float x, y, width, height; int style; } shell_d2d_label;
+HRESULT shell_d2d_surface(shell_d2d *, HDC, const RECT *, int dark, const uint32_t *background,
+                          const shell_d2d_label *labels, int count);
 /* TOC state: hover 1, pressed 2, keyboard focus 4, current chapter 8.
    Negative row IDs are uncached header/empty-state text, at the given size. */
 HRESULT shell_d2d_toc_row(shell_d2d *, HDC, const RECT *, const wchar_t *, int dark,
@@ -59,7 +73,9 @@ HRESULT shell_d2d_create(HWND window, shell_d2d **out);
 void shell_d2d_destroy(shell_d2d *shell);
 void shell_d2d_target_dpi(const shell_d2d *shell, float values[4]);
 HRESULT shell_d2d_set_dpi(shell_d2d *shell, unsigned dpi);
-HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t current, uint32_t rest);
+/* Page footer: text[strong_start, +strong_length) in `current`, the rest in `rest`. */
+HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text,
+                          unsigned strong_start, unsigned strong_length, uint32_t current, uint32_t rest);
 /* Cropped SDK image, centred by the caller; BGRA pixels retain their colours. */
 HRESULT shell_d2d_page_image(shell_d2d *, HDC, const RECT *area, const RECT *image,
                              unsigned source_width, unsigned source_height,

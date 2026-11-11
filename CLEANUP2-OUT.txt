@@ -1,0 +1,47 @@
+CLEANUP2 — baseline 0a8076a7, branch claude/review-cleanup-20261109
+
+STEP 1 COMPLETE
+Rollback: revert the step-1 commit (test-driver extraction).
+Only consumer CMake option added: examples/windows/CMakeLists.txt EXR_READER_TEST_DRIVERS OFF.
+Reason: compile the acceptance unit only for explicit test builds, leaving core CMake untouched.
+Product: cmake --build build/review-host --parallel 4 (Release, warning gate passed).
+Test: cmake -S examples/windows -B build/cleanup2/test -G Ninja -DEXR_SDK=<workspace>/build/review/stage -DEXR_READER_WINDOWS_SHELL=ON -DEXR_READER_TEST_DRIVERS=ON -DCMAKE_BUILD_TYPE=Release; cmake --build build/cleanup2/test.
+strings EXE + strings -el EXE: case-insensitive drive substring lines 81 -> 57.
+Remaining: Windows system GUID/property symbol names and CRT `drive`. The product contains no acceptance-driver strings; 78 dispatch command literals checked in a stripped audit copy (avoids confusing product function/global symbol names with command literals): 0 remain. See step1-command-audit.json.
+Exact --drive, drive.log, shell_measure, shelf_dump, select_pointer, annot_dump: present before, absent in product, present in test.
+Bytes (both unstripped): 2,244,404 -> 2,145,098 (-99,306, -4.42%).
+Three unchanged script paths PASS:
+  docs/ui/acceptance/check_shelf_flow.py: 3/3 roundtrips; 10/10 single clicks; 20/20 swipes.
+  docs/ui/acceptance/check_shelfmeta.py: 3/3 edits, covers, removal; fresh repeat PASS after initial capture window race.
+  examples/windows/check_shell_search.py: hong/english/vertical/pdf/mobi/whole-document PASS.
+ctest --test-dir build/review --output-on-failure -j 4: 257/257 PASS, 127.48s (current configured tree has 257 tests).
+Evidence: docs/ui/evidence/cleanup2/step1-*; full raw script runs build/cleanup2/step1-*.
+
+STEP 2 COMPLETE
+Rollback: revert the step-2 commit; archive manifest preserves exact pre-removal bytes.
+Deleted: 300 lines across examples (step2-audit.json contains per-file numstat); net -213 lines. Removed creation, HWND state, enable handling, geometry, old-ID command dispatch and shell's restore-to-toolbar path. New operation IDs start at 0x9000, historical IDs 101..117 retired.
+Consumer projects always select the shell; root CMake/src/include/cmake untouched.
+Native hidden list controls remain as SDK selection models, with no old 17 controls or visible old layout.
+Source grep (full expression/command in step2-audit.json): 0 hits for retired IDs/layout/restore path.
+Product ASCII+UTF16 legacy captions: 0 matches.
+Real HWND check at empty shelf and reading: retired_controls=absent, 2/2 PASS (step2-retired-controls.log).
+Product + test + native test build PASS; ctest 257/257 PASS, 117.11s.
+Existing shelf flow PASS: roundtrips 3/3, single clicks 10/10, swipes 20/20; step2-flow-result.json.
+Archive docs/ui/archive/legacy-17-control/: 119 files, 119/119 SHA256 verified. 104 files moved; 15 protected-scope historical inputs copied, originals untouched as required by scope restriction. manifest.json lists all originals/paths/hashes.
+HOST-AUDIT, INTERACTION, UI-SPEC, WIREFRAMES and step2/5/6 reports explicitly mark legacy UI 已移除 and historical evidence invalid.
+
+STEP 3 COMPLETE
+Rollback: revert the step-3 commit first, then step-2 and step-1 if desired.
+Only renderer: examples/windows/shell_shelf.inc:38 sm_paint_shelf, 119-line file including cover rendering and empty state.
+Old owner-draw recent list/scrollbar/empty UI removed; shell_recent.inc (281 lines) now holds persistence and routing only. Metadata/statistics and events remain in shell_shelfmeta.inc.
+Old centred empty icon/title explicitly discarded; new shelf empty text plus Open Book entry are authoritative. Original covers/content anchors/fixed-page IDs retained.
+Grid/list/native scrollbar/empty/tag-filter: five real window captures under docs/ui/evidence/cleanup2/*.png, visually checked.
+Shipping test binary: tools/quality/check_cleanup2_shelf.py PASS: 5/5 real-book click-to-read/return; book IDs and both screen states checked; 101..117 absent at empty shelf and all five books. Native scroll reaches 584 px; tag filter 19 -> 1.
+Existing check_shelf_flow.py and check_shelfmeta.py also PASS after consolidation; independent logs retained.
+Final product/test/native builds PASS; ctest 257/257 PASS (step3-ctest-final.log).
+19 real books: two complete runs, 11,318 pages each, 0 page count changes, 0 changed hashes; source/font/DLL identity and per-book diff retained. The untouched baseline SDK DLL 0a8076a7 SHA256=517463cfe99ea8c0faf0129554fda08202920945551d530499a7e568ad7d84c8 is used for both complete runs.
+Final command audit: 144 command names checked; 143 existed before, product 0, test 144; --drive/drive.log absent in product. Raw broad drive search 81 -> 57; residuals are system symbols + CRT path-error field, not acceptance commands.
+Final product EXReader.exe 2,118,082 bytes, baseline 2,244,404; -126,322 bytes (-5.63%).
+Product: build/cleanup2/product/EXReader.exe with adjacent libexreader.dll/Reader.otf/licenses.
+Product SHA256=83355072896f141d586aad661f32ce1941b7471b1e62448643db7760c3142958.
+Full report: docs/ui/CLEANUP2-20261110.md. No protected core tree changes, no new PR.
