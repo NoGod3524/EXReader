@@ -545,7 +545,6 @@ EXR_API exr_status exr_pager_get(exr_pager *pager, size_t page, const exr_layout
                                  exr_error *error);
 EXR_API size_t exr_pager_cached_count(const exr_pager *pager);
 EXR_API size_t exr_pager_cached_bytes(const exr_pager *pager);
-<<<<<<< HEAD
 /* Lifetime counters. Sequential next() generates owned pages without retaining a
    layout cache: each delivered page counts as a request and miss. In get() mode,
    every valid lookup counts, including misses that later fail or reach EOF.
@@ -556,10 +555,7 @@ typedef struct {
 } exr_pager_cache_stats;
 EXR_API exr_status exr_pager_cache_stats_get(const exr_pager *pager,
   exr_pager_cache_stats *out, exr_error *error);
-=======
-typedef struct { size_t hits,misses; } exr_pager_cache_stats;
 EXR_API exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);
->>>>>>> origin/main
 /* Bounded in-memory replay checkpoints, separate from the page payload cache.
    Defaults: 4 entries / 2 MiB / every 16 pages in get() mode. Capacity zero disables.
    Capacity <=64, nonzero budget/interval required when enabled; not serialized. */

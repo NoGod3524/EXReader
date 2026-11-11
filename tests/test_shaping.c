@@ -378,7 +378,6 @@ static void cached_contexts(void) {
     exr_free(expected);
   }
 }
-<<<<<<< HEAD
 static void cache_statistics(void) {
   exr_font *f=open_font("shaping.ttf");
   exr_shape_options o=exr_shape_defaults();
@@ -432,12 +431,6 @@ int main(int argc, char **argv) {
   CHECK(argc == 2); directory = argv[1]; font = open_font("shaping.ttf");
   validation(); latin(); marks(); lookup_flags(); long_marks(); optional_lookups(); context_formats();
   arabic(); controls_and_missing(); damaged_tables(); cached_contexts(); cache_statistics(); cache_collisions();
-=======
-int main(int argc, char **argv) {
-  CHECK(argc == 2); directory = argv[1]; font = open_font("shaping.ttf");
-  validation(); latin(); marks(); lookup_flags(); long_marks(); optional_lookups(); context_formats();
-  arabic(); controls_and_missing(); damaged_tables(); cached_contexts();
->>>>>>> origin/main
   exr_font_free(font);
   printf("EXReader shaping: %u checks passed\n", checks);
   return 0;
