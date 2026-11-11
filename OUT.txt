@@ -116,3 +116,8 @@ X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
   - CTest suite (-E "^sdk-release$"): 314/314 PASS (100%, 0 failures, 64.17s), including native-docx-realworld-matrix (30/30 Matrix A 540/540, 30/30 Matrix B 540/540, extra edit loss B-A = 0).
   - 19-book regression check: 19/19 books ok, 11,318 pages, 8,648,571 glyphs; page-count delta = 0, hash_changed_pages = 0, needs_review = false.
   - tests/check_reading_release.py SHA256 unchanged (6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b).
+
+[T1-realworld Step 9] Commit, push, and draft PR
+  - Commit: 32a72828 ("feat(docx): real-world round-trip fidelity for 30 structural fixtures")
+  - Pushed branch: origin/codex/dx-realworld-argon-20261110
+  - Draft PR: https://github.com/NoGod3524/EXReader/pull/132 (unmerged, targeting main)
