@@ -1,25 +1,22 @@
-The build and ctest run is still going in the background. I'm waiting for its completion notice.
+`deck.pdf` now opens and renders all 15 pages, and every PDF and fixed-layout test passes. Draft PR #133 is open, and I did not merge it.
 
-`/XRefStm` hybrid-reference files now open. The draft PR is up at https://github.com/NoGod3524/EXReader/pull/133 and is not merged.
+**Probe output** (`exreader-pdf-hybrid-test`): `pages=15 rendered=15 failures=0 first_paint_ms=5329.0`.
 
-- **Result on `deck.pdf`:** 15 pages open and all 15 render, with 0 failures.
-- **Existing tests:** all 48 ctest tests matching `pdf|fixed` pass, including the `native-pdf-*` and `native-fixed-pdf` groups.
-- **Code change in `src/pdf_objects.c`** (from the earlier WIP commit):
-  - **Hybrid object number:** a hybrid xref stream whose own object number equals `/Size` is now accepted, which is what PowerPoint writes.
-  - **Merge:** the classic-xref branch parses `/XRefStm` with the existing `stream_xref(..., hybrid=1)` and merges its entries into the same revision, with stream entries winning.
-  - **Unchanged:** I did not rewrite `stream_xref`, `compressed_object` or `undo_predictor`.
-- **New ctest groups:**
-  - `native-pdf-hybrid-deck`
-  - `native-pdf-hybrid-merge`
-  - `native-pdf-hybrid-chain` (`/Prev` chain with `/XRefStm`)
-  - `native-pdf-hybrid-bad-offset` (illegal offset gives a clear error, no crash)
-- **Fix made this session:** the three `hybrid-xref` tests failed to link because they were missing `src/pdf_crypto.c`. I added that test to the existing crypto link list in `CMakeLists.txt`.
+**Tests:** `ctest -R "pdf|fixed"` passed 48 of 48, including all `native-pdf-*` and `native-fixed-*` groups. The `native-pdf-hybrid-deck` test took about 140 seconds in that run.
 
-Not done:
-- **`first_paint_ms`:** the test prints 13361.0, because the timer in that test starts before the open call and includes the open time. I didn't investigate it.
-- **Reference comparison:** I did not run the pixel comparison against `tools/check_pdf_reference.py` or `pdftoppm`.
-- **Probe output:** I did not capture the before/after `exreader-pdf-probe` output.
-- **`OUT2.txt`:** it still has an uncommitted change that isn't mine; I left it out of the commit.
+**What was already there:** the `/XRefStm` handling in the traditional-table branch (`src/pdf_objects.c:471`) was already in the tree when I resumed. I didn't change it.
+
+**The change this branch makes** (`src/pdf_objects.c:341`): a hybrid `/XRefStm` stream may carry an object number equal to `/Size`, because Office writes it after counting `/Size`. That is what rejected `deck.pdf`. The size check is now skipped when `hybrid` is set.
+
+**New ctest groups (4):**
+- `native-pdf-hybrid-deck` is the `deck.pdf` basic case.
+- `native-pdf-hybrid-merge` checks the order in which table and stream entries are merged.
+- `native-pdf-hybrid-chain` covers a `/Prev` chain together with `/XRefStm`.
+- `native-pdf-hybrid-bad-offset` checks that an invalid `/XRefStm` offset gives a clear error and doesn't crash.
+
+**Not done:**
+- **Reference comparison:** I did not run the `tools/check_pdf_reference.py` or `pdftoppm` comparison of the first pages, so acceptance item 5 is still open.
+- **Stray file:** `OUT2.txt` shows as modified, and I couldn't restore it (git can't unlink it on Windows). I did not commit it.
 
 exit=0
 Permission deny rule "computer" matches no known tool - check for typos.
