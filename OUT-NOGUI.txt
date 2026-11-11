@@ -1,0 +1,22 @@
+已推送至指定分支，创建 [Draft PR #131](https://github.com/NoGod3524/EXReader/pull/131)。与 main 的冲突已解决，工作树干净。全程未启动 GUI、模拟输入或修改系统设置。
+
+① 原进度末行以 `Step 3: ctest-group 'sync' (windows-selection-sync) PASS on first run` 开头，停在宿主验收准备和基线构建。
+
+② 验收替换：
+
+- WebDAV → `check_sync.c`，不创建 HWND，覆盖 15 场景。
+- OPDS → 本地只 accept、不响应的 socket 服务，验证超时映射。
+- C2 → 静态检查、9 张旧截图哈希核验、人工清单生成。
+
+③ 实际结果：
+
+- 限定 ctest：**4/4**
+- WebDAV：**15/15**
+- Gutenberg 控制台：**13/13**
+- C2 静态检查：**25/25**
+- 宿主严格编译通过
+- 真书：**19/19，9,995 页，页哈希变化 0**
+
+完整命令、实际输出及原进度末行全文见[验收报告](C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/docs/ui/evidence/headless-20261110/REPORT.md)。
+
+④ 仍需真实窗口：外部 UIA、Tab/焦点恢复、焦点环、对比度观感、同步与 OPDS 宿主呈现。步骤已列入[人工清单](C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/docs/a11y/C2-MANUAL-CHECK.md)，交主控安排用户在场时确认。
