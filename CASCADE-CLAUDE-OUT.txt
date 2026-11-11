@@ -1,0 +1,11 @@
+PR #128 的冲突已解决，并已推送到 `codex/media-epub-2-20261110`（`0352498d..7e9b2ff7`）。我没有合并 PR，也没有动 main。
+
+- **冲突:** 只有两个文件冲突。
+  - `OUT.txt`：删掉冲突标记，两边内容全部保留。
+  - `RESOLVE.md`：保留本分支 PR #128 的任务说明。main 侧是 PR #107 的同名文件，没有保留。
+- **本地改动:** 合并前，`RESOLVE.md` 里一处未提交的改动挡住了合并。我先把它单独提交（`df33633a`）才没丢。
+- **文档门禁:** `tools\check_sdk_docs.py` exit=0，`errors` 为空，所以没有补任何 API 条目。
+- **硬约束:** 合并没有改 `tools/check_sdk_docs.py` 和 `tools/version_literal_exceptions.json`。`tests/check_reading_release.py` 的 SHA256 仍是 `6eb22a30…`。
+- **CI:** 我没在本地跑 CI，也没看到推送后的 CI 结果，所以不确定还有没有别的失败项。
+
+报告已写进 `RESOLVE-OUT.txt`（提交里没有 `[skip ci]` 之类的跳过标记）。
