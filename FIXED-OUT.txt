@@ -1,0 +1,13 @@
+# D1 固定版式 EPUB 扩充验证 — 进度日志 (codex/fixed-layout-20261109)
+[步骤 0] 2026-11-10 基线 3076d3dd，工作树干净。现状核对：OPF 只读 linear，未解析 rendition:layout / page-spread / viewport；pager 对 pre-paginated 章节按流式排版；CSS 无 position:absolute。现有两本真书 page-blanche(漫画, ltr)、haruko-html-jpeg(rtl, page-spread-left/right, 末页 item 级 rendition:layout-reflowable) 可复用。开始构建未改动基线 DLL 做 19 本基线。
+[步骤 1] 未改动基线 3076d3dd（Release，独立源码快照构建）19 本回归：19/19，11426 页，8648571 字形，逐页哈希存于 EXReader-D1-work/base-books.json。
+[步骤 2] 实现初版：OPF 解析 rendition:layout/viewport/spread、itemref rendition:layout-*/page-spread-*、page-progression-direction；pager 对 pre-paginated 部件按原生 viewport 排一页并统一缩放居中；固定页支持 position:absolute(top/right/bottom/left/%)；公共 API exr_publication_rendition/spreads/page_progression、exr_layout_fixed_viewport。语料：真书 page-blanche、haruko + 合成 6 本(绘本/杂志/目录/ltr双页/item级混合/无viewport)。首轮验证：fxl-toc/spread-ltr/mixed/noviewport 6/6；haruko 混合项、绘本图/绝对定位、杂志绝对定位 FAIL，排查中。
+[步骤 3] 修正：绝对定位图片尊重 CSS width；绝对定位块背景覆盖声明的 width/height（竖排侧栏 38→40px）；验证器的流式判定改为“文字行宽随视口收窄”（haruko 说明页在两种尺寸恰好同为 4 页，原“页数必须不同”判据过严，属判据错误而非引擎错误）；page-blanche 增加 img{position:absolute} 无 inset 的静态位置检查。8 本全部适用项 PASS（haruko 无定位元素，第 3 项 N/A）。
+[步骤 4] 19 本回归（候选=当前实现，同字体/同 layout.json）：19/19，11426 页，8648571 字形；与基线比较 comparable=true，页数变化 0 本、字形数变化 0 本、逐页哈希变化 0 页。
+[步骤 5] 新增 ctest 4 组 native-fixed-layout-{rendition,viewport,absolute,mixed}（105/80/31/69 项检查）全过；负对照：屏蔽绝对定位分支后 absolute 组按预期失败（line 198），恢复后通过。MinGW 树全量 ctest 253/254，唯一失败 sdk-release 为 README 快速入门需 MSVC 生成 exreader.lib（MinGW 树必然失败，与本改动无关）；正在用 MSVC 构建跑全量 ctest。未新增 src/*.h，无需改 tools/layers.json。
+[步骤 6] MSVC(cl 14.44) Release 全量 ctest：254/254 通过（含新增 4 组），日志 evidence/fixed-layout-20261110/ctest-msvc.log。文档 docs/FIXED-LAYOUT.md；FORMAT-COVERAGE.md 固定版式行追加更新说明。
+[步骤 7] 最终 DLL(sha256 41b1e231…) 复跑：19 本 19/19、11426 页、8648571 字形，页数/字形/逐页哈希变化 0；固定版式验证 8 本结果与上一轮逐字段一致，六项 6/6。准备提交。
+[步骤 8] 加固：rendition 表增加 rendition_count，pager/publication 按计数越界保护。重编后复跑：19 本 19/19、11426 页、8648571 字形，变化 0（最终 DLL sha256 8ca8792c…）；固定版式验证与前轮逐字段一致；MSVC 全量 ctest 复跑中。
+[步骤 9] 加固后 MSVC 全量 ctest 复跑：254/254 通过（新增 native-fixed-layout 4 组全过）。
+[步骤 10] 已提交 877b126e；推送 codex/fixed-layout-20261109 并建 draft PR。
+[步骤 11 完成] 已推送 877b126e 到 codex/fixed-layout-20261109，draft PR #120（base main）：https://github.com/NoGod3524/EXReader/pull/120 。最终：8 本语料六项 6/6；19 本 11426 页哈希零变化；MSVC ctest 254/254。
