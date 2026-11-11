@@ -1,0 +1,8 @@
+① Conflicts (merge origin/main):
+ - OUT.txt: report file; conflict markers removed, both sides' content kept.
+ - RESOLVE.md: add/add; markers removed, both sides kept.
+ (CMakeLists.txt auto-merged cleanly. Local RESOLVE.md edits were committed first as a wip commit so the merge could run.)
+② API docs added: none needed (457/457 public functions documented, coverage 100%).
+③ check_sdk_docs.py exit=0; last lines:
+  "examples": 15, "capability_rows": 41, "binary": null, "errors": [], "passed": true
+④ Other failures: not checked (CI not inspected; no local build/tests run).
