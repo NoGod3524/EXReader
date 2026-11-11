@@ -275,6 +275,7 @@ def pack(parts):
     with ZipFile(out, 'w', compression=ZIP_DEFLATED, compresslevel=9) as z:
         for name, data in sorted(parts.items()):
             info = ZipInfo(name, (2026, 11, 10, 0, 0, 0))
+            info.create_system = 0  # Match the committed DOS ZIP headers on every host.
             info.compress_type, info.external_attr = ZIP_DEFLATED, 0o100644 << 16
             z.writestr(info, data)
     return out.getvalue()

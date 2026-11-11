@@ -896,6 +896,7 @@ def build_fixture(spec_id, category, description):
     with ZipFile(buf, 'w') as zf:
         for name, content in sorted(parts.items()):
             info = ZipInfo(name, (2026, 1, 1, 0, 0, 0))
+            info.create_system = 0  # Match the committed DOS ZIP headers on every host.
             info.compress_type = ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
             raw = content.encode('utf-8') if isinstance(content, str) else content
