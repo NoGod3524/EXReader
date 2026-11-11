@@ -1,3 +1,25 @@
-The full-library build is still compiling. I'll continue once it finishes.
+The build and ctest run is still going in the background. I'm waiting for its completion notice.
 
-The build of the three test targets is running in the background (the first full-library build was killed at its time limit). I'll check the results when it finishes.
+`/XRefStm` hybrid-reference files now open. The draft PR is up at https://github.com/NoGod3524/EXReader/pull/133 and is not merged.
+
+- **Result on `deck.pdf`:** 15 pages open and all 15 render, with 0 failures.
+- **Existing tests:** all 48 ctest tests matching `pdf|fixed` pass, including the `native-pdf-*` and `native-fixed-pdf` groups.
+- **Code change in `src/pdf_objects.c`** (from the earlier WIP commit):
+  - **Hybrid object number:** a hybrid xref stream whose own object number equals `/Size` is now accepted, which is what PowerPoint writes.
+  - **Merge:** the classic-xref branch parses `/XRefStm` with the existing `stream_xref(..., hybrid=1)` and merges its entries into the same revision, with stream entries winning.
+  - **Unchanged:** I did not rewrite `stream_xref`, `compressed_object` or `undo_predictor`.
+- **New ctest groups:**
+  - `native-pdf-hybrid-deck`
+  - `native-pdf-hybrid-merge`
+  - `native-pdf-hybrid-chain` (`/Prev` chain with `/XRefStm`)
+  - `native-pdf-hybrid-bad-offset` (illegal offset gives a clear error, no crash)
+- **Fix made this session:** the three `hybrid-xref` tests failed to link because they were missing `src/pdf_crypto.c`. I added that test to the existing crypto link list in `CMakeLists.txt`.
+
+Not done:
+- **`first_paint_ms`:** the test prints 13361.0, because the timer in that test starts before the open call and includes the open time. I didn't investigate it.
+- **Reference comparison:** I did not run the pixel comparison against `tools/check_pdf_reference.py` or `pdftoppm`.
+- **Probe output:** I did not capture the before/after `exreader-pdf-probe` output.
+- **`OUT2.txt`:** it still has an uncommitted change that isn't mine; I left it out of the commit.
+
+exit=0
+Permission deny rule "computer" matches no known tool - check for typos.
