@@ -1,0 +1,239 @@
+{
+  "accepted": false,
+  "kind": "reader-a11y-windows-audit-record",
+  "audit_completed": true,
+  "accessibility_accepted": false,
+  "screen_reader_verified": false,
+  "evidence_verified": true,
+  "scope": "real Win32 reference host (packaged product build) at one source: keyboard only, UI Automation read",
+  "source_sha": "da2bcde7d684c1db8a9a51de9a7d478d870d5149",
+  "implementation_start": "f43baf9182d75907c0cb5d6f77048f27bca8c950",
+  "sdk_frozen_source": "9854061be331fe603a1822d9b2b36ee357154927",
+  "product_schema": "f32bb8aa18ed3de286900f19ce4230fd93435dd0",
+  "sdk_tree_changed": false,
+  "product_sql_changed": false,
+  "workflow": ".github/workflows/reader-a11y-windows.yml",
+  "run_id": 40084309431,
+  "attempt": 1,
+  "event": "push",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 120843987235,
+      "name": "real Win32 host UIA and keyboard audit (windows-2022)",
+      "conclusion": "success",
+      "head_sha": "da2bcde7d684c1db8a9a51de9a7d478d870d5149"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12556064712,
+      "name": "reader-a11y-windows-40084309431-1",
+      "size_in_bytes": 1097329,
+      "digest": "sha256:6fc353809c5dfa865788a6c141781e060b14f6c7e63274eee1c26b8c1e0f1aaf",
+      "expired": false,
+      "expires_at": "2027-01-22T10:02:15Z",
+      "source_sha": "da2bcde7d684c1db8a9a51de9a7d478d870d5149",
+      "run_id": 40084309431
+    }
+  ],
+  "audited_binary": {
+    "name": "EXReader.exe",
+    "build": "EXReaderProduct (product catalog + desktop metadata), packaged with --static-reading",
+    "sha256": "df70f4716ce82539f595f3fc3204f3de1c0479c9315628412f3689e5b5b03fc8",
+    "preserved_selftest": "26 checks passed at packaging time"
+  },
+  "environment": {
+    "runner": "windows-2022 (Windows Server 2022 10.0.20348)",
+    "python": "3.12.10",
+    "uia_client": "uiautomation 2.0.29",
+    "screen": [1024, 768],
+    "host_window": [1060, 788],
+    "dpi_aware": true,
+    "keyboard_transport": "sendinput",
+    "interactive_desktop": true,
+    "host_foreground": true,
+    "focus_recoveries": 6,
+    "focus_trap_escapes": 20,
+    "close": "alt+f4, graceful, exit code 0"
+  },
+  "counts": {
+    "checks": 49,
+    "pass": 34,
+    "fail": 9,
+    "gap": 5,
+    "not_verified": 1,
+    "error": 0,
+    "blocking": 8
+  },
+  "blocking": ["SH-04", "KB-06", "RD-02", "KB-07", "KB-01", "AN-02", "OR-09", "KB-05"],
+  "flows": [
+    {"id": "shelf", "name": "书架", "checks": 7, "pass": 6, "fail": 1, "gap": 0, "not_verified": 0},
+    {"id": "import", "name": "导入", "checks": 6, "pass": 4, "fail": 1, "gap": 1, "not_verified": 0},
+    {"id": "organize", "name": "整理", "checks": 11, "pass": 8, "fail": 2, "gap": 1, "not_verified": 0},
+    {"id": "reading", "name": "阅读", "checks": 7, "pass": 6, "fail": 1, "gap": 0, "not_verified": 0},
+    {"id": "annotation", "name": "标注", "checks": 6, "pass": 5, "fail": 1, "gap": 0, "not_verified": 0},
+    {"id": "settings", "name": "设置", "checks": 5, "pass": 3, "fail": 0, "gap": 2, "not_verified": 0},
+    {"id": "keyboard", "name": "键盘", "checks": 7, "pass": 2, "fail": 3, "gap": 1, "not_verified": 1}
+  ],
+  "findings": [
+    {
+      "id": "SH-04", "scope": "shelf", "severity": "blocking", "status": "fail",
+      "element": "IDC_SHELF_SEARCH 126, class Edit",
+      "expected": "the shelf search box announces an accessible name",
+      "actual": "name='', control_type='EditControl', help='', access_key=''",
+      "fix": "give the search box its own window text or provider name (书架搜索)"
+    },
+    {
+      "id": "AN-02", "scope": "annotation", "severity": "blocking", "status": "fail",
+      "element": "IDC_NOTE_EDIT 122, multiline Edit",
+      "expected": "the comment editor announces an accessible name",
+      "actual": "name='', control_type='EditControl'; the adjacent static names the list instead",
+      "fix": "set an accessible name on the multiline edit (标注内容)"
+    },
+    {
+      "id": "RD-02", "scope": "reading", "severity": "blocking", "status": "fail",
+      "element": "IDC_PAGE 123, class EXReaderPage",
+      "expected": "page text readable through a Text/Value pattern or child text",
+      "actual": "patterns=['LegacyIAccessiblePattern'], child_count=0: only the name 阅读区域 is exposed",
+      "fix": "implement a UI Automation text provider over the painted page text and its selection"
+    },
+    {
+      "id": "KB-05", "scope": "keyboard", "severity": "blocking", "status": "gap",
+      "element": "EXReaderPage served by the default proxy",
+      "expected": "the custom page view answers with a provider",
+      "actual": "WM_GETOBJECT=0, UiaReturnRawElementProvider=0, IAccessible=0 in the host sources",
+      "fix": "implement WM_GETOBJECT on EXReaderPage (UiaReturnRawElementProvider or the MSAA bridge)"
+    },
+    {
+      "id": "KB-06", "scope": "keyboard", "severity": "blocking", "status": "fail",
+      "element": "IDC_IMPORT_BUTTON 102 (and IDC_SHELF_REFRESH 127)",
+      "expected": "focus stays on the activated command or moves to a defined stop",
+      "actual": "focus='none' right after Space; two Tabs keep it 'none'",
+      "fix": "in host_update_controls, move focus to the next enabled control before disabling the focused one"
+    },
+    {
+      "id": "KB-07", "scope": "keyboard", "severity": "blocking", "status": "fail",
+      "element": "IDC_NOTE_EDIT 122, ES_MULTILINE",
+      "expected": "Tab and Shift+Tab both leave the comment field",
+      "actual": "after two Tabs=['note_edit','note_edit']; the same for Shift+Tab",
+      "fix": "stop answering WM_GETDLGCODE with DLGC_WANTALLKEYS, or forward Tab to IsDialogMessage"
+    },
+    {
+      "id": "KB-01", "scope": "keyboard", "severity": "blocking", "status": "fail",
+      "element": "main window Tab order",
+      "expected": "each enabled stop once, then back to the first",
+      "actual": "20 stops, cycle closed, 7 stops required an audit resume after the trap",
+      "fix": "clearing KB-07 makes the cycle clean; re-measure afterwards"
+    },
+    {
+      "id": "OR-09", "scope": "organize", "severity": "blocking", "status": "fail",
+      "element": "IDC_METADATA_BUTTON 128 / dialog #32770 书籍详情",
+      "expected": "after Escape the focus is back on 详情",
+      "actual": "focus after close='EXReaderHost:EXReader' (the owner window)",
+      "fix": "SetFocus the invoking button in the dialog WM_DESTROY; SetActiveWindow alone is not enough"
+    },
+    {
+      "id": "IM-06", "scope": "import", "severity": "moderate", "status": "fail",
+      "element": "IDC_IMPORT_BUTTON 102",
+      "expected": "focus remains on 导入",
+      "actual": "focus='none' right after the import command ran",
+      "fix": "same root cause as KB-06"
+    },
+    {
+      "id": "OR-10", "scope": "organize", "severity": "serious", "status": "fail",
+      "element": "main window commands while the dialog is open",
+      "expected": "the blocked owner commands report IsEnabled=false",
+      "actual": "IsWindowEnabled(main)=False but UIA IsEnabled of 导入=True",
+      "fix": "expose the blocked state through a provider so assistive technology does not offer unusable controls"
+    },
+    {
+      "id": "IM-05", "scope": "import", "severity": "serious", "status": "gap",
+      "element": "IDC_STATUS 125 (Static)",
+      "expected": "status changes raise an accessibility event",
+      "actual": "NotifyWinEvent=0 in the host sources; the status line is a plain static",
+      "fix": "raise EVENT_OBJECT_NAMECHANGE or a UIA notification from set_status/set_statusf"
+    },
+    {
+      "id": "OR-06", "scope": "organize", "severity": "moderate", "status": "gap",
+      "element": "IDC_METADATA_SAVE 132 / IDC_METADATA_CANCEL 133",
+      "expected": "every dialog command carries an access key",
+      "actual": "保存 access_key='Alt+s'; 取消 access_key=''",
+      "fix": "give 取消 a mnemonic like the other dialog commands"
+    },
+    {
+      "id": "ST-04", "scope": "settings", "severity": "moderate", "status": "gap",
+      "element": "no settings window in the host",
+      "expected": "a named surface for preferences",
+      "actual": "inline 字号/缩放 commands plus host.ini are the whole settings flow",
+      "fix": "add a labelled 设置 surface, or state in product docs that the inline commands are it"
+    },
+    {
+      "id": "ST-05", "scope": "settings", "severity": "moderate", "status": "gap",
+      "element": "all 18 main-window buttons",
+      "expected": "each command has an Alt access key",
+      "actual": "0 of 18 expose an AccessKey",
+      "fix": "add &-mnemonics to the main command texts"
+    },
+    {
+      "id": "KB-02", "scope": "keyboard", "severity": "serious", "status": "not_verified",
+      "element": "main window reverse Tab order",
+      "expected": "Shift+Tab visits the same stops in reverse",
+      "actual": "not measurable while KB-07 traps the walk",
+      "fix": "re-measure after KB-07 is fixed"
+    }
+  ],
+  "confirmed_working": [
+    "bookshelf list exposes a name, list role, keyboard focus and one accessible name per row",
+    "a book imports with the keyboard only (path typed, Space on 导入, shelf grows)",
+    "reading region reachable with Tab after 17 stops and shows a visible focus rectangle (1390 changed pixels, 3 of 3 samples)",
+    "arrows turn pages and the position line exposes 章/页/字号",
+    "Ctrl+A and Ctrl+C select and copy 432 bytes from the keyboard",
+    "annotation add, jump and delete work from the keyboard",
+    "字号 change 150 -> 160 and host.ini FontPercent=160",
+    "fixed-page zoom: 字号 disabled, 缩放 100 -> 125",
+    "details dialog: named 书籍详情, edits named 书名(T)/作者(A), 收藏 Alt+f with a toggle pattern, Tab cycle 书名->作者->收藏->保存->取消->书名, Escape closes, Enter runs the default 保存",
+    "shelf search filters from the keyboard to 《Pages》 — 未知作者 · PDF",
+    "UIA focus agrees with GetGUIThreadInfo at every sampled stop"
+  ],
+  "method": "real packaged host, private data directory, keyboard input through SendInput, UIA read; no driver script and no WM_COMMAND injection; visible focus measured by PrintWindow pixel comparison",
+  "verification": {
+    "validator": "tests/reader_a11y_windows/verify_report.py",
+    "accepted": true,
+    "problems": [],
+    "recomputed": "counts, blocking set, audit_completed and accessibility_accepted re-derived from the 49 named checks"
+  },
+  "limitations": [
+    "automated UIA and injected input are not a screen-reader acceptance; no NVDA/Narrator/human pass was run",
+    "speech output, verbosity, pronunciation and reading order inside a page are not judged",
+    "two blocking defects take the audit off the keyboard path; focus was restored through the auditor's own thread attach (6 recoveries, 20 trap escapes) and every one is in the key trace",
+    "only the fixed Win32 host at this source is audited; iOS, Android, GTK, sync and network features are out of scope"
+  ],
+  "human_review_required": [
+    "NVDA and Narrator pass over the same flows on a real Windows desktop",
+    "reading order and speech quality of the page region once a text provider exists",
+    "confidence check that no control needs a mouse"
+  ],
+  "iterations_retained": [
+    {"source_sha": "fbc3b5ce977ef986f476de30ee28057867b10e6b", "run_id": 40077034790, "attempt": 1,
+     "conclusion": "failure", "change": "first full run: the keyboard path died after the import with no diagnostic; added in-log diagnostics"},
+    {"source_sha": "936e09c46f3e1e3a6643b9f0991418c1d5041c4f", "run_id": 40078366778, "attempt": 1,
+     "conclusion": "failure", "change": "the diagnostics printer contained a literal newline inside a string literal; fixed"},
+    {"source_sha": "54efeceb44acea2430035d88e191f5b0c7dc2547", "run_id": 40078885293, "attempt": 1,
+     "conclusion": "failure", "change": "pinned the focus loss: 导入 disables itself while focused and the focus becomes NULL"},
+    {"source_sha": "394c37a473a36379c68e8af483902374bb98031c", "run_id": 40079889808, "attempt": 1,
+     "conclusion": "failure", "change": "recorded KB-06 and the note editor trap; added a recorded focus recovery"},
+    {"source_sha": "0ef62b09ff25c5ae86d2018840cb0e02a71e6ae9", "run_id": 40081155099, "attempt": 1,
+     "conclusion": "failure", "change": "added KB-07 and the trap escape; the dialog claims were polluted by a harness foreground bug"},
+    {"source_sha": "4ddd3b1ed7be136244a9b41459920481f0b82653", "run_id": 40082048372, "attempt": 1,
+     "conclusion": "failure", "change": "each dialog claim now restores focus inside the dialog; host.ini keys keep their case"},
+    {"source_sha": "1682e7237129af70977d4023ceec705c0345b93e", "run_id": 40082951060, "attempt": 1,
+     "conclusion": "failure", "change": "the host's own dialog now counts as the foreground (OR-07/08/11 pass); fixed-book import still failed on a relative path"},
+    {"source_sha": "02e9ec66944276b34fd0b245c8442f3c6b02a66e", "run_id": 40083419572, "attempt": 1,
+     "conclusion": "failure", "change": "clear the import field before the second book; the fixtures path was still relative"},
+    {"source_sha": "bcb1ddff8856f82216bfd58d72289be376bf1d24", "run_id": 40083956304, "attempt": 1,
+     "conclusion": "failure", "change": "absolute fixture path: audit completed with 0 errors and 8 blockers; the verifier rejected the dialog tree for lacking a list box"},
+    {"source_sha": "da2bcde7d684c1db8a9a51de9a7d478d870d5149", "run_id": 40084309431, "attempt": 1,
+     "conclusion": "success", "change": "per-tree element expectations in the verifier; evidence accepted, accessibility not accepted"}
+  ]
+}

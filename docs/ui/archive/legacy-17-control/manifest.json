@@ -1,0 +1,716 @@
+[
+  {
+    "original": "docs/ui/acceptance/check_shell_2a.py",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/acceptance/check_shell_2a.py",
+    "sha256": "2a7c507ea9e82d4f284f6c110f63859e3f63ce522cfd57bed280a684316552d0",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/acceptance/check_step5_legacy.py",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/acceptance/check_step5_legacy.py",
+    "sha256": "8dda966700fe6e68cdc32b728a9db7950e56dbe51e62412345eaca4825fa9fe2",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/acceptance/shell-2a.txt",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/acceptance/shell-2a.txt",
+    "sha256": "41fffc76334223fb8b25f18f2cf78bdf2f764eee4e9e4f27ad65663cf6db9c13",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step4-20261106/legacy/drive.tsv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step4-20261106/legacy/drive.tsv",
+    "sha256": "5b173876190b757af3699902b0b043ea0179f7e4ed89b3fc3bc237103c3aa294",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step4-20261106/legacy/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step4-20261106/legacy/paint.csv",
+    "sha256": "3e348b0b8da48bef143ca383475248ad05a2016326a9ab77309dfdd02cb6997b",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step4-20261106/legacy/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step4-20261106/legacy/process.json",
+    "sha256": "85130136f8ad0c37f216ecd1c0627d9524415d62b97c6c11a9dc921144fd9872",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step4-20261106/legacy/result.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step4-20261106/legacy/result.json",
+    "sha256": "2acbdb77609023508c51f26dde413f286836cda7bc560e16c354457d4a6f0186",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step4-20261106/legacy/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step4-20261106/legacy/run.drive",
+    "sha256": "2ef31bb534e2670989f32449bad8593ae2315e708aa7b761edc9649bb8cf5bcc",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/anchor-fix/legacy/check-exit.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/anchor-fix/legacy/check-exit.json",
+    "sha256": "bfdedf06596faa2042b0fedd9653ec1023d2e96ed56dc40b607985bc8438c1d5",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/anchor-fix/legacy/comparison.txt",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/anchor-fix/legacy/comparison.txt",
+    "sha256": "049430c3629a1c63ff1e44325e3c6593a42842cb9d8281563b4d41b1981b36fa",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/anchor-fix/legacy/result.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/anchor-fix/legacy/result.json",
+    "sha256": "effa8cc8569dd1c7f475da740ee3a5a0e1c59fa1791d821fd0488e671f732d1d",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/anchor-fix/main/legacy-after.ini",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/anchor-fix/main/legacy-after.ini",
+    "sha256": "4de1bc72b3607268eeaa0fa2349c5c4e140ed7ae0c49f35d42b7c9fcb1e04b42",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/anchor-fix/main/legacy-before.ini",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/anchor-fix/main/legacy-before.ini",
+    "sha256": "0a29f930e5829c41a393c5f0af8619d0e4e7830a9f38dc57c8700dd538d3c90c",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/legacy-after.ini",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/legacy-after.ini",
+    "sha256": "4de1bc72b3607268eeaa0fa2349c5c4e140ed7ae0c49f35d42b7c9fcb1e04b42",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/legacy-before.ini",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/legacy-before.ini",
+    "sha256": "0a29f930e5829c41a393c5f0af8619d0e4e7830a9f38dc57c8700dd538d3c90c",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/00-empty-shelf.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/00-empty-shelf.client.json",
+    "sha256": "c7b9263d3c7980931068f447da158e93129114b599acd61340e20b54b73435cb",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/00-empty-shelf.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/00-empty-shelf.png",
+    "sha256": "968d14f4fcccc4e60355e4b37e1b7a6f32f624e4dbd4553ae50132787e247788",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/01-epub-page1.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/01-epub-page1.client.json",
+    "sha256": "c7b9263d3c7980931068f447da158e93129114b599acd61340e20b54b73435cb",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/01-epub-page1.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/01-epub-page1.png",
+    "sha256": "ada8acced083380e8c73672fe32ae5ba86ee4c042af132a3f13dd2b7ade26ad5",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/02-resized.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/02-resized.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/02-resized.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/02-resized.png",
+    "sha256": "d4823846a43e034ad49c4c6ccc6582880aff3c6330c91ef301a1856e9cb60604",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/03-pdf-page1.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/03-pdf-page1.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/03-pdf-page1.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/03-pdf-page1.png",
+    "sha256": "ba8825c827c8d108e218e40069ac575b0e6c2066f60d5055349a6f01384d0fbe",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/04-stale-final.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/04-stale-final.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/04-stale-final.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/04-stale-final.png",
+    "sha256": "cddd71b5adc2d3c0628876cb3b00db8ef6ec11c46cdd91c70c1d07af50d5b0b5",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/drive.log",
+    "sha256": "300a98877ec448dd3696072f4d0b37e309c4be27b6d6865aa8cdd2fbf305dbad",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/paint.csv",
+    "sha256": "9e6f26c6ceab383791ca27576d27c7962932488cf2187cc46d161a90ddc1bd3e",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/process.json",
+    "sha256": "5157b1b8aa5f85f457c187cff907ce0b0e0a697b368cd13728f09270df5c9d93",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/A/run.drive",
+    "sha256": "568edcd217c3a7659e1e89cd99b832de2156741959df9c4665a069aa904ed463",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/10-restored.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/10-restored.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/10-restored.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/10-restored.png",
+    "sha256": "27cc01d21a02b7f5cac12d29e8ab5a40eddffaea4c6777c0f6449a8b2df86428",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/11-font-changed.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/11-font-changed.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/11-font-changed.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/11-font-changed.png",
+    "sha256": "8634485b0484b4445cca07ba35574b316e0d0109188ee6e4c6c7b1b265291fda",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/drive.log",
+    "sha256": "7b8f1510c7ca7901a95cb3e2acbfb2e6cfec85526e05c8b6ce73281601fd3394",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/paint.csv",
+    "sha256": "3b4834d64d6d63e78cf7530e23cdd2205c108a7fc5a640d70def4e561d684085",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/process.json",
+    "sha256": "024df3fb71d397d7a8601c57a4cb70428886806fb5bcb0538f255f6e0813680a",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/B/run.drive",
+    "sha256": "3afdf0fd5ca7d9845faef6da00829f11e847797a429d2d93c8c59d00c08f2a6a",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/20-restored-after-font.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/20-restored-after-font.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/20-restored-after-font.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/20-restored-after-font.png",
+    "sha256": "28dd6e589c66b7419eebea2bbc80a22e43e48e48bc82b4da9d1fd4d0599ffdae",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/drive.log",
+    "sha256": "5ebd6bfa6d0355ebc1efe95622985203d7ce794ddbef7a40e02384b455805a49",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/paint.csv",
+    "sha256": "8aad0f5a44329e030f13c3419ce1b0694cb9d4562d6b5ea98cce7d39ff4a585d",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/process.json",
+    "sha256": "1e71323a46c3911375d83534946c522a7f8422e86842eb48eff3ab9bab346329",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/baseline/C/run.drive",
+    "sha256": "72cf2ae46ac64363902135bbec94dc0444d361f420d6ec3de529463581b7e688",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/00-empty-shelf.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/00-empty-shelf.client.json",
+    "sha256": "c7b9263d3c7980931068f447da158e93129114b599acd61340e20b54b73435cb",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/00-empty-shelf.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/00-empty-shelf.png",
+    "sha256": "968d14f4fcccc4e60355e4b37e1b7a6f32f624e4dbd4553ae50132787e247788",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/01-epub-page1.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/01-epub-page1.client.json",
+    "sha256": "c7b9263d3c7980931068f447da158e93129114b599acd61340e20b54b73435cb",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/01-epub-page1.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/01-epub-page1.png",
+    "sha256": "ada8acced083380e8c73672fe32ae5ba86ee4c042af132a3f13dd2b7ade26ad5",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/02-resized.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/02-resized.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/02-resized.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/02-resized.png",
+    "sha256": "d4823846a43e034ad49c4c6ccc6582880aff3c6330c91ef301a1856e9cb60604",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/03-pdf-page1.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/03-pdf-page1.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/03-pdf-page1.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/03-pdf-page1.png",
+    "sha256": "ba8825c827c8d108e218e40069ac575b0e6c2066f60d5055349a6f01384d0fbe",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/04-stale-final.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/04-stale-final.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/04-stale-final.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/04-stale-final.png",
+    "sha256": "cddd71b5adc2d3c0628876cb3b00db8ef6ec11c46cdd91c70c1d07af50d5b0b5",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/drive.log",
+    "sha256": "75ed643d8e8fc51f0bfb3e9e9d36fd1f681644745a34bcf93221fecac7a2a265",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/paint.csv",
+    "sha256": "3c4aedee09b006362fd5dc80d79b20d3d6407b66d13365dc273806534630942f",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/process.json",
+    "sha256": "47427a2bf287488167a2fa4e2101413c8c90e1e9291cc202425be571ebd70b5f",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/A/run.drive",
+    "sha256": "568edcd217c3a7659e1e89cd99b832de2156741959df9c4665a069aa904ed463",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/10-restored.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/10-restored.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/10-restored.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/10-restored.png",
+    "sha256": "27cc01d21a02b7f5cac12d29e8ab5a40eddffaea4c6777c0f6449a8b2df86428",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/11-font-changed.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/11-font-changed.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/11-font-changed.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/11-font-changed.png",
+    "sha256": "8634485b0484b4445cca07ba35574b316e0d0109188ee6e4c6c7b1b265291fda",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/drive.log",
+    "sha256": "ef80b2ada56765ee4717e86ecba820cb85da74efe5729889114436b882140aae",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/paint.csv",
+    "sha256": "2d3d8549f28f5bb5eedac87c1221bcd98f44667ca7eeb3fef19057dea49eab00",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/process.json",
+    "sha256": "4a29aecab0eb7cc80158c6f8e5417fb565d70d4c3f0f5e4b583922d089fa7194",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/B/run.drive",
+    "sha256": "3afdf0fd5ca7d9845faef6da00829f11e847797a429d2d93c8c59d00c08f2a6a",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/20-restored-after-font.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/20-restored-after-font.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/20-restored-after-font.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/20-restored-after-font.png",
+    "sha256": "28dd6e589c66b7419eebea2bbc80a22e43e48e48bc82b4da9d1fd4d0599ffdae",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/drive.log",
+    "sha256": "dfac8001930b99e5351e985313dd773028ca9afc11f0f4c56cafbd44ea9b978d",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/paint.csv",
+    "sha256": "1297cb255fc4082c47c1fe3071c9054ea724703c0ca2dfca0e548fc0aa76eb63",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/process.json",
+    "sha256": "4fd75b3541484635b049e10c12177e31f251ac530d6d87358bb8bc913292a96c",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/changed/C/run.drive",
+    "sha256": "72cf2ae46ac64363902135bbec94dc0444d361f420d6ec3de529463581b7e688",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/comparison.txt",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/comparison.txt",
+    "sha256": "049430c3629a1c63ff1e44325e3c6593a42842cb9d8281563b4d41b1981b36fa",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/00-empty-shelf.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/00-empty-shelf.client.json",
+    "sha256": "c7b9263d3c7980931068f447da158e93129114b599acd61340e20b54b73435cb",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/00-empty-shelf.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/00-empty-shelf.png",
+    "sha256": "968d14f4fcccc4e60355e4b37e1b7a6f32f624e4dbd4553ae50132787e247788",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/01-epub-page1.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/01-epub-page1.client.json",
+    "sha256": "c7b9263d3c7980931068f447da158e93129114b599acd61340e20b54b73435cb",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/01-epub-page1.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/01-epub-page1.png",
+    "sha256": "ada8acced083380e8c73672fe32ae5ba86ee4c042af132a3f13dd2b7ade26ad5",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/02-resized.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/02-resized.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/02-resized.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/02-resized.png",
+    "sha256": "d4823846a43e034ad49c4c6ccc6582880aff3c6330c91ef301a1856e9cb60604",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/03-pdf-page1.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/03-pdf-page1.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/03-pdf-page1.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/03-pdf-page1.png",
+    "sha256": "ba8825c827c8d108e218e40069ac575b0e6c2066f60d5055349a6f01384d0fbe",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/04-stale-final.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/04-stale-final.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/04-stale-final.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/04-stale-final.png",
+    "sha256": "cddd71b5adc2d3c0628876cb3b00db8ef6ec11c46cdd91c70c1d07af50d5b0b5",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/drive.log",
+    "sha256": "3577335f235d17cb1231c59746d6d8c0c2149434de7a658f6effc3a85612b4e8",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/paint.csv",
+    "sha256": "d4f292adbc0d3feb7dfc1080ab6026bc3a2581dcfbd5a2e89b32bf0fe52e3782",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/process.json",
+    "sha256": "8f074f59f6c15b5930e77d24ef472a9048b9b9bcd489472a03791f205a5bf93b",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/A/run.drive",
+    "sha256": "568edcd217c3a7659e1e89cd99b832de2156741959df9c4665a069aa904ed463",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/10-restored.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/10-restored.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/10-restored.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/10-restored.png",
+    "sha256": "27cc01d21a02b7f5cac12d29e8ab5a40eddffaea4c6777c0f6449a8b2df86428",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/11-font-changed.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/11-font-changed.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/11-font-changed.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/11-font-changed.png",
+    "sha256": "8634485b0484b4445cca07ba35574b316e0d0109188ee6e4c6c7b1b265291fda",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/drive.log",
+    "sha256": "74e07a6fab8b1cc5290be862d7a247fcaa13f14344e918f753bebf1c76f9cd17",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/paint.csv",
+    "sha256": "dc8c2a013028852d8cbb79e55d65036caf5dd8abe4c5e650c46621c1952aa470",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/process.json",
+    "sha256": "86122a91c3e2c4bc2d7e632c2071296ea0094117f39faa2cd93598cd820f0af2",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/B/run.drive",
+    "sha256": "3afdf0fd5ca7d9845faef6da00829f11e847797a429d2d93c8c59d00c08f2a6a",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/20-restored-after-font.client.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/20-restored-after-font.client.json",
+    "sha256": "6022b693568ee536fd7582f85c24f3f1ce8ec56552d9e1cd7f92331b624961f4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/20-restored-after-font.png",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/20-restored-after-font.png",
+    "sha256": "28dd6e589c66b7419eebea2bbc80a22e43e48e48bc82b4da9d1fd4d0599ffdae",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/drive.log",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/drive.log",
+    "sha256": "edafe19598f3b691ebe936eda02e04558ea621ffe2be1db8fc501e9fcb4acdf6",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/paint.csv",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/paint.csv",
+    "sha256": "d0af4fc23b200bb116dbf5a9993cd9805f1e4bb0f81306b8ac005a0c54a61ece",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/process.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/process.json",
+    "sha256": "0cfaba3575ec757b499d387872472fa8cf530d353a4978e608ba31a9ab9385d4",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/run.drive",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/control/C/run.drive",
+    "sha256": "72cf2ae46ac64363902135bbec94dc0444d361f420d6ec3de529463581b7e688",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-20261106/record/phase-regression/result.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-20261106/record/phase-regression/result.json",
+    "sha256": "effa8cc8569dd1c7f475da740ee3a5a0e1c59fa1791d821fd0488e671f732d1d",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-art/record/legacy-after.ini",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-art/record/legacy-after.ini",
+    "sha256": "4de1bc72b3607268eeaa0fa2349c5c4e140ed7ae0c49f35d42b7c9fcb1e04b42",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-art/record/legacy-before.ini",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-art/record/legacy-before.ini",
+    "sha256": "0a29f930e5829c41a393c5f0af8619d0e4e7830a9f38dc57c8700dd538d3c90c",
+    "mode": "move"
+  },
+  {
+    "original": "docs/ui/evidence/2a-step5-art/record/legacy-result.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/ui/evidence/2a-step5-art/record/legacy-result.json",
+    "sha256": "effa8cc8569dd1c7f475da740ee3a5a0e1c59fa1791d821fd0488e671f732d1d",
+    "mode": "move"
+  },
+  {
+    "original": "docs/validation/reader-a11y-windows.json",
+    "archive": "docs/ui/archive/legacy-17-control/docs/validation/reader-a11y-windows.json",
+    "sha256": "4ba8c87d0cb9cf14d5174f8ac449d2f262ad0c7a316f94b971cd5c8d6f905e59",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/README.md",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/README.md",
+    "sha256": "18ad3cb40bfc10bc0978b2d07577cf8f00cd50d024731b4381878a4737ea1c9e",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/evidence.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/evidence.py",
+    "sha256": "08599f1ba99e8d53f095972ee328209ffc71581327c544eb0011217ff17e1bc9",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/flows.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/flows.py",
+    "sha256": "95bb12e592cc90fb7434536c204397d2b262983c6a17f47b51be9853ae30ff2e",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/host.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/host.py",
+    "sha256": "d9e62e5d00868434a801bb8208413eddbc089b962df12976a9520ac441017e48",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/keyboard.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/keyboard.py",
+    "sha256": "9e5405552aa044ed3270947a59c3afa7037310ebc4f98898e790e6c8037028cb",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/png.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/png.py",
+    "sha256": "99893d0900276944dfff8a79a84f221e7cb75ec4a74f273ddcd5a7b853237ea7",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/run_audit.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/run_audit.py",
+    "sha256": "c35fc803b4e15e20dbb3fd0c821ded106fc23964906aa5d55e42dd9baae7b797",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/session.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/session.py",
+    "sha256": "c9a4e9fd65132f4a7ffb788758f81805a5d74ca8a89d2aaff20855150c238c1e",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/uia_layer.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/uia_layer.py",
+    "sha256": "48e6d315f168979d9796297420951a589df7a2b4948066253a487ff3f0864aba",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/verify_report.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/verify_report.py",
+    "sha256": "670989a36fe668c449104c88e5162c7d74ff5de7c31a9b0d430edf8659eb44af",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/reader_a11y_windows/w32.py",
+    "archive": "docs/ui/archive/legacy-17-control/tests/reader_a11y_windows/w32.py",
+    "sha256": "04f0977a9da2134f6d057ab8e37342a6c13b20626d53d17f5daef23ac73a2c59",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/windows_host/phase-a.txt",
+    "archive": "docs/ui/archive/legacy-17-control/tests/windows_host/phase-a.txt",
+    "sha256": "9f7e460bcd69b0c6fe252ae1e90893c0d2e41eab55be69d4540c145ad4552d7d",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/windows_host/phase-b.txt",
+    "archive": "docs/ui/archive/legacy-17-control/tests/windows_host/phase-b.txt",
+    "sha256": "3afdf0fd5ca7d9845faef6da00829f11e847797a429d2d93c8c59d00c08f2a6a",
+    "mode": "snapshot (outside allowed mutation scope)"
+  },
+  {
+    "original": "tests/windows_host/phase-c.txt",
+    "archive": "docs/ui/archive/legacy-17-control/tests/windows_host/phase-c.txt",
+    "sha256": "72cf2ae46ac64363902135bbec94dc0444d361f420d6ec3de529463581b7e688",
+    "mode": "snapshot (outside allowed mutation scope)"
+  }
+]

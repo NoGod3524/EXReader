@@ -1,0 +1,33 @@
+配置仍在进行（输出被 `tail` 缓冲）。等它结束的通知后再开始构建。
+
+Configure 与构建已在后台运行（日志在 `/tmp/cfg.log`、`/tmp/build.log`），完成后会通知我，再跑 ctest 并推送。
+
+**目前状态**
+- 已合并 `origin/main`，11 个冲突文件已按“取并集”解完，仓库里没有残留冲突标记。合并结果已暂存，**尚未提交**。
+- 本地构建、ctest 和推送都还没做，所以 PR #130 目前仍是 CONFLICTING。
+- 解决方式已记入 `OUT-CF.txt`：
+  - `OUT.txt`：两侧内容都留。
+  - `tools/layers.json`：`opds.h` 和 `edit.h` 两行都留。
+  - `examples/windows/CMakeLists.txt`：取 main 的 `EXR_READER_TEST_DRIVERS` 选项，再加本分支的 `winhttp crypt32`。
+  - `examples/reader.c`：main 大幅重构了它，所以取 main 版，再把本分支的高对比、a11y、OPDS、云同步改动重放上去。
+  - `shell_drive_test.inc`：OPDS 和云同步的验收入口并到这里。
+  - `shell_screen.inc`、`shell_search.inc`：取 main 的控件 ID 表，补上 `IDC_SHELL_SYNC`。
+  - `shell_settings.inc`：取 main 的版面，在词典按钮同一行右侧加“云同步”按钮。
+  - `shell_dictionary.inc`：取 main 的绘制接口，补上云同步面板标题和“立即同步”主按钮。
+  - `shell_shelf.inc`、`shell_shelfmeta.inc`：取 main 版；“书源”按钮改放进 main 的书架顶栏，OPDS 返回时回到书架视图。
+  - `shell_d2d.cpp`：取 main 的新绘制接口，保留高对比的主题和边线处理。
+
+**需要你知道的**
+- 配置时 freetype 下载因 SSL 证书失败，所以我改用 `exr-build-argon/_deps` 里现成的依赖源码（只影响本机构建，不改仓库）。
+- 我对 main 重构后的书架做了结构性改动（“书源”入口），只做过静态检查，要等编译和 ctest 才能确认没问题。
+
+**还差**
+1. 构建完成，运行 `ctest -E "^sdk-release$"` 并修掉合并造成的失败。
+2. 用 `git commit` 完成合并（提交信息按要求带 Co-Authored-By 行）。
+3. 推送到 `codex/a11y-uia-20261110`，再查 PR 的 mergeable 状态。
+
+Build 在后台跑（日志 `/tmp/build2.log`）。上一次的 build.log 是空的，所以我重新启动了它；完成后我再看结果、跑 ctest。
+
+ctest 已在后台运行，结果在 `/tmp/ctest.log`；完成后我会汇总通过数和失败项。
+
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
