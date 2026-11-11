@@ -1,0 +1,13 @@
+The merge is still running. I'm waiting for the monitor to report that it has finished.
+
+冲突已解决,合并提交 `a8b3e75b` 已推送到 `codex/vertical-expand-20261109`。我没有查看 CI,所以 `sdk-doc-coverage` 在 CI 上是否转绿还不知道。
+
+- **冲突文件:** 有冲突的是 `OUT.txt` 和 `RESOLVE.md`,`CMakeLists.txt` 自动合并,没有冲突。
+  - `OUT.txt` 两侧内容都保留,只删了冲突标记。
+  - `RESOLVE.md` 保留了本分支的版本。它是任务说明文件,不是报告,这里没有按"取并集"处理。
+- **文档门禁:** `python -X utf8 tools\check_sdk_docs.py` 本地 exit=0,没有缺失的 API 条目,所以没补任何文档。
+- **受保护文件:** `tools/check_sdk_docs.py`、`tests/check_reading_release.py` 和 `tools/version_literal_exceptions.json` 都没改。
+- **合并前的本地改动:** `RESOLVE.md` 里有一处本地改动(把路径改成 `EXReader-fix-116-20261111`),它挡住了合并。我先丢掉了它,备份在 `..\RESOLVE-116-local.md`。
+- **留在工作区的文件:** `CASCADE-CLAUDE-OUT.txt` 仍是未跟踪状态,没提交。
+
+报告已写进 `RESOLVE-OUT.txt`,但它没提交,也没推送。其中第④项(CI 失败项)只写了"未查看"。
