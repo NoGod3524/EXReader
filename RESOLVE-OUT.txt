@@ -1,0 +1,10 @@
+① 冲突文件
+- RESOLVE.md (add/add)：保留 PR #131 版本，并追加备注记录 main 上 PR #107 版本的差异（取并集）。
+- tools/layers.json：保留 include/exr/opds.h；main 侧新增的 include/exr/edit.h 已在同文件第 231 行存在，故不重复写入（避免重复键）；JSON 校验通过。
+- CMakeLists.txt、OUT.txt、.gitignore：自动合并，无冲突。
+② 补的 API 文档：无（check_sdk_docs.py 通过，无 undocumented functions）。
+③ check_sdk_docs.py exit=0；最后三行：
+  "errors": [],
+  "passed": true
+}
+④ 其他失败项：未见 CI 结果，本地未运行其它门禁，无法确认。
