@@ -1,0 +1,8 @@
+① 冲突文件清单：无。origin/main (fe3d46e1) 已是 HEAD 的祖先，git merge origin/main 为 "Already up to date"，无 U 标记。
+   PR 的"冲突"来自远端分支落后（f90f0b43）；推送 HEAD(0c65fde7) 后 GitHub 显示 mergeable=MERGEABLE（mergeStateStatus=BLOCKED，即等待检查）。
+② 补的 API 文档：无需补（documented 457 / public 457，100%）。
+③ check_sdk_docs.py exit=0；最后三行：
+     "errors": [],
+     "passed": true
+   }
+④ CI 失败项：推送后 CI 刚触发，尚未查看结果；未发现其他失败项。
