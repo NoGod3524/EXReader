@@ -1,0 +1,10 @@
+已推送到 `codex/opds-catalog-20261110`（提交 `93c3e231`）。没有冲突要解决，缺的 API 文档也补完了。
+
+- **冲突**：`git merge origin/main` 显示 "Already up to date"。本分支之前已经合入了 main，`git status` 里也没有 U 标记。
+- **文档**：`tools/check_sdk_docs.py` 原本报 5 个 `exr_opds_*` 函数没有文档。我已在 `docs/API.md` 末尾给 `exr_opds_parse`、`exr_opds_feed_free`、`exr_opds_parse_search`、`exr_opds_search_url`、`exr_opds_resolve_url` 补了条目，ABI 都标为"实验"。
+- **门禁**：`check_sdk_docs.py` 现在 exit=0，输出 `"errors": [], "passed": true`。
+- **没碰的东西**：没有改那几个受保护文件，也没有启动 GUI。
+- **提交范围**：只提交了 `docs/API.md` 和 `RESOLVE-OUT.txt`。你工作区里原有的 `OUT.txt` 改动和 `CASCADE-CLAUDE-OUT.txt` 我没动。
+- **CI**：我没查看 CI，所以不知道还有没有别的失败项。
+
+我没有合并 PR，也没有动 main。报告在 `RESOLVE-OUT.txt`。
