@@ -83,3 +83,36 @@ X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
 [Y4 real books PASS] 19/19, 11,318 pages, 8,648,571 glyphs. Full candidate rendering compared with frozen baseline: page-count delta 0; changed RGBA page hashes 0; geometry/glyphs unchanged. Raw per-page evidence retained in tests/docx/evidence/y4/realbooks.json.gz and realbooks.diff.json.
 [Y4 evidence complete] Archived full results and per-file conflict resolution in tests/docx/evidence/y4/README.md plus machine-readable evidence; all 9 combined steps, 6 X5 fixtures, 28 new groups, exact #124 5/18->18/18, SDK smoke and 19-book zero drift recorded. Scope confirmed against #124; editor branch merges cleanly back into #124. Final all-target build remains no-work-to-do.
 [Y4 final-base sync] PR #125 created against #124; #124 concurrently advanced to 9841d30b by merging main/#120 fixed-layout. Merged that updated baseline without authoring changes to its non-editor files. Only OUT.txt conflicted: kept both upstream records and all Y4 append-only entries. Rebuilding and rerunning full acceptance on the updated #124 base before final delivery.
+[T1-realworld Step 0] 2026-11-10: Verified worktree C:\Users\Oscar\Documents\Codex\EXReader-aragorn-docx-20261110 on branch codex/dx-realworld-argon-20261110 at base commit c04560b7; tests/check_reading_release.py SHA256 verified (6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b).
+
+[T1-realworld Step 1] 2026-11-10: Configured and built C:\Users\Oscar\Documents\Codex\exr-build-argon (1212 Ninja targets, exit 0); baseline DOCX ctest suite 43/43 PASS in 2.12s.
+
+[T1-realworld Step 2] 2026-11-10: Created tests/fixtures/docx-real/make_fixtures.py and generated 30 original synthetic real-world structural DOCX fixtures (01..30 across 8 categories: tables=4, fields=4, numbering=4, styles=4, sections=4, footnotes=3, graphics=3, other=4; max size 4922 bytes < 60 KB; manifest.json verified reproducible with --check).
+
+[T1-realworld Step 3] 2026-11-10: Executed pre-fix Matrix A (read->model->write) and Matrix B (read->edit->write) audit across all 30 fixtures on baseline c04560b7:
+  - Matrix A: 25/30 fixtures 18/18 PASS (450/540 metric cells). 5 fixtures fail read with EXR_FORMAT (0/18 each, 90 cells lost): 02-table-merged-hmerge-vmerge, 10-numbering-restart-override, 11-numbering-style-bound, 12-numbering-chinese-counting, 30-other-header-table-chinese-fields.
+  - Matrix B: 21/30 fixtures 18/18 PASS (442/540 metric cells). Extra edit losses (Matrix B - Matrix A) = 8 metric cells across 4 fixtures: 04-table-repeating-header-multipar-list (-2: M08_para_and_run_props, M10_tables_and_merges), 13-style-inheritance-chain (-2: M08_para_and_run_props, M09_styles_and_theme), 14-style-direct-override-unbold (-2: M08_para_and_run_props, M09_styles_and_theme), 15-style-direct-indent-override (-2: M08_para_and_run_props, M09_styles_and_theme).
+
+[T1-realworld Step 4] 2026-11-10: Fix 1 (Numbering: Chinese/CJK/enclosed/ordinal/bullet formats in src/numbering.c + 1-based w:lvlRestart & w:numStyleLink resolution in src/docx.c):
+  - TDD Red: Added assertions in tests/test_docx.c for chineseCounting, chineseLegalSimplified, decimalEnclosedCircle, ideographTraditional, lvlRestart=1 on ilvl=0, and numStyleLink; confirmed native-docx failed at line 94 (EXR_FORMAT: Unsupported numbering format: chineseCounting).
+  - TDD Green: Implemented formats in src/numbering.c and lvlRestart/numStyleLink in src/docx.c; native-docx PASS.
+  - Metrics before -> after Fix 1: Matrix A 25/30 (450/540) -> 29/30 (522/540) (+72 cells); Matrix B 21/30 (442/540) -> 25/30 (514/540) (+72 cells).
+
+[T1-realworld Step 5] 2026-11-10: Fix 2 (Tables: w:hMerge+w:vMerge combination in src/docx.c + multi-paragraph cell EXR_EDIT_CELL_OPAQUE guard & row-insert <w:pPr> template preservation in src/docx_edit_table.c):
+  - TDD Red: Added assertions in tests/test_docx.c (hMerge+vMerge table) and tests/test_docx_edit_table_image.py (table-preserve multipara cell guard & styled cell row-insert pPr); confirmed both tests failed RED.
+  - TDD Green: Implemented hMerge span resolution in src/docx.c table(), EXR_EDIT_CELL_OPAQUE for block_count > 1 in exr_edit_table_decode, and opaque_xml pPr template inheritance in exr_edit_table_insert_row; both tests PASS.
+  - Metrics before -> after Fix 2: Matrix A 29/30 (522/540) -> 30/30 (540/540) (+18 cells); Matrix B 25/30 (514/540) -> 27/30 (534/540) (+20 cells; extra edit losses reduced from 8 to 6 cells).
+
+[T1-realworld Step 6] 2026-11-10: Fix 3 (Style inheritance preservation during paragraph property edits in src/docx_edit_io.c + CTest registration):
+  - TDD Red: Added assertion in tests/test_docx_edit_io.py (properties group) verifying that editing spacing/indent on a paragraph with style-inherited line=480 and left=720 does not emit w:line="0" or w:left="0"; confirmed native-docx-edit-io-properties failed RED.
+  - TDD Green: Updated emit_para_prop (k==4 spacing and k==5 ind) in src/docx_edit_io.c to omit zero-valued attributes that were absent on the source XML element so style-inherited values remain active; native-docx-edit-io-properties PASS.
+  - Metrics before -> after Fix 3: Matrix A 30/30 (540/540) -> 30/30 (540/540); Matrix B 27/30 (534/540) -> 30/30 (540/540) (+6 cells; extra edit losses Matrix B - Matrix A reduced from 6 to 0 across all 30 fixtures).
+  - Generated tests/fixtures/docx-real/MATRIX-A.md and tests/fixtures/docx-real/MATRIX-B.md and registered native-docx-realworld-matrix in CMakeLists.txt.
+
+[T1-realworld Step 7] 2026-11-10: Wrote docs/DOCX-LIMITS.md documenting 8 explicit unsupported/protected OOXML structures (Word Drawing Canvas, SmartArt Diagrams, OLE Embedded Objects, ActiveX/Legacy Form Controls, Structured Document Tags/Custom XML Data Binding, Tracked Changes/Revisions, Complex Table Cells [merged/shaded/nested/multi-paragraph], and Complex Fields/Comments/Bookmarks/Textboxes) with rationale and conservative zero-data-loss behavior (byte-for-byte opaque retention or explicit EXR_UNSUPPORTED).
+
+[T1-realworld Step 8] 2026-11-10: Completed full acceptance & regression suite:
+  - Layer check: 124 objects, 1456 symbol references, 0 remaining inverse references, 0 new; 1096 source/header dependencies, 0 inverse includes.
+  - CTest suite (-E "^sdk-release$"): 314/314 PASS (100%, 0 failures, 64.17s), including native-docx-realworld-matrix (30/30 Matrix A 540/540, 30/30 Matrix B 540/540, extra edit loss B-A = 0).
+  - 19-book regression check: 19/19 books ok, 11,318 pages, 8,648,571 glyphs; page-count delta = 0, hash_changed_pages = 0, needs_review = false.
+  - tests/check_reading_release.py SHA256 unchanged (6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b).

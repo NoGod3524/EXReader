@@ -610,15 +610,25 @@ static int emit_para_prop(exr_buffer *b,const source_xml *x,size_t n,size_t k,co
     return (n==NONE || exr_append(b,x->bytes+at,x->spans[n].close-at)) && exr_edit_xml_end(b,x,n,"numPr");
   }
   if (k==4) {
-    attr_edit a[]={{"before",v[0]},{"after",v[1]},{"line",v[2]},{"lineRule",p->line_rule==EXR_EDIT_LINE_EXACT ? "exact" : p->line_rule==EXR_EDIT_LINE_AT_LEAST ? "atLeast" : "auto"}};
+    const exr_node *nd=n==NONE ? NULL : x->tree->nodes+n;
+    int has_b=p->space_before!=0 || (nd && exr_edit_xml_wa(nd,"before")) || (!p->space_after && !p->line);
+    int has_a=p->space_after!=0 || (nd && exr_edit_xml_wa(nd,"after"));
+    int has_l=p->line!=0 || (nd && exr_edit_xml_wa(nd,"line"));
+    const char *rule=p->line_rule==EXR_EDIT_LINE_EXACT ? "exact" : p->line_rule==EXR_EDIT_LINE_AT_LEAST ? "atLeast" : "auto";
+    attr_edit a[]={{"before",has_b ? v[0] : NULL},{"after",has_a ? v[1] : NULL},{"line",has_l ? v[2] : NULL},{"lineRule",has_l ? rule : NULL}};
     snprintf(v[0],32,"%u",p->space_before); snprintf(v[1],32,"%u",p->space_after); snprintf(v[2],32,"%u",p->line);
     return exr_edit_xml_attrs(b,x,n,"spacing",a,4);
   }
   if (k==5) {
-    attr_edit a[]={{"left",v[0]},{"right",v[1]},{"firstLine",NULL},{"hanging",NULL},{"start",NULL},{"end",NULL}};
+    const exr_node *nd=n==NONE ? NULL : x->tree->nodes+n;
+    int has_l=p->indent_left!=0 || (nd && (exr_edit_xml_wa(nd,"left") || exr_edit_xml_wa(nd,"start"))) || (!p->indent_right && !p->indent_first_line);
+    int has_r=p->indent_right!=0 || (nd && (exr_edit_xml_wa(nd,"right") || exr_edit_xml_wa(nd,"end")));
+    int has_f=p->indent_first_line!=0 || (nd && (exr_edit_xml_wa(nd,"firstLine") || exr_edit_xml_wa(nd,"hanging")));
+    attr_edit a[]={{"left",has_l ? v[0] : NULL},{"right",has_r ? v[1] : NULL},{"firstLine",NULL},{"hanging",NULL},{"start",NULL},{"end",NULL}};
     snprintf(v[0],32,"%d",p->indent_left); snprintf(v[1],32,"%d",p->indent_right);
     snprintf(v[2],32,"%lld",p->indent_first_line<0 ? -(long long)p->indent_first_line : (long long)p->indent_first_line);
-    a[p->indent_first_line<0 ? 3 : 2].value=v[2]; return exr_edit_xml_attrs(b,x,n,"ind",a,6);
+    if (has_f) a[p->indent_first_line<0 ? 3 : 2].value=v[2];
+    return exr_edit_xml_attrs(b,x,n,"ind",a,6);
   }
   i=(size_t)p->alignment; return scalar(b,x,n,"jc",i==1 ? "center" : i==2 ? "right" : i==3 ? "both" : "left");
 }

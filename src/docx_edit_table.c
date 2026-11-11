@@ -33,10 +33,18 @@ exr_status exr_edit_table_insert_row(exr_edit_doc *d,exr_edit_id id,size_t after
   rows=calloc(t.row_count+1,sizeof(*rows)); cells=calloc(t.column_count,sizeof(*cells));
   if (!rows || !cells) { free(rows); free(cells); return exr_edit_failure(d,EXR_MEMORY); }
   memcpy(rows,t.rows,at*sizeof(*rows)); memcpy(rows+at+1,t.rows+at,(t.row_count-at)*sizeof(*rows));
-  /* Inherit paragraph formatting from the first simple source cell. */
+  /* Inherit paragraph formatting from the first simple source cell (or any paragraph cell). */
   for (i=0;i<t.rows[after==SIZE_MAX ? 0 : after].cell_count;i++) {
     const exr_edit_cell *c=t.rows[after==SIZE_MAX ? 0 : after].cells+i;
-    if (!c->unsupported && c->block_count && c->blocks[0].kind==EXR_EDIT_PARAGRAPH) { p.props=c->blocks[0].props; break; }
+    if (!c->unsupported && c->block_count && c->blocks[0].kind==EXR_EDIT_PARAGRAPH) {
+      p.props=c->blocks[0].props; p.opaque_xml=c->blocks[0].opaque_xml; p.opaque_size=c->blocks[0].opaque_size; break;
+    }
+  }
+  if (!p.opaque_xml) for (i=0;i<t.rows[after==SIZE_MAX ? 0 : after].cell_count;i++) {
+    const exr_edit_cell *c=t.rows[after==SIZE_MAX ? 0 : after].cells+i;
+    if (c->block_count && c->blocks[0].kind==EXR_EDIT_PARAGRAPH) {
+      p.props=c->blocks[0].props; p.opaque_xml=c->blocks[0].opaque_xml; p.opaque_size=c->blocks[0].opaque_size; break;
+    }
   }
   for (i=0;i<t.column_count;i++) { cells[i].blocks=&p; cells[i].block_count=1; cells[i].changed=CELL_REPLACED; }
   rows[at].cells=cells; rows[at].cell_count=t.column_count; t.rows=rows; t.row_count++;
@@ -177,6 +185,7 @@ exr_status exr_edit_table_decode(const source_xml *x,size_t n,exr_edit_table **o
           if (exr_edit_xml_word(x->tree->nodes+k,"tbl")) cell->unsupported|=EXR_EDIT_CELL_NESTED;
         }
       }
+      if (cell->block_count>1) cell->unsupported|=EXR_EDIT_CELL_OPAQUE;
     }
     if (!row->cell_count) { status=EXR_OK; goto done; }
     if (columns>t->column_count) t->column_count=columns;
