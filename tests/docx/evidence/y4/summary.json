@@ -1,14 +1,17 @@
 {
-  "base": "6cb452dac207186bd94ecd60cede35fdf848db82",
-  "tested_source_commit": "c6ae6249",
+  "initial_base": "6cb452dac207186bd94ecd60cede35fdf848db82",
+  "base": "9841d30bdbfb4d93605f2e612cf1cd7f36f52623",
+  "tested_source_commit": "c04560b7",
   "build": "PASS; full all target, final ninja: no work to do",
   "ctest": {
-    "passed": 317,
-    "total": 317,
+    "passed": 321,
+    "total": 321,
     "new_groups": 28,
+    "new_upstream_baseline_groups": 4,
     "existing_fuzz_enabled": 7,
     "previously_excluded_sdk_release": 1,
-    "seconds": 513.21
+    "seconds": 1026.94,
+    "jobs": 2
   },
   "roundtrip": {
     "baseline_passed": 5,
@@ -23,8 +26,8 @@
     "changed_pixel_hashes": 0,
     "fingerprint": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434"
   },
-  "library_sha256": "0d52e529f37a3dc7acf6877346d7c4f26b71dbf589ee538701663670ebdc537a",
-  "baseline_library_sha256": "8686ed2dc099c9d85a66d5cb21f395f306eb0b2759bdfac64422fc16de3bba74",
+  "library_sha256": "bf8fd70e9f2604013d22e857b4b287a1ba8b12b5f892a02e98e9acf73b4d6d77",
+  "baseline_library_sha256": "706dd69abfbfcb2daa653bf7eed4d5096d71a72d91ac4a70e20622a4b3c272e8",
   "source_sha256": {
     "src/docx_edit.c": "0a15776c5fdecbcea71697622a802fe09de11b3f092514eb53c9b33dd0869246",
     "src/docx_edit_image.c": "b07da35afaa11ba6e8e85684302100db91c3b9f0ac167c1fd1578614c5278670",

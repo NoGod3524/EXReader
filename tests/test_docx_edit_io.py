@@ -218,7 +218,7 @@ def test(group, api):
                 assert api.paragraphs(model)[0].runs[0].props.present == 0
             finally:
                 api.doc_free(model)
-            inherited = package(body='<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:spacing w:before="120"/><w:ind w:firstLine="240"/></w:pPr><w:r><w:t>inherit</w:t></w:r></w:p><w:sectPr/>')
+            inherited = package(body='<w:p><!--pre-pPr--><?pi-pPr?><w:pPr><w:pStyle w:val="Heading1"/><w:spacing w:before="120"/><w:ind w:firstLine="240"/></w:pPr><w:r><w:t>inherit</w:t></w:r></w:p><w:sectPr/><!--tail--><?tail?>')
             model = api.read(inherited)
             try:
                 q = api.paragraphs(model)[0]
@@ -228,8 +228,16 @@ def test(group, api):
                 pp.before = 180
                 pp.first = 360
                 assert api.set_paragraph_props(model, q.id, c.byref(pp)) == 0
+                set_run_text = getattr(api.dll, 'exr_edit_set_run_text', None)
+                if set_run_text is not None:
+                    set_run_text.restype = c.c_int
+                    set_run_text.argtypes = [c.c_void_p, ID, c.c_size_t, c.c_char_p, c.c_size_t]
+                    assert set_run_text(model, q.id, 1, b'updated-union', 13) == 0
                 out_xml = unzip(api.write(model))['word/document.xml']
+                assert b'<!--pre-pPr--><?pi-pPr?><w:pPr>' in out_xml
                 assert b'w:line="0"' not in out_xml and b'w:left="0"' not in out_xml and b'w:right="0"' not in out_xml
+                assert b'updated-union' in out_xml
+                assert b'<w:sectPr/><!--tail--><?tail?></w:body>' in out_xml
             finally:
                 api.doc_free(model)
         elif group == 'edits':

@@ -12,7 +12,7 @@ from zipfile import ZipFile
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('build', type=Path)
-parser.add_argument('--ref', default='6cb452dac207186bd94ecd60cede35fdf848db82')
+parser.add_argument('--ref', default='9841d30bdbfb4d93605f2e612cf1cd7f36f52623')
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[2]
 build = args.build.resolve()
