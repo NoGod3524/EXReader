@@ -64,3 +64,13 @@ build/s1-sdk/bin/bench_batch.exe BOOK.epub FONT.otf `
 接受批次第1轮输出：`p50 12.939200 ms; p95 14.868800 ms`。固定电源策略的复现脚本见[使用说明](C:/Users/Oscar/Documents/Codex/EXReader-S1-20261109/examples/bench_batch.md)。
 
 19本真书 **11,318页，页数及全部逐页哈希不变**；完整CTest **256/256通过**，本轮相关测试重跑 **3/3通过**。已复核全部1500个保留样本及源码/DLL身份。完整证据见[报告](C:/Users/Oscar/Documents/Codex/EXReader-S1-20261109/evidence/sdk-batch-20261109/REPORT.md)，步骤已追加至 [S1-OUT.txt](C:/Users/Oscar/Documents/Codex/EXReader-S1-20261109/S1-OUT.txt)。
+已完成并验收：
+
+- 六夹具：行数 **3→4→3**，列数正确，其它结构保留。
+- 两种 PNG：重开后尺寸正确，原图字节不变。
+- 删图：media **1→0**、图片关系 **1→0**；共享资源保留。
+- 合并、嵌套表、底纹 XML 原样保留。
+- #117：基线 **18/18**，编辑后 **18/18**。
+- `ctest` **293/293 全绿**，新增 **14 组**。
+
+[验收报告与 XML 片段](/C:/Users/Oscar/Documents/Codex/EXReader-x6-table-20261110/docs/DOCX-X6.md)；[OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-x6-table-20261110/OUT.txt) 已逐步追加。`export_text.c` 未改。

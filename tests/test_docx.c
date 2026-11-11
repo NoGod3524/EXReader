@@ -117,6 +117,9 @@ int main(int argc,char **argv) {
   package("<w:p/>","<Relationships xmlns='urn:wrong'/>",NULL,0);
   package("<w:p/>","<Relationships xmlns='" REL "'><Relationship Id='x' Type='" R "/image' Target='a.png'/><Relationship Id='x' Type='" R "/image' Target='b.png'/></Relationships>",NULL,0);
   package("<w:tbl><w:tr><w:tc><w:tcPr><w:vMerge/></w:tcPr><w:p/></w:tc></w:tr></w:tbl>",NULL,NULL,0);
+  package("<w:tbl><w:tr><w:tc><w:tcPr><w:hMerge w:val='restart'/><w:vMerge w:val='restart'/></w:tcPr><w:p><w:r><w:t>Top</w:t></w:r></w:p></w:tc>"
+    "<w:tc><w:tcPr><w:hMerge/></w:tcPr><w:p/></w:tc></w:tr>"
+    "<w:tr><w:tc><w:tcPr><w:gridSpan w:val='2'/><w:vMerge/></w:tcPr><w:p/></w:tc></w:tr></w:tbl>",NULL,NULL,1);
   package("<w:p><w:pPr><w:pStyle w:val='Cycle'/></w:pPr><w:r><w:t>Style cycle</w:t></w:r></w:p>",
     "<Relationships xmlns='" REL "'><Relationship Id='s' Type='" R "/styles' Target='styles.xml'/></Relationships>",
     "<w:styles xmlns:w='" W "'><w:style w:styleId='Cycle'><w:basedOn w:val='Cycle'/></w:style></w:styles>",0);
@@ -141,6 +144,18 @@ int main(int argc,char **argv) {
   counter_case("upperRoman",4000,"%1.","4000. X");
   counter_case("bullet",1,NULL,"• X");
   counter_case("none",1,NULL,"X");
+  counter_case("chineseCounting",1,"%1、","一、 X");
+  counter_case("chineseLegalSimplified",2,"（%1）","（贰） X");
+  counter_case("decimalEnclosedCircle",3,"%1","③ X");
+  counter_case("ideographTraditional",1,"%1、","甲、 X");
+  package_full("<w:p><w:pPr><w:pStyle w:val='NumHead'/></w:pPr><w:r><w:t>Linked</w:t></w:r></w:p>",
+    "<Relationships xmlns='" REL "'><Relationship Id='s' Type='" R "/styles' Target='styles.xml'/><Relationship Id='n' Type='" R "/numbering' Target='numbering.xml'/></Relationships>",
+    "<w:styles xmlns:w='" W "'><w:style w:type='numbering' w:styleId='OutlineNum'><w:pPr><w:numPr><w:numId w:val='2'/></w:numPr></w:pPr></w:style>"
+    "<w:style w:type='paragraph' w:styleId='NumHead'><w:pPr><w:numPr><w:ilvl w:val='0'/><w:numId w:val='1'/></w:numPr></w:pPr></w:style></w:styles>",
+    NULL,
+    "<w:numbering xmlns:w='" W "'><w:abstractNum w:abstractNumId='10'><w:numStyleLink w:val='OutlineNum'/></w:abstractNum>"
+    "<w:abstractNum w:abstractNumId='11'><w:lvl w:ilvl='0'><w:start w:val='1'/><w:numFmt w:val='decimal'/><w:lvlRestart w:val='1'/><w:lvlText w:val='%1.'/></w:lvl></w:abstractNum>"
+    "<w:num w:numId='1'><w:abstractNumId w:val='10'/></w:num><w:num w:numId='2'><w:abstractNumId w:val='11'/></w:num></w:numbering>",1);
   counter_case("unknownFormat",1,"%1.",NULL);
   printf("%u rich DOCX checks passed\n",checks); return 0;
 }
