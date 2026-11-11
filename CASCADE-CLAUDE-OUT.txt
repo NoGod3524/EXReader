@@ -1,0 +1,20 @@
+The merge is committed locally, but I don't yet know whether the push to `codex/webdav-sync-20261110` went through. The push command is still running in the background, and I'm waiting on its monitor.
+
+- **Conflicts:** two files conflicted, both resolved.
+  - `RESOLVE.md`: I kept the PR #131 version and added a note recording main's PR #107 variant.
+  - `tools/layers.json`: I kept `include/exr/opds.h`. Main's `include/exr/edit.h` entry was already in the file, so I didn't add it twice. The JSON still parses.
+  - `CMakeLists.txt`, `OUT.txt` and `.gitignore` merged automatically.
+- **Extra commit:** before merging, I committed your uncommitted `RESOLVE.md` edit as a separate commit so the merge wouldn't overwrite it.
+- **API docs:** `python -X utf8 tools\check_sdk_docs.py` exits 0, so I added no docs.
+- **Report:** `RESOLVE-OUT.txt` is written and included in the merge commit.
+- **Not checked:** I haven't seen any CI results and ran no other gates locally, so I can't name any other failures.
+
+I haven't merged the PR or touched main.
+
+The push went through: `d8dafff4..3ce05011` to `codex/webdav-sync-20261110`. I haven't seen CI results, so I can't say whether PR #131 is green yet.
+
+- **Conflicts:** `RESOLVE.md` and `tools/layers.json` conflicted, and both are resolved. No unmerged files remain.
+- **API docs:** `check_sdk_docs.py` exits 0, so I added none.
+- **Report:** `RESOLVE-OUT.txt` has the details.
+
+I haven't merged the PR or touched main. Next step is to check the CI run on PR #131.
