@@ -1,0 +1,10 @@
+{
+  "baseline_revision": "6000a89d373db03c3414f13a5ab10eb3d6819ad6",
+  "baseline_count": 275,
+  "candidate_count": 277,
+  "missing": [],
+  "added": [
+    "native-bench-batch-statistics",
+    "native-cache-stats"
+  ]
+}

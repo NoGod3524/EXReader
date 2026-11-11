@@ -1,0 +1,9 @@
+{
+  "main_export_count": 454,
+  "candidate_export_count": 456,
+  "missing": [],
+  "added": [
+    "exr_font_cache_stats_get",
+    "exr_pager_cache_stats_get"
+  ]
+}

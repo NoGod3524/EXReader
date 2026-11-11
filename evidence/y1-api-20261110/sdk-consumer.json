@@ -1,0 +1,13 @@
+{
+  "install_completed": true,
+  "source_revision": "923f1c6eaa1a18bb6bc4bdd05cc3ca6ca2d31efe",
+  "target": "exreader-bench_batch-example",
+  "runtime_command": [
+    "build/y1/sdk-consumer/bench_batch.exe",
+    "--self-test"
+  ],
+  "runtime_exit_code": 0,
+  "dll_sha256": "e54784a7d851cdf1b549990b203de9a907d876e2d1c06da22fcc7021ac86f2e5",
+  "dll_matches_candidate": true,
+  "manifest_artifact_sha256": "e54784a7d851cdf1b549990b203de9a907d876e2d1c06da22fcc7021ac86f2e5"
+}

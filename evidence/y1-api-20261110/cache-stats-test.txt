@@ -1,0 +1,2 @@
+10 pages, two passes: requests=20 legacy/new hits=10 misses=10
+pager cache compatibility: 187 checks passed
