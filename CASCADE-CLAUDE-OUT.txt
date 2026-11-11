@@ -1,0 +1,7 @@
+I merged `origin/main` into the branch and pushed it to `codex/sdk-batch-perf-20261109` (`783b8f1d..b87c2bf3`). I did not merge the PR or touch main.
+
+- **Conflicts:** the only one was `RESOLVE.md`. Each PR has its own copy of that task file and the two sides differ only in PR number, path and push branch. A union would have left contradictory instructions, so I kept the #112 version with the corrected `cd` path. `CMakeLists.txt` and `tools/layers.json` merged automatically with no conflict markers, and `layers.json` still parses. `git status --porcelain` shows no `U` entries.
+- **Doc gate:** `tools/check_sdk_docs.py` exits 0 with 460 of 460 public functions documented, so I added no API docs.
+- **Other failures:** I didn't run CI, so I have no CI check names to report. I know of no other failures.
+
+The report is in `RESOLVE-OUT.txt`, uncommitted. I left the untracked `CASCADE-CLAUDE-OUT.txt` alone.

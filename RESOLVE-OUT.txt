@@ -1,22 +1,10 @@
-① 冲突文件清单与解决方式
-git merge origin/main 返回 "Already up to date"；但 HEAD(d5994835 "wip") 是已把冲突标记提交进去的合并提交，7 个文件含 <<<<<<< 标记，均已手工解决：
-- CMakeLists.txt：并集——bench_batch 与 exr-info 两个工具目标都保留；batch-test/native-bench-batch-statistics 与 docs/examples、build_manifest、simplified-observer 都保留。
-- include/exr/layout.h：exr_pager_cache_stats 采用 struct_size/requests/hits/misses 版本，同时保留 main 的 exr_pager_cache_statistics()（返回同一结构，tests/test_docx_reflow.c 仍可用 .hits/.misses）。
-- src/pager.c：并集——保留 uint64 计数(requests/hits/misses)+main 的 fixed_target/fixed 字段+edit_page 分支+exr_pager_cache_stats_get 与 exr_pager_cache_statistics 两个函数；删除自动合并产生的重复成员 size_t cache_hits,cache_misses 以及 get() 里重复的 cache_hits++。
-- src/fonts.c / src/font_internal.h / src/opentype.c：取本分支（HEAD）——它是 main 缓存实现的演进版（4 路组相联整形缓存、统计计数、GLYPH_CACHE_LIMIT=2MiB），main 一侧是其旧版本，无独有功能。
-- tests/test_shaping.c：取 HEAD（含 cache_statistics/cache_collisions 测试，main() 调用它们）。
-
-② 补的 API 文档（全部 ABI: 实验）
-- exr_font_cache_stats_get  (实验)
-- exr_pager_cache_stats_get (实验)
-- exr_publication_warmup    (实验)
-另更新 exr_pager_cache_statistics 的返回说明（含 requests）。
-
-③ check_sdk_docs.py exit code = 0；最后三行：
-  "errors": [],
-  "passed": true
-}
-
-④ 其他失败项
-本地无法验证：FreeType 经 FetchContent 下载失败（离线），故未能编译 src/*.c 或跑 ctest；pager.c/opentype.c/fonts.c 的合并仅做了人工审查。tests/test_shaping.c 语法检查通过。CI 里的真实结果需推送后查看。
-未改动 tools/check_sdk_docs.py、tests/check_reading_release.py、version_literal_exceptions.json。
+① 冲突文件: 仅 RESOLVE.md (add/add；每个 PR 各有一份任务说明，内容只差 PR 号/路径/推送分支)。
+   解决方式: 保留 #112 的版本(并修正 cd 路径为 EXReader-fix-112-20261111)。CMakeLists.txt、tools/layers.json 自动合并成功，无冲突标记，layers.json 解析正常。
+② 补的 API 文档: 无。合并后 documented_functions=460 / public_functions=460，覆盖率 100%，无需补条目。
+③ check_sdk_docs.py exit=0; 最后三行:
+     "errors": [],
+     "passed": true
+   }
+④ 其他失败项: 本地未跑 CI，未见 CI 名称；无已知别的失败。
+   推送: 783b8f1d..b87c2bf3 -> codex/sdk-batch-perf-20261109 (未合并 PR、未动 main)。
+   备注: 工作区里未跟踪的 CASCADE-CLAUDE-OUT.txt 未动。
