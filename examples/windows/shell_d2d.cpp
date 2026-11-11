@@ -319,7 +319,8 @@ extern "C" void shell_d2d_page_metrics(shell_d2d *s,float values[12]) {
   }
 }
 
-extern "C" HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text, uint32_t current, uint32_t rest) {
+extern "C" HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, const wchar_t *text,
+                                     unsigned strong_start, unsigned strong_length, uint32_t current, uint32_t rest) {
   if (!shell->dc_target) {
     const D2D1_RENDER_TARGET_PROPERTIES properties =
       pixel_properties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE));
@@ -334,18 +335,20 @@ extern "C" HRESULT shell_d2d_dc_text(shell_d2d *shell, HDC dc, const RECT *box, 
   UINT32 length=(UINT32)wcslen(text);
   hr=page_layout(shell,text,(float)(box->right-box->left),(float)(box->bottom-box->top),&layout);
   if(FAILED(hr)) return hr;
-  const wchar_t *separator=wcschr(text,L' ');
-  ID2D1SolidColorBrush *muted=nullptr;
-  if(SUCCEEDED(hr)) hr=shell->dc_target->CreateSolidColorBrush(D2D1::ColorF(rest),&muted);
-  if(SUCCEEDED(hr) && separator) hr=layout->SetDrawingEffect(muted,{(UINT32)(separator-text),length-(UINT32)(separator-text)});
-  if(FAILED(hr)) { if(muted) muted->Release();layout->Release();return hr; }
+  /* The strong run (the current page) takes `current`; everything else `rest`. */
+  ID2D1SolidColorBrush *strong=nullptr;
+  if(strong_start>length) strong_start=length;
+  if(strong_length>length-strong_start) strong_length=length-strong_start;
+  if(SUCCEEDED(hr)) hr=shell->dc_target->CreateSolidColorBrush(D2D1::ColorF(current),&strong);
+  if(SUCCEEDED(hr) && strong_length) hr=layout->SetDrawingEffect(strong,{strong_start,strong_length});
+  if(FAILED(hr)) { if(strong) strong->Release();layout->Release();return hr; }
   DWRITE_OVERHANG_METRICS ink={};
   hr=layout->GetOverhangMetrics(&ink);
-  if(FAILED(hr)) {muted->Release();layout->Release();return hr;}
+  if(FAILED(hr)) {strong->Release();layout->Release();return hr;}
   shell->dc_target->BeginDraw();
-  shell->dc_brush->SetColor(D2D1::ColorF(current));
+  shell->dc_brush->SetColor(D2D1::ColorF(rest));
   shell->dc_target->DrawTextLayout(D2D1::Point2F(0,(ink.top-ink.bottom)/2),layout,shell->dc_brush);
-  muted->Release();layout->Release();
+  strong->Release();layout->Release();
   hr = shell->dc_target->EndDraw();
   if (hr == D2DERR_RECREATE_TARGET) { drop_dc_target(shell); shell->recreated++; return S_FALSE; }
   return hr;
@@ -460,7 +463,12 @@ extern "C" HRESULT shell_d2d_page_image(shell_d2d *s,HDC dc,const RECT *area,con
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
 
-extern "C" HRESULT shell_d2d_card(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background,const wchar_t *title) {
+/* One floating surface for every popup (settings, notes, footnotes, dictionary):
+   the caller's pixels beneath, shadow-lg, a radius-14 surface with a line
+   border, then the caller's static text. Label boxes are DIPs from the visible
+   surface's top-left corner; a width of 0 runs to the right padding. */
+extern "C" HRESULT shell_d2d_surface(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background,
+                                     const shell_d2d_label *labels,int count) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
   const auto &c=dark ? shell_theme_dark : shell_theme_light;
   float k=s->dpi/96.f,pad=(float)SHELL_SHADOW_PAD*k,top=(float)SHELL_SHADOW_TOP*k,w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
@@ -473,85 +481,96 @@ extern "C" HRESULT shell_d2d_card(shell_d2d *s,HDC dc,const RECT *box,int dark,c
   s->dc_target->BeginDraw(); s->dc_target->Clear(D2D1::ColorF(c.layer_page));
   if(underlay) { s->dc_target->DrawBitmap(underlay);underlay->Release(); }
   if(shadow) s->dc_target->DrawBitmap(shadow,D2D1::RectF(0,top-pad,w,h));
+  const float radius=(float)SHELL_RADIUS*k;
   s->dc_brush->SetColor(D2D1::ColorF(c.layer_float));
-  s->dc_target->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(pad,top,w-pad,h-pad),(float)SHELL_RADIUS*k,(float)SHELL_RADIUS*k),s->dc_brush);
-  auto border=D2D1::RoundedRect(D2D1::RectF(pad+k/2,top+k/2,w-pad-k/2,h-pad-k/2),14*k,14*k);
+  s->dc_target->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(pad,top,w-pad,h-pad),radius,radius),s->dc_brush);
   s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.layer_float,c.line_rgb,SHELL_LINE_ALPHA)));
-  s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
-  s->dc_brush->SetColor(D2D1::ColorF(c.text));
-  s->format[SHELL_TEXT_TITLE]->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  s->dc_target->DrawText(title,(UINT32)wcslen(title),s->format[SHELL_TEXT_TITLE],D2D1::RectF(pad+16*k,top+10*k,w-pad-16*k,top+36*k),s->dc_brush);
-  hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET)drop_dc_target(s);return hr;
-}
-
-extern "C" HRESULT shell_d2d_note(shell_d2d *s,HDC dc,const RECT *box,int dark,const uint32_t *background) {
-  return shell_d2d_card(s,dc,box,dark,background,L"笔记");
-}
-
-extern "C" HRESULT shell_d2d_panel(shell_d2d *s,HDC dc,const RECT *box,int dark,const wchar_t *font,const wchar_t *family,const wchar_t *path,const uint32_t *background) {
-  HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
-  const auto &c=dark ? shell_theme_dark : shell_theme_light;
-  float k=s->dpi/96.f,pad=(float)SHELL_SHADOW_PAD*k,top=(float)SHELL_SHADOW_TOP*k,w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
-  auto shadow=shadow_bitmap(s,(unsigned)w,(unsigned)(h+pad-top),1);
-  ID2D1Bitmap *underlay=nullptr;
-  if(background) {
-    auto props=D2D1::BitmapProperties(D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_IGNORE));
-    s->dc_target->CreateBitmap(D2D1::SizeU((UINT32)w,(UINT32)h),background,(UINT32)w*4,props,&underlay);
+  s->dc_target->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(pad+k/2,top+k/2,w-pad-k/2,h-pad-k/2),radius,radius),s->dc_brush,k);
+  for(int i=0;i<count;i++) {
+    const shell_d2d_label &label=labels[i];
+    IDWriteTextFormat *format=s->format[label.style==SHELL_TEXT_TITLE ? SHELL_TEXT_TITLE : SHELL_TEXT_LABEL];
+    float left=pad+label.x*k,right=label.width>0 ? left+label.width*k : w-pad-(float)SHELL_PANEL_PAD*k;
+    s->dc_brush->SetColor(D2D1::ColorF(label.style==SHELL_TEXT_TITLE ? c.text : c.text_secondary));
+    format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+    s->dc_target->DrawText(label.text,(UINT32)wcslen(label.text),format,
+      D2D1::RectF(left,top+label.y*k,right,top+(label.y+label.height)*k),s->dc_brush);
   }
-  s->dc_target->BeginDraw(); s->dc_target->Clear(D2D1::ColorF(c.layer_page));
-  if(underlay) { s->dc_target->DrawBitmap(underlay);underlay->Release(); }
-  if(shadow) s->dc_target->DrawBitmap(shadow,D2D1::RectF(0,top-pad,w,h));
-  s->dc_brush->SetColor(D2D1::ColorF(c.layer_float));
-  s->dc_target->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(pad,top,w-pad,h-pad),(float)SHELL_RADIUS*k,(float)SHELL_RADIUS*k),s->dc_brush);
-  auto border=D2D1::RoundedRect(D2D1::RectF(pad+k/2,top+k/2,w-pad-k/2,h-pad-k/2),14*k,14*k);
-  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.layer_float,c.line_rgb,SHELL_LINE_ALPHA)));
-  s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
-  (void)font;(void)family;(void)path;
-  s->dc_brush->SetColor(D2D1::ColorF(c.text));
-  s->dc_target->DrawText(L"阅读排版",4,s->format[SHELL_TEXT_TITLE],D2D1::RectF(pad+20*k,top+12*k,w-pad-20*k,top+40*k),s->dc_brush);
-  const wchar_t *labels[]={L"字号 px",L"行距 ×",L"段距 em",L"上边距 px",L"右边距 px",L"下边距 px",L"左边距 px",L"字距 em",L"主题",L"输入预设名称 / 选择预设"};
-  s->dc_brush->SetColor(D2D1::ColorF(c.text_secondary));
-  s->format[SHELL_TEXT_LABEL]->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  for(int i=0;i<10;i++) {
-    float y=i<8 ? 52.f+i*42 : i==8 ? 372.f:430.f;
-    s->dc_target->DrawText(labels[i],(UINT32)wcslen(labels[i]),s->format[SHELL_TEXT_LABEL],
-      D2D1::RectF(pad+20*k,top+y*k,w-pad-20*k,top+(y+24)*k),s->dc_brush);
-  }
-  s->dc_target->DrawText(L"点击分区 · 左 / 中 / 右",16,s->format[SHELL_TEXT_LABEL],D2D1::RectF(pad+20*k,top+558*k,w-pad-20*k,top+578*k),s->dc_brush);
   hr=s->dc_target->EndDraw(); if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s); return hr;
 }
 
-extern "C" HRESULT shell_d2d_control(shell_d2d *s,HDC dc,const RECT *box,const wchar_t *text,int dark,int variant,unsigned state) {
+/* DECKMARK-TOKENS buttons and the segmented control of ART-DIRECTION e-4. The
+   DC target has no alpha, so every control first clears its box to look->under. */
+extern "C" HRESULT shell_d2d_control(shell_d2d *s,HDC dc,const RECT *box,const wchar_t *text,int dark,const shell_d2d_look *look) {
   HRESULT hr=bind_dc(s,dc,box); if(FAILED(hr)) return hr;
   const auto &c=dark ? shell_theme_dark : shell_theme_light;
-  const float k=s->dpi/96.f,pad=(float)(variant ? SHELL_SEGMENT_PAD : SHELL_CONTROL_FRAME)*k;
-  const float px=variant ? 0 : pad,shadow_pad=(float)SHELL_SHADOW_PAD*k;
-  float w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
-  bool disabled=(state&8)!=0,hover=(state&1)!=0 && !disabled;
-  float opacity=disabled ? SHELL_DISABLED_ALPHA : 1.f;
-  float dy=variant ? 0 : (state&2) && !disabled ? (float)SHELL_PRESSED_Y*k : 0;
-  uint32_t base=variant ? c.surface2 : c.layer_float;
-  uint32_t fill=variant==1 ? c.layer_float : variant==2 ? c.surface2 : hover ? c.surface2 : c.layer_float;
-  if((state&2) && !disabled) fill=c.surface3;
-  uint32_t ink=variant==2 && !hover ? c.text_secondary : c.text;
-  auto rect=D2D1::RoundedRect(D2D1::RectF(variant ? 0 : pad,pad+dy,variant ? w : w-pad,h-pad+dy),(variant ? 6.f : (float)SHELL_RADIUS_SM)*k,(variant ? 6.f : (float)SHELL_RADIUS_SM)*k);
-  auto shadow=variant!=2 ? shadow_bitmap(s,(unsigned)(w-2*px+2*shadow_pad),(unsigned)(h-2*pad+2*shadow_pad),variant ? 2 : 0) : nullptr;
-  s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(base));
-  if(shadow) s->dc_target->DrawBitmap(shadow,D2D1::RectF(px-shadow_pad,pad+dy-shadow_pad,w-px+shadow_pad,h-pad+dy+shadow_pad),opacity);
-  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(base,fill,opacity)));
-  s->dc_target->FillRoundedRectangle(rect,s->dc_brush);
-  if(variant==0) {
+  const float k=s->dpi/96.f,shadow_pad=(float)SHELL_SHADOW_PAD*k;
+  const float w=(float)(box->right-box->left),h=(float)(box->bottom-box->top);
+  const unsigned state=look->state;
+  const bool disabled=(state&SHELL_STATE_DISABLED)!=0,hover=(state&SHELL_STATE_HOVER)!=0 && !disabled;
+  const bool pressed=(state&SHELL_STATE_PRESSED)!=0 && !disabled,selected=(state&SHELL_STATE_SELECTED)!=0;
+  const bool focus=(state&SHELL_STATE_FOCUS)!=0 && !disabled,segment=look->kind==SHELL_CONTROL_SEGMENT;
+  const float opacity=disabled ? SHELL_DISABLED_ALPHA : 1.f;
+  uint32_t under=look->under,fill=under,ink=c.text;
+  bool filled=false,raised=false;
+  D2D1_ROUNDED_RECT rect;
+  s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(under));
+  if(segment) {
+    /* Each box draws the whole track, shifted, and so shows only its own slice. */
+    const float pad=(float)SHELL_SEGMENT_PAD*k,radius=(float)SHELL_RADIUS_SM*k,left=-w*look->index,right=w*(look->count-look->index);
+    s->dc_brush->SetColor(D2D1::ColorF(c.surface2));
+    s->dc_target->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(left,0,right,h),radius,radius),s->dc_brush);
+    s->dc_brush->SetColor(D2D1::ColorF(shell_blend(c.surface2,c.line_rgb,SHELL_LINE_ALPHA)));
+    s->dc_target->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(left+k/2,k/2,right-k/2,h-k/2),radius,radius),s->dc_brush,k);
+    under=c.surface2;fill=c.layer_float;filled=raised=selected;
+    ink=selected || hover ? c.text : c.text_secondary;
+    rect=D2D1::RoundedRect(D2D1::RectF(pad,pad,w-pad,h-pad),6*k,6*k);
+  } else {
+    const float pad=(float)SHELL_CONTROL_FRAME*k,dy=pressed ? (float)SHELL_PRESSED_Y*k : 0,radius=(float)SHELL_RADIUS_SM*k;
+    rect=D2D1::RoundedRect(D2D1::RectF(pad,pad+dy,w-pad,h-pad+dy),radius,radius);
+    if(look->kind==SHELL_CONTROL_GHOST) {
+      filled=hover || pressed;fill=pressed ? c.surface3 : c.surface2;
+      ink=filled ? c.text : c.text_secondary;
+      if(selected) {
+        if(!filled) fill=shell_blend(under,SHELL_ACCENT_SOFT_RGB,SHELL_ACCENT_SOFT_ALPHA);
+        filled=true;ink=c.accent;
+      }
+    } else if(look->kind==SHELL_CONTROL_FIELD) {
+      filled=true;fill=c.layer_float;
+    } else if(look->kind==SHELL_CONTROL_PRIMARY) {
+      filled=raised=true;fill=hover || pressed ? c.accent_hover : c.accent;ink=c.on_accent;
+    } else {
+      filled=raised=true;fill=hover || pressed ? c.surface2 : c.layer_float;
+    }
+  }
+  const float rw=rect.rect.right-rect.rect.left,rh=rect.rect.bottom-rect.rect.top;
+  if(raised) {
+    auto shadow=shadow_bitmap(s,(unsigned)(rw+2*shadow_pad),(unsigned)(rh+2*shadow_pad),segment ? 2 : 0);
+    if(shadow) s->dc_target->DrawBitmap(shadow,D2D1::RectF(rect.rect.left-shadow_pad,rect.rect.top-shadow_pad,
+      rect.rect.right+shadow_pad,rect.rect.bottom+shadow_pad),opacity);
+  }
+  if(filled) {
+    fill=shell_blend(under,fill,opacity);
+    s->dc_brush->SetColor(D2D1::ColorF(fill));
+    s->dc_target->FillRoundedRectangle(rect,s->dc_brush);
+  } else fill=under;
+  if(look->kind==SHELL_CONTROL_STANDARD || look->kind==SHELL_CONTROL_FIELD) {
     s->dc_brush->SetColor(D2D1::ColorF(shell_blend(fill,c.line_rgb,SHELL_LINE_STRONG_ALPHA*opacity)));
     auto border=rect;border.rect.left+=k/2;border.rect.top+=k/2;border.rect.right-=k/2;border.rect.bottom-=k/2;
     s->dc_target->DrawRoundedRectangle(border,s->dc_brush,k);
+  } else if(look->kind==SHELL_CONTROL_PRIMARY) {
+    /* inset 0 1px 0 rgba(255,255,255,.16) */
+    s->dc_brush->SetColor(D2D1::ColorF(shell_blend(fill,0xffffff,SHELL_PRIMARY_HIGHLIGHT_ALPHA*opacity)));
+    s->dc_target->DrawLine(D2D1::Point2F(rect.rect.left+rect.radiusX,rect.rect.top+k/2),
+      D2D1::Point2F(rect.rect.right-rect.radiusX,rect.rect.top+k/2),s->dc_brush,k);
   }
-
-  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(base,ink,opacity)));
+  s->dc_brush->SetColor(D2D1::ColorF(shell_blend(fill,ink,opacity)));
+  s->format[SHELL_TEXT_UI]->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   s->dc_target->DrawText(text,(UINT32)wcslen(text),s->format[SHELL_TEXT_UI],rect.rect,s->dc_brush);
-  if((state&4) && !disabled) {
-    auto ring=rect;ring.rect.left-=(float)SHELL_FOCUS_STROKE*k;ring.rect.top-=(float)SHELL_FOCUS_STROKE*k;
-    ring.rect.right+=(float)SHELL_FOCUS_STROKE*k;ring.rect.bottom+=(float)SHELL_FOCUS_STROKE*k;
-    s->dc_brush->SetColor(D2D1::ColorF(c.accent));s->dc_target->DrawRoundedRectangle(ring,s->dc_brush,(float)SHELL_FOCUS_STROKE*k);
+  if(focus) {
+    /* A segment keeps its ring inside the track; a button's sits in its frame. */
+    const float stroke=(float)SHELL_FOCUS_STROKE*k,grow=segment ? -stroke/2 : stroke;
+    auto ring=rect;ring.rect.left-=grow;ring.rect.top-=grow;ring.rect.right+=grow;ring.rect.bottom+=grow;
+    s->dc_brush->SetColor(D2D1::ColorF(c.accent));s->dc_target->DrawRoundedRectangle(ring,s->dc_brush,stroke);
   }
   hr=s->dc_target->EndDraw();if(hr==D2DERR_RECREATE_TARGET) drop_dc_target(s);return hr;
 }
