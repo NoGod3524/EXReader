@@ -1,0 +1,42 @@
+| Check | Result | Detail |
+| --- | --- | --- |
+| package_xml | PASS | ZIP CRC, unique parts, XML syntax, document/body |
+| content_types | PASS | DOCX main-part content type |
+| root_relationship | PASS | officeDocument points to word/document.xml |
+| section_present | PASS | 1 sections |
+| section_nonempty | FAIL | 1 empty sections |
+| paragraph_properties | FAIL | 1/1 body paragraphs lack pPr (including table cells) |
+| double_spacing | FAIL | 1 paragraphs differ from 480/auto |
+| font_times_new_roman | FAIL | 1/1 text runs differ (ascii + hAnsi) |
+| font_size_12pt | FAIL | 1/1 text runs differ from sz=24 |
+| letter_page_size | FAIL | all sections 12240 x 15840 twips |
+| one_inch_margins | FAIL | all sections: top/right/bottom/left=1440 |
+| header_part | WARN | 0 linked header parts |
+| header_used | WARN | 0 section-linked headers |
+| header_page_field | FAIL | PAGE field in each used header (PAGEREF does not count) |
+
+FAIL XML: section_nonempty
+<w:sectPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" />
+
+FAIL XML: paragraph_properties
+<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:r><w:t xml:space="preserve">Title alpha</w:t></w:r></w:p>
+
+
+FAIL XML: double_spacing
+<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:r><w:t xml:space="preserve">Title alpha</w:t></w:r></w:p>
+
+
+FAIL XML: font_times_new_roman
+<w:r xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:t xml:space="preserve">Title alpha</w:t></w:r>
+
+FAIL XML: font_size_12pt
+<w:r xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:t xml:space="preserve">Title alpha</w:t></w:r>
+
+FAIL XML: letter_page_size
+<w:sectPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" />
+
+FAIL XML: one_inch_margins
+<w:sectPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" />
+
+FAIL XML: header_page_field
+<w:sectPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" />

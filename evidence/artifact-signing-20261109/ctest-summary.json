@@ -1,0 +1,12 @@
+{
+  "before": 234,
+  "after": 235,
+  "missing_tests": [],
+  "added_tests": [
+    "release-artifacts"
+  ],
+  "before_failures": 0,
+  "after_failures": 0,
+  "after_skipped": 0,
+  "final_full_suite": "235/235 with complete dependency input fingerprinting (24 release checks)"
+}

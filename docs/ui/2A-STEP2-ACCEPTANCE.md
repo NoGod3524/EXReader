@@ -1,5 +1,7 @@
 # 2a 第 2 步验收：扁平顶栏与共享绘制层（2026-11-05）
 
+> 2026-11-10 更新：旧 17 控件界面已移除，包含其布局、101–117 消息入口及返回旧面板路径。下文涉及旧控件、phase-a/b/c、旧无障碍证据与 `--debug-ui` 的描述仅为历史；[归档及清单](archive/legacy-17-control/README.md)。当前产品仅使用新界面。
+
 范围：HOST-AUDIT §G5 第 2 步（扁平化重估后 2 人日）。只改 `examples/` 与 `docs/ui/`；宏 `EXR_READER_WINDOWS_SHELL` 默认关闭。规格见 UI-SPEC（扁平化修订）与 WIREFRAMES §2。
 
 本步替代此前按旧令牌做的 48 高原型（owner 决策 8：原型作废）。原型没有提交。
