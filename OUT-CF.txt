@@ -1,0 +1,36 @@
+The build and tests are still running. I'll report as soon as they finish.
+
+I've started the build and tests again with all cached dependencies. I'll report when it finishes.
+
+合并已提交，但还没验证，也没推送。本地构建和测试还在跑，第一轮因为依赖下载失败，已用本地缓存重跑。
+
+**① 冲突文件**
+- `RESOLVE-OUT.txt`（add/add）：两侧内容都留，只删了冲突标记，并把 `=======` 换成 `---`。
+- `RESOLVE.md`（add/add）：两侧内容都留，只删了冲突标记。重复的标题和路径行也留着了，没有二选一。
+- `CMakeLists.txt` 和 `examples/CMakeLists.txt` 自动合并，没有冲突。
+
+这次合并本身只有 `RESOLVE-OUT.txt` 和 `RESOLVE.md` 冲突，没有 `src/**`、`tools/layers.json` 或 `OUT*.txt` 的冲突。合并提交是 `2a314a41`。
+
+**本地分支为什么要先快进**
+- 本地分支落后远端 PR 分支 82 个提交。
+- 我先 `git merge --abort`，再快进到远端 `d33ab324`，然后才合并 main。
+- 这样没有新建分支，也没有丢工作。
+
+**② 本地 ctest：还没有结果**
+- 配置阶段要联网下载依赖，但 SSL 校验失败，所以我把依赖指到 `exr-build-argon/_deps` 里的缓存源码。
+- faad2 没有缓存，我加了 `-DEXR_ENABLE_AAC=OFF`。AAC 相关的构建和测试因此没有被覆盖。
+- 第二轮构建（日志在 `/tmp/cf-build2.log`）正在后台跑。
+
+**③ PR 状态**
+- 还没推送，PR #112 目前仍是 `CONFLICTING`。
+- 推送前我会先看构建结果。
+
+**④ 还差什么**
+- 等构建和 ctest 跑完，再推送。
+- 远端 main 现在是 `fe9adf43`，比我合并的 `a88458ef` 新。推送前我会再合并一次，不然 PR 可能又落后。
+
+`tests/check_reading_release.py` 的 SHA256 开头仍是 `6eb22a30`，没动。合并过程已追加写入 `OUT-CF.txt`。
+
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
