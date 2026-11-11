@@ -1,0 +1,24 @@
+The merge is done locally, but I haven't pushed and the local build and tests haven't finished yet.
+
+**Merge**
+- `origin/codex/large-book-2-20261110` already had 51 commits that my local branch lacked. They included an earlier merge of main, and `RESOLVE-OUT.txt` and `RESOLVE.md` came from them.
+- I merged `origin/main` (a88458ef) and then that remote head into the local branch. Both merges are committed: f83e36b8 and bdde27e3.
+- Only three files conflicted, all report files: `OUT.txt`, `RESOLVE-OUT.txt` and `RESOLVE.md`. I removed the conflict markers and kept both sides in each.
+- Everything else merged cleanly, so none of the code, CMake or `layers.json` files conflicted.
+- The branch is now 13 commits ahead of main and 0 behind.
+- I added a step-1 line to `OUT-CF.txt` but haven't committed it.
+
+**Build and tests**
+- Configure failed with your exact command. This machine's MinGW cmake rejects GitHub's TLS certificate ("certificate signer not trusted"), so it can't download freetype, which `cmake/deps.cmake` now fetches.
+- I'm rerunning with `FETCHCONTENT_SOURCE_DIR_*` pointing at the dependency sources already in `exr-build-argon`. Those may not be the exact pinned versions, so the local result is slightly weaker evidence than a CI run.
+- The rerun is in progress. It runs configure, build, then `ctest -E "^sdk-release$"`, and writes to `Codex\cf127.log`; the last line will be `CF127-DONE`.
+
+**Still to do**
+- Wait for the ctest result and report passed/total and any failures.
+- Push with `git push origin HEAD:codex/large-book-2-20261110` and check PR #127's mergeable state.
+
+I haven't pushed anything, and I haven't touched main or merged the PR.
+
+The build is at step 16 of 268, so it's still early. I'll report once the build and ctest finish.
+
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
