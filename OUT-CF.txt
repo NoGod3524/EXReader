@@ -63,3 +63,5 @@ The merge is still staged and uncommitted, and the PR is still conflicting. The 
 I'll leave the configure and build running and not poll it. When the background task finishes, I'll fix any compile errors, run `ctest -E "^sdk-release$"`, commit the merge, push to `codex/opds-catalog-20261110`, and report the PR's mergeable state.
 
 == step 2: local full build not completed (cmake configure >1h on this machine); gcc -fsyntax-only on reader.c (shell+drivers) and shell_d2d.cpp: 0 errors. ctest NOT run locally. ==
+
+== step 3: merged remote PR branch + main again (35 newer commits); only report files conflicted (both kept); layers.json = main + opds.c/opds.h ==
