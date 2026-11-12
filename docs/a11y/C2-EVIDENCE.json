@@ -1,0 +1,44 @@
+{
+  "kind": "historical-ui-evidence",
+  "source_commit": "5cdc779ce7b90d47167893592fe1ac72d71b9261",
+  "source_branch": "codex/a11y-uia-20261110",
+  "note": "Existing C2 /ui screenshots; no recapture and no current runtime UIA claim.",
+  "screenshots": [
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/01-text-page.png",
+      "sha256": "da1c0f3ffa87764f55e6818c24d774acaf7f90b3985a35a171cf8fc1d745dd6a"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/02-page-focused.png",
+      "sha256": "f1d4d5675a5a3457ba3d5db7b94679ff0f3ab58c7ddb858779f47a86ae84157b"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/03-toc-button-focused.png",
+      "sha256": "f5c95643a7479306c691ceba745b54df86e31c0946c9a405d296056fadd8d000"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/04-settings-button-focused.png",
+      "sha256": "3de3603adc0f15fa220f9a1ba699530b12e9a3c505ac70829ef060d699da3542"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/05-toc-open.png",
+      "sha256": "14baee29ceccb23c5c5b33da3edc5efcbf7c1cf155e188426526536854b1d3c6"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/06-settings-open.png",
+      "sha256": "ccf3dad059abf80ced4c8bd3d70b87067f753ad6d26c1d62f8da687df7f430ce"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/08-high-contrast-text.png",
+      "sha256": "b56c5b76ab79a463e8f279210c1bd93bf13a7442a88998ef3bd07baa5dd9313d"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/09-high-contrast-toc-focus.png",
+      "sha256": "49a7221a2095e63a8de96369df3e071eeb61fca77194365d8cdad11241484d67"
+    },
+    {
+      "path": "docs/ui/evidence/a11y-uia-20261110/run5/10-high-contrast-toc-open.png",
+      "sha256": "1cbcf650d3f265acc615d906b164b0ff7d04c530225b37b383238cb628bc02ac"
+    }
+  ]
+}
