@@ -5758,3 +5758,5 @@ exit=0
 
 Permission deny rule "computer" matches no known tool - check for typos.
 exit=0
+
+[resume 2026-11-11] merge of origin/main already done and pushed (HEAD == origin branch, 0 behind main). OUT-CF.txt had been truncated to 0 bytes in the worktree; restored from HEAD. PR #116: mergeable=MERGEABLE, mergeStateStatus=BLOCKED (CI checks pending).
