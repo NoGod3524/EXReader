@@ -1,19 +1,10 @@
-<<<<<<< HEAD
 # 把 PR #131 解到可合并（工作在这个 PR 自己的分支上）
-=======
-# 把 PR #116 解到可合并（工作在这个 PR 自己的分支上）
->>>>>>> origin/main
 
 ## 你的分支（一字不改地在这里干）
 
 ```
-<<<<<<< HEAD
 工作树   C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110
 分支     codex/webdav-sync-20261110          ← 这就是 PR #131 的 head 分支，已 track origin
-=======
-工作树   C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109
-分支     codex/vertical-expand-20261109          ← 这就是 PR #116 的 head 分支，已 track origin
->>>>>>> origin/main
 ```
 
 **不许新建分支。** 上一轮九路就是因为建了新分支（`codex/fixNNN-*`），成果全落到 PR 看不见的地方，
@@ -22,15 +13,9 @@
 ## 现状
 
 ```
-<<<<<<< HEAD
 PR #131  mergeable = CONFLICTING
 落后 main = 11 个提交
 领先 main = 13 个提交（本 PR 的功能）
-=======
-PR #116  mergeable = CONFLICTING
-落后 main = 11 个提交
-领先 main = 10 个提交（本 PR 的功能）
->>>>>>> origin/main
 CI：因为 CONFLICTING，没有跑
 ```
 
@@ -39,11 +24,7 @@ CI：因为 CONFLICTING，没有跑
 ### 1. 合并 main，解冲突
 
 ```powershell
-<<<<<<< HEAD
 cd C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110
-=======
-cd C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109
->>>>>>> origin/main
 git fetch origin main
 git merge origin/main
 ```
@@ -62,13 +43,8 @@ git merge origin/main
 ### 2. 本地验证
 
 ```powershell
-<<<<<<< HEAD
 $bld = "C:\Users\Oscar\Documents\Codex\exr-build-cf131"
 cmake -S C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110 -B $bld -G Ninja -DEXR_READER_WINDOWS_SHELL=ON `
-=======
-$bld = "C:\Users\Oscar\Documents\Codex\exr-build-cf116"
-cmake -S C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109 -B $bld -G Ninja -DEXR_READER_WINDOWS_SHELL=ON `
->>>>>>> origin/main
   "-DFETCHCONTENT_SOURCE_DIR_MBEDTLS=C:/Users/Oscar/Documents/Codex/exr-deps/mbedtls-3.6.7"
 cmake --build $bld -j 2
 ctest --test-dir $bld -j 2 -E "^sdk-release$"
@@ -80,11 +56,7 @@ ctest --test-dir $bld -j 2 -E "^sdk-release$"
 ### 3. 推送
 
 ```powershell
-<<<<<<< HEAD
 git push origin HEAD:codex/webdav-sync-20261110
-=======
-git push origin HEAD:codex/vertical-expand-20261109
->>>>>>> origin/main
 ```
 
 推完 CI 会自动跑。**不要合并 PR，不要动 main。**
