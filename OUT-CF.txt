@@ -29,3 +29,25 @@ tests/check_reading_release.py SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f
 核验上轮 37d54bd5：OUT.txt、RESOLVE-OUT.txt 两侧保留；RESOLVE.md 漏掉 main 中 PR #107 的一句任务说明，本轮已补回。三个文件均通过双方逐行计数保留核验。
 CMakeLists.txt 自动合并，双方新增测试均保留；tools/layers.json 含 main 新增两个 src/*.h 登记，无 API 命名冲突。
 git diff --check 只报告 main 既有配置日志的尾空白、并集报告的末尾空行；按报告内容保留要求不清理。
+
+[步骤 2：配置恢复]
+指定 configure 首次失败：旧缓存 FETCHCONTENT_SOURCE_DIR_FREETYPE 指向已不存在的 exr-build-argon/_deps/freetype-src；其他旧缓存源码目录也被移除。
+仅在构建缓存中清除旧 FETCHCONTENT_SOURCE_DIR_* 覆盖，保留用户指定 mbedtls 本地源路径，让 CMake 按仓库固定版本和哈希获取依赖。
+已将构建缓存 FETCHCONTENT_FULLY_DISCONNECTED 设为 OFF，并指定 CMAKE_TLS_CAINFO=C:/Program Files/Git/mingw64/etc/ssl/certs/ca-bundle.crt；依赖恢复已推进到 libwebp 配置。
+API 文档门禁 python -X utf8 tools/check_sdk_docs.py exit=0：469/469 documented，errors=[]，passed=true。
+受保护三个文件与 origin/main 完全一致；所有 src/*.h 都在 tools/layers.json 登记；合并报告无冲突标记。
+
+[配置完成]
+CMake configure exit=0；使用指定 Ninja / Windows shell / mbedtls 参数，额外参数仅恢复构建缓存的依赖获取和 CA 路径。
+完整日志：C:/Users/Oscar/Documents/Codex/cf116-configure.log。
+构建 cmake --build exr-build-cf116 -j 2 exit=0；日志 C:/Users/Oscar/Documents/Codex/cf116-build.log。
+层检查 python -X utf8 tools/check_layers.py exr-build-cf116 exit=0；日志 C:/Users/Oscar/Documents/Codex/cf116-layers.log。
+ctest --test-dir exr-build-cf116 -j 2 -E ^sdk-release$ --output-on-failure exit=0；日志 C:/Users/Oscar/Documents/Codex/cf116-ctest.log。
+
+[步骤 2 完成：本地验证]
+CMake configure/build 均 exit=0。ctest exit=0：405/405 通过，0 失败，耗时 2912.44 秒；失败项：无。按要求仅排除 sdk-release。
+三组 PR 自带测试 native-vertical-expand-boundaries/ruby/images 全部通过；main 新增 DOCX 回归也全部通过。
+API 文档 469/469；层检查 124 objects / 1456 symbol references，0 inverse references / 0 inverse includes。
+推送前再次 fetch：main 仍为 fe9adf43，HEAD 对 origin/main 领先 14 / 落后 0；工作树仅有本步骤报告追加。
+[步骤 3：推送指定 PR head 分支]
+执行 git push origin HEAD:codex/vertical-expand-20261109；不合并 PR，不更新 main。
