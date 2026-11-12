@@ -5759,3 +5759,8 @@ Step 2 - Reused completed configure/build and full test evidence: cf116-configur
 Layer evidence: 124 objects / 1456 symbol references / 0 inverse references; 1096 source/header dependencies / 0 inverse includes.
 Constraints verified: check_reading_release.py SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b; release test, check_ci_hygiene.py and version_literal_exceptions.json match origin/main. No GUI, system changes, new branch, PR merge, or main update.
 Step 3 - Before saving recovery report, GitHub PR #116 mergeable=true, open/unmerged; head 02ef765a. Four workflows queued/pending: Native reading profiles, Native C engine, SDK version consistency, Required native reading SDK core. Saving and pushing this report to origin/codex/vertical-expand-20261109; CI results remain pending.
+
+[CF116 push verification]
+Pushed e2f5fdfa7543f007c4bdbeca0db2c2f420c10970 to origin/codex/vertical-expand-20261109 successfully; working tree clean and tracking ref synchronized.
+Post-push GitHub PR #116 confirmed head=e2f5fdfa, mergeable=true, open and unmerged; base remains fe9adf43. CI workflow discovery for that new head returned no runs yet. Remaining: await CI results.
+This final report-only commit records the observed push result and will be pushed to the same PR head.
