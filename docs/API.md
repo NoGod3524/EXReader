@@ -5442,6 +5442,8 @@ int main(void) {
 ```c
 /* SPDX-License-Identifier: MIT */
 #include <exr/formats.h>
+#include <exr/opds.h>
+#include <string.h>
 #include <stdio.h>
 
 int main(void) {
@@ -5455,7 +5457,18 @@ int main(void) {
   else
     fprintf(stderr, "%s\n", error.message);
   exr_document_free(document);
-  return status == EXR_OK ? 0 : 1;
+  if (status != EXR_OK) return 1;
+  const char atom[] = "<feed xmlns='http://www.w3.org/2005/Atom'><title>Catalog</title>"
+    "<entry><title>Example</title><link rel='http://opds-spec.org/acquisition' "
+    "type='application/epub+zip' href='../books/a.epub'/></entry></feed>";
+  exr_opds_feed feed = {0};
+  status = exr_opds_parse(atom, sizeof(atom) - 1, "https://example.test/catalog/root.xml", &feed, &error);
+  int catalog_ok = status == EXR_OK && feed.entry_count == 1 && feed.entries[0].download_url &&
+    !strcmp(feed.entries[0].download_url, "https://example.test/books/a.epub");
+  if (catalog_ok) printf("OPDS entries=%zu title=%s\n", feed.entry_count, feed.title);
+  else fprintf(stderr, "OPDS parse failed: %s\n", error.message);
+  exr_opds_feed_free(&feed);
+  return catalog_ok ? 0 : 1;
 }
 ```
 
@@ -7158,3 +7171,105 @@ int main(void) {
 **线程** 仅查询不可变数据；可并行只读，但不得与释放、引用计数变更或底层来源变更并发。
 
 **所有权** 字节与 MIME 字符串借用到 inspection_free。
+
+## OPDS
+
+### `exr_opds_parse`
+
+**签名** `exr_status exr_opds_parse(const void *data,size_t size,const char *base_url, exr_opds_feed *out,exr_error *error);`
+
+**ABI** 实验；声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `data`/`size`：OPDS Atom 文档字节；`base_url`：解析相对 URL 的基准，非 NULL；`out`：接收 feed 快照；`error`：可选诊断。
+
+**返回与失败** EXR_OK；空指针/非法 XML 为 EXR_ARGUMENT 或 EXR_FORMAT；`data:` URI 被丢弃而非报错。失败清零 out。
+
+**线程** 无共享可变状态；独立输出可并发。
+
+**所有权** 输出经 `exr_opds_feed_free` 释放；其中字符串为该 feed 拥有。
+
+### `exr_opds_feed_free`
+
+**签名** `void exr_opds_feed_free(exr_opds_feed *feed);`
+
+**ABI** 实验；声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `feed`：由 `exr_opds_parse` 填充的快照；可 NULL。
+
+**返回与失败** 无返回值；NULL 或已释放的快照不动作。
+
+**线程** 不得与同一 feed 的读取并发。
+
+**所有权** 释放 feed 内所有字符串与数组。
+
+### `exr_opds_parse_search`
+
+**签名** `exr_status exr_opds_parse_search(const void *data,size_t size,const char *base_url, char **template_url,exr_error *error);`
+
+**ABI** 实验；声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `data`/`size`：OpenSearch 描述文档；`base_url`：基准 URL；`template_url`：接收结果 URL 模板；`error`：可选诊断。
+
+**返回与失败** EXR_OK；缺 OpenSearch 模板或文档非法为 EXR_FORMAT，空指针为 EXR_ARGUMENT。失败清零输出。
+
+**线程** 无共享可变状态。
+
+**所有权** `template_url` 为宿主拥有的 UTF-8 字符串，用 `exr_free` 释放。
+
+### `exr_opds_search_url`
+
+**签名** `exr_status exr_opds_search_url(const char *template_url,const char *query, char **out,exr_error *error);`
+
+**ABI** 实验；声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `template_url`：含 `{searchTerms}` 的模板；`query`：非空 UTF-8 查询，按 percent-encoding 展开；其余 `{parameter}`/`{parameter?}` 展开为空。
+
+**返回与失败** EXR_OK；空查询或缺 `{searchTerms}` 为 EXR_ARGUMENT。失败清零 out。
+
+**线程** 无共享可变状态。
+
+**所有权** `out` 为宿主拥有字符串，用 `exr_free` 释放。
+
+### `exr_opds_resolve_url`
+
+**签名** `exr_status exr_opds_resolve_url(const char *base_url,const char *reference, char **out,exr_error *error);`
+
+**ABI** 实验；声明：[opds.h](../include/exr/opds.h)。
+
+**参数** `base_url`：http/https 基准；`reference`：RFC 3986 引用；`out`：接收绝对 URL。
+
+**返回与失败** EXR_OK；非 http/https 基准或非法引用为 EXR_ARGUMENT。失败清零 out。
+
+**线程** 无共享可变状态。
+
+**所有权** `out` 为宿主拥有字符串，用 `exr_free` 释放。
+
+<!-- example: docs/examples/opds.c -->
+```c
+/* SPDX-License-Identifier: MIT */
+#include <exr/opds.h>
+#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+  const char feed[] =
+      "<feed xmlns='http://www.w3.org/2005/Atom'>"
+      "<title>Catalog</title>"
+      "<entry><title>Book</title>"
+      "<link rel='http://opds-spec.org/acquisition' type='application/epub+zip'"
+      " href='../books/a.epub'/></entry></feed>";
+  exr_opds_feed parsed = {0};
+  exr_error error = {0};
+  exr_status status = exr_opds_parse(feed, sizeof(feed) - 1,
+                                     "https://example.test/catalog/root.xml", &parsed, &error);
+  if (status != EXR_OK) {
+    fprintf(stderr, "parse failed: %s\n", error.message);
+    return 1;
+  }
+  printf("title=%s entries=%zu first=%s\n", parsed.title ? parsed.title : "",
+         parsed.entry_count,
+         parsed.entry_count ? parsed.entries[0].download_url : "");
+  exr_opds_feed_free(&parsed);
+  return 0;
+}
+```
