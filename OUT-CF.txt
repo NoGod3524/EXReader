@@ -1360,3 +1360,8 @@ Interrupted OUT-CF.txt had been replaced by one quota-limit line. Retained compl
 Step 2 completed: reused existing cf116-configure.log, cf116-build.log and cf116-ctest.log; no code changes since validated commit 846d3d2c (only OUT-CF.txt). Full ctest: 405/405 passed, failed items: none; sdk-release excluded exactly as requested; elapsed 2912.44 sec.
 Verified constraints: release-test SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b; release test, CI hygiene logic and version exceptions match origin/main. No new source headers or code edits this recovery.
 Step 3 preparation: GitHub PR #116 open, unmerged, mergeable=true at cd1d8242. Saving this recovered report and pushing only the existing PR head; post-push state will be checked.
+
+[CF116 step 3 completed]
+Pushed 2bbef51f52b19c057bcae15c3a8565164a4eca85 to origin/codex/vertical-expand-20261109. Working tree clean; branch synchronized.
+Post-push GitHub PR #116 verified: head=2bbef51f, mergeable=true, state=open, merged=false, base=fe9adf43. Required native reading SDK core is pending; CI has not completed.
+Remaining: CI results. This report-only follow-up is pushed to the same existing PR head.
