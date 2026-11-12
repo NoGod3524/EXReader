@@ -1,0 +1,97 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h
+      Start 165: native-pdf-hybrid-deck
+      Start  68: native-pdf-shading
+ 1/46 Test  #68: native-pdf-shading .................   Passed   14.38 sec
+      Start 282: native-pdf-deepening-scan
+ 2/46 Test #282: native-pdf-deepening-scan ..........   Passed    1.46 sec
+      Start 284: native-pdf-deepening-encryption
+ 3/46 Test #284: native-pdf-deepening-encryption ....   Passed    1.58 sec
+      Start 283: native-pdf-deepening-contracts
+ 4/46 Test #283: native-pdf-deepening-contracts .....   Passed    0.96 sec
+      Start 280: native-pdf-deepening-search
+ 5/46 Test #280: native-pdf-deepening-search ........   Passed    1.06 sec
+      Start 281: native-pdf-deepening-coordinates
+ 6/46 Test #281: native-pdf-deepening-coordinates ...   Passed    1.00 sec
+      Start 249: native-pdf-jpx
+ 7/46 Test #249: native-pdf-jpx .....................   Passed    0.29 sec
+      Start  25: native-pdf-shading-mesh7
+ 8/46 Test  #25: native-pdf-shading-mesh7 ...........   Passed    0.72 sec
+      Start  76: native-pdf-inline
+ 9/46 Test  #76: native-pdf-inline ..................   Passed    0.97 sec
+      Start 162: native-fixed-library
+10/46 Test #162: native-fixed-library ...............   Passed    0.49 sec
+      Start 155: native-pdf-image
+11/46 Test #155: native-pdf-image ...................   Passed    1.74 sec
+      Start  93: native-pdf-form
+12/46 Test  #93: native-pdf-form ....................   Passed    0.56 sec
+      Start  57: native-pdf-color
+13/46 Test  #57: native-pdf-color ...................   Passed    0.66 sec
+      Start  44: native-pdf-crypto
+14/46 Test  #44: native-pdf-crypto ..................   Passed    1.20 sec
+      Start 239: native-pdf-group-reference
+15/46 Test #239: native-pdf-group-reference .........   Passed    1.43 sec
+      Start 112: native-fixed-layout-viewport
+16/46 Test #112: native-fixed-layout-viewport .......   Passed    0.42 sec
+      Start 154: native-pdf-raster
+17/46 Test #154: native-pdf-raster ..................   Passed    0.90 sec
+      Start 150: native-pdf-text
+18/46 Test #150: native-pdf-text ....................   Passed    0.71 sec
+      Start 146: native-pdf-objects
+19/46 Test #146: native-pdf-objects .................   Passed    6.56 sec
+      Start 152: native-pdf-graphics
+20/46 Test #152: native-pdf-graphics ................   Passed    0.61 sec
+      Start 163: native-fixed-text
+21/46 Test #163: native-fixed-text ..................   Passed    0.29 sec
+      Start  94: native-pdf-appearance
+22/46 Test  #94: native-pdf-appearance ..............   Passed    0.28 sec
+      Start  86: native-pdf-markup
+23/46 Test  #86: native-pdf-markup ..................   Passed    0.43 sec
+      Start 167: native-pdf-hybrid-chain
+24/46 Test #167: native-pdf-hybrid-chain ............   Passed    0.19 sec
+      Start 166: native-pdf-hybrid-merge
+25/46 Test #166: native-pdf-hybrid-merge ............   Passed    0.19 sec
+      Start  60: native-pdf-groupcs
+26/46 Test  #60: native-pdf-groupcs .................   Passed    0.33 sec
+      Start  91: native-pdf-metadata-write
+27/46 Test  #91: native-pdf-metadata-write ..........   Passed    0.30 sec
+      Start 164: native-fixed-pdf
+28/46 Test #164: native-fixed-pdf ...................   Passed    0.18 sec
+      Start  24: native-pdf-shading-mesh
+29/46 Test  #24: native-pdf-shading-mesh ............   Passed    0.18 sec
+      Start  84: native-pdf-type3
+30/46 Test  #84: native-pdf-type3 ...................   Passed    0.20 sec
+      Start 153: native-pdf-outline
+31/46 Test #153: native-pdf-outline .................   Passed    0.16 sec
+      Start 148: native-pdf-cmap
+32/46 Test #148: native-pdf-cmap ....................   Passed    0.10 sec
+      Start 111: native-fixed-layout-rendition
+33/46 Test #111: native-fixed-layout-rendition ......   Passed    0.08 sec
+      Start 114: native-fixed-layout-mixed
+34/46 Test #114: native-fixed-layout-mixed ..........   Passed    0.10 sec
+      Start 169: native-fixed-example
+35/46 Test #169: native-fixed-example ...............   Passed    0.15 sec
+      Start 168: native-pdf-hybrid-bad-offset
+36/46 Test #168: native-pdf-hybrid-bad-offset .......   Passed    0.08 sec
+      Start  69: native-pdf-calculator
+37/46 Test  #69: native-pdf-calculator ..............   Passed    0.15 sec
+      Start 113: native-fixed-layout-absolute
+38/46 Test #113: native-fixed-layout-absolute .......   Passed    0.18 sec
+      Start  26: native-pdf-ccitt
+39/46 Test  #26: native-pdf-ccitt ...................   Passed    0.23 sec
+      Start 149: native-pdf-font
+40/46 Test #149: native-pdf-font ....................   Passed    0.75 sec
+      Start 147: native-pdf-pages
+41/46 Test #147: native-pdf-pages ...................   Passed    0.85 sec
+      Start  59: native-pdf-matte
+42/46 Test  #59: native-pdf-matte ...................   Passed    0.34 sec
+      Start  92: native-pdf-write
+43/46 Test  #92: native-pdf-write ...................   Passed    0.25 sec
+      Start  58: native-pdf-intent
+44/46 Test  #58: native-pdf-intent ..................   Passed    0.31 sec
+      Start 170: native-fixed
+45/46 Test #170: native-fixed .......................   Passed    0.18 sec
+46/46 Test #165: native-pdf-hybrid-deck .............   Passed   56.18 sec
+
+100% tests passed out of 46
+
+Total Test time (real) =  56.29 sec
