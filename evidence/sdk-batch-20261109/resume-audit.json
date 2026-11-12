@@ -1,0 +1,64 @@
+{
+  "audited_utc": "2026-11-09T16:41:18.702444+00:00",
+  "source_head": "fa0dbbec875be515c953cbe6866e5ee8c25fa805",
+  "source_identity_matches": true,
+  "candidate_dll_sha256": "c308aca22f3504fb238d3696c7e7ea4adf466f4de05f675ca43964a24abf68b6",
+  "benchmark_executable_identity_matches": true,
+  "timing_files": [
+    "associative-cold.json",
+    "associative-warm.json",
+    "before-103.json",
+    "before-main.json",
+    "capacity-cold.json",
+    "capacity-control-103.json",
+    "capacity-warm.json",
+    "controlled-1\\cold.json",
+    "controlled-1\\reference.json",
+    "controlled-1\\warm.json",
+    "controlled-2\\cold.json",
+    "controlled-2\\reference.json",
+    "controlled-2\\warm.json",
+    "port-cold.json",
+    "port-warm.json"
+  ],
+  "timing_samples_checked": 1500,
+  "warm_p95_ms": [
+    14.8688,
+    14.9382,
+    15.0047,
+    14.7733,
+    15.0419
+  ],
+  "warm_dispersion_percent": 1.799619,
+  "warm_cache": {
+    "glyph": {
+      "requests": 21573,
+      "hits": 21573,
+      "misses": 0,
+      "hit_percent": 100.0,
+      "evictions": 0
+    },
+    "shaping": {
+      "requests": 36670,
+      "hits": 36547,
+      "misses": 123,
+      "hit_percent": 99.664576,
+      "evictions": 123,
+      "bypasses": 0
+    },
+    "layout": {
+      "requests": 20,
+      "hits": 0,
+      "misses": 20,
+      "hit_percent": 0.0
+    }
+  },
+  "cold_warm_page_sequences_match": true,
+  "regression_books": 19,
+  "regression_pages": 11318,
+  "changed_page_hashes": 0,
+  "content_fingerprint": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434",
+  "power_restoration_verified": true,
+  "workflow_files_unchanged": true,
+  "resume_checks": "independent installed-SDK GCC compilation and fixture smoke; native-batch/native-shaping/statistics 3/3; compiled layer graph passed"
+}

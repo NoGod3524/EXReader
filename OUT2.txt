@@ -1,20 +1,76 @@
-`/XRefStm` hybrid-reference support is done and PR #133 (draft, not merged) is already open and pushed. I could only run part of the verification here, so the deck.pdf and full-suite acceptance items are still unchecked.
+已推送 `codex/sdk-batch-perf-20261109`，最新提交 `db02ebff`，Draft PR **[#112](https://github.com/NoGod3524/EXReader/pull/112)**。PR CI 已自动触发，尚在运行。
 
-**What was already in place** (earlier commits on `codex/pdf-xref-stream-20261111`):
-- **Engine:** `src/pdf_objects.c` now handles `/XRefStm`. The old rejection at line 349 only applies when `hybrid` is off, and the traditional-table branch at line 471 calls `stream_xref(..., hybrid=1)` and merges entries.
-- **Tests:** `tests/test_pdf_hybrid_xref.c` has the scenarios `merge`, `chain` and `bad-offset`, registered in `CMakeLists.txt` as `native-pdf-hybrid-merge`, `-chain` and `-bad-offset`. There is also `native-pdf-hybrid-deck` for `tests/fixtures/pdf-ppt/deck.pdf`.
+**预热21页后达标**：五轮 p95 全部 ≤16ms，离散度 **1.7996%**。测量配置为《紅樓夢》、1552×928、font24、CPU3/HIGH、AC处理器100%/boost关闭；预热约450ms。
 
-**What I ran:** I built the hybrid test directly with gcc, reusing a miniz copy from another build tree, and it passes: `merge`, `chain` and `bad-offset` all print `ok` with exit code 0.
+| 同配置路径 | 五轮 p95（ms） | 离散度 |
+|---|---|---:|
+| 修复前 #103 | 27.5601、27.9547、27.9671、27.7460、27.6926 | 1.4649% |
+| 修复后，无预热 | 26.1935、26.1538、26.1494、26.6201、26.0109 | 2.3229% |
+| 修复后，预热21页 | **14.8688、14.9382、15.0047、14.7733、15.0419** | **1.7996%** |
 
-**What I did not verify:**
-- **Full build:** the CMake configure fails because it can't download freetype (TLS certificate error, status 60). I didn't turn off certificate verification to get around it.
-- **deck.pdf and the full suite:** that means I couldn't run the deck.pdf open test (pages=15), the 15-page render, or the full `native-pdf-*` / `fixed-*` suite. The `exreader-pdf-hybrid-test.exe` in `build/hybrid-validation` is a pre-fix baseline build. It still fails with "Invalid PDF cross-reference stream", so it says nothing about the current code.
-- **Pixel comparison:** not run either.
+第1轮完整20次序列：
 
-**Loose end:** `OUT2.txt` shows as modified (emptied), but `git checkout` can't restore it (`unable to unlink`). It's only a scratch log, so I left it alone.
+| 次序 | 无预热 ms | 预热后 ms |
+|---:|---:|---:|
+| 1 | 6.0720 | 6.3865 |
+| 2 | 12.6220 | 9.0140 |
+| 3 | 33.0741 | 15.9208 |
+| 4 | 26.1935 | 14.8688 |
+| 5 | 23.8300 | 14.3189 |
+| 6 | 20.5688 | 13.5743 |
+| 7 | 21.1161 | 14.6286 |
+| 8 | 20.3121 | 13.5441 |
+| 9 | 17.3634 | 12.9261 |
+| 10 | 15.8783 | 12.0943 |
+| 11 | 17.0420 | 13.2621 |
+| 12 | 16.0581 | 12.5163 |
+| 13 | 19.5447 | 13.4837 |
+| 14 | 14.0399 | 11.7591 |
+| 15 | 13.8760 | 11.6375 |
+| 16 | 16.8821 | 12.9015 |
+| 17 | 16.9774 | 13.3655 |
+| 18 | 16.8090 | 12.9392 |
+| 19 | 14.6483 | 12.3530 |
+| 20 | 17.1047 | 12.9738 |
 
-To finish verification, someone needs to run the full CMake build and ctest somewhere with network or a pre-populated dependency cache. If you want, I can retry the configure with the local `FETCHCONTENT_SOURCE_DIR_*` overrides pointing at the existing `exr-build-cf116/_deps` sources.
+三组缓存统计：
 
-That notification was only the background `find` for a local miniz copy, which hit its time limit and was stopped. It doesn't change anything: I'd already found miniz in the `exr-build-cf116` build tree, and the hybrid xref test results stand (`merge`, `chain` and `bad-offset` all passed).
+| 缓存 | 无预热命中率 | 预热后命中率 |
+|---|---:|---:|
+| 字形位图 | 90.3722% | **100%（21573/21573）** |
+| 整形 | 91.0963% | **99.6646%（36547/36670）** |
+| 布局 | 0/20 | 0/20 |
 
-Still unverified: the full CMake build, the deck.pdf open and render checks, and the full ctest suite. The build needs network access or a pre-populated dependency cache. PR #133 stays a draft.
+历史尖峰在第8–11、16–17次，单靠启动预热解释不全。修复采用 **2MiB 字形LRU＋8192槽四路组相联整形缓存**，减少容量淘汰和碰撞；该路径同步执行，没有内部多线程锁竞争。布局0%对应连续生成新页。
+
+新增接口：
+
+```c
+exr_publication_warmup(pub, font, &config, pages, &error);
+```
+
+`bench_batch` 已独立编译运行。编译和使用：
+
+```powershell
+gcc -std=c11 -O3 -Wall -Wextra -Wpedantic -Werror `
+  -I build/s1-sdk/include examples/bench_batch.c `
+  -L build/s1-sdk/lib -lexreader -lshell32 `
+  -o build/s1-sdk/bin/bench_batch.exe
+
+build/s1-sdk/bin/bench_batch.exe BOOK.epub FONT.otf `
+  --runs 5 --turns 20 --warmup 21 --cpu 3 --high-priority --json warm.json
+```
+
+接受批次第1轮输出：`p50 12.939200 ms; p95 14.868800 ms`。固定电源策略的复现脚本见[使用说明](C:/Users/Oscar/Documents/Codex/EXReader-S1-20261109/examples/bench_batch.md)。
+
+19本真书 **11,318页，页数及全部逐页哈希不变**；完整CTest **256/256通过**，本轮相关测试重跑 **3/3通过**。已复核全部1500个保留样本及源码/DLL身份。完整证据见[报告](C:/Users/Oscar/Documents/Codex/EXReader-S1-20261109/evidence/sdk-batch-20261109/REPORT.md)，步骤已追加至 [S1-OUT.txt](C:/Users/Oscar/Documents/Codex/EXReader-S1-20261109/S1-OUT.txt)。
+已完成并验收：
+
+- 六夹具：行数 **3→4→3**，列数正确，其它结构保留。
+- 两种 PNG：重开后尺寸正确，原图字节不变。
+- 删图：media **1→0**、图片关系 **1→0**；共享资源保留。
+- 合并、嵌套表、底纹 XML 原样保留。
+- #117：基线 **18/18**，编辑后 **18/18**。
+- `ctest` **293/293 全绿**，新增 **14 组**。
+
+[验收报告与 XML 片段](/C:/Users/Oscar/Documents/Codex/EXReader-x6-table-20261110/docs/DOCX-X6.md)；[OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-x6-table-20261110/OUT.txt) 已逐步追加。`export_text.c` 未改。
