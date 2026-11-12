@@ -3777,3 +3777,13 @@ codex
 tokens used
 55,943
 exit=0
+
+
+[2026-11-11 recovery: preserved interrupted worktree content]
+You've hit your weekly limit · resets 1pm (America/New_York)
+
+[2026-11-11 recovery: status audit]
+Resumed on required branch codex/sdk-batch-perf-20261109 at 77592a6a. Only uncommitted change was OUT-CF.txt overwritten by the weekly-limit message above. Restored complete committed report and appended interrupted content without deleting either. Fetched origin/main; verifying prior merge, test artifacts, protected files, and remote PR status instead of repeating completed source work.
+
+[2026-11-11 recovery: merge and test verification completed]
+Latest origin/main fe9adf43 is already an ancestor (0 behind). Parent-line union audits passed for OUT2.txt, RESOLVE-OUT.txt and RESOLVE.md. Saved configure/build logs show completion; full CTest suite initially 402/404, native-document-probe and native-corpus-triage passed serial retries, yielding 404/404 test cases passed excluding sdk-release. Since tested head 48f253ec only reports and one restored task sentence changed; no source/test changes, so completed suite reused. Protected files match main byte-for-byte; check_reading_release.py SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. No added src header. GitHub confirms head 77592a6a mergeable=true, open, merged=false. CI pending/queued.
