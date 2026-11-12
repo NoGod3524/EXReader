@@ -24,7 +24,7 @@
    search bar 200+, shelf 190+, style fields 1800+, dictionary 810+. */
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, IDC_SHELL_SEARCH,
        IDC_SHELL_LIGHT = 164, IDC_SHELL_DARK, IDC_SHELL_SYSTEM,
-       IDC_SHELL_BACK = 180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY };
+       IDC_SHELL_BACK = 180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY, IDC_SHELL_SYNC };
 static HWND shell_back;
 static char *shell_synced_title;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
@@ -45,6 +45,7 @@ static void shell_panel_layout(void);
 static void shell_apply_theme(void);
 static void shell_toggle_settings(void);
 static int shell_settings_command(int id);
+static void sy_open(void);
 static int shell_draw_settings(const DRAWITEMSTRUCT *item);
 static void shell_toc_create(HWND parent);
 static void shell_toc_layout(void);
@@ -54,6 +55,8 @@ static void shell_toc_set(int open,int keyboard);
 static void shell_toc_hide(void);
 static int shell_toc_keyboard;
 static int shell_toc_key(HWND focus,WPARAM key,int shift);
+static int shell_tab_next(HWND focus,int shift);
+static void shell_a11y_names(void);
 static int shell_toc_draw(const DRAWITEMSTRUCT *item);
 static int shell_toc_open;
 static int shell_toc_close_pending;
@@ -312,6 +315,7 @@ static void shell_create(HWND parent) {
   shell_create_panel(parent);
   shell_toc_create(parent);
   shell_search_create(parent);
+  shell_a11y_names();
 }
 
 /* P0 visual bounds: 32px, 6px gap, 12px right inset. */
@@ -570,3 +574,87 @@ static HWND shell_button_named(const char *name) {
 #include "shell_toc.inc"
 
 #include "shell_search.inc"
+
+/* Keyboard order of the reading screen (C2): top bar, text, contents, settings,
+   then around again. An open search bar belongs to the top bar, an open contents
+   list to the contents button and the open settings panel to the settings button.
+   Z-order cannot express this: the panels must stay above the page to paint. */
+static int shell_tab_stops(HWND *out, int capacity) {
+  HWND stops[64];
+  int count = 0;
+  stops[count++] = shell_back;
+  stops[count++] = shell_search_button;
+  if (shell_search_open) {
+    stops[count++] = shell_search_edit; stops[count++] = shell_search_prev; stops[count++] = shell_search_next;
+    stops[count++] = shell_search_case; stops[count++] = shell_search_word; stops[count++] = shell_search_close;
+  }
+  stops[count++] = g.page;
+  stops[count++] = shell_toc;
+  if (shell_toc_open) stops[count++] = shell_toc_count ? shell_toc_list : shell_toc_panel;
+  stops[count++] = shell_settings;
+  int panel_start = count;
+  if (shell_panel_open && shell_panel) {
+    HWND child;
+    for (child = GetWindow(shell_panel, GW_CHILD); child && count < 64; child = GetWindow(child, GW_HWNDNEXT))
+      stops[count++] = child;
+  }
+  int kept = 0;
+  for (int i = 0; i < count && kept < capacity; i++) {
+    HWND window = stops[i];
+    if (!window || !IsWindowVisible(window) || !IsWindowEnabled(window)) continue;
+    if (i >= panel_start && !(GetWindowLongPtrW(window, GWL_STYLE) & WS_TABSTOP)) continue;
+    out[kept++] = window;
+  }
+  return kept;
+}
+
+static int shell_tab_next(HWND focus, int shift) {
+  HWND stops[64], next;
+  int count = shell_tab_stops(stops, 64), at = -1;
+  for (int i = 0; i < count && at < 0; i++) if (stops[i] == focus || IsChild(stops[i], focus)) at = i;
+  if (at < 0) return 0;
+  next = stops[(at + (shift ? count - 1 : 1)) % count];
+  shell_toc_keyboard = 1;
+  SetFocus(next);
+  if (host_offscreen) shell_toc_test_focus = next;
+  SendMessageW(g.window, WM_CHANGEUISTATE, MAKEWPARAM(UIS_CLEAR, UISF_HIDEFOCUS), 0);
+  InvalidateRect(shell_toc_list, NULL, FALSE);
+  return 1;
+}
+
+/* Every control on the reading screen states what it is. Owner-drawn glyph
+   buttons would otherwise be read as "−", "+", "↑", "×". */
+static void shell_a11y_names(void) {
+  static const wchar_t *const field[8] = {L"字号", L"行距", L"段距", L"上边距", L"右边距", L"下边距", L"左边距", L"字距"};
+  host_a11y_describe(shell_back, L"返回书架", L"回到书架，快捷键 Ctrl+W");
+  host_a11y_describe(shell_search_button, L"全文搜索", L"在整本书里搜索文字，快捷键 Ctrl+F");
+  host_a11y_describe(shell_toc, L"目录", L"打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭");
+  host_a11y_describe(shell_settings, L"设置", L"打开阅读设置：字号、行距、边距、主题和点击分区");
+  host_a11y_describe(shell_toc_panel, L"目录面板", L"当前书的章节目录");
+  host_a11y_describe(shell_toc_list, L"目录列表", L"上下键选择章节，回车跳转到该章");
+  host_a11y_describe(shell_panel, L"阅读设置", L"调整阅读排版和主题，Esc 关闭");
+  host_a11y_describe(shell_search_bar, L"全文搜索栏", L"输入关键词，回车查找下一处，Shift+回车查找上一处，Esc 关闭");
+  host_a11y_describe(shell_search_edit, L"搜索关键词", L"输入要在全文中查找的文字");
+  host_a11y_describe(shell_search_prev, L"上一处", L"跳到上一个搜索结果");
+  host_a11y_describe(shell_search_next, L"下一处", L"跳到下一个搜索结果");
+  host_a11y_describe(shell_search_case, L"区分大小写", L"选中后搜索区分英文大小写");
+  host_a11y_describe(shell_search_word, L"全词匹配", L"选中后只匹配完整的词");
+  host_a11y_describe(shell_search_close, L"关闭搜索", L"关闭搜索栏并回到正文");
+  host_a11y_describe(shell_search_count, L"搜索结果计数", NULL);
+  for (int i = 0; i < 8; i++) {
+    wchar_t name[48];
+    swprintf(name, 48, L"减小%ls", field[i]); host_a11y_describe(style_buttons[2*i], name, L"按一步减小这一项");
+    swprintf(name, 48, L"增大%ls", field[i]); host_a11y_describe(style_buttons[2*i+1], name, L"按一步增大这一项");
+    host_a11y_describe(style_edits[i], field[i], L"直接输入数值，离开输入框后生效");
+  }
+  host_a11y_describe(shell_segments[0], L"浅色主题", L"使用浅色界面");
+  host_a11y_describe(shell_segments[1], L"深色主题", L"使用深色界面");
+  host_a11y_describe(shell_segments[2], L"跟随系统主题", L"界面颜色跟随 Windows 的深浅色设置");
+  host_a11y_describe(style_preset, L"排版预设", L"输入名称保存，或从列表选择已有预设");
+  host_a11y_describe(style_save, NULL, L"把当前排版保存为预设");
+  host_a11y_describe(style_reset, NULL, L"恢复默认排版");
+  host_a11y_describe(shell_tap_buttons[0], L"点击分区 20 / 60 / 20", L"左右各 20% 翻页，中间 60% 显示或隐藏工具栏");
+  host_a11y_describe(shell_tap_buttons[1], L"点击分区 25 / 50 / 25", L"左右各 25% 翻页，中间 50% 显示或隐藏工具栏");
+  host_a11y_describe(GetDlgItem(shell_panel, IDC_SHELL_DICTIONARY), NULL, L"管理词典和生词本");
+  host_a11y_describe(GetDlgItem(shell_panel, IDC_SHELL_SYNC), NULL, L"配置 WebDAV 云同步、查看同步状态和离线草稿");
+}

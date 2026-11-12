@@ -1,0 +1,11 @@
+HOST	phase=1	engine=3.42.0	pid=13816
+STEP	1	shell	PASS	legacy panel
+STEP	2	shell_dpi	PASS	page=1;status=已打开《Pride and Prejudice》。
+STEP	3	shell_client	PASS	page=1;status=已打开《Pride and Prejudice》。
+STEP	4	wait_idle	PASS	page=1;status=已打开《Pride and Prejudice》。
+STEP	5	shell_click	PASS	button invoked
+STEP	6	sm_show	PASS	shelf metadata action
+STEP	7	sm_dump	PASS	shelf metadata action
+STEP	8	opds_dump	PASS	opds action
+STEP	9	quit	PASS	closing
+DONE	9	eof	PASS	script finished
