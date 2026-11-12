@@ -408,6 +408,34 @@ typedef struct { size_t part, start, end, footnote; } exr_footnote_reference;
 EXR_API exr_status exr_publication_footnotes(exr_publication *publication,
   const exr_footnote **footnotes,size_t *count,
   const exr_footnote_reference **references,size_t *reference_count,exr_error *error);
+/* EPUB 3 Media Overlay (SMIL) of one part, parsed only; nothing is played.
+   Each clip pairs a text fragment with an audio interval. text_start/text_end
+   are UTF-8 offsets in exr_document_text of the loaded text part (as from
+   publication_load) of the fragment element; SIZE_MAX when the fragment or
+   part is unresolved. clip_end_ms is -1 when absent (play to media end). */
+typedef struct {
+  const char *par_id;     /* SMIL par id or "" */
+  const char *text_path;  /* container path of the referenced XHTML */
+  const char *fragment;   /* decoded fragment id or "" */
+  size_t text_part;       /* publication part, SIZE_MAX when not a part */
+  size_t text_start, text_end;
+  const char *audio_path; /* container path of the audio clip */
+  long long clip_begin_ms, clip_end_ms;
+  int audio_present;      /* zero when the audio member is absent */
+} exr_overlay_clip;
+typedef struct {
+  const char *smil_path;
+  long long duration_ms;  /* OPF media:duration refining this overlay, -1 absent */
+  const char *active_class, *playback_active_class; /* OPF media:* or "" */
+  exr_overlay_clip *clips;
+  size_t clip_count, missing_audio, unresolved_text;
+} exr_media_overlay;
+/* *overlay is NULL with EXR_OK when the part declares no media-overlay. A
+   declared but absent/malformed SMIL fails with a readable message; reading the
+   part itself is unaffected. EPUB publications only. Free with overlay_free. */
+EXR_API exr_status exr_publication_media_overlay(exr_publication *publication,size_t part,
+  exr_media_overlay **overlay,exr_error *error);
+EXR_API void exr_media_overlay_free(exr_media_overlay *overlay);
 /* Optional dictionaries are retained. Automatic opportunities require CSS
    hyphens:auto; the CSS default remains manual. Replacement strings are literal
    and retain protected original selection ranges. Committed after text wraps

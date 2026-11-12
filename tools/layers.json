@@ -93,6 +93,8 @@
     "font_scan.c": "text",
     "fonts.c": "text",
     "formats.c": "formats",
+    "media.c": "formats",
+    "media_overlay.c": "layout",
     "lcp.c": "formats",
     "book.c": "formats",
     "huff.c": "formats",

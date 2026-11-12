@@ -1,4 +1,7 @@
-① 接管之前 Claude 做到哪里
+D2 EPUB 媒体续跑收尾（2026-11-10）
+分支：codex/media-epub-2-20261110
+接手提交：bb672b35；最终被测源码：c60951f0；对照基线：6000a89d。
+证据目录：evidence/d2-media-20261110/；入口：该目录 README.md。
 已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
 
 - **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。
@@ -87,186 +90,158 @@ Compared against an unmodified build of 3076d3dd: 19/19 books, 11,426 pages, 8,6
 
 已接通增量重排、缓存复用与锚点恢复，未修改 `src/docx_edit.c`。
 
-接管提交为 627124e7，分支 codex/large-book-2-20261110。Claude 已合入搜索快照 16 MiB LRU 修复、bounded 搜索回归和大书工具，当前合并树已完成 Release 构建。其 LARGE-OUT.txt 最后一行原文：
+① Claude 做到哪
 
-```text
-[2026-11-10T17:09:21-05:00] Step 10: AFTER run 1 (3 serial runs) completed for all 7 books but is load-contaminated (host CPU 56%, 26 compiler procs from other sessions; e.g. v2 toc_load 504ms vs 84ms earlier). Keeping raw in large-book-d3/measure-after2.json. Added tools/large_book/ab_measure.py: interleaved before/after (A/B) runs, 5 each, median+min, to cancel load. Running now.
-```
+MEDIA-OUT.txt 接手时最后一行原文：
+“步骤 6：4 本语料识别/SMIL/降级截图已生成（../d2m-report）；19 本真书基线-候选渲染在后台运行；完整 ctest 在后台运行（../d2m-ctest.log）。”
 
-② 本次补了什么
+实际接手时后台验证已结束。旧 DLL 的 19 本对比为零变化；完整 ctest 为 258/260，失败 sdk-release 与 native-chapter-index（原始日志已保存为 claude-ctest.txt）。
+但该 DLL 的写入时间为 17:18:47，已保存的 document.c 晚于它，源码还存在对已删除字段 media_expected 的引用。因此旧 DLL 的通过结果不能代替最终源码验证。
 
-- 找到已完成的 ../large-book-d3/ab.json：7 本、每侧各 5 次，共 70 次。验证页数、章节数、目录条目、目录末项落点、首批及完整搜索命中数在全部 A/B 记录中一致；归档为 evidence/d3-large-20261110/ab-claude.json。没有用已污染的 measure-after2.json 下结论。
-- 发现原始 A/B 的 probe 可执行文件不同，补跑相同 probe 的 5,901／10,964／26,013 页交错 A/B，每侧 5 次，共 30 次；使用原有 ab_measure.py，保存原值、中位数、最小值和 CSV 测量表。
-- 跑完当前合并树 257 项 ctest；复核 bounded 搜索的正反对照。对唯一失败的 sdk-release 单独重跑、定位到发布包与 README 工具链不匹配，并补测 MinGW 包的实际编译、运行及非空白图像。
-- 跑完 19 本真书的全部逐页渲染，并与字体哈希一致的已有基线比较：11,426 页，页数和逐页像素哈希全部不变。
-- 归档 7 档样本的体积、组成、散列、章节页数、顺序分页内存曲线、12 本源 EPUB 散列、构建选项和保护文件散列；写 evidence/d3-large-20261110/README.md 说明证据来源和复跑方法。
+② 本次补完了什么
 
-本次续跑只补验证、证据和报告；src、include、tests、CMakeLists.txt 和 tools 的实现相对接管提交没有变化。
+1. 补齐最后的占位节点接线：删除 media.c 对不存在的 media_expected 字段的访问；只在 EPUB 解析时预留空占位节点，媒体扫描填写文字。保留原有识别、时长探测、SMIL 和降级实现。
+2. 修复 generic XML 与流式 chapter-index 的节点数差异；占位节点保持源码顺序，避免布局漏字或截断。tests/test_media_epub.c 只新增可见文本节点顺序断言，未删除或放宽已有断言。
+3. 重新构建最终源码，重跑 4 组媒体测试、chapter-index、完整 260 项 ctest、19 本真书逐页回归、层依赖审计及版本检查。
+4. 重新生成 4 本媒体语料的识别/映射 JSON 和 7 张截图；补《草枕》真实 SMIL 的 439 个片段映射与 16 张部件首页截图。4 本合成 EPUB 一并入证据库，真书仍在原位置。
+5. 追查 SDK 验证：MinGW 构建只生成 libexreader.dll.a，而 Windows README 用 MSVC 链接 exreader.lib。用现有 MSVC lib.exe 从当前 DLL 的 438 项导出生成匹配的导入库后，重新跑通完整 SDK smoke。未改变 DLL、编译开关或发布检查脚本。
+6. 保存原始日志、逐书页数/哈希变化表、媒体测量表、配置和输入 SHA-256；本报告补入原先为空的 OUT.txt。
 
-③ 验证命令与实际输出
+③ 验证命令及实际输出
 
-完整测试：
+以下命令在本工作树根目录执行；完整输出在证据目录。返回码由实际进程记录。
 
-```powershell
-ctest --test-dir build/d3 --output-on-failure -j 2
-```
+A. 构建
+命令：cmake --build ../d2m-build -j 4
+最终输出末段（build-final.txt）：
+[165/168] Linking C executable exreader-media-epub-test.exe
+[166/168] Linking C executable exreader-pdf-deepening-test.exe
+[167/168] Linking C executable exreader-epub-strict-test.exe
+返回码：0。
+最终 DLL SHA-256：7eb56b6c8be32ad8350c1dfa1f54980daf2c392e9bee5d7bbd520966535284f1。
 
-```text
-257/257 Test #256: native-build-manifest ..................   Passed   15.68 sec
-99% tests passed, 1 tests failed out of 257
-Total Test time (real) = 969.75 sec
+B. 4 组媒体测试
+命令：ctest --test-dir ../d2m-build -R '^native-media-epub-' -V
+实际输出摘录（media-ctest.txt）：
+245: elements: 4 media elements, labels visible in part text
+246: overlay: par p1  text[0,4)="One."  <->  OPS/audio/a.wav 0-1500 ms
+246: overlay: par p2  text[5,9)="Two."  <->  OPS/audio/a.wav 1500-3000 ms
+246: overlay: par p3  text[10,16)="Three."  <->  OPS/audio/gone.wav 1000-2000 ms  (audio missing)
+247: degrade: state=1  "[Audio unavailable: audio/gone.mp3 is missing from this book]"
+247: degrade: state=2  "[Embedded media not supported: movie.swf (application/x-shockwave-flash)]"
+247: degrade: state=3  "[Video is online: http://example.com/v.mp4 - not loaded]"
+247: degrade: state=4  "[Audio: no source given]"
+100% tests passed out of 4
+Total Test time (real) = 2.00 sec
+返回码：0。
+
+C. chapter-index 回归
+命令：ctest --test-dir ../d2m-build -R ^native-chapter-index$ --output-on-failure
+输出（chapter-index.txt）：
+1/1 Test #32: native-chapter-index .............   Passed    1.74 sec
+100% tests passed out of 1
+Total Test time (real) = 1.78 sec
+返回码：0。
+
+D. 完整 ctest 与失败项复测（不是一次全套 260/260）
+命令：ctest --test-dir ../d2m-build --output-on-failure -j 2
+输出（ctest-final.txt）：
+99% tests passed, 3 tests failed out of 260
+Total Test time (real) = 337.15 sec
 The following tests FAILED:
-      1 - sdk-release (Timeout)                             release
-exit: 8
-```
+  1 - sdk-release (Failed)
+ 39 - native-library-stream (Failed)
+106 - native-publication-index-boundaries (Failed)
+返回码：8；实际为 257/260。
 
-其余 256 项全部通过。首轮 sdk-release 在 181.55 秒触发既有 180 秒超时。单项重跑保留原测试和超时设置：
+library-stream 与 index-boundaries 首轮均无诊断输出；没有改动它们的实现或断言。直接运行 boundaries 返回 publication index boundaries passed、exit_code=0（index-boundaries-retry.txt）。
+随后命令：ctest --test-dir ../d2m-build --rerun-failed --output-on-failure -j 1
+输出（ctest-rerun-failed.txt）：
+2/3 Test #39: native-library-stream .................   Passed    5.10 sec
+3/3 Test #106: native-publication-index-boundaries ...   Passed    4.04 sec
+67% tests passed, 1 tests failed out of 3
+Total Test time (real) = 17.75 sec
+仅 sdk-release 仍失败，返回码：8。
+两项无输出失败的根因尚未隔离；串行复测已成功，不将其归因为已证实的负载问题。
 
-```powershell
-ctest --test-dir build/d3 -R '^sdk-release$' --output-on-failure -j 1
-```
-
-```text
-1/1 Test #1: sdk-release ......................***Failed   54.46 sec
-PASS public export count: lib/libexreader.dll: exr_* exports [435]; minimum 389
-PASS CLI runtime layout and import library: import library lib/libexreader.dll.a; bin DLL matches lib DLL
-EXR_README_COMMAND_1
-EXR_README_COMMAND_2
-main.c
+E. SDK smoke 的具体失败层与补验证
+首轮和第一次复测已通过打包、解压、438 项导出及版本检查，卡在 README 的 MSVC 链接命令：
 LINK : fatal error LNK1181: cannot open input file 'lib\exreader.lib'
 FAIL: README three commands failed with exit 1
-0% tests passed, 1 tests failed out of 1
-exit: 8
-```
 
-包的 48 个文件、47 个 SHA256、18 个公共头文件、x64 架构和 435 个公共导出均通过现有校验。MinGW 包自带 libexreader.dll.a，而 README 固定用 cl 和 exreader.lib；失败发生在示例链接阶段。README.md 和 tools/release 相对合入基线 6000a89d 均无改动。原始日志为 ctest.txt、ctest-sdk-release-retry.txt、sdk-release-smoke.json 和 sdk-package-check.json。
+补验证所用环境准备：
+将生成的 ../d2m-build/exreader.def 前加 LIBRARY libexreader.dll，写到 ../d2m-build/msvc-compat.def（副本已入证据库）。
+New-Item -ItemType Directory -Force ../d2m-build/Release
+& 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\lib.exe' /nologo /def:../d2m-build/msvc-compat.def /machine:x64 /out:../d2m-build/Release/exreader.lib
+输出（msvc-import.txt）：
+Creating library ../d2m-build/Release/exreader.lib and object ../d2m-build/Release/exreader.exp
+exit_code=0
 
-使用当前配置的同一个 gcc 和解压后的原包，实际执行：
-
-```text
-gcc.exe -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c lib/libexreader.dll.a -o minimal-gcc.exe
-exit: 0
-minimal-gcc.exe examples/minimal/sample.epub examples/minimal/font.ttf page-gcc.pgm
+再次命令：ctest --test-dir ../d2m-build --rerun-failed --output-on-failure -j 1
+输出（ctest-sdk-final.txt）：
+1/1 Test #1: sdk-release ......................   Passed    8.27 sec
+100% tests passed out of 1
+Total Test time (real) = 8.28 sec
+返回码：0。
+sdk-smoke/smoke.txt 中重定位后的 CLI 实际输出：
+Version: 3.42.0
+Format: EPUB
 Title: Native styled sample
 Pages: 2
 TOC entries: 1
-Output: page-gcc.pgm (720 x 1040, PGM)
 exit: 0
-PASS matching MinGW SDK consumer: {"width": 720, "height": 1040, "bytes": 748816, "nonwhite_pixels": 129549}
-```
+sdk-smoke/smoke.json：passed=true；三条 README 命令 exit_code 均为 0；示例 2 页、目录 1 项，720×1040 PGM，129549 个非白像素；CLI 为 EPUB、3.42.0。
+因此 260 项各自均取得通过记录；全套首轮及两次复测日志全部保留。
 
-完整编译器路径、命令和图像检查见 package-gcc-smoke.txt / .json。这项补测验证匹配 MinGW 的消费路径，没有把失败的 MSVC quickstart 记为通过。
-
-bounded 搜索正反对照：
-
-```powershell
-& build/d3/exreader-document-search-test.exe bounded
-& ../large-book-d3/A-sameprobe/exreader-document-search-test.exe bounded
-```
-
-```text
-AFTER exit=0
-search bounded passed
-BEFORE exit=1 (expected nonzero)
-line 103: s.loads>BIG_PARTS ()
-```
-
-两次使用同一个测试可执行文件，BEFORE 目录只更换为冻结的修复前 DLL。24×1 MiB 文本超过快照预算；测试覆盖精确命中数、淘汰后的重载及同长度文本变更的 EXR_FORMAT。没有改断言。
-
-大书交错 A/B：
-
-```powershell
-python tools/large_book/ab_measure.py --a ../large-book-d3/A-sameprobe --b ../large-book-d3/B-sameprobe --font ../large-book-d3/Reader.otf --runs 5 --output evidence/d3-large-20261110/ab-sameprobe.json ../large-book-d3/books/v4.epub ../large-book-d3/books/v7.epub ../large-book-d3/books/v12.epub
-```
-
-```text
-v4 done
-v7 done
-v12 done
-exit: 0
-Same-probe A/B: 3 books x 2 sides x 5 runs = 30; all page/part/TOC/search/target counts agree.
-Probe SHA256: 803a0a17d3fe3651ea2ed2674294bf2c8cda0bcde970591358aeec03d424ccb9
-```
-
-A 冻结 DLL SHA256 为 bea067b76a761578b0b8b9c5c952b6e0cf35aab09920bfdf99c2a6416579c691；B 当前 Release DLL 为 1137bc5e73b7b0bf5c24ca5fa547ac792fa76897129d6cd9f6f0f4a4d273a161。B 与接管时 after2 目录的 DLL 字节一致。每轮 A/B 次序反转，probe 串行运行。内存单位 MiB，均为 5 次的中位数：
-
-| 页数 | A 全量搜索后 WS | B 全量搜索后 WS | A 峰值 WS | B 峰值 WS |
-| ---: | ---: | ---: | ---: | ---: |
-| 5,901 | 40.94 | 43.21 | 59.59 | 59.64 |
-| 10,964 | 48.16 | 49.57 | 59.73 | 59.73 |
-| 26,013 | 65.30 | 53.14 | 65.30 | 59.88 |
-
-前两档快照未超过预算，驻留内存没有改善；超过预算的 26,013 页档结束 WS 下降 12.16 MiB。Claude 完整交错 A/B 中，52,026 页极端档结束 WS 为 A 97.63 / B 55.39 MiB，峰值 A 97.63 / B 60.12 MiB；该档本次只核验已有 10 次记录，没有另跑相同 probe。
-
-B 侧关键延迟，单元格为“中位数 / 最小值”，单位 ms：
-
-| 指标 | 5,901 页 | 10,964 页 | 26,013 页 |
-| --- | ---: | ---: | ---: |
-| 首次打开 | 4.236 / 3.753 | 5.664 / 4.589 | 7.302 / 5.701 |
-| 首屏分页并绘制 | 54.594 / 48.993 | 63.135 / 48.761 | 85.027 / 80.018 |
-| 翻页 p95 | 106.570 / 35.883 | 36.698 / 14.594 | 56.114 / 13.961 |
-| 抽样跳转 p95 | 1222.743 / 699.312 | 2329.177 / 1567.402 | 1192.834 / 413.539 |
-| 目录首次加载 | 229.998 / 148.299 | 1263.993 / 1115.934 | 2849.199 / 769.936 |
-| 目录末项跳转 | 478.225 / 147.003 | 2960.039 / 2571.370 | 148.646 / 85.822 |
-| reader 首批 32 条搜索 | 6.356 / 5.579 | 7.036 / 6.666 | 8.307 / 7.099 |
-| SDK 首批 32 条搜索 | 1.951 / 1.626 | 3.444 / 1.956 | 1.942 / 1.781 |
-| SDK 全量搜索 A | 382.311 / 244.618 | 1551.155 / 611.570 | 1136.483 / 862.198 |
-| SDK 全量搜索 B | 1716.440 / 149.087 | 1024.569 / 615.003 | 2664.782 / 1089.736 |
-
-翻页和跳转每次抽取 20 个固定种子样本。交错测量降低负载时序偏差，仍可见明显波动；宿主机快照有 5 个编译进程、3 个 ctest，空闲物理内存约 2 GiB。上述数据支持快照驻留内存受预算约束，没有证明速度改善。完整搜索增加散列和淘汰成本，较慢的结果已原样保留。
-
-7 档样本为 1,684／3,329／5,901／10,964／13,711／26,013／52,026 页。Claude 已完成的全书顺序分页峰值 WS 依次为 59.58／61.33／61.88／62.16／63.02／63.28／64.60 MiB；它不是逐页绘制测量。v12 为 12 本不同公版书、10,895,535 个非空白字符估计值、16,050,910 字节 EPUB、12 张图；v24 重复这 12 卷，作为极端档。全部体积与曲线见 samples.csv、merged-v*.json、v*.meta.json；两轮延迟明细见 ab-*-summary.csv。
-
-19 本真书回归：
-
-```powershell
-python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll build/d3/libexreader.dll --font C:/Windows/Fonts/NotoSerifSC-VF.ttf --layout tools/regress/layout.json --output evidence/d3-large-20261110/realbooks-after.json --baseline evidence/d3-large-20261110/realbooks-baseline.json --source-revision 627124e7 --workers 2
-```
-
-```text
-{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11426, "total_glyphs": 8648571, "wall_seconds": 560.845492, "sum_book_seconds": 1065.815601, "fastest_book": "the-house-on-mango-street", "slowest_book": "the-autobiography-of-malcolm-x."}
-exit: 2 (initial comparison: font_sha256 incompatible)
-```
-
-首次误选 simplified-20261110 的 2c76254f… 字体基线；同名系统字体的当前内容实际为 a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280，与冻结的 Reader.otf、perf-gate-final-20261109 基线一致。首次诊断保存在 realbooks-font-mismatch.diff.json.gz。使用正确的既有基线重新比较同一份完整渲染结果：
-
-```powershell
-python tools/regress/run_realbooks.py --baseline evidence/d3-large-20261110/realbooks-perf-baseline.json --candidate evidence/d3-large-20261110/realbooks-after.json --output evidence/d3-large-20261110/realbooks.diff.json
-```
-
-```text
+F. 19 本真书逐页回归
+命令：python tools/regress/run_realbooks.py --manifest tools/regress/corpus.json --dll ../d2m-build/libexreader.dll --font C:/Windows/Fonts/NotoSerifSC-VF.ttf --layout tools/regress/layout.json --output evidence/d2-media-20261110/real-final.json --baseline evidence/d2-media-20261110/real-before.json --workers 3 --source-revision c60951f0
+输出末行（real-final.txt）：
+{"requested_books": 19, "successful_books": 19, "failed_books": [], "total_pages": 11426, "total_glyphs": 8648571, "wall_seconds": 203.025383, "sum_book_seconds": 565.53115, "fastest_book": "the-house-on-mango-street", "slowest_book": "hongloumeng-24264"}
+返回码：0。
+另以保存的 JSON 独立比较：
+python tools/regress/run_realbooks.py --baseline evidence/d2-media-20261110/real-before.json --candidate evidence/d2-media-20261110/real-final.json --output evidence/d2-media-20261110/real-final-verified.diff.json
+实际输出（real-compare.txt）：
 {"comparable": true, "incompatible_conditions": [], "added_books": [], "removed_books": [], "hash_changed_pages": 0, "failed_books": [], "needs_review": false}
-exit: 0
-page_count_changed: 0
-added_pages: 0
-removed_pages: 0
-hash_changed_pages: 0
-19/19 books; 11426 pages; 0 changed page hashes; identical content fingerprint: f133272deccc097ee10bbdcf18cdb60c95bf3035ddde529e8dbea24a1d5ce488
-```
+返回码：0。19 本逐书页数、字形数与 11426 页像素哈希全部不变；books-table.csv 列出逐书结果。运行耗时只记录，不作为性能结论。
 
-基线来自 evidence/perf-gate-final-20261109/realbooks.json.gz，没有修改。渲染结果现压缩为 realbooks-after.json.gz；两个解压后的临时基线副本及未压缩 candidate 已清理。realbooks-summary.json 记录来源、字体和每本页数；比较器自检实际输出为 pixel padding and comparator self-checks passed。
+G. 合成语料与真实 SMIL
+命令：python tests/media_corpus/media_report.py ../d2m-build/libexreader.dll C:/Windows/Fonts/NotoSerifSC-VF.ttf tools/regress/layout.json evidence/d2-media-20261110/media-final ../d2m-corpus/media-av.epub ../d2m-corpus/media-cover-bgm.epub ../d2m-corpus/media-legacy.epub ../d2m-corpus/media-smil.epub
+输出（media-final.txt；下列保留主要实际字段）：
+media-av.epub: parts=1 pages=1 media=3 overlays=0
+media-cover-bgm.epub: parts=2 pages=2 media=2 overlays=0
+media-legacy.epub: parts=1 pages=2 media=6 overlays=0
+media-smil.epub: parts=2 pages=2 media=0 overlays=2
+返回码：0。实际 MP3/M4A/MP4 时长分别 4048/3000/2000 ms；封面、autoplay/loop/background 标志和降级状态见 media-final/media-report.json。
 
-约束检查：
+同一脚本以 tools/regress/corpus.json 中的《草枕》路径为输入、输出目录换为 evidence/d2-media-20261110/kusamakura：
+kusamakura-japanese-vertical-writing.epub: parts=16 pages=464 media=0 overlays=2
+返回码：0。kusamakura-overlays.csv 实际数据：
+part=2, smil=OPS/xhtml/一.smil, duration_ms=2015025, clips=219, missing_audio=0, unresolved_text=0
+part=3, smil=OPS/xhtml/二.smil, duration_ms=1588006, clips=220, missing_audio=0, unresolved_text=0
 
-```powershell
-git diff --exit-code HEAD -- src include tests CMakeLists.txt tools
-git diff --exit-code 6000a89d -- README.md tools/release tests/check_reading_release.py tools/version_literal_exceptions.json tools/layers.json
-Get-FileHash tests/check_reading_release.py -Algorithm SHA256
-git diff --check
-```
+H. 静态约束
+命令：python tools/check_layers.py ../d2m-build
+输出（layers.txt）：
+122 objects, 1391 symbol references, 0 remaining inverse references, 0 new
+1086 source/header dependencies, 0 inverse includes
+返回码：0。原新增的两个 .c 已登记；本次未新增 src/*.h。
+命令：python tools/check_version_consistency.py
+输出（version-check.txt）：PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions
+返回码：0。
+Get-FileHash tests/check_reading_release.py -Algorithm SHA256：
+6EB22A304686B2160D1F283A709936BFDFD65C3B0F5E10BB060F457C4FAFFB2B
+该文件及 tools/version_literal_exceptions.json 相对接手提交均无差异；后者没有重排格式。
 
-前两条 diff 均无输出、退出 0；SHA256 为 6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。未新增 src/*.h。最终提交前 diff --check 结果另记 LARGE-OUT.txt。
+④ 没做到的、仍需补什么
 
-④ 尚未做到、具体层次及还差什么
+1. MP3/AAC 解码开关保持 OFF，基线与候选一致。原失败在 src/mp3.c:15 的 #include <minimp3.h>；候选实际配置的 _deps/minimp3-src/minimp3.h 不存在，FETCHCONTENT_SOURCE_DIR_MINIMP3 为空。续跑时发现 C:/Users/Oscar/exr-deps/minimp3/minimp3.h 已存在于另一目录，但没有擅自改配置启用。
+   要补齐 MP3，需将依赖指向经过校验、符合 cmake/deps.cmake 固定提交 ea99364f61c14656440e8d77e9c233ccf3124633 的头文件目录，或正常填充 FetchContent，再启用 EXR_ENABLE_MP3 并补解码测试。AAC 是另一个 FAAD2 依赖（固定提交 521d105979795b887ea11e1f36565e97a8fbfc53），需单独补依赖与 EXR_ENABLE_AAC 验证；不能用补 minimp3.h 代替。FAAD2 的 GPL-2.0-or-later 条件已在现有 cmake/deps.cmake 中注明。
+2. SDK 验证依赖本次显式生成的 MSVC 导入库；没有修改通用 MinGW 打包流程。干净 MinGW 构建仍需重复上述准备，或由打包任务统一处理 MSVC 导入库。导出变化后应重新生成，不能复用旧库。
+3. 两项首轮无输出失败已复测成功，根因未隔离，日志未隐藏；没有把首轮说成一次 260/260。
+4. 本实现提供识别、可见占位与 SMIL 数据映射，尚无宿主播放控件、页内媒体框输出、媒体成员流式读取或 chapter_window 媒体占位支持。具体接口缺口和上限已沿用 docs/MEDIA-EPUB.md；本次未扩展方案。
+5. Draft PR 与当前 main（fe3d46e1）的只读合并检查只发现 OUT.txt 文本冲突。工作树未执行合并；集成时需保留各任务报告，由主控处理。记录见 evidence/d2-media-20261110/main-integration-check.txt。
 
-- ctest 尚未全绿：256/257 通过，sdk-release 单项重跑明确失败于 Windows 发布包消费层。需要发布打包/README 对齐工具链：为 MSVC quickstart 提供兼容的 exreader.lib，或为 MinGW 包提供匹配且经过实测的 quickstart。当前匹配 MinGW 的消费路径已实测通过，不能替代原 MSVC quickstart 门禁。本分支保留该失败证据，不修改发布脚本、测试断言或 180 秒超时。
-- 目录首次加载仍会恢复正文，随文本量增长；本轮修复的是 publication 全量搜索快照驻留。若要压低大书目录首次打开延迟，需要继续改目录恢复/索引层。
-- 16 MiB 是搜索快照缓存预算，不是进程 RSS 上限；单个超大章节可独占并超过预算，章节元数据也随章节数增长。此次没有实现单章搜索流式化。
-- 延迟来自共享机器上的 SDK probe；尚无空闲机器复测和窗口消息队列/屏幕呈现实测。若要给出产品端交互 SLA，还需独立的 reader 窗口端到端测量。
-
-证据目录：evidence/d3-large-20261110/。推送和 draft PR 链接在 LARGE-OUT.txt 收尾记录及会话回执中提供。
-
-发布回执：证据与报告提交 417b2f4f 已推送到 origin/codex/large-book-2-20261110；已创建 draft PR #127：https://github.com/NoGod3524/EXReader/pull/127 。GitHub 当前返回 draft=true、merged=false、mergeable=false，目标 main 已到 fe3d46e1bf94af5381ce91997cb98ab46b9cec29；后续还需主控处理与当前 main 的集成。本轮验证针对前述合并树，不代表已验证与最新 main 的合并结果。
+已推送 origin/codex/media-epub-2-20261110，draft PR：https://github.com/NoGod3524/EXReader/pull/128 。
 X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
 [2026-11-10T16:24:42.3840678-05:00] Step 1: gh pr view 113 initial: headRefName=claude/review-cleanup-20261109; mergeable=UNKNOWN; mergeStateStatus=UNKNOWN; statusCheckRollup=[]. Local worktree clean, detached HEAD cf233f7e. Querying full PR lifecycle before branch mutation.
 [2026-11-10T16:25:03.6336657-05:00] Step 2: Full PR query resolved OPEN / CONFLICTING / DIRTY, core absent, head cf233f7e20e77471a8a2206fd9676438f782c3f4. No merge performed. Fetching main and PR branch for union conflict resolution.
@@ -294,116 +269,8 @@ X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
 [2026-11-10T17:08:59.3776105-05:00] Step 22: Latest required Windows job 130156061329 failed at installed examples. Fetching exact new failure log to build/pr113-windows-ci-105ebcfd.log; no assumptions from earlier failure.
 [2026-11-10T17:12:38.9859970-05:00] Step 23: New real error: shell_shelf.inc(38,62) C2628 HFONT followed by char; same in shell_shelfmeta.inc. Windows RPC small macro collides with HFONT small identifiers. Renamed only those identifiers to small_font in both renderers. Regression reproduction gcc -Dsmall=char failed before change; product and driver syntax checks repeated after change. Checking with installed MSVC too.
 [2026-11-10T17:13:07.7201718-05:00] Step 24: MSVC 14.44 syntax check PASS for both product and EXR_READER_TEST_DRIVERS=1 using current repo headers and Windows SDK. gcc macro regression: before rename exit=1, after rename both product/driver exit=0 with -Dsmall=char. git diff --check for edited renderers PASS. Committing and pushing identifier-only fix.
-
-
---- origin/main report (preserved in full) ---
-
-已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
-
-- **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。
-- **签名**：GPG 测试密钥实签、验签及篡改拒绝通过；minisign、Authenticode dry-run 通过，EV/OV 证书命令模板已提供。
-- **Manifest**：包含 GCC 16.2.0、CMake 4.4.2、expat/freetype/miniz 版本与源码哈希，以及配置、环境等输入。
-- **回归**：ctest 从 234/234 到 235/235；19 本、11,318 页，页数及逐页哈希零变化。
-- `.github/` 未改；workflow 仅提供片段；`SIGN-OUT.txt` 已追加并提交。
-
-| 产物 | 第一次 SHA256 | 第二次 SHA256 |
-|---|---|---|
-| DLL | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` | `b7ab2bc2668e806bf03c957d767d8247dcc708c6d2ea59b74464a6cfc7aea632` |
-| SDK 包 | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` | `07c0e315df9b4c47f532842af4b76b9fd0edfbc9102db6f2e54bbda665c65c19` |
-
-[完整验收记录与命令](/C:/Users/Oscar/Documents/Codex/EXReader-C4-20261109/evidence/artifact-signing-20261109/README.md)
-[2026-11-10 PR107 收尾 step 1] 首查 UNKNOWN/UNKNOWN、checks=[]；复查 OPEN，head=da91831345e24f5a738a28c51ec52a4d7dfc1ac4，mergeable=CONFLICTING，mergeStateStatus=DIRTY，core 未出现。工作树 clean，但处于 detached HEAD。目标 merge，接下来恢复 PR 分支并合并 origin/main。
-[step 2] 已 fetch origin main 和 PR 分支，开始本地 merge origin/main；冲突详情以 git 输出及后续记录为准。
-
----
-
-已提交并推送至 `codex/sdk-docs-20261109`，draft PR：[**#109**](https://github.com/NoGod3524/EXReader/pull/109)。
-
-- 覆盖：**15/15 模块，427/427 公开函数，100%**；当前实际为 17 个公开头文件。
-- 示例：**15/15 编译、链接、运行通过**；文档一致性检查 **1/1**。[编译输出](C:/Users/Oscar/Documents/Codex/EXReader-S4-20261109/docs/examples/compile-output.txt)
-- 接入指南：五个接入点及文本时序图齐全。
-- 能力矩阵：**41 行**，明确标出不支持项。
-- ABI：稳定 **394**、实验 **33**、公开函数中的内部入口 **0**；私有实现明确禁止外部调用。
-- `S4-OUT.txt` 已逐步记录并提交。最新提交 `f191e99f`；PR CI 已自动触发，目前排队或运行中。
-[2026-11-10T16:24:55.8568014-05:00] Step 1: gh pr view 109: head=codex/sdk-docs-20261109; mergeable=UNKNOWN; mergeStateStatus=UNKNOWN; statusCheckRollup=[]. Local HEAD detached at 979a4025; working tree clean. Re-querying full PR state before branch mutation.
-[2026-11-10T16:25:25.9151276-05:00] Step 2: PR OPEN, mergeable=CONFLICTING, mergeStateStatus=DIRTY, core absent. Confirmed true conflict. Fetching main and PR head before union merge.
-[2026-11-10T16:25:52.3370459-05:00] Step 3: fetch completed; PR head remains 979a4025. Named branch is attached to EXReader-S4-20261109, so keeping this authorized workspace detached and will push HEAD explicitly to codex/sdk-docs-20261109. OUT.txt is the only local modification.
-[2026-11-10T16:26:29.0939032-05:00] Step 4: merge stopped before modifying files because tracked OUT.txt has this session's required progress entries. Committing progress first, then retrying merge; both histories will be retained.
-D1 is finished. The engine now renders fixed-layout EPUB pages as fixed pages instead of treating them as reflowable text. Eight books cover all six book types, every item passes on every book where it applies, the 19 reflowable books are unchanged, and draft **PR #120** is open: https://github.com/NoGod3524/EXReader/pull/120
-
-**What changed:** fixed-layout pages used to be reflowed (Haruko had 14 pages at one size and 15 at another). Now each fixed page is laid out once at its own declared size and scaled evenly to fit the screen, centred, never stretched or cropped. It is always exactly one page. The page size comes from, in order:
-1. the page's own `<meta name="viewport">`
-2. the book-level `rendition:viewport`
-3. the size of the page's first image
-4. the screen size
-
-Absolute positioning (`position:absolute` with top/right/bottom/left) is applied on fixed pages only. I added four public functions; no existing function signatures changed.
-
-## Corpus (8 books)
-| Book | Type | Pages at 720×1040 |
-|---|---|---|
-| page-blanche (real IDPF sample) | comic | 10 |
-| haruko-html-jpeg (real IDPF sample) | right-to-left two-page spreads + per-page fixed/reflowable mix | 16 |
-| fxl-picturebook | picture book | 4 |
-| fxl-magazine | magazine (columns + rotated vertical text) | 4 |
-| fxl-toc | fixed layout + table of contents | 5 |
-| fxl-spread-ltr | left-to-right spreads | 7 |
-| fxl-mixed | per-item `rendition:layout` | 17 |
-| fxl-noviewport | no viewport declared | 2 |
-
-The six synthetic books are generated by `tools/fixed_layout/make_corpus.py`. Each book has at least 2 screenshots plus a two-page spread image, all in `evidence/fixed-layout-20261110/screenshots/`.
-
-## Six items: 6/6
-Every item passes on all books where it applies. Two entries are N/A because there is nothing to test: Haruko has no positioned elements (item 3), and the magazine has no full-page image (item 2).
-
-| Item | How it was checked |
-|---|---|
-| 1. Page size matches the screen | Scale is min(width ratio, height ratio) and content is centred, at both portrait and landscape sizes |
-| 2. Full-page images not cropped | Each generated image has a red frame; all 4 edges are visible in the render |
-| 3. Absolute positions correct | Box positions match the declared offsets within 1px, and pixel colours inside each box match its background |
-| 4. Spread order correct | Haruko's right-to-left spreads (p02 right, p03 left, …) and the left-to-right/center/auto cases match the expected order |
-| 5. Mixed: fixed pages fixed, reflowable pages reflowed | Fixed parts stay at 1 page at every size; reflowable parts re-wrap when the screen narrows |
-| 6. Zoom with and without `rendition:viewport` | All four page-size sources are tested |
-
-## Mixed book: which pages are fixed
-- **fxl-mixed:** parts 1, 3 and 5 are fixed (1 page each at every size). Parts 2 and 4 reflow (7 / 8 / 14 pages at 720×1040, 1040×720 and 480×800). In the whole book at 720×1040, pages 1, 9 and 17 are fixed; pages 2–8 and 10–16 reflow.
-- **Haruko:** p01–p12 are fixed (one page each); the "About this document" page reflows into 4 pages.
-
-## 19-book regression
-Compared against an unmodified build of 3076d3dd: 19/19 books, 11,426 pages, 8,648,571 glyphs. Changes in page count, glyph count and per-page hash are all 0. I re-ran this on the final DLL after the last code change.
-
-## ctest
-- **MSVC full suite:** 254/254 pass, including 4 new test groups `native-fixed-layout-{rendition,viewport,absolute,mixed}`. Turning absolute positioning off makes the `absolute` group fail, as expected.
-- **MinGW build:** only `sdk-release` fails there. That test compiles the README quickstart with MSVC and needs `exreader.lib`, which a MinGW build doesn't produce, so I ran the full suite on MSVC.
-
-## Limits and changes to existing items
-- **Not supported:** CSS `transform` (the magazine's `rotate(-8deg)` caption renders unrotated), `z-index`, and SVG pages in the reading order. Opening a whole EPUB with `exr_document_open` still lays everything out as reflow; fixed layout applies on the per-part publication path the reader uses.
-- **Changed one verifier criterion:** I first required a reflowable page's page count to change between two sizes. Haruko's About page happens to be 4 pages at both sizes, so that rule failed a page that does reflow. The check now requires that text lines narrow when the screen narrows.
-- **No new `src/*.h`,** so `tools/layers.json` is unchanged (the layer check reports 0 violations). Nothing under `.github/` was touched.
-
-`FIXED-OUT.txt` has entries for steps 0–11. The full write-up is in `docs/FIXED-LAYOUT.md`.
-
-
-已接通增量重排、缓存复用与锚点恢复，未修改 `src/docx_edit.c`。
-
-| 100 页场景 | 重排页数 | p50 / p95 |
-|---|---:|---:|
-| 页首插入一段 | 101 | 0.92 / 2.15ms |
-| 页中插入一段 | 51 | 0.82 / 5.71ms |
-| 末段修改一字符 | **1** | 0.78 / 1.64ms |
-| 文末追加 50 段 | **5** | 2.05 / 4.75ms |
-
-含冷缓存首帧渲染，四场景 p95 均低于 **6.3ms**。
-
-**268/268 ctest 全绿，新增 12 组用例。19 本真书共 11,318 页，页数与逐页像素哈希不变。**
-
-[验收记录：缓存命中数、4 个锚点示例及原始数据](evidence/x2-reflow-20261110/README.md) · [接口说明](docs/X2_REFLOW.md)
-
-X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
 [step 3] 冲突取并集完成：.gitignore 保留根 /release/ 与 tools/release 例外；OUT.txt 完整保留双方记录；tools/release/README.md 先保留 main SDK 使用/打包说明，再附完整签名/复现说明。tests/check_reading_release.py 未改，SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。登记表未改。
 [step 4] 已取历史失败 job 129316736854 日志：check_reading_release.py:23/43/125 evidence bytes changed，24/44/126 版本字面量无有效豁免。当前文件哈希与原登记一致，未更改测试或登记表。git diff --check 通过；本地版本门禁运行中，先推送已解决冲突以启动 CI。
 
 [2026-11-10T16:28:26.5792754-05:00] Step 5: resolved both conflicts by union. CMakeLists.txt retains docs/examples under EXR_FULL_TESTS, main's build_manifest include, and simplified-observer with its Python guard. OUT.txt retains the complete SDK report/progress plus main's fixed-layout and X2 reports. No test assertions or version exception entries changed.
 [2026-11-10T16:33:39.6469176-05:00] Step 6: main adds 30 public declarations; updated docs/API.md to 457/457 (100%), 19 headers, stable 394 / experimental 63, keeping 15 compiled examples. Header-only X1 model availability and X2 fallback are explicitly documented. python tools/check_sdk_docs.py passed with no errors. Version consistency check is running; neither byte-bound tests/check_reading_release.py nor its exception registry was edited. Started an independent MinGW full-component build with existing dependency sources and optional image/JPX codecs disabled.
-[2026-11-11T15:28:07-05:00] Resume: branch codex/dx-realworld-argon-20261110 HEAD c37f5228 == origin. check_ci_hygiene.py exit 0, 'PASS: CI hygiene; violations=0' (no remap needed; main merge 34c84e47 carried baseline). Run 43093283763 (34c84e47): ci-hygiene x4 and desktop (ubuntu-22.04) all success; windows/macos desktop + core still running. No new edits/pushes.
-[2026-11-11] Resume2: worktree EXReader-fix132-hyg-20261111 absent; used aragorn worktree on PR branch, HEAD 80f86ff9==origin. check_ci_hygiene exit 0 'PASS: CI hygiene; violations=0' (no remap). Run 43093283763 (34c84e47): ci-hygiene x4 + desktop ubuntu-22.04 success; exit 8 not reproduced, no ctest failure to attribute. Runs on 80f86ff9 queued. No push (would restart CI).
