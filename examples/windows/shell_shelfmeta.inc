@@ -728,7 +728,6 @@ static void sm_click(int index,int right,int x,int y) {
     case SM_HIT_SOURCES:opds_show();return;
     case SM_HIT_BACK:sm_hide();return;
     case SM_HIT_IMPORT:g.auto_open_imported=1;import_path(NULL,1);return;
-    case SM_HIT_SOURCES:opds_show();return;
   }
   InvalidateRect(sm_view,NULL,FALSE);
 }
