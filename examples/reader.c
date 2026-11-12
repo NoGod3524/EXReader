@@ -33,6 +33,10 @@ int shell_epub_source(exr_source *source);
 int shell_style_document(exr_document **document);
 /* Created with the main window; draws the reading screen (windows/shell_screen.inc). */
 static shell_d2d *host_shell;
+static int de_active(void);
+static int de_exit(void);
+static void de_controls(void);
+static int de_draw_item(const DRAWITEMSTRUCT *item);
 #endif
 #include <math.h>
 #include <limits.h>
@@ -4221,9 +4225,13 @@ static void selection_report(void) {
 #include "windows/shell_tts.inc"
 #include "windows/shell_dictionary.inc"
 #include "windows/shell_sync.inc"
+#include "windows/shell_docedit.inc"
+#include "windows/shell_docedit_paint.inc"
+#include "windows/shell_docedit_input.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL
+  if (de_message(window,message,wparam,lparam)) return 0;
   if (shell_gesture_message(window, message, wparam, lparam)) return 0;
   if (shell_selection_message(window, message, wparam, lparam)) return 0;
 #endif
@@ -5034,6 +5042,9 @@ static inline void jump_selected_note(void) {
 }
 
 static void open_selected_book(void) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(de_active() && !de_exit())return;
+#endif
   LRESULT index;
   host_job *job;
 #ifdef EXR_READER_WINDOWS_SHELL
@@ -5115,6 +5126,9 @@ static inline void delete_selected_book(void) {
 }
 
 static void import_path(const wchar_t *path, int dialog_fallback) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(de_active() && !de_exit())return;
+#endif
   host_job *job;
   wchar_t chosen[HOST_PATH] = L"";
   if (g.job || g.pending) {
@@ -5213,6 +5227,7 @@ static void host_update_controls(void) {
   host_a11y_owner_reapply();
 #ifdef EXR_READER_WINDOWS_SHELL
   shell_sync();
+  de_controls();
 #endif
 }
 
@@ -5629,6 +5644,9 @@ static void handle_job_complete(host_job *job) {
 }
 
 static void host_command(int id) {
+#ifdef EXR_READER_WINDOWS_SHELL
+  if(de_active() && !de_exit())return;
+#endif
   if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
@@ -6041,6 +6059,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       int id = LOWORD(wparam);
       int code = HIWORD(wparam);
 #ifdef EXR_READER_WINDOWS_SHELL
+      if(id==IDC_SHELL_DOCEDIT) {de_enter();return 0;}
       if (id == IDC_SHELL_BACK) { shelf_return(); return 0; }
       if (id == IDC_SHELL_SEARCH) { shell_search_set(!shell_search_open); return 0; }
       if (id == IDC_SHELL_SETTINGS) { shell_toggle_settings(); return 0; }
@@ -6207,6 +6226,7 @@ static LRESULT CALLBACK procedure(HWND window, UINT message, WPARAM wparam, LPAR
       return 0;
     case WM_CLOSE:
 #ifdef EXR_READER_WINDOWS_SHELL
+      if(de_active() && !de_exit())return 0;
       tts_stop();
 #endif
       if (g.closing) return 0;
@@ -6308,6 +6328,9 @@ static int register_host_classes(HINSTANCE instance) {
 static int message_loop(void) {
   MSG message;
   while (GetMessageW(&message, NULL, 0, 0) > 0) {
+#ifdef EXR_READER_WINDOWS_SHELL
+    if(de_translate(&message))continue;
+#endif
 #ifdef EXR_READER_WINDOWS_SEARCH
     if(winsearch_translate(&message)) continue;
 #endif
@@ -6375,6 +6398,7 @@ static void host_cleanup(void) {
   exr_anchor_free(&shell_anchor); shell_anchor_valid = 0;
   shell_selection_reset();
   dict_shutdown();
+  de_close();
 #endif
   session_clear(&g.session);
   frame_clear(&g.frame);

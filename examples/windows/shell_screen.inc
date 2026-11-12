@@ -24,7 +24,8 @@
    search bar 200+, shelf 190+, style fields 1800+, dictionary 810+. */
 enum { IDC_SHELL_TOC = 160, IDC_SHELL_SETTINGS, IDC_SHELL_SEARCH,
        IDC_SHELL_LIGHT = 164, IDC_SHELL_DARK, IDC_SHELL_SYSTEM,
-       IDC_SHELL_BACK = 180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY, IDC_SHELL_SYNC };
+       IDC_SHELL_BACK = 180, IDC_SHELL_TAP20, IDC_SHELL_TAP25, IDC_SHELL_DICTIONARY, IDC_SHELL_SYNC,
+       IDC_SHELL_DOCEDIT = 186 };
 static HWND shell_back;
 static char *shell_synced_title;
 /* The 32px visual has 4px per side for the offset keyboard outline. */
@@ -353,6 +354,7 @@ static int shell_layout(void) {
   shell_panel_layout();
   shell_toc_layout();
   sm_refresh();
+  de_controls();
   return 1;
 }
 
@@ -452,7 +454,7 @@ static void shell_paint(HWND window) {
     }
     /* P0 title inset; retain the existing ellipsis limit before the controls. */
     shell_button_circle(shell_search_button, area.right, &circle);
-    int inset=max(shell_px(112,shell_dpi),area.right-circle.left);
+    int inset=max(shell_px(212,shell_dpi),area.right-circle.left);
     if(title && area.right>2*inset)
       shell_d2d_text(host_shell,SHELL_TEXT_CENTER,title,(float)inset,0,(float)(area.right-2*inset),
         (float)shell_px(SHELL_TOPBAR_H-1,shell_dpi),shell_colors->text);
@@ -467,6 +469,7 @@ static void shell_paint(HWND window) {
 static int shell_draw_item(const DRAWITEMSTRUCT *item) {
   shell_d2d_button look;
   int disabled, pressed, hover, focus;
+  if(de_draw_item(item))return 1;
   if(item->hwndItem==shell_back) { shell_draw_control(item,L"← 书架",SHELL_CONTROL_GHOST,shell_colors->layer_side);return 1; }
   if (shell_toc_draw(item)) return 1;
   if (shell_draw_settings(item)) return 1;
@@ -583,6 +586,7 @@ static int shell_tab_stops(HWND *out, int capacity) {
   HWND stops[64];
   int count = 0;
   stops[count++] = shell_back;
+  stops[count++] = GetDlgItem(g.window,IDC_SHELL_DOCEDIT);
   stops[count++] = shell_search_button;
   if (shell_search_open) {
     stops[count++] = shell_search_edit; stops[count++] = shell_search_prev; stops[count++] = shell_search_next;
