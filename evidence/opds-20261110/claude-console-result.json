@@ -1,0 +1,14 @@
+{"root":"https://www.gutenberg.org/ebooks.opds/","checks":[
+  {"check":"root_feed","pass":true,"detail":"title=Project Gutenberg entries=3 search_description=https://www.gutenberg.org/catalog/osd-books.xml"},
+  {"check":"list_ge_20","pass":true,"detail":"url=https://www.gutenberg.org/ebooks/search.opds/?sort_order=downloads entries=25 first=Pride and Prejudice next=https://www.gutenberg.org/ebooks/search.opds/?sort_order=downloads&start_index=26"},
+  {"check":"next_page_differs","pass":true,"detail":"page1=25 page2=25 overlap=0 page2_first=The Adventures of Tom Sawyer, Complete"},
+  {"check":"book_detail_has_download","pass":true,"detail":"book=Pride and Prejudice editions=2 pick=1 format=epub size=24864457 url=https://www.gutenberg.org/ebooks/1342.epub3.images"},
+  {"check":"download_epub","pass":true,"detail":"bytes=24864457 content_type=application/epub+zip final=https://www.gutenberg.org/cache/epub/1342/pg1342-images-3.epub magic=PK"},
+  {"check":"opensearch_ge_1","pass":true,"detail":"template=http://m.gutenberg.org/ebooks/search.opds/?query={searchTerms} query=https://m.gutenberg.org/ebooks/search.opds/?query=dracula entries=7 first=Subjects"},
+  {"check":"error_404","pass":true,"detail":"code=not_found http=404 message=地址不存在（HTTP 404），请检查书源地址。"},
+  {"check":"error_plain_http_rejected","pass":true,"detail":"code=not_https message=仅支持 HTTPS 书源，已拒绝不安全的 http:// 地址。"},
+  {"check":"cache_hit_within_ttl","pass":true,"detail":"second fetch from_cache=1 hits=1"},
+  {"check":"cache_expires","pass":true,"detail":"fetch with expired ttl from_cache=0"},
+  {"check":"cache_ttl_is_10_minutes","pass":true,"detail":"ONET_CACHE_MS=600000"},
+  {"check":"end","pass":true,"detail":"failures=0"}
+]}
