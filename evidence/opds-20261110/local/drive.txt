@@ -1,0 +1,55 @@
+HOST	phase=1	engine=3.42.0	pid=35916
+STEP	1	shell	PASS	legacy panel
+STEP	2	shell_dpi	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	3	shell_client	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	4	wait_idle	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	5	shell_click	PASS	button invoked
+STEP	6	opds_show	PASS	opds action
+STEP	7	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	8	opds_dump	PASS	opds action
+STEP	9	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	10	opds_dump	PASS	opds action
+STEP	11	opds_refresh	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	12	opds_dump	PASS	opds action
+STEP	13	opds_search	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	14	opds_dump	PASS	opds action
+STEP	15	opds_back	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	16	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	17	opds_dump	PASS	opds action
+STEP	18	shell_measure	PASS	physical layout captured
+STEP	19	probe_wait	PASS	waited without blocking UI
+STEP	20	opds_timeout	PASS	opds action
+STEP	21	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	22	opds_dump	PASS	opds action
+STEP	23	shell_measure	PASS	physical layout captured
+STEP	24	probe_wait	PASS	waited without blocking UI
+STEP	25	opds_timeout	PASS	opds action
+STEP	26	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	27	opds_dump	PASS	opds action
+STEP	28	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	29	opds_dump	PASS	opds action
+STEP	30	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	31	opds_dump	PASS	opds action
+STEP	32	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	33	opds_dump	PASS	opds action
+STEP	34	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	35	opds_dump	PASS	opds action
+STEP	36	opds_download	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	37	opds_dump	PASS	opds action
+STEP	38	opds_download	PASS	opds action
+STEP	39	opds_sleep	PASS	opds action
+STEP	40	shell_measure	PASS	physical layout captured
+STEP	41	probe_wait	PASS	waited without blocking UI
+STEP	42	opds_dump	PASS	opds action
+STEP	43	opds_cancel	PASS	opds action
+STEP	44	opds_wait	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	45	opds_dump	PASS	opds action
+STEP	46	opds_download	PASS	page=1;status=已打开《Selection Original》 · 从首个阅读章节开始。
+STEP	47	opds_dump	PASS	opds action
+STATE	48	local-opened	PASS	book_id=1;page=0;page_count=0;font=150;zoom=100;offset=0;page_text_len=352;range_len=352;notes=0;selected_id=1;selection_active=0;page_text_fnv=13168023097983692108;page_hash_len=352;bounded=1;part=0;generation=1;progress_record_preserved=0;part_path=body.xhtml;book_bytes=1524;index_bytes=145313;parse_workspace_bytes=118848;peak_parse_workspace_bytes=294600;projection_bytes=352;page_cache_bytes=77600;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=45473;bitmap_bytes=2955264;dib_bytes=2955264;state=local-opened;title=Selection Original;kind=reflow;page_text=Alpha bravo reader selection English. A café combines its accent%3B co-operate keeps its punctuation.%0ASecond paragraph contains portable text and deterministic boundar;offset_text=Alpha bravo reader selection English. A café combines its acce;status=已打开《Selection Original》 · 从首个阅读章节开始。
+SHELF	48	local-opened	PASS	title=Selection Original;author=;id=1;format=4
+STEP	48	state	PASS	state captured
+STEP	49	shell_measure	PASS	physical layout captured
+STEP	50	probe_wait	PASS	waited without blocking UI
+STEP	51	quit	PASS	closing
+DONE	51	eof	PASS	script finished

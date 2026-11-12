@@ -338,7 +338,9 @@ static int stream_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info,
   if(!integer_token(p,&object) || !object || object>=PDF_MAX_OBJECTS || !integer_token(p,&generation) || generation) goto bad;
   f->loading_xref=1; dict=indirect(&start,(uint32_t)object,0);
   if(dict==EXR_PDF_NONE || f->values[dict].kind!=EXR_PDF_STREAM || !name_is(f,exr_pdf_get(f,dict,"Type"),"XRef") ||
-     !direct_integer(f,exr_pdf_get(f,dict,"Size"),PDF_MAX_OBJECTS,&size) || !size || object>=size ||
+     !direct_integer(f,exr_pdf_get(f,dict,"Size"),PDF_MAX_OBJECTS,&size) || !size ||
+     /* Office writes the hybrid /XRefStm object after counting /Size, so its own number may equal /Size. */
+     (object>=size && !hybrid) ||
      !array_integers(f,exr_pdf_get(f,dict,"W"),widths,3,&n) || n!=3 || !xref_room(f,(size_t)size)) goto bad;
   for(i=0;i<3;i++) { if(widths[i]>8) goto bad; row+=(size_t)widths[i]; }
   if(!row) goto bad;

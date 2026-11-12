@@ -1,15 +1,15 @@
-The merge of `origin/main` into the PR branch hasn't finished, so nothing is resolved or pushed yet. I haven't touched the docs gate or `RESOLVE-OUT.txt` either.
+I merged `origin/main` into `codex/fix129-20261111` and pushed it to `codex/opds-catalog-20261110`. The push went through (`93c3e231..abee9440`). I didn't touch the PR or main, and I haven't seen CI results.
 
-- **Fetch:** `git fetch origin main` completed. `origin/main` is at `f9df2377`.
-- **Merge:** the first `git merge origin/main` printed nothing and left HEAD at `0c65fde7`, so I couldn't tell whether it did anything. I ran it again. That run passed the 180s timeout and is now in the background (task `b297siyya`), with its output file still empty.
-- **Working tree:** there are no unmerged files so far. `RESOLVE.md` has uncommitted changes and `CASCADE-CLAUDE-OUT.txt` is untracked. Both were already there when I started.
+- **Conflicts:** the merge had two, and `git status` now shows no U markers.
+  - **`RESOLVE.md`:** this was an add/add conflict, and I kept this task's brief. Main's version is the PR #107 brief, which stays in main's history. That is a pick of one side, not a union, because the two briefs name different PRs, directories and push targets.
+  - **`tools/layers.json`:** I kept `include/exr/opds.h`. Main's `include/exr/edit.h` entry already exists lower in the file, so I skipped the duplicate key. The file still parses as JSON.
+  - **Auto-merged:** `CMakeLists.txt`, `OUT.txt` and `.gitignore` merged without conflict.
+- **API docs:** I added none. The earlier commit `93c3e231` already documented the `exr_opds_*` functions, and `python -X utf8 tools\check_sdk_docs.py` exits 0 with 462 of 462 functions documented and `"passed": true`.
+- **Other failures:** I can't tell from here, since I didn't look at CI.
+- **Extra commit:** `RESOLVE.md` had uncommitted edits that blocked the merge, so I committed it first (`docs: update RESOLVE.md before merging main`).
+- **Report:** `RESOLVE-OUT.txt` is written and committed.
+- **Not committed:** `CASCADE-CLAUDE-OUT.txt` is still untracked.
 
-I'm waiting for the merge task to report back. Once it does, I'll list any conflicts and resolve them by keeping both sides. Then I'll run `tools\check_sdk_docs.py` and add any missing API entries. After that I'll write `RESOLVE-OUT.txt` and push to `codex/large-book-2-20261110`.
+That notification is just my idle-wait timer expiring. It needs no action, because the merge and push finished earlier.
 
-I merged `origin/main` into the PR branch and pushed it to `codex/large-book-2-20261110`. The branch head is now `ef32f479`. I didn't check CI or build and test locally, so I can't say whether anything else is failing.
-
-- **Conflicts:** there were two, `OUT.txt` and `RESOLVE.md`. For each I removed the conflict markers and kept both sides' content. `CMakeLists.txt` auto-merged cleanly, and no unmerged files remain.
-- **Local `RESOLVE.md` edits:** the merge was blocked at first by uncommitted edits to `RESOLVE.md`. I committed them as a wip commit, which is part of what got pushed.
-- **API docs:** `python -X utf8 tools\check_sdk_docs.py` exits 0, with all 457 public functions documented (100%). I added no entries.
-- **Report:** `RESOLVE-OUT.txt` is written and pushed. Its "other failures" line says that part wasn't checked.
-- **Left alone:** the untracked `CASCADE-CLAUDE-OUT.txt` is not committed, and I didn't merge the PR or touch `main`.
+PR #129's branch is pushed with the conflicts resolved, and the docs gate passes. I'm stopping here as instructed.

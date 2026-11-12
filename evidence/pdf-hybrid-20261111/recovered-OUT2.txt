@@ -1,0 +1,13 @@
+The build is running in the background. I'll run the tests when it finishes.
+
+The build is still running. I'll wait for its completion notice.
+
+The build task will notify me when it finishes, so I'm waiting for that.
+
+The sqlite compile is still going. I'll wait for it to finish before judging the failure.
+
+I restarted the full build and the PDF/fixed ctest run in the background. The earlier sqlite failure didn't reproduce when I rebuilt that target alone, so it was probably a collision with the other ninja process. I'll report the results when it finishes.
+
+The sqlite object builds fine on its own and only fails under the parallel full build, so I suspect memory pressure. I'm rerunning with `-j2`, followed by the PDF/fixed ctests.
+
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)

@@ -725,6 +725,7 @@ static void sm_click(int index,int right,int x,int y) {
       sm_list=h.kind==SM_HIT_LIST;sm_dirty=1;sm_save();break;
     case SM_HIT_STATS:sm_show(1);break;
     case SM_HIT_SHELF:sm_show(0);break;
+    case SM_HIT_SOURCES:opds_show();return;
     case SM_HIT_BACK:sm_hide();return;
     case SM_HIT_IMPORT:g.auto_open_imported=1;import_path(NULL,1);return;
     case SM_HIT_SOURCES:opds_show();return;
@@ -781,6 +782,7 @@ static void sm_create(HWND parent) {
   sm_view=CreateWindowExW(0,type.lpszClassName,L"系列、标签与阅读统计",WS_CHILD|WS_CLIPSIBLINGS|WS_TABSTOP|WS_VSCROLL,0,0,0,0,shelf_panel,NULL,instance,NULL);
   sm_foreground=GetForegroundWindow()==parent;sm_load();
   SetTimer(parent,0x5760,1000,NULL);
+  sy_boot();
 }
 static void sm_refresh(void) {
   if(!sm_view)return;
@@ -791,6 +793,7 @@ static void sm_shelf_visibility(int show) {
   if(!show){sm_recent();return;}
   if(sm_requested>=0){sm_mode=sm_requested;sm_requested=-1;}
   if(sm_view){ShowWindow(sm_view,SW_SHOWNA);sm_layout();SetFocus(sm_view);}
+  opds_layout();
   sm_refresh();
 }
 static void sm_show(int mode) {
