@@ -1,4 +1,5 @@
-PR #112 ??? `MERGEABLE`,?????????????,???????????????? ctest,??? ? ????????
+You've hit your weekly limit · resets 1pm (America/New_York)
+?? ? ????????
 
 - **?????**:main ???,????? `0a810a60`(? `2a314a41`)??? HEAD ? `origin/codex/sdk-batch-perf-20261109` ?? `920a30a0`,???????
 - **????**:? `OUT*` ?????,????????
@@ -10513,3 +10514,18 @@ exit=0
 
 exit=0
 Permission deny rule "computer" matches no known tool - check for typos.
+
+[Recovered report line from HEAD]
+PR #112 ??? `MERGEABLE`,?????????????,???????????????? ctest,??? ? ????????
+
+[2026-11-11 resumed recovery: state verified]
+Verified exact existing branch codex/sdk-batch-perf-20261109; HEAD c2608314 equals remote head. Fetched origin/main fe9adf43; behind main 0, ahead 19. Existing merge commits 2a314a41 and 0a810a60 retained; no repeated merge needed. Preserved pending report text and restored the displaced HEAD report line.
+
+[2026-11-11 resumed recovery: validation verified]
+Configuration/build and full CTest were completed in the prior run. Source tree matches validated merge 0a810a60 exactly except OUT-CF.txt. Original requested suite: 402/404; native-document-probe and native-corpus-triage timed out, both subsequently passed serial retries with unchanged code. Aggregate 404/404, outstanding failed tests none; sdk-release excluded. Evidence: ../cf112-build.log, ../cf112-ctest.log, ../cf112-retry.log, ../cf112-triage-retry.log. Protected files equal origin/main; reading-release SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. Version exceptions remain indent=2. Both added src headers registered in layers.json.
+
+[2026-11-11 resumed recovery: remote status before report push]
+GitHub PR #112 open, merged=false, mergeable=true; head c2608314. Four workflows queued: SDK version consistency, Native reading profiles, Native C engine, Required native reading SDK core. Remaining step: commit and push preserved report on the same PR branch, then verify final remote state.
+
+[2026-11-11 resumed recovery: historical instruction union repaired]
+Parent-line audit found RESOLVE.md from merge 2a314a41 retained PR #112 wording but replaced the main-side PR #107 task sentence. Restored that one missing sentence alongside PR #112; verified every line of both original parents remains a subsequence. OUT2.txt and RESOLVE-OUT.txt already retain all parent lines. No source or test changes; existing CTest results remain applicable.
