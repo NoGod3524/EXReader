@@ -37,11 +37,11 @@ jobs:
           echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           echo "$sdk/platform-tools" >> "$GITHUB_PATH"
-          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          printf 'y\n%.0s' {1..100} | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
           "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" \
             "build-tools;35.0.0" "cmake;3.22.1" "ndk;${C11_NDK}" "emulator" \
             "system-images;android-34;default;x86_64"
-      - name: Build and install the frozen 3.41 SDK for x86_64
+      - name: Build and install the current SDK for x86_64
         run: |
           set -o pipefail
           ws="$PWD/build/wave3"
@@ -72,7 +72,7 @@ jobs:
             cmake -S "$source" -B "$ws/module-$name" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$C11_TOOLCHAIN" \
               -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static \
               -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-              -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$sdk" -DEXR_SDK_VERSION=3.41.0 \
+              -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$sdk" -DEXR_SDK_VERSION="$(python3 tools/sdk_version.py)" \
               -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_PRODUCT_PREFIX="$stage" \
               -DCMAKE_PREFIX_PATH="$stage;$sdk" -DCMAKE_INSTALL_PREFIX="$stage" "$@" \
               2>&1 | tee "$ws/logs/$name-configure.log"

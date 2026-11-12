@@ -1,0 +1,119 @@
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+You've hit your 5-hour limit · resets 5:40pm (America/New_York)
+
+[2026-11-11 resume step 1] Verified branch codex/opds-catalog-20261110 at 6e8802a6; fetched origin/main; behind=0, ahead=20. Prior merges already pushed; GitHub reports MERGEABLE/BLOCKED with identity and failfast failures. Protected reading-release SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. Continuing validation without repeating merges.
+
+[Recovered prior OUT-CF record deleted by recovery commit 6e8802a6; historical status below is superseded by resume entries]
+Configure/build for the merged tree is still running. I'll continue when the monitor reports.
+
+The merge is staged with all conflicts resolved, but it is not committed or pushed, and it has not been built or tested. The local configure and build in `exr-build-cf129` was still running when I stopped. The 227-file "still to do" items below are therefore all open.
+
+**① Conflicts and how each was resolved**
+
+| File | Resolution |
+|---|---|
+| `OUT.txt` | Both sides kept, markers removed. |
+| `tools/layers.json` | Both kept (`opds.h` and `edit.h`). |
+| `examples/reader.c` | Main moved all the acceptance-driver code into the new `windows/shell_drive_test.inc`, so I took main's side. I re-added our `opds_` and `sync_` dispatch, the extra includes and the `opds_busy` idle check into `shell_drive_test.inc`. |
+| `shell_screen.inc` | Took main's command-ID table and added `IDC_SHELL_SYNC`. |
+| `shell_search.inc` | Took main's IDs. Our 196 workaround is dropped because main fixed the same clash differently. |
+| `shell_settings.inc` | Took main's panel layout. The cloud-sync button shares the dictionary row, so the panel-height token is unchanged. |
+| `shell_dictionary.inc` | Took main's `shell_card_paint` and `shell_draw_control`. Re-added the sync panel title and the primary style for the sync "now" button. |
+| `shell_shelf.inc`, `shell_shelfmeta.inc` | Main replaced the old shelf buttons with one drawn shelf view. Our "书源" button is now a toolbar item in that view. I rewired `opds_show` and `opds_hide` to it. |
+| `shell_d2d.cpp` | Took main's control-drawing API and re-applied our high-contrast theme (`theme_of`, `line_alpha`). |
+
+I did not touch `tests/check_reading_release.py`, `tools/version_literal_exceptions.json` or `tools/check_ci_hygiene.py`. I did not open any GUI or create a branch. `OUT-CF.txt` has a note for this step only.
+
+**② Local ctest:** none yet.
+
+The build dir had no downloaded dependencies and the network download failed on a certificate error. I reconfigured offline using the dependency sources from the `cf128` build, and the build is not done.
+
+**③ PR mergeable state:** unchanged (conflicting), since nothing has been pushed.
+
+**④ Still to do**
+1. Finish the build and fix any compile errors from the adaptations. The riskiest are `shell_opds.inc`, `shell_opds_drive.inc`, `shell_sync.inc` and the check programs, which may still use the old shelf or control-draw APIs.
+2. Run `ctest -E "^sdk-release$"`.
+3. Commit the merge and push to `codex/opds-catalog-20261110`.
+4. Report the PR mergeable state after the push.
+
+The merge is staged with every conflict resolved, but it is not committed or pushed. I haven't built or tested it. The configure step was still running at the last check, about 25 minutes in, so there is no ctest result yet and the PR is still conflicting.
+
+Configure is slow here because it runs many dependency probes one after another. I reused the offline dependency sources from the `cf128` build, since the download from GitHub failed with an SSL certificate error. The build log in `/tmp` is stale, left by another session, so I can't tell build progress from it.
+
+**① Conflict files and how each was resolved**
+- **`OUT.txt` and `tools/layers.json`:** both sides kept. `layers.json` has both `opds.h` and `edit.h`.
+- **`examples/reader.c`:** main moved all the acceptance-driver code into the new `shell_drive_test.inc`, so I took main's side. In `shell_drive_test.inc` I re-added our `opds_` and `sync_` action dispatch, the two extra drive includes, and the `opds_busy` idle check.
+- **`shell_screen.inc`:** main's command-ID table, plus `IDC_SHELL_SYNC`.
+- **`shell_search.inc`:** main's IDs. Our 196 workaround is dropped because main fixed the same ID clash differently.
+- **`shell_settings.inc`:** main's panel layout. The cloud-sync button shares the dictionary row, so the panel-height token is unchanged.
+- **`shell_dictionary.inc`:** main's card and control drawing, with the sync panel title and the primary style for the sync "now" button added back.
+- **`shell_shelf.inc` and `shell_shelfmeta.inc`:** main replaced the old shelf buttons with one drawn shelf view. Our "书源" button is now a toolbar item in that view. I rewired `opds_show` and `opds_hide` to match.
+- **`shell_d2d.cpp`:** main's new control-drawing API, with our high-contrast theme re-applied.
+
+**② ctest:** not run yet.
+
+**③ PR mergeable state:** still conflicting, since nothing is pushed.
+
+**④ What's left**
+1. Finish configure and build in `exr-build-cf129`, then fix compile errors from the adaptations. The riskiest files are `shell_opds.inc`, `shell_opds_drive.inc`, `shell_sync.inc` and the check programs, which may still use the old shelf or control-draw APIs.
+2. Run `ctest -E "^sdk-release$"`.
+3. Commit the merge and push to `codex/opds-catalog-20261110`.
+4. Report the PR's mergeable state after the push.
+
+I didn't touch the three protected files, didn't open a GUI, and didn't create a branch. `OUT-CF.txt` has a note for the merge step only.
+
+That expiry is another old monitor timing out. Configure is still running (it's now at compiler-flag probes), and `build.ninja` doesn't exist yet, so nothing has been built or tested.
+
+The merge is still staged and uncommitted, and the PR is still conflicting. The conflict resolutions and the remaining steps are as in my last summary.
+
+I'll leave the configure and build running and not poll it. When the background task finishes, I'll fix any compile errors, run `ctest -E "^sdk-release$"`, commit the merge, push to `codex/opds-catalog-20261110`, and report the PR's mergeable state.
+
+PR #129 is now `MERGEABLE`, but its merge state is `BLOCKED`, most likely waiting on CI or required checks. I pushed to `codex/opds-catalog-20261110` (head `53d37850`) and did not merge the PR or touch main. I didn't run ctest. Only a gcc syntax check was clean on `reader.c` and `shell_d2d.cpp`.
+
+**① Conflicts and how each was resolved**
+- **First merge of main** (conflicts in `reader.c`, `shell_*.inc`, `shell_d2d.cpp`, `OUT.txt`, `tools/layers.json`; details in the earlier summary):
+  - **Report files and `layers.json`:** both sides kept.
+  - **Shell UI files:** main's refactored version, with our features re-added on top.
+  - **`reader.c` driver code:** main's `shell_drive_test.inc`, with our `opds_` and `sync_` dispatch re-added.
+  - **OPDS "书源" button:** now a toolbar item in the unified bookshelf view.
+  - **Cloud-sync button:** shares the settings dictionary row.
+  - **High-contrast theme:** re-applied to the new control-drawing API.
+- **Push rejected:** the PR branch had 7 commits I didn't have, including its own earlier merge of main. I merged them in. `OUT.txt`, `RESOLVE-OUT.txt` and `RESOLVE.md` kept both sides.
+- **`tools/layers.json`:** that merge duplicated the `edit.h` key and had dropped main's `docx_edit*` entries. I reset the file to main's version and added `opds.c` and `opds.h`.
+- **Main moved again** by 35 commits. Only `RESOLVE-OUT.txt` conflicted, and I kept both sides.
+
+I didn't touch the three protected files, open a GUI, or create a branch.
+
+**② Local test results:** no ctest run. The full CMake configure on this machine hit the one-hour limit without finishing, so there is no build. A gcc `-fsyntax-only` check on `reader.c` (with shell and test drivers on) and on `shell_d2d.cpp` reported no errors. The other files I edited were not compiled, and none of the check programs were built.
+
+**③ PR state:** `MERGEABLE`, `BLOCKED`.
+
+**④ Still open**
+- CI is the first real build and test of the merged tree. Check `shell_opds.inc`, `shell_opds_drive.inc`, `shell_sync.inc`, `check_shell_opds.c` and `check_shell_sync.inc` first. If any still use the old shelf or control-drawing API, they could fail there.
+- Some of my commit messages lack the Claude co-author line.
+
+[2026-11-11 resume conflict audit]
+04d1122b conflicts: OUT.txt (both reports kept); examples/reader.c (main driver extraction plus OPDS/sync dispatch retained in shell_drive_test.inc); examples/windows/shell_d2d.cpp (new drawing API plus high contrast); shell_dictionary.inc (main painting plus sync title/button); shell_screen.inc (main IDs plus sync ID); shell_search.inc (main unique command IDs); shell_settings.inc (main panel layout plus sync button); shell_shelf.inc and shell_shelfmeta.inc (main drawn shelf plus OPDS toolbar and show/hide); tools/layers.json (main registrations plus OPDS).
+35ef04f7 conflicts: RESOLVE.md (retained PR129 task brief; PR107 source retained in git history), RESOLVE-OUT.txt (both reports kept). fe0322af conflict: RESOLVE-OUT.txt (both reports kept). CMakeLists.txt/cmake/modules.cmake retain main additions plus OPDS test/exports; layers.json differs from main only by opds.c and include/exr/opds.h.
+[2026-11-11 resume CI correction] Updated 12 workflows: source-derived SDK version for two current consumers; explicit bash defaults; PowerShell Stop/native error propagation; bounded Android license input without swallowing sdkmanager failure; removed preflight continue-on-error. check_ci_hygiene.py --rule failfast --base origin/main PASS (0 new violations). Protected files unchanged.
+
+[2026-11-11 detailed union audit correction] git show --remerge-diff confirms RESOLVE.md retained all PR113/PR107/PR129 headings, worktree lines and push commands; the older report claiming PR107 was kept only in history is inaccurate. No content repair was needed. OUT-CF history was appended from c67bd513 to restore its deleted record without replacing the current log.
+[2026-11-11 resume validation] tests/check_ci_hygiene.py --rule failfast PASS, including deliberate exit-37 runtime rejection. Existing version exception records remain byte-for-byte unchanged and no entries refer to the modified workflows. Offline configure continues through libaom feature probes.
+[2026-11-11 resume build environment] Reused exr-build-argon/_deps source paths disappeared during configuration, causing missing libaom CMake helper files and setup_aom_dsp_targets failure. Recovering pinned archives with Windows curl into exr-build-cf129/dependency-sources and verifying repository SHA256 before extraction. No dependency pins or project options changed. Plain Windows reader gcc -std=c11 -fsyntax-only PASS after guarding shell-only high-contrast state.
+[2026-11-11 resume step 2a] CMake configure PASS with private verified dependency sources; starting cmake --build exr-build-cf129 -j 2.
+[2026-11-11 resume MSVC correction] Prior GitHub Windows job 130817060585 failed at examples/windows/opds_net.h:213 on GCC-only __attribute__((unused)). Replaced with standard C static inline, preserving cache-clear behavior. MSVC cl /Zs /std:c11 /utf-8 with EXR_READER_WINDOWS_SHELL=1 and EXR_READER_TEST_DRIVERS=1 PASS. Private-source configure PASS (198 s configure + 9 s generation); full Ninja build running -j 2, 1248 tasks.
+[2026-11-11 resume validation] PYTHONUTF8=1 python tools/check_version_consistency.py --self-test PASS: SDK 3.42.0/ABI1/552 live exceptions; both deliberate project and consumer version drifts rejected. Self-test temporary changes restored. tools/check_sdk_docs.py PASS (errors=[]).
+[2026-11-11 resume validation] All CI hygiene rules PASS against origin/main: packaging=0 new violations, failfast=0, diagnostic=0, negative=0. Existing baseline debts unchanged; checker and baseline logic untouched.
+[2026-11-11 report union repair] Line-set comparison against both parents found one omitted historical PR107 task sentence in RESOLVE.md (the headings and commands had been retained). Restored that sentence in place. This supersedes the earlier audit statement that all RESOLVE.md content was already present. OUT.txt parent content complete; continuing remaining parent checks.
+
+[2026-11-11 report union audit PASS] OUT.txt, RESOLVE.md, and RESOLVE-OUT.txt contain every non-marker nonblank line from both parents of their conflict-producing merges. One omitted PR107 sentence repaired; audit evidence: exr-build-cf129/report-union-audit.json.
+[2026-11-11 resume build cache repair] First full build stopped at font_manager.c because inherited CMAKE_C_FLAGS_RELEASE contained libaom-only -Wstack-usage=100000 and many other warning flags after interrupted historical configure; root -Werror promoted the accidental warning. Restoring standard MinGW Release flags (-O3 -DNDEBUG) for both C and C++, keeping all project warning gates and source unchanged. Prior log preserved as build-attempt1.log.
+[2026-11-11 clean Release configure PASS] Confirmed CMAKE_C_FLAGS_RELEASE and CMAKE_CXX_FLAGS_RELEASE are exactly -O3 -DNDEBUG; generated font_manager command retains -std=c11 -Wall -Wextra -Wpedantic -Werror with no vendor-only stack warning. Full canonical Release rebuild now running; 1242 tasks. Earlier stopped build was diagnosed from full failure output, not only progress lines.
+[2026-11-11 live recovery checkpoint] Worktree remains on codex/opds-catalog-20261110, HEAD 6e8802a6, source fixes not committed yet. Clean canonical Release build is ACTIVE in execution session 1921; log exr-build-cf129/build-resume.log (last observed 943/1242); completion sentinel BUILD_EXIT=<code>. Execution session 2983 is already waiting to run compiled layers and full ctest excluding sdk-release, then logs CTEST_EXIT=<code> and writes JUnit. Do not duplicate these runs. Pending: finish/fix build or tests, record exact ctest totals, commit and push this same PR branch, query final PR head and mergeable. Remote main re-fetched during build: behind=0, ahead=20; PR old head remains MERGEABLE/BLOCKED pending our CI fixes. Protected files unchanged.
+[2026-11-11 resume step 2b] Canonical Release full build PASS, cmake --build exr-build-cf129 -j 2; starting compiled layer verification and full ctest excluding only sdk-release.
+[2026-11-11 resume step 2c] Compiled layer exit=0; full ctest -j 2 -E ^sdk-release$ exit=0. Logs and JUnit saved in exr-build-cf129 for result review.
+
+[2026-11-11 step 2 FINAL PASS] Canonical Release full configure/build PASS; compiled layers PASS (125 objects, 1460 symbol references, 0 inverse references, 0 new, 1099 source/header dependencies, 0 inverse includes). Full ctest -j 2 -E ^sdk-release$: 403/403 PASS, failed=[], skipped=[], exit=0, real time 1099.58 s. JUnit independently verified. Build/test sessions 1921 and 2983 are FINISHED; do not restart them. Evidence: exr-build-cf129/ctest-resume.log, ctest-resume.xml, layers-resume.log, build-resume.log.
+Conflict inventory: 12 unique paths across prior merges: OUT.txt, examples/reader.c, examples/windows/shell_d2d.cpp, shell_dictionary.inc, shell_screen.inc, shell_search.inc, shell_settings.inc, shell_shelf.inc, shell_shelfmeta.inc, tools/layers.json, RESOLVE.md, RESOLVE-OUT.txt. Report parent union audit PASS after restoring one PR107 sentence. CMakeLists.txt and cmake/modules.cmake retain main additions plus OPDS test/exports; layer manifest retains main plus OPDS source/header.
+Additional gates PASS: SDK version consistency/self-test (both negative controls); SDK docs; CI hygiene packaging/failfast/diagnostic/negative; failfast runtime acceptance; plain reader GCC syntax; shell+drivers MSVC syntax. Protected files byte-unchanged; reading-release SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. No branch created, no GUI/System settings used, main/PR not merged.

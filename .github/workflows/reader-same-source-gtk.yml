@@ -4,6 +4,9 @@ on:
     branches: [codex/reader-same-source-integration]
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 jobs:
   retained:
     runs-on: ubuntu-22.04

@@ -4068,10 +4068,12 @@ static void compose_page_view(HWND window) {
     const wchar_t *hint = L"打开一本书开始阅读\n\n导入 EPUB/PDF/CBZ 后从左侧书架打开";
     RECT text = area;
     SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc,
 #ifdef EXR_READER_WINDOWS_SHELL
-    if(shell_active) SetTextColor(dc,shell_colorref(shell_colors->text_secondary));else
+      shell_active ? shell_colorref(shell_colors->text_secondary) :
+      shell_contrast ? GetSysColor(COLOR_WINDOWTEXT) :
 #endif
-    SetTextColor(dc, shell_contrast ? GetSysColor(COLOR_WINDOWTEXT) : RGB(90, 90, 90));
+      RGB(90, 90, 90));
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
 #ifdef EXR_READER_WINDOWS_SHELL
