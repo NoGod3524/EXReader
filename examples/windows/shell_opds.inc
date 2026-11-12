@@ -401,8 +401,11 @@ static LRESULT CALLBACK opds_view_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
     case WM_DRAWITEM: {
       const DRAWITEMSTRUCT *d=(const DRAWITEMSTRUCT *)lp;wchar_t label[32];
       GetWindowTextW(d->hwndItem,label,32);
-      shell_d2d_control(host_shell,d->hDC,&d->rcItem,label,shell_is_dark(),d->CtlID==OPDS_ID_ACTION ? 1:2,
-        (d->itemState&ODS_SELECTED ? 2:0)|(d->itemState&ODS_FOCUS ? 4:0)|(d->itemState&ODS_DISABLED ? 8:0));
+      {
+        unsigned state = (d->itemState&ODS_SELECTED ? 2u:0u)|(d->itemState&ODS_FOCUS ? 4u:0u)|(d->itemState&ODS_DISABLED ? 8u:0u);
+        shell_d2d_look look = {d->CtlID==OPDS_ID_ACTION ? 1 : 2, state, 0, 0, 1};
+        shell_d2d_control(host_shell,d->hDC,&d->rcItem,label,shell_is_dark(),&look);
+      }
       return TRUE;
     }
     case WM_COMMAND:
@@ -456,3 +459,4 @@ static void opds_create(HWND parent) {
   }
   opds_set_status(L"填写书源地址后点“打开”。支持 OPDS 1.x（Atom）目录，例如 Project Gutenberg。");
 }
+
