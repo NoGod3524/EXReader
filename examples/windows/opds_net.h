@@ -214,7 +214,7 @@ static unsigned onet_cache_hits, onet_cache_misses;
 static CRITICAL_SECTION onet_cache_lock;
 static int onet_cache_ready;
 static void onet_cache_init(void) { if (!onet_cache_ready) { InitializeCriticalSection(&onet_cache_lock); onet_cache_ready = 1; } }
-static void __attribute__((unused)) onet_cache_clear(void) {
+static void onet_cache_clear(void) {
   onet_cache_init();
   EnterCriticalSection(&onet_cache_lock);
   for (int i = 0; i < ONET_CACHE_SLOTS; i++) { free(onet_cache[i].url); free(onet_cache[i].data); memset(&onet_cache[i], 0, sizeof(onet_cache[i])); }
@@ -308,3 +308,4 @@ static int onet_download(const char *url, const wchar_t *path, const onet_option
   return 0;
 }
 #endif
+
