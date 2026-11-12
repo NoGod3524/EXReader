@@ -29,3 +29,35 @@ You've hit your 5-hour limit · resets 5:40pm (America/New_York)
 [2026-11-11 recovery step] Verified branch codex/large-book-2-20261110 at 77cc7682; prior configure/build/ctest completed successfully (303/303, sdk-release excluded, cf127.log CF127-DONE rc=0). Fetched main now at fe9adf43: 35 commits behind, 14 ahead; merge latest main required before final validation.
 
 [Latest-main merge step] Merged fe9adf43 on existing PR branch. Only conflict: RESOLVE-OUT.txt; removed marker lines only, retaining both sides. OUT.txt and CMakeLists.txt auto-merged; tools/layers.json includes both new DOCX internal headers. No changes to protected reading-release test, CI hygiene checker or version exception file.
+
+[Configure step] CMake configure passed using independently downloaded, pinned-archive SHA256-verified dependency sources in Codex/cf127-pinned-deps, plus the requested mbedtls-3.6.7 path. Replaced stale external source-path cache entries only; no repository dependency configuration changed.
+
+[Build step] cmake --build Codex/exr-build-cf127 -j 2 passed (exit 0).
+
+[CTest step] ctest --test-dir Codex/exr-build-cf127 -j 2 -E ^sdk-release$ --output-on-failure finished with exit 0. Full log: Codex/cf127-ctest-recovery.log.
+        Start 383: native-docx-real-text-alias
+398/403 Test #382: native-docx-real-text-history ......................   Passed    5.94 sec
+        Start 384: native-docx-real-text-validation
+399/403 Test #383: native-docx-real-text-alias ........................   Passed    5.51 sec
+        Start 385: native-docx-real-text-transaction
+400/403 Test #384: native-docx-real-text-validation ...................   Passed    4.50 sec
+        Start 386: native-docx-real-oracle-mutations
+401/403 Test #385: native-docx-real-text-transaction ..................   Passed    3.22 sec
+        Start 387: native-docx-real-text-allocation
+402/403 Test #387: native-docx-real-text-allocation ...................   Passed    0.40 sec
+403/403 Test #386: native-docx-real-oracle-mutations ..................   Passed    8.73 sec
+
+100% tests passed out of 403
+
+Total Test time (real) = 3126.35 sec
+
+[交付前核对]
+冲突文件（含上一轮已完成部分）：
+- OUT.txt：仅删除冲突标记，两侧报告行均保留，已逐行对照两侧父提交核实。
+- RESOLVE-OUT.txt：上一轮及本轮冲突均仅删除标记，保留两侧全部内容。
+- RESOLVE.md：仅删除冲突标记，两侧内容均保留，已逐行核实。
+本轮最新 main 合并仅 RESOLVE-OUT.txt 冲突；CMakeLists.txt、OUT.txt 自动合并，新增 DOCX 源码、测试和头文件登记全部保留，无代码语义冲突。
+本地配置、构建成功；ctest 403/403 通过，失败项无，仅排除 sdk-release；耗时 3126.35 秒。
+编译层级检查通过：124 objects、1456 symbol references、0 inverse references、0 inverse includes。
+受保护三个文件与 origin/main 一致；check_reading_release.py SHA256 = 6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。
+再次 fetch 后 main 仍为 fe9adf43，当前分支落后 0、领先 15；准备推送到 PR #127 原 head 分支。
