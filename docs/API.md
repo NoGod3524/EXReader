@@ -73,7 +73,7 @@ provider、读取源、分配内存的接口还可能传播相应回调、I/O、
 | 标注 | 45 | [annotation.c](examples/annotation.c) |
 | 目录 | 17 | [toc.c](examples/toc.c) |
 | 书库 | 49 | [library.c](examples/library.c) |
-| 格式与转换 | 29 | [formats.c](examples/formats.c) |
+| 格式与转换 | 34 | [formats.c](examples/formats.c) |
 | 固定版面与 PDF | 12 | [pdf.c](examples/pdf.c) |
 | 音频 | 76 | [audio.c](examples/audio.c) |
 
@@ -5864,6 +5864,76 @@ int main(void) {
 **线程** 同一对象及共享回调上下文的操作由宿主串行；同步回调在调用线程运行，不要重入当前对象。
 
 **所有权** 输入借用；data 用 exr_free。成功字节独立于 doc。
+
+### `exr_opds_parse`
+
+**签名** `exr_status exr_opds_parse(const void *data, size_t size, const char *base_url, exr_opds_feed *out, exr_error *error);`
+
+**ABI** 实验；声明：[exr/opds.h](../include/exr/opds.h)。
+
+**参数** `data`：Atom 字节（无需 NUL 结尾，上限 16 MiB）；`size`：字节数；`base_url`：用于解析相对链接的基地址；`out`：新 feed；`error`：可选诊断输出。
+
+**返回与失败** EXR_OK；参数 EXR_ARGUMENT，XML 非法 EXR_FORMAT，超出 4096 条目/嵌套 64/输入上限 EXR_LIMIT，分配 EXR_MEMORY。失败时 out 清零。
+
+**线程** 纯函数，无全局状态；对互不相关的对象可并行。
+
+**所有权** feed 及其字符串归调用方，由 exr_opds_feed_free 释放。
+
+### `exr_opds_feed_free`
+
+**签名** `void exr_opds_feed_free(exr_opds_feed *feed);`
+
+**ABI** 实验；声明：[exr/opds.h](../include/exr/opds.h)。
+
+**参数** `feed`：由 exr_opds_parse 填充的 feed 或 NULL。
+
+**返回与失败** 无返回值；NULL 为空操作，释放后 feed 清零。
+
+**线程** 纯函数，无全局状态；对互不相关的对象可并行。
+
+**所有权** 释放 feed 拥有的全部条目与字符串，不释放 feed 结构本身。
+
+### `exr_opds_parse_search`
+
+**签名** `exr_status exr_opds_parse_search(const void *data, size_t size, const char *base_url, char **template_url, exr_error *error);`
+
+**ABI** 实验；声明：[exr/opds.h](../include/exr/opds.h)。
+
+**参数** `data`、`size`：OpenSearch 描述文档字节；`base_url`：解析基地址；`template_url`：接收结果 URL 模板；`error`：可选诊断输出。
+
+**返回与失败** EXR_OK；参数 EXR_ARGUMENT，文档非法或无 Atom/OPDS 结果模板 EXR_FORMAT，分配 EXR_MEMORY。
+
+**线程** 纯函数，无全局状态；对互不相关的对象可并行。
+
+**所有权** *template_url 归调用方，用 exr_free 释放。
+
+### `exr_opds_search_url`
+
+**签名** `exr_status exr_opds_search_url(const char *template_url, const char *query, char **out, exr_error *error);`
+
+**ABI** 实验；声明：[exr/opds.h](../include/exr/opds.h)。
+
+**参数** `template_url`：含 {searchTerms} 的模板；`query`：UTF-8 查询词；`out`：展开后的 URL；`error`：可选诊断输出。
+
+**返回与失败** EXR_OK；空查询、模板缺少 {searchTerms} 或参数为 NULL 返回 EXR_ARGUMENT，分配 EXR_MEMORY。
+
+**线程** 纯函数，无全局状态；对互不相关的对象可并行。
+
+**所有权** *out 归调用方，用 exr_free 释放。
+
+### `exr_opds_resolve_url`
+
+**签名** `exr_status exr_opds_resolve_url(const char *base_url, const char *reference, char **out, exr_error *error);`
+
+**ABI** 实验；声明：[exr/opds.h](../include/exr/opds.h)。
+
+**参数** `base_url`：http/https 基地址；`reference`：相对或绝对引用；`out`：解析结果；`error`：可选诊断输出。
+
+**返回与失败** EXR_OK；参数为 NULL 或基地址非 http/https 返回 EXR_ARGUMENT，分配 EXR_MEMORY。按 RFC 3986 解析。
+
+**线程** 纯函数，无全局状态；对互不相关的对象可并行。
+
+**所有权** *out 归调用方，用 exr_free 释放。
 
 ## 固定版面与 PDF
 
