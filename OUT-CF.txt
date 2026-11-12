@@ -10529,3 +10529,6 @@ GitHub PR #112 open, merged=false, mergeable=true; head c2608314. Four workflows
 
 [2026-11-11 resumed recovery: historical instruction union repaired]
 Parent-line audit found RESOLVE.md from merge 2a314a41 retained PR #112 wording but replaced the main-side PR #107 task sentence. Restored that one missing sentence alongside PR #112; verified every line of both original parents remains a subsequence. OUT2.txt and RESOLVE-OUT.txt already retain all parent lines. No source or test changes; existing CTest results remain applicable.
+
+[2026-11-11 resumed recovery: push verified]
+Pushed c2608314..6e88448c to origin/codex/sdk-batch-perf-20261109. HEAD equals remote head; worktree clean; behind main 0. GitHub confirms PR #112 head 6e88448c502eaf6ec903e69f1d597c852a4d3d9b, mergeable=true, state=open, merged=false. CI triggered: Required native reading SDK core pending, Native C engine / SDK version consistency / Native reading profiles queued. Remaining external step: CI completion. This final report-only commit records that verified push and is also pushed to the same branch.
