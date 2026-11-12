@@ -1,0 +1,184 @@
+{
+  "source_revision": "627124e7",
+  "dll_sha256": "1137bc5e73b7b0bf5c24ca5fa547ac792fa76897129d6cd9f6f0f4a4d273a161",
+  "font_sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+  "driver_sha256": "2fd0a1fa0d28804a7e6583367d91d9f7e48f43e662deb957f01b59f6471c8c8b",
+  "content_fingerprint": "f133272deccc097ee10bbdcf18cdb60c95bf3035ddde529e8dbea24a1d5ce488",
+  "summary": {
+    "requested_books": 19,
+    "successful_books": 19,
+    "failed_books": [],
+    "total_pages": 11426,
+    "total_glyphs": 8648571,
+    "wall_seconds": 560.845492,
+    "sum_book_seconds": 1065.815601,
+    "fastest_book": "the-house-on-mango-street",
+    "slowest_book": "the-autobiography-of-malcolm-x."
+  },
+  "layout": {
+    "width": 720,
+    "height": 1040,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10,
+    "document_css": 1,
+    "embedded_fonts": 1,
+    "direction": 0,
+    "fixed_max_dimension": 720
+  },
+  "environment": {
+    "system": "Windows",
+    "machine": "AMD64"
+  },
+  "baseline": {
+    "artifact": "evidence/perf-gate-final-20261109/realbooks.json.gz",
+    "source_revision": "ed252fb6",
+    "font_sha256": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+    "content_fingerprint": "f133272deccc097ee10bbdcf18cdb60c95bf3035ddde529e8dbea24a1d5ce488"
+  },
+  "comparison": {
+    "comparable": true,
+    "incompatible_conditions": [],
+    "added_books": [],
+    "removed_books": [],
+    "hash_changed_pages": 0,
+    "failed_books": [],
+    "needs_review": false
+  },
+  "books": [
+    {
+      "id": "a-raisin-in-the-sun",
+      "sha256": "2416cbd8d73eb7ba2a228842aa33ae303653fb75fa42dd6e921293bee2ed576d",
+      "page_count": 356,
+      "glyph_count": 201166,
+      "status": "ok"
+    },
+    {
+      "id": "between-the-world-and-me",
+      "sha256": "3d909ac99c4388022a6576475b81c5d458490337aba08b0e7ba311bc18ab68a5",
+      "page_count": 232,
+      "glyph_count": 206259,
+      "status": "ok"
+    },
+    {
+      "id": "black-boy",
+      "sha256": "a6d4c9a1f117e8c9c21aec186ca77e0f58cdaf9f97fce8f1f1d1660a724a7e87",
+      "page_count": 1037,
+      "glyph_count": 827291,
+      "status": "ok"
+    },
+    {
+      "id": "born-a-crime",
+      "sha256": "c22402e02baa5e9b7c88c895a9f232f2858f7c168122aaf084493b85e37f6d58",
+      "page_count": 512,
+      "glyph_count": 463582,
+      "status": "ok"
+    },
+    {
+      "id": "crying-in-h-mart",
+      "sha256": "8e6641c9c820cbc987dbd848d1b2ee88a15d620db6d9302cc17ca2ca49072a3e",
+      "page_count": 535,
+      "glyph_count": 454828,
+      "status": "ok"
+    },
+    {
+      "id": "how-does-it-feel-to-be-a-problem-being-young-and-arab-in-america",
+      "sha256": "02a37f7c5f80169b09d010f27edf494116df0bcb0c8bc8023282a1d3bf43e941",
+      "page_count": 503,
+      "glyph_count": 591513,
+      "status": "ok"
+    },
+    {
+      "id": "i-know-why-the-caged-bird-sings",
+      "sha256": "7a52e3c22743cbf9cdacd1fc6d2a8f72f9ad0f9287591f310640d0287857ec09",
+      "page_count": 625,
+      "glyph_count": 445273,
+      "status": "ok"
+    },
+    {
+      "id": "pachinko",
+      "sha256": "7f8a2a6c4b25a620b5370bdc602d0cf83c564e04f03243308cc532c438357033",
+      "page_count": 1266,
+      "glyph_count": 932465,
+      "status": "ok"
+    },
+    {
+      "id": "the-absolutely-true-diary-of-a-part-time-indian",
+      "sha256": "eedadec8e91f54e53e0587127b8ed2ca12d7d97b282f8a734b709468b7c2cf67",
+      "page_count": 566,
+      "glyph_count": 248895,
+      "status": "ok"
+    },
+    {
+      "id": "the-autobiography-of-malcolm-x.",
+      "sha256": "c9373b7dbda128fea031616b444ca490a3cd59dccb3f02cb2512fd9957a0fdb7",
+      "page_count": 279,
+      "glyph_count": 1084554,
+      "status": "ok"
+    },
+    {
+      "id": "the-distance-between-us-a-memoir",
+      "sha256": "19591466f9b795f978f6061ac9979d8bd420ddf29cc849a4c970190a968844e3",
+      "page_count": 714,
+      "glyph_count": 575175,
+      "status": "ok"
+    },
+    {
+      "id": "the-fire-next-time",
+      "sha256": "e0e361a8b3eb84cab263dac4efd69953b48c0a8d7b1972011a2f8e3deaab4570",
+      "page_count": 189,
+      "glyph_count": 138691,
+      "status": "ok"
+    },
+    {
+      "id": "the-fire-this-time-a-new-generation-speaks-about-race",
+      "sha256": "3662ed4599157e8a94e1869a43b7e231244862c520ac4fe02f3a047893d23ef0",
+      "page_count": 333,
+      "glyph_count": 297363,
+      "status": "ok"
+    },
+    {
+      "id": "the-house-on-mango-street",
+      "sha256": "5a3b11c8f3ee4dd1c41d264aaf27dd83bb82faa1ebf3c7370a7072a0711cb3df",
+      "page_count": 185,
+      "glyph_count": 105411,
+      "status": "ok"
+    },
+    {
+      "id": "zami-a-new-spelling-of-my-name---a-biomythography",
+      "sha256": "6a107f978b9689221865539da63156996e1a0b67fa622629deac6503e16a7284",
+      "page_count": 659,
+      "glyph_count": 580269,
+      "status": "ok"
+    },
+    {
+      "id": "hongloumeng-24264",
+      "sha256": "325fef5fb561a258ee4e0ded25821a55d77f7b4b627ae0ecac03410802ea6ec7",
+      "page_count": 1684,
+      "glyph_count": 787657,
+      "status": "ok"
+    },
+    {
+      "id": "xingshihengyan-24239",
+      "sha256": "c229b87ef790da1b50636381bbf23e63c2dd9f3f8f7a893bf165bc2ff0933372",
+      "page_count": 1203,
+      "glyph_count": 553944,
+      "status": "ok"
+    },
+    {
+      "id": "tangshi300-52323",
+      "sha256": "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945",
+      "page_count": 84,
+      "glyph_count": 46635,
+      "status": "ok"
+    },
+    {
+      "id": "kusamakura-japanese-vertical-writing",
+      "sha256": "6d4d4ed5eda3f612e3263c54fa0f74ccfa87260f43e81bb58ea658636e52eeb7",
+      "page_count": 464,
+      "glyph_count": 107600,
+      "status": "ok"
+    }
+  ]
+}
