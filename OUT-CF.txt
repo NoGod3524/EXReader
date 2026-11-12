@@ -139,3 +139,6 @@ You've hit your weekly limit · resets 1pm (America/New_York)
 
 [Recovery verification]
 Fetched origin/main at fe9adf438bdeff83b90ed4508f169d32fcd7b664; behind=0, ahead=23. GitHub confirms PR #127 open, merged=false, mergeable=true, original head branch unchanged. Verified cf127-ctest-recovery.log and Testing/Temporary/LastTest.log: 403/403 passed, sdk-release excluded, 3126.35 seconds. Only OUT-CF.txt differs from validated merge 8e7d65f7. All three protected files are byte-identical to origin/main; protected test SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. git diff --check passed.
+
+[Recovery push step]
+Pushed restored report commit 43a18605f91d1e33479aa8043c85404c6033c405 to origin/codex/large-book-2-20261110. GitHub verified this exact PR head with mergeable=true, open, merged=false; base remains fe9adf43. Remote CI has been queued; required-check completion remains outstanding. This final documentation commit records the push result; no product code changed.
