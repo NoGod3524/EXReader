@@ -15165,3 +15165,10 @@ exit=0
 ???????????,???? SHA256 ? `6eb22a30.`???????????? [OUT-CF.txt](/C:/Users/Oscar/Documents/Codex/EXReader-b2-opds-20261110/OUT-CF.txt)?
 tokens used
 39,707
+
+[Recovery: restored complete committed report; preserved displaced worktree content below]
+You've hit your weekly limit · resets 1pm (America/New_York)
+
+[2026-11-11 recovery inspection PASS] Started from git log and worktree on codex/opds-catalog-20261110 at 8fea784e. Fetched origin/main: behind=0, ahead=30; prior merges and source fixes complete. Restored complete committed OUT-CF report, preserving quota-message worktree content above. No repeated merge or source changes.
+[2026-11-11 recovery validation PASS] Source matches tested fbd847f7 (only OUT-CF.txt differs). Reused completed canonical configure/build and ctest evidence, as instructed for recovery. Independently parsed JUnit: 403/403 passed, failed=[], skipped=[]; sdk-release excluded; build and ctest exit=0. Report union audit has 8 parent/file records and no missing content. All three protected files byte-match origin/main; reading-release SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. No branch created, GUI, SendInput, system settings changes, main updates, or PR merge.
+[2026-11-11 recovery pre-push metadata] GitHub exact current head 8fea784e confirms MERGEABLE, mergeStateStatus=BLOCKED, draft=true; 34 pending of 38 checks, failed=[]. Publishing restored report on the existing PR head branch. Remaining prerequisites: CI completion and Draft-to-Ready review state. PR remains open/unmerged; main untouched.
