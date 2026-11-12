@@ -51,3 +51,11 @@ API 文档 469/469；层检查 124 objects / 1456 symbol references，0 inverse 
 推送前再次 fetch：main 仍为 fe9adf43，HEAD 对 origin/main 领先 14 / 落后 0；工作树仅有本步骤报告追加。
 [步骤 3：推送指定 PR head 分支]
 执行 git push origin HEAD:codex/vertical-expand-20261109；不合并 PR，不更新 main。
+
+[步骤 3 完成：推送与 GitHub 核对]
+已成功推送 846d3d2ca516aa6f29012f22f8a29be7031b062c 到 origin/codex/vertical-expand-20261109。
+GitHub PR #116：state=open，merged=false，mergeable=true；base=fe9adf438bdeff83b90ed4508f169d32fcd7b664。
+推送已触发 4 个工作流：SDK version consistency、Native C engine、Native reading profiles、Required native reading SDK core，核对时均 queued。
+仅剩等待远端 CI 完成；本地无失败项。此结果记录作为独立文档提交回推同一 head 分支。
+最终冲突清单（含恢复前既有合并）：OUT.txt 两侧保留；RESOLVE-OUT.txt 两侧保留并仅删标记；RESOLVE.md 两侧说明保留且补回历史遗漏的 PR #107 一句。
+未新建分支，未开 GUI，未修改受保护测试/判定逻辑/JSON 排版；未合并 PR，未修改 main 分支。
