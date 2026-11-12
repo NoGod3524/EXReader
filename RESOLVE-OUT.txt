@@ -1,10 +1,14 @@
-① 冲突文件: OUT.txt — 两侧内容全部保留(仅删冲突标记); RESOLVE.md — 保留本分支版本(任务说明文件, 非报告); CMakeLists.txt 自动合并无冲突。
-② 补 API 文档: 无 (check_sdk_docs.py 已通过, 无 undocumented functions)。
+① 冲突文件: 仅 RESOLVE.md (add/add；每个 PR 各有一份任务说明，内容只差 PR 号/路径/推送分支)。
+   解决方式: 保留 #112 的版本(并修正 cd 路径为 EXReader-fix-112-20261111)。CMakeLists.txt、tools/layers.json 自动合并成功，无冲突标记，layers.json 解析正常。
+② 补的 API 文档: 无。合并后 documented_functions=460 / public_functions=460，覆盖率 100%，无需补条目。
 ③ check_sdk_docs.py exit=0; 最后三行:
-  "errors": [],
-  "passed": true
-}
-④ 未查看 CI (未联网查 Actions); 本地无其他失败项已知。已推送 a8b3e75b 到 codex/vertical-expand-20261109。
+     "errors": [],
+     "passed": true
+   }
+④ 其他失败项: 本地未跑 CI，未见 CI 名称；无已知别的失败。
+   推送: 783b8f1d..b87c2bf3 -> codex/sdk-batch-perf-20261109 (未合并 PR、未动 main)。
+   备注: 工作区里未跟踪的 CASCADE-CLAUDE-OUT.txt 未动。
+---
 ① 冲突文件清单与解决方式
 - 无冲突：git merge origin/main 自动合并成功（merge commit 98ca706e）。
 - 唯一障碍：工作区未跟踪的任务说明 RESOLVE.md 与 main 上已跟踪的同名文件冲突；已把本地未跟踪副本移出仓库（%TEMP%\RESOLVE-task.md），保留 main 的 RESOLVE.md。
