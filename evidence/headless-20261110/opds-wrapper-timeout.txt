@@ -1,0 +1,2 @@
+PASS error_timeout code=timeout http=0 win_error=12002 accepted=1 elapsed_ms=4031 message=连接超时：1 秒内没有收到服务器响应，请检查网络或稍后重试。
+1/1 console checks passed

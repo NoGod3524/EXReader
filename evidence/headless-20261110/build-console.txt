@@ -1,0 +1,50 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===========================================================================
+--
+-- CMake version in use ......... 4.4.2
+--
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... C:/Users/Oscar/Documents/Codex/exr-opds-sdk
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix .......
+--
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+--
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+--
+--   Entropy sources
+--     rand_s ................... ON
+--
+-- ===========================================================================
+CMake Warning (deprecated) at C:/Users/Oscar/exr-deps/miniz/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Editing reflow disabled: supply EXR_EDIT_MODEL_SOURCE from X1
+-- Configuring done (45.5s)
+-- Generating done (2.9s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/exr-opds-build
+[0/4] Re-checking globbed directories...
+ninja: no work to do.

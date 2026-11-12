@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "commands": [
+    {
+      "command": [
+        "gcc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-Iinclude",
+        "examples/minimal/main.c",
+        "-Llib",
+        "-lexreader",
+        "-o",
+        "minimal.exe"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Oscar\\Documents\\Codex\\opds-mingw-smoke\\exreader-3.42.0-win-x64\\minimal.exe",
+        "examples/minimal/sample.epub",
+        "examples/minimal/font.ttf",
+        "page-1.pgm"
+      ],
+      "exit_code": 0,
+      "stdout": "Title: Native styled sample\nPages: 2\nTOC entries: 1\nOutput: page-1.pgm (720 x 1040, PGM)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Oscar\\Documents\\Codex\\opds-mingw-smoke\\exreader-3.42.0-win-x64\\bin\\exr-info.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "EXReader 3.42.0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "C:\\Users\\Oscar\\Documents\\Codex\\opds-mingw-smoke\\exreader-3.42.0-win-x64\\bin\\exr-info.exe",
+        "examples/minimal/sample.epub",
+        "examples/minimal/font.ttf"
+      ],
+      "exit_code": 0,
+      "stdout": "Version: 3.42.0\nFormat: EPUB\nTitle: Native styled sample\nPages: 2\nTOC entries: 1\n",
+      "stderr": ""
+    }
+  ],
+  "pgm": {
+    "width": 720,
+    "height": 1040,
+    "bytes": 748816,
+    "nonwhite_pixels": 129549
+  },
+  "sample": {
+    "Title": "Native styled sample",
+    "Pages": 2,
+    "TOC entries": 1
+  },
+  "cli": {
+    "Version": "3.42.0",
+    "Format": "EPUB",
+    "Title": "Native styled sample",
+    "Pages": 2,
+    "TOC entries": 1
+  }
+}
