@@ -1,12 +1,24 @@
 /* SPDX-License-Identifier: MIT */
 /* M-E1: one engine model. Layouts are disposable paragraph-local projections. */
 #include <exr/edit.h>
+/* Same stable Expat entry points as shell_epub.cpp (no vendor headers in SDK). */
+extern void *XML_ParserCreate(const char *);
+extern void XML_ParserFree(void *);
+extern void XML_SetUserData(void *,void *);
+extern void XML_SetElementHandler(void *,void (*)(void *,const char *,const char **),void (*)(void *,const char *));
+extern int XML_Parse(void *,const char *,int,int);
+typedef struct { char id[128],base[128]; exr_edit_run_props props; } de_style;
 typedef struct { size_t block,run,byte; } de_pos;
 typedef struct {
   exr_edit_doc *doc;
   size_t caret_block,caret_run,caret_byte;
   size_t sel_anchor_block,sel_anchor_run,sel_anchor_byte;
-  int dirty;
+  int dirty,color_panel;
+  exr_edit_run_props pending_props,default_props;
+  de_style *styles;
+  size_t style_count;
+  int styles_loaded;
+  char default_style[128];
   char path[MAX_PATH];
   float scroll_y,extent,inset;
   shell_d2d_edit_row *rows;
@@ -21,6 +33,10 @@ static HWND de_button;
 static void de_refresh(int reveal);
 static void de_drop_layout(void);
 static int de_exit(void);
+static float de_toolbar_height(void);
+static HRESULT de_toolbar_paint(HDC dc);
+static int de_toolbar_click(float x,float y);
+static exr_edit_run_props de_current_props(void);
 
 static de_pos de_caret(void) {
   de_pos p={de.caret_block,de.caret_run,de.caret_byte};return p;
@@ -29,6 +45,8 @@ static de_pos de_anchor(void) {
   de_pos p={de.sel_anchor_block,de.sel_anchor_run,de.sel_anchor_byte};return p;
 }
 static void de_set_caret(de_pos p) {
+  if(de.caret_block!=p.block || de.caret_run!=p.run || de.caret_byte!=p.byte)
+    memset(&de.pending_props,0,sizeof(de.pending_props));
   de.caret_block=p.block;de.caret_run=p.run;de.caret_byte=p.byte;
 }
 static void de_set_anchor(de_pos p) {
@@ -184,7 +202,9 @@ static void de_enter(void) {
 }
 static void de_close(void) {
   if(g.page) {KillTimer(g.page,DE_TIMER);if(GetCapture()==g.page)ReleaseCapture();}
-  de_drop_layout();exr_edit_doc_free(de.doc);de.doc=NULL;de_title();
+  de_drop_layout();free(de.styles);de.styles=NULL;de.style_count=0;de.styles_loaded=0;
+  exr_edit_doc_free(de.doc);de.doc=NULL;de.color_panel=0;
+  memset(&de.pending_props,0,sizeof(de.pending_props));de_title();
   if(g.page)page_dirty(g.page,1);
 }
 static int de_exit_choice(int choice) {
