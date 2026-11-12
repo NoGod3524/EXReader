@@ -40,3 +40,107 @@ Verified branch codex/sdk-batch-perf-20261109 at 8d34bbc6, tracking the same rem
 
 [2026-11-11 recovery step 2: main merge resolved]
 Merged origin/main fe9adf43 into the existing PR head branch. Conflicts: OUT2.txt (add/add) and RESOLVE-OUT.txt (content); removed only conflict marker lines, retained both sides in order, verified each side as a line subsequence. CMakeLists.txt, docs/API.md and tools/layers.json merged automatically. No source/API conflict. Prior merge 2a314a41 conflict records RESOLVE.md and RESOLVE-OUT.txt retained.
+
+[2026-11-11 recovery step 3: configure environment]
+Original configure failed: bundled CMake TLS has no trust anchors. Exported trusted Windows certificate stores to an external build CA bundle and supplied CMAKE_TLS_CAINFO (no system settings changed). Previous source overrides point to removed exr-build-argon caches; cleared these overrides. Re-enabled AAC previously disabled by the interrupted run; use default feature coverage and pinned hashes. Protected files byte-identical to HEAD and origin/main; two incoming src headers registered in tools/layers.json.
+
+[2026-11-11 recovery step 4: static gates]
+check_sdk_docs.py: exit 0, 472/472 public functions documented (100%). check_version_consistency.py: exit 0, SDK 3.42.0 / ABI 1 / 552 live exact literal exceptions. check_ci_hygiene.py --base origin/main: exit 0, violations=0; checker and baseline unchanged. CMake dependency configuration still progressing; build and CTest not yet started.
+
+[2026-11-11 recovery validation]
+CMake configure succeeded with Windows shell ON, AAC ON, pinned mbedtls source and external Windows-trust CA bundle. SDK docs: 472/472 documented; SDK version consistency PASS (3.42.0, ABI 1, 552 existing literal exceptions); CI hygiene --base origin/main PASS, violations=0. Starting cmake --build exr-build-cf112 -j 2.
+
+[2026-11-11 recovery validation]
+build: exit=0; log=C:\Users\Oscar\Documents\Codex\cf112-build.log.
+1266/1288] Building CXX object _deps/libaom-build/CMakeFiles/yuv.dir/third_party/libyuv/source/scale_neon.cc.obj
+[1267/1288] Building CXX object _deps/libaom-build/CMakeFiles/yuv.dir/third_party/libyuv/source/scale_neon64.cc.obj
+[1268/1288] Building CXX object _deps/libaom-build/CMakeFiles/yuv.dir/third_party/libyuv/source/scale_win.cc.obj
+[1269/1288] Building CXX object _deps/libaom-build/CMakeFiles/yuv.dir/third_party/libyuv/source/scale_uv.cc.obj
+[1270/1288] Linking C static library _deps\libaom-build\libaom_pc.a
+[1271/1288] Linking C static library _deps\libavif-build\libavif.a; Merge static libraries with ar
+[1272/1288] Linking C executable exreader-doc-base.exe
+[1273/1288] Linking C executable exreader-doc-document.exe
+[1274/1288] Linking C executable exreader-doc-formats.exe
+[1275/1288] Linking C executable exreader-doc-pagination.exe
+[1276/1288] Linking C executable exreader-doc-render.exe
+[1277/1288] Linking C executable exreader-doc-font.exe
+[1278/1288] Linking C executable exreader-doc-search.exe
+[1279/1288] Linking C executable exreader-doc-annotation.exe
+[1280/1288] Linking C executable exreader-doc-toc.exe
+[1281/1288] Linking C executable exreader-doc-library.exe
+[1282/1288] Building CXX object _deps/libaom-build/CMakeFiles/yuv.dir/third_party/libyuv/source/row_common.cc.obj
+[1283/1288] Linking C executable exreader-doc-dictionary.exe
+[1284/1288] Linking C executable exreader-doc-graphics.exe
+[1285/1288] Linking C executable exreader-doc-pdf.exe
+[1286/1288] Linking C executable exreader-doc-textindex.exe
+[1287/1288] Linking C executable exreader-doc-audio.exe
+
+
+[2026-11-11 recovery interim CTest failures]
+Full build passed. CTest is still running; at least 292/404 completed. Two failures reported: native-document-probe (162.62s) and native-corpus-triage (99.83s). Their harnesses launch subprocesses with 30/60-second limits. Detailed CTest log is not flushed yet; cause is not established. Keep suite running, then inspect complete failure stacks and rerun failed tests serially with output-on-failure. No source or test changes made.
+
+[2026-11-11 recovery validation]
+ctest: exit=8; log=C:\Users\Oscar\Documents\Codex\cf112-ctest.log.
+4 Test #396: sdk-doc-textindex ..................................   Passed    0.29 sec
+        Start 397: sdk-doc-audio
+396/404 Test #397: sdk-doc-audio ......................................   Passed    0.31 sec
+        Start 398: sdk-doc-pagination
+397/404 Test #398: sdk-doc-pagination .................................   Passed    0.35 sec
+        Start 399: sdk-doc-render
+398/404 Test #387: native-docx-real-oracle-mutations ..................   Passed   13.79 sec
+        Start 400: sdk-doc-font
+399/404 Test #399: sdk-doc-render .....................................   Passed    0.69 sec
+        Start 401: sdk-doc-toc
+400/404 Test #400: sdk-doc-font .......................................   Passed    0.78 sec
+        Start 402: sdk-doc-pdf
+401/404 Test #401: sdk-doc-toc ........................................   Passed    0.71 sec
+        Start 403: sdk-doc-dictionary
+402/404 Test #402: sdk-doc-pdf ........................................   Passed    0.63 sec
+        Start 404: sdk-doc-coverage
+403/404 Test #403: sdk-doc-dictionary .................................   Passed    3.08 sec
+404/404 Test #404: sdk-doc-coverage ...................................   Passed    7.74 sec
+
+99% tests passed, 2 tests failed out of 404
+
+Total Test time (real) = 2949.67 sec
+
+The following tests FAILED:
+	270 - native-document-probe (Failed)
+	271 - native-corpus-triage (Failed)
+Errors while running CTest
+Output from these tests are in: C:/Users/Oscar/Documents/Codex/exr-build-cf112/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.
+
+
+[2026-11-11 recovery step 6: full CTest result and retry]
+Initial requested suite: 402/404 passed, 2 failed (native-document-probe, native-corpus-triage), total 2949.67s. Both failed with subprocess.TimeoutExpired at 60 seconds in tools/check_corpus.py invocations; document-probe cleanup additionally hit WinError 32 on a child-held stderr.log. No functional assertion failed before these timeouts. native-batch, native-bench-batch-statistics, and all DOCX real-world regressions passed. Preserved full first-run detail in cf112-ctest-first-detail.log. Starting ctest --rerun-failed --output-on-failure -j 1 with unchanged source, binaries, assertions and timeouts.
+
+[2026-11-11 recovery serial retry result]
+exit=0; log=C:\Users\Oscar\Documents\Codex\cf112-retry.log
+Test project C:/Users/Oscar/Documents/Codex/exr-build-cf112
+    Start 270: native-benchmark
+1/2 Test #270: native-benchmark .................   Passed   39.73 sec
+    Start 271: native-document-probe
+2/2 Test #271: native-document-probe ............   Passed  125.84 sec
+
+100% tests passed out of 2
+
+Total Test time (real) = 166.21 sec
+
+
+[2026-11-11 recovery retry selection correction]
+The first --rerun-failed omitted the original -E filter; CTest renumbered tests and selected native-benchmark and native-document-probe, not native-corpus-triage. Both selected tests passed (39.73s, 125.84s). Document-probe is recovered with unchanged assertions/timeouts; corpus-triage is still unverified. Now select native-corpus-triage by exact name and retain sdk-release exclusion. Do not count the first retry as recovery of both failures.
+
+[2026-11-11 recovery exact-name corpus-triage retry]
+exit=0; log=C:\Users\Oscar\Documents\Codex\cf112-triage-retry.log
+Test project C:/Users/Oscar/Documents/Codex/exr-build-cf112
+    Start 272: native-corpus-triage
+1/1 Test #272: native-corpus-triage .............   Passed   65.88 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =  66.06 sec
+
+
+[2026-11-11 recovery step 7: pre-push verification]
+Full requested build succeeded. Initial CTest: 402/404 passed; native-document-probe and native-corpus-triage hit 60-second subprocess timeouts. Each failed test subsequently passed serially by verified test name with unchanged source, binaries, assertions and timeout values. Combined result: 404/404 unique tests passed, outstanding failures: none; only sdk-release excluded as requested. Retained cf112-ctest.log, cf112-ctest-first-detail.log, cf112-retry.log and cf112-triage-retry.log. Re-fetched origin/main and verified it is fully contained in HEAD (0 incoming commits). No unmerged paths or conflict markers in resolved reports. Three protected files remain byte-identical to recovery HEAD 8d34bbc6 and origin/main; reading-release SHA256 remains 6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. Only OUT-CF.txt changed after validation. Committing results and pushing directly to codex/sdk-batch-perf-20261109.
