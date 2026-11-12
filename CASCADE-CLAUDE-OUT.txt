@@ -1,15 +1,25 @@
-The merge of `origin/main` into the PR branch hasn't finished, so nothing is resolved or pushed yet. I haven't touched the docs gate or `RESOLVE-OUT.txt` either.
+The build is still running in the background. I'll report when it finishes and I've run the tests.
 
-- **Fetch:** `git fetch origin main` completed. `origin/main` is at `f9df2377`.
-- **Merge:** the first `git merge origin/main` printed nothing and left HEAD at `0c65fde7`, so I couldn't tell whether it did anything. I ran it again. That run passed the 180s timeout and is now in the background (task `b297siyya`), with its output file still empty.
-- **Working tree:** there are no unmerged files so far. `RESOLVE.md` has uncommitted changes and `CASCADE-CLAUDE-OUT.txt` is untracked. Both were already there when I started.
+The build is running in the background (log: `build/x/ninja.log`). The fix is one line in `src/pdf_objects.c`, but it isn't verified yet. I'll run the tests when the build finishes and report the numbers.
+tests/test_pdf_hybrid_xref.c` 和 `OUT2.txt`。这些不是我写的。
+- `OUT2.txt` 写着"The full-library build is still compiling. I'll continue once it finishes."，说明另一个会话正在编译并跑测试。
+- 我现在写代码、提交或推分支，会跟它撞车，所以没有做。
 
-I'm waiting for the merge task to report back. Once it does, I'll list any conflicts and resolve them by keeping both sides. Then I'll run `tools\check_sdk_docs.py` and add any missing API entries. After that I'll write `RESOLVE-OUT.txt` and push to `codex/large-book-2-20261110`.
+**对任务书的订正（两处前提都不成立）**
+- `classic_xref` 在 `src/pdf_objects.c:469-475` 已经处理 `/XRefStm`，调用的是 `stream_xref(..., hybrid=1)`。`/Prev` 链和"同 revision 内 stream 条目覆盖传统表"的合并逻辑也都已存在（L376-380）。引擎并没有拒绝混合引用。
+- `deck.pdf` 真正的失败点是 `stream_xref` 里的 `object>=size`（L341）。它的 xref 流是 `1038 0 obj`，`/Size` 却是 1038。PowerPoint 先数 `/Size` 再写这个对象，所以对象号等于 `/Size`。
+- 另一个会话的改动正是这一处：hybrid 模式下不再要求 `object<size`，非 hybrid 的纯 xref 流路径不变。我自己查出来的结论和它一致。
 
-I merged `origin/main` into the PR branch and pushed it to `codex/large-book-2-20261110`. The branch head is now `ef32f479`. I didn't check CI or build and test locally, so I can't say whether anything else is failing.
+**我做的验证**
+- 我用 gcc 编译了一个小探针，只链接 `pdf_objects.c`、`pdf_ccitt.c`、`common.c`。miniz 和 crypto 用了临时桩（放在 `/tmp/pr`，不在仓库里），因为这里没有网络，CMake 拉不到依赖。
+- 带当前未提交改动时，`exr_pdf_open(deck.pdf)` 返回 status=0，`pdf-hybrid.pdf` 也是 0。
+- 没验证的部分：我没有重现"改动前 deck.pdf 报错"，也没跑 15 页渲染、`first_paint_ms`、完整 ctest 和像素对比，因为全量 CMake 构建在这里做不了。这些得等另一个会话的构建结果。
 
-- **Conflicts:** there were two, `OUT.txt` and `RESOLVE.md`. For each I removed the conflict markers and kept both sides' content. `CMakeLists.txt` auto-merged cleanly, and no unmerged files remain.
-- **Local `RESOLVE.md` edits:** the merge was blocked at first by uncommitted edits to `RESOLVE.md`. I committed them as a wip commit, which is part of what got pushed.
-- **API docs:** `python -X utf8 tools\check_sdk_docs.py` exits 0, with all 457 public functions documented (100%). I added no entries.
-- **Report:** `RESOLVE-OUT.txt` is written and pushed. Its "other failures" line says that part wasn't checked.
-- **Left alone:** the untracked `CASCADE-CLAUDE-OUT.txt` is not committed, and I didn't merge the PR or touch `main`.
+**尚未完成的验收项**
+- 渲染、ctest 全绿、像素比对都还没有结果。
+- 4 组新增 ctest 看起来已经写好（`native-pdf-hybrid-deck` 加 `test_pdf_hybrid_xref.c` 的各场景），但我没有跑过。
+- draft PR 还没开。
+
+**需要你决定**
+- 要我等那个会话收尾，再接手验证、提交、推分支和开 draft PR 吗？
+- 还是你想让我现在就在这个工作树里继续？那样可能和它冲突。
