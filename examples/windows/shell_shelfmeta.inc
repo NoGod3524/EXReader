@@ -808,3 +808,5 @@ static int sm_flush(void) {
   if(sm_dirty && !sm_save())set_status(L"阅读统计保存失败；shelf.json 原文件保留。");
   return 1; /* never block closing on statistics */
 }
+
+
