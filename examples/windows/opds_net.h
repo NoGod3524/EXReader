@@ -80,9 +80,16 @@ static int onet_loopback(const wchar_t *host) {
 }
 /* http:// -> https:// for URLs found in catalogs and typed by the user. */
 static void onet_secure(const char *url, char *out, size_t size) {
-  if (!_strnicmp(url, "http://", 7) && _strnicmp(url + 7, "127.0.0.1", 9) && _strnicmp(url + 7, "localhost", 9))
-    snprintf(out, size, "https://%s", url + 7);
-  else snprintf(out, size, "%s", url);
+  size_t length = strlen(url);
+  int upgrade = !_strnicmp(url, "http://", 7) && _strnicmp(url + 7, "127.0.0.1", 9) && _strnicmp(url + 7, "localhost", 9);
+  if (!size) return;
+  /* Reject an overlong URL through the normal bad-URL path, never request a
+     silently truncated address. Upgrading http adds one byte. */
+  if (length >= size - (size_t)upgrade) { out[0] = 0; return; }
+  if (upgrade) {
+    memmove(out + 8, url + 7, length - 7 + 1);
+    memcpy(out, "https://", 8);
+  } else memmove(out, url, length + 1);
 }
 static void onet_map_win_error(onet_result *r, DWORD e, unsigned receive_ms) {
   r->win_error = e;
@@ -210,7 +217,7 @@ static unsigned onet_cache_hits, onet_cache_misses;
 static CRITICAL_SECTION onet_cache_lock;
 static int onet_cache_ready;
 static void onet_cache_init(void) { if (!onet_cache_ready) { InitializeCriticalSection(&onet_cache_lock); onet_cache_ready = 1; } }
-static inline void onet_cache_clear(void) {
+static void onet_cache_clear(void) {
   onet_cache_init();
   EnterCriticalSection(&onet_cache_lock);
   for (int i = 0; i < ONET_CACHE_SLOTS; i++) { free(onet_cache[i].url); free(onet_cache[i].data); memset(&onet_cache[i], 0, sizeof(onet_cache[i])); }
@@ -304,3 +311,4 @@ static int onet_download(const char *url, const wchar_t *path, const onet_option
   return 0;
 }
 #endif
+

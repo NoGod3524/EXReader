@@ -46,7 +46,7 @@ static HBRUSH sm_edit_brush;
 static void sm_hide(void);
 static void sm_recent(void);
 typedef struct { RECT r; int kind,arg; } sm_hit;
-enum { SM_HIT_BOOK=1,SM_HIT_TAG,SM_HIT_GRID,SM_HIT_LIST,SM_HIT_STATS,SM_HIT_SHELF,SM_HIT_BACK,SM_HIT_IMPORT,SM_HIT_SOURCES };
+enum { SM_HIT_BOOK=1,SM_HIT_TAG,SM_HIT_GRID,SM_HIT_LIST,SM_HIT_STATS,SM_HIT_SHELF,SM_HIT_BACK,SM_HIT_SOURCES,SM_HIT_IMPORT };
 static sm_hit sm_hits[512]; static int sm_hit_count;
 static char *sm_tags[256]; static int sm_tag_total;
 typedef struct { int book; HBITMAP bitmap; int w,h; char *path; } sm_cover_cache;
@@ -425,12 +425,12 @@ static int sm_header(HDC dc,RECT client,HFONT title,HFONT ui) {
   RECT t={shell_px(24,shell_dpi),0,client.right/2,shell_px(56,shell_dpi)};
   DrawTextW(dc,sm_mode ? L"阅读统计":L"书架",-1,&t,DT_VCENTER|DT_SINGLELINE);
   SelectObject(dc,ui);
-  const wchar_t *labels[6]={L"网格",L"列表",L"统计",L"书源",L"返回阅读",L"打开书籍"};
-  int kinds[6]={SM_HIT_GRID,SM_HIT_LIST,SM_HIT_STATS,SM_HIT_SOURCES,SM_HIT_BACK,SM_HIT_IMPORT};
+  const wchar_t *labels[6]={L"网格",L"列表",L"统计",L"返回阅读",L"书源",L"打开书籍"};
+  int kinds[6]={SM_HIT_GRID,SM_HIT_LIST,SM_HIT_STATS,SM_HIT_BACK,SM_HIT_SOURCES,SM_HIT_IMPORT};
   if(sm_mode){labels[0]=L"书架";kinds[0]=SM_HIT_SHELF;}
   int x=client.right-shell_px(24,shell_dpi);
   for(int i=5;i>=0;i--) {
-    if(sm_mode && (i==1 || i==2 || i==3))continue;
+    if(sm_mode && (i==1 || i==2 || i==4))continue;
     SIZE size;GetTextExtentPoint32W(dc,labels[i],(int)wcslen(labels[i]),&size);
     int w=size.cx+shell_px(24,shell_dpi);x-=w;
     int on=!sm_mode && ((i==0 && !sm_list) || (i==1 && sm_list));
@@ -725,8 +725,8 @@ static void sm_click(int index,int right,int x,int y) {
       sm_list=h.kind==SM_HIT_LIST;sm_dirty=1;sm_save();break;
     case SM_HIT_STATS:sm_show(1);break;
     case SM_HIT_SHELF:sm_show(0);break;
-    case SM_HIT_SOURCES:opds_show();return;
     case SM_HIT_BACK:sm_hide();return;
+    case SM_HIT_SOURCES:opds_show();return;
     case SM_HIT_IMPORT:g.auto_open_imported=1;import_path(NULL,1);return;
   }
   InvalidateRect(sm_view,NULL,FALSE);
@@ -792,7 +792,6 @@ static void sm_shelf_visibility(int show) {
   if(!show){sm_recent();return;}
   if(sm_requested>=0){sm_mode=sm_requested;sm_requested=-1;}
   if(sm_view){ShowWindow(sm_view,SW_SHOWNA);sm_layout();SetFocus(sm_view);}
-  opds_layout();
   sm_refresh();
 }
 static void sm_show(int mode) {

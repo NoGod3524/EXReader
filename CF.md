@@ -1,10 +1,10 @@
-# 把 PR #128 解到可合并（工作在这个 PR 自己的分支上）
+# 把 PR #130 解到可合并（工作在这个 PR 自己的分支上）
 
 ## 你的分支（一字不改地在这里干）
 
 ```
-工作树   C:\Users\Oscar\Documents\Codex\EXReader-d2-media-20261110
-分支     codex/media-epub-2-20261110          ← 这就是 PR #128 的 head 分支，已 track origin
+工作树   C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110
+分支     codex/a11y-uia-20261110          ← 这就是 PR #130 的 head 分支，已 track origin
 ```
 
 **不许新建分支。** 上一轮九路就是因为建了新分支（`codex/fixNNN-*`），成果全落到 PR 看不见的地方，
@@ -13,9 +13,9 @@
 ## 现状
 
 ```
-PR #128  mergeable = CONFLICTING
+PR #130  mergeable = CONFLICTING
 落后 main = 11 个提交
-领先 main = 12 个提交（本 PR 的功能）
+领先 main = 7 个提交（本 PR 的功能）
 CI：因为 CONFLICTING，没有跑
 ```
 
@@ -24,7 +24,7 @@ CI：因为 CONFLICTING，没有跑
 ### 1. 合并 main，解冲突
 
 ```powershell
-cd C:\Users\Oscar\Documents\Codex\EXReader-d2-media-20261110
+cd C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110
 git fetch origin main
 git merge origin/main
 ```
@@ -43,8 +43,8 @@ git merge origin/main
 ### 2. 本地验证
 
 ```powershell
-$bld = "C:\Users\Oscar\Documents\Codex\exr-build-cf128"
-cmake -S C:\Users\Oscar\Documents\Codex\EXReader-d2-media-20261110 -B $bld -G Ninja -DEXR_READER_WINDOWS_SHELL=ON `
+$bld = "C:\Users\Oscar\Documents\Codex\exr-build-cf130"
+cmake -S C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110 -B $bld -G Ninja -DEXR_READER_WINDOWS_SHELL=ON `
   "-DFETCHCONTENT_SOURCE_DIR_MBEDTLS=C:/Users/Oscar/Documents/Codex/exr-deps/mbedtls-3.6.7"
 cmake --build $bld -j 2
 ctest --test-dir $bld -j 2 -E "^sdk-release$"
@@ -56,7 +56,7 @@ ctest --test-dir $bld -j 2 -E "^sdk-release$"
 ### 3. 推送
 
 ```powershell
-git push origin HEAD:codex/media-epub-2-20261110
+git push origin HEAD:codex/a11y-uia-20261110
 ```
 
 推完 CI 会自动跑。**不要合并 PR，不要动 main。**

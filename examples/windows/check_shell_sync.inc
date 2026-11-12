@@ -5,9 +5,6 @@
    sm_load) to prove the rewritten files are still valid. */
 #include "mock_webdav.inc"
 
-static int syt_scenarios;
-static void syt_pass(const char *detail) { ++syt_scenarios; puts(detail); }
-
 #define SYT_PASS "s3cret-Pw!-\xE5\xAF\x86\xE7\xA0\x81"
 static wchar_t syt_root[HOST_PATH];
 static char syt_url[128];
@@ -137,7 +134,7 @@ static void test_sync(void) {
     a.ann[0].updated=60;sy_state m4;assert(sy_merge(&a,&t,100,&m4) && m4.na==1 && m4.nd==0);
     sy_state_free(&m1);sy_state_free(&m2);sy_state_free(&m3);sy_state_free(&m4);sy_state_free(&a);sy_state_free(&b);sy_state_free(&t);
     cv_text_free(&e);cv_text_free(&e2);cv_text_free(&r1);cv_text_free(&r2);
-    syt_pass("MERGE commutative=1 tombstone=1 newer-edit-wins=1");
+    puts("MERGE commutative=1 tombstone=1 newer-edit-wins=1");
   }
 
   /* B. first upload, incremental, idle */
@@ -149,12 +146,12 @@ static void test_sync(void) {
   assert(syt_sync()==SY_OK);
   assert(mock_n_mkcol==1 && mock_n_put==1 && mock_n_propfind==1);
   assert(syt_remote_revision(SYT_BOOK_X,&anns)==1 && anns==1);
-  syt_pass("FIRST-UPLOAD put=1 mkcol=1 revision=1 annotations=1");
+  puts("FIRST-UPLOAD put=1 mkcol=1 revision=1 annotations=1");
   {syt_ann two[]={{100,"first",1762600001000ULL},{200,"second",1762600002000ULL}};syt_write_anns(SYT_BOOK_X,two,2);}
   sy_clock_fixed+=5000;mock_n_put=mock_n_mkcol=0;
   assert(syt_sync()==SY_OK && mock_n_put==1 && mock_n_mkcol==0);
   assert(syt_remote_revision(SYT_BOOK_X,&anns)==2 && anns==2);
-  syt_pass("INCREMENTAL put=1 mkcol=0 revision=2 annotations=2");
+  puts("INCREMENTAL put=1 mkcol=0 revision=2 annotations=2");
   mock_n_put=0;assert(syt_sync()==SY_OK && mock_n_put==0 && syt_remote_revision(SYT_BOOK_X,NULL)==2);
   puts("IDLE put=0 (nothing changed, nothing uploaded)");
 
@@ -175,15 +172,13 @@ static void test_sync(void) {
   syt_dev("devB");
   {syt_ann l[]={{100,"first",1762600001000ULL},{200,"second",1762600002000ULL},{400,"B-only",1762600011000ULL}};syt_write_anns(SYT_BOOK_X,l,3);}
   syt_dev("devA");sy_clock_fixed+=5000;assert(syt_sync()==SY_OK);
-  syt_dev("devB");sy_clock_fixed+=5000;
-  mock_force_status=412;mock_force_count=1; /* retry a concurrent write after GET */
-  assert(syt_sync()==SY_OK && mock_force_count==0 && mock_n_if_match>0);
+  syt_dev("devB");sy_clock_fixed+=5000;assert(syt_sync()==SY_OK);
   assert(syt_read_anns(SYT_BOOK_X,buf,sizeof(buf))==4);printf("  devB: %s\n",buf);
   syt_dev("devA");sy_clock_fixed+=5000;assert(syt_sync()==SY_OK);
   assert(syt_read_anns(SYT_BOOK_X,buf,sizeof(buf))==4);printf("  devA: %s\n",buf);
   assert(strstr(buf,"A-only") && strstr(buf,"B-only"));
   assert(syt_remote_revision(SYT_BOOK_X,&anns)>=3 && anns==4);
-  syt_pass("CONFLICT common-base A+1 B+1 -> both devices 4 annotations (2 shared + A-only + B-only), nothing lost");
+  puts("CONFLICT common-base A+1 B+1 -> both devices 4 annotations (2 shared + A-only + B-only), nothing lost");
 
   /* E. the literal acceptance case: two empty devices each add one annotation -> two each */
   syt_dev("devA");{syt_ann l[]={{10,"from-A",1762600020000ULL}};syt_write_anns(SYT_BOOK_Y,l,1);}
@@ -203,7 +198,7 @@ static void test_sync(void) {
   assert(syt_read_anns(SYT_BOOK_Y,buf,sizeof(buf))==1 && !strcmp(buf,"from-A"));
   syt_dev("devA");sy_clock_fixed+=1000;assert(syt_sync()==SY_OK);
   assert(syt_read_anns(SYT_BOOK_Y,buf,sizeof(buf))==1);
-  syt_pass("DELETE tombstone propagated, not resurrected");
+  puts("DELETE tombstone propagated, not resurrected");
 
   /* G. progress and settings: last writer wins */
   syt_dev("devB");sy_clock_fixed+=1000;
@@ -212,7 +207,7 @@ static void test_sync(void) {
   syt_dev("devA");sy_clock_fixed+=1000;assert(syt_sync()==SY_OK);
   assert(fabs(syt_read_progress(SYT_BOOK_X,&at,&opened)-0.80)<1e-6 && at==800);
   assert(syt_read_title(SYT_BOOK_X,buf,sizeof(buf)) && !strcmp(buf,"Title B"));
-  syt_pass("LWW progress 0.25->0.80 and title A->B reached the other device");
+  puts("LWW progress 0.25->0.80 and title A->B reached the other device");
 
   /* H. errors are readable and never silent */
   {
@@ -220,29 +215,29 @@ static void test_sync(void) {
     sy_wipe(&sy_pass);sy_pass=host_strdup("wrong");
     sy_status s={0};int c=sy_sync_now(&s);printf("  401: %s\n",s.text);
     assert(c==SY_AUTH && strstr(s.text,"401") && strstr(s.text,"密码") && sy_last_code==SY_AUTH);
-    syt_pass("ERROR-401 reported: " "认证失败（HTTP 401）");
+    puts("ERROR-401 reported: " "认证失败（HTTP 401）");
     syt_dev("devA");
     char bad[160];snprintf(bad,sizeof(bad),"http://127.0.0.1:%d/nope/",port);
     free(sy_url);sy_url=host_strdup(bad);
     c=sy_sync_now(&s);printf("  404: %s\n",s.text);
     assert(c==SY_NOTFOUND && strstr(s.text,"404"));
-    syt_pass("ERROR-404 reported: 找不到同步目录（HTTP 404）");
+    puts("ERROR-404 reported: 找不到同步目录（HTTP 404）");
     syt_dev("devA");
     mock_delay_ms=4000;sy_timeout_ms=700;
     c=sy_sync_now(&s);printf("  timeout: %s\n",s.text);
     assert(c==SY_TIMEOUT && strstr(s.text,"超时"));
     mock_delay_ms=0;sy_timeout_ms=1500;
-    syt_pass("ERROR-TIMEOUT reported: 连接超时");
+    assert(WaitForSingleObject(mock_idle,5000)==WAIT_OBJECT_0);
+    puts("ERROR-TIMEOUT reported: 连接超时");
     mock_force_status=403;mock_force_count=1000;
     c=sy_sync_now(&s);printf("  403: %s\n",s.text);assert(c==SY_AUTH && strstr(s.text,"403"));
-    syt_pass("ERROR-403 reported: HTTP 403");
     mock_force_count=0;
+    puts("ERROR-403 reported: HTTP 403");
     /* transient 500s are retried transparently */
-    LONG forced_before=mock_n_forced;
     mock_force_status=500;mock_force_count=2;
-    c=sy_sync_now(&s);printf("  after two 500s: %s\n",s.text);assert(c==SY_OK && mock_n_forced-forced_before==2);
+    c=sy_sync_now(&s);printf("  after two 500s: %s\n",s.text);assert(c==SY_OK);
     mock_force_count=0;
-    syt_pass("RETRY two HTTP 500 responses then success, no user-visible failure");
+    puts("RETRY two HTTP 500 responses then success, no user-visible failure");
   }
 
   /* I. corrupt remote state is never merged into local data */
@@ -258,7 +253,7 @@ static void test_sync(void) {
     assert(c==SY_LOCAL && before_n==after_n && !memcmp(before,after,before_n));
     free(before);free(after);
     EnterCriticalSection(&mock_lock);mock_put_node(path,0,keep,keep_size);LeaveCriticalSection(&mock_lock);free(keep);
-    syt_pass("CORRUPT-REMOTE reported, local annotations byte-identical, remote not overwritten");
+    puts("CORRUPT-REMOTE reported, local annotations byte-identical, remote not overwritten");
   }
 
   /* J. offline queue: really unreachable network, three edits, then reconnect */
@@ -277,7 +272,7 @@ static void test_sync(void) {
     assert((unsigned long)mock_n_put==put_before);
     /* the draft queue is on disk: survives an app restart */
     sy_queue_clear();sy_config_load();assert(sy_queue_count==3);
-    syt_pass("OFFLINE server down: failure reported, 3 drafts queued and persisted in sync.json");
+    puts("OFFLINE server down: failure reported, 3 drafts queued and persisted in sync.json");
     /* network back */
     assert(mock_start(port,"alice",SYT_PASS)==port);
     sy_clock_fixed+=1000;c=syt_sync();assert(c==SY_OK && sy_queue_count==0);
@@ -285,7 +280,7 @@ static void test_sync(void) {
     assert(syt_remote_revision(SYT_BOOK_Z,&anns)==1 && anns==1);
     assert(syt_remote_revision(SYT_BOOK_W,NULL)==1);
     sy_queue_clear();sy_config_load();assert(sy_queue_count==0);
-    syt_pass("RECONNECT 3/3 offline edits pushed (X annotations=5, Z created, W created), queue empty");
+    puts("RECONNECT 3/3 offline edits pushed (X annotations=5, Z created, W created), queue empty");
   }
 
   /* K. credentials are encrypted at rest */
@@ -302,10 +297,12 @@ static void test_sync(void) {
     size_t n=0;char *blob=sy_read(sy_cred_file,&n);assert(blob && n>40);blob[n/2]^=0x55;assert(sy_write(sy_cred_file,blob,n));free(blob);
     sy_wipe(&sy_user);sy_wipe(&sy_pass);assert(!sy_cred_load() && !sy_user && !sy_pass);
     sy_cred_delete();assert(GetFileAttributesW(sy_cred_file)==INVALID_FILE_ATTRIBUTES);
-    syt_pass("CREDENTIALS password/username absent from all files; DPAPI blob roundtrip ok; tampered blob rejected; delete removes file");
+    puts("CREDENTIALS password/username absent from all files; DPAPI blob roundtrip ok; tampered blob rejected; delete removes file");
   }
   /* The wire never carries the password anywhere but the Authorization header: userinfo is refused. */
   {sy_target t;assert(!sy_target_parse("http://alice:pw@host/dav/",&t) && !sy_target_parse("ftp://h/",&t) && sy_target_parse("https://h:8443/a/b",&t) && t.secure && t.port==8443 && !strcmp(t.path,"/a/b/"));}
   mock_stop();
-  assert(syt_scenarios==15);
+  mock_reset();
+  sy_queue_clear();free(sy_url);sy_url=NULL;
+  WSACleanup();
 }

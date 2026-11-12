@@ -1,0 +1,1920 @@
+{
+ "exe": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\build\\a11y-host\\EXReader.exe",
+ "font": "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+ "book": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\moby-dick-mo.epub",
+ "self_test": {
+  "identical": 0,
+  "with_2px_border": 2528
+ },
+ "sha256": {
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\build\\a11y-host\\EXReader.exe": "51742953305f56428e8e99e069b851f1ad88c8f01d57323b740a563351f6ac68",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\build\\a11y-host\\libexreader.dll": "79e9496e24dd2da013aa931d8ac3b07af39a5dc9976e644f17abf30bd18acd6c",
+  "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\moby-dick-mo.epub": "749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\docs\\ui\\acceptance\\check_a11y_c2.py": "d5385ab83a7f3dda13a2c40774d4daee823a7d586f4f49129dd1749566b5e1af"
+ },
+ "foreground_activations": 1,
+ "text_read": {
+  "pagedown_presses": 1,
+  "first50": "Brief Contents\nTitle Page\nOriginal Transcriber’s N",
+  "length": 50,
+  "events": []
+ },
+ "reading_keys": [
+  {
+   "key": "PageDown",
+   "before": "Brief Contents\nTitle Page\nOrig",
+   "after": "Original Transcriber’s Notes:\n",
+   "changed": true,
+   "events": [
+    "StructureChanged(ChildrenInvalidated) on \"阅读区域\""
+   ]
+  },
+  {
+   "key": "PageUp",
+   "before": "Original Transcriber’s Notes:\n",
+   "after": "Brief Contents\nTitle Page\nOrig",
+   "changed": true,
+   "events": [
+    "TextChanged() on \"阅读区域\""
+   ]
+  },
+  {
+   "key": "End",
+   "before": "Brief Contents\nTitle Page\nOrig",
+   "after": "Brief Contents\nTitle Page\nOrig",
+   "changed": false,
+   "events": [
+    "StructureChanged(ChildrenInvalidated) on \"EXReader\"",
+    "StructureChanged(ChildrenInvalidated) on \"阅读区域\"",
+    "TextChanged() on \"阅读区域\"",
+    "StructureChanged(ChildrenInvalidated) on \"EXReader\"",
+    "StructureChanged(ChildrenInvalidated) on \"阅读区域\"",
+    "TextChanged() on \"阅读区域\"",
+    "StructureChanged(ChildrenInvalidated) on \"EXReader\""
+   ]
+  },
+  {
+   "key": "Home",
+   "before": "Brief Contents\nTitle Page\nOrig",
+   "after": "Brief Contents\nTitle Page\nOrig",
+   "changed": false,
+   "events": [
+    "TextChanged() on \"阅读区域\""
+   ]
+  }
+ ],
+ "selection": {
+  "ranges": 1,
+  "first50": "Brief Contents\nTitle Page\nOriginal Transcriber’s N",
+  "events": [
+   "TextChanged() on \"阅读区域\"",
+   "TextSelectionChanged() on \"阅读区域\""
+  ]
+ },
+ "tab_with_search_open": [
+  "Edit#181 \"搜索关键词\"",
+  "Button#184 \"区分大小写\"",
+  "Button#185 \"全词匹配\"",
+  "Button#186 \"关闭搜索\"",
+  "EXReaderPage \"阅读区域\"",
+  "Button#160 \"目录\"",
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#196 \"全文搜索\"",
+  "Edit#181 \"搜索关键词\""
+ ],
+ "search_esc_focus": "EXReaderPage \"阅读区域\"",
+ "search_ctrl_f_focus": "Edit#181 \"搜索关键词\"",
+ "tab_order_forward": [
+  "EXReaderPage \"阅读区域\"",
+  "Button#160 \"目录\"",
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#196 \"全文搜索\"",
+  "EXReaderPage \"阅读区域\"",
+  "Button#160 \"目录\""
+ ],
+ "tab_order_backward": [
+  "Button#160 \"目录\"",
+  "EXReaderPage \"阅读区域\"",
+  "Button#196 \"全文搜索\"",
+  "Button#180 \"返回书架\"",
+  "Button#161 \"设置\"",
+  "Button#160 \"目录\"",
+  "EXReaderPage \"阅读区域\""
+ ],
+ "focus_sequence_for_shots": [
+  "EXReaderPage \"阅读区域\"",
+  "Button#160 \"目录\"",
+  "Button#161 \"设置\""
+ ],
+ "page_border": {
+  "dpi": 120,
+  "page_region": [
+   9,
+   108,
+   1271,
+   851
+  ],
+  "diff_page_focused_vs_toc_focused": 0,
+  "diff_page_focused_vs_settings_focused": 0,
+  "note": "client area below the top bar only; 0 means no focus border is painted on the page"
+ },
+ "focus_ring": {
+  "button": "目录",
+  "box": [
+   1163,
+   48,
+   1213,
+   98
+  ],
+  "ring_px_when_focused": 2,
+  "ring_px_when_not_focused": 0,
+  "expected_px": 2,
+  "accent": "#4553E0",
+  "stroke_token": "SHELL_FOCUS_STROKE=2px x dpi/96"
+ },
+ "tab_with_toc_open": [
+  "ListBox#168 \"目录列表\"",
+  "Button#161 \"设置\"",
+  "Button#180 \"返回书架\"",
+  "Button#196 \"全文搜索\"",
+  "EXReaderPage \"阅读区域\""
+ ],
+ "toc_flow": {
+  "open_events": [
+   "StructureChanged(ChildrenInvalidated) on \"阅读区域\"",
+   "StructureChanged(ChildrenInvalidated) on \"EXReader\"",
+   "StructureChanged(ChildAdded) on \"目录面板\""
+  ],
+  "focus_after_open": "ListBox#168 \"目录列表\"",
+  "text_before_jump": "Brief Contents\nTitle Page\nOrig",
+  "text_after_jump": "EXTRACTS (Supplied by a Sub-Su",
+  "changed": true,
+  "jump_events": [
+   "StructureChanged(ChildrenInvalidated) on \"阅读区域\"",
+   "TextChanged() on \"阅读区域\"",
+   "StructureChanged(ChildrenInvalidated) on \"EXReader\"",
+   "StructureChanged(ChildrenInvalidated) on \"阅读区域\"",
+   "StructureChanged(ChildrenInvalidated) on \"EXReader\"",
+   "StructureChanged(ChildRemoved) on \"目录面板\""
+  ],
+  "focus_after_jump": "EXReaderPage \"阅读区域\""
+ },
+ "settings_events": [
+  "StructureChanged(ChildrenInvalidated) on \"阅读区域\"",
+  "StructureChanged(ChildrenInvalidated) on \"EXReader\"",
+  "TextChanged() on \"字号\"",
+  "StructureChanged(ChildAdded) on \"阅读设置\"",
+  "TextChanged() on \"行距\"",
+  "TextChanged() on \"段距\"",
+  "TextChanged() on \"上边距\"",
+  "TextChanged() on \"右边距\"",
+  "TextChanged() on \"下边距\"",
+  "TextChanged() on \"左边距\"",
+  "TextChanged() on \"字距\"",
+  "StructureChanged(ChildrenInvalidated) on \"EXReader\""
+ ],
+ "tab_with_settings_open": [
+  "Button#1800 \"减小字号\"",
+  "Button#1801 \"增大字号\"",
+  "Edit#1802 \"字号\"",
+  "Button#1803 \"减小行距\"",
+  "Button#1804 \"增大行距\"",
+  "Edit#1805 \"行距\"",
+  "Button#1806 \"减小段距\"",
+  "Button#1807 \"增大段距\"",
+  "Edit#1808 \"段距\"",
+  "Button#1809 \"减小上边距\"",
+  "Button#1810 \"增大上边距\"",
+  "Edit#1811 \"上边距\"",
+  "Button#1812 \"减小右边距\"",
+  "Button#1813 \"增大右边距\"",
+  "Edit#1814 \"右边距\"",
+  "Button#1815 \"减小下边距\"",
+  "Button#1816 \"增大下边距\"",
+  "Edit#1817 \"下边距\"",
+  "Button#1818 \"减小左边距\"",
+  "Button#1819 \"增大左边距\"",
+  "Edit#1820 \"左边距\"",
+  "Button#1821 \"减小字距\"",
+  "Button#1822 \"增大字距\"",
+  "Edit#1823 \"字距\"",
+  "Button#164 \"浅色主题\"",
+  "Button#165 \"深色主题\"",
+  "Button#166 \"跟随系统主题\"",
+  "Edit#1001 \"排版预设\"",
+  "Button#1841 \"保存为预设\"",
+  "Button#1840 \"恢复默认\"",
+  "Button#181 \"点击分区 20 / 60 / 20\"",
+  "Button#182 \"点击分区 25 / 50 / 25\"",
+  "Button#183 \"词典与生词本\"",
+  "Button#180 \"返回书架\"",
+  "Button#196 \"全文搜索\"",
+  "EXReaderPage \"阅读区域\""
+ ],
+ "coverage": {
+  "closed": {
+   "total": 5,
+   "named": 5,
+   "unnamed": [],
+   "with_help": 5,
+   "controls": [
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "196",
+     "cls": "Button"
+    }
+   ]
+  },
+  "search-open": {
+   "total": 14,
+   "named": 14,
+   "unnamed": [],
+   "with_help": 12,
+   "controls": [
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "196",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索栏",
+     "type": "pane",
+     "enabled": true,
+     "help": "输入关键词，回车查找下一处，Shift+回车查找上一处，Esc 关闭",
+     "id": "",
+     "cls": "EXReaderSearchBar"
+    },
+    {
+     "name": "搜索",
+     "type": "text",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": "Static"
+    },
+    {
+     "name": "搜索关键词",
+     "type": "edit",
+     "enabled": true,
+     "help": "输入要在全文中查找的文字",
+     "id": "181",
+     "cls": "Edit"
+    },
+    {
+     "name": "搜索结果计数",
+     "type": "text",
+     "enabled": true,
+     "help": "",
+     "id": "187",
+     "cls": "Static"
+    },
+    {
+     "name": "上一处",
+     "type": "button",
+     "enabled": false,
+     "help": "跳到上一个搜索结果",
+     "id": "182",
+     "cls": "Button"
+    },
+    {
+     "name": "下一处",
+     "type": "button",
+     "enabled": false,
+     "help": "跳到下一个搜索结果",
+     "id": "183",
+     "cls": "Button"
+    },
+    {
+     "name": "区分大小写",
+     "type": "check box",
+     "enabled": true,
+     "help": "选中后搜索区分英文大小写",
+     "id": "184",
+     "cls": "Button"
+    },
+    {
+     "name": "全词匹配",
+     "type": "check box",
+     "enabled": true,
+     "help": "选中后只匹配完整的词",
+     "id": "185",
+     "cls": "Button"
+    },
+    {
+     "name": "关闭搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "关闭搜索栏并回到正文",
+     "id": "186",
+     "cls": "Button"
+    }
+   ]
+  },
+  "toc-open": {
+   "total": 148,
+   "named": 148,
+   "unnamed": [],
+   "with_help": 7,
+   "controls": [
+    {
+     "name": "目录面板",
+     "type": "pane",
+     "enabled": true,
+     "help": "当前书的章节目录",
+     "id": "",
+     "cls": "EXReaderTOC"
+    },
+    {
+     "name": "目录列表",
+     "type": "list",
+     "enabled": true,
+     "help": "上下键选择章节，回车跳转到该章",
+     "id": "168",
+     "cls": "ListBox"
+    },
+    {
+     "name": "Moby-Dick",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Original Transcriber’s Notes:",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "ETYMOLOGY.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "EXTRACTS (Supplied by a Sub-Sub-Librarian).",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 1. Loomings.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 2. The Carpet-Bag.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 3. The Spouter-Inn.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 4. The Counterpane.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 5. Breakfast.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 6. The Street.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 7. The Chapel.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 8. The Pulpit.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 9. The Sermon.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 10. A Bosom Friend.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 11. Nightgown.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 12. Biographical.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 13. Wheelbarrow.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 14. Nantucket.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 15. Chowder.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 16. The Ship.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 17. The Ramadan.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 18. His Mark.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 19. The Prophet.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 20. All Astir.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 21. Going Aboard.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 22. Merry Christmas.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 23. The Lee Shore.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 24. The Advocate.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 25. Postscript.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 26. Knights and Squires.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 27. Knights and Squires.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 28. Ahab.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 29. Enter Ahab; to Him, Stubb.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 30. The Pipe.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 31. Queen Mab.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 32. Cetology.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 33. The Specksnyder.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 34. The Cabin-Table.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 35. The Mast-Head.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 36. The Quarter-Deck.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 37. Sunset.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 38. Dusk.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 39. First Night Watch.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 40. Midnight, Forecastle.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 41. Moby Dick.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 42. The Whiteness of The Whale.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 43. Hark!",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 44. The Chart.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 45. The Affidavit.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 46. Surmises.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 47. The Mat-Maker.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 48. The First Lowering.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 49. The Hyena.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 50. Ahab’s Boat and Crew. Fedallah.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 51. The Spirit-Spout.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 52. The Albatross.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 53. The Gam.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 54. The Town-Ho’s Story.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 55. Of the Monstrous Pictures of Whales.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 56. Of the Less Erroneous Pictures of Whales, and the True",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 57. Of Whales in Paint; in Teeth; in Wood; in Sheet-Iron; in",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 58. Brit.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 59. Squid.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 60. The Line.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 61. Stubb Kills a Whale.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 62. The Dart.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 63. The Crotch.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 64. Stubb’s Supper.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 65. The Whale as a Dish.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 66. The Shark Massacre.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 67. Cutting In.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 68. The Blanket.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 69. The Funeral.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 70. The Sphynx.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 71. The Jeroboam’s Story.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 72. The Monkey-Rope.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 73. Stubb and Flask Kill a Right Whale; and Then Have a Talk",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 74. The Sperm Whale’s Head—Contrasted View.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 75. The Right Whale’s Head—Contrasted View.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 76. The Battering-Ram.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 77. The Great Heidelburgh Tun.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 78. Cistern and Buckets.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 79. The Prairie.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 80. The Nut.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 81. The Pequod Meets The Virgin.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 82. The Honour and Glory of Whaling.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 83. Jonah Historically Regarded.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 84. Pitchpoling.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 85. The Fountain.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 86. The Tail.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 87. The Grand Armada.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 88. Schools and Schoolmasters.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 89. Fast-Fish and Loose-Fish.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 90. Heads or Tails.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 91. The Pequod Meets The Rose-Bud.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 92. Ambergris.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 93. The Castaway.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 94. A Squeeze of the Hand.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 95. The Cassock.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 96. The Try-Works.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 97. The Lamp.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 98. Stowing Down and Clearing Up.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 99. The Doubloon.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 100. Leg and Arm.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 101. The Decanter.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 102. A Bower in the Arsacides.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 103. Measurement of The Whale’s Skeleton.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 104. The Fossil Whale.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 105. Does the Whale’s Magnitude Diminish?—Will He Perish?",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 106. Ahab’s Leg.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 107. The Carpenter.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 108. Ahab and the Carpenter.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 109. Ahab and Starbuck in the Cabin.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 110. Queequeg in His Coffin.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 111. The Pacific.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 112. The Blacksmith.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 113. The Forge.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 114. The Gilder.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 115. The Pequod Meets The Bachelor.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 116. The Dying Whale.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 117. The Whale Watch.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 118. The Quadrant.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 119. The Candles.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 120. The Deck Towards the End of the First Night Watch.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 121. Midnight.—The Forecastle Bulwarks.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 122. Midnight Aloft.—Thunder and Lightning.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 123. The Musket.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 124. The Needle.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 125. The Log and Line.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 126. The Life-Buoy.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 127. The Deck.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 128. The Pequod Meets The Rachel.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 129. The Cabin.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 130. The Hat.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 131. The Pequod Meets The Delight.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 132. The Symphony.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 133. The Chase—First Day.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 134. The Chase—Second Day.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Chapter 135. The Chase.—Third Day.",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Epilogue",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "Copyright Page",
+     "type": "list item",
+     "enabled": true,
+     "help": "",
+     "id": "",
+     "cls": ""
+    },
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "196",
+     "cls": "Button"
+    }
+   ]
+  },
+  "settings-open": {
+   "total": 41,
+   "named": 41,
+   "unnamed": [],
+   "with_help": 39,
+   "controls": [
+    {
+     "name": "阅读设置",
+     "type": "pane",
+     "enabled": true,
+     "help": "调整阅读排版和主题，Esc 关闭",
+     "id": "",
+     "cls": "EXReaderSettings"
+    },
+    {
+     "name": "减小字号",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1800",
+     "cls": "Button"
+    },
+    {
+     "name": "增大字号",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1801",
+     "cls": "Button"
+    },
+    {
+     "name": "字号",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1802",
+     "cls": "Edit"
+    },
+    {
+     "name": "减小行距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1803",
+     "cls": "Button"
+    },
+    {
+     "name": "增大行距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1804",
+     "cls": "Button"
+    },
+    {
+     "name": "行距",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1805",
+     "cls": "Edit"
+    },
+    {
+     "name": "减小段距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1806",
+     "cls": "Button"
+    },
+    {
+     "name": "增大段距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1807",
+     "cls": "Button"
+    },
+    {
+     "name": "段距",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1808",
+     "cls": "Edit"
+    },
+    {
+     "name": "减小上边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1809",
+     "cls": "Button"
+    },
+    {
+     "name": "增大上边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1810",
+     "cls": "Button"
+    },
+    {
+     "name": "上边距",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1811",
+     "cls": "Edit"
+    },
+    {
+     "name": "减小右边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1812",
+     "cls": "Button"
+    },
+    {
+     "name": "增大右边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1813",
+     "cls": "Button"
+    },
+    {
+     "name": "右边距",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1814",
+     "cls": "Edit"
+    },
+    {
+     "name": "减小下边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1815",
+     "cls": "Button"
+    },
+    {
+     "name": "增大下边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1816",
+     "cls": "Button"
+    },
+    {
+     "name": "下边距",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1817",
+     "cls": "Edit"
+    },
+    {
+     "name": "减小左边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1818",
+     "cls": "Button"
+    },
+    {
+     "name": "增大左边距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1819",
+     "cls": "Button"
+    },
+    {
+     "name": "左边距",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1820",
+     "cls": "Edit"
+    },
+    {
+     "name": "减小字距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步减小这一项",
+     "id": "1821",
+     "cls": "Button"
+    },
+    {
+     "name": "增大字距",
+     "type": "button",
+     "enabled": true,
+     "help": "按一步增大这一项",
+     "id": "1822",
+     "cls": "Button"
+    },
+    {
+     "name": "字距",
+     "type": "edit",
+     "enabled": true,
+     "help": "直接输入数值，离开输入框后生效",
+     "id": "1823",
+     "cls": "Edit"
+    },
+    {
+     "name": "浅色主题",
+     "type": "button",
+     "enabled": true,
+     "help": "使用浅色界面",
+     "id": "164",
+     "cls": "Button"
+    },
+    {
+     "name": "深色主题",
+     "type": "button",
+     "enabled": true,
+     "help": "使用深色界面",
+     "id": "165",
+     "cls": "Button"
+    },
+    {
+     "name": "跟随系统主题",
+     "type": "button",
+     "enabled": true,
+     "help": "界面颜色跟随 Windows 的深浅色设置",
+     "id": "166",
+     "cls": "Button"
+    },
+    {
+     "name": "排版预设",
+     "type": "combo box",
+     "enabled": true,
+     "help": "输入名称保存，或从列表选择已有预设",
+     "id": "1842",
+     "cls": "ComboBox"
+    },
+    {
+     "name": "排版预设",
+     "type": "edit",
+     "enabled": true,
+     "help": "",
+     "id": "1001",
+     "cls": "Edit"
+    },
+    {
+     "name": "Open",
+     "type": "button",
+     "enabled": true,
+     "help": "",
+     "id": "DropDown",
+     "cls": ""
+    },
+    {
+     "name": "保存为预设",
+     "type": "button",
+     "enabled": true,
+     "help": "把当前排版保存为预设",
+     "id": "1841",
+     "cls": "Button"
+    },
+    {
+     "name": "恢复默认",
+     "type": "button",
+     "enabled": true,
+     "help": "恢复默认排版",
+     "id": "1840",
+     "cls": "Button"
+    },
+    {
+     "name": "点击分区 20 / 60 / 20",
+     "type": "button",
+     "enabled": true,
+     "help": "左右各 20% 翻页，中间 60% 显示或隐藏工具栏",
+     "id": "181",
+     "cls": "Button"
+    },
+    {
+     "name": "点击分区 25 / 50 / 25",
+     "type": "button",
+     "enabled": true,
+     "help": "左右各 25% 翻页，中间 50% 显示或隐藏工具栏",
+     "id": "182",
+     "cls": "Button"
+    },
+    {
+     "name": "词典与生词本",
+     "type": "button",
+     "enabled": true,
+     "help": "管理词典和生词本",
+     "id": "183",
+     "cls": "Button"
+    },
+    {
+     "name": "阅读区域",
+     "type": "正文",
+     "enabled": true,
+     "help": "选择文字后可复制引用或添加标注",
+     "id": "IDC_PAGE",
+     "cls": "EXReaderPage"
+    },
+    {
+     "name": "返回书架",
+     "type": "button",
+     "enabled": true,
+     "help": "回到书架，快捷键 Ctrl+W",
+     "id": "180",
+     "cls": "Button"
+    },
+    {
+     "name": "目录",
+     "type": "button",
+     "enabled": true,
+     "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+     "id": "160",
+     "cls": "Button"
+    },
+    {
+     "name": "设置",
+     "type": "button",
+     "enabled": true,
+     "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+     "id": "161",
+     "cls": "Button"
+    },
+    {
+     "name": "全文搜索",
+     "type": "button",
+     "enabled": true,
+     "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+     "id": "196",
+     "cls": "Button"
+    }
+   ]
+  }
+ },
+ "contrast_restored": {
+  "flags": 126,
+  "high_contrast_on": false,
+  "sys_color_window": "0xffffff"
+ }
+}
