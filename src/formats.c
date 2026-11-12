@@ -1220,6 +1220,8 @@ exr_status exr_epub_load(const exr_document *index, size_t part, exr_document **
   }
   result = epub_parse_chapter(d, &z, index->chapters[part].resource, 1, 1, e);
   if (result == EXR_OK)
+    result = exr_media_scan(d, e);
+  if (result == EXR_OK)
     result = exr_model_finish(d, e);
 done:
   mz_zip_reader_end(&z.archive);

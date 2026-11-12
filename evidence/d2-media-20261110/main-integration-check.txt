@@ -1,0 +1,15 @@
+Command: git merge-tree --write-tree HEAD origin/main
+Base checked: fe3d46e1
+Exit code: 1
+683a479c6f916dedfaf2f97a9aad9a6390549661
+100644 eeb006ff1ebacc73d87d06905226db43f3802511 1	OUT.txt
+100644 16288855ab3704edea9c61c2e1d6d7d1ca88da5f 2	OUT.txt
+100644 46ff5eeff477d5b605c89bfaa9ddc1babffabecc 3	OUT.txt
+
+Auto-merging CMakeLists.txt
+Auto-merging OUT.txt
+CONFLICT (content): Merge conflict in OUT.txt
+Auto-merging include/exr/layout.h
+Auto-merging src/document.c
+Auto-merging src/document_internal.h
+Auto-merging src/formats.c

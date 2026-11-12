@@ -1,0 +1,7 @@
+Test project C:/Users/Oscar/Documents/Codex/d2m-build
+    Start 32: native-chapter-index
+1/1 Test #32: native-chapter-index .............   Passed    1.74 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   1.78 sec

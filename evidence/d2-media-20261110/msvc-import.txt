@@ -1,0 +1,4 @@
+Tool: C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\lib.exe
+Input: ../d2m-build/msvc-compat.def (LIBRARY libexreader.dll + generated exreader.def exports)
+   Creating library ../d2m-build/Release/exreader.lib and object ../d2m-build/Release/exreader.exp
+exit_code=0

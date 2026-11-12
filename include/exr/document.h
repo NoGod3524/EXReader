@@ -288,6 +288,44 @@ EXR_API const exr_chapter *exr_document_chapters(const exr_document *doc, size_t
 EXR_API const exr_resource *exr_document_resources(const exr_document *doc, size_t *count);
 /* Borrowed views last until document_free. Attribute names use URI|local for namespaces. */
 EXR_API const char *exr_node_attribute(const exr_node *node, const char *name);
+
+/* Embedded media recognised in a loaded EPUB part. The engine never decodes or
+   plays media; it identifies each <audio>, <video>, <object> and <embed>, checks
+   the container, and lays out a short visible placeholder (TEXT node) instead of
+   leaving the element blank. Hosts that can play media use path/media_type and
+   read bytes with exr_document_resource. */
+typedef enum { EXR_MEDIA_AUDIO = 1, EXR_MEDIA_VIDEO, EXR_MEDIA_EMBEDDED } exr_media_kind;
+typedef enum {
+  EXR_MEDIA_AVAILABLE = 0, /* local, present, an audio or video type */
+  EXR_MEDIA_MISSING,       /* local reference absent from the container */
+  EXR_MEDIA_UNSUPPORTED,   /* plugin/legacy type (Flash, Java, ...) or non-media */
+  EXR_MEDIA_REMOTE,        /* absolute URI outside the book; never fetched */
+  EXR_MEDIA_NO_SOURCE      /* no src/data and no <source> child */
+} exr_media_state;
+enum {
+  EXR_MEDIA_AUTOPLAY = 1, EXR_MEDIA_LOOP = 2, EXR_MEDIA_CONTROLS = 4, EXR_MEDIA_MUTED = 8,
+  EXR_MEDIA_HIDDEN = 16,     /* hidden attribute: no placeholder is laid out */
+  EXR_MEDIA_COVER = 32,      /* inside epub:type/role cover, or a cover-named part */
+  EXR_MEDIA_BACKGROUND = 64, /* audio with autoplay+loop and no controls */
+  EXR_MEDIA_DURATION_ESTIMATED = 128 /* constant-bitrate MP3 size estimate */
+};
+typedef struct {
+  exr_media_kind kind;
+  exr_media_state state;
+  unsigned flags;
+  size_t element;     /* node index of the media element */
+  size_t placeholder; /* TEXT node holding label, SIZE_MAX when none */
+  const char *tag;    /* local element name */
+  const char *src;    /* chosen reference as written ("" when none) */
+  const char *path;   /* resolved container path, NULL when remote/absent */
+  const char *media_type; /* manifest type, else type attribute, else "" */
+  const char *poster; /* resolved video poster path or NULL */
+  long long duration_ms; /* -1 unknown; WAV, MP3, MP4/M4A/MOV headers only */
+  size_t source_count;   /* candidate references considered (src + <source>) */
+  const char *label;     /* the visible placeholder text */
+} exr_media_item;
+/* Borrowed until document_free; parts without media return NULL and 0. */
+EXR_API const exr_media_item *exr_document_media(const exr_document *doc, size_t *count);
 EXR_API exr_format exr_document_format(const exr_document *doc);
 EXR_API exr_status exr_document_find(const exr_document *doc, const char *query, size_t from,
                                      size_t *start, size_t *end, exr_error *error);

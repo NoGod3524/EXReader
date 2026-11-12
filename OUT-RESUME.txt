@@ -1,6 +1,8 @@
-已推送至 `f90f0b43`，创建 [draft PR #127](https://github.com/NoGod3524/EXReader/pull/127)。完整报告：[OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-d3-large-20261110/OUT.txt)。
+已完成续跑并推送，draft PR：[#128](https://github.com/NoGod3524/EXReader/pull/128)。
 
-- 19 本真书、11,426 页：页数及逐页哈希全部不变。
-- 相同 probe 的交错 A/B 已完成；26,013 页搜索后内存从 65.30 降至 53.14 MiB。
-- ctest **256/257**：剩余 `sdk-release` 因 MinGW 包缺少 MSVC 所需的 `exreader.lib` 失败，详情已记录。
-- PR 当前不可直接合并，待主控集成。
+- 19 本、11,426 页：页数与逐页哈希全部不变。
+- 媒体测试 4/4；《草枕》439 个 SMIL 片段全部解析。
+- 完整 ctest 首轮 257/260，三项经复测及补齐 MSVC 导入库后均通过；原始失败记录已保留。
+- MP3/AAC 保持关闭，受保护文件未改。
+
+收尾报告：[OUT.txt](C:/Users/Oscar/Documents/Codex/EXReader-d2-media-20261110/OUT.txt)。与最新 `main` 仅 `OUT.txt` 有文本冲突，已记录，留主控集成。
