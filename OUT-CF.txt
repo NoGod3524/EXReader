@@ -1546,3 +1546,6 @@ Verified original PR head branch codex/large-book-2-20261110, no merge in progre
 Conflict files across completed merges: OUT.txt, RESOLVE-OUT.txt, RESOLVE.md. Each retains both parents with marker lines removed (16 parent/report checks passed). OUT-CF.txt contains append-only recovery notes. CMakeLists.txt and source/layer additions merged automatically.
 Configure/build already passed. Verified cf127-ctest-recovery.log: 403/403 passed, no failed tests, sdk-release excluded, 3126.35 seconds. Only OUT-CF.txt differs from tested merge 8e7d65f7; no suite rerun needed.
 Protected files are byte-identical to origin/main; reading-release SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b. GitHub pre-push confirms PR 127 open, merged=false, mergeable=true, original head branch. Push this report only to origin/codex/large-book-2-20261110.
+
+[Recovery push verification]
+Pushed c96dfaca2bb78f3271e25dd488d7d5bfb8990813 to the original PR branch successfully. GitHub confirms this exact head, open=true, merged=false, mergeable=true, base fe9adf43. CI started automatically: Required native reading SDK core pending; Native C engine, Native reading profiles and SDK version consistency queued. Required remote CI completion remains outstanding. This follow-up records the observed push result on the same branch; no source changes or new test run.
