@@ -10521,3 +10521,5 @@ exit=0
 
 Permission deny rule "computer" matches no known tool - check for typos.
 exit=0
+
+[recovery 2026-11-11 final] Working-tree OUT-CF.txt had been truncated to 0 bytes by the interrupted run; restored from HEAD. HEAD == origin branch, 0 behind main (16 ahead). Conflicts resolved earlier (commit 0a810a60, union of both sides); local ctest 404/404 excluding sdk-release (2 flaky native tests passed on serial retry). PR #112 mergeable=MERGEABLE, mergeStateStatus=BLOCKED only because CI checks are QUEUED. No re-merge needed.
