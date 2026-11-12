@@ -1,0 +1,16 @@
+{
+  "tests/check_reading_release.py": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+  "tools/version_literal_exceptions.json": "6d2ab944c7c624b1f82ffa61b0c742fb1cb731b88bd700b245bac644aa247fc2",
+  "tools/layers.json": "f7e525a0682dc96794ae4288a7a62fd0d84b0684dc643ff61459367c85bceaf1",
+  "tools/large_book/large_book_probe.c": "a155fdcb0e011651f562fe7e7ae89d78a0eae821a7068f37cfc9781fc8de0e9f",
+  "build/d3/libexreader.dll": "1137bc5e73b7b0bf5c24ca5fa547ac792fa76897129d6cd9f6f0f4a4d273a161",
+  "build/d3/exreader-document-search-test.exe": "d955078dd00dd8312f5b63eac6f1b2d164c59519b01130b7a166ca5d4461d3d3",
+  "../large-book-d3/before/libexreader.dll": "bea067b76a761578b0b8b9c5c952b6e0cf35aab09920bfdf99c2a6416579c691",
+  "../large-book-d3/before/probe.exe": "ae2db0b3b9720c1136fa8865155b27ae55390910ff56668b8c527254cea54959",
+  "../large-book-d3/after2/probe.exe": "803a0a17d3fe3651ea2ed2674294bf2c8cda0bcde970591358aeec03d424ccb9",
+  "../large-book-d3/Reader.otf": "a4aed9985a5916fbf6690456f8732a9fccd517938e353165d4142b4f11a39280",
+  "../large-book-d3/A-sameprobe/probe.exe": "803a0a17d3fe3651ea2ed2674294bf2c8cda0bcde970591358aeec03d424ccb9",
+  "../large-book-d3/B-sameprobe/probe.exe": "803a0a17d3fe3651ea2ed2674294bf2c8cda0bcde970591358aeec03d424ccb9",
+  "../large-book-d3/A-sameprobe/libexreader.dll": "bea067b76a761578b0b8b9c5c952b6e0cf35aab09920bfdf99c2a6416579c691",
+  "../large-book-d3/B-sameprobe/libexreader.dll": "1137bc5e73b7b0bf5c24ca5fa547ac792fa76897129d6cd9f6f0f4a4d273a161"
+}

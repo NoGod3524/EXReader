@@ -3,7 +3,12 @@
 #include "hyphen_internal.h"
 #include <ctype.h>
 
-typedef struct { char *text; size_t size; } search_part;
+/* Search snapshots are an LRU cache bounded by SEARCH_SNAPSHOT_BUDGET bytes,
+   so a complete search of an arbitrarily large book keeps resident text flat.
+   An evicted part keeps its size and FNV-1a hash; a reload must match it, so a
+   mutable provider can never mix two text revisions in one publication. */
+#define SEARCH_SNAPSHOT_BUDGET ((size_t)16*1024*1024)
+typedef struct { char *text; size_t size; uint64_t hash, used; int seen; } search_part;
 typedef struct publication_search_index publication_search_index;
 static void publication_index_free(publication_search_index *index);
 struct exr_publication {
@@ -24,6 +29,8 @@ struct exr_publication {
   exr_target *missing;
   size_t missing_count, missing_capacity;
   search_part *search;
+  size_t search_bytes;
+  uint64_t search_clock;
   int searching;
   publication_search_index *index;
   exr_footnote *footnotes;
@@ -1349,6 +1356,33 @@ static int search_whole(const char *s,size_t n,size_t start,size_t end) {
   at=end;if(at<n) exr_next(s,n,&at,&after);
   return !(search_word(before) && search_word(first)) && !(search_word(last) && search_word(after));
 }
+static uint64_t search_hash(const char *text,size_t size) {
+  uint64_t hash=UINT64_C(14695981039346656037);size_t i;
+  for(i=0;i<size;i++) {hash^=(unsigned char)text[i];hash*=UINT64_C(1099511628211);}
+  return hash;
+}
+static exr_status search_snapshot(exr_publication *p,size_t part,exr_error *e) {
+  search_part *sp=&p->search[part];exr_document *doc=NULL;size_t size=0,i;uint64_t hash;
+  exr_status status=exr_publication_load(p,part,&doc,e);if(status!=EXR_OK) return status;
+  const char *text=exr_document_text(doc,&size);
+  hash=search_hash(text,size);
+  if(sp->seen && (sp->size!=size || sp->hash!=hash)) {
+    exr_document_free(doc);
+    return exr_fail(e,EXR_FORMAT,"Publication part text changed since its search snapshot; reopen the publication");
+  }
+  /* Evict least recently searched parts; the part being loaded may exceed the budget alone. */
+  while(p->search_bytes && (p->search_bytes>SEARCH_SNAPSHOT_BUDGET || size>SEARCH_SNAPSHOT_BUDGET-p->search_bytes)) {
+    size_t victim=SIZE_MAX;
+    for(i=0;i<p->count;i++) if(p->search[i].text && (victim==SIZE_MAX || p->search[i].used<p->search[victim].used)) victim=i;
+    if(victim==SIZE_MAX) break;
+    free(p->search[victim].text);p->search[victim].text=NULL;p->search_bytes-=p->search[victim].size;
+  }
+  sp->text=exr_copy(text,size);
+  exr_document_free(doc);
+  if(!sp->text) return exr_fail(e,EXR_MEMORY,"Search text snapshot allocation failed");
+  sp->size=size;sp->hash=hash;sp->seen=1;p->search_bytes+=size;
+  return EXR_OK;
+}
 static exr_status search_run(exr_publication *p,exr_text_position from,const char *needle,unsigned flags,
   exr_search_fn callback,void *context,const exr_control *control,size_t *count,exr_search_result *first,exr_error *e) {
   uint32_t *pattern=NULL,*prefix=NULL,cp;size_t bytes=0,m=0,at=0,i,j,part,hits=0;exr_status status=EXR_OK;
@@ -1382,13 +1416,9 @@ static exr_status search_run(exr_publication *p,exr_text_position from,const cha
     status=exr_control_cancel(control,e);if(status!=EXR_OK) break;
     if(!p->parts[part].in_reading_order) continue;
     if(!sp->text) {
-      exr_document *doc=NULL;
-      status=exr_publication_load(p,part,&doc,e);if(status!=EXR_OK) break;
-      const char *text=exr_document_text(doc,&sp->size);
-      sp->text=exr_copy(text,sp->size);
-      exr_document_free(doc);
-      if(!sp->text) {status=exr_fail(e,EXR_MEMORY,"Search text snapshot allocation failed");break;}
+      status=search_snapshot(p,part,e);if(status!=EXR_OK) break;
     }
+    sp->used=++p->search_clock;
     at=part==from.part ? from.offset:0;j=0;
     if(at>sp->size) {status=exr_fail(e,EXR_ARGUMENT,"Search offset exceeds part text");break;}
     while(at<sp->size && ((unsigned char)sp->text[at]&0xc0)==0x80) at++;
