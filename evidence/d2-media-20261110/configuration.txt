@@ -1,0 +1,16 @@
+EXR_BUILD_TESTS:BOOL=ON
+EXR_BUILD_TOOLS:BOOL=ON
+EXR_ENABLE_AAC:BOOL=OFF
+EXR_ENABLE_MP3:BOOL=OFF
+FETCHCONTENT_SOURCE_DIR_MINIMP3:PATH=
+EXR_BUILD_TESTS:BOOL=OFF
+EXR_BUILD_TOOLS:BOOL=OFF
+EXR_ENABLE_AAC:BOOL=OFF
+EXR_ENABLE_MP3:BOOL=OFF
+FETCHCONTENT_SOURCE_DIR_MINIMP3:PATH=
+Candidate configured header: False
+Alternate header C:/Users/Oscar/exr-deps/minimp3/minimp3.h: True
+
+> C:/Users/Oscar/Documents/Codex/EXReader-d2-media-20261110/src/mp3.c:15:10: fatal error: minimp3.h: No such file or directory
+     15 | #include <minimp3.h>
+        |          ^~~~~~~~~~~

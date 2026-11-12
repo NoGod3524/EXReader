@@ -1,0 +1,10 @@
+Test project C:/Users/Oscar/Documents/Codex/d2m-build
+    Start 1: sdk-release
+1/1 Test #1: sdk-release ......................   Passed    8.27 sec
+
+100% tests passed out of 1
+
+Label Time Summary:
+release    =   8.27 sec*proc (1 test)
+
+Total Test time (real) =   8.28 sec

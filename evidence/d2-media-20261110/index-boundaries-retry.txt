@@ -1,0 +1,2 @@
+publication index boundaries passed
+exit_code=0

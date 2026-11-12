@@ -1,0 +1,336 @@
+[
+  {
+    "book": "media-av.epub",
+    "parts": 1,
+    "pages": 1,
+    "media": [
+      {
+        "part": 0,
+        "kind": "audio",
+        "state": "available",
+        "flags": [
+          "controls"
+        ],
+        "src": "audio/tone.mp3",
+        "path": "OPS/audio/tone.mp3",
+        "media_type": "audio/mpeg",
+        "poster": null,
+        "duration_ms": 4048,
+        "source_count": 1,
+        "label": "[Audio: tone.mp3, 0:04]",
+        "placeholder_node": true
+      },
+      {
+        "part": 0,
+        "kind": "audio",
+        "state": "available",
+        "flags": [
+          "controls"
+        ],
+        "src": "audio/theme.m4a",
+        "path": "OPS/audio/theme.m4a",
+        "media_type": "audio/mp4",
+        "poster": null,
+        "duration_ms": 3000,
+        "source_count": 2,
+        "label": "[Audio: theme.m4a, 0:03]",
+        "placeholder_node": true
+      },
+      {
+        "part": 0,
+        "kind": "video",
+        "state": "available",
+        "flags": [
+          "controls"
+        ],
+        "src": "video/clip.mp4",
+        "path": "OPS/video/clip.mp4",
+        "media_type": "video/mp4",
+        "poster": "OPS/img/poster.png",
+        "duration_ms": 2000,
+        "source_count": 1,
+        "label": "[Video: clip.mp4, 0:02]",
+        "placeholder_node": true
+      }
+    ],
+    "overlays": [],
+    "screenshots": [
+      "media-av-part0-p0.png"
+    ],
+    "media_count": 3
+  },
+  {
+    "book": "media-cover-bgm.epub",
+    "parts": 2,
+    "pages": 2,
+    "media": [
+      {
+        "part": 0,
+        "kind": "video",
+        "state": "available",
+        "flags": [
+          "autoplay",
+          "loop",
+          "muted",
+          "cover"
+        ],
+        "src": "video/clip.mp4",
+        "path": "OPS/video/clip.mp4",
+        "media_type": "video/mp4",
+        "poster": "OPS/img/poster.png",
+        "duration_ms": 2000,
+        "source_count": 1,
+        "label": "[Video: clip.mp4, 0:02]",
+        "placeholder_node": true
+      },
+      {
+        "part": 1,
+        "kind": "audio",
+        "state": "available",
+        "flags": [
+          "autoplay",
+          "loop",
+          "background"
+        ],
+        "src": "audio/theme.m4a",
+        "path": "OPS/audio/theme.m4a",
+        "media_type": "audio/mp4",
+        "poster": null,
+        "duration_ms": 3000,
+        "source_count": 1,
+        "label": "[Audio: theme.m4a, 0:03]",
+        "placeholder_node": true
+      }
+    ],
+    "overlays": [],
+    "screenshots": [
+      "media-cover-bgm-part0-p0.png",
+      "media-cover-bgm-part1-p0.png"
+    ],
+    "media_count": 2
+  },
+  {
+    "book": "media-legacy.epub",
+    "parts": 1,
+    "pages": 2,
+    "media": [
+      {
+        "part": 0,
+        "kind": "audio",
+        "state": "missing",
+        "flags": [
+          "controls"
+        ],
+        "src": "audio/gone.mp3",
+        "path": "OPS/audio/gone.mp3",
+        "media_type": "audio/mpeg",
+        "poster": null,
+        "duration_ms": -1,
+        "source_count": 1,
+        "label": "[Audio unavailable: audio/gone.mp3 is missing from this book]",
+        "placeholder_node": true
+      },
+      {
+        "part": 0,
+        "kind": "embedded",
+        "state": "unsupported",
+        "flags": [],
+        "src": "movie.swf",
+        "path": "OPS/movie.swf",
+        "media_type": "application/x-shockwave-flash",
+        "poster": null,
+        "duration_ms": -1,
+        "source_count": 2,
+        "label": "[Embedded media not supported: movie.swf (application/x-shockwave-flash)]",
+        "placeholder_node": true
+      },
+      {
+        "part": 0,
+        "kind": "video",
+        "state": "unsupported",
+        "flags": [],
+        "src": "old.flv",
+        "path": "OPS/old.flv",
+        "media_type": "video/x-flv",
+        "poster": null,
+        "duration_ms": -1,
+        "source_count": 1,
+        "label": "[Video not supported: old.flv (video/x-flv)]",
+        "placeholder_node": true
+      },
+      {
+        "part": 0,
+        "kind": "video",
+        "state": "unsupported",
+        "flags": [
+          "controls"
+        ],
+        "src": "old.wmv",
+        "path": "OPS/old.wmv",
+        "media_type": "video/x-ms-wmv",
+        "poster": null,
+        "duration_ms": -1,
+        "source_count": 1,
+        "label": "[Video not supported: old.wmv (video/x-ms-wmv)]",
+        "placeholder_node": true
+      },
+      {
+        "part": 0,
+        "kind": "video",
+        "state": "remote",
+        "flags": [
+          "controls"
+        ],
+        "src": "https://example.com/v.mp4",
+        "path": null,
+        "media_type": "video/mp4",
+        "poster": null,
+        "duration_ms": -1,
+        "source_count": 1,
+        "label": "[Video is online: https://example.com/v.mp4 - not loaded]",
+        "placeholder_node": true
+      },
+      {
+        "part": 0,
+        "kind": "audio",
+        "state": "no-source",
+        "flags": [
+          "controls"
+        ],
+        "src": null,
+        "path": null,
+        "media_type": null,
+        "poster": null,
+        "duration_ms": -1,
+        "source_count": 0,
+        "label": "[Audio: no source given]",
+        "placeholder_node": true
+      }
+    ],
+    "overlays": [],
+    "screenshots": [
+      "media-legacy-part0-p0.png",
+      "media-legacy-part0-p1.png"
+    ],
+    "media_count": 6
+  },
+  {
+    "book": "media-smil.epub",
+    "parts": 2,
+    "pages": 2,
+    "media": [],
+    "overlays": [
+      {
+        "part": 0,
+        "smil": "OPS/c1.smil",
+        "duration_ms": 3000,
+        "active_class": "-epub-media-overlay-active",
+        "clips": 3,
+        "missing_audio": 0,
+        "unresolved_text": 0,
+        "pairs": [
+          {
+            "par": "s1",
+            "text": [
+              0,
+              12,
+              35
+            ],
+            "fragment": "s1",
+            "audio": "OPS/audio/narration.mp3",
+            "begin_ms": 0,
+            "end_ms": 1000,
+            "audio_present": true,
+            "text_excerpt": "It was a quiet morning."
+          },
+          {
+            "par": "s2",
+            "text": [
+              0,
+              36,
+              61
+            ],
+            "fragment": "s2",
+            "audio": "OPS/audio/narration.mp3",
+            "begin_ms": 1000,
+            "end_ms": 2000,
+            "audio_present": true,
+            "text_excerpt": "The kettle began to sing."
+          },
+          {
+            "par": "s3",
+            "text": [
+              0,
+              62,
+              86
+            ],
+            "fragment": "s3",
+            "audio": "OPS/audio/narration.mp3",
+            "begin_ms": 2000,
+            "end_ms": 3000,
+            "audio_present": true,
+            "text_excerpt": "Somewhere a door closed."
+          }
+        ]
+      },
+      {
+        "part": 1,
+        "smil": "OPS/c2.smil",
+        "duration_ms": 3000,
+        "active_class": "-epub-media-overlay-active",
+        "clips": 3,
+        "missing_audio": 0,
+        "unresolved_text": 0,
+        "pairs": [
+          {
+            "par": "t1",
+            "text": [
+              1,
+              12,
+              34
+            ],
+            "fragment": "t1",
+            "audio": "OPS/audio/narration.mp3",
+            "begin_ms": 3000,
+            "end_ms": 4000,
+            "audio_present": true,
+            "text_excerpt": "She opened the window."
+          },
+          {
+            "par": "t2",
+            "text": [
+              1,
+              35,
+              58
+            ],
+            "fragment": "t2",
+            "audio": "OPS/audio/narration.mp3",
+            "begin_ms": 4000,
+            "end_ms": 5000,
+            "audio_present": true,
+            "text_excerpt": "Rain had started again."
+          },
+          {
+            "par": "t3",
+            "text": [
+              1,
+              59,
+              73
+            ],
+            "fragment": "t3",
+            "audio": "OPS/audio/narration.mp3",
+            "begin_ms": 5000,
+            "end_ms": 6000,
+            "audio_present": true,
+            "text_excerpt": "The day began."
+          }
+        ]
+      }
+    ],
+    "screenshots": [
+      "media-smil-part0-p0.png",
+      "media-smil-part1-p0.png"
+    ],
+    "media_count": 0
+  }
+]
