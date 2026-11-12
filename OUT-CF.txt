@@ -5736,3 +5736,5 @@ exit=0
 
 Permission deny rule "computer" matches no known tool - check for typos.
 exit=0
+
+[recovery 2 2026-11-11] OUT-CF.txt was again 0 bytes in worktree; restored from HEAD (491713 bytes). HEAD==origin branch 631375ab, 0 behind main, no conflict markers. PR #116 MERGEABLE/BLOCKED, CI checks pending.
