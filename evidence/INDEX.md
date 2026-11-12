@@ -5,9 +5,9 @@
 | 口径 | 数值 | 依据 |
 | --- | --- | --- |
 | 名义（catalog 记账） | 99/108（verified 99、partial 1、pending 8） | [catalog.json](../docs/reader-total-progress/catalog.json) |
-| 有总台账审计支撑 | 95/108 | [run 40928834086](https://github.com/NoGod3524/EXReader/actions/runs/40928834086)（#29 attempt 2，开始于 2026-10-29T18:17:09Z）`report.json`：current_done=95、evidence_ok=true；96–99 为未审计记账，见 [LEDGER-AUTHORITY](../docs/reader-total-progress/LEDGER-AUTHORITY.md#exceptions) |
-| 当前树可复现 | 未知 | 尚无绑定当前 main SHA 的完整台账复验 |
-| 产品级 final 组（F 项） | 名义 4/12（F02/F04/F06/F07） | catalog 记账；不是当前树产品验收 4/12。上述审计 run 当时 final 组为 1/12 |
+| 有总台账审计支撑 | **99/108** | [run 43295866204](https://github.com/NoGod3524/EXReader/actions/runs/43295866204)（绑定 main `ca9e9f6b`，2026-11-12T20:01Z）`report.json`：current_done=99、evidence_ok=true、problems={} |
+| 当前树可复现 | **是** | 同一 run 43295866204 在 `ca9e9f6b` 上跑完，evidence_ok=true；99/108 与 catalog 记账一致 |
+| 产品级 final 组（F 项） | 名义 4/12（F02/F04/F06/F07）；当前树审计同为 **4/12** | 审计 run 43295866204 的 by_group.final.done=4 |
 
 99/108 是历史记账，不能当作当前整树通过。
 
