@@ -74,6 +74,28 @@ const exr_node *exr_document_nodes(const exr_document *d, size_t *n) {
     *n = d ? d->node_count : 0;
   return d ? d->nodes : NULL;
 }
+const exr_media_item *exr_document_media(const exr_document *d, size_t *n) {
+  if (n)
+    *n = d ? d->media_count : 0;
+  return d && d->media_count ? d->media : NULL;
+}
+int exr_media_element(const char *s) {
+  return !strcmp(s, "audio") || !strcmp(s, "video") || !strcmp(s, "object") || !strcmp(s, "embed");
+}
+size_t exr_media_placeholder_of(const exr_document *d, size_t element) {
+  size_t i;
+  for (i = 0; d && i < d->media_count; i++)
+    if (d->media[i].element == element)
+      return d->media[i].placeholder;
+  return SIZE_MAX;
+}
+int exr_media_placeholder(const exr_document *d, size_t node) {
+  size_t i;
+  for (i = 0; d && i < d->media_count; i++)
+    if (d->media[i].placeholder == node)
+      return 1;
+  return 0;
+}
 const exr_chapter *exr_document_chapters(const exr_document *d, size_t *n) {
   if (n)
     *n = d ? d->chapter_count : 0;
@@ -118,6 +140,16 @@ void exr_model_free(exr_document *d) {
       free((void *)d->chapters[i].id);
       free((void *)d->chapters[i].path);
     }
+  for (i = 0; i < d->media_count; i++) {
+    free((void *)d->media[i].src);
+    free((void *)d->media[i].path);
+    free((void *)d->media[i].media_type);
+    free((void *)d->media[i].poster);
+    free((void *)d->media[i].label);
+  }
+  free(d->media);
+  d->media = NULL;
+  d->media_count = 0;
   free(d->nodes);
   free(d->last_children);
   free(d->chapters);
@@ -236,6 +268,13 @@ static void XMLCALL tree_start(void *user, const char *name, const char **attrs)
       token(exr_node_attribute(node, "role"), "doc-footnote") ||
       token(exr_node_attribute(node, "role"), "doc-endnote"))
     node->kind = EXR_NODE_NOTE;
+  /* EPUB placeholders must stay in tree order for layout. Generic XML trees
+     retain their source nodes so streaming chapter indexes remain equivalent. */
+  if (p->doc->format == EXR_EPUB && exr_media_element(local_name(name)) &&
+      exr_model_node(p->doc, index, p->chapter, EXR_NODE_TEXT, NULL, "", 0) == SIZE_MAX) {
+    stop(p, EXR_LIMIT);
+    return;
+  }
   if (p->position) {
     int64_t offset = XML_GetCurrentByteIndex64(p->parser);
     exr_status status = offset < 0 ? EXR_FORMAT :
@@ -448,12 +487,19 @@ static int project_node(projection *p, size_t index, unsigned heading) {
   const char *tag = exr_html_tag(p->doc, node);
   size_t child, start = SIZE_MAX, end = 0;
   int boundary;
+  size_t placeholder;
   if (node->kind == EXR_NODE_TEXT)
     return project_text(p, node, heading);
   if (!strcmp(tag, "head") || !strcmp(tag, "script") || !strcmp(tag, "style") ||
-      !strcmp(tag, "object") || !strcmp(tag, "template") || exr_node_attribute(node, "hidden"))
+      !strcmp(tag, "template") || exr_node_attribute(node, "hidden"))
     return 1;
-  boundary = exr_projection_boundary(node->kind, tag);
+  placeholder = exr_media_placeholder_of(p->doc, index);
+  /* An <object> shows only its engine placeholder; other objects stay hidden. */
+  if (!strcmp(tag, "object") && placeholder == SIZE_MAX)
+    return 1;
+  /* The placeholder replaces the element's fallback content, which would
+     otherwise contradict a playable file's label. */
+  boundary = exr_projection_boundary(node->kind, tag) || placeholder != SIZE_MAX;
   if (boundary)
     end_block(p);
   if (node->kind == EXR_NODE_HEADING)
@@ -461,6 +507,8 @@ static int project_node(projection *p, size_t index, unsigned heading) {
         tag[0] == 'h' && tag[1] >= '1' && tag[1] <= '6' && !tag[2] ? (unsigned)(tag[1] - '0') : 1;
   for (child = node->first_child; child != SIZE_MAX; child = p->doc->nodes[child].next_sibling) {
     exr_node *v = &p->doc->nodes[child];
+    if (placeholder != SIZE_MAX && child != placeholder)
+      continue;
     if (!project_node(p, child, heading))
       return 0;
     if (v->start != SIZE_MAX && v->end > v->start) {
@@ -713,6 +761,7 @@ size_t exr_document_memory_size(const exr_document *d) {
   total = exr_memory_array(total, d->chapters, d->chapter_capacity, sizeof(*d->chapters));
   total = exr_memory_array(total, d->resources, d->resource_capacity, sizeof(*d->resources));
   total = exr_memory_array(total, d->resource_data, d->resource_count, sizeof(*d->resource_data));
+  total = exr_memory_array(total, d->media, d->media_count, sizeof(*d->media));
   total = exr_memory_add(total, d->model_bytes);
   /* Custom construction copies its title through exr_model_copy. Chapter strings
      either alias resource metadata or were copied through that same model path. */

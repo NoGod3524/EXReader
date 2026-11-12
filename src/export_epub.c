@@ -90,7 +90,8 @@ static int tree(writer *w, exr_buffer *b, size_t index, unsigned depth) {
     w->status = exr_control_poll(w->control, EXR_STAGE_EXPORT, w->visited, 0, w->error);
     if (w->status != EXR_OK) return 0;
   }
-  if (v->kind == EXR_NODE_TEXT) return escape(w, b, v->text);
+  /* Engine media placeholders are presentation, not publication content. */
+  if (v->kind == EXR_NODE_TEXT) return exr_media_placeholder(w->doc, index) ? 1 : escape(w, b, v->text);
   tag = v->name ? v->name : fallback(v->kind);
   if (!name(w, tag, &local, &ns)) return 0;
   if (!put(b, "<") || !put(b, local) || !put(b, " xmlns=\"") ||

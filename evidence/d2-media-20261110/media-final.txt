@@ -1,0 +1,4 @@
+media-av.epub: parts=1 pages=1 media=3 overlays=0 screenshots=['media-av-part0-p0.png']
+media-cover-bgm.epub: parts=2 pages=2 media=2 overlays=0 screenshots=['media-cover-bgm-part0-p0.png', 'media-cover-bgm-part1-p0.png']
+media-legacy.epub: parts=1 pages=2 media=6 overlays=0 screenshots=['media-legacy-part0-p0.png', 'media-legacy-part0-p1.png']
+media-smil.epub: parts=2 pages=2 media=0 overlays=2 screenshots=['media-smil-part0-p0.png', 'media-smil-part1-p0.png']

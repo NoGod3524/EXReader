@@ -2141,6 +2141,48 @@ int main(void) {
 
 **所有权** 输入仅借用本次调用；值类型输出由调用者保存，无需释放。
 
+### `exr_document_media`
+
+**签名** `const exr_media_item *exr_document_media(const exr_document *doc, size_t *count);`
+
+**ABI** 实验；声明：[exr/document.h](../include/exr/document.h)。
+
+**参数** `doc`：结构化文档快照；`count`：输出媒体项数量
+
+**返回与失败** 返回媒体项数组；无媒体的部分返回 NULL 且 count 为 0。
+
+**线程** 可并发读取不可变快照；调用期间不得销毁对象或其借用视图。
+
+**所有权** 返回值借用自文档，直到 exr_document_free 前有效，不得释放。
+
+### `exr_publication_media_overlay`
+
+**签名** `exr_status exr_publication_media_overlay(exr_publication *publication,size_t part,exr_media_overlay **overlay,exr_error *error);`
+
+**ABI** 实验；声明：[exr/layout.h](../include/exr/layout.h)。
+
+**参数** `publication`：出版物；`part`：部分序号；`overlay`：输出叠加层；`error`：可选错误详情
+
+**返回与失败** 成功返回 EXR_OK；部分未声明 media-overlay 时 *overlay 为 NULL。SMIL 缺失或格式错误时失败并给出可读信息，不影响读取该部分本身。仅限 EPUB。
+
+**线程** 同一 publication 不得并发调用；不同对象可并行。
+
+**所有权** 成功时输出的 overlay 归调用者，须用 exr_media_overlay_free 释放。
+
+### `exr_media_overlay_free`
+
+**签名** `void exr_media_overlay_free(exr_media_overlay *overlay);`
+
+**ABI** 实验；声明：[exr/layout.h](../include/exr/layout.h)。
+
+**参数** `overlay`：要释放的叠加层，可为 NULL
+
+**返回与失败** 无返回值，不会失败。
+
+**线程** 同一对象不得并发释放；释放期间不得使用该对象。
+
+**所有权** 释放后 overlay 及其内部字符串与片段数组全部失效。
+
 ### `exr_publication_create`
 
 **签名** `exr_status exr_publication_create(const exr_publication_input *input, exr_publication **out, exr_error *error);`
