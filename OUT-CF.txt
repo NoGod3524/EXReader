@@ -5823,3 +5823,5 @@ codex
 tokens used
 197,655
 exit=0
+
+[recovery 2026-11-11] merge of origin/main already done+pushed (0 behind main). PR #116 mergeable=MERGEABLE, state BLOCKED (awaiting CI/review). Earlier local ctest: 405/405 excluding sdk-release. A 0-byte OUT-CF.txt was restored from HEAD.
