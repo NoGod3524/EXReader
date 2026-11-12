@@ -4069,9 +4069,11 @@ static void compose_page_view(HWND window) {
     RECT text = area;
     SetBkMode(dc, TRANSPARENT);
 #ifdef EXR_READER_WINDOWS_SHELL
-    if(shell_active) SetTextColor(dc,shell_colorref(shell_colors->text_secondary));else
+    if(shell_active) SetTextColor(dc,shell_colorref(shell_colors->text_secondary));
+    else if(shell_contrast) SetTextColor(dc,GetSysColor(COLOR_WINDOWTEXT));
+    else
 #endif
-    SetTextColor(dc, shell_contrast ? GetSysColor(COLOR_WINDOWTEXT) : RGB(90, 90, 90));
+    SetTextColor(dc, RGB(90, 90, 90));
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
 #ifdef EXR_READER_WINDOWS_SHELL
