@@ -1,0 +1,52 @@
+{
+  "exe_sha256": "098ed800e973d7cc6784a886c6419e517b91682481c72c22fff6af6a2c225f81",
+  "book_sha256": "2cccccc9166a39ea8c142fde9c6d6e94d8959023e56b73f7bdb43d695dd0d397",
+  "credential_scan": {
+    "profile-A": [
+      "scanned 9 files under C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\webdav-20261110\\real-exe\\A\\profile; hits=0; sync.cred present (276 bytes)",
+      "PASS"
+    ],
+    "profile-B": [
+      "scanned 9 files under C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\webdav-20261110\\real-exe\\B\\profile; hits=0; sync.cred present (276 bytes)",
+      "PASS"
+    ],
+    "profile-C": [
+      "scanned 8 files under C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\webdav-20261110\\real-exe\\C\\profile; hits=0; sync.cred present (276 bytes)",
+      "PASS"
+    ],
+    "annotations-A": [
+      "scanned 1 files under C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\webdav-20261110\\real-exe\\A-annotations; hits=0; sync.cred MISSING",
+      "FAIL"
+    ],
+    "annotations-B": [
+      "scanned 1 files under C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\webdav-20261110\\real-exe\\B-annotations; hits=0; sync.cred MISSING",
+      "FAIL"
+    ]
+  },
+  "runs": {
+    "A-first": {
+      "exit": 0,
+      "elapsed_seconds": 37.70563449999827
+    },
+    "B-merge": {
+      "exit": 0,
+      "elapsed_seconds": 15.304711799999495
+    },
+    "A-restart": {
+      "exit": 0,
+      "elapsed_seconds": 34.23105020000003
+    },
+    "A-offline": {
+      "exit": 0,
+      "elapsed_seconds": 67.58355369999845
+    },
+    "A-reconnect": {
+      "exit": 0,
+      "elapsed_seconds": 35.875363299997844
+    },
+    "C-401": {
+      "exit": 0,
+      "elapsed_seconds": 37.10568239999702
+    }
+  }
+}

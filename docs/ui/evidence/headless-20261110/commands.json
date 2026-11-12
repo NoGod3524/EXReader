@@ -1,0 +1,394 @@
+[
+  {
+    "name": "build-console",
+    "command": [
+      "cmake",
+      "--build",
+      "build/w",
+      "--target",
+      "check_sync",
+      "check_shell_opds",
+      "exreader-opds-test",
+      "-j",
+      "2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 75.156,
+    "log": "build-console.txt"
+  },
+  {
+    "name": "ctest-headless",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "build/w",
+      "-V",
+      "-R",
+      "^(windows-selection-sync|windows-opds-timeout|windows-a11y-static|native-opds)$"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 32.961,
+    "log": "ctest-headless.txt"
+  },
+  {
+    "name": "sync-15",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "examples/windows/check_shell_sync.py",
+      "build/w/check_sync.exe",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\headless-20261110"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 28.461,
+    "log": "sync-15.txt"
+  },
+  {
+    "name": "opds-gutenberg",
+    "command": [
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\build\\w\\check_shell_opds.exe",
+      "https://www.gutenberg.org/ebooks.opds/",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\headless-20261110\\opds"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 5.994,
+    "log": "opds-gutenberg.txt"
+  },
+  {
+    "name": "version",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/check_version_consistency.py"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 41.081,
+    "log": "version.txt"
+  },
+  {
+    "name": "layers",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/check_layers.py",
+      "build/w"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.026,
+    "log": "layers.txt"
+  },
+  {
+    "name": "install-sdk",
+    "command": [
+      "cmake",
+      "--install",
+      "build/w",
+      "--prefix",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\out\\sdk"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 23.366,
+    "log": "install-sdk.txt"
+  },
+  {
+    "name": "configure-host",
+    "command": [
+      "cmake",
+      "-S",
+      "examples/windows",
+      "-B",
+      "build/host",
+      "-DEXR_SDK=C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\out\\sdk",
+      "-DEXR_READER_WINDOWS_SHELL=ON",
+      "-DCMAKE_C_FLAGS=-O2 -Wall -Wextra -Werror"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.582,
+    "log": "configure-host.txt"
+  },
+  {
+    "name": "build-host",
+    "command": [
+      "cmake",
+      "--build",
+      "build/host",
+      "--target",
+      "EXReader",
+      "-j",
+      "2"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 21.537,
+    "log": "build-host-failed.txt"
+  },
+  {
+    "name": "build-console-final",
+    "command": [
+      "cmake",
+      "--build",
+      "build/w",
+      "--target",
+      "check_sync",
+      "check_shell_opds",
+      "exreader-opds-test",
+      "-j",
+      "2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 88.643,
+    "log": "build-console-final.txt"
+  },
+  {
+    "name": "ctest-headless-final",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "build/w",
+      "-V",
+      "-R",
+      "^(windows-selection-sync|windows-opds-timeout|windows-a11y-static|native-opds)$"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 40.56,
+    "log": "ctest-headless-final.txt"
+  },
+  {
+    "name": "build-host",
+    "command": [
+      "cmake",
+      "--build",
+      "build/host",
+      "--target",
+      "EXReader",
+      "-j",
+      "2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 18.032,
+    "log": "build-host.txt"
+  },
+  {
+    "name": "realbooks",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/regress/run_realbooks.py",
+      "--manifest",
+      "tools/regress/corpus.json",
+      "--dll",
+      "build/w/libexreader.dll",
+      "--font",
+      "tests/fixtures/fonts/primary.ttf",
+      "--layout",
+      "tools/regress/layout.json",
+      "--output",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\headless-20261110\\realbooks.json",
+      "--baseline",
+      "docs/ui/evidence/webdav-20261110/books-final.json",
+      "--source-revision",
+      "787e86e09cd3ca517922e6b14dfbee31ed1bcf98",
+      "--workers",
+      "2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 46.592,
+    "log": "realbooks.txt"
+  },
+  {
+    "name": "post-main-build-console",
+    "command": [
+      "cmake",
+      "--build",
+      "build/w",
+      "--target",
+      "check_sync",
+      "check_shell_opds",
+      "exreader-opds-test",
+      "-j",
+      "2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 118.453,
+    "log": "post-main-build-console.txt"
+  },
+  {
+    "name": "post-main-ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "build/w",
+      "-V",
+      "-R",
+      "^(windows-selection-sync|windows-opds-timeout|windows-a11y-static|native-opds)$"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 33.103,
+    "log": "post-main-ctest.txt"
+  },
+  {
+    "name": "post-main-version",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/check_version_consistency.py"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 26.39,
+    "log": "post-main-version.txt"
+  },
+  {
+    "name": "post-main-layers",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/check_layers.py",
+      "build/w"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.086,
+    "log": "post-main-layers.txt"
+  },
+  {
+    "name": "post-main-install-sdk",
+    "command": [
+      "cmake",
+      "--install",
+      "build/w",
+      "--prefix",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\out\\sdk"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 12.024,
+    "log": "post-main-install-sdk.txt"
+  },
+  {
+    "name": "post-main-configure-host",
+    "command": [
+      "cmake",
+      "-S",
+      "examples/windows",
+      "-B",
+      "build/host",
+      "-DEXR_SDK=C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\out\\sdk",
+      "-DEXR_READER_WINDOWS_SHELL=ON",
+      "-DCMAKE_C_FLAGS=-O2 -Wall -Wextra -Werror"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.472,
+    "log": "post-main-configure-host.txt"
+  },
+  {
+    "name": "post-main-build-host",
+    "command": [
+      "cmake",
+      "--build",
+      "build/host",
+      "--target",
+      "EXReader",
+      "-j",
+      "2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 15.376,
+    "log": "post-main-build-host.txt"
+  },
+  {
+    "name": "post-main-realbooks",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/regress/run_realbooks.py",
+      "--manifest",
+      "tools/regress/corpus.json",
+      "--dll",
+      "build/w/libexreader.dll",
+      "--font",
+      "tests/fixtures/fonts/primary.ttf",
+      "--layout",
+      "tools/regress/layout.json",
+      "--output",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\headless-20261110\\post-main-realbooks.json",
+      "--baseline",
+      "docs/ui/evidence/webdav-20261110/books-final.json",
+      "--source-revision",
+      "8c08679f35de45108c91ae7d1096b57d456eeb26",
+      "--workers",
+      "2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 39.087,
+    "log": "post-main-realbooks.txt"
+  },
+  {
+    "name": "post-main-docs-compile",
+    "command": [
+      "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Werror",
+      "-Iinclude",
+      "docs/examples/formats.c",
+      "build/w/libexreader.dll.a",
+      "-o",
+      "build/w/check_opds_docs.exe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.23,
+    "log": "post-main-docs-compile.txt"
+  },
+  {
+    "name": "post-main-docs-example",
+    "command": [
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\build\\w\\check_opds_docs.exe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.07,
+    "log": "post-main-docs-example.txt"
+  },
+  {
+    "name": "post-main-docs-coverage",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/check_sdk_docs.py",
+      "--output",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\headless-20261110\\sdk-docs-static.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.24,
+    "log": "post-main-docs-coverage.txt"
+  },
+  {
+    "name": "post-main-opds-gutenberg",
+    "command": [
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\build\\w\\check_shell_opds.exe",
+      "https://www.gutenberg.org/ebooks.opds/",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b1-webdav-20261110\\docs\\ui\\evidence\\headless-20261110\\post-main-opds"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 6.351,
+    "log": "post-main-opds-gutenberg.txt"
+  },
+  {
+    "name": "post-main-version-final",
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "tools/check_version_consistency.py"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 12.726,
+    "log": "post-main-version-final.txt"
+  }
+]

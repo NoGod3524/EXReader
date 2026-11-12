@@ -1,0 +1,43 @@
+{
+  "mode": "headless-static",
+  "checks": {
+    "Name/HelpText:shell_back": true,
+    "Name/HelpText:shell_search_button": true,
+    "Name/HelpText:shell_toc": true,
+    "Name/HelpText:shell_settings": true,
+    "Name/HelpText:shell_toc_panel": true,
+    "Name/HelpText:shell_toc_list": true,
+    "Name/HelpText:shell_panel": true,
+    "Name/HelpText:shell_search_bar": true,
+    "Name/HelpText:shell_search_edit": true,
+    "Name/HelpText:shell_search_prev": true,
+    "Name/HelpText:shell_search_next": true,
+    "Name/HelpText:shell_search_case": true,
+    "Name/HelpText:shell_search_word": true,
+    "Name/HelpText:shell_search_close": true,
+    "Name/HelpText:style-fields": true,
+    "registration:backend": true,
+    "registration:after-controls-created": true,
+    "registration:reader-include": true,
+    "events:structure": true,
+    "events:text-and-selection": true,
+    "keyboard:tab-handler": true,
+    "keyboard:base-order": true,
+    "focus-ring:token": true,
+    "contrast:configuration": true,
+    "historical-screenshots": true
+  },
+  "accepted": true,
+  "runtime_uia": "pending-user-present-manual-check",
+  "sources": {
+    "examples/reader.c": "94f377ecc075a07afff01d697ae33322a184abfe9f3b13981eb0ae502c14ee99",
+    "examples/windows/shell_screen.inc": "19f8f2afd22fb5a20a334a30db6096d0db94612d8e6638cfb60f58fddaa8e615",
+    "apps/reader/desktop/windows_accessibility.inc": "97b484196d945c901745cdfae4e1f6f27901599dd8a8e95f105eada80d63faf2",
+    "examples/windows/shell_search.inc": "83c26cbfdca08d7079699c9e1714d4156fad78fc782d8d9353612b265d1247b6",
+    "examples/windows/shell_toc.inc": "9cde94cda0a6dce8c24ee3ce1e66d3681f1c3979f4408cff795063f64b965282",
+    "examples/windows/shell_settings.inc": "c9b65906ae9aef1dda647c5bc7941aa5668c7bb85b540f21ac7c645e2df69d3d",
+    "examples/windows/shell_tokens.h": "d396aac5782854c6e81ea8c129e014de2bd59d0c48ececb857acc70e901bbaad",
+    "examples/windows/shell_d2d.cpp": "124c116d43cac761551a22271e75f8239d4a5c8ea3e7b08cc8ec96ff07ae8a20"
+  },
+  "manual_checklist": "docs/a11y/C2-MANUAL-CHECK.md"
+}

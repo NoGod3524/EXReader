@@ -1,0 +1,138 @@
+ninja: warning: premature end of file; recovering
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===========================================================================
+--
+-- CMake version in use ......... 4.4.2
+--
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix .......
+--
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+--
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+--
+--   Entropy sources
+--     rand_s ................... ON
+--
+-- ===========================================================================
+CMake Warning (deprecated) at C:/Users/Oscar/exr-deps/miniz/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Editing reflow disabled: supply EXR_EDIT_MODEL_SOURCE from X1
+-- Configuring done (5.8s)
+-- Generating done (1.3s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w
+ninja: warning: premature end of file; recovering
+[0/4] Re-checking globbed directories...
+[1/90] Building C object CMakeFiles/exr_doc_objects.dir/src/annotation.c.obj
+[2/90] Building C object CMakeFiles/exr_doc_objects.dir/src/anchor.c.obj
+[3/90] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_offset.c.obj
+[4/90] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_syntax.c.obj
+[5/90] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi.c.obj
+[6/90] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_index.c.obj
+[7/90] Building C object CMakeFiles/exr_doc_objects.dir/src/cfi_text.c.obj
+[8/90] Building C object CMakeFiles/exr_doc_objects.dir/src/construct.c.obj
+[9/90] Building C object CMakeFiles/exr_doc_objects.dir/src/chapter_window.c.obj
+[10/90] Building C object CMakeFiles/exr_doc_objects.dir/src/document.c.obj
+[11/90] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed.c.obj
+[12/90] Building C object CMakeFiles/exr_doc_objects.dir/src/fixed_text.c.obj
+[13/90] Building C object CMakeFiles/exr_doc_objects.dir/src/opds.c.obj
+[14/90] Linking C static library libexr_doc.a
+[15/90] Building C object CMakeFiles/exr_formats_objects.dir/src/book.c.obj
+[16/90] Building C object CMakeFiles/exr_formats_objects.dir/src/epub_write.c.obj
+[17/90] Building C object CMakeFiles/exr_formats_objects.dir/src/docx.c.obj
+[18/90] Building C object CMakeFiles/exr_formats_objects.dir/src/export_epub.c.obj
+[19/90] Building C object CMakeFiles/exr_formats_objects.dir/src/export_text.c.obj
+[20/90] Building C object CMakeFiles/exr_formats_objects.dir/src/fb2.c.obj
+[21/90] Building C object CMakeFiles/exr_formats_objects.dir/src/huff.c.obj
+[22/90] Building C object CMakeFiles/exr_formats_objects.dir/src/formats.c.obj
+[23/90] Building C object CMakeFiles/exr_formats_objects.dir/src/kf8.c.obj
+[24/90] Building C object CMakeFiles/exr_formats_objects.dir/src/navigation.c.obj
+[25/90] Building C object CMakeFiles/exr_formats_objects.dir/src/lcp.c.obj
+[26/90] Building C object CMakeFiles/exr_formats_objects.dir/src/xmp.c.obj
+[27/90] Building C object CMakeFiles/exr_formats_objects.dir/src/rtf.c.obj
+[28/90] Linking C static library libexr_formats.a
+[29/90] Building C object CMakeFiles/exr_layout_objects.dir/src/chapter_reader.c.obj
+[30/90] Building C object CMakeFiles/exr_layout_objects.dir/src/display_bidi.c.obj
+[31/90] Building C object CMakeFiles/exr_layout_objects.dir/src/docx_reflow.c.obj
+[32/90] Building C object CMakeFiles/exr_layout_objects.dir/src/floats.c.obj
+[33/90] Building C object CMakeFiles/exr_layout_objects.dir/src/flow.c.obj
+[34/90] Building C object CMakeFiles/exr_layout_objects.dir/src/inline.c.obj
+[35/90] Building C object CMakeFiles/exr_layout_objects.dir/src/layout.c.obj
+[36/90] Building C object CMakeFiles/exr_layout_objects.dir/src/pager.c.obj
+[37/90] Building C object CMakeFiles/exr_layout_objects.dir/src/pager_table.c.obj
+[38/90] Building C object CMakeFiles/exr_layout_objects.dir/src/positioned.c.obj
+[39/90] Building C object CMakeFiles/exr_layout_objects.dir/src/publication.c.obj
+[40/90] Building C object CMakeFiles/exr_layout_objects.dir/src/ruby.c.obj
+[41/90] Building C object CMakeFiles/exr_layout_objects.dir/src/ssml.c.obj
+[42/90] Building C object CMakeFiles/exr_layout_objects.dir/src/style.c.obj
+[43/90] Building C object CMakeFiles/exr_layout_objects.dir/src/toc_page.c.obj
+[44/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/cbz.c.obj
+[45/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotation_paint.c.obj
+[46/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_annotations.c.obj
+[47/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_ccitt.c.obj
+[48/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_cmap.c.obj
+[49/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_color.c.obj
+[50/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_content.c.obj
+[51/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_crypto.c.obj
+[52/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_document.c.obj
+[53/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_encoding.c.obj
+[54/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_face.c.obj
+[55/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_font.c.obj
+[56/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_function.c.obj
+[57/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_image.c.obj
+[58/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_objects.c.obj
+[59/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_pages.c.obj
+[60/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_paint.c.obj
+[61/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_raster.c.obj
+[62/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading.c.obj
+[63/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_shading_mesh.c.obj
+[64/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask.c.obj
+[65/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_softmask_parse.c.obj
+[66/90] Building C object CMakeFiles/exr_pdf_objects.dir/src/pdf_view.c.obj
+[67/90] Linking C static library libexr_layout.a
+[68/90] Building C object CMakeFiles/exr_render_objects.dir/src/raster.c.obj
+[69/90] Linking C static library libexr_pdf.a
+[70/90] Building C object CMakeFiles/exr_pdf_edit_objects.dir/src/pdf_write.c.obj
+[71/90] Building C object CMakeFiles/exr_pdf_edit_objects.dir/src/xmp_write.c.obj
+[72/90] Building C object CMakeFiles/exr_library_objects.dir/src/library.c.obj
+[73/90] Linking C static library libexr_render.a
+[74/90] Linking C static library libexr_pdf_edit.a
+[75/90] Building C object CMakeFiles/exreader-opds-test.dir/tests/test_opds.c.obj
+[76/90] Building C object CMakeFiles/check_sync.dir/examples/windows/check_sync.c.obj
+[77/90] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_d2d.cpp.obj
+[78/90] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_speech.cpp.obj
+[79/90] Building C object CMakeFiles/exr_sqlite.dir/C_/Users/Oscar/exr-deps/sqlite/sqlite3.c.obj
+[80/90] Linking C static library libexr_sqlite.a
+[81/90] Linking C static library libexr_library.a
+[82/90] Linking C shared library libexreader.dll
+[83/90] Building CXX object CMakeFiles/check_sync.dir/examples/windows/shell_epub.cpp.obj
+[84/90] Linking C executable exreader-opds-test.exe
+[85/90] Linking CXX executable check_sync.exe
+[86/90] Building C object CMakeFiles/check_shell_opds.dir/examples/windows/check_shell_opds.c.obj
+[87/90] Linking C executable check_shell_opds.exe

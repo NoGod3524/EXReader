@@ -228,6 +228,7 @@ static int shelf_layout(void) {
   if(!shelf_visible || !shelf_panel)return 0;
   RECT r;GetClientRect(g.window,&r);
   SetWindowPos(shelf_panel,HWND_TOP,0,0,r.right,r.bottom,SWP_NOACTIVATE);
+  opds_layout();
   sm_refresh();return 1;
 }
 static void shelf_show(int show) {

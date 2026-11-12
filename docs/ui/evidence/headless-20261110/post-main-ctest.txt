@@ -1,0 +1,131 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 180
+    Start 180: native-opds
+
+180: Test command: C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\build\w\exreader-opds-test.exe
+180: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w
+180: Test timeout computed to be: 10000000
+180: opds ok
+1/4 Test #180: native-opds ......................   Passed    0.06 sec
+test 272
+    Start 272: windows-selection-sync
+
+272: Test command: C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\build\w\check_sync.exe
+272: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w
+272: Test timeout computed to be: 90
+272: MERGE commutative=1 tombstone=1 newer-edit-wins=1
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 1 本书。
+272: FIRST-UPLOAD put=1 mkcol=1 revision=1 annotations=1
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 1 本书。
+272: INCREMENTAL put=1 mkcol=0 revision=2 annotations=2
+272:   sync -> code=0  同步完成：上传 0 本，从云端更新 0 本，共 1 本书。
+272: IDLE put=0 (nothing changed, nothing uploaded)
+272:   sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 1 本书。
+272: PULL annotations=2 progress=0.25(anchor 100) title="Title A"
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 1 本书。
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 1 本，共 1 本书。
+272:   devB: first|second|B-only|A-only
+272:   sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 1 本书。
+272:   devA: first|second|A-only|B-only
+272: CONFLICT common-base A+1 B+1 -> both devices 4 annotations (2 shared + A-only + B-only), nothing lost
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 2 本书。
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 1 本，共 2 本书。
+272:   devB: from-B|from-A
+272:   sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 2 本书。
+272:   devA: from-A|from-B
+272: CONFLICT-2 each device added 1 -> both devices have 2
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 2 本书。
+272:   sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 2 本书。
+272:   sync -> code=0  同步完成：上传 0 本，从云端更新 0 本，共 2 本书。
+272: DELETE tombstone propagated, not resurrected
+272:   sync -> code=0  同步完成：上传 1 本，从云端更新 0 本，共 2 本书。
+272:   sync -> code=0  同步完成：上传 0 本，从云端更新 1 本，共 2 本书。
+272: LWW progress 0.25->0.80 and title A->B reached the other device
+272:   401: 连接服务器失败：认证失败（HTTP 401），用户名或密码不正确。
+272: ERROR-401 reported: 认证失败（HTTP 401）
+272:   404: 连接服务器失败：找不到同步目录（HTTP 404），请检查服务器地址与路径。
+272: ERROR-404 reported: 找不到同步目录（HTTP 404）
+272:   timeout: 连接服务器失败：连接超时，服务器长时间没有响应。
+272: ERROR-TIMEOUT reported: 连接超时
+272:   403: 连接服务器失败：拒绝访问（HTTP 403），该账号对此目录没有读写权限。
+272: ERROR-403 permission denied reported
+272:   after two 500s: 同步完成：上传 0 本，从云端更新 0 本，共 2 本书。
+272: RETRY two HTTP 500 responses then success, no user-visible failure
+272:   corrupt: 远端状态文件损坏或版本不受支持（11111111…），已跳过这本书，未覆盖远端。
+272: CORRUPT-REMOTE reported, local annotations byte-identical, remote not overwritten
+272:   offline: 连接服务器失败：无法连接服务器（网络已断开，或服务器未运行）。
+272: OFFLINE server down: failure reported, 3 drafts queued and persisted in sync.json
+272:   unroutable: 连接服务器失败：连接超时，服务器长时间没有响应。
+272:   dns: 连接服务器失败：无法解析服务器域名（网络未连接或地址拼写错误）。
+272:   sync -> code=0  同步完成：上传 3 本，从云端更新 0 本，共 4 本书。
+272: RECONNECT 3/3 offline edits pushed (X annotations=5, Z created, W created), queue empty
+272:   scanned 54 files under the data root: password hits=0  username hits=0  fragment hits=0
+272: CREDENTIALS password/username absent from all files; DPAPI blob roundtrip ok; tampered blob rejected; delete removes file
+272: PASS WebDAV 15 scenarios; windows_created=0
+2/4 Test #272: windows-selection-sync ...........   Passed   28.42 sec
+test 273
+    Start 273: windows-opds-timeout
+
+273: Test command: C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\build\w\check_shell_opds.exe "--timeout-only" "C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w/opds-timeout"
+273: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w
+273: Test timeout computed to be: 15
+273: PASS secure_url_bounds exact fit accepted; oversized URL rejected without truncation
+273: PASS error_timeout code=timeout win_error=12002 http=0 accepted=1 elapsed_ms=4000 message=连接超时：1 秒内没有收到服务器响应，请检查网络或稍后重试。
+3/4 Test #273: windows-opds-timeout .............   Passed    4.17 sec
+test 274
+    Start 274: windows-a11y-static
+
+274: Test command: C:\Python314\python.exe "-X" "utf8" "C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/docs/ui/acceptance/check_a11y_c2.py" "--self-test"
+274: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-b1-webdav-20261110/build/w
+274: Test timeout computed to be: 30
+274: PASS negative checks: missing HelpText and missing registration caller rejected
+274: PASS Name/HelpText:shell_back
+274: PASS Name/HelpText:shell_search_button
+274: PASS Name/HelpText:shell_toc
+274: PASS Name/HelpText:shell_settings
+274: PASS Name/HelpText:shell_toc_panel
+274: PASS Name/HelpText:shell_toc_list
+274: PASS Name/HelpText:shell_panel
+274: PASS Name/HelpText:shell_search_bar
+274: PASS Name/HelpText:shell_search_edit
+274: PASS Name/HelpText:shell_search_prev
+274: PASS Name/HelpText:shell_search_next
+274: PASS Name/HelpText:shell_search_case
+274: PASS Name/HelpText:shell_search_word
+274: PASS Name/HelpText:shell_search_close
+274: PASS Name/HelpText:style-fields
+274: PASS registration:backend
+274: PASS registration:after-controls-created
+274: PASS registration:reader-include
+274: PASS events:structure
+274: PASS events:text-and-selection
+274: PASS keyboard:tab-handler
+274: PASS keyboard:base-order
+274: PASS focus-ring:token
+274: PASS contrast:configuration
+274: PASS historical-screenshots
+274: 25/25 static checks; 9 historical PNGs; manual checklist generated
+4/4 Test #274: windows-a11y-static ..............   Passed    0.24 sec
+
+The following tests passed:
+	native-opds
+	windows-selection-sync
+	windows-opds-timeout
+	windows-a11y-static
+
+100% tests passed out of 4
+
+Label Time Summary:
+a11y        =   0.24 sec*proc (1 test)
+headless    =  32.84 sec*proc (3 tests)
+opds        =   4.17 sec*proc (1 test)
+sync        =  28.42 sec*proc (1 test)
+
+Total Test time (real) =  32.94 sec

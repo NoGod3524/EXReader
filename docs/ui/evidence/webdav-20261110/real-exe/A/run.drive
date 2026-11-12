@@ -1,0 +1,13 @@
+import|C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\docs\ui\evidence\webdav-20261110\real-exe\sync-book.epub
+open|Sync Book
+shell|on
+shell_client|1280|800
+shell_click|settings
+shell_click|light
+shell_click|settings
+sync_open
+sync_click|now
+sync_wait|20000
+sync_check|0|同步完成|0
+probe_wait|20000
+quit

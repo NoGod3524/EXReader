@@ -1,0 +1,36 @@
+{
+  "public_headers": 20,
+  "headers_declaring_functions": 17,
+  "modules": 15,
+  "module_names": [
+    "基础",
+    "图形",
+    "字体与文字",
+    "字典",
+    "渲染",
+    "全文索引",
+    "文档",
+    "分页",
+    "搜索",
+    "标注",
+    "目录",
+    "书库与持久化",
+    "格式与转换",
+    "固定版面与 PDF",
+    "音频"
+  ],
+  "documented_functions": 462,
+  "public_functions": 462,
+  "coverage_percent": 100.0,
+  "frozen_contract_functions": 394,
+  "abi": {
+    "稳定": 394,
+    "实验": 68,
+    "内部": 0
+  },
+  "examples": 15,
+  "capability_rows": 41,
+  "binary": null,
+  "errors": [],
+  "passed": true
+}
