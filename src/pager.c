@@ -103,7 +103,6 @@ struct exr_pager {
   void *edit_state;
   exr_edit_page_fn edit_page;
   void (*edit_free)(void *);
-  size_t cache_hits,cache_misses;
   void *owned_view;
   void (*view_release)(void *);
   void *owned_chapter;
@@ -136,6 +135,7 @@ struct exr_pager {
   checkpoint *checkpoints[64]; /* Most recently recorded first. */
   size_t checkpoint_count, checkpoint_bytes, checkpoint_capacity, checkpoint_budget, interval;
   size_t generated_pages, restored_checkpoints;
+  uint64_t cache_requests, cache_hits, cache_misses;
   exr_layout_options fixed_target; /* Requested page of a pre-paginated part. */
   exr_fixed_viewport fixed; /* fixed=0 for reflow pagers. */
 };
@@ -1809,13 +1809,16 @@ exr_status exr_flow_intrinsic(flow *parent,size_t node,float width,int mode,floa
   exr_layout_free(layout); exr_pager_free(p); return status;
 }
 exr_status exr_pager_next(exr_pager *p, exr_layout **out, exr_error *e) {
+  exr_status status;
   if (!out)
     return exr_fail(e, EXR_ARGUMENT, "Missing page output");
   *out = NULL;
   if (!p || p->busy || p->mode == 2 || p->edit_state)
     return exr_fail(e, EXR_ARGUMENT, "Invalid, reentrant or cached-mode pager");
   p->mode = 1;
-  return next_page(p, out, e);
+  status = next_page(p, out, e);
+  if (status == EXR_OK && *out) { p->cache_requests++; p->cache_misses++; }
+  return status;
 }
 
 static void reset_cursor(exr_pager *p) {
@@ -1874,13 +1877,14 @@ exr_status exr_pager_get(exr_pager *p, size_t index, const exr_layout **out, exr
   if (!p || p->busy || p->mode == 1)
     return exr_fail(e, EXR_ARGUMENT, "Invalid, reentrant or sequential-mode pager");
   p->mode = 2;
+  p->cache_requests++;
   for (i = 0; i < p->cache_count; i++)
     if (p->cache[i].index == index) {
+      p->cache_hits++;
       entry = p->cache[i];
       memmove(p->cache + 1, p->cache, i * sizeof(*p->cache));
       p->cache[0] = entry;
       *out = entry.layout;
-      p->cache_hits++;
       return exr_fail(e, EXR_OK, "");
     }
   p->cache_misses++;
@@ -1935,8 +1939,15 @@ exr_status exr_pager_get(exr_pager *p, size_t index, const exr_layout **out, exr
 }
 size_t exr_pager_cached_count(const exr_pager *p) { return p ? p->cache_count : 0; }
 size_t exr_pager_cached_bytes(const exr_pager *p) { return p ? p->cache_bytes : 0; }
+exr_status exr_pager_cache_stats_get(const exr_pager *p, exr_pager_cache_stats *out, exr_error *e) {
+  if (!p || !out || out->struct_size != sizeof(*out))
+    return exr_fail(e, EXR_ARGUMENT, "Invalid pager cache statistics output");
+  *out = (exr_pager_cache_stats){sizeof(*out), p->cache_requests, p->cache_hits, p->cache_misses};
+  return exr_fail(e, EXR_OK, "");
+}
 exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *p) {
-  return p ? (exr_pager_cache_stats){p->cache_hits,p->cache_misses} : (exr_pager_cache_stats){0};
+  if (!p) return (exr_pager_cache_stats){sizeof(exr_pager_cache_stats), 0, 0, 0};
+  return (exr_pager_cache_stats){sizeof(exr_pager_cache_stats), p->cache_requests, p->cache_hits, p->cache_misses};
 }
 exr_status exr_pager_set_checkpoints(exr_pager *p, size_t capacity, size_t budget,
                                       size_t interval, exr_error *e) {
