@@ -1,3 +1,21 @@
+已提交并 push 至 `codex/vertical-expand-20261109`，创建 draft [PR #116](https://github.com/NoGod3524/EXReader/pull/116)，自动 CI 已触发。
+
+| 新增语料（均自造） | 页数 | 结果 |
+|---|---:|---:|
+| 中文《湖上晨读》 | 7 | 7/7 |
+| 中文《山城夜记》 | 6 | 7/7 |
+| 日文《星の観察日記》含 ruby | 7 | 7/7 |
+| 图文混排《图与文字的方向》 | 6 | 7/7 |
+
+七项均通过：①列右→左、字上→下；②标点右上；③安全挤压；④合字一格；⑤ruby 右侧；⑥图片直立；⑦左侧下一页。
+
+- 边界：`2026/1234/0000` 在 digits 2 下不合并、digits 4 下各占一格；连续标点三例及换列、跨页共 **27 个场景通过**。
+- 回归：19 本、**11,318 页，页数与逐页哈希全部不变**。
+- ctest：**260/260 全绿，新增 3 组**。
+- 证据：26 张页面截图＋8 张宿主翻页截图，含 ruby、整页图及混排图。
+
+[完整报告与截图](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/tests/vertical-expand-20261109/REPORT.md) · [VERT-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/VERT-OUT.txt)
+
 已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
 
 - **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。
@@ -131,3 +149,5 @@ X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
 
 [2026-11-10T16:28:26.5792754-05:00] Step 5: resolved both conflicts by union. CMakeLists.txt retains docs/examples under EXR_FULL_TESTS, main's build_manifest include, and simplified-observer with its Python guard. OUT.txt retains the complete SDK report/progress plus main's fixed-layout and X2 reports. No test assertions or version exception entries changed.
 [2026-11-10T16:33:39.6469176-05:00] Step 6: main adds 30 public declarations; updated docs/API.md to 457/457 (100%), 19 headers, stable 394 / experimental 63, keeping 15 compiled examples. Header-only X1 model availability and X2 fallback are explicitly documented. python tools/check_sdk_docs.py passed with no errors. Version consistency check is running; neither byte-bound tests/check_reading_release.py nor its exception registry was edited. Started an independent MinGW full-component build with existing dependency sources and optional image/JPX codecs disabled.
+[2026-11-11T15:28:07-05:00] Resume: branch codex/dx-realworld-argon-20261110 HEAD c37f5228 == origin. check_ci_hygiene.py exit 0, 'PASS: CI hygiene; violations=0' (no remap needed; main merge 34c84e47 carried baseline). Run 43093283763 (34c84e47): ci-hygiene x4 and desktop (ubuntu-22.04) all success; windows/macos desktop + core still running. No new edits/pushes.
+[2026-11-11] Resume2: worktree EXReader-fix132-hyg-20261111 absent; used aragorn worktree on PR branch, HEAD 80f86ff9==origin. check_ci_hygiene exit 0 'PASS: CI hygiene; violations=0' (no remap). Run 43093283763 (34c84e47): ci-hygiene x4 + desktop ubuntu-22.04 success; exit 8 not reproduced, no ctest failure to attribute. Runs on 80f86ff9 queued. No push (would restart CI).
