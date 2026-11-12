@@ -1,4 +1,21 @@
-<<<<<<< HEAD
+已提交并 push 至 `codex/vertical-expand-20261109`，创建 draft [PR #116](https://github.com/NoGod3524/EXReader/pull/116)，自动 CI 已触发。
+
+| 新增语料（均自造） | 页数 | 结果 |
+|---|---:|---:|
+| 中文《湖上晨读》 | 7 | 7/7 |
+| 中文《山城夜记》 | 6 | 7/7 |
+| 日文《星の観察日記》含 ruby | 7 | 7/7 |
+| 图文混排《图与文字的方向》 | 6 | 7/7 |
+
+七项均通过：①列右→左、字上→下；②标点右上；③安全挤压；④合字一格；⑤ruby 右侧；⑥图片直立；⑦左侧下一页。
+
+- 边界：`2026/1234/0000` 在 digits 2 下不合并、digits 4 下各占一格；连续标点三例及换列、跨页共 **27 个场景通过**。
+- 回归：19 本、**11,318 页，页数与逐页哈希全部不变**。
+- ctest：**260/260 全绿，新增 3 组**。
+- 证据：26 张页面截图＋8 张宿主翻页截图，含 ruby、整页图及混排图。
+
+[完整报告与截图](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/tests/vertical-expand-20261109/REPORT.md) · [VERT-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/VERT-OUT.txt)
+
 已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
 
 - **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。
@@ -18,7 +35,6 @@
 
 ---
 
-=======
 已提交并推送至 `codex/sdk-docs-20261109`，draft PR：[**#109**](https://github.com/NoGod3524/EXReader/pull/109)。
 
 - 覆盖：**15/15 模块，427/427 公开函数，100%**；当前实际为 17 个公开头文件。
@@ -31,7 +47,6 @@
 [2026-11-10T16:25:25.9151276-05:00] Step 2: PR OPEN, mergeable=CONFLICTING, mergeStateStatus=DIRTY, core absent. Confirmed true conflict. Fetching main and PR head before union merge.
 [2026-11-10T16:25:52.3370459-05:00] Step 3: fetch completed; PR head remains 979a4025. Named branch is attached to EXReader-S4-20261109, so keeping this authorized workspace detached and will push HEAD explicitly to codex/sdk-docs-20261109. OUT.txt is the only local modification.
 [2026-11-10T16:26:29.0939032-05:00] Step 4: merge stopped before modifying files because tracked OUT.txt has this session's required progress entries. Committing progress first, then retrying merge; both histories will be retained.
->>>>>>> origin/main
 D1 is finished. The engine now renders fixed-layout EPUB pages as fixed pages instead of treating them as reflowable text. Eight books cover all six book types, every item passes on every book where it applies, the 19 reflowable books are unchanged, and draft **PR #120** is open: https://github.com/NoGod3524/EXReader/pull/120
 
 **What changed:** fixed-layout pages used to be reflowed (Haruko had 14 pages at one size and 15 at another). Now each fixed page is laid out once at its own declared size and scaled evenly to fit the screen, centred, never stretched or cropped. It is always exactly one page. The page size comes from, in order:
@@ -103,11 +118,36 @@ Compared against an unmodified build of 3076d3dd: 19/19 books, 11,426 pages, 8,6
 [验收记录：缓存命中数、4 个锚点示例及原始数据](evidence/x2-reflow-20261110/README.md) · [接口说明](docs/X2_REFLOW.md)
 
 X1 尚无替换文字命令，场景 3 使用保留 ID 的修订快照验证。
-<<<<<<< HEAD
+[2026-11-10T16:24:42.3840678-05:00] Step 1: gh pr view 113 initial: headRefName=claude/review-cleanup-20261109; mergeable=UNKNOWN; mergeStateStatus=UNKNOWN; statusCheckRollup=[]. Local worktree clean, detached HEAD cf233f7e. Querying full PR lifecycle before branch mutation.
+[2026-11-10T16:25:03.6336657-05:00] Step 2: Full PR query resolved OPEN / CONFLICTING / DIRTY, core absent, head cf233f7e20e77471a8a2206fd9676438f782c3f4. No merge performed. Fetching main and PR branch for union conflict resolution.
+[2026-11-10T16:26:51.4208259-05:00] Step 3: Fetched origin/main=59a9e5a92f9462fb7022cc9cf568ef03cb862366 and PR head=cf233f7e. git diff --name-status --diff-filter=D origin/main...HEAD: 0 deleted paths (rename detection enabled), confirming the 296 deletions are absent. #121 is OPEN head a8b36c9c, describes 133 workflows + 163 test files. Target local branch is occupied by C:/Users/Oscar/exreader-agents/g01-windows-account/EXReader; keeping isolated detached worktree, will push HEAD explicitly to authorized PR ref. Started git merge origin/main.
+
+[2026-11-10T16:28:02.4616797-05:00] Step 4: Initial merge aborted safely because main tracks OUT.txt. Preserved local log in temporary backup, retried merge, then appended local log to main OUT.txt.
+[2026-11-10T16:29:05.4828525-05:00] Step 5: Resolved examples/reader.c by preserving extracted EXR_READER_TEST_DRIVERS include and porting main RTL probe_key left/right support into examples/windows/shell_drive_test.inc (main's only change inside moved driver). Retained all other auto-merged main changes: settings_write, cached frame dispatch, RTL page navigation, accepted-buffer repaint and synced-title cleanup. Resolved examples/windows/shell_settings.inc with PR pixels bound plus main 256-entry shades lookup. No side selected wholesale; main functionality retained in extracted structure. git diff --check passed.
+[2026-11-10T16:32:05.5233764-05:00] Step 6: No unresolved paths. Protected release test and registry have zero diff versus main. No deleted paths under .github or tests. Full staged whitespace check reports existing whitespace in incoming main evidence; conflict-edit check passes except pre-existing moved-driver EOF blank line. Local host compile against old review/stage SDK found missing exr_publication_page_progression declaration (SDK predates main RTL API); validating against current repo headers, no code workaround. main branch has no classic branch protection (API 404 Branch not protected).
+[2026-11-10T16:32:56.0218407-05:00] Step 7: Product and test-driver syntax validation both PASS using current include/: gcc -fsyntax-only -std=gnu11 -DEXR_READER_WINDOWS_SHELL=1 [-DEXR_READER_TEST_DRIVERS=1] -I include examples/reader.c. Created union merge 3ef9c3ca, pushed only HEAD:refs/heads/claude/review-cleanup-20261109 (cf233f7e -> 3ef9c3ca). Awaiting fresh CI.
+[2026-11-10T16:33:26.7982726-05:00] Step 8: After push: MERGEABLE / BLOCKED; fresh CI queued/in progress for head 3ef9c3ca (required workflow run 42906053174). Local version gate PASS: SDK 3.42.0; ABI 1; 587 live exact literal exceptions. No test assertions or checks weakened.
+[2026-11-10T16:36:25.7861150-05:00] Step 9: Cleared stale EXReader_DIR CMake cache and selected current Y1 installed SDK containing RTL API. Windows product build PASS (all 5 compile/link steps); test-driver build in progress. Remote CI: 6 successes, 0 failures, 9 running, 21 queued; mergeable MERGEABLE, state BLOCKED pending checks.
+[2026-11-10T16:37:44.4817846-05:00] Step 10: Windows product + explicit test-driver builds PASS against current Y1 SDK. Existing check_cleanup2_binary.py PASS: product command literals/--drive/drive.log absent; test command literals complete. Evidence build/pr113-command-audit.json.
+[2026-11-10T16:39:39.7895854-05:00] Step 11: Binary audit exact counts: product 0/144 acceptance command literals, test 144/144; product --drive=false and drive.log=false. No remote CI failures at last completed poll; required workflow still queued/in progress. Waiting, no merge before core success.
+[2026-11-10T16:41:51.9658780-05:00] Step 12: Required core workflow 42906053174: 12 passing jobs, zero failures, 7 remaining at preceding poll (native Windows/Linux/fuzz/sanitizers, native macOS/Apple, macOS library profile). Continue waiting.
+[2026-11-10T16:46:05.9453294-05:00] Step 13: Required native Windows job 130144203200 failed. Fetched full job log via gh run view --job 130144203200 --log to build/pr113-windows-ci.log; inspecting real errors before edits.
+[2026-11-10T16:48:43.0600106-05:00] Step 15: Full include-path search also found shell_annotations.inc includes ../../tools/convert_json.c. Added both convert_json.h and convert_json.c to same install rule, preserving source-relative layout. No other examples includes from tools/.
+[2026-11-10T16:54:44.6177846-05:00] Step 14: gh run view --job --log refused while parent run active, so fetched completed-job logs with gh api actions/jobs/130144203200/logs --allow-escape-sequences. Actual failure: stage/examples/reader.c(30,1): error C1083: Cannot open include file: '../tools/convert_json.h': No such file or directory. Fixed packaging root cause with single install(FILES tools/convert_json.h DESTINATION tools); no test changes. Validating installed-layout example build with isolated staging.
+[2026-11-10T16:53:52.5557176-05:00] Step 16: Pushed packaging fix 19b40ef203289e01f1db264c22b8bd1ef4c4a959 to PR branch. During push main advanced; preceding PR query reported BEHIND. Following requested procedure: gh pr update-branch 113.
+
+[2026-11-10T16:55:17.2833805-05:00] Step 17: gh pr update-branch succeeded; new remote head 105ebcfd803bfbf68da2fa985c05bba57b296c9a, MERGEABLE / BLOCKED, fresh checks queued. Preserved append-only local OUT tail, fast-forwarding isolated worktree to remote updated head.
+[2026-11-10T16:55:37.6320388-05:00] Step 18: Installed-layout examples build PASS: all 35 compile/link steps completed, including exreader-reader-example.exe. This reproduces the CI consumer layout with examples plus tools/convert_json.h and .c; fixes actual C1083 missing include without modifying checks.
+[2026-11-10T16:56:04.2787190-05:00] Step 19: Latest main d89877f8 merged #121. Post-update PR diff still has 0 deleted paths; release test and exception registry identical to main. Canceled only superseded PR113 runs 42909300694,42909300415 (19b40ef2) and 42906053365,42906053174 (3ef9c3ca) to free runner queue; current head 105ebcfd core run 42909488186 retained.
+[2026-11-10T17:00:01.8715345-05:00] Step 20: Current head 105ebcfd: 22 total CI successes, no failures, 12 remaining at prior poll. Required core runner queue includes macOS/Apple jobs; keeping PR unmerged until exact-head core succeeds.
+[2026-11-10T17:04:25.6906901-05:00] Step 21: Current core 42909488186 has 14 successes, no failures. Sanitizers PASS; Windows native tests completed and job proceeded to installed static components. Four macOS/Apple core jobs remain queued with no steps started.
+[2026-11-10T17:08:59.3776105-05:00] Step 22: Latest required Windows job 130156061329 failed at installed examples. Fetching exact new failure log to build/pr113-windows-ci-105ebcfd.log; no assumptions from earlier failure.
+[2026-11-10T17:12:38.9859970-05:00] Step 23: New real error: shell_shelf.inc(38,62) C2628 HFONT followed by char; same in shell_shelfmeta.inc. Windows RPC small macro collides with HFONT small identifiers. Renamed only those identifiers to small_font in both renderers. Regression reproduction gcc -Dsmall=char failed before change; product and driver syntax checks repeated after change. Checking with installed MSVC too.
+[2026-11-10T17:13:07.7201718-05:00] Step 24: MSVC 14.44 syntax check PASS for both product and EXR_READER_TEST_DRIVERS=1 using current repo headers and Windows SDK. gcc macro regression: before rename exit=1, after rename both product/driver exit=0 with -Dsmall=char. git diff --check for edited renderers PASS. Committing and pushing identifier-only fix.
 [step 3] 冲突取并集完成：.gitignore 保留根 /release/ 与 tools/release 例外；OUT.txt 完整保留双方记录；tools/release/README.md 先保留 main SDK 使用/打包说明，再附完整签名/复现说明。tests/check_reading_release.py 未改，SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。登记表未改。
 [step 4] 已取历史失败 job 129316736854 日志：check_reading_release.py:23/43/125 evidence bytes changed，24/44/126 版本字面量无有效豁免。当前文件哈希与原登记一致，未更改测试或登记表。git diff --check 通过；本地版本门禁运行中，先推送已解决冲突以启动 CI。
-=======
 
 [2026-11-10T16:28:26.5792754-05:00] Step 5: resolved both conflicts by union. CMakeLists.txt retains docs/examples under EXR_FULL_TESTS, main's build_manifest include, and simplified-observer with its Python guard. OUT.txt retains the complete SDK report/progress plus main's fixed-layout and X2 reports. No test assertions or version exception entries changed.
 [2026-11-10T16:33:39.6469176-05:00] Step 6: main adds 30 public declarations; updated docs/API.md to 457/457 (100%), 19 headers, stable 394 / experimental 63, keeping 15 compiled examples. Header-only X1 model availability and X2 fallback are explicitly documented. python tools/check_sdk_docs.py passed with no errors. Version consistency check is running; neither byte-bound tests/check_reading_release.py nor its exception registry was edited. Started an independent MinGW full-component build with existing dependency sources and optional image/JPX codecs disabled.
->>>>>>> origin/main
+[2026-11-11T15:28:07-05:00] Resume: branch codex/dx-realworld-argon-20261110 HEAD c37f5228 == origin. check_ci_hygiene.py exit 0, 'PASS: CI hygiene; violations=0' (no remap needed; main merge 34c84e47 carried baseline). Run 43093283763 (34c84e47): ci-hygiene x4 and desktop (ubuntu-22.04) all success; windows/macos desktop + core still running. No new edits/pushes.
+[2026-11-11] Resume2: worktree EXReader-fix132-hyg-20261111 absent; used aragorn worktree on PR branch, HEAD 80f86ff9==origin. check_ci_hygiene exit 0 'PASS: CI hygiene; violations=0' (no remap). Run 43093283763 (34c84e47): ci-hygiene x4 + desktop ubuntu-22.04 success; exit 8 not reproduced, no ctest failure to attribute. Runs on 80f86ff9 queued. No push (would restart CI).

@@ -292,23 +292,12 @@ static LRESULT CALLBACK annot_procedure(HWND window,UINT message,WPARAM wp,LPARA
       break;
     case WM_DRAWITEM: {
       const DRAWITEMSTRUCT *item=(const DRAWITEMSTRUCT *)lp;
-      shell_d2d_control(host_shell,item->hDC,&item->rcItem,item->CtlID==1 ? L"保存":item->CtlID==2 ? L"取消":L"删除",
-        shell_is_dark(),item->CtlID==1 ? 1:2,(item->itemState&ODS_SELECTED ? 2:0)|(item->itemState&ODS_FOCUS ? 4:0));return TRUE;
+      shell_draw_control(item,item->CtlID==1 ? L"保存":item->CtlID==2 ? L"取消":L"删除",
+        item->CtlID==1 ? SHELL_CONTROL_PRIMARY:SHELL_CONTROL_STANDARD,shell_colors->layer_float);return TRUE;
     }
     case WM_PAINT:case WM_PRINTCLIENT: {
       PAINTSTRUCT paint;RECT box;GetClientRect(window,&box);HDC dc=message==WM_PAINT ? BeginPaint(window,&paint):(HDC)wp;
-      BITMAPINFO info={0};void *bits=NULL;
-      info.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);info.bmiHeader.biWidth=box.right;
-      info.bmiHeader.biHeight=-box.bottom;info.bmiHeader.biPlanes=1;info.bmiHeader.biBitCount=32;
-      HDC underlay=CreateCompatibleDC(dc);HBITMAP bitmap=CreateDIBSection(dc,&info,DIB_RGB_COLORS,&bits,NULL,0);
-      if(underlay && bitmap) {
-        HGDIOBJ old=SelectObject(underlay,bitmap);RECT place;GetWindowRect(window,&place);MapWindowPoints(NULL,g.page,(POINT *)&place,2);
-        HBRUSH bg=CreateSolidBrush(shell_colorref(shell_colors->layer_page));FillRect(underlay,&box,bg);DeleteObject(bg);
-        if(page_buffer_dc)BitBlt(underlay,0,0,box.right,box.bottom,page_buffer_dc,place.left,place.top,SRCCOPY);
-        GdiFlush();shell_d2d_note(host_shell,dc,&box,shell_is_dark(),bits);SelectObject(underlay,old);
-      } else shell_d2d_note(host_shell,dc,&box,shell_is_dark(),NULL);
-      if(bitmap)DeleteObject(bitmap);
-      if(underlay)DeleteDC(underlay);
+      shell_card_paint(window,dc,&box,L"笔记");
       if(message==WM_PAINT)EndPaint(window,&paint);
       return 0;
     }

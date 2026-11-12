@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-t1-docxreal-20261110\tests\fixtures\docx-real\regressions.py", line 92, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-t1-docxreal-20261110\tests\fixtures\docx-real\regressions.py", line 87, in main
+    check(rt.RealBridge(args.library.resolve()), args.name)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-t1-docxreal-20261110\tests\fixtures\docx-real\regressions.py", line 15, in check
+    assert api.set_text, 'missing public exr_edit_set_run_text; no supported body-text replacement command'
+           ^^^^^^^^^^^^
+AssertionError: missing public exr_edit_set_run_text; no supported body-text replacement command
