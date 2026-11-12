@@ -1,3 +1,21 @@
+已提交并 push 至 `codex/vertical-expand-20261109`，创建 draft [PR #116](https://github.com/NoGod3524/EXReader/pull/116)，自动 CI 已触发。
+
+| 新增语料（均自造） | 页数 | 结果 |
+|---|---:|---:|
+| 中文《湖上晨读》 | 7 | 7/7 |
+| 中文《山城夜记》 | 6 | 7/7 |
+| 日文《星の観察日記》含 ruby | 7 | 7/7 |
+| 图文混排《图与文字的方向》 | 6 | 7/7 |
+
+七项均通过：①列右→左、字上→下；②标点右上；③安全挤压；④合字一格；⑤ruby 右侧；⑥图片直立；⑦左侧下一页。
+
+- 边界：`2026/1234/0000` 在 digits 2 下不合并、digits 4 下各占一格；连续标点三例及换列、跨页共 **27 个场景通过**。
+- 回归：19 本、**11,318 页，页数与逐页哈希全部不变**。
+- ctest：**260/260 全绿，新增 3 组**。
+- 证据：26 张页面截图＋8 张宿主翻页截图，含 ruby、整页图及混排图。
+
+[完整报告与截图](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/tests/vertical-expand-20261109/REPORT.md) · [VERT-OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-A5-20261109/VERT-OUT.txt)
+
 已提交并推送，Draft PR：[#107](https://github.com/NoGod3524/EXReader/pull/107)。自动 CI 已触发，目前排队中。
 
 - **校验**：两轮均 `PASS: 3 files verified`；355 个安装文件哈希一致。

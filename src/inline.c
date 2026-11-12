@@ -533,12 +533,26 @@ int exr_inline_punctuation(uint32_t cp) {
 }
 /* Remaining punctuation space, after any adjacent compression, has the same
    half-em floor. Latin faces and proportional punctuation never participate. */
-static float punctuation_room(flow *f,const exr_glyph *g) {
+static float punctuation_room(flow *f,const exr_glyph *g,int leading) {
+  float room;
   if((g->flags&(EXR_GLYPH_HIDDEN|EXR_GLYPH_RUBY_ITEM|EXR_GLYPH_COMBINED)) ||
      !exr_inline_punctuation(g->codepoint) || g->size<=0 ||
      g->advance>g->size+.01f || g->advance<.5f*g->size-.01f ||
      (g->codepoint<0x3000 && !exr_font_has_glyph(f->font,g->font_index,0x3002))) return 0;
-  return fmaxf(0,g->advance-.5f*g->size);
+  room=fmaxf(0,g->advance-.5f*g->size);
+  if((g->flags&EXR_GLYPH_VERTICAL) && !(g->flags&EXR_GLYPH_SIDEWAYS)) {
+    exr_face *face=&f->font->faces[g->font_index];
+    FT_Glyph_Metrics metrics;
+    /* Upright vertical marks such as fullwidth !/? can occupy most of the
+       inline em. Opening marks trim the leading edge; adjacent marks trim
+       the trailing edge. In either case remove only actual blank space. */
+    if(face->bitmap_only || exr_font_size(face,g->size) ||
+       FT_Load_Glyph(face->face,g->glyph,FT_LOAD_VERTICAL_LAYOUT)) return 0;
+    metrics=face->face->glyph->metrics;
+    room=fminf(room,fmaxf(0,leading ? (float)metrics.vertBearingY/64 :
+      g->advance-(float)(metrics.vertBearingY+metrics.height)/64));
+  }
+  return room;
 }
 /* Charge each join to its left glyph once. Provisional runs stay untouched;
    only a freshly shaped final line receives the reduced advances. Requiring
@@ -552,7 +566,7 @@ static float punctuation_compression(flow *f,const exr_glyph *left,const exr_gly
      fabsf(left->advance-left->size)>.01f || fabsf(right->advance-right->size)>.01f) return 0;
   if((left->codepoint<0x3000 && !exr_font_has_glyph(f->font,left->font_index,0x3002)) ||
      (right->codepoint<0x3000 && !exr_font_has_glyph(f->font,right->font_index,0x3002))) return 0;
-  return punctuation_room(f,left);
+  return punctuation_room(f,left,0);
 }
 static int opening_punctuation(uint32_t cp) {
   switch(cp) {
@@ -578,8 +592,11 @@ static float punctuation_width(flow *f,exr_glyph *glyphs,size_t count,int commit
   tail=end;
   while(tail>first) {
     const exr_glyph *g=glyphs+tail-1;
+    /* Pooling a terminal run into one horizontal em can stack vertical ink.
+       Vertical text uses the per-glyph trailing-space budget above instead. */
+    if(g->flags&EXR_GLYPH_VERTICAL) break;
     if(!exr_inline_punctuation(g->codepoint) ||
-       fabsf(g->advance-g->size)>.01f || !punctuation_room(f,g)) break;
+       fabsf(g->advance-g->size)>.01f || !punctuation_room(f,g,0)) break;
     if(tail<end && (exr_inline_same(g,g+1) || g->bidi_level!=(g+1)->bidi_level || g->size!=tail_em)) break;
     tail_em=g->size;tail--;
   }
@@ -588,7 +605,7 @@ static float punctuation_width(flow *f,exr_glyph *glyphs,size_t count,int commit
     float adjacent=i+1<count ? punctuation_compression(f,&g,glyphs+i+1):0;
     g.advance-=adjacent;
     if(i==first && opening_punctuation(g.codepoint)) {
-      float take=punctuation_room(f,&g);g.advance-=take;
+      float take=punctuation_room(f,&g,1);g.advance-=take;
       if(commit) {
         if((g.flags&EXR_GLYPH_VERTICAL) && !(g.flags&EXR_GLYPH_SIDEWAYS)) glyphs[i].offset_y+=take;
         else glyphs[i].offset_x-=take;
@@ -598,14 +615,14 @@ static float punctuation_width(flow *f,exr_glyph *glyphs,size_t count,int commit
       g.advance=tail_em/(float)(end-tail);
     }
     width+=g.advance+line_kern(f,i ? glyphs+i-1:NULL,&g);
-    if(i>first && i<tail) room+=punctuation_room(f,&g);
+    if(i>first && i<tail) room+=punctuation_room(f,&g,0);
     if(commit) glyphs[i].advance=g.advance;
   }
   /* Only ordinary CJK paragraphs use the discretionary compression budget. */
   if(f->bidi && f->bidi->cjk && !f->intrinsic && width>available) {
     float shrink=fminf(room,width-available);width-=shrink;
     if(commit) for(i=first+1;i<tail && shrink>0;i++) {
-      float take=fminf(shrink,punctuation_room(f,glyphs+i));
+      float take=fminf(shrink,punctuation_room(f,glyphs+i,0));
       glyphs[i].advance-=take;shrink-=take;
     }
   }
@@ -1598,8 +1615,8 @@ static exr_status measure_unwrapped(flow *f,exr_line_buffer *b) {
     if(f->first_line) { b->measure_width+=fmaxf(0,exr_flow_indent(f)); f->first_line=0; }
     advance=g->advance+line_kern(f,b->measure_has_last ? &b->measure_last : NULL,g)
       -punctuation_compression(f,b->measure_has_last ? &b->measure_last : NULL,g);
-    if(!b->measure_has_last && opening_punctuation(g->codepoint)) advance-=punctuation_room(f,g);
-    if(punctuation_room(f,g)>0) {
+    if(!b->measure_has_last && opening_punctuation(g->codepoint)) advance-=punctuation_room(f,g,1);
+    if(punctuation_room(f,g,0)>0) {
       float adjacent=b->measure_has_last ? punctuation_compression(f,&b->measure_last,g):0;
       if(!adjacent) { b->measure_punctuation_count=0;b->measure_punctuation_width=0; }
       b->measure_punctuation_count++;

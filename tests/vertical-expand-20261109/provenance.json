@@ -1,0 +1,36 @@
+{
+  "baseline_revision": "3076d3dd",
+  "layout": {
+    "width": 504,
+    "height": 720,
+    "margin": 36,
+    "font_size": 28,
+    "line_height": 1.5,
+    "paragraph_spacing": 10
+  },
+  "font": "Reader.otf (same external font as 19-book canonical baseline)",
+  "optional_codecs": {
+    "webp": false,
+    "tiff": false,
+    "avif": false,
+    "icc": true,
+    "pdf_crypto": true,
+    "jpx": true
+  },
+  "source_sha256": {
+    "src\\inline.c": "4407c94a822e3b505a69e2ac5aede3fd2d1b3c56550717b90f65817ff8d73513",
+    "tests\\vertical_expand.py": "f8d0cb9795a7a1b8062bf0c91df81f75b3a2fdb877410348b6882926f26a6e9b",
+    "tools\\generate_combine_test_font.py": "f4b262095991e401960e7dca52aff4f9b84cf1bee0d7933ae5bc27ad3c89414d",
+    "examples\\reader.c": "43fad8f3604862fe78caa0fc9d07339396c66b558819e68e4fd7744c6bc99044",
+    "examples\\windows\\shell_gestures.inc": "fa772cf4a40b14ea5eb9c25a2198475e1f4ad8b543b7a58fe8fc09c9f38f8f34"
+  },
+  "binaries": {
+    "build\\a5\\libexreader.dll": "63504465b17f25c8f4d631fdcd3e9dd76c39d5b0c8ebb8e093e0a4ec9b77d984",
+    "build\\msvc-a5\\exreader.dll": "e1cf59c15c43d725cef2494866bcabd86dc74b796102b2dea14935b5d7c93b3c",
+    "build\\host\\a5-reader.exe": "bb262095373919c076f6b4adec2ceea83886178a73d7dadaf728efd0bc33a1a3"
+  },
+  "host_validation_sdk_sha256": "05a4a63d412e3007909f31b2c16f05fb278fba8e1805dc9aceaec5bd0c7bd0c9",
+  "host_gesture_source_unchanged": true,
+  "final_layout_source": "leading/trailing budget correction following commit 9c695169; exact source fingerprints above",
+  "final_corpus_pixels_equal_capture": true
+}
