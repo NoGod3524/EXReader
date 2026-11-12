@@ -679,7 +679,7 @@ if(EXR_FULL_TESTS)
       ${CMAKE_CURRENT_BINARY_DIR}/publication-index-${group}.idx)
   endforeach()
   target_link_libraries(exreader-document-search-test PRIVATE exreader)
-  foreach(group basic unicode flags errors mapping)
+  foreach(group basic unicode flags errors bounded mapping)
     add_test(NAME native-document-search-${group} COMMAND exreader-document-search-test ${group}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf)
   endforeach()

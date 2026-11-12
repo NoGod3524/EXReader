@@ -1,0 +1,5 @@
+git diff --exit-code 627124e7 -- src include tests CMakeLists.txt tools => exit 0; no output
+git diff --exit-code 6000a89d -- README.md tools/release tests/check_reading_release.py tools/version_literal_exceptions.json tools/layers.json => exit 0; no output
+git diff --check => exit 0; no output
+All recorded binary, source, font and protection hashes match current files.
+Bounded positive/negative test executables are byte-identical.
