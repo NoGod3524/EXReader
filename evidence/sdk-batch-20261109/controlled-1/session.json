@@ -1,0 +1,16 @@
+{
+  "turns": 20,
+  "font": "C:\\Users\\Oscar\\Documents\\Codex\\exr-demo-2a\\Reader.otf",
+  "retries": 0,
+  "binary": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S1-20261109\\build\\s1-after\\bench_batch.exe",
+  "policy": {
+    "PROCTHROTTLEMAX": 100,
+    "PROCTHROTTLEMIN": 100,
+    "PERFBOOSTMODE": 0
+  },
+  "cpu": 3,
+  "reference": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-S1-20261109\\build\\s1-103\\bench_batch.exe",
+  "book": "C:\\Users\\Oscar\\Documents\\Codex\\exr-cjk-corpus\\hongloumeng-24264.epub",
+  "runs": 5,
+  "warmup": 21
+}

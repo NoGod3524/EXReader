@@ -1,15 +1,7 @@
-I merged `origin/main` into `codex/fix129-20261111` and pushed it to `codex/opds-catalog-20261110`. The push went through (`93c3e231..abee9440`). I didn't touch the PR or main, and I haven't seen CI results.
+I merged `origin/main` into the branch and pushed it to `codex/sdk-batch-perf-20261109` (`783b8f1d..b87c2bf3`). I did not merge the PR or touch main.
 
-- **Conflicts:** the merge had two, and `git status` now shows no U markers.
-  - **`RESOLVE.md`:** this was an add/add conflict, and I kept this task's brief. Main's version is the PR #107 brief, which stays in main's history. That is a pick of one side, not a union, because the two briefs name different PRs, directories and push targets.
-  - **`tools/layers.json`:** I kept `include/exr/opds.h`. Main's `include/exr/edit.h` entry already exists lower in the file, so I skipped the duplicate key. The file still parses as JSON.
-  - **Auto-merged:** `CMakeLists.txt`, `OUT.txt` and `.gitignore` merged without conflict.
-- **API docs:** I added none. The earlier commit `93c3e231` already documented the `exr_opds_*` functions, and `python -X utf8 tools\check_sdk_docs.py` exits 0 with 462 of 462 functions documented and `"passed": true`.
-- **Other failures:** I can't tell from here, since I didn't look at CI.
-- **Extra commit:** `RESOLVE.md` had uncommitted edits that blocked the merge, so I committed it first (`docs: update RESOLVE.md before merging main`).
-- **Report:** `RESOLVE-OUT.txt` is written and committed.
-- **Not committed:** `CASCADE-CLAUDE-OUT.txt` is still untracked.
+- **Conflicts:** the only one was `RESOLVE.md`. Each PR has its own copy of that task file and the two sides differ only in PR number, path and push branch. A union would have left contradictory instructions, so I kept the #112 version with the corrected `cd` path. `CMakeLists.txt` and `tools/layers.json` merged automatically with no conflict markers, and `layers.json` still parses. `git status --porcelain` shows no `U` entries.
+- **Doc gate:** `tools/check_sdk_docs.py` exits 0 with 460 of 460 public functions documented, so I added no API docs.
+- **Other failures:** I didn't run CI, so I have no CI check names to report. I know of no other failures.
 
-That notification is just my idle-wait timer expiring. It needs no action, because the merge and push finished earlier.
-
-PR #129's branch is pushed with the conflicts resolved, and the docs gate passes. I'm stopping here as instructed.
+The report is in `RESOLVE-OUT.txt`, uncommitted. I left the untracked `CASCADE-CLAUDE-OUT.txt` alone.
