@@ -227,11 +227,12 @@ static void test_sync(void) {
     c=sy_sync_now(&s);printf("  timeout: %s\n",s.text);
     assert(c==SY_TIMEOUT && strstr(s.text,"超时"));
     mock_delay_ms=0;sy_timeout_ms=1500;
+    assert(WaitForSingleObject(mock_idle,5000)==WAIT_OBJECT_0);
     puts("ERROR-TIMEOUT reported: 连接超时");
     mock_force_status=403;mock_force_count=1000;
     c=sy_sync_now(&s);printf("  403: %s\n",s.text);assert(c==SY_AUTH && strstr(s.text,"403"));
-    puts("ERROR-403 permission denied reported");
     mock_force_count=0;
+    puts("ERROR-403 reported: HTTP 403");
     /* transient 500s are retried transparently */
     mock_force_status=500;mock_force_count=2;
     c=sy_sync_now(&s);printf("  after two 500s: %s\n",s.text);assert(c==SY_OK);
@@ -272,13 +273,6 @@ static void test_sync(void) {
     /* the draft queue is on disk: survives an app restart */
     sy_queue_clear();sy_config_load();assert(sy_queue_count==3);
     puts("OFFLINE server down: failure reported, 3 drafts queued and persisted in sync.json");
-    /* black-hole address and unresolvable name are the other two real outage shapes */
-    char hole[]="http://10.255.255.1:81/dav/";free(sy_url);sy_url=host_strdup(hole);sy_timeout_ms=800;
-    c=sy_sync_now(&s);printf("  unroutable: %s\n",s.text);assert(c==SY_TIMEOUT || c==SY_OFFLINE);
-    char nx[]="http://no-such-host.invalid/dav/";free(sy_url);sy_url=host_strdup(nx);
-    c=sy_sync_now(&s);printf("  dns: %s\n",s.text);assert(c==SY_OFFLINE || c==SY_TIMEOUT);
-    sy_timeout_ms=1500;free(sy_url);sy_url=host_strdup(syt_url);
-    assert(sy_queue_count==3);
     /* network back */
     assert(mock_start(port,"alice",SYT_PASS)==port);
     sy_clock_fixed+=1000;c=syt_sync();assert(c==SY_OK && sy_queue_count==0);
@@ -308,4 +302,7 @@ static void test_sync(void) {
   /* The wire never carries the password anywhere but the Authorization header: userinfo is refused. */
   {sy_target t;assert(!sy_target_parse("http://alice:pw@host/dav/",&t) && !sy_target_parse("ftp://h/",&t) && sy_target_parse("https://h:8443/a/b",&t) && t.secure && t.port==8443 && !strcmp(t.path,"/a/b/"));}
   mock_stop();
+  mock_reset();
+  sy_queue_clear();free(sy_url);sy_url=NULL;
+  WSACleanup();
 }

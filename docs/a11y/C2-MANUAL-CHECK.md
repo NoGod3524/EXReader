@@ -1,31 +1,24 @@
-# C2 人工验收交接
+# C2 人工验收清单
 
-本轮仅编译、控制台测试和静态校验。下列项目全部待主控安排用户在场后确认，不能记为已通过。
+状态：待主控安排用户在场的真实窗口验收。本轮仅执行编译、控制台和静态配置检查。
+`check_a11y_c2.py` 生成清单与静态结果，不启动应用、不创建窗口、不发送输入、不修改系统设置。
 
-自动脚本不启动应用、不附着 UIA、不模拟输入、不更改系统设置。
+已有截图位于 [历史 C2 证据](../ui/evidence/a11y-uia-20261110/)，重点参考
+`run1/02-page-focused.png`、`run1/03-toc-button-focused.png`、
+`run1/03b-toc-ring-crop-x4.png`、`run1/06-settings-open.png`、
+`run1/08-high-contrast-text.png`、`run1/11-high-contrast-settings-open.png`。
+这些是此前运行的记录；本轮不重拍，不据此认定当前二进制的 UIA/视觉验收通过。
 
-- [ ] **外部 UIA**：需要真实窗口，因为 UIA 必须读取运行中的控件树与 provider。用户在场时手动打开应用和有文字的书页，从独立 UIA 客户端检查 Name、HelpText、角色、可用状态、TextPattern/DocumentRange、ValuePattern、选择范围；翻页、选择、翻章和开关面板时核对 TextChanged、TextSelectionChanged、StructureChanged。封面无文本须单独记录。
+下列操作需要真实窗口，因为焦点、外部 UIA 树与事件、DPI 后的实际像素和视觉感受取决于运行中的原生控件。
+由主控决定时间、测试环境和操作人员；本轮不执行。
 
-- [ ] **Tab 与焦点恢复**：需要真实窗口，因为实际焦点受可见性、启用状态和消息循环影响。人工按 Tab/Shift+Tab 检查 返回书架→全文搜索→正文→目录→设置 循环；分别打开搜索、目录、设置检查子控件顺序，Esc 关闭后焦点回到正文，禁用控件不能困住焦点。
+- [ ] 用户在场时，由人工打开宿主并载入有正文的书，记录版本、二进制哈希、书籍、系统主题和 DPI。
+- [ ] 从外部 UIA 客户端读取阅读页、搜索、目录和设置的 Name、HelpText、角色与可用性；核实全部可操作控件有名称。
+- [ ] 从外部读取正文 DocumentRange 和选区，核实翻页、选区变化分别收到 TextChanged、TextSelectionChanged；翻章、开关目录及设置收到 StructureChanged。封面无正文时允许 ELEMENTNOTAVAILABLE，须再检查有正文页。
+- [ ] 人工按 Tab 检查返回书架→全文搜索→正文→目录→设置→返回书架；Shift+Tab 反向；搜索、目录和设置展开后包含其控件；隐藏或禁用控件不进入循环。
+- [ ] 人工按 Ctrl+F 和 Esc，检查进入搜索及回正文；PageDown/PageUp/Home/End 翻页，目录上下键和回车跳转；面板关闭后焦点可继续操作。
+- [ ] 观察按钮获得/失去焦点的焦点环（2px × DPI/96），正文获得焦点时无新增整页边框；在目标 DPI 上核实清晰度和裁切。
+- [ ] 在主控安排的已有高对比度测试环境中，人工观察正文、按钮、目录和设置的可读性与焦点辨识；与上述历史截图对照。本清单不授权自动修改任何系统设置。
+- [ ] 检查新增 WebDAV 设置和 OPDS 书源界面的实际焦点、状态文案及屏幕阅读器播报。控制台网络与存储结果不能证明原生 UI 的体验。
 
-- [ ] **焦点环**：需要真实窗口，因为静态 token 不能证明实际绘制、裁切与缩放。人工检查目录、设置、搜索和各设置按钮的焦点环，在用户当前 DPI 下应清晰完整；正文聚焦时无额外页面边框。
-
-- [ ] **对比度观感**：需要真实窗口，因为截图和颜色配置不能证明用户屏幕上的可读性。先在当前主题检查文字、选区、焦点环、禁用控件和面板；高对比度仅由用户本人决定是否切换并操作，检查完成由用户恢复。自动验收不得切换主题、高对比度、DPI 或输入法。
-
-- [ ] **同步宿主呈现**：需要真实窗口，因为控制台只能证明同步数据和状态码。人工检查设置→云同步入口、错误和离线队列的文字、后台完成后的状态刷新及保存后密码框清空。
-
-- [ ] **OPDS 宿主呈现**：需要真实窗口，因为控制台不能验证面板交互和进度呈现。人工检查书源入口、搜索/翻页/返回、下载进度与取消、下载后导入并打开、超时错误显示。
-
-## 复用的旧截图
-
-来源提交 `5cdc779c`，目录 `docs/ui/evidence/a11y-uia-20261110/run1`。仅作为历史证据，不代表当前构建已完成人工验收。
-
-- [01-text-page.png](../ui/evidence/a11y-uia-20261110/reused/01-text-page.png) · SHA-256 `901d873f84c981095fb2b67da4ac0c47d23cffc2b6ded661a03e282b4f36c4db`
-- [03-toc-button-focused.png](../ui/evidence/a11y-uia-20261110/reused/03-toc-button-focused.png) · SHA-256 `caa67c8b62818c1e2284b046510627dbc17dfc7e221ba8e6b7e2549f2aea620b`
-- [04-settings-button-focused.png](../ui/evidence/a11y-uia-20261110/reused/04-settings-button-focused.png) · SHA-256 `3e275110b43c79dd837e78754099adaa6a72c000512416bfef081f3e4d340deb`
-- [05-toc-open.png](../ui/evidence/a11y-uia-20261110/reused/05-toc-open.png) · SHA-256 `28fb2711346c390bc99ef5fc443662f1c537782c00e0ea617c3413ca521afd09`
-- [06-settings-open.png](../ui/evidence/a11y-uia-20261110/reused/06-settings-open.png) · SHA-256 `1444637a4dbc94a068a51e7afa011dd63289e0ebadc4b94b557f1fd8065a1f8c`
-- [08-high-contrast-text.png](../ui/evidence/a11y-uia-20261110/reused/08-high-contrast-text.png) · SHA-256 `6a1c1e01d74d944e6962b9ae1451e264dfdf537daea852e27a8a23242406aecc`
-- [09-high-contrast-toc-focus.png](../ui/evidence/a11y-uia-20261110/reused/09-high-contrast-toc-focus.png) · SHA-256 `051fd257c427b23b5dd1f89123fc6917060074eebe4c4ab479cb21e9f8340169`
-- [10-high-contrast-toc-open.png](../ui/evidence/a11y-uia-20261110/reused/10-high-contrast-toc-open.png) · SHA-256 `051fd257c427b23b5dd1f89123fc6917060074eebe4c4ab479cb21e9f8340169`
-- [11-high-contrast-settings-open.png](../ui/evidence/a11y-uia-20261110/reused/11-high-contrast-settings-open.png) · SHA-256 `af77f1c8bd13bdfa48c6aaba3b9e15fba230d062bf18b42a77c88d143f6a0698`
+验收记录填写：操作人、时间、环境、每项通过/失败、外部 UIA 导出和人工观察备注。未确认项继续保持待验收。
