@@ -1,0 +1,6197 @@
+[
+  {
+    "book": "kusamakura-japanese-vertical-writing.epub",
+    "parts": 16,
+    "pages": 464,
+    "media": [],
+    "overlays": [
+      {
+        "part": 2,
+        "smil": "OPS/xhtml/一.smil",
+        "duration_ms": 2015025,
+        "active_class": null,
+        "clips": 219,
+        "missing_audio": 0,
+        "unresolved_text": 0,
+        "pairs": [
+          {
+            "par": "fgyq_0001",
+            "text": [
+              2,
+              0,
+              3
+            ],
+            "fragment": "fgyq_0001",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 0,
+            "end_ms": 1979,
+            "audio_present": true,
+            "text_excerpt": "一"
+          },
+          {
+            "par": "fgyq_0002",
+            "text": [
+              2,
+              4,
+              61
+            ],
+            "fragment": "fgyq_0002",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1979,
+            "end_ms": 8039,
+            "audio_present": true,
+            "text_excerpt": "山路やまみちを登りながら、こう考えた。"
+          },
+          {
+            "par": "fgyq_0003",
+            "text": [
+              2,
+              62,
+              101
+            ],
+            "fragment": "fgyq_0003",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 8039,
+            "end_ms": 13139,
+            "audio_present": true,
+            "text_excerpt": "智ちに働けば角かどが立つ。"
+          },
+          {
+            "par": "fgyq_0004",
+            "text": [
+              2,
+              101,
+              149
+            ],
+            "fragment": "fgyq_0004",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 13139,
+            "end_ms": 18059,
+            "audio_present": true,
+            "text_excerpt": "情じょうに棹さおさせば流される。"
+          },
+          {
+            "par": "fgyq_0005",
+            "text": [
+              2,
+              149,
+              200
+            ],
+            "fragment": "fgyq_0005",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 18059,
+            "end_ms": 23159,
+            "audio_present": true,
+            "text_excerpt": "意地を通とおせば窮屈きゅうくつだ。"
+          },
+          {
+            "par": "fgyq_0006",
+            "text": [
+              2,
+              200,
+              242
+            ],
+            "fragment": "fgyq_0006",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 23159,
+            "end_ms": 27478,
+            "audio_present": true,
+            "text_excerpt": "とかくに人の世は住みにくい。"
+          },
+          {
+            "par": "fgyq_0007",
+            "text": [
+              2,
+              243,
+              321
+            ],
+            "fragment": "fgyq_0007",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 27478,
+            "end_ms": 35578,
+            "audio_present": true,
+            "text_excerpt": "住みにくさが高こうじると、安い所へ引き越したくなる。"
+          },
+          {
+            "par": "fgyq_0008",
+            "text": [
+              2,
+              321,
+              420
+            ],
+            "fragment": "fgyq_0008",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 35578,
+            "end_ms": 45358,
+            "audio_present": true,
+            "text_excerpt": "どこへ越しても住みにくいと悟さとった時、詩が生れて、画えが出来る。"
+          },
+          {
+            "par": "par_0009",
+            "text": [
+              2,
+              421,
+              490
+            ],
+            "fragment": "fmse_0001",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 45358,
+            "end_ms": 53098,
+            "audio_present": true,
+            "text_excerpt": "人の世を作ったものは神でもなければ鬼でもない。"
+          },
+          {
+            "par": "fgyq_0011",
+            "text": [
+              2,
+              490,
+              580
+            ],
+            "fragment": "fgyq_0011",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 53098,
+            "end_ms": 62578,
+            "audio_present": true,
+            "text_excerpt": "やはり向う三軒両隣りょうどなりにちらちらするただの人である。"
+          },
+          {
+            "par": "fgyq_0012",
+            "text": [
+              2,
+              580,
+              673
+            ],
+            "fragment": "fgyq_0012",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 62578,
+            "end_ms": 71698,
+            "audio_present": true,
+            "text_excerpt": "ただの人が作った人の世が住みにくいからとて、越す国はあるまい。"
+          },
+          {
+            "par": "fgyq_0013",
+            "text": [
+              2,
+              673,
+              724
+            ],
+            "fragment": "fgyq_0013",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 71698,
+            "end_ms": 77578,
+            "audio_present": true,
+            "text_excerpt": "あれば人でなしの国へ行くばかりだ。"
+          },
+          {
+            "par": "par_0013",
+            "text": [
+              2,
+              724,
+              793
+            ],
+            "fragment": "fmse_0003",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 77578,
+            "end_ms": 84897,
+            "audio_present": true,
+            "text_excerpt": "人でなしの国は人の世よりもなお住みにくかろう。"
+          },
+          {
+            "par": "fgyq_0016",
+            "text": [
+              2,
+              794,
+              986
+            ],
+            "fragment": "fgyq_0016",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 84897,
+            "end_ms": 102417,
+            "audio_present": true,
+            "text_excerpt": "越す事のならぬ世が住みにくければ、住みにくい所をどれほどか、寛容くつろげて、束つかの間まの命を、束の間でも住みよくせねばならぬ。"
+          },
+          {
+            "par": "fgyq_0017",
+            "text": [
+              2,
+              986,
+              1079
+            ],
+            "fragment": "fgyq_0017",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 102417,
+            "end_ms": 111357,
+            "audio_present": true,
+            "text_excerpt": "ここに詩人という天職が出来て、ここに画家という使命が降くだる。"
+          },
+          {
+            "par": "fgyq_0018",
+            "text": [
+              2,
+              1079,
+              1202
+            ],
+            "fragment": "fgyq_0018",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 111357,
+            "end_ms": 123897,
+            "audio_present": true,
+            "text_excerpt": "あらゆる芸術の士は人の世を長閑のどかにし、人の心を豊かにするが故ゆえに尊たっとい。"
+          },
+          {
+            "par": "fgyq_0019",
+            "text": [
+              2,
+              1203,
+              1368
+            ],
+            "fragment": "fgyq_0019",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 123897,
+            "end_ms": 137517,
+            "audio_present": true,
+            "text_excerpt": "住みにくき世から、住みにくき煩わずらいを引き抜いて、ありがたい世界をまのあたりに写すのが詩である、画えである。"
+          },
+          {
+            "par": "fgyq_0020",
+            "text": [
+              2,
+              1368,
+              1404
+            ],
+            "fragment": "fgyq_0020",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 137517,
+            "end_ms": 141696,
+            "audio_present": true,
+            "text_excerpt": "あるは音楽と彫刻である。"
+          },
+          {
+            "par": "fgyq_0021",
+            "text": [
+              2,
+              1404,
+              1455
+            ],
+            "fragment": "fgyq_0021",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 141696,
+            "end_ms": 146255,
+            "audio_present": true,
+            "text_excerpt": "こまかに云いえば写さないでもよい。"
+          },
+          {
+            "par": "fgyq_0022",
+            "text": [
+              2,
+              1455,
+              1533
+            ],
+            "fragment": "fgyq_0022",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 146255,
+            "end_ms": 153755,
+            "audio_present": true,
+            "text_excerpt": "ただまのあたりに見れば、そこに詩も生き、歌も湧わく。"
+          },
+          {
+            "par": "fgyq_0023",
+            "text": [
+              2,
+              1533,
+              1635
+            ],
+            "fragment": "fgyq_0023",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 153755,
+            "end_ms": 162215,
+            "audio_present": true,
+            "text_excerpt": "着想を紙に落さぬとも璆鏘きゅうそうの音おんは胸裏きょうりに起おこる。"
+          },
+          {
+            "par": "fgyq_0024",
+            "text": [
+              2,
+              1635,
+              1794
+            ],
+            "fragment": "fgyq_0024",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 162215,
+            "end_ms": 173615,
+            "audio_present": true,
+            "text_excerpt": "丹青たんせいは画架がかに向って塗抹とまつせんでも五彩ごさいの絢爛けんらんは自おのずから心眼しんがんに映る。"
+          },
+          {
+            "par": "fgyq_0025",
+            "text": [
+              2,
+              1794,
+              2001
+            ],
+            "fragment": "fgyq_0025",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 173615,
+            "end_ms": 188675,
+            "audio_present": true,
+            "text_excerpt": "ただおのが住む世を、かく観かんじ得て、霊台方寸れいだいほうすんのカメラに澆季溷濁ぎょうきこんだくの俗界を清くうららかに収め得うれば足たる。"
+          },
+          {
+            "par": "fgyq_0026",
+            "text": [
+              2,
+              2001,
+              2700
+            ],
+            "fragment": "fgyq_0026",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 188675,
+            "end_ms": 234188,
+            "audio_present": true,
+            "text_excerpt": "この故に無声むせいの詩人には一句なく、無色むしょくの画家には尺縑せっけんなきも、かく人世じんせいを観じ得るの点において、かく煩悩ぼんのうを解脱げだつするの点において、かく清浄界しょうじょうかいに出入しゅつにゅうし得るの点において、またこの不同不二ふどうふじの乾坤けんこんを建立こんりゅうし得るの点において、我利私慾がりしよくの覊絆きはんを掃蕩そうとうするの点において、——千金せんきんの子よりも、万乗ばんじょうの君よりも、あらゆる俗界の寵児ちょうじよりも幸福である。"
+          },
+          {
+            "par": "fgyq_0027",
+            "text": [
+              2,
+              2701,
+              2785
+            ],
+            "fragment": "fgyq_0027",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 234188,
+            "end_ms": 242238,
+            "audio_present": true,
+            "text_excerpt": "世に住むこと二十年にして、住むに甲斐かいある世と知った。"
+          },
+          {
+            "par": "fgyq_0028",
+            "text": [
+              2,
+              2785,
+              2908
+            ],
+            "fragment": "fgyq_0028",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 242238,
+            "end_ms": 254127,
+            "audio_present": true,
+            "text_excerpt": "二十五年にして明暗は表裏ひょうりのごとく、日のあたる所にはきっと影がさすと悟った。"
+          },
+          {
+            "par": "fgyq_0029",
+            "text": [
+              2,
+              2908,
+              2962
+            ],
+            "fragment": "fgyq_0029",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 254127,
+            "end_ms": 259467,
+            "audio_present": true,
+            "text_excerpt": "三十の今日こんにちはこう思うている。"
+          },
+          {
+            "par": "fgyq_0030",
+            "text": [
+              2,
+              2962,
+              3082
+            ],
+            "fragment": "fgyq_0030",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 259467,
+            "end_ms": 270746,
+            "audio_present": true,
+            "text_excerpt": "——喜びの深きとき憂うれいいよいよ深く、楽たのしみの大いなるほど苦しみも大きい。"
+          },
+          {
+            "par": "fgyq_0031",
+            "text": [
+              2,
+              3082,
+              3136
+            ],
+            "fragment": "fgyq_0031",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 270746,
+            "end_ms": 276326,
+            "audio_present": true,
+            "text_excerpt": "これを切り放そうとすると身が持てぬ。"
+          },
+          {
+            "par": "fgyq_0032",
+            "text": [
+              2,
+              3136,
+              3187
+            ],
+            "fragment": "fgyq_0032",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 276326,
+            "end_ms": 281426,
+            "audio_present": true,
+            "text_excerpt": "片かたづけようとすれば世が立たぬ。"
+          },
+          {
+            "par": "fgyq_0033",
+            "text": [
+              2,
+              3187,
+              3274
+            ],
+            "fragment": "fgyq_0033",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 281426,
+            "end_ms": 289346,
+            "audio_present": true,
+            "text_excerpt": "金は大事だ、大事なものが殖ふえれば寝ねる間まも心配だろう。"
+          },
+          {
+            "par": "fgyq_0034",
+            "text": [
+              2,
+              3274,
+              3370
+            ],
+            "fragment": "fgyq_0034",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 289346,
+            "end_ms": 299726,
+            "audio_present": true,
+            "text_excerpt": "恋はうれしい、嬉しい恋が積もれば、恋をせぬ昔がかえって恋しかろ。"
+          },
+          {
+            "par": "fgyq_0035",
+            "text": [
+              2,
+              3370,
+              3430
+            ],
+            "fragment": "fgyq_0035",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 299726,
+            "end_ms": 306206,
+            "audio_present": true,
+            "text_excerpt": "閣僚の肩は数百万人の足を支ささえている。"
+          },
+          {
+            "par": "fgyq_0036",
+            "text": [
+              2,
+              3430,
+              3490
+            ],
+            "fragment": "fgyq_0036",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 306206,
+            "end_ms": 311606,
+            "audio_present": true,
+            "text_excerpt": "背中せなかには重い天下がおぶさっている。"
+          },
+          {
+            "par": "fgyq_0037",
+            "text": [
+              2,
+              3490,
+              3529
+            ],
+            "fragment": "fgyq_0037",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 311606,
+            "end_ms": 315866,
+            "audio_present": true,
+            "text_excerpt": "うまい物も食わねば惜しい。"
+          },
+          {
+            "par": "fgyq_0038",
+            "text": [
+              2,
+              3529,
+              3568
+            ],
+            "fragment": "fgyq_0038",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 315866,
+            "end_ms": 319406,
+            "audio_present": true,
+            "text_excerpt": "少し食えば飽あき足たらぬ。"
+          },
+          {
+            "par": "fgyq_0039",
+            "text": [
+              2,
+              3568,
+              3607
+            ],
+            "fragment": "fgyq_0039",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 319406,
+            "end_ms": 324626,
+            "audio_present": true,
+            "text_excerpt": "存分食えばあとが不愉快だ。"
+          },
+          {
+            "par": "fgyq_0040",
+            "text": [
+              2,
+              3607,
+              3613
+            ],
+            "fragment": "fgyq_0040",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 324626,
+            "end_ms": 326186,
+            "audio_present": true,
+            "text_excerpt": "……"
+          },
+          {
+            "par": "fgyq_0041",
+            "text": [
+              2,
+              3614,
+              3794
+            ],
+            "fragment": "fgyq_0041",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 326186,
+            "end_ms": 339582,
+            "audio_present": true,
+            "text_excerpt": "余よの考かんがえがここまで漂流して来た時に、余の右足うそくは突然坐すわりのわるい角石かくいしの端はしを踏み損そくなった。"
+          },
+          {
+            "par": "fgyq_0042",
+            "text": [
+              2,
+              3794,
+              4025
+            ],
+            "fragment": "fgyq_0042",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 339582,
+            "end_ms": 356454,
+            "audio_present": true,
+            "text_excerpt": "平衡へいこうを保つために、すわやと前に飛び出した左足さそくが、仕損しそんじの埋うめ合あわせをすると共に、余の腰は具合よく方ほう三尺ほどな岩の上に卸おりた。"
+          },
+          {
+            "par": "fgyq_0043",
+            "text": [
+              2,
+              4025,
+              4151
+            ],
+            "fragment": "fgyq_0043",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 356454,
+            "end_ms": 366269,
+            "audio_present": true,
+            "text_excerpt": "肩にかけた絵の具箱が腋わきの下から躍おどり出しただけで、幸いと何なんの事もなかった。"
+          },
+          {
+            "par": "fgyq_0044",
+            "text": [
+              2,
+              4152,
+              4281
+            ],
+            "fragment": "fgyq_0044",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 366269,
+            "end_ms": 375989,
+            "audio_present": true,
+            "text_excerpt": "立ち上がる時に向うを見ると、路みちから左の方にバケツを伏せたような峰が聳そびえている。"
+          },
+          {
+            "par": "fgyq_0045",
+            "text": [
+              2,
+              4281,
+              4533
+            ],
+            "fragment": "fgyq_0045",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 375989,
+            "end_ms": 394289,
+            "audio_present": true,
+            "text_excerpt": "杉か檜ひのきか分からないが根元ねもとから頂いただきまでことごとく蒼黒あおぐろい中に、山桜が薄赤くだんだらに棚引たなびいて、続つぎ目めが確しかと見えぬくらい靄もやが濃い。"
+          },
+          {
+            "par": "fgyq_0046",
+            "text": [
+              2,
+              4533,
+              4632
+            ],
+            "fragment": "fgyq_0046",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 394289,
+            "end_ms": 402629,
+            "audio_present": true,
+            "text_excerpt": "少し手前に禿山はげやまが一つ、群ぐんをぬきんでて眉まゆに逼せまる。"
+          },
+          {
+            "par": "fgyq_0047",
+            "text": [
+              2,
+              4632,
+              4764
+            ],
+            "fragment": "fgyq_0047",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 402629,
+            "end_ms": 413609,
+            "audio_present": true,
+            "text_excerpt": "禿はげた側面は巨人の斧おので削けずり去ったか、鋭どき平面をやけに谷の底に埋うずめている。"
+          },
+          {
+            "par": "fgyq_0048",
+            "text": [
+              2,
+              4764,
+              4824
+            ],
+            "fragment": "fgyq_0048",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 413609,
+            "end_ms": 419309,
+            "audio_present": true,
+            "text_excerpt": "天辺てっぺんに一本見えるのは赤松だろう。"
+          },
+          {
+            "par": "fgyq_0049",
+            "text": [
+              2,
+              4824,
+              4878
+            ],
+            "fragment": "fgyq_0049",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 419309,
+            "end_ms": 424349,
+            "audio_present": true,
+            "text_excerpt": "枝の間の空さえ判然はっきりしている。"
+          },
+          {
+            "par": "fgyq_0050",
+            "text": [
+              2,
+              4878,
+              5040
+            ],
+            "fragment": "fgyq_0050",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 424349,
+            "end_ms": 437182,
+            "audio_present": true,
+            "text_excerpt": "行く手は二丁ほどで切れているが、高い所から赤い毛布けっとが動いて来るのを見ると、登ればあすこへ出るのだろう。"
+          },
+          {
+            "par": "fgyq_0051",
+            "text": [
+              2,
+              5040,
+              5079
+            ],
+            "fragment": "fgyq_0051",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 437182,
+            "end_ms": 441562,
+            "audio_present": true,
+            "text_excerpt": "路はすこぶる難義なんぎだ。"
+          },
+          {
+            "par": "fgyq_0052",
+            "text": [
+              2,
+              5080,
+              5191
+            ],
+            "fragment": "fgyq_0052",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 441562,
+            "end_ms": 450501,
+            "audio_present": true,
+            "text_excerpt": "土をならすだけならさほど手間てまも入いるまいが、土の中には大きな石がある。"
+          },
+          {
+            "par": "fgyq_0053",
+            "text": [
+              2,
+              5191,
+              5248
+            ],
+            "fragment": "fgyq_0053",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 450501,
+            "end_ms": 456081,
+            "audio_present": true,
+            "text_excerpt": "土は平たいらにしても石は平らにならぬ。"
+          },
+          {
+            "par": "fgyq_0054",
+            "text": [
+              2,
+              5248,
+              5302
+            ],
+            "fragment": "fgyq_0054",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 456081,
+            "end_ms": 461901,
+            "audio_present": true,
+            "text_excerpt": "石は切り砕いても、岩は始末がつかぬ。"
+          },
+          {
+            "par": "fgyq_0055",
+            "text": [
+              2,
+              5302,
+              5437
+            ],
+            "fragment": "fgyq_0055",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 461901,
+            "end_ms": 471621,
+            "audio_present": true,
+            "text_excerpt": "掘崩ほりくずした土の上に悠然ゆうぜんと峙そばだって、吾らのために道を譲る景色けしきはない。"
+          },
+          {
+            "par": "fgyq_0056",
+            "text": [
+              2,
+              5437,
+              5509
+            ],
+            "fragment": "fgyq_0056",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 471621,
+            "end_ms": 478161,
+            "audio_present": true,
+            "text_excerpt": "向うで聞かぬ上は乗り越すか、廻らなければならん。"
+          },
+          {
+            "par": "fgyq_0057",
+            "text": [
+              2,
+              5509,
+              5569
+            ],
+            "fragment": "fgyq_0057",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 478161,
+            "end_ms": 483793,
+            "audio_present": true,
+            "text_excerpt": "巌いわのない所でさえ歩あるきよくはない。"
+          },
+          {
+            "par": "fgyq_0058",
+            "text": [
+              2,
+              5569,
+              5755
+            ],
+            "fragment": "fgyq_0058",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 483793,
+            "end_ms": 497318,
+            "audio_present": true,
+            "text_excerpt": "左右が高くって、中心が窪くぼんで、まるで一間幅はばを三角に穿くって、その頂点が真中まんなかを貫つらぬいていると評してもよい。"
+          },
+          {
+            "par": "fgyq_0059",
+            "text": [
+              2,
+              5755,
+              5833
+            ],
+            "fragment": "fgyq_0059",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 497318,
+            "end_ms": 504458,
+            "audio_present": true,
+            "text_excerpt": "路を行くと云わんより川底を渉わたると云う方が適当だ。"
+          },
+          {
+            "par": "fgyq_0060",
+            "text": [
+              2,
+              5833,
+              5926
+            ],
+            "fragment": "fgyq_0060",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 504458,
+            "end_ms": 511418,
+            "audio_present": true,
+            "text_excerpt": "固もとより急ぐ旅でないから、ぶらぶらと七曲ななまがりへかかる。"
+          },
+          {
+            "par": "fgyq_0061",
+            "text": [
+              2,
+              5927,
+              5990
+            ],
+            "fragment": "fgyq_0061",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 511418,
+            "end_ms": 517358,
+            "audio_present": true,
+            "text_excerpt": "たちまち足の下で雲雀ひばりの声がし出した。"
+          },
+          {
+            "par": "fgyq_0062",
+            "text": [
+              2,
+              5990,
+              6071
+            ],
+            "fragment": "fgyq_0062",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 517358,
+            "end_ms": 524978,
+            "audio_present": true,
+            "text_excerpt": "谷を見下みおろしたが、どこで鳴いてるか影も形も見えぬ。"
+          },
+          {
+            "par": "fgyq_0063",
+            "text": [
+              2,
+              6071,
+              6113
+            ],
+            "fragment": "fgyq_0063",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 524978,
+            "end_ms": 529658,
+            "audio_present": true,
+            "text_excerpt": "ただ声だけが明らかに聞える。"
+          },
+          {
+            "par": "fgyq_0064",
+            "text": [
+              2,
+              6113,
+              6182
+            ],
+            "fragment": "fgyq_0064",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 529658,
+            "end_ms": 534338,
+            "audio_present": true,
+            "text_excerpt": "せっせと忙せわしく、絶間たえまなく鳴いている。"
+          },
+          {
+            "par": "fgyq_0065",
+            "text": [
+              2,
+              6182,
+              6296
+            ],
+            "fragment": "fgyq_0065",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 534338,
+            "end_ms": 541237,
+            "audio_present": true,
+            "text_excerpt": "方幾里ほういくりの空気が一面に蚤のみに刺されていたたまれないような気がする。"
+          },
+          {
+            "par": "fgyq_0066",
+            "text": [
+              2,
+              6296,
+              6353
+            ],
+            "fragment": "fgyq_0066",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 541237,
+            "end_ms": 546877,
+            "audio_present": true,
+            "text_excerpt": "あの鳥の鳴く音ねには瞬時の余裕もない。"
+          },
+          {
+            "par": "fgyq_0067",
+            "text": [
+              2,
+              6353,
+              6476
+            ],
+            "fragment": "fgyq_0067",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 546877,
+            "end_ms": 555930,
+            "audio_present": true,
+            "text_excerpt": "のどかな春の日を鳴き尽くし、鳴きあかし、また鳴き暮らさなければ気が済まんと見える。"
+          },
+          {
+            "par": "fgyq_0068",
+            "text": [
+              2,
+              6476,
+              6551
+            ],
+            "fragment": "fgyq_0068",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 555930,
+            "end_ms": 562349,
+            "audio_present": true,
+            "text_excerpt": "その上どこまでも登って行く、いつまでも登って行く。"
+          },
+          {
+            "par": "fgyq_0069",
+            "text": [
+              2,
+              6551,
+              6605
+            ],
+            "fragment": "fgyq_0069",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 562349,
+            "end_ms": 568031,
+            "audio_present": true,
+            "text_excerpt": "雲雀はきっと雲の中で死ぬに相違ない。"
+          },
+          {
+            "par": "fgyq_0070",
+            "text": [
+              2,
+              6605,
+              6803
+            ],
+            "fragment": "fgyq_0070",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 568031,
+            "end_ms": 584411,
+            "audio_present": true,
+            "text_excerpt": "登り詰めた揚句あげくは、流れて雲に入いって、漂ただようているうちに形は消えてなくなって、ただ声だけが空の裡うちに残るのかも知れない。"
+          },
+          {
+            "par": "fgyq_0071",
+            "text": [
+              2,
+              6804,
+              7020
+            ],
+            "fragment": "fgyq_0071",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 584411,
+            "end_ms": 600851,
+            "audio_present": true,
+            "text_excerpt": "巌角いわかどを鋭どく廻って、按摩あんまなら真逆様まっさかさまに落つるところを、際きわどく右へ切れて、横に見下みおろすと、菜なの花が一面に見える。"
+          },
+          {
+            "par": "fgyq_0072",
+            "text": [
+              2,
+              7020,
+              7071
+            ],
+            "fragment": "fgyq_0072",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 600851,
+            "end_ms": 604990,
+            "audio_present": true,
+            "text_excerpt": "雲雀はあすこへ落ちるのかと思った。"
+          },
+          {
+            "par": "fgyq_0073",
+            "text": [
+              2,
+              7071,
+              7161
+            ],
+            "fragment": "fgyq_0073",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 604990,
+            "end_ms": 611770,
+            "audio_present": true,
+            "text_excerpt": "いいや、あの黄金こがねの原から飛び上がってくるのかと思った。"
+          },
+          {
+            "par": "fgyq_0074",
+            "text": [
+              2,
+              7161,
+              7266
+            ],
+            "fragment": "fgyq_0074",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 611770,
+            "end_ms": 619630,
+            "audio_present": true,
+            "text_excerpt": "次には落ちる雲雀と、上あがる雲雀ひばりが十文字にすれ違うのかと思った。"
+          },
+          {
+            "par": "fgyq_0075",
+            "text": [
+              2,
+              7266,
+              7410
+            ],
+            "fragment": "fgyq_0075",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 619630,
+            "end_ms": 631870,
+            "audio_present": true,
+            "text_excerpt": "最後に、落ちる時も、上る時も、また十文字に擦すれ違うときにも元気よく鳴きつづけるだろうと思った。"
+          },
+          {
+            "par": "fgyq_0076",
+            "text": [
+              2,
+              7411,
+              7432
+            ],
+            "fragment": "fgyq_0076",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 631870,
+            "end_ms": 635350,
+            "audio_present": true,
+            "text_excerpt": "春は眠くなる。"
+          },
+          {
+            "par": "fgyq_0077",
+            "text": [
+              2,
+              7432,
+              7510
+            ],
+            "fragment": "fgyq_0077",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 635350,
+            "end_ms": 643330,
+            "audio_present": true,
+            "text_excerpt": "猫は鼠を捕とる事を忘れ、人間は借金のある事を忘れる。"
+          },
+          {
+            "par": "fgyq_0078",
+            "text": [
+              2,
+              7510,
+              7600
+            ],
+            "fragment": "fgyq_0078",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 643330,
+            "end_ms": 650710,
+            "audio_present": true,
+            "text_excerpt": "時には自分の魂たましいの居所いどころさえ忘れて正体なくなる。"
+          },
+          {
+            "par": "fgyq_0079",
+            "text": [
+              2,
+              7600,
+              7663
+            ],
+            "fragment": "fgyq_0079",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 650710,
+            "end_ms": 657010,
+            "audio_present": true,
+            "text_excerpt": "ただ菜の花を遠く望んだときに眼が醒さめる。"
+          },
+          {
+            "par": "fgyq_0080",
+            "text": [
+              2,
+              7663,
+              7741
+            ],
+            "fragment": "fgyq_0080",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 657010,
+            "end_ms": 664270,
+            "audio_present": true,
+            "text_excerpt": "雲雀の声を聞いたときに魂のありかが判然はんぜんする。"
+          },
+          {
+            "par": "fgyq_0081",
+            "text": [
+              2,
+              7741,
+              7819
+            ],
+            "fragment": "fgyq_0081",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 664270,
+            "end_ms": 672490,
+            "audio_present": true,
+            "text_excerpt": "雲雀の鳴くのは口で鳴くのではない、魂全体が鳴くのだ。"
+          },
+          {
+            "par": "fgyq_0082",
+            "text": [
+              2,
+              7819,
+              7921
+            ],
+            "fragment": "fgyq_0082",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 672490,
+            "end_ms": 681790,
+            "audio_present": true,
+            "text_excerpt": "魂の活動が声にあらわれたもののうちで、あれほど元気のあるものはない。"
+          },
+          {
+            "par": "fgyq_0083",
+            "text": [
+              2,
+              7921,
+              7939
+            ],
+            "fragment": "fgyq_0083",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 681790,
+            "end_ms": 684670,
+            "audio_present": true,
+            "text_excerpt": "ああ愉快だ。"
+          },
+          {
+            "par": "fgyq_0084",
+            "text": [
+              2,
+              7939,
+              7999
+            ],
+            "fragment": "fgyq_0084",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 684670,
+            "end_ms": 691330,
+            "audio_present": true,
+            "text_excerpt": "こう思って、こう愉快になるのが詩である。"
+          },
+          {
+            "par": "fgyq_0085",
+            "text": [
+              2,
+              8000,
+              8195
+            ],
+            "fragment": "fgyq_0085",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 691330,
+            "end_ms": 705009,
+            "audio_present": true,
+            "text_excerpt": "たちまちシェレーの雲雀の詩を思い出して、口のうちで覚えたところだけ暗誦あんしょうして見たが、覚えているところは二三句しかなかった。"
+          },
+          {
+            "par": "fgyq_0086",
+            "text": [
+              2,
+              8195,
+              8246
+            ],
+            "fragment": "fgyq_0086",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 705009,
+            "end_ms": 709929,
+            "audio_present": true,
+            "text_excerpt": "その二三句のなかにこんなのがある。"
+          },
+          {
+            "par": "fgyq_0087",
+            "text": [
+              2,
+              8247,
+              8406
+            ],
+            "fragment": "fgyq_0087",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 709929,
+            "end_ms": 730175,
+            "audio_present": true,
+            "text_excerpt": "We look before and after\nAnd pine for what is not:\nOur sincerest laughter\nWith some pain is fraught;\nOur sweetest songs are those that tell of saddest thought."
+          },
+          {
+            "par": "fgyq_0088",
+            "text": [
+              2,
+              8407,
+              8509
+            ],
+            "fragment": "fgyq_0088",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 730175,
+            "end_ms": 738934,
+            "audio_present": true,
+            "text_excerpt": "「前をみては、後しりえを見ては、物欲ものほしと、あこがるるかなわれ。"
+          },
+          {
+            "par": "fgyq_0089",
+            "text": [
+              2,
+              8509,
+              8581
+            ],
+            "fragment": "fgyq_0089",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 738934,
+            "end_ms": 745714,
+            "audio_present": true,
+            "text_excerpt": "腹からの、笑といえど、苦しみの、そこにあるべし。"
+          },
+          {
+            "par": "fgyq_0090",
+            "text": [
+              2,
+              8581,
+              8689
+            ],
+            "fragment": "fgyq_0090",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 745714,
+            "end_ms": 756572,
+            "audio_present": true,
+            "text_excerpt": "うつくしき、極きわみの歌に、悲しさの、極みの想おもい、籠こもるとぞ知れ」"
+          },
+          {
+            "par": "fgyq_0091",
+            "text": [
+              2,
+              8690,
+              8870
+            ],
+            "fragment": "fgyq_0091",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 756572,
+            "end_ms": 771931,
+            "audio_present": true,
+            "text_excerpt": "なるほどいくら詩人が幸福でも、あの雲雀のように思い切って、一心不乱に、前後を忘却して、わが喜びを歌う訳わけには行くまい。"
+          },
+          {
+            "par": "fgyq_0092",
+            "text": [
+              2,
+              8870,
+              8990
+            ],
+            "fragment": "fgyq_0092",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 771931,
+            "end_ms": 781411,
+            "audio_present": true,
+            "text_excerpt": "西洋の詩は無論の事、支那の詩にも、よく万斛ばんこくの愁うれいなどと云う字がある。"
+          },
+          {
+            "par": "fgyq_0093",
+            "text": [
+              2,
+              8990,
+              9077
+            ],
+            "fragment": "fgyq_0093",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 781411,
+            "end_ms": 787950,
+            "audio_present": true,
+            "text_excerpt": "詩人だから万斛で素人しろうとなら一合ごうで済むかも知れぬ。"
+          },
+          {
+            "par": "fgyq_0094",
+            "text": [
+              2,
+              9077,
+              9206
+            ],
+            "fragment": "fgyq_0094",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 787950,
+            "end_ms": 800130,
+            "audio_present": true,
+            "text_excerpt": "して見ると詩人は常の人よりも苦労性で、凡骨ぼんこつの倍以上に神経が鋭敏なのかも知れん。"
+          },
+          {
+            "par": "fgyq_0095",
+            "text": [
+              2,
+              9206,
+              9281
+            ],
+            "fragment": "fgyq_0095",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 800130,
+            "end_ms": 807090,
+            "audio_present": true,
+            "text_excerpt": "超俗の喜びもあろうが、無量の悲かなしみも多かろう。"
+          },
+          {
+            "par": "fgyq_0096",
+            "text": [
+              2,
+              9281,
+              9332
+            ],
+            "fragment": "fgyq_0096",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 807090,
+            "end_ms": 812850,
+            "audio_present": true,
+            "text_excerpt": "そんならば詩人になるのも考え物だ。"
+          },
+          {
+            "par": "fgyq_0097",
+            "text": [
+              2,
+              9333,
+              9447
+            ],
+            "fragment": "fgyq_0097",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 812850,
+            "end_ms": 822570,
+            "audio_present": true,
+            "text_excerpt": "しばらくは路が平たいらで、右は雑木山ぞうきやま、左は菜の花の見つづけである。"
+          },
+          {
+            "par": "fgyq_0098",
+            "text": [
+              2,
+              9447,
+              9507
+            ],
+            "fragment": "fgyq_0098",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 822570,
+            "end_ms": 827490,
+            "audio_present": true,
+            "text_excerpt": "足の下に時々蒲公英たんぽぽを踏みつける。"
+          },
+          {
+            "par": "fgyq_0099",
+            "text": [
+              2,
+              9507,
+              9621
+            ],
+            "fragment": "fgyq_0099",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 827490,
+            "end_ms": 837390,
+            "audio_present": true,
+            "text_excerpt": "鋸のこぎりのような葉が遠慮なく四方へのして真中に黄色な珠たまを擁護している。"
+          },
+          {
+            "par": "fgyq_0100",
+            "text": [
+              2,
+              9621,
+              9813
+            ],
+            "fragment": "fgyq_0100",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 837390,
+            "end_ms": 852689,
+            "audio_present": true,
+            "text_excerpt": "菜の花に気をとられて、踏みつけたあとで、気の毒な事をしたと、振り向いて見ると、黄色な珠は依然として鋸のなかに鎮座ちんざしている。"
+          },
+          {
+            "par": "fgyq_0101",
+            "text": [
+              2,
+              9813,
+              9843
+            ],
+            "fragment": "fgyq_0101",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 852689,
+            "end_ms": 856289,
+            "audio_present": true,
+            "text_excerpt": "呑気のんきなものだ。"
+          },
+          {
+            "par": "fgyq_0102",
+            "text": [
+              2,
+              9843,
+              9873
+            ],
+            "fragment": "fgyq_0102",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 856289,
+            "end_ms": 859769,
+            "audio_present": true,
+            "text_excerpt": "また考えをつづける。"
+          },
+          {
+            "par": "fgyq_0103",
+            "text": [
+              2,
+              9874,
+              10018
+            ],
+            "fragment": "fgyq_0103",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 859769,
+            "end_ms": 870809,
+            "audio_present": true,
+            "text_excerpt": "詩人に憂うれいはつきものかも知れないが、あの雲雀ひばりを聞く心持になれば微塵みじんの苦くもない。"
+          },
+          {
+            "par": "fgyq_0104",
+            "text": [
+              2,
+              10018,
+              10096
+            ],
+            "fragment": "fgyq_0104",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 870809,
+            "end_ms": 877469,
+            "audio_present": true,
+            "text_excerpt": "菜の花を見ても、ただうれしくて胸が躍おどるばかりだ。"
+          },
+          {
+            "par": "fgyq_0105",
+            "text": [
+              2,
+              10096,
+              10174
+            ],
+            "fragment": "fgyq_0105",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 877469,
+            "end_ms": 886889,
+            "audio_present": true,
+            "text_excerpt": "蒲公英もその通り、桜も——桜はいつか見えなくなった。"
+          },
+          {
+            "par": "fgyq_0106",
+            "text": [
+              2,
+              10174,
+              10285
+            ],
+            "fragment": "fgyq_0106",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 886889,
+            "end_ms": 897149,
+            "audio_present": true,
+            "text_excerpt": "こう山の中へ来て自然の景物けいぶつに接すれば、見るものも聞くものも面白い。"
+          },
+          {
+            "par": "fgyq_0107",
+            "text": [
+              2,
+              10285,
+              10336
+            ],
+            "fragment": "fgyq_0107",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 897149,
+            "end_ms": 902969,
+            "audio_present": true,
+            "text_excerpt": "面白いだけで別段の苦しみも起らぬ。"
+          },
+          {
+            "par": "fgyq_0108",
+            "text": [
+              2,
+              10336,
+              10447
+            ],
+            "fragment": "fgyq_0108",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 902969,
+            "end_ms": 911849,
+            "audio_present": true,
+            "text_excerpt": "起るとすれば足が草臥くたびれて、旨うまいものが食べられぬくらいの事だろう。"
+          },
+          {
+            "par": "fgyq_0109",
+            "text": [
+              2,
+              10448,
+              10499
+            ],
+            "fragment": "fgyq_0109",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 911849,
+            "end_ms": 916769,
+            "audio_present": true,
+            "text_excerpt": "しかし苦しみのないのはなぜだろう。"
+          },
+          {
+            "par": "fgyq_0110",
+            "text": [
+              2,
+              10499,
+              10610
+            ],
+            "fragment": "fgyq_0110",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 916769,
+            "end_ms": 924869,
+            "audio_present": true,
+            "text_excerpt": "ただこの景色を一幅ぷくの画えとして観み、一巻かんの詩として読むからである。"
+          },
+          {
+            "par": "fgyq_0111",
+            "text": [
+              2,
+              10610,
+              10793
+            ],
+            "fragment": "fgyq_0111",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 924869,
+            "end_ms": 937348,
+            "audio_present": true,
+            "text_excerpt": "画がであり詩である以上は地面じめんを貰って、開拓する気にもならねば、鉄道をかけて一儲ひともうけする了見りょうけんも起らぬ。"
+          },
+          {
+            "par": "fgyq_0112",
+            "text": [
+              2,
+              10793,
+              11012
+            ],
+            "fragment": "fgyq_0112",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 937348,
+            "end_ms": 955724,
+            "audio_present": true,
+            "text_excerpt": "ただこの景色が——腹の足たしにもならぬ、月給の補いにもならぬこの景色が景色としてのみ、余が心を楽ませつつあるから苦労も心配も伴ともなわぬのだろう。"
+          },
+          {
+            "par": "fgyq_0113",
+            "text": [
+              2,
+              11012,
+              11063
+            ],
+            "fragment": "fgyq_0113",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 955724,
+            "end_ms": 960284,
+            "audio_present": true,
+            "text_excerpt": "自然の力はここにおいて尊たっとい。"
+          },
+          {
+            "par": "fgyq_0114",
+            "text": [
+              2,
+              11063,
+              11195
+            ],
+            "fragment": "fgyq_0114",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 960284,
+            "end_ms": 971323,
+            "audio_present": true,
+            "text_excerpt": "吾人の性情を瞬刻に陶冶とうやして醇乎じゅんことして醇なる詩境に入らしむるのは自然である。"
+          },
+          {
+            "par": "fgyq_0115",
+            "text": [
+              2,
+              11196,
+              11283
+            ],
+            "fragment": "fgyq_0115",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 971323,
+            "end_ms": 980923,
+            "audio_present": true,
+            "text_excerpt": "恋はうつくしかろ、孝もうつくしかろ、忠君愛国も結構だろう。"
+          },
+          {
+            "par": "fgyq_0116",
+            "text": [
+              2,
+              11283,
+              11463
+            ],
+            "fragment": "fgyq_0116",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 980923,
+            "end_ms": 995209,
+            "audio_present": true,
+            "text_excerpt": "しかし自身がその局きょくに当れば利害の旋風つむじに捲まき込まれて、うつくしき事にも、結構な事にも、目は眩くらんでしまう。"
+          },
+          {
+            "par": "fgyq_0117",
+            "text": [
+              2,
+              11463,
+              11535
+            ],
+            "fragment": "fgyq_0117",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 995209,
+            "end_ms": 1002649,
+            "audio_present": true,
+            "text_excerpt": "したがってどこに詩があるか自身には解げしかねる。"
+          },
+          {
+            "par": "fgyq_0118",
+            "text": [
+              2,
+              11536,
+              11647
+            ],
+            "fragment": "fgyq_0118",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1002649,
+            "end_ms": 1011349,
+            "audio_present": true,
+            "text_excerpt": "これがわかるためには、わかるだけの余裕のある第三者の地位に立たねばならぬ。"
+          },
+          {
+            "par": "fgyq_0119",
+            "text": [
+              2,
+              11647,
+              11710
+            ],
+            "fragment": "fgyq_0119",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1011349,
+            "end_ms": 1017289,
+            "audio_present": true,
+            "text_excerpt": "三者の地位に立てばこそ芝居は観みて面白い。"
+          },
+          {
+            "par": "fgyq_0120",
+            "text": [
+              2,
+              11710,
+              11737
+            ],
+            "fragment": "fgyq_0120",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1017289,
+            "end_ms": 1020949,
+            "audio_present": true,
+            "text_excerpt": "小説も見て面白い。"
+          },
+          {
+            "par": "fgyq_0121",
+            "text": [
+              2,
+              11737,
+              11854
+            ],
+            "fragment": "fgyq_0121",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1020949,
+            "end_ms": 1032229,
+            "audio_present": true,
+            "text_excerpt": "芝居を見て面白い人も、小説を読んで面白い人も、自己の利害は棚たなへ上げている。"
+          },
+          {
+            "par": "fgyq_0122",
+            "text": [
+              2,
+              11854,
+              11911
+            ],
+            "fragment": "fgyq_0122",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1032229,
+            "end_ms": 1038469,
+            "audio_present": true,
+            "text_excerpt": "見たり読んだりする間だけは詩人である。"
+          },
+          {
+            "par": "fgyq_0123",
+            "text": [
+              2,
+              11912,
+              11987
+            ],
+            "fragment": "fgyq_0123",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1038469,
+            "end_ms": 1046495,
+            "audio_present": true,
+            "text_excerpt": "それすら、普通の芝居や小説では人情を免まぬかれぬ。"
+          },
+          {
+            "par": "fgyq_0124",
+            "text": [
+              2,
+              11987,
+              12056
+            ],
+            "fragment": "fgyq_0124",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1046495,
+            "end_ms": 1053815,
+            "audio_present": true,
+            "text_excerpt": "苦しんだり、怒ったり、騒いだり、泣いたりする。"
+          },
+          {
+            "par": "fgyq_0125",
+            "text": [
+              2,
+              12056,
+              12173
+            ],
+            "fragment": "fgyq_0125",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1053815,
+            "end_ms": 1064855,
+            "audio_present": true,
+            "text_excerpt": "見るものもいつかその中に同化して苦しんだり、怒ったり、騒いだり、泣いたりする。"
+          },
+          {
+            "par": "fgyq_0126",
+            "text": [
+              2,
+              12173,
+              12365
+            ],
+            "fragment": "fgyq_0126",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1064855,
+            "end_ms": 1078714,
+            "audio_present": true,
+            "text_excerpt": "取柄とりえは利慾が交まじらぬと云う点に存そんするかも知れぬが、交らぬだけにその他の情緒じょうしょは常よりは余計に活動するだろう。"
+          },
+          {
+            "par": "fgyq_0127",
+            "text": [
+              2,
+              12365,
+              12389
+            ],
+            "fragment": "fgyq_0127",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1078714,
+            "end_ms": 1081654,
+            "audio_present": true,
+            "text_excerpt": "それが嫌いやだ。"
+          },
+          {
+            "par": "fgyq_0128",
+            "text": [
+              2,
+              12390,
+              12483
+            ],
+            "fragment": "fgyq_0128",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1081654,
+            "end_ms": 1089814,
+            "audio_present": true,
+            "text_excerpt": "苦しんだり、怒ったり、騒いだり、泣いたりは人の世につきものだ。"
+          },
+          {
+            "par": "fgyq_0129",
+            "text": [
+              2,
+              12483,
+              12564
+            ],
+            "fragment": "fgyq_0129",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1089814,
+            "end_ms": 1096654,
+            "audio_present": true,
+            "text_excerpt": "余も三十年の間それを仕通しとおして、飽々あきあきした。"
+          },
+          {
+            "par": "fgyq_0130",
+            "text": [
+              2,
+              12564,
+              12654
+            ],
+            "fragment": "fgyq_0130",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1096654,
+            "end_ms": 1105294,
+            "audio_present": true,
+            "text_excerpt": "飽あき飽きした上に芝居や小説で同じ刺激を繰り返しては大変だ。"
+          },
+          {
+            "par": "fgyq_0131",
+            "text": [
+              2,
+              12654,
+              12753
+            ],
+            "fragment": "fgyq_0131",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1105294,
+            "end_ms": 1113214,
+            "audio_present": true,
+            "text_excerpt": "余が欲する詩はそんな世間的の人情を鼓舞こぶするようなものではない。"
+          },
+          {
+            "par": "fgyq_0132",
+            "text": [
+              2,
+              12753,
+              12861
+            ],
+            "fragment": "fgyq_0132",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1113214,
+            "end_ms": 1122514,
+            "audio_present": true,
+            "text_excerpt": "俗念を放棄して、しばらくでも塵界じんかいを離れた心持ちになれる詩である。"
+          },
+          {
+            "par": "fgyq_0133",
+            "text": [
+              2,
+              12861,
+              12960
+            ],
+            "fragment": "fgyq_0133",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1122514,
+            "end_ms": 1132714,
+            "audio_present": true,
+            "text_excerpt": "いくら傑作でも人情を離れた芝居はない、理非を絶した小説は少かろう。"
+          },
+          {
+            "par": "fgyq_0134",
+            "text": [
+              2,
+              12960,
+              13038
+            ],
+            "fragment": "fgyq_0134",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1132714,
+            "end_ms": 1140094,
+            "audio_present": true,
+            "text_excerpt": "どこまでも世間を出る事が出来ぬのが彼らの特色である。"
+          },
+          {
+            "par": "fgyq_0135",
+            "text": [
+              2,
+              13038,
+              13215
+            ],
+            "fragment": "fgyq_0135",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1140094,
+            "end_ms": 1152634,
+            "audio_present": true,
+            "text_excerpt": "ことに西洋の詩になると、人事が根本になるからいわゆる詩歌しいかの純粋なるものもこの境きょうを解脱げだつする事を知らぬ。"
+          },
+          {
+            "par": "fgyq_0136",
+            "text": [
+              2,
+              13215,
+              13395
+            ],
+            "fragment": "fgyq_0136",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1152634,
+            "end_ms": 1165766,
+            "audio_present": true,
+            "text_excerpt": "どこまでも同情だとか、愛だとか、正義だとか、自由だとか、浮世うきよの勧工場かんこうばにあるものだけで用を弁べんじている。"
+          },
+          {
+            "par": "fgyq_0137",
+            "text": [
+              2,
+              13395,
+              13515
+            ],
+            "fragment": "fgyq_0137",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1165766,
+            "end_ms": 1175426,
+            "audio_present": true,
+            "text_excerpt": "いくら詩的になっても地面の上を馳かけてあるいて、銭ぜにの勘定を忘れるひまがない。"
+          },
+          {
+            "par": "fgyq_0138",
+            "text": [
+              2,
+              13515,
+              13593
+            ],
+            "fragment": "fgyq_0138",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1175426,
+            "end_ms": 1180945,
+            "audio_present": true,
+            "text_excerpt": "シェレーが雲雀ひばりを聞いて嘆息したのも無理はない。"
+          },
+          {
+            "par": "fgyq_0139",
+            "text": [
+              2,
+              13594,
+              13684
+            ],
+            "fragment": "fgyq_0139",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1180945,
+            "end_ms": 1188025,
+            "audio_present": true,
+            "text_excerpt": "うれしい事に東洋の詩歌しいかはそこを解脱げだつしたのがある。"
+          },
+          {
+            "par": "fgyq_0140",
+            "text": [
+              2,
+              13684,
+              13795
+            ],
+            "fragment": "fgyq_0140",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1188025,
+            "end_ms": 1196885,
+            "audio_present": true,
+            "text_excerpt": "採菊きくをとる東籬下とうりのもと、悠然ゆうぜんとして見南山なんざんをみる。"
+          },
+          {
+            "par": "fgyq_0141",
+            "text": [
+              2,
+              13795,
+              13894
+            ],
+            "fragment": "fgyq_0141",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1196885,
+            "end_ms": 1204805,
+            "audio_present": true,
+            "text_excerpt": "ただそれぎりの裏うちに暑苦しい世の中をまるで忘れた光景が出てくる。"
+          },
+          {
+            "par": "fgyq_0142",
+            "text": [
+              2,
+              13894,
+              14035
+            ],
+            "fragment": "fgyq_0142",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1204805,
+            "end_ms": 1215965,
+            "audio_present": true,
+            "text_excerpt": "垣の向うに隣りの娘が覗のぞいてる訳でもなければ、南山なんざんに親友が奉職している次第でもない。"
+          },
+          {
+            "par": "fgyq_0143",
+            "text": [
+              2,
+              14035,
+              14143
+            ],
+            "fragment": "fgyq_0143",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1215965,
+            "end_ms": 1224725,
+            "audio_present": true,
+            "text_excerpt": "超然と出世間的しゅっせけんてきに利害損得の汗を流し去った心持ちになれる。"
+          },
+          {
+            "par": "fgyq_0144",
+            "text": [
+              2,
+              14143,
+              14368
+            ],
+            "fragment": "fgyq_0144",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1224725,
+            "end_ms": 1241945,
+            "audio_present": true,
+            "text_excerpt": "独ひとり坐幽篁裏ゆうこうのうちにざし、弾琴きんをだんじて復長嘯またちょうしょうす、深林しんりん人不知ひとしらず、明月来めいげつきたりて相照あいてらす。"
+          },
+          {
+            "par": "fgyq_0145",
+            "text": [
+              2,
+              14368,
+              14473
+            ],
+            "fragment": "fgyq_0145",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1241945,
+            "end_ms": 1248905,
+            "audio_present": true,
+            "text_excerpt": "ただ二十字のうちに優ゆうに別乾坤べつけんこんを建立こんりゅうしている。"
+          },
+          {
+            "par": "fgyq_0146",
+            "text": [
+              2,
+              14473,
+              14602
+            ],
+            "fragment": "fgyq_0146",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1248905,
+            "end_ms": 1257065,
+            "audio_present": true,
+            "text_excerpt": "この乾坤の功徳くどくは「不如帰ほととぎす」や「金色夜叉こんじきやしゃ」の功徳ではない。"
+          },
+          {
+            "par": "fgyq_0147",
+            "text": [
+              2,
+              14602,
+              14758
+            ],
+            "fragment": "fgyq_0147",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1257065,
+            "end_ms": 1272915,
+            "audio_present": true,
+            "text_excerpt": "汽船、汽車、権利、義務、道徳、礼義で疲れ果てた後のちに、すべてを忘却してぐっすり寝込むような功徳である。"
+          },
+          {
+            "par": "fgyq_0148",
+            "text": [
+              2,
+              14759,
+              14864
+            ],
+            "fragment": "fgyq_0148",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1272915,
+            "end_ms": 1282914,
+            "audio_present": true,
+            "text_excerpt": "二十世紀に睡眠が必要ならば、二十世紀にこの出世間的の詩味は大切である。"
+          },
+          {
+            "par": "fgyq_0149",
+            "text": [
+              2,
+              14864,
+              15116
+            ],
+            "fragment": "fgyq_0149",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1282914,
+            "end_ms": 1300376,
+            "audio_present": true,
+            "text_excerpt": "惜しい事に今の詩を作る人も、詩を読む人もみんな、西洋人にかぶれているから、わざわざ呑気のんきな扁舟へんしゅうを泛うかべてこの桃源とうげんに溯さかのぼるものはないようだ。"
+          },
+          {
+            "par": "fgyq_0150",
+            "text": [
+              2,
+              15116,
+              15323
+            ],
+            "fragment": "fgyq_0150",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1300376,
+            "end_ms": 1314416,
+            "audio_present": true,
+            "text_excerpt": "余は固もとより詩人を職業にしておらんから、王維おういや淵明えんめいの境界きょうがいを今の世に布教ふきょうして広げようと云う心掛も何もない。"
+          },
+          {
+            "par": "fgyq_0151",
+            "text": [
+              2,
+              15323,
+              15434
+            ],
+            "fragment": "fgyq_0151",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1314416,
+            "end_ms": 1324895,
+            "audio_present": true,
+            "text_excerpt": "ただ自分にはこう云う感興が演芸会よりも舞踏会よりも薬になるように思われる。"
+          },
+          {
+            "par": "fgyq_0152",
+            "text": [
+              2,
+              15434,
+              15518
+            ],
+            "fragment": "fgyq_0152",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1324895,
+            "end_ms": 1332035,
+            "audio_present": true,
+            "text_excerpt": "ファウストよりも、ハムレットよりもありがたく考えられる。"
+          },
+          {
+            "par": "fgyq_0153",
+            "text": [
+              2,
+              15518,
+              15701
+            ],
+            "fragment": "fgyq_0153",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1332035,
+            "end_ms": 1345764,
+            "audio_present": true,
+            "text_excerpt": "こうやって、ただ一人ひとり絵の具箱と三脚几さんきゃくきを担かついで春の山路やまじをのそのそあるくのも全くこれがためである。"
+          },
+          {
+            "par": "fgyq_0154",
+            "text": [
+              2,
+              15701,
+              15881
+            ],
+            "fragment": "fgyq_0154",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1345764,
+            "end_ms": 1359384,
+            "audio_present": true,
+            "text_excerpt": "淵明、王維の詩境を直接に自然から吸収して、すこしの間までも非人情ひにんじょうの天地に逍遥しょうようしたいからの願ねがい。"
+          },
+          {
+            "par": "fgyq_0155",
+            "text": [
+              2,
+              15881,
+              15917
+            ],
+            "fragment": "fgyq_0155",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1359384,
+            "end_ms": 1362844,
+            "audio_present": true,
+            "text_excerpt": "一つの酔興すいきょうだ。"
+          },
+          {
+            "par": "fgyq_0156",
+            "text": [
+              2,
+              15918,
+              16056
+            ],
+            "fragment": "fgyq_0156",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1362844,
+            "end_ms": 1373763,
+            "audio_present": true,
+            "text_excerpt": "もちろん人間の一分子いちぶんしだから、いくら好きでも、非人情はそう長く続く訳わけには行かぬ。"
+          },
+          {
+            "par": "fgyq_0157",
+            "text": [
+              2,
+              16056,
+              16272
+            ],
+            "fragment": "fgyq_0157",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1373763,
+            "end_ms": 1387083,
+            "audio_present": true,
+            "text_excerpt": "淵明だって年ねんが年中ねんじゅう南山なんざんを見詰めていたのでもあるまいし、王維も好んで竹藪たけやぶの中に蚊帳かやを釣らずに寝た男でもなかろう。"
+          },
+          {
+            "par": "fgyq_0158",
+            "text": [
+              2,
+              16272,
+              16410
+            ],
+            "fragment": "fgyq_0158",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1387083,
+            "end_ms": 1397462,
+            "audio_present": true,
+            "text_excerpt": "やはり余った菊は花屋へ売りこかして、生はえた筍たけのこは八百屋やおやへ払い下げたものと思う。"
+          },
+          {
+            "par": "fgyq_0159",
+            "text": [
+              2,
+              16410,
+              16443
+            ],
+            "fragment": "fgyq_0159",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1397462,
+            "end_ms": 1401062,
+            "audio_present": true,
+            "text_excerpt": "こう云う余もその通り。"
+          },
+          {
+            "par": "fgyq_0160",
+            "text": [
+              2,
+              16443,
+              16572
+            ],
+            "fragment": "fgyq_0160",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1401062,
+            "end_ms": 1410662,
+            "audio_present": true,
+            "text_excerpt": "いくら雲雀と菜の花が気に入ったって、山のなかへ野宿するほど非人情が募つのってはおらん。"
+          },
+          {
+            "par": "fgyq_0161",
+            "text": [
+              2,
+              16572,
+              16611
+            ],
+            "fragment": "fgyq_0161",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1410662,
+            "end_ms": 1414562,
+            "audio_present": true,
+            "text_excerpt": "こんな所でも人間に逢あう。"
+          },
+          {
+            "par": "fgyq_0162",
+            "text": [
+              2,
+              16611,
+              16773
+            ],
+            "fragment": "fgyq_0162",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1414562,
+            "end_ms": 1425781,
+            "audio_present": true,
+            "text_excerpt": "じんじん端折ばしょりの頬冠ほおかむりや、赤い腰巻こしまきの姉あねさんや、時には人間より顔の長い馬にまで逢う。"
+          },
+          {
+            "par": "fgyq_0163",
+            "text": [
+              2,
+              16773,
+              16947
+            ],
+            "fragment": "fgyq_0163",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1425781,
+            "end_ms": 1439581,
+            "audio_present": true,
+            "text_excerpt": "百万本の檜ひのきに取り囲まれて、海面を抜く何百尺かの空気を呑のんだり吐いたりしても、人の臭においはなかなか取れない。"
+          },
+          {
+            "par": "fgyq_0164",
+            "text": [
+              2,
+              16947,
+              17079
+            ],
+            "fragment": "fgyq_0164",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1439581,
+            "end_ms": 1449961,
+            "audio_present": true,
+            "text_excerpt": "それどころか、山を越えて落ちつく先の、今宵こよいの宿は那古井なこいの温泉場おんせんばだ。"
+          },
+          {
+            "par": "fgyq_0165",
+            "text": [
+              2,
+              17080,
+              17134
+            ],
+            "fragment": "fgyq_0165",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1449961,
+            "end_ms": 1455241,
+            "audio_present": true,
+            "text_excerpt": "ただ、物は見様みようでどうでもなる。"
+          },
+          {
+            "par": "fgyq_0166",
+            "text": [
+              2,
+              17134,
+              17311
+            ],
+            "fragment": "fgyq_0166",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1455241,
+            "end_ms": 1470035,
+            "audio_present": true,
+            "text_excerpt": "レオナルド・ダ・ヴィンチが弟子に告げた言ことばに、あの鐘かねの音おとを聞け、鐘は一つだが、音はどうとも聞かれるとある。"
+          },
+          {
+            "par": "fgyq_0167",
+            "text": [
+              2,
+              17311,
+              17413
+            ],
+            "fragment": "fgyq_0167",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1470035,
+            "end_ms": 1479095,
+            "audio_present": true,
+            "text_excerpt": "一人の男、一人の女も見様次第みようしだいでいかようとも見立てがつく。"
+          },
+          {
+            "par": "fgyq_0168",
+            "text": [
+              2,
+              17413,
+              17599
+            ],
+            "fragment": "fgyq_0168",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1479095,
+            "end_ms": 1493255,
+            "audio_present": true,
+            "text_excerpt": "どうせ非人情をしに出掛けた旅だから、そのつもりで人間を見たら、浮世小路うきよこうじの何軒目に狭苦しく暮した時とは違うだろう。"
+          },
+          {
+            "par": "fgyq_0169",
+            "text": [
+              2,
+              17599,
+              17761
+            ],
+            "fragment": "fgyq_0169",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1493255,
+            "end_ms": 1506155,
+            "audio_present": true,
+            "text_excerpt": "よし全く人情を離れる事が出来んでも、せめて御能拝見おのうはいけんの時くらいは淡い心持ちにはなれそうなものだ。"
+          },
+          {
+            "par": "fgyq_0170",
+            "text": [
+              2,
+              17761,
+              17788
+            ],
+            "fragment": "fgyq_0170",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1506155,
+            "end_ms": 1509635,
+            "audio_present": true,
+            "text_excerpt": "能にも人情はある。"
+          },
+          {
+            "par": "fgyq_0171",
+            "text": [
+              2,
+              17788,
+              17887
+            ],
+            "fragment": "fgyq_0171",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1509635,
+            "end_ms": 1517015,
+            "audio_present": true,
+            "text_excerpt": "七騎落しちきおちでも、墨田川すみだがわでも泣かぬとは保証が出来ん。"
+          },
+          {
+            "par": "fgyq_0172",
+            "text": [
+              2,
+              17887,
+              18109
+            ],
+            "fragment": "fgyq_0172",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1517015,
+            "end_ms": 1533994,
+            "audio_present": true,
+            "text_excerpt": "しかしあれは情じょう三分芸ぶげい七分で見せるわざだ。我らが能から享うけるありがた味は下界の人情をよくそのままに写す手際てぎわから出てくるのではない。"
+          },
+          {
+            "par": "par_0171",
+            "text": [
+              2,
+              18109,
+              18272
+            ],
+            "fragment": "fmse_0005",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1533994,
+            "end_ms": 1545031,
+            "audio_present": true,
+            "text_excerpt": "そのまま の上へ芸術という着物を何枚も着せて、世の中にあるまじき悠長ゆうちょうな振舞ふるまいをするからである。"
+          },
+          {
+            "par": "fgyq_0176",
+            "text": [
+              2,
+              18273,
+              18456
+            ],
+            "fragment": "fgyq_0176",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1545031,
+            "end_ms": 1557328,
+            "audio_present": true,
+            "text_excerpt": "しばらくこの旅中りょちゅうに起る出来事と、旅中に出逢であう人間を能の仕組しくみと能役者の所作しょさに見立てたらどうだろう。"
+          },
+          {
+            "par": "fgyq_0177",
+            "text": [
+              2,
+              18456,
+              18657
+            ],
+            "fragment": "fgyq_0177",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1557328,
+            "end_ms": 1572550,
+            "audio_present": true,
+            "text_excerpt": "まるで人情を棄すてる訳には行くまいが、根が詩的に出来た旅だから、非人情のやりついでに、なるべく節倹してそこまでは漕こぎつけたいものだ。"
+          },
+          {
+            "par": "fgyq_0178",
+            "text": [
+              2,
+              18657,
+              18942
+            ],
+            "fragment": "fgyq_0178",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1572550,
+            "end_ms": 1592614,
+            "audio_present": true,
+            "text_excerpt": "南山なんざんや幽篁ゆうこうとは性たちの違ったものに相違ないし、また雲雀ひばりや菜の花といっしょにする事も出来まいが、なるべくこれに近づけて、近づけ得る限りは同じ観察点から人間を視みてみたい。"
+          },
+          {
+            "par": "fgyq_0179",
+            "text": [
+              2,
+              18942,
+              19089
+            ],
+            "fragment": "fgyq_0179",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1592614,
+            "end_ms": 1603481,
+            "audio_present": true,
+            "text_excerpt": "芭蕉ばしょうと云う男は枕元まくらもとへ馬が尿いばりするのをさえ雅がな事と見立てて発句ほっくにした。"
+          },
+          {
+            "par": "fgyq_0180",
+            "text": [
+              2,
+              19089,
+              19326
+            ],
+            "fragment": "fgyq_0180",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1603481,
+            "end_ms": 1621421,
+            "audio_present": true,
+            "text_excerpt": "余もこれから逢う人物を——百姓も、町人も、村役場の書記も、爺じいさんも婆ばあさんも——ことごとく大自然の点景として描き出されたものと仮定して取こなして見よう。"
+          },
+          {
+            "par": "fgyq_0181",
+            "text": [
+              2,
+              19326,
+              19434
+            ],
+            "fragment": "fgyq_0181",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1621421,
+            "end_ms": 1630421,
+            "audio_present": true,
+            "text_excerpt": "もっとも画中の人物と違って、彼らはおのがじし勝手な真似まねをするだろう。"
+          },
+          {
+            "par": "fgyq_0182",
+            "text": [
+              2,
+              19434,
+              19647
+            ],
+            "fragment": "fgyq_0182",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1630421,
+            "end_ms": 1645850,
+            "audio_present": true,
+            "text_excerpt": "しかし普通の小説家のようにその勝手な真似の根本を探さぐって、心理作用に立ち入ったり、人事葛藤じんじかっとうの詮議立せんぎだてをしては俗になる。"
+          },
+          {
+            "par": "fgyq_0183",
+            "text": [
+              2,
+              19647,
+              19674
+            ],
+            "fragment": "fgyq_0183",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1645850,
+            "end_ms": 1648669,
+            "audio_present": true,
+            "text_excerpt": "動いても構わない。"
+          },
+          {
+            "par": "fgyq_0184",
+            "text": [
+              2,
+              19674,
+              19740
+            ],
+            "fragment": "fgyq_0184",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1648669,
+            "end_ms": 1653829,
+            "audio_present": true,
+            "text_excerpt": "画中の人間が動くと見れば差さし支つかえない。"
+          },
+          {
+            "par": "fgyq_0185",
+            "text": [
+              2,
+              19740,
+              19824
+            ],
+            "fragment": "fgyq_0185",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1653829,
+            "end_ms": 1660608,
+            "audio_present": true,
+            "text_excerpt": "画中の人物はどう動いても平面以外に出られるものではない。"
+          },
+          {
+            "par": "fgyq_0186",
+            "text": [
+              2,
+              19824,
+              19980
+            ],
+            "fragment": "fgyq_0186",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1660608,
+            "end_ms": 1673148,
+            "audio_present": true,
+            "text_excerpt": "平面以外に飛び出して、立方的に働くと思えばこそ、こっちと衝突したり、利害の交渉が起ったりして面倒になる。"
+          },
+          {
+            "par": "fgyq_0187",
+            "text": [
+              2,
+              19980,
+              20064
+            ],
+            "fragment": "fgyq_0187",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1673148,
+            "end_ms": 1679748,
+            "audio_present": true,
+            "text_excerpt": "面倒になればなるほど美的に見ている訳わけに行かなくなる。"
+          },
+          {
+            "par": "fgyq_0188",
+            "text": [
+              2,
+              20064,
+              20208
+            ],
+            "fragment": "fgyq_0188",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1679748,
+            "end_ms": 1691988,
+            "audio_present": true,
+            "text_excerpt": "これから逢う人間には超然と遠き上から見物する気で、人情の電気がむやみに双方で起らないようにする。"
+          },
+          {
+            "par": "fgyq_0189",
+            "text": [
+              2,
+              20208,
+              20481
+            ],
+            "fragment": "fgyq_0189",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1691988,
+            "end_ms": 1712856,
+            "audio_present": true,
+            "text_excerpt": "そうすれば相手がいくら働いても、こちらの懐ふところには容易に飛び込めない訳だから、つまりは画えの前へ立って、画中の人物が画面の中うちをあちらこちらと騒ぎ廻るのを見るのと同じ訳になる。"
+          },
+          {
+            "par": "fgyq_0190",
+            "text": [
+              2,
+              20481,
+              20556
+            ],
+            "fragment": "fgyq_0190",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1712856,
+            "end_ms": 1718736,
+            "audio_present": true,
+            "text_excerpt": "間あいだ三尺も隔へだてていれば落ちついて見られる。"
+          },
+          {
+            "par": "fgyq_0191",
+            "text": [
+              2,
+              20556,
+              20595
+            ],
+            "fragment": "fgyq_0191",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1718736,
+            "end_ms": 1721976,
+            "audio_present": true,
+            "text_excerpt": "あぶな気げなしに見られる。"
+          },
+          {
+            "par": "fgyq_0192",
+            "text": [
+              2,
+              20595,
+              20763
+            ],
+            "fragment": "fgyq_0192",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1721976,
+            "end_ms": 1734936,
+            "audio_present": true,
+            "text_excerpt": "言ことばを換かえて云えば、利害に気を奪われないから、全力を挙あげて彼らの動作を芸術の方面から観察する事が出来る。"
+          },
+          {
+            "par": "fgyq_0193",
+            "text": [
+              2,
+              20763,
+              20844
+            ],
+            "fragment": "fgyq_0193",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1734936,
+            "end_ms": 1742496,
+            "audio_present": true,
+            "text_excerpt": "余念もなく美か美でないかと鑒識かんしきする事が出来る。"
+          },
+          {
+            "par": "fgyq_0194",
+            "text": [
+              2,
+              20845,
+              20914
+            ],
+            "fragment": "fgyq_0194",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1742496,
+            "end_ms": 1749396,
+            "audio_present": true,
+            "text_excerpt": "ここまで決心をした時、空があやしくなって来た。"
+          },
+          {
+            "par": "fgyq_0195",
+            "text": [
+              2,
+              20914,
+              21166
+            ],
+            "fragment": "fgyq_0195",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1749396,
+            "end_ms": 1768716,
+            "audio_present": true,
+            "text_excerpt": "煮え切れない雲が、頭の上へ靠垂もたれ懸かかっていたと思ったが、いつのまにか、崩くずれ出だして、四方しほうはただ雲の海かと怪しまれる中から、しとしとと春の雨が降り出した。"
+          },
+          {
+            "par": "fgyq_0196",
+            "text": [
+              2,
+              21166,
+              21382
+            ],
+            "fragment": "fgyq_0196",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1768716,
+            "end_ms": 1787196,
+            "audio_present": true,
+            "text_excerpt": "菜の花は疾とくに通り過して、今は山と山の間を行くのだが、雨の糸が濃こまやかでほとんど霧を欺あざむくくらいだから、隔へだたりはどれほどかわからぬ。"
+          },
+          {
+            "par": "fgyq_0197",
+            "text": [
+              2,
+              21382,
+              21493
+            ],
+            "fragment": "fgyq_0197",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1787196,
+            "end_ms": 1798296,
+            "audio_present": true,
+            "text_excerpt": "時々風が来て、高い雲を吹き払うとき、薄黒い山の背せが右手に見える事がある。"
+          },
+          {
+            "par": "fgyq_0198",
+            "text": [
+              2,
+              21493,
+              21565
+            ],
+            "fragment": "fgyq_0198",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1798296,
+            "end_ms": 1805436,
+            "audio_present": true,
+            "text_excerpt": "何でも谷一つ隔てて向うが脈の走っている所らしい。"
+          },
+          {
+            "par": "fgyq_0199",
+            "text": [
+              2,
+              21565,
+              21607
+            ],
+            "fragment": "fgyq_0199",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1805436,
+            "end_ms": 1810236,
+            "audio_present": true,
+            "text_excerpt": "左はすぐ山の裾すそと見える。"
+          },
+          {
+            "par": "fgyq_0200",
+            "text": [
+              2,
+              21607,
+              21697
+            ],
+            "fragment": "fgyq_0200",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1810236,
+            "end_ms": 1817916,
+            "audio_present": true,
+            "text_excerpt": "深く罩こめる雨の奥から松らしいものが、ちょくちょく顔を出す。"
+          },
+          {
+            "par": "fgyq_0201",
+            "text": [
+              2,
+              21697,
+              21733
+            ],
+            "fragment": "fgyq_0201",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1817916,
+            "end_ms": 1821636,
+            "audio_present": true,
+            "text_excerpt": "出すかと思うと、隠れる。"
+          },
+          {
+            "par": "fgyq_0202",
+            "text": [
+              2,
+              21733,
+              21835
+            ],
+            "fragment": "fgyq_0202",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1821636,
+            "end_ms": 1833635,
+            "audio_present": true,
+            "text_excerpt": "雨が動くのか、木が動くのか、夢が動くのか、何となく不思議な心持ちだ。"
+          },
+          {
+            "par": "fgyq_0203",
+            "text": [
+              2,
+              21836,
+              21980
+            ],
+            "fragment": "fgyq_0203",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1833635,
+            "end_ms": 1844974,
+            "audio_present": true,
+            "text_excerpt": "路は存外ぞんがい広くなって、かつ平たいらだから、あるくに骨は折れんが、雨具の用意がないので急ぐ。"
+          },
+          {
+            "par": "fgyq_0204",
+            "text": [
+              2,
+              21980,
+              22154
+            ],
+            "fragment": "fgyq_0204",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1844974,
+            "end_ms": 1859907,
+            "audio_present": true,
+            "text_excerpt": "帽子から雨垂あまだれがぽたりぽたりと落つる頃、五六間先きから、鈴の音がして、黒い中から、馬子まごがふうとあらわれた。"
+          },
+          {
+            "par": "fgyq_0205",
+            "text": [
+              2,
+              22155,
+              22197
+            ],
+            "fragment": "fgyq_0205",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1859907,
+            "end_ms": 1863746,
+            "audio_present": true,
+            "text_excerpt": "「ここらに休む所はないかね」"
+          },
+          {
+            "par": "fgyq_0206",
+            "text": [
+              2,
+              22198,
+              22252
+            ],
+            "fragment": "fgyq_0206",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1863746,
+            "end_ms": 1868666,
+            "audio_present": true,
+            "text_excerpt": "「もう十五丁行くと茶屋がありますよ。"
+          },
+          {
+            "par": "fgyq_0207",
+            "text": [
+              2,
+              22252,
+              22279
+            ],
+            "fragment": "fgyq_0207",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1868666,
+            "end_ms": 1871486,
+            "audio_present": true,
+            "text_excerpt": "だいぶ濡ぬれたね」"
+          },
+          {
+            "par": "fgyq_0208",
+            "text": [
+              2,
+              22280,
+              22430
+            ],
+            "fragment": "fgyq_0208",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1871486,
+            "end_ms": 1884026,
+            "audio_present": true,
+            "text_excerpt": "まだ十五丁かと、振り向いているうちに、馬子の姿は影画かげえのように雨につつまれて、またふうと消えた。"
+          },
+          {
+            "par": "fgyq_0209",
+            "text": [
+              2,
+              22431,
+              22590
+            ],
+            "fragment": "fgyq_0209",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1884026,
+            "end_ms": 1896146,
+            "audio_present": true,
+            "text_excerpt": "糠ぬかのように見えた粒は次第に太く長くなって、今は一筋ひとすじごとに風に捲まかれる様さままでが目に入いる。"
+          },
+          {
+            "par": "fgyq_0210",
+            "text": [
+              2,
+              22590,
+              22749
+            ],
+            "fragment": "fgyq_0210",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1896146,
+            "end_ms": 1907006,
+            "audio_present": true,
+            "text_excerpt": "羽織はとくに濡れ尽つくして肌着に浸しみ込んだ水が、身体からだの温度ぬくもりで生暖なまあたたかく感ぜられる。"
+          },
+          {
+            "par": "fgyq_0211",
+            "text": [
+              2,
+              22749,
+              22824
+            ],
+            "fragment": "fgyq_0211",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1907006,
+            "end_ms": 1913906,
+            "audio_present": true,
+            "text_excerpt": "気持がわるいから、帽を傾けて、すたすた歩行あるく。"
+          },
+          {
+            "par": "fgyq_0212",
+            "text": [
+              2,
+              22825,
+              23095
+            ],
+            "fragment": "fgyq_0212",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1913906,
+            "end_ms": 1933601,
+            "audio_present": true,
+            "text_excerpt": "茫々ぼうぼうたる薄墨色うすずみいろの世界を、幾条いくじょうの銀箭ぎんせんが斜ななめに走るなかを、ひたぶるに濡れて行くわれを、われならぬ人の姿と思えば、詩にもなる、句にも咏よまれる。"
+          },
+          {
+            "par": "fgyq_0213",
+            "text": [
+              2,
+              23095,
+              23284
+            ],
+            "fragment": "fgyq_0213",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1933601,
+            "end_ms": 1949321,
+            "audio_present": true,
+            "text_excerpt": "有体ありていなる己おのれを忘れ尽つくして純客観に眼をつくる時、始めてわれは画中の人物として、自然の景物と美しき調和を保たもつ。"
+          },
+          {
+            "par": "fgyq_0214",
+            "text": [
+              2,
+              23284,
+              23458
+            ],
+            "fragment": "fgyq_0214",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1949321,
+            "end_ms": 1964201,
+            "audio_present": true,
+            "text_excerpt": "ただ降る雨の心苦しくて、踏む足の疲れたるを気に掛ける瞬間に、われはすでに詩中の人にもあらず、画裡がりの人にもあらず。"
+          },
+          {
+            "par": "fgyq_0215",
+            "text": [
+              2,
+              23458,
+              23524
+            ],
+            "fragment": "fgyq_0215",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1964201,
+            "end_ms": 1969481,
+            "audio_present": true,
+            "text_excerpt": "依然として市井しせいの一豎子じゅしに過ぎぬ。"
+          },
+          {
+            "par": "fgyq_0216",
+            "text": [
+              2,
+              23524,
+              23578
+            ],
+            "fragment": "fgyq_0216",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1969481,
+            "end_ms": 1973620,
+            "audio_present": true,
+            "text_excerpt": "雲煙飛動の趣おもむきも眼に入いらぬ。"
+          },
+          {
+            "par": "fgyq_0217",
+            "text": [
+              2,
+              23578,
+              23644
+            ],
+            "fragment": "fgyq_0217",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1973620,
+            "end_ms": 1978660,
+            "audio_present": true,
+            "text_excerpt": "落花啼鳥らっかていちょうの情けも心に浮ばぬ。"
+          },
+          {
+            "par": "fgyq_0218",
+            "text": [
+              2,
+              23644,
+              23791
+            ],
+            "fragment": "fgyq_0218",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1978660,
+            "end_ms": 1988380,
+            "audio_present": true,
+            "text_excerpt": "蕭々しょうしょうとして独ひとり春山しゅんざんを行く吾われの、いかに美しきかはなおさらに解かいせぬ。"
+          },
+          {
+            "par": "fgyq_0219",
+            "text": [
+              2,
+              23791,
+              23836
+            ],
+            "fragment": "fgyq_0219",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1988380,
+            "end_ms": 1992640,
+            "audio_present": true,
+            "text_excerpt": "初めは帽を傾けて歩行あるいた。"
+          },
+          {
+            "par": "fgyq_0220",
+            "text": [
+              2,
+              23836,
+              23908
+            ],
+            "fragment": "fgyq_0220",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1992640,
+            "end_ms": 1997740,
+            "audio_present": true,
+            "text_excerpt": "後のちにはただ足の甲こうのみを見詰めてあるいた。"
+          },
+          {
+            "par": "fgyq_0221",
+            "text": [
+              2,
+              23908,
+              23965
+            ],
+            "fragment": "fgyq_0221",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 1997740,
+            "end_ms": 2003380,
+            "audio_present": true,
+            "text_excerpt": "終りには肩をすぼめて、恐る恐る歩行た。"
+          },
+          {
+            "par": "fgyq_0222",
+            "text": [
+              2,
+              23965,
+              24088
+            ],
+            "fragment": "fgyq_0222",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 2003380,
+            "end_ms": 2010520,
+            "audio_present": true,
+            "text_excerpt": "雨は満目まんもくの樹梢じゅしょうを揺うごかして四方しほうより孤客こかくに逼せまる。"
+          },
+          {
+            "par": "fgyq_0223",
+            "text": [
+              2,
+              24088,
+              24130
+            ],
+            "fragment": "fgyq_0223",
+            "audio": "OPS/audio/fmse004b.mp3",
+            "begin_ms": 2010520,
+            "end_ms": 2015025,
+            "audio_present": true,
+            "text_excerpt": "非人情がちと強過ぎたようだ。"
+          }
+        ]
+      },
+      {
+        "part": 3,
+        "smil": "OPS/xhtml/二.smil",
+        "duration_ms": 1588006,
+        "active_class": null,
+        "clips": 220,
+        "missing_audio": 0,
+        "unresolved_text": 0,
+        "pairs": [
+          {
+            "par": "ibcw_0001",
+            "text": [
+              3,
+              0,
+              3
+            ],
+            "fragment": "dol_1_1_ibcw_0001",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 0,
+            "end_ms": 1919,
+            "audio_present": true,
+            "text_excerpt": "二"
+          },
+          {
+            "par": "ibcw_0002",
+            "text": [
+              3,
+              4,
+              55
+            ],
+            "fragment": "dol_1_1_ibcw_0002",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1919,
+            "end_ms": 7859,
+            "audio_present": true,
+            "text_excerpt": "「おい」と声を掛けたが返事がない。"
+          },
+          {
+            "par": "ibcw_0003",
+            "text": [
+              3,
+              56,
+              161
+            ],
+            "fragment": "dol_1_1_ibcw_0003",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 7859,
+            "end_ms": 15539,
+            "audio_present": true,
+            "text_excerpt": "軒下のきしたから奥を覗のぞくと煤すすけた障子しょうじが立て切ってある。"
+          },
+          {
+            "par": "ibcw_0004",
+            "text": [
+              3,
+              161,
+              188
+            ],
+            "fragment": "dol_1_1_ibcw_0004",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 15539,
+            "end_ms": 19199,
+            "audio_present": true,
+            "text_excerpt": "向う側は見えない。"
+          },
+          {
+            "par": "ibcw_0005",
+            "text": [
+              3,
+              188,
+              338
+            ],
+            "fragment": "dol_1_1_ibcw_0005",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 19199,
+            "end_ms": 30179,
+            "audio_present": true,
+            "text_excerpt": "五六足の草鞋わらじが淋さびしそうに庇ひさしから吊つるされて、屈托気くったくげにふらりふらりと揺れる。"
+          },
+          {
+            "par": "ibcw_0006",
+            "text": [
+              3,
+              338,
+              476
+            ],
+            "fragment": "dol_1_1_ibcw_0006",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 30179,
+            "end_ms": 40160,
+            "audio_present": true,
+            "text_excerpt": "下に駄菓子だがしの箱が三つばかり並んで、そばに五厘銭と文久銭ぶんきゅうせんが散らばっている。"
+          },
+          {
+            "par": "ibcw_0007",
+            "text": [
+              3,
+              477,
+              516
+            ],
+            "fragment": "dol_1_1_ibcw_0007",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 40160,
+            "end_ms": 45140,
+            "audio_present": true,
+            "text_excerpt": "「おい」とまた声をかける。"
+          },
+          {
+            "par": "ibcw_0008",
+            "text": [
+              3,
+              516,
+              645
+            ],
+            "fragment": "dol_1_1_ibcw_0008",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 45140,
+            "end_ms": 55400,
+            "audio_present": true,
+            "text_excerpt": "土間の隅すみに片寄せてある臼うすの上に、ふくれていた鶏にわとりが、驚ろいて眼をさます。"
+          },
+          {
+            "par": "ibcw_0009",
+            "text": [
+              3,
+              645,
+              684
+            ],
+            "fragment": "dol_1_1_ibcw_0009",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 55400,
+            "end_ms": 61340,
+            "audio_present": true,
+            "text_excerpt": "ククク、クククと騒ぎ出す。"
+          },
+          {
+            "par": "ibcw_0010",
+            "text": [
+              3,
+              684,
+              900
+            ],
+            "fragment": "dol_1_1_ibcw_0010",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 61340,
+            "end_ms": 79459,
+            "audio_present": true,
+            "text_excerpt": "敷居の外に土竈どべっついが、今しがたの雨に濡れて、半分ほど色が変ってる上に、真黒な茶釜ちゃがまがかけてあるが、土の茶釜か、銀の茶釜かわからない。"
+          },
+          {
+            "par": "ibcw_0011",
+            "text": [
+              3,
+              900,
+              939
+            ],
+            "fragment": "dol_1_1_ibcw_0011",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 79459,
+            "end_ms": 84319,
+            "audio_present": true,
+            "text_excerpt": "幸い下は焚たきつけてある。"
+          },
+          {
+            "par": "ibcw_0012",
+            "text": [
+              3,
+              940,
+              1054
+            ],
+            "fragment": "dol_1_1_ibcw_0012",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 84319,
+            "end_ms": 92419,
+            "audio_present": true,
+            "text_excerpt": "返事がないから、無断でずっと這入はいって、床几しょうぎの上へ腰を卸おろした。"
+          },
+          {
+            "par": "ibcw_0013",
+            "text": [
+              3,
+              1054,
+              1132
+            ],
+            "fragment": "dol_1_1_ibcw_0013",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 92419,
+            "end_ms": 97159,
+            "audio_present": true,
+            "text_excerpt": "鶏にわとりは羽摶はばたきをして臼うすから飛び下りる。"
+          },
+          {
+            "par": "ibcw_0014",
+            "text": [
+              3,
+              1132,
+              1168
+            ],
+            "fragment": "dol_1_1_ibcw_0014",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 97159,
+            "end_ms": 101479,
+            "audio_present": true,
+            "text_excerpt": "今度は畳の上へあがった。"
+          },
+          {
+            "par": "ibcw_0015",
+            "text": [
+              3,
+              1168,
+              1261
+            ],
+            "fragment": "dol_1_1_ibcw_0015",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 101479,
+            "end_ms": 107779,
+            "audio_present": true,
+            "text_excerpt": "障子しょうじがしめてなければ奥まで馳かけぬける気かも知れない。"
+          },
+          {
+            "par": "ibcw_0016",
+            "text": [
+              3,
+              1261,
+              1360
+            ],
+            "fragment": "dol_1_1_ibcw_0016",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 107779,
+            "end_ms": 118699,
+            "audio_present": true,
+            "text_excerpt": "雄が太い声でこけっこっこと云うと、雌が細い声でけけっこっこと云う。"
+          },
+          {
+            "par": "ibcw_0017",
+            "text": [
+              3,
+              1360,
+              1429
+            ],
+            "fragment": "dol_1_1_ibcw_0017",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 118699,
+            "end_ms": 124481,
+            "audio_present": true,
+            "text_excerpt": "まるで余を狐か狗いぬのように考えているらしい。"
+          },
+          {
+            "par": "ibcw_0018",
+            "text": [
+              3,
+              1429,
+              1675
+            ],
+            "fragment": "dol_1_1_ibcw_0018",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 124481,
+            "end_ms": 140321,
+            "audio_present": true,
+            "text_excerpt": "床几の上には一升枡いっしょうますほどな煙草盆たばこぼんが閑静に控えて、中にはとぐろを捲まいた線香が、日の移るのを知らぬ顔で、すこぶる悠長ゆうちょうに燻いぶっている。"
+          },
+          {
+            "par": "ibcw_0019",
+            "text": [
+              3,
+              1675,
+              1705
+            ],
+            "fragment": "dol_1_1_ibcw_0019",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 140321,
+            "end_ms": 144101,
+            "audio_present": true,
+            "text_excerpt": "雨はしだいに収まる。"
+          },
+          {
+            "par": "ibcw_0020",
+            "text": [
+              3,
+              1706,
+              1811
+            ],
+            "fragment": "dol_1_1_ibcw_0020",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 144101,
+            "end_ms": 153521,
+            "audio_present": true,
+            "text_excerpt": "しばらくすると、奥の方から足音がして、煤すすけた障子がさらりと開あく。"
+          },
+          {
+            "par": "ibcw_0021",
+            "text": [
+              3,
+              1811,
+              1853
+            ],
+            "fragment": "dol_1_1_ibcw_0021",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 153521,
+            "end_ms": 158321,
+            "audio_present": true,
+            "text_excerpt": "なかから一人の婆さんが出る。"
+          },
+          {
+            "par": "ibcw_0022",
+            "text": [
+              3,
+              1854,
+              1908
+            ],
+            "fragment": "dol_1_1_ibcw_0022",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 158321,
+            "end_ms": 162821,
+            "audio_present": true,
+            "text_excerpt": "どうせ誰か出るだろうとは思っていた。"
+          },
+          {
+            "par": "ibcw_0023",
+            "text": [
+              3,
+              1908,
+              1947
+            ],
+            "fragment": "dol_1_1_ibcw_0023",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 162821,
+            "end_ms": 166661,
+            "audio_present": true,
+            "text_excerpt": "竈へついに火は燃えている。"
+          },
+          {
+            "par": "ibcw_0024",
+            "text": [
+              3,
+              1947,
+              1995
+            ],
+            "fragment": "dol_1_1_ibcw_0024",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 166661,
+            "end_ms": 171821,
+            "audio_present": true,
+            "text_excerpt": "菓子箱の上に銭が散らばっている。"
+          },
+          {
+            "par": "ibcw_0025",
+            "text": [
+              3,
+              1995,
+              2040
+            ],
+            "fragment": "dol_1_1_ibcw_0025",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 171821,
+            "end_ms": 176194,
+            "audio_present": true,
+            "text_excerpt": "線香は呑気のんきに燻っている。"
+          },
+          {
+            "par": "ibcw_0026",
+            "text": [
+              3,
+              2040,
+              2082
+            ],
+            "fragment": "dol_1_1_ibcw_0026",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 176194,
+            "end_ms": 179313,
+            "audio_present": true,
+            "text_excerpt": "どうせ出るにはきまっている。"
+          },
+          {
+            "par": "ibcw_0027",
+            "text": [
+              3,
+              2082,
+              2214
+            ],
+            "fragment": "dol_1_1_ibcw_0027",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 179313,
+            "end_ms": 188732,
+            "audio_present": true,
+            "text_excerpt": "しかし自分の見世みせを明あけ放しても苦にならないと見えるところが、少し都とは違っている。"
+          },
+          {
+            "par": "ibcw_0028",
+            "text": [
+              3,
+              2214,
+              2340
+            ],
+            "fragment": "dol_1_1_ibcw_0028",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 188732,
+            "end_ms": 198452,
+            "audio_present": true,
+            "text_excerpt": "返事がないのに床几に腰をかけて、いつまでも待ってるのも少し二十世紀とは受け取れない。"
+          },
+          {
+            "par": "ibcw_0029",
+            "text": [
+              3,
+              2340,
+              2376
+            ],
+            "fragment": "dol_1_1_ibcw_0029",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 198452,
+            "end_ms": 202471,
+            "audio_present": true,
+            "text_excerpt": "ここらが非人情で面白い。"
+          },
+          {
+            "par": "ibcw_0030",
+            "text": [
+              3,
+              2376,
+              2433
+            ],
+            "fragment": "dol_1_1_ibcw_0030",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 202471,
+            "end_ms": 207691,
+            "audio_present": true,
+            "text_excerpt": "その上出て来た婆さんの顔が気に入った。"
+          },
+          {
+            "par": "ibcw_0031",
+            "text": [
+              3,
+              2434,
+              2521
+            ],
+            "fragment": "dol_1_1_ibcw_0031",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 207691,
+            "end_ms": 214711,
+            "audio_present": true,
+            "text_excerpt": "二三年前宝生ほうしょうの舞台で高砂たかさごを見た事がある。"
+          },
+          {
+            "par": "ibcw_0032",
+            "text": [
+              3,
+              2521,
+              2596
+            ],
+            "fragment": "dol_1_1_ibcw_0032",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 214711,
+            "end_ms": 220651,
+            "audio_present": true,
+            "text_excerpt": "その時これはうつくしい活人画かつじんがだと思った。"
+          },
+          {
+            "par": "ibcw_0033",
+            "text": [
+              3,
+              2596,
+              2755
+            ],
+            "fragment": "dol_1_1_ibcw_0033",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 220651,
+            "end_ms": 231214,
+            "audio_present": true,
+            "text_excerpt": "箒ほうきを担かついだ爺さんが橋懸はしがかりを五六歩来て、そろりと後向うしろむきになって、婆さんと向い合う。"
+          },
+          {
+            "par": "ibcw_0034",
+            "text": [
+              3,
+              2755,
+              2809
+            ],
+            "fragment": "dol_1_1_ibcw_0034",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 231214,
+            "end_ms": 236854,
+            "audio_present": true,
+            "text_excerpt": "その向い合うた姿勢が今でも眼につく。"
+          },
+          {
+            "par": "ibcw_0035",
+            "text": [
+              3,
+              2809,
+              3010
+            ],
+            "fragment": "dol_1_1_ibcw_0035",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 236854,
+            "end_ms": 252394,
+            "audio_present": true,
+            "text_excerpt": "余の席からは婆さんの顔がほとんど真まむきに見えたから、ああうつくしいと思った時に、その表情はぴしゃりと心のカメラへ焼き付いてしまった。"
+          },
+          {
+            "par": "ibcw_0036",
+            "text": [
+              3,
+              3010,
+              3091
+            ],
+            "fragment": "dol_1_1_ibcw_0036",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 252394,
+            "end_ms": 259894,
+            "audio_present": true,
+            "text_excerpt": "茶店の婆さんの顔はこの写真に血を通わしたほど似ている。"
+          },
+          {
+            "par": "ibcw_0037",
+            "text": [
+              3,
+              3092,
+              3146
+            ],
+            "fragment": "dol_1_1_ibcw_0037",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 259894,
+            "end_ms": 264634,
+            "audio_present": true,
+            "text_excerpt": "「御婆さん、ここをちょっと借りたよ」"
+          },
+          {
+            "par": "ibcw_0038",
+            "text": [
+              3,
+              3147,
+              3204
+            ],
+            "fragment": "dol_1_1_ibcw_0038",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 264634,
+            "end_ms": 269134,
+            "audio_present": true,
+            "text_excerpt": "「はい、これは、いっこう存じませんで」"
+          },
+          {
+            "par": "ibcw_0039",
+            "text": [
+              3,
+              3205,
+              3232
+            ],
+            "fragment": "dol_1_1_ibcw_0039",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 269134,
+            "end_ms": 272074,
+            "audio_present": true,
+            "text_excerpt": "「だいぶ降ったね」"
+          },
+          {
+            "par": "ibcw_0040",
+            "text": [
+              3,
+              3233,
+              3302
+            ],
+            "fragment": "dol_1_1_ibcw_0040",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 272074,
+            "end_ms": 278133,
+            "audio_present": true,
+            "text_excerpt": "「あいにくな御天気で、さぞ御困りで御座んしょ。"
+          },
+          {
+            "par": "ibcw_0041",
+            "text": [
+              3,
+              3302,
+              3350
+            ],
+            "fragment": "dol_1_1_ibcw_0041",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 278133,
+            "end_ms": 282093,
+            "audio_present": true,
+            "text_excerpt": "おおおおだいぶお濡ぬれなさった。"
+          },
+          {
+            "par": "ibcw_0042",
+            "text": [
+              3,
+              3350,
+              3407
+            ],
+            "fragment": "dol_1_1_ibcw_0042",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 282093,
+            "end_ms": 287313,
+            "audio_present": true,
+            "text_excerpt": "今火を焚たいて乾かわかして上げましょ」"
+          },
+          {
+            "par": "ibcw_0043",
+            "text": [
+              3,
+              3408,
+              3498
+            ],
+            "fragment": "dol_1_1_ibcw_0043",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 287313,
+            "end_ms": 293493,
+            "audio_present": true,
+            "text_excerpt": "「そこをもう少し燃もしつけてくれれば、あたりながら乾かすよ。"
+          },
+          {
+            "par": "ibcw_0044",
+            "text": [
+              3,
+              3498,
+              3543
+            ],
+            "fragment": "dol_1_1_ibcw_0044",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 293493,
+            "end_ms": 298593,
+            "audio_present": true,
+            "text_excerpt": "どうも少し休んだら寒くなった」"
+          },
+          {
+            "par": "ibcw_0045",
+            "text": [
+              3,
+              3544,
+              3592
+            ],
+            "fragment": "dol_1_1_ibcw_0045",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 298593,
+            "end_ms": 302793,
+            "audio_present": true,
+            "text_excerpt": "「へえ、ただいま焚いて上げます。"
+          },
+          {
+            "par": "ibcw_0046",
+            "text": [
+              3,
+              3592,
+              3722
+            ],
+            "fragment": "dol_1_1_ibcw_0046",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 302793,
+            "end_ms": 312393,
+            "audio_present": true,
+            "text_excerpt": "まあ御茶を一つ」\nと立ち上がりながら、しっしっと二声ふたこえで鶏にわとりを追い下さげる。"
+          },
+          {
+            "par": "ibcw_0047",
+            "text": [
+              3,
+              3722,
+              3872
+            ],
+            "fragment": "dol_1_1_ibcw_0047",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 312393,
+            "end_ms": 323423,
+            "audio_present": true,
+            "text_excerpt": "ここここと馳かけ出した夫婦は、焦茶色こげちゃいろの畳から、駄菓子箱の中を踏みつけて、往来へ飛び出す。"
+          },
+          {
+            "par": "ibcw_0048",
+            "text": [
+              3,
+              3872,
+              3944
+            ],
+            "fragment": "dol_1_1_ibcw_0048",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 323423,
+            "end_ms": 329423,
+            "audio_present": true,
+            "text_excerpt": "雄の方が逃げるとき駄菓子の上へ糞ふんを垂たれた。"
+          },
+          {
+            "par": "ibcw_0049",
+            "text": [
+              3,
+              3945,
+              4053
+            ],
+            "fragment": "dol_1_1_ibcw_0049",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 329423,
+            "end_ms": 338243,
+            "audio_present": true,
+            "text_excerpt": "「まあ一つ」と婆さんはいつの間まにか刳くり抜き盆の上に茶碗をのせて出す。"
+          },
+          {
+            "par": "ibcw_0050",
+            "text": [
+              3,
+              4053,
+              4197
+            ],
+            "fragment": "dol_1_1_ibcw_0050",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 338243,
+            "end_ms": 348443,
+            "audio_present": true,
+            "text_excerpt": "茶の色の黒く焦こげている底に、一筆ひとふでがきの梅の花が三輪無雑作むぞうさに焼き付けられている。"
+          },
+          {
+            "par": "ibcw_0051",
+            "text": [
+              3,
+              4198,
+              4315
+            ],
+            "fragment": "dol_1_1_ibcw_0051",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 348443,
+            "end_ms": 356722,
+            "audio_present": true,
+            "text_excerpt": "「御菓子を」と今度は鶏の踏みつけた胡麻ごまねじと微塵棒みじんぼうを持ってくる。"
+          },
+          {
+            "par": "ibcw_0052",
+            "text": [
+              3,
+              4315,
+              4441
+            ],
+            "fragment": "dol_1_1_ibcw_0052",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 356722,
+            "end_ms": 365196,
+            "audio_present": true,
+            "text_excerpt": "糞ふんはどこぞに着いておらぬかと眺ながめて見たが、それは箱のなかに取り残されていた。"
+          },
+          {
+            "par": "ibcw_0053",
+            "text": [
+              3,
+              4442,
+              4556
+            ],
+            "fragment": "dol_1_1_ibcw_0053",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 365196,
+            "end_ms": 373596,
+            "audio_present": true,
+            "text_excerpt": "婆さんは袖無そでなしの上から、襷たすきをかけて、竈へっついの前へうずくまる。"
+          },
+          {
+            "par": "ibcw_0054",
+            "text": [
+              3,
+              4556,
+              4676
+            ],
+            "fragment": "dol_1_1_ibcw_0054",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 373596,
+            "end_ms": 382896,
+            "audio_present": true,
+            "text_excerpt": "余は懐ふところから写生帖を取り出して、婆さんの横顔を写しながら、話しをしかける。"
+          },
+          {
+            "par": "ibcw_0055",
+            "text": [
+              3,
+              4677,
+              4701
+            ],
+            "fragment": "dol_1_1_ibcw_0055",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 382896,
+            "end_ms": 385896,
+            "audio_present": true,
+            "text_excerpt": "「閑静でいいね」"
+          },
+          {
+            "par": "ibcw_0056",
+            "text": [
+              3,
+              4702,
+              4756
+            ],
+            "fragment": "dol_1_1_ibcw_0056",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 385896,
+            "end_ms": 390636,
+            "audio_present": true,
+            "text_excerpt": "「へえ、御覧の通りの山里やまざとで」"
+          },
+          {
+            "par": "ibcw_0057",
+            "text": [
+              3,
+              4757,
+              4793
+            ],
+            "fragment": "dol_1_1_ibcw_0057",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 390636,
+            "end_ms": 393636,
+            "audio_present": true,
+            "text_excerpt": "「鶯うぐいすは鳴くかね」"
+          },
+          {
+            "par": "ibcw_0058",
+            "text": [
+              3,
+              4794,
+              4836
+            ],
+            "fragment": "dol_1_1_ibcw_0058",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 393636,
+            "end_ms": 397776,
+            "audio_present": true,
+            "text_excerpt": "「ええ毎日のように鳴きます。"
+          },
+          {
+            "par": "ibcw_0059",
+            "text": [
+              3,
+              4836,
+              4875
+            ],
+            "fragment": "dol_1_1_ibcw_0059",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 397776,
+            "end_ms": 401520,
+            "audio_present": true,
+            "text_excerpt": "此辺ここらは夏も鳴きます」"
+          },
+          {
+            "par": "ibcw_0060",
+            "text": [
+              3,
+              4876,
+              4897
+            ],
+            "fragment": "dol_1_1_ibcw_0060",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 401520,
+            "end_ms": 403559,
+            "audio_present": true,
+            "text_excerpt": "「聞きたいな。"
+          },
+          {
+            "par": "ibcw_0061",
+            "text": [
+              3,
+              4897,
+              4945
+            ],
+            "fragment": "dol_1_1_ibcw_0061",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 403559,
+            "end_ms": 408478,
+            "audio_present": true,
+            "text_excerpt": "ちっとも聞えないとなお聞きたい」"
+          },
+          {
+            "par": "ibcw_0062",
+            "text": [
+              3,
+              4946,
+              5039
+            ],
+            "fragment": "dol_1_1_ibcw_0062",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 408478,
+            "end_ms": 415018,
+            "audio_present": true,
+            "text_excerpt": "「あいにく今日きょうは——先刻さっきの雨でどこぞへ逃げました」"
+          },
+          {
+            "par": "ibcw_0063",
+            "text": [
+              3,
+              5040,
+              5169
+            ],
+            "fragment": "dol_1_1_ibcw_0063",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 415018,
+            "end_ms": 425637,
+            "audio_present": true,
+            "text_excerpt": "折りから、竈のうちが、ぱちぱちと鳴って、赤い火が颯さっと風を起して一尺あまり吹き出す。"
+          },
+          {
+            "par": "ibcw_0064",
+            "text": [
+              3,
+              5170,
+              5200
+            ],
+            "fragment": "dol_1_1_ibcw_0064",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 425637,
+            "end_ms": 428277,
+            "audio_present": true,
+            "text_excerpt": "「さあ、御おあたり。"
+          },
+          {
+            "par": "ibcw_0065",
+            "text": [
+              3,
+              5200,
+              5233
+            ],
+            "fragment": "dol_1_1_ibcw_0065",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 428277,
+            "end_ms": 432237,
+            "audio_present": true,
+            "text_excerpt": "さぞ御寒かろ」と云う。"
+          },
+          {
+            "par": "ibcw_0066",
+            "text": [
+              3,
+              5233,
+              5398
+            ],
+            "fragment": "dol_1_1_ibcw_0066",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 432237,
+            "end_ms": 442497,
+            "audio_present": true,
+            "text_excerpt": "軒端のきばを見ると青い煙りが、突き当って崩くずれながらに、微かすかな痕あとをまだ板庇いたびさしにからんでいる。"
+          },
+          {
+            "par": "ibcw_0067",
+            "text": [
+              3,
+              5399,
+              5471
+            ],
+            "fragment": "dol_1_1_ibcw_0067",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 442497,
+            "end_ms": 449841,
+            "audio_present": true,
+            "text_excerpt": "「ああ、好いい心持ちだ、御蔭おかげで生き返った」"
+          },
+          {
+            "par": "ibcw_0068",
+            "text": [
+              3,
+              5472,
+              5514
+            ],
+            "fragment": "dol_1_1_ibcw_0068",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 449841,
+            "end_ms": 454041,
+            "audio_present": true,
+            "text_excerpt": "「いい具合に雨も晴れました。"
+          },
+          {
+            "par": "ibcw_0069",
+            "text": [
+              3,
+              5514,
+              5571
+            ],
+            "fragment": "dol_1_1_ibcw_0069",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 454041,
+            "end_ms": 458061,
+            "audio_present": true,
+            "text_excerpt": "そら天狗巌てんぐいわが見え出しました」"
+          },
+          {
+            "par": "ibcw_0070",
+            "text": [
+              3,
+              5572,
+              5944
+            ],
+            "fragment": "dol_1_1_ibcw_0070",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 458061,
+            "end_ms": 485980,
+            "audio_present": true,
+            "text_excerpt": "逡巡しゅんじゅんとして曇り勝ちなる春の空を、もどかしとばかりに吹き払う山嵐の、思い切りよく通り抜けた前山ぜんざんの一角いっかくは、未練もなく晴れ尽して、老嫗ろううの指さす方かたに巑岏さんがんと、あら削けずりの柱のごとく聳そびえるのが天狗岩だそうだ。"
+          },
+          {
+            "par": "ibcw_0071",
+            "text": [
+              3,
+              5945,
+              6086
+            ],
+            "fragment": "dol_1_1_ibcw_0071",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 485980,
+            "end_ms": 497080,
+            "audio_present": true,
+            "text_excerpt": "余はまず天狗巌を眺ながめて、次に婆さんを眺めて、三度目には半々はんはんに両方を見比みくらべた。"
+          },
+          {
+            "par": "ibcw_0072",
+            "text": [
+              3,
+              6086,
+              6251
+            ],
+            "fragment": "dol_1_1_ibcw_0072",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 497080,
+            "end_ms": 509020,
+            "audio_present": true,
+            "text_excerpt": "画家として余が頭のなかに存在する婆さんの顔は高砂たかさごの媼ばばと、蘆雪ろせつのかいた山姥やまうばのみである。"
+          },
+          {
+            "par": "ibcw_0073",
+            "text": [
+              3,
+              6251,
+              6347
+            ],
+            "fragment": "dol_1_1_ibcw_0073",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 509020,
+            "end_ms": 517000,
+            "audio_present": true,
+            "text_excerpt": "蘆雪の図を見たとき、理想の婆さんは物凄ものすごいものだと感じた。"
+          },
+          {
+            "par": "ibcw_0074",
+            "text": [
+              3,
+              6347,
+              6428
+            ],
+            "fragment": "dol_1_1_ibcw_0074",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 517000,
+            "end_ms": 524200,
+            "audio_present": true,
+            "text_excerpt": "紅葉もみじのなかか、寒い月の下に置くべきものと考えた。"
+          },
+          {
+            "par": "ibcw_0075",
+            "text": [
+              3,
+              6428,
+              6593
+            ],
+            "fragment": "dol_1_1_ibcw_0075",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 524200,
+            "end_ms": 535119,
+            "audio_present": true,
+            "text_excerpt": "宝生ほうしょうの別会能べつかいのうを観るに及んで、なるほど老女にもこんな優しい表情があり得るものかと驚ろいた。"
+          },
+          {
+            "par": "ibcw_0076",
+            "text": [
+              3,
+              6593,
+              6656
+            ],
+            "fragment": "dol_1_1_ibcw_0076",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 535119,
+            "end_ms": 540999,
+            "audio_present": true,
+            "text_excerpt": "あの面めんは定めて名人の刻んだものだろう。"
+          },
+          {
+            "par": "ibcw_0077",
+            "text": [
+              3,
+              6656,
+              6800
+            ],
+            "fragment": "dol_1_1_ibcw_0077",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 540999,
+            "end_ms": 552279,
+            "audio_present": true,
+            "text_excerpt": "惜しい事に作者の名は聞き落したが、老人もこうあらわせば、豊かに、穏おだやかに、あたたかに見える。"
+          },
+          {
+            "par": "ibcw_0078",
+            "text": [
+              3,
+              6800,
+              6935
+            ],
+            "fragment": "dol_1_1_ibcw_0078",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 552279,
+            "end_ms": 561699,
+            "audio_present": true,
+            "text_excerpt": "金屏きんびょうにも、春風はるかぜにも、あるは桜にもあしらって差さし支つかえない道具である。"
+          },
+          {
+            "par": "ibcw_0079",
+            "text": [
+              3,
+              6935,
+              7160
+            ],
+            "fragment": "dol_1_1_ibcw_0079",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 561699,
+            "end_ms": 579519,
+            "audio_present": true,
+            "text_excerpt": "余は天狗岩よりは、腰をのして、手を翳かざして、遠く向うを指ゆびさしている、袖無し姿の婆さんを、春の山路やまじの景物として恰好かっこうなものだと考えた。"
+          },
+          {
+            "par": "ibcw_0080",
+            "text": [
+              3,
+              7160,
+              7274
+            ],
+            "fragment": "dol_1_1_ibcw_0080",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 579519,
+            "end_ms": 588458,
+            "audio_present": true,
+            "text_excerpt": "余が写生帖を取り上げて、今しばらくという途端とたんに、婆さんの姿勢は崩れた。"
+          },
+          {
+            "par": "ibcw_0081",
+            "text": [
+              3,
+              7275,
+              7429
+            ],
+            "fragment": "dol_1_1_ibcw_0081",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 588458,
+            "end_ms": 599323,
+            "audio_present": true,
+            "text_excerpt": "手持無沙汰てもちぶさたに写生帖を、火にあてて乾かわかしながら、\n「御婆さん、丈夫そうだね」と訊たずねた。"
+          },
+          {
+            "par": "ibcw_0082",
+            "text": [
+              3,
+              7430,
+              7442
+            ],
+            "fragment": "dol_1_1_ibcw_0082",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 599323,
+            "end_ms": 601183,
+            "audio_present": true,
+            "text_excerpt": "「はい。"
+          },
+          {
+            "par": "ibcw_0083",
+            "text": [
+              3,
+              7442,
+              7574
+            ],
+            "fragment": "dol_1_1_ibcw_0083",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 601183,
+            "end_ms": 612555,
+            "audio_present": true,
+            "text_excerpt": "ありがたい事に達者で——針も持ちます、苧おもうみます、御団子おだんごの粉こも磨ひきます」"
+          },
+          {
+            "par": "ibcw_0084",
+            "text": [
+              3,
+              7575,
+              7653
+            ],
+            "fragment": "dol_1_1_ibcw_0084",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 612555,
+            "end_ms": 617715,
+            "audio_present": true,
+            "text_excerpt": "この御婆さんに石臼いしうすを挽ひかして見たくなった。"
+          },
+          {
+            "par": "ibcw_0085",
+            "text": [
+              3,
+              7653,
+              7807
+            ],
+            "fragment": "dol_1_1_ibcw_0085",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 617715,
+            "end_ms": 628755,
+            "audio_present": true,
+            "text_excerpt": "しかしそんな注文も出来ぬから、\n「ここから那古井なこいまでは一里足たらずだったね」と別な事を聞いて見る。"
+          },
+          {
+            "par": "ibcw_0086",
+            "text": [
+              3,
+              7808,
+              7850
+            ],
+            "fragment": "dol_1_1_ibcw_0086",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 628755,
+            "end_ms": 633435,
+            "audio_present": true,
+            "text_excerpt": "「はい、二十八丁と申します。"
+          },
+          {
+            "par": "ibcw_0087",
+            "text": [
+              3,
+              7850,
+              7913
+            ],
+            "fragment": "dol_1_1_ibcw_0087",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 633435,
+            "end_ms": 637287,
+            "audio_present": true,
+            "text_excerpt": "旦那だんなは湯治とうじに御越おこしで……」"
+          },
+          {
+            "par": "ibcw_0088",
+            "text": [
+              3,
+              7914,
+              8025
+            ],
+            "fragment": "dol_1_1_ibcw_0088",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 637287,
+            "end_ms": 645146,
+            "audio_present": true,
+            "text_excerpt": "「込み合わなければ、少し逗留とうりゅうしようかと思うが、まあ気が向けばさ」"
+          },
+          {
+            "par": "ibcw_0089",
+            "text": [
+              3,
+              8026,
+              8122
+            ],
+            "fragment": "dol_1_1_ibcw_0089",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 645146,
+            "end_ms": 652466,
+            "audio_present": true,
+            "text_excerpt": "「いえ、戦争が始まりましてから、頓とんと参るものは御座いません。"
+          },
+          {
+            "par": "ibcw_0090",
+            "text": [
+              3,
+              8122,
+              8170
+            ],
+            "fragment": "dol_1_1_ibcw_0090",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 652466,
+            "end_ms": 656846,
+            "audio_present": true,
+            "text_excerpt": "まるで締め切り同様で御座います」"
+          },
+          {
+            "par": "ibcw_0091",
+            "text": [
+              3,
+              8171,
+              8192
+            ],
+            "fragment": "dol_1_1_ibcw_0091",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 656846,
+            "end_ms": 659606,
+            "audio_present": true,
+            "text_excerpt": "「妙な事だね。"
+          },
+          {
+            "par": "ibcw_0092",
+            "text": [
+              3,
+              8192,
+              8249
+            ],
+            "fragment": "dol_1_1_ibcw_0092",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 659606,
+            "end_ms": 663806,
+            "audio_present": true,
+            "text_excerpt": "それじゃ泊とめてくれないかも知れんね」"
+          },
+          {
+            "par": "ibcw_0093",
+            "text": [
+              3,
+              8250,
+              8313
+            ],
+            "fragment": "dol_1_1_ibcw_0093",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 663806,
+            "end_ms": 669086,
+            "audio_present": true,
+            "text_excerpt": "「いえ、御頼みになればいつでも宿とめます」"
+          },
+          {
+            "par": "ibcw_0094",
+            "text": [
+              3,
+              8314,
+              8356
+            ],
+            "fragment": "dol_1_1_ibcw_0094",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 669086,
+            "end_ms": 672806,
+            "audio_present": true,
+            "text_excerpt": "「宿屋はたった一軒だったね」"
+          },
+          {
+            "par": "ibcw_0095",
+            "text": [
+              3,
+              8357,
+              8441
+            ],
+            "fragment": "dol_1_1_ibcw_0095",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 672806,
+            "end_ms": 678986,
+            "audio_present": true,
+            "text_excerpt": "「へえ、志保田しほださんと御聞きになればすぐわかります。"
+          },
+          {
+            "par": "ibcw_0096",
+            "text": [
+              3,
+              8441,
+              8519
+            ],
+            "fragment": "dol_1_1_ibcw_0096",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 678986,
+            "end_ms": 686066,
+            "audio_present": true,
+            "text_excerpt": "村のものもちで、湯治場だか、隠居所だかわかりません」"
+          },
+          {
+            "par": "ibcw_0097",
+            "text": [
+              3,
+              8520,
+              8568
+            ],
+            "fragment": "dol_1_1_ibcw_0097",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 686066,
+            "end_ms": 690686,
+            "audio_present": true,
+            "text_excerpt": "「じゃ御客がなくても平気な訳だ」"
+          },
+          {
+            "par": "ibcw_0098",
+            "text": [
+              3,
+              8569,
+              8596
+            ],
+            "fragment": "dol_1_1_ibcw_0098",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 690686,
+            "end_ms": 694226,
+            "audio_present": true,
+            "text_excerpt": "「旦那は始めてで」"
+          },
+          {
+            "par": "ibcw_0099",
+            "text": [
+              3,
+              8597,
+              8660
+            ],
+            "fragment": "dol_1_1_ibcw_0099",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 694226,
+            "end_ms": 699746,
+            "audio_present": true,
+            "text_excerpt": "「いや、久しい以前ちょっと行った事がある」"
+          },
+          {
+            "par": "ibcw_0100",
+            "text": [
+              3,
+              8661,
+              8703
+            ],
+            "fragment": "dol_1_1_ibcw_0100",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 699746,
+            "end_ms": 703586,
+            "audio_present": true,
+            "text_excerpt": "会話はちょっと途切とぎれる。"
+          },
+          {
+            "par": "ibcw_0101",
+            "text": [
+              3,
+              8703,
+              8874
+            ],
+            "fragment": "dol_1_1_ibcw_0101",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 703586,
+            "end_ms": 716966,
+            "audio_present": true,
+            "text_excerpt": "帳面をあけて先刻さっきの鶏を静かに写生していると、落ちついた耳の底へじゃらんじゃらんと云う馬の鈴が聴きこえ出した。"
+          },
+          {
+            "par": "ibcw_0102",
+            "text": [
+              3,
+              8874,
+              8973
+            ],
+            "fragment": "dol_1_1_ibcw_0102",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 716966,
+            "end_ms": 724706,
+            "audio_present": true,
+            "text_excerpt": "この声がおのずと、拍子ひょうしをとって頭の中に一種の調子が出来る。"
+          },
+          {
+            "par": "ibcw_0103",
+            "text": [
+              3,
+              8973,
+              9060
+            ],
+            "fragment": "dol_1_1_ibcw_0103",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 724706,
+            "end_ms": 733106,
+            "audio_present": true,
+            "text_excerpt": "眠りながら、夢に隣りの臼の音に誘われるような心持ちである。"
+          },
+          {
+            "par": "ibcw_0104",
+            "text": [
+              3,
+              9060,
+              9126
+            ],
+            "fragment": "dol_1_1_ibcw_0104",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 733106,
+            "end_ms": 739225,
+            "audio_present": true,
+            "text_excerpt": "余は鶏の写生をやめて、同じページの端はじに、"
+          },
+          {
+            "par": "ibcw_0105",
+            "text": [
+              3,
+              9127,
+              9169
+            ],
+            "fragment": "dol_1_1_ibcw_0105",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 739225,
+            "end_ms": 745944,
+            "audio_present": true,
+            "text_excerpt": "春風や惟然いねんが耳に馬の鈴"
+          },
+          {
+            "par": "ibcw_0106",
+            "text": [
+              3,
+              9170,
+              9191
+            ],
+            "fragment": "dol_1_1_ibcw_0106",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 745944,
+            "end_ms": 748358,
+            "audio_present": true,
+            "text_excerpt": "と書いて見た。"
+          },
+          {
+            "par": "ibcw_0107",
+            "text": [
+              3,
+              9191,
+              9245
+            ],
+            "fragment": "dol_1_1_ibcw_0107",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 748358,
+            "end_ms": 754053,
+            "audio_present": true,
+            "text_excerpt": "山を登ってから、馬には五六匹逢った。"
+          },
+          {
+            "par": "ibcw_0108",
+            "text": [
+              3,
+              9245,
+              9317
+            ],
+            "fragment": "dol_1_1_ibcw_0108",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 754053,
+            "end_ms": 761012,
+            "audio_present": true,
+            "text_excerpt": "逢った五六匹は皆腹掛をかけて、鈴を鳴らしている。"
+          },
+          {
+            "par": "ibcw_0109",
+            "text": [
+              3,
+              9317,
+              9356
+            ],
+            "fragment": "dol_1_1_ibcw_0109",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 761012,
+            "end_ms": 764852,
+            "audio_present": true,
+            "text_excerpt": "今の世の馬とは思われない。"
+          },
+          {
+            "par": "ibcw_0110",
+            "text": [
+              3,
+              9357,
+              9480
+            ],
+            "fragment": "dol_1_1_ibcw_0110",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 764852,
+            "end_ms": 772771,
+            "audio_present": true,
+            "text_excerpt": "やがて長閑のどかな馬子唄まごうたが、春に更ふけた空山一路くうざんいちろの夢を破る。"
+          },
+          {
+            "par": "ibcw_0111",
+            "text": [
+              3,
+              9480,
+              9570
+            ],
+            "fragment": "dol_1_1_ibcw_0111",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 772771,
+            "end_ms": 781110,
+            "audio_present": true,
+            "text_excerpt": "憐れの底に気楽な響がこもって、どう考えても画えにかいた声だ。"
+          },
+          {
+            "par": "ibcw_0112",
+            "text": [
+              3,
+              9571,
+              9631
+            ],
+            "fragment": "dol_1_1_ibcw_0112",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 781110,
+            "end_ms": 787530,
+            "audio_present": true,
+            "text_excerpt": "馬子唄まごうたの鈴鹿すずか越ゆるや春の雨"
+          },
+          {
+            "par": "ibcw_0113",
+            "text": [
+              3,
+              9632,
+              9749
+            ],
+            "fragment": "dol_1_1_ibcw_0113",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 787530,
+            "end_ms": 796050,
+            "audio_present": true,
+            "text_excerpt": "と、今度は斜はすに書きつけたが、書いて見て、これは自分の句でないと気がついた。"
+          },
+          {
+            "par": "ibcw_0114",
+            "text": [
+              3,
+              9750,
+              9849
+            ],
+            "fragment": "dol_1_1_ibcw_0114",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 796050,
+            "end_ms": 803730,
+            "audio_present": true,
+            "text_excerpt": "「また誰ぞ来ました」と婆さんが半なかば独ひとり言ごとのように云う。"
+          },
+          {
+            "par": "ibcw_0115",
+            "text": [
+              3,
+              9850,
+              9943
+            ],
+            "fragment": "dol_1_1_ibcw_0115",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 803730,
+            "end_ms": 811650,
+            "audio_present": true,
+            "text_excerpt": "ただ一条ひとすじの春の路だから、行くも帰るも皆近づきと見える。"
+          },
+          {
+            "par": "ibcw_0116",
+            "text": [
+              3,
+              9943,
+              10147
+            ],
+            "fragment": "dol_1_1_ibcw_0116",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 811650,
+            "end_ms": 827670,
+            "audio_present": true,
+            "text_excerpt": "最前逢おうた五六匹のじゃらんじゃらんもことごとくこの婆さんの腹の中でまた誰ぞ来たと思われては山を下くだり、思われては山を登ったのだろう。"
+          },
+          {
+            "par": "ibcw_0117",
+            "text": [
+              3,
+              10147,
+              10447
+            ],
+            "fragment": "dol_1_1_ibcw_0117",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 827670,
+            "end_ms": 847649,
+            "audio_present": true,
+            "text_excerpt": "路寂寞じゃくまくと古今ここんの春を貫つらぬいて、花を厭いとえば足を着くるに地なき小村こむらに、婆さんは幾年いくねんの昔からじゃらん、じゃらんを数え尽くして、今日こんにちの白頭はくとうに至ったのだろう。"
+          },
+          {
+            "par": "ibcw_0118",
+            "text": [
+              3,
+              10448,
+              10505
+            ],
+            "fragment": "dol_1_1_ibcw_0118",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 847649,
+            "end_ms": 855089,
+            "audio_present": true,
+            "text_excerpt": "馬子まご唄や白髪しらがも染めで暮るる春"
+          },
+          {
+            "par": "ibcw_0119",
+            "text": [
+              3,
+              10506,
+              10713
+            ],
+            "fragment": "dol_1_1_ibcw_0119",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 855089,
+            "end_ms": 869489,
+            "audio_present": true,
+            "text_excerpt": "と次のページへ認したためたが、これでは自分の感じを云い終おおせない、もう少し工夫くふうのありそうなものだと、鉛筆の先を見詰めながら考えた。"
+          },
+          {
+            "par": "ibcw_0120",
+            "text": [
+              3,
+              10713,
+              10929
+            ],
+            "fragment": "dol_1_1_ibcw_0120",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 869489,
+            "end_ms": 886349,
+            "audio_present": true,
+            "text_excerpt": "何でも白髪という字を入れて、幾代の節と云う句を入れて、馬子唄という題も入れて、春の季きも加えて、それを十七字に纏まとめたいと工夫しているうちに、"
+          },
+          {
+            "par": "ibcw_0121",
+            "text": [
+              3,
+              10930,
+              11026
+            ],
+            "fragment": "dol_1_1_ibcw_0121",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 886349,
+            "end_ms": 894387,
+            "audio_present": true,
+            "text_excerpt": "「はい、今日は」と実物の馬子が店先に留とまって大きな声をかける。"
+          },
+          {
+            "par": "ibcw_0122",
+            "text": [
+              3,
+              11027,
+              11051
+            ],
+            "fragment": "dol_1_1_ibcw_0122",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 894387,
+            "end_ms": 896737,
+            "audio_present": true,
+            "text_excerpt": "「おや源さんか。"
+          },
+          {
+            "par": "ibcw_0123",
+            "text": [
+              3,
+              11051,
+              11081
+            ],
+            "fragment": "dol_1_1_ibcw_0123",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 896737,
+            "end_ms": 899180,
+            "audio_present": true,
+            "text_excerpt": "また城下へ行くかい」"
+          },
+          {
+            "par": "ibcw_0124",
+            "text": [
+              3,
+              11082,
+              11136
+            ],
+            "fragment": "dol_1_1_ibcw_0124",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 899180,
+            "end_ms": 903859,
+            "audio_present": true,
+            "text_excerpt": "「何か買物があるなら頼まれて上げよ」"
+          },
+          {
+            "par": "ibcw_0125",
+            "text": [
+              3,
+              11137,
+              11290
+            ],
+            "fragment": "dol_1_1_ibcw_0125",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 903859,
+            "end_ms": 912799,
+            "audio_present": true,
+            "text_excerpt": "「そうさ、鍛冶町かじちょうを通ったら、娘に霊厳寺れいがんじの御札おふだを一枚もらってきておくれなさい」"
+          },
+          {
+            "par": "ibcw_0126",
+            "text": [
+              3,
+              11291,
+              11321
+            ],
+            "fragment": "dol_1_1_ibcw_0126",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 912799,
+            "end_ms": 915799,
+            "audio_present": true,
+            "text_excerpt": "「はい、貰ってきよ。"
+          },
+          {
+            "par": "ibcw_0127",
+            "text": [
+              3,
+              11321,
+              11333
+            ],
+            "fragment": "dol_1_1_ibcw_0127",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 915799,
+            "end_ms": 918139,
+            "audio_present": true,
+            "text_excerpt": "一枚か。"
+          },
+          {
+            "par": "ibcw_0128",
+            "text": [
+              3,
+              11333,
+              11405
+            ],
+            "fragment": "dol_1_1_ibcw_0128",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 918139,
+            "end_ms": 922999,
+            "audio_present": true,
+            "text_excerpt": "——御秋おあきさんは善よい所へ片づいて仕合せだ。"
+          },
+          {
+            "par": "ibcw_0129",
+            "text": [
+              3,
+              11405,
+              11435
+            ],
+            "fragment": "dol_1_1_ibcw_0129",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 922999,
+            "end_ms": 925639,
+            "audio_present": true,
+            "text_excerpt": "な、御叔母おばさん」"
+          },
+          {
+            "par": "ibcw_0130",
+            "text": [
+              3,
+              11436,
+              11502
+            ],
+            "fragment": "dol_1_1_ibcw_0130",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 925639,
+            "end_ms": 930859,
+            "audio_present": true,
+            "text_excerpt": "「ありがたい事に今日こんにちには困りません。"
+          },
+          {
+            "par": "ibcw_0131",
+            "text": [
+              3,
+              11502,
+              11541
+            ],
+            "fragment": "dol_1_1_ibcw_0131",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 930859,
+            "end_ms": 934639,
+            "audio_present": true,
+            "text_excerpt": "まあ仕合せと云うのだろか」"
+          },
+          {
+            "par": "ibcw_0132",
+            "text": [
+              3,
+              11542,
+              11572
+            ],
+            "fragment": "dol_1_1_ibcw_0132",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 934639,
+            "end_ms": 938599,
+            "audio_present": true,
+            "text_excerpt": "「仕合せとも、御前。"
+          },
+          {
+            "par": "ibcw_0133",
+            "text": [
+              3,
+              11572,
+              11629
+            ],
+            "fragment": "dol_1_1_ibcw_0133",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 938599,
+            "end_ms": 943459,
+            "audio_present": true,
+            "text_excerpt": "あの那古井なこいの嬢さまと比べて御覧」"
+          },
+          {
+            "par": "ibcw_0134",
+            "text": [
+              3,
+              11630,
+              11660
+            ],
+            "fragment": "dol_1_1_ibcw_0134",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 943459,
+            "end_ms": 947059,
+            "audio_present": true,
+            "text_excerpt": "「本当に御気の毒な。"
+          },
+          {
+            "par": "ibcw_0135",
+            "text": [
+              3,
+              11660,
+              11690
+            ],
+            "fragment": "dol_1_1_ibcw_0135",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 947059,
+            "end_ms": 950059,
+            "audio_present": true,
+            "text_excerpt": "あんな器量を持って。"
+          },
+          {
+            "par": "ibcw_0136",
+            "text": [
+              3,
+              11690,
+              11735
+            ],
+            "fragment": "dol_1_1_ibcw_0136",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 950059,
+            "end_ms": 954199,
+            "audio_present": true,
+            "text_excerpt": "近頃はちっとは具合がいいかい」"
+          },
+          {
+            "par": "ibcw_0137",
+            "text": [
+              3,
+              11736,
+              11769
+            ],
+            "fragment": "dol_1_1_ibcw_0137",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 954199,
+            "end_ms": 958579,
+            "audio_present": true,
+            "text_excerpt": "「なあに、相変らずさ」"
+          },
+          {
+            "par": "ibcw_0138",
+            "text": [
+              3,
+              11770,
+              11827
+            ],
+            "fragment": "dol_1_1_ibcw_0138",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 958579,
+            "end_ms": 965479,
+            "audio_present": true,
+            "text_excerpt": "「困るなあ」と婆さんが大きな息をつく。"
+          },
+          {
+            "par": "ibcw_0139",
+            "text": [
+              3,
+              11828,
+              11888
+            ],
+            "fragment": "dol_1_1_ibcw_0139",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 965479,
+            "end_ms": 972499,
+            "audio_present": true,
+            "text_excerpt": "「困るよう」と源さんが馬の鼻を撫なでる。"
+          },
+          {
+            "par": "ibcw_0140",
+            "text": [
+              3,
+              11889,
+              12177
+            ],
+            "fragment": "dol_1_1_ibcw_0140",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 972499,
+            "end_ms": 994285,
+            "audio_present": true,
+            "text_excerpt": "枝繁えだしげき山桜の葉も花も、深い空から落ちたままなる雨の塊かたまりを、しっぽりと宿していたが、この時わたる風に足をすくわれて、いたたまれずに、仮かりの住居すまいを、さらさらと転ころげ落ちる。"
+          },
+          {
+            "par": "ibcw_0141",
+            "text": [
+              3,
+              12177,
+              12252
+            ],
+            "fragment": "dol_1_1_ibcw_0141",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 994285,
+            "end_ms": 1000045,
+            "audio_present": true,
+            "text_excerpt": "馬は驚ろいて、長い鬣たてがみを上下うえしたに振る。"
+          },
+          {
+            "par": "ibcw_0142",
+            "text": [
+              3,
+              12253,
+              12388
+            ],
+            "fragment": "dol_1_1_ibcw_0142",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1000045,
+            "end_ms": 1010605,
+            "audio_present": true,
+            "text_excerpt": "「コーラッ」と叱しかりつける源さんの声が、じゃらん、じゃらんと共に余の冥想めいそうを破る。"
+          },
+          {
+            "par": "ibcw_0143",
+            "text": [
+              3,
+              12389,
+              12413
+            ],
+            "fragment": "dol_1_1_ibcw_0143",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1010605,
+            "end_ms": 1013905,
+            "audio_present": true,
+            "text_excerpt": "御婆さんが云う。"
+          },
+          {
+            "par": "ibcw_0144",
+            "text": [
+              3,
+              12413,
+              12524
+            ],
+            "fragment": "dol_1_1_ibcw_0144",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1013905,
+            "end_ms": 1022245,
+            "audio_present": true,
+            "text_excerpt": "「源さん、わたしゃ、お嫁入りのときの姿が、まだ眼前めさきに散らついている。"
+          },
+          {
+            "par": "ibcw_0145",
+            "text": [
+              3,
+              12524,
+              12629
+            ],
+            "fragment": "dol_1_1_ibcw_0145",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1022245,
+            "end_ms": 1028425,
+            "audio_present": true,
+            "text_excerpt": "裾模様すそもようの振袖ふりそでに、高島田たかしまだで、馬に乗って……」"
+          },
+          {
+            "par": "ibcw_0146",
+            "text": [
+              3,
+              12630,
+              12669
+            ],
+            "fragment": "dol_1_1_ibcw_0146",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1028425,
+            "end_ms": 1031965,
+            "audio_present": true,
+            "text_excerpt": "「そうさ、船ではなかった。"
+          },
+          {
+            "par": "ibcw_0147",
+            "text": [
+              3,
+              12669,
+              12687
+            ],
+            "fragment": "dol_1_1_ibcw_0147",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1031965,
+            "end_ms": 1034485,
+            "audio_present": true,
+            "text_excerpt": "馬であった。"
+          },
+          {
+            "par": "ibcw_0148",
+            "text": [
+              3,
+              12687,
+              12753
+            ],
+            "fragment": "dol_1_1_ibcw_0148",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1034485,
+            "end_ms": 1039465,
+            "audio_present": true,
+            "text_excerpt": "やはりここで休んで行ったな、御叔母おばさん」"
+          },
+          {
+            "par": "ibcw_0149",
+            "text": [
+              3,
+              12754,
+              12910
+            ],
+            "fragment": "dol_1_1_ibcw_0149",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1039465,
+            "end_ms": 1054045,
+            "audio_present": true,
+            "text_excerpt": "「あい、その桜の下で嬢様の馬がとまったとき、桜の花がほろほろと落ちて、せっかくの島田に斑ふが出来ました」"
+          },
+          {
+            "par": "ibcw_0150",
+            "text": [
+              3,
+              12911,
+              12947
+            ],
+            "fragment": "dol_1_1_ibcw_0150",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1054045,
+            "end_ms": 1057825,
+            "audio_present": true,
+            "text_excerpt": "余はまた写生帖をあける。"
+          },
+          {
+            "par": "ibcw_0151",
+            "text": [
+              3,
+              12947,
+              13001
+            ],
+            "fragment": "dol_1_1_ibcw_0151",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1057825,
+            "end_ms": 1063225,
+            "audio_present": true,
+            "text_excerpt": "この景色は画えにもなる、詩にもなる。"
+          },
+          {
+            "par": "ibcw_0152",
+            "text": [
+              3,
+              13001,
+              13094
+            ],
+            "fragment": "dol_1_1_ibcw_0152",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1063225,
+            "end_ms": 1072764,
+            "audio_present": true,
+            "text_excerpt": "心のうちに花嫁の姿を浮べて、当時の様を想像して見てしたり顔に、"
+          },
+          {
+            "par": "ibcw_0153",
+            "text": [
+              3,
+              13095,
+              13137
+            ],
+            "fragment": "dol_1_1_ibcw_0153",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1072764,
+            "end_ms": 1079783,
+            "audio_present": true,
+            "text_excerpt": "花の頃を越えてかしこし馬に嫁"
+          },
+          {
+            "par": "ibcw_0154",
+            "text": [
+              3,
+              13138,
+              13159
+            ],
+            "fragment": "dol_1_1_ibcw_0154",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1079783,
+            "end_ms": 1082423,
+            "audio_present": true,
+            "text_excerpt": "と書きつける。"
+          },
+          {
+            "par": "ibcw_0155",
+            "text": [
+              3,
+              13159,
+              13321
+            ],
+            "fragment": "dol_1_1_ibcw_0155",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1082423,
+            "end_ms": 1096883,
+            "audio_present": true,
+            "text_excerpt": "不思議な事には衣装いしょうも髪も馬も桜もはっきりと目に映じたが、花嫁の顔だけは、どうしても思いつけなかった。"
+          },
+          {
+            "par": "ibcw_0156",
+            "text": [
+              3,
+              13321,
+              13540
+            ],
+            "fragment": "dol_1_1_ibcw_0156",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1096883,
+            "end_ms": 1114163,
+            "audio_present": true,
+            "text_excerpt": "しばらくあの顔か、この顔か、と思案しているうちに、ミレーのかいた、オフェリヤの面影おもかげが忽然こつぜんと出て来て、高島田の下へすぽりとはまった。"
+          },
+          {
+            "par": "ibcw_0157",
+            "text": [
+              3,
+              13540,
+              13627
+            ],
+            "fragment": "dol_1_1_ibcw_0157",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1114163,
+            "end_ms": 1120823,
+            "audio_present": true,
+            "text_excerpt": "これは駄目だと、せっかくの図面を早速さっそく取り崩くずす。"
+          },
+          {
+            "par": "ibcw_0158",
+            "text": [
+              3,
+              13627,
+              13930
+            ],
+            "fragment": "dol_1_1_ibcw_0158",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1120823,
+            "end_ms": 1144703,
+            "audio_present": true,
+            "text_excerpt": "衣装も髪も馬も桜も一瞬間に心の道具立から奇麗きれいに立ち退のいたが、オフェリヤの合掌して水の上を流れて行く姿だけは、朦朧もうろうと胸の底に残って、棕梠箒しゅろぼうきで煙を払うように、さっぱりしなかった。"
+          },
+          {
+            "par": "ibcw_0159",
+            "text": [
+              3,
+              13930,
+              14005
+            ],
+            "fragment": "dol_1_1_ibcw_0159",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1144703,
+            "end_ms": 1151388,
+            "audio_present": true,
+            "text_excerpt": "空に尾を曳ひく彗星すいせいの何となく妙な気になる。"
+          },
+          {
+            "par": "ibcw_0160",
+            "text": [
+              3,
+              14006,
+              14081
+            ],
+            "fragment": "dol_1_1_ibcw_0160",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1151388,
+            "end_ms": 1158948,
+            "audio_present": true,
+            "text_excerpt": "「それじゃ、まあ御免」と源さんが挨拶あいさつする。"
+          },
+          {
+            "par": "ibcw_0161",
+            "text": [
+              3,
+              14082,
+              14118
+            ],
+            "fragment": "dol_1_1_ibcw_0161",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1158948,
+            "end_ms": 1162188,
+            "audio_present": true,
+            "text_excerpt": "「帰りにまた御寄おより。"
+          },
+          {
+            "par": "ibcw_0162",
+            "text": [
+              3,
+              14118,
+              14181
+            ],
+            "fragment": "dol_1_1_ibcw_0162",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1162188,
+            "end_ms": 1166508,
+            "audio_present": true,
+            "text_excerpt": "あいにくの降りで七曲ななまがりは難義だろ」"
+          },
+          {
+            "par": "ibcw_0163",
+            "text": [
+              3,
+              14182,
+              14257
+            ],
+            "fragment": "dol_1_1_ibcw_0163",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1166508,
+            "end_ms": 1172868,
+            "audio_present": true,
+            "text_excerpt": "「はい、少し骨が折れよ」と源さんは歩行あるき出す。"
+          },
+          {
+            "par": "ibcw_0164",
+            "text": [
+              3,
+              14257,
+              14290
+            ],
+            "fragment": "dol_1_1_ibcw_0164",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1172868,
+            "end_ms": 1176828,
+            "audio_present": true,
+            "text_excerpt": "源さんの馬も歩行出す。"
+          },
+          {
+            "par": "ibcw_0165",
+            "text": [
+              3,
+              14290,
+              14317
+            ],
+            "fragment": "dol_1_1_ibcw_0165",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1176828,
+            "end_ms": 1179888,
+            "audio_present": true,
+            "text_excerpt": "じゃらんじゃらん。"
+          },
+          {
+            "par": "ibcw_0166",
+            "text": [
+              3,
+              14318,
+              14363
+            ],
+            "fragment": "dol_1_1_ibcw_0166",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1179888,
+            "end_ms": 1183127,
+            "audio_present": true,
+            "text_excerpt": "「あれは那古井なこいの男かい」"
+          },
+          {
+            "par": "ibcw_0167",
+            "text": [
+              3,
+              14364,
+              14415
+            ],
+            "fragment": "dol_1_1_ibcw_0167",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1183127,
+            "end_ms": 1187927,
+            "audio_present": true,
+            "text_excerpt": "「はい、那古井の源兵衛で御座んす」"
+          },
+          {
+            "par": "ibcw_0168",
+            "text": [
+              3,
+              14416,
+              14509
+            ],
+            "fragment": "dol_1_1_ibcw_0168",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1187927,
+            "end_ms": 1194767,
+            "audio_present": true,
+            "text_excerpt": "「あの男がどこぞの嫁さんを馬へ乗せて、峠とうげを越したのかい」"
+          },
+          {
+            "par": "ibcw_0169",
+            "text": [
+              3,
+              14510,
+              14678
+            ],
+            "fragment": "dol_1_1_ibcw_0169",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1194767,
+            "end_ms": 1206587,
+            "audio_present": true,
+            "text_excerpt": "「志保田の嬢様が城下へ御輿入おこしいれのときに、嬢様を青馬あおに乗せて、源兵衛が覊絏はづなを牽ひいて通りました。"
+          },
+          {
+            "par": "ibcw_0170",
+            "text": [
+              3,
+              14678,
+              14762
+            ],
+            "fragment": "dol_1_1_ibcw_0170",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1206587,
+            "end_ms": 1213758,
+            "audio_present": true,
+            "text_excerpt": "——月日の立つのは早いもので、もう今年で五年になります」"
+          },
+          {
+            "par": "ibcw_0171",
+            "text": [
+              3,
+              14763,
+              14874
+            ],
+            "fragment": "dol_1_1_ibcw_0171",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1213758,
+            "end_ms": 1223777,
+            "audio_present": true,
+            "text_excerpt": "鏡に対むかうときのみ、わが頭の白きを喞かこつものは幸の部に属する人である。"
+          },
+          {
+            "par": "ibcw_0172",
+            "text": [
+              3,
+              14874,
+              15054
+            ],
+            "fragment": "dol_1_1_ibcw_0172",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1223777,
+            "end_ms": 1238896,
+            "audio_present": true,
+            "text_excerpt": "指を折って始めて、五年の流光に、転輪の疾とき趣おもむきを解し得たる婆さんは、人間としてはむしろ仙せんに近づける方だろう。"
+          },
+          {
+            "par": "ibcw_0173",
+            "text": [
+              3,
+              15054,
+              15078
+            ],
+            "fragment": "dol_1_1_ibcw_0173",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1238896,
+            "end_ms": 1242256,
+            "audio_present": true,
+            "text_excerpt": "余はこう答えた。"
+          },
+          {
+            "par": "ibcw_0174",
+            "text": [
+              3,
+              15079,
+              15115
+            ],
+            "fragment": "dol_1_1_ibcw_0174",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1242256,
+            "end_ms": 1245856,
+            "audio_present": true,
+            "text_excerpt": "「さぞ美くしかったろう。"
+          },
+          {
+            "par": "ibcw_0175",
+            "text": [
+              3,
+              15115,
+              15145
+            ],
+            "fragment": "dol_1_1_ibcw_0175",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1245856,
+            "end_ms": 1248736,
+            "audio_present": true,
+            "text_excerpt": "見にくればよかった」"
+          },
+          {
+            "par": "ibcw_0176",
+            "text": [
+              3,
+              15146,
+              15191
+            ],
+            "fragment": "dol_1_1_ibcw_0176",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1248736,
+            "end_ms": 1253716,
+            "audio_present": true,
+            "text_excerpt": "「ハハハ今でも御覧になれます。"
+          },
+          {
+            "par": "ibcw_0177",
+            "text": [
+              3,
+              15191,
+              15290
+            ],
+            "fragment": "dol_1_1_ibcw_0177",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1253716,
+            "end_ms": 1260496,
+            "audio_present": true,
+            "text_excerpt": "湯治場とうじばへ御越しなされば、きっと出て御挨拶をなされましょう」"
+          },
+          {
+            "par": "ibcw_0178",
+            "text": [
+              3,
+              15291,
+              15336
+            ],
+            "fragment": "dol_1_1_ibcw_0178",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1260496,
+            "end_ms": 1264696,
+            "audio_present": true,
+            "text_excerpt": "「はあ、今では里にいるのかい。"
+          },
+          {
+            "par": "ibcw_0179",
+            "text": [
+              3,
+              15336,
+              15447
+            ],
+            "fragment": "dol_1_1_ibcw_0179",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1264696,
+            "end_ms": 1271776,
+            "audio_present": true,
+            "text_excerpt": "やはり裾模様すそもようの振袖ふりそでを着て、高島田に結いっていればいいが」"
+          },
+          {
+            "par": "ibcw_0180",
+            "text": [
+              3,
+              15448,
+              15481
+            ],
+            "fragment": "dol_1_1_ibcw_0180",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1271776,
+            "end_ms": 1274596,
+            "audio_present": true,
+            "text_excerpt": "「たのんで御覧なされ。"
+          },
+          {
+            "par": "ibcw_0181",
+            "text": [
+              3,
+              15481,
+              15505
+            ],
+            "fragment": "dol_1_1_ibcw_0181",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1274596,
+            "end_ms": 1277056,
+            "audio_present": true,
+            "text_excerpt": "着て見せましょ」"
+          },
+          {
+            "par": "ibcw_0182",
+            "text": [
+              3,
+              15506,
+              15596
+            ],
+            "fragment": "dol_1_1_ibcw_0182",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1277056,
+            "end_ms": 1283956,
+            "audio_present": true,
+            "text_excerpt": "余はまさかと思ったが、婆さんの様子は存外真面目まじめである。"
+          },
+          {
+            "par": "ibcw_0183",
+            "text": [
+              3,
+              15596,
+              15665
+            ],
+            "fragment": "dol_1_1_ibcw_0183",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1283956,
+            "end_ms": 1289896,
+            "audio_present": true,
+            "text_excerpt": "非人情の旅にはこんなのが出なくては面白くない。"
+          },
+          {
+            "par": "ibcw_0184",
+            "text": [
+              3,
+              15665,
+              15686
+            ],
+            "fragment": "dol_1_1_ibcw_0184",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1289896,
+            "end_ms": 1292536,
+            "audio_present": true,
+            "text_excerpt": "婆さんが云う。"
+          },
+          {
+            "par": "ibcw_0185",
+            "text": [
+              3,
+              15687,
+              15765
+            ],
+            "fragment": "dol_1_1_ibcw_0185",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1292536,
+            "end_ms": 1298416,
+            "audio_present": true,
+            "text_excerpt": "「嬢様と長良ながらの乙女おとめとはよく似ております」"
+          },
+          {
+            "par": "ibcw_0186",
+            "text": [
+              3,
+              15766,
+              15784
+            ],
+            "fragment": "dol_1_1_ibcw_0186",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1298416,
+            "end_ms": 1300756,
+            "audio_present": true,
+            "text_excerpt": "「顔がかい」"
+          },
+          {
+            "par": "ibcw_0187",
+            "text": [
+              3,
+              15785,
+              15800
+            ],
+            "fragment": "dol_1_1_ibcw_0187",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1300756,
+            "end_ms": 1302076,
+            "audio_present": true,
+            "text_excerpt": "「いいえ。"
+          },
+          {
+            "par": "ibcw_0188",
+            "text": [
+              3,
+              15800,
+              15839
+            ],
+            "fragment": "dol_1_1_ibcw_0188",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1302076,
+            "end_ms": 1305796,
+            "audio_present": true,
+            "text_excerpt": "身の成り行きがで御座んす」"
+          },
+          {
+            "par": "ibcw_0189",
+            "text": [
+              3,
+              15840,
+              15903
+            ],
+            "fragment": "dol_1_1_ibcw_0189",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1305796,
+            "end_ms": 1311735,
+            "audio_present": true,
+            "text_excerpt": "「へえ、その長良の乙女と云うのは何者かい」"
+          },
+          {
+            "par": "ibcw_0190",
+            "text": [
+              3,
+              15904,
+              16030
+            ],
+            "fragment": "dol_1_1_ibcw_0190",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1311735,
+            "end_ms": 1321455,
+            "audio_present": true,
+            "text_excerpt": "「昔むかしこの村に長良の乙女と云う、美くしい長者ちょうじゃの娘が御座りましたそうな」"
+          },
+          {
+            "par": "ibcw_0191",
+            "text": [
+              3,
+              16031,
+              16043
+            ],
+            "fragment": "dol_1_1_ibcw_0191",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1321455,
+            "end_ms": 1323975,
+            "audio_present": true,
+            "text_excerpt": "「へえ」"
+          },
+          {
+            "par": "ibcw_0192",
+            "text": [
+              3,
+              16044,
+              16131
+            ],
+            "fragment": "dol_1_1_ibcw_0192",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1323975,
+            "end_ms": 1331775,
+            "audio_present": true,
+            "text_excerpt": "「ところがその娘に二人の男が一度に懸想けそうして、あなた」"
+          },
+          {
+            "par": "ibcw_0193",
+            "text": [
+              3,
+              16132,
+              16150
+            ],
+            "fragment": "dol_1_1_ibcw_0193",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1331775,
+            "end_ms": 1333935,
+            "audio_present": true,
+            "text_excerpt": "「なるほど」"
+          },
+          {
+            "par": "ibcw_0194",
+            "text": [
+              3,
+              16151,
+              16316
+            ],
+            "fragment": "dol_1_1_ibcw_0194",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1333935,
+            "end_ms": 1347795,
+            "audio_present": true,
+            "text_excerpt": "「ささだ男に靡なびこうか、ささべ男に靡こうかと、娘はあけくれ思い煩わずらったが、どちらへも靡きかねて、とうとう"
+          },
+          {
+            "par": "ibcw_0195",
+            "text": [
+              3,
+              16317,
+              16410
+            ],
+            "fragment": "dol_1_1_ibcw_0195",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1347795,
+            "end_ms": 1360094,
+            "audio_present": true,
+            "text_excerpt": "あきづけばをばなが上に置く露の、けぬべくもわは、おもほゆるかも"
+          },
+          {
+            "par": "ibcw_0196",
+            "text": [
+              3,
+              16411,
+              16498
+            ],
+            "fragment": "dol_1_1_ibcw_0196",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1360094,
+            "end_ms": 1367534,
+            "audio_present": true,
+            "text_excerpt": "と云う歌を咏よんで、淵川ふちかわへ身を投げて果はてました」"
+          },
+          {
+            "par": "ibcw_0197",
+            "text": [
+              3,
+              16499,
+              16661
+            ],
+            "fragment": "dol_1_1_ibcw_0197",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1367534,
+            "end_ms": 1381754,
+            "audio_present": true,
+            "text_excerpt": "余はこんな山里へ来て、こんな婆さんから、こんな古雅こがな言葉で、こんな古雅な話をきこうとは思いがけなかった。"
+          },
+          {
+            "par": "ibcw_0198",
+            "text": [
+              3,
+              16662,
+              16773
+            ],
+            "fragment": "dol_1_1_ibcw_0198",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1381754,
+            "end_ms": 1390274,
+            "audio_present": true,
+            "text_excerpt": "「これから五丁東へ下くだると、道端みちばたに五輪塔ごりんのとうが御座んす。"
+          },
+          {
+            "par": "ibcw_0199",
+            "text": [
+              3,
+              16773,
+              16854
+            ],
+            "fragment": "dol_1_1_ibcw_0199",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1390274,
+            "end_ms": 1396514,
+            "audio_present": true,
+            "text_excerpt": "ついでに長良ながらの乙女おとめの墓を見て御行きなされ」"
+          },
+          {
+            "par": "ibcw_0200",
+            "text": [
+              3,
+              16855,
+              16915
+            ],
+            "fragment": "dol_1_1_ibcw_0200",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1396514,
+            "end_ms": 1402694,
+            "audio_present": true,
+            "text_excerpt": "余は心のうちに是非見て行こうと決心した。"
+          },
+          {
+            "par": "ibcw_0201",
+            "text": [
+              3,
+              16915,
+              16966
+            ],
+            "fragment": "dol_1_1_ibcw_0201",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1402694,
+            "end_ms": 1407854,
+            "audio_present": true,
+            "text_excerpt": "婆さんは、そのあとを語りつづける。"
+          },
+          {
+            "par": "ibcw_0202",
+            "text": [
+              3,
+              16967,
+              17033
+            ],
+            "fragment": "dol_1_1_ibcw_0202",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1407854,
+            "end_ms": 1414178,
+            "audio_present": true,
+            "text_excerpt": "「那古井の嬢様にも二人の男が祟たたりました。"
+          },
+          {
+            "par": "ibcw_0203",
+            "text": [
+              3,
+              17033,
+              17195
+            ],
+            "fragment": "dol_1_1_ibcw_0203",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1414178,
+            "end_ms": 1427549,
+            "audio_present": true,
+            "text_excerpt": "一人は嬢様が京都へ修行に出て御出おいでの頃御逢おあいなさったので、一人はここの城下で随一の物持ちで御座んす」"
+          },
+          {
+            "par": "ibcw_0204",
+            "text": [
+              3,
+              17196,
+              17253
+            ],
+            "fragment": "dol_1_1_ibcw_0204",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1427549,
+            "end_ms": 1432708,
+            "audio_present": true,
+            "text_excerpt": "「はあ、御嬢さんはどっちへ靡いたかい」"
+          },
+          {
+            "par": "ibcw_0205",
+            "text": [
+              3,
+              17254,
+              17440
+            ],
+            "fragment": "dol_1_1_ibcw_0205",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1432708,
+            "end_ms": 1446481,
+            "audio_present": true,
+            "text_excerpt": "「御自身は是非京都の方へと御望みなさったのを、そこには色々な理由わけもありましたろが、親ご様が無理にこちらへ取りきめて……」"
+          },
+          {
+            "par": "ibcw_0206",
+            "text": [
+              3,
+              17441,
+              17522
+            ],
+            "fragment": "dol_1_1_ibcw_0206",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1446481,
+            "end_ms": 1452420,
+            "audio_present": true,
+            "text_excerpt": "「めでたく、淵川ふちかわへ身を投げんでも済んだ訳だね」"
+          },
+          {
+            "par": "ibcw_0207",
+            "text": [
+              3,
+              17523,
+              17850
+            ],
+            "fragment": "dol_1_1_ibcw_0207",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1452420,
+            "end_ms": 1474103,
+            "audio_present": true,
+            "text_excerpt": "「ところが——先方さきでも器量望みで御貰おもらいなさったのだから、随分大事にはなさったかも知れませぬが、もともと強しいられて御出なさったのだから、どうも折合おりあいがわるくて、御親類でもだいぶ御心配の様子で御座んした。"
+          },
+          {
+            "par": "ibcw_0208",
+            "text": [
+              3,
+              17850,
+              17943
+            ],
+            "fragment": "dol_1_1_ibcw_0208",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1474103,
+            "end_ms": 1481963,
+            "audio_present": true,
+            "text_excerpt": "ところへ今度の戦争で、旦那様の勤めて御出の銀行がつぶれました。"
+          },
+          {
+            "par": "ibcw_0209",
+            "text": [
+              3,
+              17943,
+              18015
+            ],
+            "fragment": "dol_1_1_ibcw_0209",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1481963,
+            "end_ms": 1488263,
+            "audio_present": true,
+            "text_excerpt": "それから嬢様はまた那古井の方へ御帰りになります。"
+          },
+          {
+            "par": "ibcw_0210",
+            "text": [
+              3,
+              18015,
+              18099
+            ],
+            "fragment": "dol_1_1_ibcw_0210",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1488263,
+            "end_ms": 1496603,
+            "audio_present": true,
+            "text_excerpt": "世間では嬢様の事を不人情だとか、薄情だとか色々申します。"
+          },
+          {
+            "par": "ibcw_0211",
+            "text": [
+              3,
+              18099,
+              18276
+            ],
+            "fragment": "dol_1_1_ibcw_0211",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1496603,
+            "end_ms": 1510823,
+            "audio_present": true,
+            "text_excerpt": "もとは極々ごくごく内気うちきの優しいかたが、この頃ではだいぶ気が荒くなって、何だか心配だと源兵衛が来るたびに申します。"
+          },
+          {
+            "par": "ibcw_0212",
+            "text": [
+              3,
+              18276,
+              18285
+            ],
+            "fragment": "dol_1_1_ibcw_0212",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1510823,
+            "end_ms": 1512083,
+            "audio_present": true,
+            "text_excerpt": "……」"
+          },
+          {
+            "par": "ibcw_0213",
+            "text": [
+              3,
+              18286,
+              18373
+            ],
+            "fragment": "dol_1_1_ibcw_0213",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1512083,
+            "end_ms": 1518563,
+            "audio_present": true,
+            "text_excerpt": "これからさきを聞くと、せっかくの趣向しゅこうが壊こわれる。"
+          },
+          {
+            "par": "ibcw_0214",
+            "text": [
+              3,
+              18373,
+              18520
+            ],
+            "fragment": "dol_1_1_ibcw_0214",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1518563,
+            "end_ms": 1528043,
+            "audio_present": true,
+            "text_excerpt": "ようやく仙人になりかけたところを、誰か来て羽衣はごろもを帰せ帰せと催促さいそくするような気がする。"
+          },
+          {
+            "par": "ibcw_0215",
+            "text": [
+              3,
+              18520,
+              18751
+            ],
+            "fragment": "dol_1_1_ibcw_0215",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1528043,
+            "end_ms": 1541063,
+            "audio_present": true,
+            "text_excerpt": "七曲ななまがりの険を冒おかして、やっとの思おもいで、ここまで来たものを、そうむやみに俗界に引きずり下おろされては、飄然ひょうぜんと家を出た甲斐かいがない。"
+          },
+          {
+            "par": "ibcw_0216",
+            "text": [
+              3,
+              18751,
+              18919
+            ],
+            "fragment": "dol_1_1_ibcw_0216",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1541063,
+            "end_ms": 1552463,
+            "audio_present": true,
+            "text_excerpt": "世間話しもある程度以上に立ち入ると、浮世の臭においが毛孔けあなから染込しみこんで、垢あかで身体からだが重くなる。"
+          },
+          {
+            "par": "ibcw_0217",
+            "text": [
+              3,
+              18920,
+              19067
+            ],
+            "fragment": "dol_1_1_ibcw_0217",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1552463,
+            "end_ms": 1565140,
+            "audio_present": true,
+            "text_excerpt": "「御婆さん、那古井へは一筋道だね」と十銭銀貨を一枚床几しょうぎの上へかちりと投げ出して立ち上がる。"
+          },
+          {
+            "par": "ibcw_0218",
+            "text": [
+              3,
+              19068,
+              19182
+            ],
+            "fragment": "dol_1_1_ibcw_0218",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1565140,
+            "end_ms": 1574266,
+            "audio_present": true,
+            "text_excerpt": "「長良ながらの五輪塔から右へ御下おくだりなさると、六丁ほどの近道になります。"
+          },
+          {
+            "par": "ibcw_0219",
+            "text": [
+              3,
+              19182,
+              19263
+            ],
+            "fragment": "dol_1_1_ibcw_0219",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1574266,
+            "end_ms": 1580386,
+            "audio_present": true,
+            "text_excerpt": "路みちはわるいが、御若い方にはその方ほうがよろしかろ。"
+          },
+          {
+            "par": "ibcw_0220",
+            "text": [
+              3,
+              19263,
+              19341
+            ],
+            "fragment": "dol_1_1_ibcw_0220",
+            "audio": "OPS/audio/ulnr0036.mp3",
+            "begin_ms": 1580386,
+            "end_ms": 1588006,
+            "audio_present": true,
+            "text_excerpt": "——これは多分に御茶代を——気をつけて御越しなされ」"
+          }
+        ]
+      }
+    ],
+    "screenshots": [
+      "kusamakura-japanese-vertical-writing-part0-p0.png",
+      "kusamakura-japanese-vertical-writing-part1-p0.png",
+      "kusamakura-japanese-vertical-writing-part2-p0.png",
+      "kusamakura-japanese-vertical-writing-part3-p0.png",
+      "kusamakura-japanese-vertical-writing-part4-p0.png",
+      "kusamakura-japanese-vertical-writing-part5-p0.png",
+      "kusamakura-japanese-vertical-writing-part6-p0.png",
+      "kusamakura-japanese-vertical-writing-part7-p0.png",
+      "kusamakura-japanese-vertical-writing-part8-p0.png",
+      "kusamakura-japanese-vertical-writing-part9-p0.png",
+      "kusamakura-japanese-vertical-writing-part10-p0.png",
+      "kusamakura-japanese-vertical-writing-part11-p0.png",
+      "kusamakura-japanese-vertical-writing-part12-p0.png",
+      "kusamakura-japanese-vertical-writing-part13-p0.png",
+      "kusamakura-japanese-vertical-writing-part14-p0.png",
+      "kusamakura-japanese-vertical-writing-part15-p0.png"
+    ],
+    "media_count": 0
+  }
+]
