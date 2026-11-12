@@ -70,15 +70,35 @@ static int de_measure(int width,int height) {
   de.inset=(float)shell_px(24,shell_dpi);
   size_t count=exr_edit_block_count(de.doc);
   de.rows=calloc(count ? count:1,sizeof(*de.rows));if(!de.rows)return 0;
-  float y=de.inset;
+  float y=de_toolbar_height()+de.inset;
   for(size_t i=0;i<count;i++) {
-    wchar_t *text=de_paragraph_text(exr_edit_block_at(de.doc,i));
+    const exr_edit_block *block=exr_edit_block_at(de.doc,i);
+    wchar_t *text=de_paragraph_text(block);
     if(!text) {de_drop_layout();return 0;}
     shell_d2d_edit_row *row=&de.rows[i];
     HRESULT hr=shell_d2d_edit_layout(host_shell,text,g.font_family[0] ? g.font_family:L"Segoe UI",
-      17.f*shell_dpi/96.f,(float)width-2*de.inset,&row->layout,&row->height);
+      16.f*shell_dpi/96.f,(float)width-2*de.inset,&row->layout,&row->height);
     free(text);
-    if(FAILED(hr)) {de_drop_layout();return 0;}
+    unsigned start=0;
+    for(size_t j=0;SUCCEEDED(hr) && j<block->run_count;j++) {
+      const exr_edit_run *r=&block->runs[j];unsigned length=de_run_units(r);
+      if(length && r->kind==EXR_EDIT_TEXT) {
+        exr_edit_run_props resolved=de_resolve_props(block,r);
+        const exr_edit_run_props *props=&resolved;
+        wchar_t *font=props->font[0] ? host_wide(props->font,strlen(props->font)):NULL;
+        if(props->font[0] && !font) {hr=E_OUTOFMEMORY;break;}
+        int missing=0;
+        hr=shell_d2d_edit_style(host_shell,row->layout,start,length,font,
+          (props->size_half_points ? props->size_half_points:24)*shell_dpi/144.f,
+          props->bold,props->italic,(props->present&EXR_EDIT_COLOR)!=0,props->color_rgb,&missing);
+        if(missing)fprintf(stderr,"font fallback: %s -> default\n",props->font);
+        free(font);
+      }
+      start+=length;
+    }
+    if(SUCCEEDED(hr))hr=shell_d2d_edit_align(row->layout,
+      (block->props.present&EXR_EDIT_ALIGN) ? block->props.alignment:EXR_EDIT_LEFT,&row->height);
+    if(FAILED(hr)) {shell_d2d_edit_release(row->layout);row->layout=NULL;de_drop_layout();return 0;}
     de.row_count++;row->y=y;
     if(de_block_trivia(exr_edit_block_at(de.doc,i)))row->height=0;
     else y+=row->height+(float)shell_px(8,shell_dpi);
@@ -99,7 +119,7 @@ static void de_refresh(int reveal) {
     float box[4];shell_d2d_edit_row *row=&de.rows[de.caret_block];
     shell_d2d_edit_position(row->layout,de_offset(de_caret()),box);
     float top=row->y+box[1],bottom=top+box[3];
-    if(top<de.scroll_y)de.scroll_y=top;
+    if(top<de.scroll_y+de_toolbar_height())de.scroll_y=top-de_toolbar_height();
     if(bottom>de.scroll_y+de.height)de.scroll_y=bottom-de.height;
   }
   de_scroll(0);de_title();
@@ -137,7 +157,9 @@ static HRESULT de_paint_dc(HDC dc,const RECT *area) {
     row->caret=i==de.caret_block ? de_offset(de_caret()):0;
     row->show_caret=i==de.caret_block && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
   }
-  return shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),de.rows,de.row_count,de.inset,de.scroll_y);
+  HRESULT hr=shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),de.rows,de.row_count,
+    de.inset,de.scroll_y,de_toolbar_height());
+  return hr==S_OK ? de_toolbar_paint(dc):hr;
 }
 static void de_paint(HWND window) {
   PAINTSTRUCT paint;RECT area;HDC dc=BeginPaint(window,&paint);GetClientRect(window,&area);

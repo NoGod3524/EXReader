@@ -4226,6 +4226,7 @@ static void selection_report(void) {
 #include "windows/shell_dictionary.inc"
 #include "windows/shell_sync.inc"
 #include "windows/shell_docedit.inc"
+#include "windows/shell_docedit_toolbar.inc"
 #include "windows/shell_docedit_paint.inc"
 #include "windows/shell_docedit_input.inc"
 #endif
