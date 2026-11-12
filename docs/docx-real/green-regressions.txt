@@ -1,0 +1,9 @@
+text-command PASS
+paragraph-markers PASS
+section-tail PASS
+text-history PASS
+text-alias PASS
+text-validation PASS
+text-transaction PASS
+text allocation rollback: 11 failure points, zero live allocations
+18/18 metrics reject mutation; equal-count text/style/geometry/anchor changes detected

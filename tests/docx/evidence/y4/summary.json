@@ -1,0 +1,40 @@
+{
+  "initial_base": "6cb452dac207186bd94ecd60cede35fdf848db82",
+  "base": "9841d30bdbfb4d93605f2e612cf1cd7f36f52623",
+  "tested_source_commit": "c04560b7",
+  "build": "PASS; full all target, final ninja: no work to do",
+  "ctest": {
+    "passed": 321,
+    "total": 321,
+    "new_groups": 28,
+    "new_upstream_baseline_groups": 4,
+    "existing_fuzz_enabled": 7,
+    "previously_excluded_sdk_release": 1,
+    "seconds": 1026.94,
+    "jobs": 2
+  },
+  "roundtrip": {
+    "baseline_passed": 5,
+    "editable_passed": 18,
+    "total": 18
+  },
+  "books": {
+    "count": 19,
+    "pages": 11318,
+    "glyphs": 8648571,
+    "changed_page_counts": 0,
+    "changed_pixel_hashes": 0,
+    "fingerprint": "8e51f8a0ad679f1fab702a96aed50dd02ad32d4d3624f0e30b1234ff20cd5434"
+  },
+  "library_sha256": "bf8fd70e9f2604013d22e857b4b287a1ba8b12b5f892a02e98e9acf73b4d6d77",
+  "baseline_library_sha256": "706dd69abfbfcb2daa653bf7eed4d5096d71a72d91ac4a70e20622a4b3c272e8",
+  "source_sha256": {
+    "src/docx_edit.c": "0a15776c5fdecbcea71697622a802fe09de11b3f092514eb53c9b33dd0869246",
+    "src/docx_edit_image.c": "b07da35afaa11ba6e8e85684302100db91c3b9f0ac167c1fd1578614c5278670",
+    "src/docx_edit_internal.h": "bd8cf439599be1ba3dbb337e1a4aa7a4c83f4e09d1397cb364969fe822f32969",
+    "src/docx_edit_io.c": "6e6e88e14f4b0dc0327b9025a53294cfd097ca068ccb3158a588649af92bcb05",
+    "src/docx_edit_model_internal.h": "642e5a3b7586f9a034690cde2771d1847ea3c65538775b7be71680c9d932386e",
+    "src/docx_edit_table.c": "891265b435916188923788c3c7407a086ec6b74c4f701217c6524c8966935304",
+    "include/exr/edit.h": "7eece348f6005c5625468b854bebbde7b2f0895c0e5d7b69bc1a311416189a89"
+  }
+}
