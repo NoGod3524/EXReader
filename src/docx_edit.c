@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include <exr/edit.h>
+#include "docx_edit_model_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -100,12 +100,36 @@ static int para_props_valid(const exr_edit_para_props *p) {
     p->page_break_before<=1 && p->numbering_level<=8;
 }
 static int block_valid(const exr_edit_block *b) {
-  size_t i;
-  if (b->kind<EXR_EDIT_PARAGRAPH || b->kind>EXR_EDIT_PAGE_BREAK ||
+  size_t i,j,k;
+  if (b->kind<EXR_EDIT_PARAGRAPH || b->kind>EXR_EDIT_IMAGE ||
       !para_props_valid(&b->props) || (b->opaque_size && !b->opaque_xml) ||
       b->run_count>SIZE_MAX/sizeof(exr_edit_run) || (b->run_count && !b->runs) ||
       (b->kind!=EXR_EDIT_PARAGRAPH && b->run_count) ||
-      (b->kind==EXR_EDIT_TABLE && !b->opaque_size)) return 0;
+      (b->kind==EXR_EDIT_OPAQUE_BLOCK && !b->opaque_size) ||
+      (b->kind==EXR_EDIT_TABLE && !b->table && !b->opaque_size) ||
+      (b->table && b->kind!=EXR_EDIT_TABLE) || (b->image && b->kind!=EXR_EDIT_IMAGE)) return 0;
+  if (b->kind==EXR_EDIT_IMAGE && (!b->image || !b->image->data || !b->image->size ||
+      b->image->width_emu<=0 || b->image->height_emu<=0 || b->image->jpeg>1)) return 0;
+  if (b->table) {
+    const exr_edit_table *t=b->table;
+    if (!t->row_count || !t->rows || t->row_count>SIZE_MAX/sizeof(*t->rows) ||
+        !t->column_count || t->column_count>16384 || t->width_twips<0 ||
+        t->borders<EXR_EDIT_BORDER_NONE || t->borders>EXR_EDIT_BORDER_DOUBLE || (t->changed&~3u)) return 0;
+    for (i=0;i<t->row_count;i++) {
+      const exr_edit_row *r=t->rows+i;
+      if (!r->cell_count || !r->cells || r->cell_count>SIZE_MAX/sizeof(*r->cells) ||
+          (r->opaque_size && !r->opaque_xml)) return 0;
+      for (j=0;j<r->cell_count;j++) {
+        const exr_edit_cell *c=r->cells+j;
+        if (c->block_count>SIZE_MAX/sizeof(*c->blocks) || (c->block_count && !c->blocks) ||
+            (c->opaque_size && !c->opaque_xml) || (c->unsupported&~15u)) return 0;
+        for (k=0;k<c->block_count;k++) {
+          const exr_edit_block *p=c->blocks+k;
+          if ((p->kind!=EXR_EDIT_PARAGRAPH && p->kind!=EXR_EDIT_OPAQUE_BLOCK) || !block_valid(p)) return 0;
+        }
+      }
+    }
+  }
   for (i=0;i<b->run_count;i++) {
     const exr_edit_run *r=b->runs+i;
     if (!run_props_valid(&r->props) || (r->opaque_size && !r->opaque_xml)) return 0;
@@ -119,51 +143,118 @@ static exr_edit_id fresh_id(exr_edit_doc *d) {
   if (id) d->next_id=id==UINT64_MAX ? 0 : id+1;
   return id;
 }
-static void block_unref(exr_edit_doc *d,edit_block *b) {
-  size_t i;
-  if (!b || --b->refs) return;
-  for (i=0;i<b->view.run_count;i++) {
-    release(d,b->view.runs[i].text); release(d,b->view.runs[i].opaque_xml);
+static void view_free(exr_edit_doc *d,exr_edit_block *v) {
+  size_t i,j,k;
+  for (i=0;i<v->run_count;i++) {
+    release(d,v->runs[i].text); release(d,v->runs[i].opaque_xml);
   }
-  release(d,b->view.runs); release(d,b->view.opaque_xml); release(d,b);
+  if (v->table) {
+    for (i=0;i<v->table->row_count;i++) {
+      const exr_edit_row *r=v->table->rows+i;
+      for (j=0;j<r->cell_count;j++) {
+        const exr_edit_cell *c=r->cells+j;
+        for (k=0;k<c->block_count;k++) view_free(d,(exr_edit_block *)c->blocks+k);
+        release(d,c->blocks); release(d,c->opaque_xml);
+      }
+      release(d,r->cells); release(d,r->opaque_xml);
+    }
+    release(d,v->table->rows); release(d,v->table);
+  }
+  if (v->image) {
+    release(d,v->image->data); release(d,v->image);
+  }
+  release(d,v->runs); release(d,v->opaque_xml);
+}
+static void block_unref(exr_edit_doc *d,edit_block *b) {
+  if (b && !--b->refs) { view_free(d,&b->view); release(d,b); }
 }
 static edit_block *block_ref(edit_block *b) { if (b) b->refs++; return b; }
-static edit_block *block_copy(exr_edit_doc *d,const exr_edit_block *v) {
-  size_t i; edit_block *b=allocate(d,sizeof(*b)); exr_edit_run *runs;
-  if (!b) return NULL;
-  b->refs=1; b->view=*v; b->view.runs=NULL; b->view.run_count=0; b->view.opaque_xml=NULL;
+static int view_copy(exr_edit_doc *d,exr_edit_block *b,const exr_edit_block *v) {
+  size_t i,j,k; exr_edit_run *runs;
+  *b=*v; b->runs=NULL; b->run_count=0; b->opaque_xml=NULL; b->table=NULL; b->image=NULL;
   if (v->opaque_size) {
-    b->view.opaque_xml=copy_bytes(d,v->opaque_xml,v->opaque_size,0);
-    if (!b->view.opaque_xml) goto fail;
+    b->opaque_xml=copy_bytes(d,v->opaque_xml,v->opaque_size,0);
+    if (!b->opaque_xml) return 0;
   }
   if (v->run_count) {
     runs=allocate(d,v->run_count*sizeof(*runs));
-    if (!runs) goto fail;
-    b->view.runs=runs;
+    if (!runs) return 0;
+    b->runs=runs;
     for (i=0;i<v->run_count;i++) {
       runs[i]=v->runs[i]; runs[i].text=NULL; runs[i].opaque_xml=NULL;
-      b->view.run_count++;
+      b->run_count++;
       if (v->runs[i].kind==EXR_EDIT_TEXT) {
         runs[i].text=copy_bytes(d,v->runs[i].text,v->runs[i].text_size,1);
-        if (!runs[i].text) goto fail;
+        if (!runs[i].text) return 0;
       }
       if (v->runs[i].opaque_size) {
         runs[i].opaque_xml=copy_bytes(d,v->runs[i].opaque_xml,v->runs[i].opaque_size,0);
-        if (!runs[i].opaque_xml) goto fail;
+        if (!runs[i].opaque_xml) return 0;
       }
     }
   }
-  return b;
-fail:
-  block_unref(d,b); return NULL;
-}
-static int assign_ids(exr_edit_doc *d,edit_block *b,int all) {
-  size_t i; exr_edit_run *r=(exr_edit_run *)b->view.runs;
-  if ((all || !b->view.id) && !(b->view.id=fresh_id(d))) return 0;
-  for (i=0;i<b->view.run_count;i++)
-    if ((all || !r[i].id) && !(r[i].id=fresh_id(d))) return 0;
+  if (v->image) {
+    exr_edit_image *im=allocate(d,sizeof(*im));
+    if (!im) return 0;
+    b->image=im; *im=*v->image;
+    im->data=copy_bytes(d,v->image->data,v->image->size,0);
+    if (!im->data) return 0;
+  }
+  if (v->table) {
+    exr_edit_table *t=allocate(d,sizeof(*t)); exr_edit_row *rows;
+    if (!t) return 0;
+    b->table=t; *t=*v->table; t->rows=NULL; t->row_count=0;
+    rows=allocate(d,v->table->row_count*sizeof(*rows)); if (!rows) return 0;
+    t->rows=rows;
+    for (i=0;i<v->table->row_count;i++) {
+      const exr_edit_row *r=v->table->rows+i; exr_edit_cell *cells;
+      rows[i]=*r; rows[i].cells=NULL; rows[i].cell_count=0; rows[i].opaque_xml=NULL; t->row_count++;
+      if (r->opaque_size && !(rows[i].opaque_xml=copy_bytes(d,r->opaque_xml,r->opaque_size,0))) return 0;
+      cells=allocate(d,r->cell_count*sizeof(*cells)); if (!cells) return 0;
+      rows[i].cells=cells;
+      for (j=0;j<r->cell_count;j++) {
+        const exr_edit_cell *c=r->cells+j; exr_edit_block *ps;
+        cells[j]=*c; cells[j].blocks=NULL; cells[j].block_count=0; cells[j].opaque_xml=NULL; rows[i].cell_count++;
+        if (c->opaque_size && !(cells[j].opaque_xml=copy_bytes(d,c->opaque_xml,c->opaque_size,0))) return 0;
+        if (!c->block_count) continue;
+        ps=allocate(d,c->block_count*sizeof(*ps)); if (!ps) return 0;
+        cells[j].blocks=ps;
+        for (k=0;k<c->block_count;k++) {
+          cells[j].block_count++;
+          if (!view_copy(d,ps+k,c->blocks+k)) return 0;
+        }
+      }
+    }
+  }
   return 1;
 }
+static edit_block *block_copy(exr_edit_doc *d,const exr_edit_block *v) {
+  edit_block *b=allocate(d,sizeof(*b));
+  if (!b) return NULL;
+  b->refs=1;
+  if (!view_copy(d,&b->view,v)) { block_unref(d,b); return NULL; }
+  return b;
+}
+static int view_ids(exr_edit_doc *d,exr_edit_block *b,int all) {
+  size_t i,j,k; exr_edit_run *r=(exr_edit_run *)b->runs;
+  if ((all || !b->id) && !(b->id=fresh_id(d))) return 0;
+  for (i=0;i<b->run_count;i++)
+    if ((all || !r[i].id) && !(r[i].id=fresh_id(d))) return 0;
+  if (b->table) for (i=0;i<b->table->row_count;i++) {
+    exr_edit_row *row=(exr_edit_row *)b->table->rows+i;
+    if ((all || !row->id) && !(row->id=fresh_id(d))) return 0;
+    for (j=0;j<row->cell_count;j++) {
+      exr_edit_cell *c=(exr_edit_cell *)row->cells+j;
+      if ((all || !c->id) && !(c->id=fresh_id(d))) return 0;
+      for (k=0;k<c->block_count;k++) {
+        exr_edit_block *p=(exr_edit_block *)c->blocks+k; p->section_id=b->section_id;
+        if (!view_ids(d,p,all)) return 0;
+      }
+    }
+  }
+  return 1;
+}
+static int assign_ids(exr_edit_doc *d,edit_block *b,int all) { return view_ids(d,&b->view,all); }
 static size_t find_index(const exr_edit_doc *d,exr_edit_id id) {
   size_t i;
   for (i=0;i<d->count;i++) if (d->blocks[i]->view.id==id) return i;
@@ -266,6 +357,21 @@ static int compare_ids(const void *a,const void *b) {
   exr_edit_id x=*(const exr_edit_id *)a,y=*(const exr_edit_id *)b;
   return (x>y)-(x<y);
 }
+static size_t collect_ids(const exr_edit_block *b,exr_edit_id *ids,size_t at) {
+  size_t i,j,k;
+#define ID_ADD(value) do { if (at==SIZE_MAX) return SIZE_MAX; if (ids) ids[at]=(value); at++; } while (0)
+  ID_ADD(b->id);
+  for (i=0;i<b->run_count;i++) { ID_ADD(b->runs[i].id); }
+  if (b->table) for (i=0;i<b->table->row_count;i++) {
+    const exr_edit_row *r=b->table->rows+i; ID_ADD(r->id);
+    for (j=0;j<r->cell_count;j++) {
+      const exr_edit_cell *c=r->cells+j; ID_ADD(c->id);
+      for (k=0;k<c->block_count;k++) { at=collect_ids(c->blocks+k,ids,at); if (at==SIZE_MAX) return at; }
+    }
+  }
+#undef ID_ADD
+  return at;
+}
 exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t ns,
   const exr_edit_block *blocks,size_t nb,const exr_edit_part *parts,size_t np,
   const exr_edit_options *options,exr_edit_doc **out) {
@@ -284,11 +390,11 @@ exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t ns,
     sections=&default_section; ns=1;
   }
   if (ns>SIZE_MAX-nb || ns+nb>SIZE_MAX-np) return EXR_LIMIT;
-  total=ns+nb+np;
+  total=ns+np;
   for (i=0;i<nb;i++) {
     if (!block_valid(blocks+i)) return EXR_ARGUMENT;
-    if (blocks[i].run_count>SIZE_MAX-total) return EXR_LIMIT;
-    total+=blocks[i].run_count;
+    total=collect_ids(blocks+i,NULL,total);
+    if (total==SIZE_MAX) return EXR_LIMIT;
   }
   if (total>SIZE_MAX/sizeof(*ids)) return EXR_LIMIT;
   d=calloc(1,sizeof(*d));
@@ -298,10 +404,7 @@ exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t ns,
   ids=allocate(d,total*sizeof(*ids));
   if (!ids) goto fail;
   for (i=0;i<ns;i++) ids[k++]=sections[i].id;
-  for (i=0;i<nb;i++) {
-    ids[k++]=blocks[i].id;
-    for (j=0;j<blocks[i].run_count;j++) ids[k++]=blocks[i].runs[j].id;
-  }
+  for (i=0;i<nb;i++) k=collect_ids(blocks+i,ids,k);
   for (i=0;i<np;i++) ids[k++]=parts[i].id;
   qsort(ids,total,sizeof(*ids),compare_ids);
   for (i=1;i<total;i++) if (ids[i] && ids[i]==ids[i-1]) { status=EXR_ARGUMENT; goto fail; }
@@ -312,8 +415,8 @@ exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t ns,
   memcpy(d->sections,sections,ns*sizeof(*sections)); d->section_count=ns;
   for (i=0;i<ns;i++) {
     exr_edit_section *s=d->sections+i;
-    if (s->page_width<=0 || s->page_height<=0 || s->margin_top<0 || s->margin_right<0 ||
-        s->margin_bottom<0 || s->margin_left<0 || s->header_distance<0 ||
+    if (s->page_width<=0 || s->page_height<=0 || s->margin_right<0 ||
+        s->margin_left<0 || s->header_distance<0 ||
         s->footer_distance<0 || s->landscape>1) { status=EXR_ARGUMENT; goto fail; }
     for (j=0;j<3;j++) if (!string_field(s->header_refs[j],128) || !string_field(s->footer_refs[j],128)) {
       status=EXR_ARGUMENT; goto fail;
@@ -478,12 +581,62 @@ exr_status exr_edit_set_paragraph_props(exr_edit_doc *d,exr_edit_id id,const exr
 exr_status exr_edit_set_run_props(exr_edit_doc *d,exr_edit_id id,size_t run,const exr_edit_run_props *p) {
   return set_props(d,id,run,NULL,p);
 }
+exr_status exr_edit_set_run_text(exr_edit_doc *d,exr_edit_id id,size_t run,const char *text,size_t size) {
+  size_t index; edit_block *b; exr_edit_run *r; char *copy; edit_change change; exr_status s=ready(d);
+  if (s) return s;
+  if (size==SIZE_MAX || !utf8(text,size)) return command_failure(d,EXR_ARGUMENT);
+  index=find_index(d,id);
+  if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
+  if (d->blocks[index]->view.kind!=EXR_EDIT_PARAGRAPH) return command_failure(d,EXR_UNSUPPORTED);
+  if (run>=d->blocks[index]->view.run_count) return command_failure(d,EXR_ARGUMENT);
+  if (d->blocks[index]->view.runs[run].kind!=EXR_EDIT_TEXT) return command_failure(d,EXR_UNSUPPORTED);
+  b=block_copy(d,&d->blocks[index]->view);
+  if (!b) return command_failure(d,EXR_MEMORY);
+  copy=copy_bytes(d,text,size,1);
+  if (!copy) { block_unref(d,b); return command_failure(d,EXR_MEMORY); }
+  r=(exr_edit_run *)b->view.runs+run;
+  release(d,r->text); r->text=copy; r->text_size=size;
+  change.index=index; change.before=d->blocks[index]; change.after=b;
+  s=modify(d,&change,1); block_unref(d,b); return s;
+}
 exr_status exr_edit_delete_block(exr_edit_doc *d,exr_edit_id id) {
   size_t index; edit_change c; exr_status s=ready(d);
   if (s) return s;
   index=find_index(d,id);
   if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
-  if (d->blocks[index]->view.kind==EXR_EDIT_TABLE) return command_failure(d,EXR_UNSUPPORTED);
+  if (d->blocks[index]->view.kind==EXR_EDIT_TABLE ||
+      d->blocks[index]->view.kind==EXR_EDIT_OPAQUE_BLOCK) return command_failure(d,EXR_UNSUPPORTED);
   c.index=index; c.before=d->blocks[index]; c.after=NULL;
   return modify(d,&c,1);
+}
+exr_status exr_edit_ready(exr_edit_doc *d) { return ready(d); }
+exr_status exr_edit_failure(exr_edit_doc *d,exr_status s) { return command_failure(d,s); }
+exr_status exr_edit_replace(exr_edit_doc *d,exr_edit_id id,const exr_edit_block *v) {
+  size_t index; edit_block *b=NULL; edit_change c; exr_status s=ready(d);
+  if (s) return s;
+  index=find_index(d,id);
+  if (index==SIZE_MAX || (v && (!block_valid(v) || v->id!=id ||
+      v->section_id!=d->blocks[index]->view.section_id))) return command_failure(d,EXR_ARGUMENT);
+  if (v) {
+    b=block_copy(d,v); if (!b) return command_failure(d,EXR_MEMORY);
+    if (!assign_ids(d,b,0)) { block_unref(d,b); return command_failure(d,EXR_LIMIT); }
+  }
+  c.index=index; c.before=d->blocks[index]; c.after=b;
+  s=modify(d,&c,1); block_unref(d,b); return s;
+}
+exr_status exr_edit_insert_block(exr_edit_doc *d,exr_edit_id after,const exr_edit_block *view,exr_edit_id *out) {
+  size_t index=0; edit_block *b; edit_change c; exr_edit_block v; exr_status s=ready(d);
+  if (out) *out=0;
+  if (s) return s;
+  if (!out || !view || !block_valid(view)) return command_failure(d,EXR_ARGUMENT);
+  v=*view;
+  if (after) {
+    index=find_index(d,after); if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
+    v.section_id=d->blocks[index++]->view.section_id;
+  } else v.section_id=d->sections[0].id;
+  b=block_copy(d,&v); if (!b) return command_failure(d,EXR_MEMORY);
+  if (!assign_ids(d,b,1)) { block_unref(d,b); return command_failure(d,EXR_LIMIT); }
+  c.index=index; c.before=NULL; c.after=b;
+  s=modify(d,&c,1); if (!s) *out=b->view.id;
+  block_unref(d,b); return s;
 }

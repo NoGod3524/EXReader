@@ -1,0 +1,66 @@
+[
+  {
+    "book": "zh-lake",
+    "status": "PASS",
+    "action": "left gutter click",
+    "window_xy": [
+      25,
+      400
+    ],
+    "before_footer": "1-1",
+    "after_footer": "1-2",
+    "screenshots": [
+      "host-zh-lake-before.jpg",
+      "host-zh-lake-after-left.jpg"
+    ],
+    "method": "observed actual Windows host snapshots; host geometry differs from SDK corpus geometry"
+  },
+  {
+    "book": "zh-hill",
+    "status": "PASS",
+    "action": "left gutter click",
+    "window_xy": [
+      25,
+      400
+    ],
+    "before_footer": "1-1",
+    "after_footer": "1-2",
+    "screenshots": [
+      "host-zh-hill-before.jpg",
+      "host-zh-hill-after-left.jpg"
+    ],
+    "method": "observed actual Windows host snapshots; host geometry differs from SDK corpus geometry"
+  },
+  {
+    "book": "ja-stars",
+    "status": "PASS",
+    "action": "left gutter click",
+    "window_xy": [
+      25,
+      400
+    ],
+    "before_footer": "1-1",
+    "after_footer": "1-2",
+    "screenshots": [
+      "host-ja-stars-before.jpg",
+      "host-ja-stars-after-left.jpg"
+    ],
+    "method": "observed actual Windows host snapshots; host geometry differs from SDK corpus geometry"
+  },
+  {
+    "book": "vertical-images",
+    "status": "PASS",
+    "action": "left gutter click",
+    "window_xy": [
+      25,
+      400
+    ],
+    "before_footer": "1-1",
+    "after_footer": "1-2",
+    "screenshots": [
+      "host-vertical-images-before.jpg",
+      "host-vertical-images-after-left.jpg"
+    ],
+    "method": "observed actual Windows host snapshots; host geometry differs from SDK corpus geometry"
+  }
+]

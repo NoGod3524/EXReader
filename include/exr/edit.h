@@ -8,6 +8,8 @@ extern "C" {
 
 typedef struct exr_edit_doc exr_edit_doc;
 typedef struct exr_edit_tx exr_edit_tx;
+typedef struct exr_edit_block exr_edit_block;
+typedef struct exr_edit_table exr_edit_table;
 typedef uint64_t exr_edit_id; /* Nonzero, document-wide, never reused (even after undo). */
 
 enum {
@@ -54,11 +56,40 @@ typedef struct {
   exr_edit_run_kind kind;
   const char *text; size_t text_size; /* UTF-8, byte length, owned copy is NUL terminated */
   exr_edit_run_props props;
-  const void *opaque_xml; size_t opaque_size; /* Uninterpreted drawing/unknown inline XML */
+  /* OPAQUE_RUN: complete unmodelled inline XML. TEXT: optional original run
+     template, backed by the retained DOCX main part when using the IO bridge. */
+  const void *opaque_xml; size_t opaque_size;
 } exr_edit_run;
 typedef enum { EXR_EDIT_PARAGRAPH,EXR_EDIT_TABLE,EXR_EDIT_PAGE_BREAK,
-  EXR_EDIT_OPAQUE_BLOCK } exr_edit_block_kind;
+  EXR_EDIT_OPAQUE_BLOCK,EXR_EDIT_IMAGE } exr_edit_block_kind;
+typedef enum { EXR_EDIT_BORDER_NONE,EXR_EDIT_BORDER_SINGLE,EXR_EDIT_BORDER_DOUBLE } exr_edit_borders;
+enum { EXR_EDIT_CELL_MERGED=1u,EXR_EDIT_CELL_NESTED=2u,
+  EXR_EDIT_CELL_SHADING=4u,EXR_EDIT_CELL_OPAQUE=8u };
 typedef struct {
+  exr_edit_id id;
+  const exr_edit_block *blocks; size_t block_count; /* Paragraphs reuse the block/run model. */
+  unsigned unsupported; /* Protected cells are retained as original XML. */
+  const void *opaque_xml; size_t opaque_size;
+  unsigned changed; /* Writer bookkeeping: replacement=1, vertical merge=2/4, patch=8. */
+} exr_edit_cell;
+typedef struct {
+  exr_edit_id id;
+  const exr_edit_cell *cells; size_t cell_count;
+  const void *opaque_xml; size_t opaque_size;
+  size_t source_index; /* Writer bookkeeping; 0 for newly seeded rows. */
+} exr_edit_row;
+struct exr_edit_table {
+  const exr_edit_row *rows; size_t row_count,column_count;
+  int32_t width_twips;
+  exr_edit_borders borders;
+  unsigned changed; /* Writer bookkeeping: width=1, borders=2. */
+};
+typedef struct {
+  const void *data; size_t size; /* Original PNG/JPEG payload, never re-encoded. */
+  int64_t width_emu,height_emu; /* 12700 EMU = 1 point. */
+  unsigned jpeg;
+} exr_edit_image;
+struct exr_edit_block {
   exr_edit_id id,section_id;
   exr_edit_block_kind kind;
   exr_edit_para_props props;
@@ -66,7 +97,9 @@ typedef struct {
   /* Original paragraph/table/unknown XML. The DOCX bridge patches modelled
      properties in paragraph templates and retains all other source bytes. */
   const void *opaque_xml; size_t opaque_size;
-} exr_edit_block;
+  const exr_edit_table *table; /* TABLE: NULL keeps an opaque legacy seed. */
+  const exr_edit_image *image; /* IMAGE: new payload; imported drawings remain opaque runs. */
+};
 typedef struct {
   exr_edit_id id;
   const char *name; /* OPC part path, e.g. word/media/image1.png or word/_rels/document.xml.rels */
@@ -84,6 +117,16 @@ EXR_API exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t s
   const exr_edit_block *blocks,size_t block_count,const exr_edit_part *parts,size_t part_count,
   const exr_edit_options *options,exr_edit_doc **out);
 EXR_API void exr_edit_doc_free(exr_edit_doc *doc);
+/* Lossless OPC-backed DOCX IO. Unknown XML and package parts are retained.
+   UTF-8/US-ASCII XML only. Outputs are cleared on failure; release successful
+   write output with exr_free(). Edits invalidate retained digital signatures. */
+EXR_API exr_status exr_edit_docx_read(const void *data,size_t size,
+  const exr_edit_options *options,exr_edit_doc **out,exr_error *error);
+EXR_API exr_status exr_edit_docx_open(const char *path,const exr_edit_options *options,
+  exr_edit_doc **out,exr_error *error);
+EXR_API exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,
+  size_t *size,exr_error *error);
+
 /* Borrowed read-only views. Block/run views expire when that block changes or
    leaves the model; IDs remain stable. Sections and parts live until doc_free.
    Objects are single-threaded; callers serialize access. */
@@ -110,8 +153,34 @@ EXR_API exr_status exr_edit_set_paragraph_props(exr_edit_doc *doc,exr_edit_id bl
   const exr_edit_para_props *props);
 EXR_API exr_status exr_edit_set_run_props(exr_edit_doc *doc,exr_edit_id block_id,
   size_t run_index,const exr_edit_run_props *props);
-/* Tables are retained but cannot be deleted/edited in this version. */
+/* Replace one TEXT run with valid UTF-8/XML text (byte length, not characters).
+   IDs, direct properties, original XML template and neighbouring opaque runs
+   are retained. Buffers may alias borrowed text; NULL/0 clears the run.
+   Opaque runs return EXR_UNSUPPORTED. Participates in transactions/undo/redo. */
+EXR_API exr_status exr_edit_set_run_text(exr_edit_doc *doc,exr_edit_id block_id,
+  size_t run_index,const char *text,size_t text_size);
 EXR_API exr_status exr_edit_delete_block(exr_edit_doc *doc,exr_edit_id block_id);
+
+/* Zero-based physical row/cell indices. SIZE_MAX inserts before the first row.
+   Protected cells (merges, nested tables, shading or opaque content) cannot be
+   replaced. Other cells/rows in the same table remain editable. Vertical merge
+   chains cannot be split by inserting/deleting a row. Each command participates
+   in the same transaction/undo history as paragraph edits. */
+EXR_API exr_status exr_edit_table_insert_row(exr_edit_doc *doc,exr_edit_id table_id,size_t after_row_index);
+EXR_API exr_status exr_edit_table_delete_row(exr_edit_doc *doc,exr_edit_id table_id,size_t row_index);
+EXR_API exr_status exr_edit_table_set_cell_text(exr_edit_doc *doc,exr_edit_id table_id,
+  size_t row,size_t col,const exr_edit_run *runs,size_t count);
+EXR_API exr_status exr_edit_table_set_width(exr_edit_doc *doc,exr_edit_id table_id,int32_t twips);
+EXR_API exr_status exr_edit_table_set_borders(exr_edit_doc *doc,exr_edit_id table_id,exr_edit_borders spec);
+EXR_API exr_status exr_edit_delete_table(exr_edit_doc *doc,exr_edit_id table_id);
+/* Payload length is required for a C byte buffer. Dimensions are points, finite
+   and positive. PNG and JPEG are accepted by signature. after_id 0 prepends.
+   Delete accepts a new image block ID, an imported drawing run ID (including
+   table-cell runs), or a paragraph ID to remove its drawings while keeping text.
+   Export prunes removed image relationships and media unused by any OPC part. */
+EXR_API exr_status exr_edit_insert_image(exr_edit_doc *doc,exr_edit_id after_id,
+  const void *bytes,size_t size,double width_pt,double height_pt,exr_edit_id *new_id);
+EXR_API exr_status exr_edit_delete_image(exr_edit_doc *doc,exr_edit_id image_id);
 
 /* No nested transactions. NULL means invalid document, active tx or allocation
    failure. Outside a tx each successful command is one undo entry.
