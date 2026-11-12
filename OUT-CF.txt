@@ -5738,3 +5738,24 @@ Permission deny rule "computer" matches no known tool - check for typos.
 exit=0
 
 [recovery 2 2026-11-11] OUT-CF.txt was again 0 bytes in worktree; restored from HEAD (491713 bytes). HEAD==origin branch 631375ab, 0 behind main, no conflict markers. PR #116 MERGEABLE/BLOCKED, CI checks pending.
+
+
+[Recovered uncommitted text; committed report retained above]
+PR #116 now merges cleanly into main. I pushed a docs-only commit this session, and CI is still running, so no CI result yet.
+**What I found.** The merge of `origin/main` had already been done and pushed in earlier sessions. The branch is 0 behind main and has no conflict markers. The interruption left `OUT-CF.txt` truncated to 0 bytes in the worktree. I restored it from HEAD (491,713 bytes, no diff). Then I appended a recovery note and pushed it as `02ef765a`. I did not rebuild or rerun ctest this session. The results below come from the earlier sessions' log in `OUT-CF.txt`.
+**Deliverables**
+1. **Conflicts.** I did not re-derive the per-file resolution list this session. `OUT-CF.txt` and the merge commits `8d3c3ec5` and `37d54bd5` record how each file was resolved.
+2. **Local ctest.** The last full run passed 405/405 with `sdk-release` excluded, 0 failures.
+3. **PR #116.** `mergeable = MERGEABLE`, `mergeStateStatus = BLOCKED`, because the CI checks (android, apple-mobile, ci-hygiene ×4, desktop ×3, fuzz, identity, corpus and others) are still pending.
+4. **Remaining.** Wait for CI on `02ef765a`. I did not merge the PR or touch main.
+You've hit your weekly limit · resets 1pm (America/New_York)
+--decorate; git branch -vv; git remote -v; Get-Content -LiteralPath C:\\Users\\Oscar\\.codex\\skills\\ponytail\\SKILL.md; Get-ChildItem -Force -Name AGENTS.md,OUT-CF.txt -ErrorAction SilentlyContinue" in C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109
+
+[CF116 recovery completion 2026-11-11]
+Step 1 - Confirmed same worktree/head branch; fetched origin main and the PR head. HEAD=02ef765a, main=fe9adf43, 25 ahead / 0 behind. No merge in progress. Prior merges 37d54bd5 and 8d3c3ec5 already completed and pushed; did not repeat them.
+Conflict inventory: OUT.txt - both parent contents retained; RESOLVE-OUT.txt - both parent contents retained from both merges; RESOLVE.md - both parent contents retained, including PR #107 task line restored by earlier work. Verified each parent file's full ordered line sequence survives in current HEAD. CMakeLists.txt merged automatically; both registrations retained. No source/API conflict required further edits.
+Recovered the interrupted report change by retaining the entire committed report and appending its new text; original worktree bytes backed up outside the repository as cf116-recovery-uncommitted-02ef765a.txt.
+Step 2 - Reused completed configure/build and full test evidence: cf116-configure.log, cf116-build.log, cf116-ctest.log. CMake Ninja/Windows shell build succeeded; ctest 405/405 passed, failures: none, sdk-release excluded as requested; duration 2912.44 seconds. Since validation commit 846d3d2c, only OUT-CF.txt changed, so no test rerun needed.
+Layer evidence: 124 objects / 1456 symbol references / 0 inverse references; 1096 source/header dependencies / 0 inverse includes.
+Constraints verified: check_reading_release.py SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b; release test, check_ci_hygiene.py and version_literal_exceptions.json match origin/main. No GUI, system changes, new branch, PR merge, or main update.
+Step 3 - Before saving recovery report, GitHub PR #116 mergeable=true, open/unmerged; head 02ef765a. Four workflows queued/pending: Native reading profiles, Native C engine, SDK version consistency, Required native reading SDK core. Saving and pushing this report to origin/codex/vertical-expand-20261109; CI results remain pending.
