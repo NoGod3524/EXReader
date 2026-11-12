@@ -1,29 +1,34 @@
 /* SPDX-License-Identifier: MIT */
 /* Console acceptance for the OPDS engine parser + WinHTTP network layer against
-   a real catalog. Usage: check_shell_opds <root-feed-url> <out-dir>
-   Or: check_shell_opds --timeout-test <out-dir> (loopback only, no catalog).
+   a real catalog. Usage: check_shell_opds <root-feed-url> <out-dir> [slow-url]
    Writes <out-dir>/opds-net.json; exit 0 only when every check passed. */
 #include <winsock2.h>
-#include <ws2tcpip.h>
 #include "opds_net.h"
 #include <exr/opds.h>
 #include <direct.h>
+#include <process.h>
 
 static int failures;
 static FILE *report;
-typedef struct { SOCKET listener; HANDLE stop; LONG accepted; } slow_server;
-static DWORD WINAPI slow_accept(void *arg) {
-  slow_server *s = arg;
-  /* Keep accepting WinHTTP retries, but never send a response. */
+/* Accept TCP connections, then deliberately send nothing. An event makes
+   cleanup bounded and lets WinHTTP retry without a server-side close. */
+static SOCKET slow_listener = INVALID_SOCKET;
+static HANDLE slow_stop;
+static volatile LONG slow_accepted;
+static unsigned __stdcall slow_serve(void *unused) {
   SOCKET clients[16];
   int count = 0;
-  while (WaitForSingleObject(s->stop, 20) == WAIT_TIMEOUT) {
-    fd_set ready;
-    struct timeval timeout = {0, 20000};
-    FD_ZERO(&ready); FD_SET(s->listener, &ready);
-    if (select(0, &ready, NULL, NULL, &timeout) > 0 && count < 16) {
-      SOCKET c = accept(s->listener, NULL, NULL);
-      if (c != INVALID_SOCKET) { clients[count++] = c; InterlockedIncrement(&s->accepted); }
+  (void)unused;
+  while (WaitForSingleObject(slow_stop, 0) == WAIT_TIMEOUT) {
+    fd_set reads;
+    struct timeval tv = {0, 50000};
+    FD_ZERO(&reads); FD_SET(slow_listener, &reads);
+    if (select(0, &reads, NULL, NULL, &tv) > 0) {
+      SOCKET c = accept(slow_listener, NULL, NULL);
+      if (c != INVALID_SOCKET) {
+        InterlockedIncrement(&slow_accepted);
+        if (count < 16) clients[count++] = c; else closesocket(c);
+      }
     }
   }
   for (int i = 0; i < count; i++) closesocket(clients[i]);
@@ -46,35 +51,59 @@ static void json_escape(const char *s, char *out, size_t size) {
 }
 static void timeout_check(void) {
   WSADATA wsa;
-  slow_server s = {INVALID_SOCKET, NULL, 0};
-  HANDLE thread = NULL;
   struct sockaddr_in address = {0};
-  int size = sizeof(address), ok = 0;
-  char url[128], detail[1024], safe[1100];
-  onet_options o = {0}; onet_result r = {0}; onet_buffer b = {0};
-  DWORD elapsed = 0;
-  if (WSAStartup(MAKEWORD(2, 2), &wsa)) { check("error_timeout", 0, "WSAStartup failed"); return; }
-  s.listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  address.sin_family = AF_INET; address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  if (s.listener == INVALID_SOCKET || bind(s.listener, (struct sockaddr *)&address, size) ||
-      listen(s.listener, 16) || getsockname(s.listener, (struct sockaddr *)&address, &size)) goto done;
-  s.stop = CreateEventW(NULL, TRUE, FALSE, NULL);
-  if (!s.stop || !(thread = CreateThread(NULL, 0, slow_accept, &s, 0, NULL))) goto done;
-  snprintf(url, sizeof(url), "http://127.0.0.1:%u/slow.xml", (unsigned)ntohs(address.sin_port));
-  o.resolve_ms = o.connect_ms = o.send_ms = o.receive_ms = 700;
-  DWORD started = GetTickCount();
-  int fetched = onet_fetch(url, &o, 0, &b, &r);
-  elapsed = GetTickCount() - started;
-  ok = !fetched && r.code == ONET_TIMEOUT && r.win_error == ERROR_WINHTTP_TIMEOUT &&
-       r.http_status == 0 && r.message[0] && s.accepted > 0 && elapsed >= 600 && elapsed < 6000;
-done:
-  if (thread) { SetEvent(s.stop); WaitForSingleObject(thread, INFINITE); CloseHandle(thread); }
-  if (s.stop) CloseHandle(s.stop);
-  if (s.listener != INVALID_SOCKET) closesocket(s.listener);
-  WSACleanup(); free(b.data);
-  snprintf(detail, sizeof(detail), "code=%s http=%d win_error=%lu accepted=%ld elapsed_ms=%lu message=%s",
-           onet_name(r.code), r.http_status, r.win_error, s.accepted, (unsigned long)elapsed, r.message);
-  json_escape(detail, safe, sizeof(safe)); check("error_timeout", ok, safe);
+  int size = sizeof(address), ready = 0;
+  HANDLE thread = NULL;
+  char url[128], detail[512], safe[600];
+  onet_options options = {0};
+  onet_result result;
+  onet_buffer body;
+  DWORD started;
+  int ok;
+  if (WSAStartup(MAKEWORD(2, 2), &wsa)) { check("local_slow_server", 0, "WSAStartup"); return; }
+  slow_listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  address.sin_family = AF_INET;
+  address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  slow_stop = CreateEventW(NULL, TRUE, FALSE, NULL);
+  if (slow_listener != INVALID_SOCKET && slow_stop &&
+      !bind(slow_listener, (struct sockaddr *)&address, sizeof(address)) &&
+      !listen(slow_listener, 16) && !getsockname(slow_listener, (struct sockaddr *)&address, &size))
+    thread = (HANDLE)_beginthreadex(NULL, 0, slow_serve, NULL, 0, NULL);
+  if (thread) {
+    ready = 1;
+    snprintf(url, sizeof(url), "http://127.0.0.1:%u/slow.opds", (unsigned)ntohs(address.sin_port));
+    options.resolve_ms = options.connect_ms = options.send_ms = options.receive_ms = 700;
+    started = GetTickCount();
+    ok = onet_fetch(url, &options, 0, &body, &result);
+    snprintf(detail, sizeof(detail), "code=%s win_error=%lu http=%d elapsed_ms=%lu accepted=%ld message=%s",
+             onet_name(result.code), result.win_error, result.http_status,
+             (unsigned long)(GetTickCount() - started), (long)slow_accepted, result.message);
+    json_escape(detail, safe, sizeof(safe));
+    check("error_timeout_local_accept_no_response", !ok && result.code == ONET_TIMEOUT &&
+          result.win_error == ERROR_WINHTTP_TIMEOUT && result.http_status == 0 &&
+          slow_accepted > 0 && result.message[0] && GetTickCount() - started < 6000, safe);
+    free(body.data);
+    SetEvent(slow_stop);
+    check("local_slow_server_join", WaitForSingleObject(thread, 2000) == WAIT_OBJECT_0, "server stopped");
+    CloseHandle(thread);
+  }
+  if (!ready) check("local_slow_server", 0, "socket setup failed");
+  if (slow_listener != INVALID_SOCKET) closesocket(slow_listener);
+  if (slow_stop) CloseHandle(slow_stop);
+  WSACleanup();
+}
+static void url_check(void) {
+  char input[2048], output[2048];
+  memset(input, 'a', sizeof(input));
+  memcpy(input, "http://example.org/", 19);
+  input[2046] = 0;
+  onet_secure(input, output, sizeof(output));
+  check("https_upgrade_exact_fit", strlen(output) == 2047 && !strncmp(output, "https://", 8), "2047 bytes plus terminator");
+  input[2046] = 'a'; input[2047] = 0;
+  onet_secure(input, output, sizeof(output));
+  check("https_upgrade_overflow_rejected", !output[0], "overlong address becomes bad_url");
+  onet_secure("http://127.0.0.1/feed", output, sizeof(output));
+  check("loopback_http_preserved", !strcmp(output, "http://127.0.0.1/feed"), "local fixtures remain reachable");
 }
 static int load(const char *url, int use_cache, exr_opds_feed *feed, onet_result *r, const onet_options *o) {
   onet_buffer b;
@@ -102,19 +131,20 @@ int main(int argc, char **argv) {
   char detail_text[4096], safe[4200], path[600];
   wchar_t wpath[600];
   int ok;
+  SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
   if (argc < 3) return 2;
   _mkdir(argv[2]);
   snprintf(path, sizeof(path), "%s/opds-net.json", argv[2]);
   report = fopen(path, "wb");
   if (!report) return 2;
   fprintf(report, "{\"root\":\"%s\",\"checks\":[", argv[1]);
+  url_check();
   timeout_check();
-  if (!strcmp(argv[1], "--timeout-test")) goto finish;
+  if (!strcmp(argv[1], "--timeout-only")) goto finish;
   /* 1. root feed + a book list with >= 20 entries */
   ok = load(argv[1], 1, &root, &r, &o);
   snprintf(detail_text, sizeof(detail_text), "title=%s entries=%zu search_description=%s", ok && root.title ? root.title : "", root.entry_count,
            ok && root.search_description_url ? root.search_description_url : "none");
-  if (!ok) snprintf(detail_text, sizeof(detail_text), "code=%s http=%d message=%s", onet_name(r.code), r.http_status, r.message);
   json_escape(detail_text, safe, sizeof(safe));
   check("root_feed", ok && root.entry_count > 0, safe);
   {
@@ -199,6 +229,15 @@ int main(int argc, char **argv) {
     snprintf(detail_text, sizeof(detail_text), "code=%s message=%s", onet_name(r.code), r.message);
     json_escape(detail_text, safe, sizeof(safe));
     check("error_plain_http_rejected", !ok && r.code == ONET_NOT_HTTPS, safe);
+    if (argc > 3) {
+      onet_options slow = {0};
+      DWORD t0 = GetTickCount();
+      slow.receive_ms = 1500;
+      ok = onet_fetch(argv[3], &slow, 0, &b, &r);
+      snprintf(detail_text, sizeof(detail_text), "code=%s elapsed_ms=%lu message=%s", onet_name(r.code), (unsigned long)(GetTickCount() - t0), r.message);
+      json_escape(detail_text, safe, sizeof(safe));
+      check("error_timeout", !ok && r.code == ONET_TIMEOUT && GetTickCount() - t0 < 6000, safe);
+    }
     {
       unsigned hits = onet_cache_hits;
       ok = onet_fetch(argv[1], &o, 1, &b, &r);
@@ -216,7 +255,7 @@ int main(int argc, char **argv) {
     }
   }
 finish:
-  fprintf(report, "\n  {\"check\":\"end\",\"pass\":true,\"detail\":\"failures=%d\"}\n]}\n", failures);
+  fprintf(report, "\n  {\"check\":\"end\",\"pass\":%s,\"detail\":\"failures=%d\"}\n]}\n", failures ? "false" : "true", failures);
   fclose(report);
   exr_opds_feed_free(&root); exr_opds_feed_free(&page1); exr_opds_feed_free(&page2); exr_opds_feed_free(&detail); exr_opds_feed_free(&found);
   return failures ? 1 : 0;

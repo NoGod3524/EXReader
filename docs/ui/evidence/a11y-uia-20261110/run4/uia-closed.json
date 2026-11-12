@@ -1,0 +1,230 @@
+[
+ {
+  "name": "EXReader",
+  "type": "window",
+  "type_id": 50032,
+  "id": "",
+  "class": "EXReaderHost",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   64,
+   64,
+   1344,
+   924
+  ]
+ },
+ {
+  "name": "阅读区域",
+  "type": "正文",
+  "type_id": 50030,
+  "id": "IDC_PAGE",
+  "class": "EXReaderPage",
+  "enabled": true,
+  "help": "选择文字后可复制引用或添加标注",
+  "focusable": true,
+  "focused": true,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   73,
+   172,
+   1335,
+   915
+  ]
+ },
+ {
+  "name": "返回书架",
+  "type": "button",
+  "type_id": 50000,
+  "id": "180",
+  "class": "Button",
+  "enabled": true,
+  "help": "回到书架，快捷键 Ctrl+W",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   88,
+   112,
+   198,
+   162
+  ]
+ },
+ {
+  "name": "目录",
+  "type": "button",
+  "type_id": 50000,
+  "id": "160",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1227,
+   112,
+   1277,
+   162
+  ]
+ },
+ {
+  "name": "设置",
+  "type": "button",
+  "type_id": 50000,
+  "id": "161",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1275,
+   112,
+   1325,
+   162
+  ]
+ },
+ {
+  "name": "全文搜索",
+  "type": "button",
+  "type_id": 50000,
+  "id": "196",
+  "class": "Button",
+  "enabled": true,
+  "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1180,
+   112,
+   1230,
+   162
+  ]
+ },
+ {
+  "name": null,
+  "type": "title bar",
+  "type_id": 50037,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   93,
+   67,
+   1335,
+   102
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu bar",
+  "type_id": 50010,
+  "id": "MenuBar",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   73,
+   73,
+   101,
+   101
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu item",
+  "type_id": 50011,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   73,
+   73,
+   101,
+   101
+  ]
+ },
+ {
+  "name": "Minimize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   65,
+   1217,
+   102
+  ]
+ },
+ {
+  "name": "Maximize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1217,
+   65,
+   1276,
+   102
+  ]
+ },
+ {
+  "name": "Close",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1276,
+   65,
+   1336,
+   102
+  ]
+ }
+]

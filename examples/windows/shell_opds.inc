@@ -25,6 +25,7 @@ typedef struct {
   onet_result result;
   char error[256];
 } opds_job;
+static void opds_back_to_shelf(void);
 static HWND opds_view,opds_url_edit,opds_query_edit,opds_list;
 static exr_opds_feed opds_feed;
 static char opds_url[2048],opds_stack[OPDS_STACK][2048],opds_search_template[2048],opds_search_description[2048];
@@ -276,7 +277,7 @@ static void opds_finish(opds_job *j) {
       /* Same path as the shelf's open-book button, so import adds metadata and
          cover and then opens the book. */
       g.auto_open_imported=1;opds_imports_started++;
-      if(opds_visible){ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_shelf_visibility(1);}
+      if(opds_visible){ShowWindow(opds_view,SW_HIDE);opds_visible=0;opds_back_to_shelf();}
       import_path(opds_download_path,0);
     } else {
       if(r.code==ONET_CANCELLED)opds_downloads_cancelled++;else opds_downloads_failed++;
@@ -343,6 +344,9 @@ static void opds_paint(HDC dc) {
   }
   opds_rect_text(dc,opds_status,line,13,400,shell_colors->text_secondary,DT_LEFT|DT_SINGLELINE);
 }
+static void opds_back_to_shelf(void) {
+  if(sm_view){ShowWindow(sm_view,SW_SHOWNA);sm_layout();SetFocus(sm_view);}
+}
 static void opds_layout(void) {
   if(!opds_view || !opds_visible)return;
   RECT c;GetClientRect(shelf_panel,&c);
@@ -368,7 +372,7 @@ static void opds_layout(void) {
 static void opds_hide(void) {
   if(!opds_view || !opds_visible)return;
   if(opds_busy)InterlockedExchange(&opds_cancel,1);
-  ShowWindow(opds_view,SW_HIDE);opds_visible=0;sm_recent();
+  ShowWindow(opds_view,SW_HIDE);opds_visible=0;opds_back_to_shelf();
 }
 static void opds_show(void) {
   if(!opds_view || !shelf_visible)return;
@@ -397,7 +401,11 @@ static LRESULT CALLBACK opds_view_proc(HWND w,UINT m,WPARAM wp,LPARAM lp) {
     case WM_DRAWITEM: {
       const DRAWITEMSTRUCT *d=(const DRAWITEMSTRUCT *)lp;wchar_t label[32];
       GetWindowTextW(d->hwndItem,label,32);
-      shell_draw_control(d,label,d->CtlID==OPDS_ID_ACTION ? SHELL_CONTROL_PRIMARY:SHELL_CONTROL_STANDARD,shell_colors->layer_page);
+      {
+        unsigned state = (d->itemState&ODS_SELECTED ? 2u:0u)|(d->itemState&ODS_FOCUS ? 4u:0u)|(d->itemState&ODS_DISABLED ? 8u:0u);
+        shell_d2d_look look = {d->CtlID==OPDS_ID_ACTION ? 1 : 2, state, 0, 0, 1};
+        shell_d2d_control(host_shell,d->hDC,&d->rcItem,label,shell_is_dark(),&look);
+      }
       return TRUE;
     }
     case WM_COMMAND:
@@ -451,3 +459,4 @@ static void opds_create(HWND parent) {
   }
   opds_set_status(L"填写书源地址后点“打开”。支持 OPDS 1.x（Atom）目录，例如 Project Gutenberg。");
 }
+

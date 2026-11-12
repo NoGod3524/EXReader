@@ -1,0 +1,2947 @@
+[
+ {
+  "name": "EXReader",
+  "type": "window",
+  "type_id": 50032,
+  "id": "",
+  "class": "EXReaderHost",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   96,
+   96,
+   1376,
+   956
+  ]
+ },
+ {
+  "name": "目录面板",
+  "type": "pane",
+  "type_id": 50033,
+  "id": "",
+  "class": "EXReaderTOC",
+  "enabled": true,
+  "help": "当前书的章节目录",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   105,
+   204,
+   455,
+   947
+  ]
+ },
+ {
+  "name": "目录列表",
+  "type": "list",
+  "type_id": 50008,
+  "id": "168",
+  "class": "ListBox",
+  "enabled": true,
+  "help": "上下键选择章节，回车跳转到该章",
+  "focusable": true,
+  "focused": true,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   118,
+   263,
+   442,
+   947
+  ]
+ },
+ {
+  "name": "Moby-Dick",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": true,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Original Transcriber’s Notes:",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "ETYMOLOGY.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "EXTRACTS (Supplied by a Sub-Sub-Librarian).",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 1. Loomings.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 2. The Carpet-Bag.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 3. The Spouter-Inn.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 4. The Counterpane.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 5. Breakfast.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 6. The Street.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 7. The Chapel.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 8. The Pulpit.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 9. The Sermon.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 10. A Bosom Friend.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 11. Nightgown.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 12. Biographical.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 13. Wheelbarrow.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 14. Nantucket.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 15. Chowder.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 16. The Ship.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 17. The Ramadan.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 18. His Mark.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 19. The Prophet.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 20. All Astir.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 21. Going Aboard.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 22. Merry Christmas.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 23. The Lee Shore.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 24. The Advocate.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 25. Postscript.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 26. Knights and Squires.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 27. Knights and Squires.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 28. Ahab.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 29. Enter Ahab; to Him, Stubb.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 30. The Pipe.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 31. Queen Mab.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 32. Cetology.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 33. The Specksnyder.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 34. The Cabin-Table.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 35. The Mast-Head.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 36. The Quarter-Deck.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 37. Sunset.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 38. Dusk.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 39. First Night Watch.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 40. Midnight, Forecastle.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 41. Moby Dick.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 42. The Whiteness of The Whale.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 43. Hark!",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 44. The Chart.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 45. The Affidavit.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 46. Surmises.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 47. The Mat-Maker.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 48. The First Lowering.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 49. The Hyena.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 50. Ahab’s Boat and Crew. Fedallah.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 51. The Spirit-Spout.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 52. The Albatross.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 53. The Gam.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 54. The Town-Ho’s Story.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 55. Of the Monstrous Pictures of Whales.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 56. Of the Less Erroneous Pictures of Whales, and the True",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 57. Of Whales in Paint; in Teeth; in Wood; in Sheet-Iron; in",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 58. Brit.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 59. Squid.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 60. The Line.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 61. Stubb Kills a Whale.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 62. The Dart.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 63. The Crotch.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 64. Stubb’s Supper.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 65. The Whale as a Dish.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 66. The Shark Massacre.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 67. Cutting In.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 68. The Blanket.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 69. The Funeral.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 70. The Sphynx.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 71. The Jeroboam’s Story.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 72. The Monkey-Rope.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 73. Stubb and Flask Kill a Right Whale; and Then Have a Talk",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 74. The Sperm Whale’s Head—Contrasted View.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 75. The Right Whale’s Head—Contrasted View.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 76. The Battering-Ram.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 77. The Great Heidelburgh Tun.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 78. Cistern and Buckets.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 79. The Prairie.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 80. The Nut.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 81. The Pequod Meets The Virgin.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 82. The Honour and Glory of Whaling.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 83. Jonah Historically Regarded.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 84. Pitchpoling.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 85. The Fountain.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 86. The Tail.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 87. The Grand Armada.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 88. Schools and Schoolmasters.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 89. Fast-Fish and Loose-Fish.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 90. Heads or Tails.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 91. The Pequod Meets The Rose-Bud.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 92. Ambergris.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 93. The Castaway.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 94. A Squeeze of the Hand.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 95. The Cassock.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 96. The Try-Works.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 97. The Lamp.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 98. Stowing Down and Clearing Up.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 99. The Doubloon.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 100. Leg and Arm.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 101. The Decanter.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 102. A Bower in the Arsacides.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 103. Measurement of The Whale’s Skeleton.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 104. The Fossil Whale.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 105. Does the Whale’s Magnitude Diminish?—Will He Perish?",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 106. Ahab’s Leg.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 107. The Carpenter.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 108. Ahab and the Carpenter.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 109. Ahab and Starbuck in the Cabin.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 110. Queequeg in His Coffin.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 111. The Pacific.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 112. The Blacksmith.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 113. The Forge.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 114. The Gilder.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 115. The Pequod Meets The Bachelor.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 116. The Dying Whale.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 117. The Whale Watch.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 118. The Quadrant.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 119. The Candles.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 120. The Deck Towards the End of the First Night Watch.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 121. Midnight.—The Forecastle Bulwarks.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 122. Midnight Aloft.—Thunder and Lightning.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 123. The Musket.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 124. The Needle.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 125. The Log and Line.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 126. The Life-Buoy.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 127. The Deck.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 128. The Pequod Meets The Rachel.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 129. The Cabin.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 130. The Hat.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 131. The Pequod Meets The Delight.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 132. The Symphony.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 133. The Chase—First Day.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 134. The Chase—Second Day.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Chapter 135. The Chase.—Third Day.",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Epilogue",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "Copyright Page",
+  "type": "list item",
+  "type_id": 50007,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": true,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "阅读区域",
+  "type": "正文",
+  "type_id": 50030,
+  "id": "IDC_PAGE",
+  "class": "EXReaderPage",
+  "enabled": true,
+  "help": "选择文字后可复制引用或添加标注",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   105,
+   204,
+   1367,
+   947
+  ]
+ },
+ {
+  "name": "返回书架",
+  "type": "button",
+  "type_id": 50000,
+  "id": "180",
+  "class": "Button",
+  "enabled": true,
+  "help": "回到书架，快捷键 Ctrl+W",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   120,
+   144,
+   230,
+   194
+  ]
+ },
+ {
+  "name": "目录",
+  "type": "button",
+  "type_id": 50000,
+  "id": "160",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1259,
+   144,
+   1309,
+   194
+  ]
+ },
+ {
+  "name": "设置",
+  "type": "button",
+  "type_id": 50000,
+  "id": "161",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1307,
+   144,
+   1357,
+   194
+  ]
+ },
+ {
+  "name": "全文搜索",
+  "type": "button",
+  "type_id": 50000,
+  "id": "196",
+  "class": "Button",
+  "enabled": true,
+  "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1212,
+   144,
+   1262,
+   194
+  ]
+ },
+ {
+  "name": null,
+  "type": "title bar",
+  "type_id": 50037,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   125,
+   99,
+   1367,
+   134
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu bar",
+  "type_id": 50010,
+  "id": "MenuBar",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   105,
+   105,
+   133,
+   133
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu item",
+  "type_id": 50011,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   105,
+   105,
+   133,
+   133
+  ]
+ },
+ {
+  "name": "Minimize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1189,
+   97,
+   1249,
+   134
+  ]
+ },
+ {
+  "name": "Maximize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1249,
+   97,
+   1308,
+   134
+  ]
+ },
+ {
+  "name": "Close",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1308,
+   97,
+   1368,
+   134
+  ]
+ }
+]

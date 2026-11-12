@@ -468,6 +468,7 @@ shell_theme shell_theme_contrast = shell_theme_dark; /* declared extern "C" in s
 static const shell_theme &theme_of(int dark) { return dark == 2 ? shell_theme_contrast : dark ? shell_theme_dark : shell_theme_light; }
 static float line_alpha(int dark, float normal) { return dark == 2 ? 1.f : normal; }
 
+
 /* One floating surface for every popup (settings, notes, footnotes, dictionary):
    the caller's pixels beneath, shadow-lg, a radius-14 surface with a line
    border, then the caller's static text. Label boxes are DIPs from the visible
