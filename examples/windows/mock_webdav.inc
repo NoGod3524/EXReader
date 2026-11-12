@@ -10,7 +10,8 @@ static mock_node mock_nodes[512];
 static int mock_node_count;
 static CRITICAL_SECTION mock_lock;
 static SOCKET mock_listener=INVALID_SOCKET;
-static HANDLE mock_thread;
+static HANDLE mock_thread,mock_idle;
+static volatile LONG mock_active;
 static volatile LONG mock_running;
 static int mock_port;
 static char mock_user[64],mock_pass[64];
@@ -152,20 +153,28 @@ static void mock_handle(SOCKET s) {
 done:
   free(buf);shutdown(s,SD_BOTH);closesocket(s);
 }
-static unsigned __stdcall mock_conn(void *arg) {mock_handle((SOCKET)(UINT_PTR)arg);return 0;}
+static unsigned __stdcall mock_conn(void *arg) {
+  mock_handle((SOCKET)(UINT_PTR)arg);
+  if(!InterlockedDecrement(&mock_active)) SetEvent(mock_idle);
+  return 0;
+}
 static unsigned __stdcall mock_accept(void *arg) {
   (void)arg;
   while(mock_running) {
     SOCKET c=accept(mock_listener,NULL,NULL);
     if(c==INVALID_SOCKET) break;
+    InterlockedIncrement(&mock_active);ResetEvent(mock_idle);
     uintptr_t t=_beginthreadex(NULL,0,mock_conn,(void *)(UINT_PTR)c,0,NULL);
-    if(t) CloseHandle((HANDLE)t);else closesocket(c);
+    if(t) CloseHandle((HANDLE)t);else {closesocket(c);if(!InterlockedDecrement(&mock_active))SetEvent(mock_idle);}
   }
   return 0;
 }
 /* port 0 picks a free port. Returns the bound port, or 0. */
 static int mock_start(int port,const char *user,const char *pass) {
-  WSADATA wsa;if(WSAStartup(MAKEWORD(2,2),&wsa)) return 0;
+  if(!mock_idle) {
+    WSADATA wsa;if(WSAStartup(MAKEWORD(2,2),&wsa)) return 0;
+    mock_idle=CreateEventW(NULL,TRUE,TRUE,NULL);if(!mock_idle)return 0;
+  }
   static int once;if(!once){InitializeCriticalSection(&mock_lock);once=1;}
   snprintf(mock_user,sizeof(mock_user),"%s",user ? user:"");snprintf(mock_pass,sizeof(mock_pass),"%s",pass ? pass:"");
   mock_delay_ms=0;mock_force_count=0;
@@ -183,4 +192,5 @@ static void mock_stop(void) {
   mock_running=0;
   if(mock_listener!=INVALID_SOCKET){closesocket(mock_listener);mock_listener=INVALID_SOCKET;}
   if(mock_thread){WaitForSingleObject(mock_thread,2000);CloseHandle(mock_thread);mock_thread=NULL;}
+  WaitForSingleObject(mock_idle,10000);
 }

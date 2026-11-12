@@ -15,7 +15,7 @@ static const wchar_t *const style_names[8]={L"字号 px",L"行距 ×",L"段距 e
 /* Panel geometry in DIPs from the visible surface's corner. Every setting is
    one 34-high row, label left and control right (ART-DIRECTION e-4); rows are
    42 apart so that neighbouring 4-wide control frames never overlap. */
-enum { PANEL_TITLE_Y=14,PANEL_ROW_Y=56,PANEL_ROW_PITCH=42,PANEL_PRESET_Y=PANEL_ROW_Y+8*PANEL_ROW_PITCH,
+enum { PANEL_SYNC_W=92,PANEL_TITLE_Y=14,PANEL_ROW_Y=56,PANEL_ROW_PITCH=42,PANEL_PRESET_Y=PANEL_ROW_Y+8*PANEL_ROW_PITCH,
        PANEL_THEME_Y=PANEL_PRESET_Y+50,PANEL_TAP_Y=PANEL_THEME_Y+PANEL_ROW_PITCH,PANEL_DICTIONARY_Y=PANEL_TAP_Y+50,
        PANEL_RIGHT=SHELL_PANEL_W-SHELL_PANEL_PAD,PANEL_STEPPER_VALUE=56,PANEL_STEPPER_GAP=6,
        PANEL_PRESET_W=196,PANEL_THEME_W=222,PANEL_TAP_W=190,PANEL_TRACK_H=SHELL_SEGMENT_H+2*SHELL_SEGMENT_PAD,
@@ -234,9 +234,9 @@ static void shell_panel_layout(void) {
   panel_place(style_save,SHELL_PANEL_PAD+PANEL_PRESET_W+8,PANEL_PRESET_Y,PANEL_RIGHT-SHELL_PANEL_PAD-PANEL_PRESET_W-8,SHELL_CONTROL_H);
   panel_place_track(shell_segments,3,PANEL_THEME_Y,PANEL_THEME_W);
   panel_place_track(shell_tap_buttons,2,PANEL_TAP_Y,PANEL_TAP_W);
-  /* Dictionary and cloud sync share the last row: the panel height is a token. */
-  panel_place(shell_dictionary_button,SHELL_PANEL_PAD,PANEL_DICTIONARY_Y,PANEL_RIGHT-SHELL_PANEL_PAD-88,SHELL_CONTROL_H);
-  panel_place(shell_sync_button,PANEL_RIGHT-80,PANEL_DICTIONARY_Y,80,SHELL_CONTROL_H);
+  /* Cloud sync shares the dictionary row. */
+  panel_place(shell_dictionary_button,SHELL_PANEL_PAD,PANEL_DICTIONARY_Y,PANEL_RIGHT-SHELL_PANEL_PAD-PANEL_SYNC_W-8,SHELL_CONTROL_H);
+  panel_place(shell_sync_button,PANEL_RIGHT-PANEL_SYNC_W,PANEL_DICTIONARY_Y,PANEL_SYNC_W,SHELL_CONTROL_H);
 }
 
 static float shell_ease(float x) {

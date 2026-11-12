@@ -1,120 +1,145 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""C2 headless acceptance: source assertions, historical PNG hashes, manual list.
+"""C2 headless acceptance: inspect source and inventory existing evidence only.
 
-Usage: python -X utf8 docs/ui/acceptance/check_a11y_c2.py [--self-test]
-Uses only Python file operations. Does not launch or attach to an application.
+Usage: python check_a11y_c2.py [--out DIR] [--self-test]
+No application, UI Automation client, input injection, or system setting access.
+Runtime UIA and visual/focus acceptance stay pending in C2-MANUAL-CHECK.md.
 """
 import argparse
 import hashlib
 import json
-from pathlib import Path
 import re
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-SOURCES = {
-    'reader': 'examples/reader.c',
-    'screen': 'examples/windows/shell_screen.inc',
-    'uia': 'apps/reader/desktop/windows_accessibility.inc',
-    'search': 'examples/windows/shell_search.inc',
-    'toc': 'examples/windows/shell_toc.inc',
-    'settings': 'examples/windows/shell_settings.inc',
-    'tokens': 'examples/windows/shell_tokens.h',
-    'draw': 'examples/windows/shell_d2d.cpp',
-}
-NAMES = {
-    'shell_back': '返回书架', 'shell_search_button': '全文搜索',
-    'shell_toc': '目录', 'shell_settings': '设置',
-    'shell_toc_panel': '目录面板', 'shell_toc_list': '目录列表',
-    'shell_panel': '阅读设置', 'shell_search_bar': '全文搜索栏',
-    'shell_search_edit': '搜索关键词', 'shell_search_prev': '上一处',
-    'shell_search_next': '下一处', 'shell_search_case': '区分大小写',
-    'shell_search_word': '全词匹配', 'shell_search_close': '关闭搜索',
-}
-MANUAL = [
-    ('外部 UIA', '需要真实窗口，因为 UIA 必须读取运行中的控件树与 provider。用户在场时手动打开应用和有文字的书页，从独立 UIA 客户端检查 Name、HelpText、角色、可用状态、TextPattern/DocumentRange、ValuePattern、选择范围；翻页、选择、翻章和开关面板时核对 TextChanged、TextSelectionChanged、StructureChanged。封面无文本须单独记录。'),
-    ('Tab 与焦点恢复', '需要真实窗口，因为实际焦点受可见性、启用状态和消息循环影响。人工按 Tab/Shift+Tab 检查 返回书架→全文搜索→正文→目录→设置 循环；分别打开搜索、目录、设置检查子控件顺序，Esc 关闭后焦点回到正文，禁用控件不能困住焦点。'),
-    ('焦点环', '需要真实窗口，因为静态 token 不能证明实际绘制、裁切与缩放。人工检查目录、设置、搜索和各设置按钮的焦点环，在用户当前 DPI 下应清晰完整；正文聚焦时无额外页面边框。'),
-    ('对比度观感', '需要真实窗口，因为截图和颜色配置不能证明用户屏幕上的可读性。先在当前主题检查文字、选区、焦点环、禁用控件和面板；高对比度仅由用户本人决定是否切换并操作，检查完成由用户恢复。自动验收不得切换主题、高对比度、DPI 或输入法。'),
-    ('同步宿主呈现', '需要真实窗口，因为控制台只能证明同步数据和状态码。人工检查设置→云同步入口、错误和离线队列的文字、后台完成后的状态刷新及保存后密码框清空。'),
-    ('OPDS 宿主呈现', '需要真实窗口，因为控制台不能验证面板交互和进度呈现。人工检查书源入口、搜索/翻页/返回、下载进度与取消、下载后导入并打开、超时错误显示。'),
+MANUAL = ROOT / "docs/a11y/C2-MANUAL-CHECK.md"
+SOURCES = [
+    "examples/reader.c", "apps/reader/desktop/windows_accessibility.inc",
+    "examples/windows/shell_screen.inc", "examples/windows/shell_settings.inc",
+    "examples/windows/shell_toc.inc", "examples/windows/shell_tokens.h",
+    "examples/windows/shell_d2d.cpp",
 ]
+EXPECTED = {
+    "shell_back": "返回书架", "shell_search_button": "全文搜索",
+    "shell_toc": "目录", "shell_settings": "设置", "shell_toc_panel": "目录面板",
+    "shell_toc_list": "目录列表", "shell_panel": "阅读设置",
+    "shell_search_bar": "全文搜索栏", "shell_search_edit": "搜索关键词",
+    "shell_search_prev": "上一处", "shell_search_next": "下一处",
+    "shell_search_case": "区分大小写", "shell_search_word": "全词匹配",
+    "shell_search_close": "关闭搜索",
+    "shell_segments[0]": "浅色主题", "shell_segments[1]": "深色主题",
+    "shell_segments[2]": "跟随系统主题", "style_preset": "排版预设",
+    "shell_tap_buttons[0]": "点击分区 20 / 60 / 20",
+    "shell_tap_buttons[1]": "点击分区 25 / 50 / 25",
+}
 
 
-def static_checks(source):
-    # Ignore comments so dead descriptions cannot satisfy registrations.
-    s = {k: re.sub(r'"(?:\\.|[^"\\])*"|/\*.*?\*/|//[^\n]*',
-                   lambda m: '' if m[0].startswith(('/',)) else m[0], v, flags=re.S)
-         for k, v in source.items()}
-    result = {}
-    for control, name in NAMES.items():
-        pattern = rf'host_a11y_describe\({control},\s*L"{name}",\s*L"[^"]+"\);'
-        result['Name/HelpText:' + control] = bool(re.search(pattern, s['screen']))
-    result['Name/HelpText:style-fields'] = all(x in s['screen'] for x in (
-        'host_a11y_describe(style_buttons[2*i], name, L"按一步减小这一项")',
-        'host_a11y_describe(style_buttons[2*i+1], name, L"按一步增大这一项")',
-        'host_a11y_describe(style_edits[i], field[i], L"直接输入数值，离开输入框后生效")'))
-    result['registration:backend'] = all(x in s['uia'] for x in (
-        'CoCreateInstance(&host_a11y_clsid_props',
-        'SetHwndPropStr(host_a11y_props, window, OBJID_CLIENT, CHILDID_SELF, host_a11y_prop_name, name)',
-        'SetHwndPropStr(host_a11y_props, window, OBJID_CLIENT, CHILDID_SELF, host_a11y_prop_help, help)'))
-    create = re.search(r'static void shell_create\(HWND parent\)\s*\{(.*?)\n\}', s['screen'], re.S)
-    result['registration:after-controls-created'] = bool(create and re.search(
-        r'shell_create_panel\(parent\);\s*shell_toc_create\(parent\);\s*shell_search_create\(parent\);\s*shell_a11y_names\(\);', create[1]))
-    result['registration:reader-include'] = '#include "../apps/reader/desktop/windows_accessibility.inc"' in s['reader']
-    result['events:structure'] = all(('host_a11y_panel_toggled(' in s[key]) for key in ('toc', 'settings')) and 'UiaRaiseStructureChangedEvent(' in s['uia'] and 'host_a11y_structure_changed();' in s['uia']
-    result['events:text-and-selection'] = all(x in s['uia'] for x in ('UIA_Text_TextChangedEventId', 'UIA_Text_TextSelectionChangedEventId'))
-    result['keyboard:tab-handler'] = 'shell_tab_next(focus,shift)' in s['toc'] and 'next = stops[(at + (shift ? count - 1 : 1)) % count]' in s['screen']
-    stops = re.search(r'static int shell_tab_stops\([^)]*\)\s*\{(.*?)int panel_start', s['screen'], re.S)
-    order = re.findall(r'stops\[count\+\+\] = (\w+(?:\.\w+)?);', stops[1]) if stops else []
-    expected = ['shell_back', 'shell_search_button', 'g.page', 'shell_toc', 'shell_settings']
-    result['keyboard:base-order'] = [x for x in order if x in expected] == expected
-    result['focus-ring:token'] = bool(re.search(r'SHELL_FOCUS_STROKE\s*=\s*2\b', s['tokens'])) and 'SHELL_FOCUS_STROKE' in s['draw']
-    result['contrast:configuration'] = 'shell_theme_contrast' in s['settings'] and 'HCF_HIGHCONTRASTON' in s['reader'] and 'case WM_SYSCOLORCHANGE:' in s['reader']
-    return result
+def code_only(source):
+    # Preserve strings; discard comments so a commented-out registration fails.
+    return re.sub(r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"',
+                  lambda m: m[0] if m[0].startswith('"') else ' ', source, flags=re.S)
+
+
+def function(source, name):
+    match = re.search(r'\b' + re.escape(name) + r'\([^;{}]*\)\s*{', source)
+    if not match:
+        return ""
+    start, depth = match.end(), 1
+    tokens = re.finditer(r'"(?:\\.|[^"\\])*"|[{}]', source[start:])
+    for token in tokens:
+        if token[0] == '{':
+            depth += 1
+        elif token[0] == '}':
+            depth -= 1
+            if not depth:
+                return source[start:start + token.start()]
+    return ""
+
+
+def validate(sources):
+    rows = []
+
+    def check(name, ok):
+        rows.append({"check": name, "pass": bool(ok), "kind": "static"})
+
+    reader, provider, screen, settings, toc, tokens, d2d = (
+        code_only(sources[name]) for name in SOURCES)
+    names = function(screen, "shell_a11y_names")
+    for control, name in EXPECTED.items():
+        pattern = (r'host_a11y_describe\(\s*' + re.escape(control) +
+                   r'\s*,\s*L"' + re.escape(name) + r'"\s*,\s*L"[^"\n]+"\s*\)')
+        check("Name+HelpText:" + control, re.search(pattern, names))
+    check("dynamic_style_fields", all('L"' + field + '"' in names
+          for field in ("字号", "行距", "段距", "上边距", "右边距", "下边距", "左边距", "字距"))
+          and 'i < 8' in names and 'host_a11y_describe(style_edits[i], field[i],' in names
+          and 'host_a11y_describe(style_buttons[2*i], name,' in names
+          and 'host_a11y_describe(style_buttons[2*i+1], name,' in names)
+    check("registration_called_during_shell_create",
+          "shell_a11y_names();" in function(screen, "shell_create") and 'shell_create(parent);' in reader)
+    describe = function(provider, "host_a11y_describe")
+    check("IAccPropServices_Name_HelpText", all(token in describe for token in (
+        'CoCreateInstance', 'SetHwndPropStr', 'host_a11y_prop_name, name', 'host_a11y_prop_help, help'))
+        and '0x608d3df8' in provider and '0xc831e11f' in provider)
+    check("page_name_and_provider_dispatch", 'L"EXReaderPage", L"阅读区域"' in reader
+          and 'return host_a11y_page_object(window, wparam, lparam);' in reader)
+    check("text_provider_interfaces", all(token in provider for token in (
+        'ITextProvider', 'ITextRangeProvider', 'IValueProvider', 'UIA_Text_TextChangedEventId',
+        'UIA_Text_TextSelectionChangedEventId', 'UiaRaiseStructureChangedEvent')))
+    check("panel_structure_event_calls", 'host_a11y_panel_toggled(shell_panel,shell_panel_open)' in settings
+          and 'host_a11y_panel_toggled(shell_toc_panel,open)' in toc)
+    tab = function(screen, 'shell_tab_stops')
+    stops = re.findall(r'stops\[count\+\+\] = (shell_back|shell_search_button|g\.page|shell_toc|shell_settings);', tab)
+    check("closed_tab_order", stops == ['shell_back', 'shell_search_button', 'g.page', 'shell_toc', 'shell_settings'])
+    check("tab_skips_hidden_disabled", '!IsWindowVisible(window)' in tab and '!IsWindowEnabled(window)' in tab)
+    check("reverse_tab_wrap", '(shift ? count - 1 : 1)) % count' in function(screen, 'shell_tab_next'))
+    check("focus_stroke_2px_scaled", 'SHELL_FOCUS_STROKE=2' in tokens and
+          '(float)SHELL_FOCUS_STROKE*k' in d2d and 's->dpi/96.f' in d2d)
+    check("contrast_system_palette", all(token in reader for token in (
+        'SPI_GETHIGHCONTRAST', 'HCF_HIGHCONTRASTON', 'COLOR_WINDOW', 'COLOR_WINDOWTEXT', 'COLOR_HIGHLIGHT')))
+    check("contrast_theme_d2d_path", 'dark == 2 ? shell_theme_contrast' in d2d
+          and 'WM_SYSCOLORCHANGE' in reader)
+    return rows
+
+
+def self_test(sources):
+    baseline = validate(sources)
+    assert all(row['pass'] for row in baseline), [r for r in baseline if not r['pass']]
+    for old, new in [('L"返回书架"', 'L""'), ('L"回到书架，快捷键 Ctrl+W"', 'NULL'),
+                     ('shell_a11y_names();', '/* shell_a11y_names(); */')]:
+        broken = dict(sources)
+        broken[SOURCES[2]] = sources[SOURCES[2]].replace(old, new)
+        assert any(not row['pass'] for row in validate(broken)), old
+    print('PASS static negative controls: missing Name, HelpText, registration call')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--out', type=Path, default=ROOT / 'build/a11y-c2-static')
     parser.add_argument('--self-test', action='store_true')
     args = parser.parse_args()
-    source = {k: (ROOT / path).read_text(encoding='utf-8') for k, path in SOURCES.items()}
-    checks = static_checks(source)
+    sources = {name: (ROOT / name).read_text(encoding='utf-8') for name in SOURCES}
+    checks = validate(sources)
+    # Historical evidence is inventoried, never promoted to a current runtime pass.
+    evidence = ROOT / 'docs/ui/evidence/a11y-uia-20261110'
+    shots = [{"path": path.relative_to(ROOT).as_posix(), "bytes": path.stat().st_size,
+              "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "kind": "historical"}
+             for path in sorted(evidence.rglob('*.png'))]
+    checks.append({"check": "existing_screenshots_available", "pass": bool(shots), "kind": "evidence_inventory"})
+    checks.append({"check": "manual_checklist_available", "pass": MANUAL.is_file(), "kind": "static"})
+    args.out.mkdir(parents=True, exist_ok=True)
+    result = {"mode": "headless-static", "runtime_uia": "pending_external_manual",
+              "checks": checks, "historical_screenshots": shots,
+              "sources": {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in SOURCES},
+              "manual_checklist": MANUAL.relative_to(ROOT).as_posix()}
+    (args.out / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    (args.out / 'C2-MANUAL-CHECK.md').write_bytes(MANUAL.read_bytes())
+    for row in checks:
+        print(('PASS' if row['pass'] else 'FAIL') + ' ' + row['check'])
+    print(f"Historical screenshots: {len(shots)}; runtime UIA: pending_external_manual")
     if args.self_test:
-        broken = dict(source, screen=source['screen'].replace('L"返回书架", L"回到书架，快捷键 Ctrl+W"', 'L"返回书架", NULL'))
-        assert not static_checks(broken)['Name/HelpText:shell_back']
-        broken = dict(source, screen=source['screen'].replace('shell_a11y_names();', ''))
-        assert not static_checks(broken)['registration:after-controls-created']
-        print('PASS negative checks: missing HelpText and missing registration caller rejected')
-    evidence = ROOT / 'docs/ui/evidence/a11y-uia-20261110/reused'
-    manifest = json.loads((evidence / 'manifest.json').read_text(encoding='utf-8'))
-    images = manifest['images']
-    checks['historical-screenshots'] = len(images) == 9 and manifest['historical_only'] and all(
-        (evidence / row['path']).read_bytes().startswith(b'\x89PNG\r\n\x1a\n') and
-        hashlib.sha256((evidence / row['path']).read_bytes()).hexdigest() == row['sha256'] for row in images)
-    manual = ROOT / 'docs/a11y/C2-MANUAL-CHECK.md'
-    manual.parent.mkdir(parents=True, exist_ok=True)
-    lines = ['# C2 人工验收交接', '',
-             '本轮仅编译、控制台测试和静态校验。下列项目全部待主控安排用户在场后确认，不能记为已通过。', '',
-             '自动脚本不启动应用、不附着 UIA、不模拟输入、不更改系统设置。', '']
-    for title, detail in MANUAL:
-        lines.extend([f'- [ ] **{title}**：{detail}', ''])
-    lines.extend(['## 复用的旧截图', '',
-                  f'来源提交 `{manifest["origin_commit"]}`，目录 `{manifest["origin_directory"]}`。仅作为历史证据，不代表当前构建已完成人工验收。', ''])
-    for row in images:
-        lines.append(f'- [{row["path"]}](../ui/evidence/a11y-uia-20261110/reused/{row["path"]}) · SHA-256 `{row["sha256"]}`')
-    manual.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    report = dict(mode='headless-static', checks=checks, accepted=all(checks.values()),
-                  runtime_uia='pending-user-present-manual-check',
-                  sources={path: hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in SOURCES.values()},
-                  manual_checklist='docs/a11y/C2-MANUAL-CHECK.md')
-    out = ROOT / 'docs/ui/evidence/headless-20261110'
-    out.mkdir(parents=True, exist_ok=True)
-    (out / 'a11y-static.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    for name, passed in checks.items():
-        print(('PASS ' if passed else 'FAIL ') + name)
-    print(f'{sum(checks.values())}/{len(checks)} static checks; 9 historical PNGs; manual checklist generated')
-    return int(not report['accepted'])
+        self_test(sources)
+    return int(any(not row['pass'] for row in checks))
 
 
 if __name__ == '__main__':

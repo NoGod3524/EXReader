@@ -1,0 +1,914 @@
+[
+ {
+  "name": "EXReader",
+  "type": "window",
+  "type_id": 50032,
+  "id": "",
+  "class": "EXReaderHost",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   96,
+   96,
+   1376,
+   956
+  ]
+ },
+ {
+  "name": "阅读设置",
+  "type": "pane",
+  "type_id": 50033,
+  "id": "",
+  "class": "EXReaderSettings",
+  "enabled": true,
+  "help": "调整阅读排版和主题，Esc 关闭",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   817,
+   204,
+   1427,
+   1109
+  ]
+ },
+ {
+  "name": "减小字号",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1800",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": true,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   294,
+   1148,
+   334
+  ]
+ },
+ {
+  "name": "增大字号",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1801",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   294,
+   1293,
+   334
+  ]
+ },
+ {
+  "name": "字号",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1802",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   298,
+   1240,
+   331
+  ]
+ },
+ {
+  "name": "减小行距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1803",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   347,
+   1148,
+   387
+  ]
+ },
+ {
+  "name": "增大行距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1804",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   347,
+   1293,
+   387
+  ]
+ },
+ {
+  "name": "行距",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1805",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   350,
+   1240,
+   383
+  ]
+ },
+ {
+  "name": "减小段距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1806",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   399,
+   1148,
+   439
+  ]
+ },
+ {
+  "name": "增大段距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1807",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   399,
+   1293,
+   439
+  ]
+ },
+ {
+  "name": "段距",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1808",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   403,
+   1240,
+   436
+  ]
+ },
+ {
+  "name": "减小上边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1809",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   452,
+   1148,
+   492
+  ]
+ },
+ {
+  "name": "增大上边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1810",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   452,
+   1293,
+   492
+  ]
+ },
+ {
+  "name": "上边距",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1811",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   455,
+   1240,
+   488
+  ]
+ },
+ {
+  "name": "减小右边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1812",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   504,
+   1148,
+   544
+  ]
+ },
+ {
+  "name": "增大右边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1813",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   504,
+   1293,
+   544
+  ]
+ },
+ {
+  "name": "右边距",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1814",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   508,
+   1240,
+   541
+  ]
+ },
+ {
+  "name": "减小下边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1815",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   557,
+   1148,
+   597
+  ]
+ },
+ {
+  "name": "增大下边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1816",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   557,
+   1293,
+   597
+  ]
+ },
+ {
+  "name": "下边距",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1817",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   560,
+   1240,
+   593
+  ]
+ },
+ {
+  "name": "减小左边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1818",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   609,
+   1148,
+   649
+  ]
+ },
+ {
+  "name": "增大左边距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1819",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   609,
+   1293,
+   649
+  ]
+ },
+ {
+  "name": "左边距",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1820",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   613,
+   1240,
+   646
+  ]
+ },
+ {
+  "name": "减小字距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1821",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步减小这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1105,
+   662,
+   1148,
+   702
+  ]
+ },
+ {
+  "name": "增大字距",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1822",
+  "class": "Button",
+  "enabled": true,
+  "help": "按一步增大这一项",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1250,
+   662,
+   1293,
+   702
+  ]
+ },
+ {
+  "name": "字距",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1823",
+  "class": "Edit",
+  "enabled": true,
+  "help": "直接输入数值，离开输入框后生效",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1157,
+   665,
+   1240,
+   698
+  ]
+ },
+ {
+  "name": "浅色主题",
+  "type": "button",
+  "type_id": 50000,
+  "id": "164",
+  "class": "Button",
+  "enabled": true,
+  "help": "使用浅色界面",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   922,
+   727,
+   1037,
+   767
+  ]
+ },
+ {
+  "name": "深色主题",
+  "type": "button",
+  "type_id": 50000,
+  "id": "165",
+  "class": "Button",
+  "enabled": true,
+  "help": "使用深色界面",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1042,
+   727,
+   1157,
+   767
+  ]
+ },
+ {
+  "name": "跟随系统主题",
+  "type": "button",
+  "type_id": 50000,
+  "id": "166",
+  "class": "Button",
+  "enabled": true,
+  "help": "界面颜色跟随 Windows 的深浅色设置",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1162,
+   727,
+   1277,
+   767
+  ]
+ },
+ {
+  "name": "排版预设",
+  "type": "combo box",
+  "type_id": 50003,
+  "id": "1842",
+  "class": "ComboBox",
+  "enabled": true,
+  "help": "输入名称保存，或从列表选择已有预设",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   922,
+   799,
+   1160,
+   823
+  ]
+ },
+ {
+  "name": "排版预设",
+  "type": "edit",
+  "type_id": 50004,
+  "id": "1001",
+  "class": "Edit",
+  "enabled": true,
+  "help": "",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   925,
+   802,
+   1136,
+   820
+  ]
+ },
+ {
+  "name": "Open",
+  "type": "button",
+  "type_id": 50000,
+  "id": "DropDown",
+  "class": "",
+  "enabled": true,
+  "help": "",
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1137,
+   801,
+   1158,
+   821
+  ]
+ },
+ {
+  "name": "保存为预设",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1841",
+  "class": "Button",
+  "enabled": true,
+  "help": "把当前排版保存为预设",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1172,
+   794,
+   1312,
+   837
+  ]
+ },
+ {
+  "name": "恢复默认",
+  "type": "button",
+  "type_id": 50000,
+  "id": "1840",
+  "class": "Button",
+  "enabled": true,
+  "help": "恢复默认排版",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   922,
+   867,
+   1107,
+   910
+  ]
+ },
+ {
+  "name": "点击分区 20 / 60 / 20",
+  "type": "button",
+  "type_id": 50000,
+  "id": "181",
+  "class": "Button",
+  "enabled": true,
+  "help": "左右各 20% 翻页，中间 60% 显示或隐藏工具栏",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   922,
+   967,
+   1107,
+   1007
+  ]
+ },
+ {
+  "name": "点击分区 25 / 50 / 25",
+  "type": "button",
+  "type_id": 50000,
+  "id": "182",
+  "class": "Button",
+  "enabled": true,
+  "help": "左右各 25% 翻页，中间 50% 显示或隐藏工具栏",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1117,
+   967,
+   1302,
+   1007
+  ]
+ },
+ {
+  "name": "词典与生词本",
+  "type": "button",
+  "type_id": 50000,
+  "id": "183",
+  "class": "Button",
+  "enabled": true,
+  "help": "管理词典和生词本",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1117,
+   867,
+   1312,
+   910
+  ]
+ },
+ {
+  "name": "阅读区域",
+  "type": "正文",
+  "type_id": 50030,
+  "id": "IDC_PAGE",
+  "class": "EXReaderPage",
+  "enabled": true,
+  "help": "选择文字后可复制引用或添加标注",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   105,
+   204,
+   1367,
+   947
+  ]
+ },
+ {
+  "name": "返回书架",
+  "type": "button",
+  "type_id": 50000,
+  "id": "180",
+  "class": "Button",
+  "enabled": true,
+  "help": "回到书架，快捷键 Ctrl+W",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   120,
+   144,
+   230,
+   194
+  ]
+ },
+ {
+  "name": "目录",
+  "type": "button",
+  "type_id": 50000,
+  "id": "160",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开或关闭目录，用上下键选章节，回车跳转，Esc 关闭",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1259,
+   144,
+   1309,
+   194
+  ]
+ },
+ {
+  "name": "设置",
+  "type": "button",
+  "type_id": 50000,
+  "id": "161",
+  "class": "Button",
+  "enabled": true,
+  "help": "打开阅读设置：字号、行距、边距、主题和点击分区",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1307,
+   144,
+   1357,
+   194
+  ]
+ },
+ {
+  "name": "全文搜索",
+  "type": "button",
+  "type_id": 50000,
+  "id": "196",
+  "class": "Button",
+  "enabled": true,
+  "help": "在整本书里搜索文字，快捷键 Ctrl+F",
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1212,
+   144,
+   1262,
+   194
+  ]
+ },
+ {
+  "name": null,
+  "type": "title bar",
+  "type_id": 50037,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   125,
+   99,
+   1367,
+   134
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu bar",
+  "type_id": 50010,
+  "id": "MenuBar",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   105,
+   105,
+   133,
+   133
+  ]
+ },
+ {
+  "name": "System",
+  "type": "menu item",
+  "type_id": 50011,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": true,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   105,
+   105,
+   133,
+   133
+  ]
+ },
+ {
+  "name": "Minimize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1189,
+   97,
+   1249,
+   134
+  ]
+ },
+ {
+  "name": "Maximize",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1249,
+   97,
+   1308,
+   134
+  ]
+ },
+ {
+  "name": "Close",
+  "type": "button",
+  "type_id": 50000,
+  "id": "",
+  "class": "",
+  "enabled": true,
+  "help": null,
+  "focusable": false,
+  "focused": false,
+  "control": true,
+  "offscreen": false,
+  "rect": [
+   1308,
+   97,
+   1368,
+   134
+  ]
+ }
+]

@@ -656,5 +656,4 @@ static void shell_a11y_names(void) {
   host_a11y_describe(shell_tap_buttons[0], L"点击分区 20 / 60 / 20", L"左右各 20% 翻页，中间 60% 显示或隐藏工具栏");
   host_a11y_describe(shell_tap_buttons[1], L"点击分区 25 / 50 / 25", L"左右各 25% 翻页，中间 50% 显示或隐藏工具栏");
   host_a11y_describe(GetDlgItem(shell_panel, IDC_SHELL_DICTIONARY), NULL, L"管理词典和生词本");
-  host_a11y_describe(shell_sync_button, NULL, L"WebDAV 云同步设置");
 }

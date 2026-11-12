@@ -78,15 +78,18 @@ static wchar_t *onet_wide(const char *s) {
 static int onet_loopback(const wchar_t *host) {
   return !_wcsicmp(host, L"127.0.0.1") || !_wcsicmp(host, L"localhost") || !_wcsicmp(host, L"[::1]") || !_wcsicmp(host, L"::1");
 }
-/* http:// -> https:// for links found in catalogs. Reject oversized output
-   rather than requesting a truncated URL. Typed URLs are validated unchanged. */
+/* http:// -> https:// for URLs found in catalogs and typed by the user. */
 static void onet_secure(const char *url, char *out, size_t size) {
-  size_t n = strlen(url);
+  size_t length = strlen(url);
   int upgrade = !_strnicmp(url, "http://", 7) && _strnicmp(url + 7, "127.0.0.1", 9) && _strnicmp(url + 7, "localhost", 9);
   if (!size) return;
-  if (n + (upgrade ? 1u : 0u) >= size) { out[0] = 0; return; }
-  if (upgrade) { memcpy(out, "https://", 8); memcpy(out + 8, url + 7, n - 6); }
-  else memcpy(out, url, n + 1);
+  /* Reject an overlong URL through the normal bad-URL path, never request a
+     silently truncated address. Upgrading http adds one byte. */
+  if (length >= size - (size_t)upgrade) { out[0] = 0; return; }
+  if (upgrade) {
+    memmove(out + 8, url + 7, length - 7 + 1);
+    memcpy(out, "https://", 8);
+  } else memmove(out, url, length + 1);
 }
 static void onet_map_win_error(onet_result *r, DWORD e, unsigned receive_ms) {
   r->win_error = e;

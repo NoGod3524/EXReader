@@ -1,82 +1,33 @@
-Merge 的冲突已经解完，但还没编译，也没跑 `ctest`，也没推送。我停在了 CMake 配置这一步，它还在后台运行。
+配置仍在进行（输出被 `tail` 缓冲）。等它结束的通知后再开始构建。
 
-## 现在到哪了
-- 工作树在 `codex/webdav-sync-20261110`，没新建分支。`origin/main` 已合入，合并提交还没提交。
-- 冲突文件都已 `git add`。
-- 每个文件怎么解的，已追加到 `OUT-CF.txt`。
-- 第一次配置时，从 GitHub 下载 freetype 报 SSL 证书错误，所以没通过。
-- 我没有关掉 TLS 校验，改用 `exr-build-argon/_deps` 里现成的依赖源码（`-DFETCHCONTENT_SOURCE_DIR_*`）重新配置。
-- `faad2` 在那里没有，配置可能还会在这一项上失败。
+Configure 与构建已在后台运行（日志在 `/tmp/cfg.log`、`/tmp/build.log`），完成后会通知我，再跑 ctest 并推送。
 
-## ① 冲突文件和解决方式
-| 文件 | 解决方式 |
-|---|---|
-| `tools/layers.json` | 两边新增都留（`opds.h` 和 `edit.h`）。 |
-| `examples/windows/CMakeLists.txt` | main 的 `EXR_READER_TEST_DRIVERS` 选项保留，我们的链接库 `winhttp crypt32` 保留。 |
-| `examples/reader.c` | 取 main 的版本，因为验收驱动代码已挪到 `shell_drive_test.inc`。我们对那段代码的改动已移植过去：`opds_` 和 `sync_` 命令分发、`opds_busy` 空闲判断、两个 drive include。 |
-| `shell_screen.inc`、`shell_search.inc` | 用 main 的命令 ID 表，在表里加 `IDC_SHELL_SYNC`。 |
-| `shell_dictionary.inc` | 用 main 的卡片绘制和按钮绘制，保留云同步面板的标题和"立即同步"主按钮样式。 |
-| `shell_settings.inc` | 用 main 的面板布局。云同步按钮和词典按钮并排放在同一行，因为面板高度是编译期断言的固定值。 |
-| `shell_shelf.inc`、`shell_shelfmeta.inc` | 取 main，因为书架已重写。原来的"书源"按钮改放到书架顶栏（`SM_HIT_SOURCES`），`opds_show`/`opds_hide` 随之改为显示和隐藏书架视图。`opds_layout` 在 `shelf_layout` 里调用。 |
-| `shell_d2d.cpp` | 取 main，再把高对比度主题（`theme_of`、`line_alpha`）重新移植上去。 |
+**目前状态**
+- 已合并 `origin/main`，11 个冲突文件已按“取并集”解完，仓库里没有残留冲突标记。合并结果已暂存，**尚未提交**。
+- 本地构建、ctest 和推送都还没做，所以 PR #130 目前仍是 CONFLICTING。
+- 解决方式已记入 `OUT-CF.txt`：
+  - `OUT.txt`：两侧内容都留。
+  - `tools/layers.json`：`opds.h` 和 `edit.h` 两行都留。
+  - `examples/windows/CMakeLists.txt`：取 main 的 `EXR_READER_TEST_DRIVERS` 选项，再加本分支的 `winhttp crypt32`。
+  - `examples/reader.c`：main 大幅重构了它，所以取 main 版，再把本分支的高对比、a11y、OPDS、云同步改动重放上去。
+  - `shell_drive_test.inc`：OPDS 和云同步的验收入口并到这里。
+  - `shell_screen.inc`、`shell_search.inc`：取 main 的控件 ID 表，补上 `IDC_SHELL_SYNC`。
+  - `shell_settings.inc`：取 main 的版面，在词典按钮同一行右侧加“云同步”按钮。
+  - `shell_dictionary.inc`：取 main 的绘制接口，补上云同步面板标题和“立即同步”主按钮。
+  - `shell_shelf.inc`、`shell_shelfmeta.inc`：取 main 版；“书源”按钮改放进 main 的书架顶栏，OPDS 返回时回到书架视图。
+  - `shell_d2d.cpp`：取 main 的新绘制接口，保留高对比的主题和边线处理。
 
-## ② 本地 ctest
-还没跑。
+**需要你知道的**
+- 配置时 freetype 下载因 SSL 证书失败，所以我改用 `exr-build-argon/_deps` 里现成的依赖源码（只影响本机构建，不改仓库）。
+- 我对 main 重构后的书架做了结构性改动（“书源”入口），只做过静态检查，要等编译和 ctest 才能确认没问题。
 
-## ③ PR 的 mergeable 状态
-还没推送，所以还是 CONFLICTING。
+**还差**
+1. 构建完成，运行 `ctest -E "^sdk-release$"` 并修掉合并造成的失败。
+2. 用 `git commit` 完成合并（提交信息按要求带 Co-Authored-By 行）。
+3. 推送到 `codex/a11y-uia-20261110`，再查 PR 的 mergeable 状态。
 
-## ④ 还差什么
-- 配置通过后，编译并跑 `ctest`（排除 `sdk-release`），修掉移植引入的编译错误。
-  - 最可能出错的是我们的 `shell_sync.inc`、`shell_opds.inc` 还在调用 main 已改名或删除的旧接口，比如 `shell_make_button` 和旧版 `shell_d2d_control`。
-- 确认新增的 `src/*.h` 都登记在 `tools/layers.json`。
-- 提交合并，推送到 `codex/webdav-sync-20261110`，再查 PR 的 mergeable 状态。
+Build 在后台跑（日志 `/tmp/build2.log`）。上一次的 build.log 是空的，所以我重新启动了它；完成后我再看结果、跑 ctest。
 
-后台任务 `bxsmwg6cp` 在等配置完成，有结果我再接着往下做。
-
-CMake 配置被超时杀掉了。我用更长的超时重新启动，输出写到 `Codex\cfg.log`。完成后我接着编译。
-
-That was only the old wait-loop task, killed at its time limit. It doesn't matter, because the new configure run (`bqkt0lzrc`) is still going. I'll wait for it to finish before building.
-
-合并冲突已解完，但还没编译，也没跑 `ctest`，也没推送，所以 PR #131 现在仍是 CONFLICTING。
-
-我停在 CMake 配置这一步，它还在后台运行，配置阶段的各项编译器探测很慢，已经跑了二十多分钟。配置完成后，我会编译、跑 `ctest`（排除 `sdk-release`）、提交合并并推送。
-
-- **配置方式：** 第一次配置从 GitHub 下载 freetype 时报 SSL 证书错误。我没有关掉 TLS 校验，而是用 `exr-build-argon/_deps` 里现成的依赖源码（`-DFETCHCONTENT_SOURCE_DIR_*`）重新配置。那里没有 `faad2`，配置可能还会在这一项上失败。
-- **合并状态：** 工作树在 `codex/webdav-sync-20261110`，没新建分支。`origin/main` 已合入，冲突文件都已 `git add`，合并提交还没提交。
-
-## ① 冲突文件和解决方式
-| 文件 | 解决方式 |
-|---|---|
-| `tools/layers.json` | 两边新增都留（`opds.h` 和 `edit.h`）。 |
-| `examples/windows/CMakeLists.txt` | main 的 `EXR_READER_TEST_DRIVERS` 选项保留，我们的链接库 `winhttp crypt32` 保留。 |
-| `examples/reader.c` | 取 main 的版本，因为验收驱动代码已挪到 `shell_drive_test.inc`。我们对那段代码的改动已移植过去：`opds_` 和 `sync_` 命令分发、`opds_busy` 空闲判断、两个 drive include。 |
-| `shell_screen.inc`、`shell_search.inc` | 用 main 的命令 ID 表，在表里加 `IDC_SHELL_SYNC`。 |
-| `shell_dictionary.inc` | 用 main 的卡片绘制和按钮绘制，保留云同步面板的标题和"立即同步"主按钮样式。 |
-| `shell_settings.inc` | 用 main 的面板布局。云同步按钮和词典按钮并排放在同一行，因为面板高度是编译期断言的固定值。 |
-| `shell_shelf.inc`、`shell_shelfmeta.inc` | 取 main，因为书架已重写。原来的"书源"按钮改放到书架顶栏（`SM_HIT_SOURCES`），`opds_show`/`opds_hide` 随之改为显示和隐藏书架视图，`opds_layout` 在 `shelf_layout` 里调用。 |
-| `shell_d2d.cpp` | 取 main，再把高对比度主题（`theme_of`、`line_alpha`）重新移植上去。 |
-
-每个文件的处理也已追加到 `OUT-CF.txt`。
-
-## ② 本地 ctest
-还没跑。
-
-## ③ PR 的 mergeable 状态
-还没推送，仍是 CONFLICTING。
-
-## ④ 还差什么
-- 编译并跑 `ctest`，修掉移植引入的编译错误。
-  - 最可能出错的是我们的 `shell_sync.inc`、`shell_opds.inc` 还在调用 main 已改名或删除的旧接口，比如 `shell_make_button` 和旧版 `shell_d2d_control`。
-- 确认新增的 `src/*.h` 都登记在 `tools/layers.json`。
-- 提交合并，推送到 `codex/webdav-sync-20261110`，再查 PR 的 mergeable 状态。
-
-That's just the old wait loop being stopped at its time limit. The newer one (`bao07xiw7`) is still watching the configure, so nothing changes. I'm waiting for it.
-
-配置已生成 `build.ninja`，编译已在后台启动，输出写到 `Codex\build.log`。编译完成后我会处理其中的错误，再跑 `ctest`。
-
-上一次编译其实什么都没编，因为配置没完整生成。我重新跑了配置，并在同一个后台任务里接着编译，日志在 `Codex\cfg2.log` 和 `build.log`，完成后会通知我。
-
-编译通过：270 步全部成功，没有错误。`ctest`（排除 `sdk-release`）已在后台开始，输出写到 `Codex\ctest.log`，跑完会通知我。
+ctest 已在后台运行，结果在 `/tmp/ctest.log`；完成后我会汇总通过数和失败项。
 
 You've hit your 5-hour limit · resets 5:40pm (America/New_York)

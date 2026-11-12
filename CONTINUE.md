@@ -5,16 +5,16 @@
 上一轮是 Claude 会话干到一半撞了 5 小时限额，**代码全在，只是没走完收尾**。
 
 ```
-工作树   C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110
-分支     codex/webdav-sync-20261110
-进度记录 C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\WEBDAV-OUT.txt
+工作树   C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110
+分支     codex/a11y-uia-20261110
+进度记录 C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\A11Y-OUT.txt
 ```
 
 ## 第一步：先读进度，不要重新规划
 
 ```powershell
 git log --oneline -6
-Get-Content C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\WEBDAV-OUT.txt -Tail 20
+Get-Content C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\A11Y-OUT.txt -Tail 20
 ```
 
 进度文件里写了它做到第几步、下一步该干什么、哪些验证还没跑。

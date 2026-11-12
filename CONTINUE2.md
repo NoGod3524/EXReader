@@ -28,7 +28,7 @@
 ### 1. 先读你自己的进度文件
 
 ```
-C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\WEBDAV-OUT.txt
+C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110\A11Y-OUT.txt
 ```
 
 上面写着做到第几步、哪些验证还没跑。**接着干，不要推翻方案。**
@@ -64,7 +64,7 @@ C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110\WEBDAV-OUT.txt
 ```
 
 ## 边界
-- 工作树 `C:\Users\Oscar\Documents\Codex\EXReader-b1-webdav-20261110`，分支 `codex/webdav-sync-20261110`
+- 工作树 `C:\Users\Oscar\Documents\Codex\EXReader-c2-a11y-20261110`，分支 `codex/a11y-uia-20261110`
 - 不改 `tests/check_reading_release.py`（字节 sha256 绑定）
 - `tools/version_literal_exceptions.json` 保持 `indent=2`，只增删条目
 - 新增 `src/*.h` 要在 `tools/layers.json` 登记

@@ -1,0 +1,16 @@
+{
+ "exe": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\build\\a11y-host\\EXReader.exe",
+ "font": "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf",
+ "book": "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\moby-dick-mo.epub",
+ "self_test": {
+  "identical": 0,
+  "with_2px_border": 2528
+ },
+ "sha256": {
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\build\\a11y-host\\EXReader.exe": "51742953305f56428e8e99e069b851f1ad88c8f01d57323b740a563351f6ac68",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\build\\a11y-host\\libexreader.dll": "79e9496e24dd2da013aa931d8ac3b07af39a5dc9976e644f17abf30bd18acd6c",
+  "C:\\Users\\Oscar\\exr-deps\\reader-font\\Reader.otf": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+  "C:\\Users\\Oscar\\Documents\\Codex\\formats-samples-20261107\\moby-dick-mo.epub": "749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c",
+  "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-c2-a11y-20261110\\docs\\ui\\acceptance\\check_a11y_c2.py": "ddcbe5a306e322ec07927ce67d11639290ea905742972580de10050c7de6dce7"
+ }
+}

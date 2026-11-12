@@ -1,0 +1,31 @@
+[
+  {
+    "file": "tests/check_reading_release.py",
+    "sha256": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+    "byte_identical_to_previous_commit": true
+  },
+  {
+    "file": "tools/version_literal_exceptions.json",
+    "sha256": "6d2ab944c7c624b1f82ffa61b0c742fb1cb731b88bd700b245bac644aa247fc2",
+    "byte_identical_to_previous_commit": true
+  },
+  {
+    "file": "tools\\version_literal_exceptions.json",
+    "indent_2": true
+  },
+  {
+    "check": "static_probe_imports",
+    "imports": [
+      "argparse",
+      "hashlib",
+      "json",
+      "re",
+      "pathlib"
+    ],
+    "pass": true
+  },
+  {
+    "check": "historical_evidence_unchanged",
+    "pass": true
+  }
+]

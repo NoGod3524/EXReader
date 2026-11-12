@@ -1,0 +1,5 @@
+[0/2] Re-checking globbed directories...
+[1/5] Building C object CMakeFiles/check_shell_opds.dir/examples/windows/check_shell_opds.c.obj
+[2/5] Linking C executable check_shell_opds.exe
+[3/5] Building C object CMakeFiles/check_sync.dir/examples/windows/check_sync.c.obj
+[4/5] Linking CXX executable check_sync.exe
