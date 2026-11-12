@@ -61,3 +61,9 @@ Total Test time (real) = 3126.35 sec
 编译层级检查通过：124 objects、1456 symbol references、0 inverse references、0 inverse includes。
 受保护三个文件与 origin/main 一致；check_reading_release.py SHA256 = 6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b。
 再次 fetch 后 main 仍为 fe9adf43，当前分支落后 0、领先 15；准备推送到 PR #127 原 head 分支。
+
+[推送与远端状态]
+已推送 de1a0e71a321ae32963b4c13132b5c7ba4512050 到 origin/codex/large-book-2-20261110，未创建新分支、未修改 main、未合并 PR。
+GitHub 查询确认 PR #127 head 为上述提交，base fe9adf43，mergeable=true，state=open，merged=false。
+推送已触发 4 个 PR workflows：SDK version consistency、Native reading profiles、Native C engine 正在运行，Required native reading SDK core 排队中。
+本次后续提交仅持久化这份推送结果；仍待远端 CI 完成。最终 head 的 mergeable 与 CI 状态将在回复中再次核对。
