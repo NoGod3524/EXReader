@@ -1226,7 +1226,14 @@ static void host_a11y_page_destroyed(void) {
   if (element) { UiaDisconnectProvider(&element->simple); host_a11y_release(element); }
 }
 
+static void host_a11y_structure_changed(void);
 static void host_a11y_page_changed(int selection_only) {
+  static int64_t seen_book = -1;
+  static size_t seen_part = (size_t)-1;
+  if (!selection_only && g.frame.valid && (g.frame.book_id != seen_book || g.frame.part != seen_part)) {
+    seen_book = g.frame.book_id; seen_part = g.frame.part;
+    host_a11y_structure_changed();
+  }
   if (!host_a11y_element) return;
   if (UiaClientsAreListening()) {
     UiaRaiseAutomationEvent(&host_a11y_element->simple, UIA_Text_TextChangedEventId);
@@ -1247,6 +1254,40 @@ static void host_a11y_status_changed(void) {
   previous[767] = 0;
   NotifyWinEvent(EVENT_OBJECT_NAMECHANGE, g.status, OBJID_CLIENT, CHILDID_SELF);
 }
+/* ---- structure events, names and help ----------------------------------- */
+/* The book or chapter changed: what the reading element contains is a new
+   subtree, not just new text. Page turns inside a chapter stay text events. */
+static void host_a11y_structure_changed(void) {
+  if (host_a11y_element && UiaClientsAreListening())
+    UiaRaiseStructureChangedEvent(&host_a11y_element->simple, StructureChangeType_ChildrenInvalidated, NULL, 0);
+  if (g.window) NotifyWinEvent(EVENT_OBJECT_REORDER, g.window, OBJID_CLIENT, CHILDID_SELF);
+}
+
+/* The contents panel or the settings panel opened or closed. */
+static void host_a11y_panel_toggled(HWND panel, int shown) {
+  if (panel) NotifyWinEvent(shown ? EVENT_OBJECT_SHOW : EVENT_OBJECT_HIDE, panel, OBJID_CLIENT, CHILDID_SELF);
+  host_a11y_structure_changed();
+}
+
+/* Owner-drawn and unlabeled native controls have no useful name of their own;
+   Windows' dynamic annotation service lets the host state it once per window. */
+/* GUIDs are spelled out so the host needs no extra import library. */
+static const GUID host_a11y_clsid_props = {0xb5f8350b, 0x0548, 0x48b1, {0xa6, 0xee, 0x88, 0xbd, 0x00, 0xb4, 0xa5, 0xe7}};
+static const GUID host_a11y_iid_props = {0x6e26e776, 0x04f0, 0x495d, {0x80, 0xe4, 0x33, 0x30, 0x35, 0x2e, 0x31, 0x69}};
+static const GUID host_a11y_prop_name = {0x608d3df8, 0x8128, 0x4aa7, {0xa4, 0x28, 0xf5, 0x5e, 0x49, 0x26, 0x72, 0x91}};
+static const GUID host_a11y_prop_help = {0xc831e11f, 0x44db, 0x4a99, {0x97, 0x68, 0xcb, 0x8f, 0x97, 0x8b, 0x72, 0x31}};
+static IAccPropServices *host_a11y_props;
+static void host_a11y_describe(HWND window, const wchar_t *name, const wchar_t *help) {
+  if (!window) return;
+  if (!host_a11y_props) {
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED); /* S_FALSE or a different mode is fine */
+    if (FAILED(CoCreateInstance(&host_a11y_clsid_props, NULL, CLSCTX_INPROC_SERVER, &host_a11y_iid_props,
+                                (void **)&host_a11y_props))) { host_a11y_props = NULL; return; }
+  }
+  if (name) host_a11y_props->lpVtbl->SetHwndPropStr(host_a11y_props, window, OBJID_CLIENT, CHILDID_SELF, host_a11y_prop_name, name);
+  if (help) host_a11y_props->lpVtbl->SetHwndPropStr(host_a11y_props, window, OBJID_CLIENT, CHILDID_SELF, host_a11y_prop_help, help);
+}
+
 /* ---- keyboard continuity ------------------------------------------------ */
 /* A command that disables itself while it holds focus must hand focus on. */
 static void host_a11y_focus_guard(HWND before) {
