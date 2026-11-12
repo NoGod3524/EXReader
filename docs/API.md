@@ -835,6 +835,20 @@ int main(int argc, char **argv) {
 
 **所有权** 返回标量。
 
+### `exr_font_cache_stats_get`
+
+**签名** `exr_status exr_font_cache_stats_get(const exr_font *font, exr_font_cache_stats *out, exr_error *error);`
+
+**ABI** 实验；声明：[exr/text.h](../include/exr/text.h)。
+
+**参数** `font`：字体实例；`out`：调用前须将 struct_size 设为 sizeof(exr_font_cache_stats)，接收字形位图/整形缓存的累计请求、命中、未命中、绕过与淘汰计数；`error`：可 NULL，接收 exr_status 和 UTF-8 错误说明
+
+**返回与失败** EXR_OK：写入快照，不清零计数、不加锁；font/out 为 NULL 或 struct_size 不符 EXR_ARGUMENT。
+
+**线程** 与该字体的 shape 调用同一串行化规则，由宿主串行化；不与整形/渲染并发。
+
+**所有权** 值类型输出由调用者保存，无需释放；不取得字体所有权。
+
 ### `exr_font_color_palettes`
 
 **签名** `exr_status exr_font_color_palettes(const exr_font *font,size_t font_index, size_t *palettes,size_t *entries,exr_error *error);`
@@ -1324,6 +1338,20 @@ int main(int argc, char **argv) {
 **线程** 不可变 manager 的查询可并发；free 必须等待全部查询结束。
 
 **所有权** font 由 exr_font_free；faces 数组由 exr_free；字体独立于 manager。
+
+### `exr_publication_warmup`
+
+**签名** `exr_status exr_publication_warmup(exr_publication *publication, exr_font *font, const exr_layout_config *config, size_t pages, exr_error *error);`
+
+**ABI** 实验；声明：[exr/render.h](../include/exr/render.h)。
+
+**参数** `publication`：出版物；`font`：被预热的字体；`config`：布局配置，config.control 提供取消/进度；`pages`：预热页数，0 为空操作；`error`：可 NULL，接收 exr_status 和 UTF-8 错误说明
+
+**返回与失败** EXR_OK：为受限字体缓存预热前若干页，不改变阅读游标；页数不足（EOF）也返回成功；参数错误 EXR_ARGUMENT，取消 EXR_CANCELLED，其余错误透传；已完成的缓存条目在取消后保留。
+
+**线程** 同一出版物与字体的操作由宿主串行化；回调同步运行于调用线程，不得重入或销毁活动对象。
+
+**所有权** 调用期间借用 publication、font 与 config；不取得所有权，不保留页面。
 
 ## 字典
 
@@ -3582,6 +3610,20 @@ int main(int argc, char **argv) {
 
 **所有权** 按值返回。
 
+### `exr_pager_cache_stats_get`
+
+**签名** `exr_status exr_pager_cache_stats_get(const exr_pager *pager, exr_pager_cache_stats *out, exr_error *error);`
+
+**ABI** 实验；声明：[exr/layout.h](../include/exr/layout.h)。
+
+**参数** `pager`：分页器；`out`：调用前须将 struct_size 设为 sizeof(exr_pager_cache_stats)，接收终身 requests/hits/misses 计数；`error`：可 NULL，接收 exr_status 和 UTF-8 错误说明
+
+**返回与失败** EXR_OK：写入快照；顺序 next() 每交付一页计一次请求与未命中，get() 模式每次有效查询均计数；pager/out 为 NULL 或 struct_size 不符 EXR_ARGUMENT。
+
+**线程** 同一分页器的访问由宿主串行化；不与翻页、重排或释放并发。
+
+**所有权** 值类型输出由调用者保存，无需释放；不取得分页器所有权。
+
 ### `exr_pager_cache_statistics`
 
 **签名** `exr_pager_cache_stats exr_pager_cache_statistics(const exr_pager *pager);`
@@ -3590,7 +3632,7 @@ int main(int argc, char **argv) {
 
 **参数** pager 为分页器，可为 NULL。
 
-**返回与失败** 返回页缓存 hits/misses；NULL 返回零统计。
+**返回与失败** 返回页缓存 requests/hits/misses（struct_size 已填充）；NULL 返回零统计。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 

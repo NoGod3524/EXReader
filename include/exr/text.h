@@ -128,6 +128,20 @@ EXR_API exr_status exr_font_axes(const exr_font *font,size_t font_index,
 EXR_API exr_status exr_font_create_variable(const exr_font_input *inputs,size_t count,
   const exr_font_coordinate *coordinates,size_t coordinate_count,exr_font **out,exr_error *error);
 EXR_API size_t exr_font_count(const exr_font *font);
+typedef struct {
+  size_t struct_size; /* Initialize to sizeof(exr_font_cache_stats). */
+  uint64_t glyph_requests, glyph_hits, glyph_misses;
+  uint64_t shaping_requests, shaping_hits, shaping_misses;
+  uint64_t glyph_evictions, shaping_evictions, shaping_bypasses;
+} exr_font_cache_stats;
+/* Cumulative bitmap/shaping cache lookups on this font instance. Requests are
+   eligible lookups and equal hits + misses; long runs, custom features and
+   progress callbacks bypass the shaping cache and increment shaping_bypasses.
+   Snapshot differences isolate a measured interval without clearing caches.
+   Use exr_layout_font() for a document with embedded fonts. Same serialization
+   rule as shape(); no locking or counter reset is performed. */
+EXR_API exr_status exr_font_cache_stats_get(const exr_font *font,
+  exr_font_cache_stats *out, exr_error *error);
 /* CPAL counts; fonts without CPAL return 0/0. Same font serialization rule as
    shape. Palette/layer queries do not change the instance's default rendering. */
 EXR_API exr_status exr_font_color_palettes(const exr_font *font,size_t font_index,

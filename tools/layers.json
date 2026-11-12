@@ -164,6 +164,7 @@
     "vector.c": "graphics",
     "viewport.c": "base",
     "wave.c": "audio",
+    "warmup.c": "render",
     "xmp.c": "formats",
     "xmp_write.c": "pdf_edit"
   },
