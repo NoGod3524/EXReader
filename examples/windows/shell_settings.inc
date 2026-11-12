@@ -3,7 +3,7 @@
 static HDC page_buffer_dc; /* UI-owned backing store, defined after this include. */
 /* Style fields: 3 IDs per field (minus, plus, edit). Font size is field 0. */
 enum {IDC_STYLE_BASE=1800,IDC_STYLE_RESET=1840,IDC_STYLE_SAVE,IDC_STYLE_PRESET,IDC_STYLE_PRESETS};
-static HWND shell_tap_buttons[2],shell_dictionary_button;
+static HWND shell_tap_buttons[2],shell_dictionary_button,shell_sync_button;
 static HWND style_edits[8],style_buttons[16],style_reset,style_save,style_preset,style_presets;
 static int style_refreshing;
 static const float style_min[]={12,1.2f,0,0,0,0,0,-.02f};
@@ -48,9 +48,11 @@ static void shell_card_paint(HWND window,HDC dc,const RECT *box,const wchar_t *t
 }
 
 static void shell_apply_theme(void) {
-  shell_colors=shell_is_dark() ? &shell_theme_dark : &shell_theme_light;
+  shell_contrast_refresh();
+  shell_colors=shell_contrast ? &shell_theme_contrast : shell_is_dark() ? &shell_theme_dark : &shell_theme_light;
+  if(host_shell) shell_d2d_toc_clear(host_shell); /* cached rows carry the old palette */
   /* Class brushes are owned here after registration; keep legacy white. */
-  uint32_t bg=shell_active ? shell_colors->layer_page : shell_theme_light.layer_float;
+  uint32_t bg=shell_active || shell_contrast ? shell_colors->layer_page : shell_theme_light.layer_float;
   HWND windows[2]={g.window,g.page};
   for(int i=0;i<2;i++) if(windows[i]) {
     HBRUSH brush=CreateSolidBrush(shell_colorref(bg));
@@ -65,7 +67,7 @@ static void shell_apply_theme(void) {
    bitmap, keeping SDK bytes and cached layouts unchanged. Grayscale coverage
    maps black/white to text/bg; colour illustrations retain their RGB. */
 static void shell_color_display(host_frame *frame) {
-  int theme=shell_is_dark()+1;
+  int theme=shell_contrast ? 100+(int)shell_contrast_generation : shell_is_dark()+1;
   if(!frame->valid || frame->fixed || !frame->shell_geometry.enabled || !IsRectEmpty(&frame->shell_image)) return;
   if(!frame_prepare_display(frame) || frame->display_shell_theme==theme) return;
   DIBSECTION section={0};
@@ -159,6 +161,7 @@ static int shell_settings_command(int id) {
     shell_tap_edge=id==IDC_SHELL_TAP20 ? 20:25;settings_save();shell_settings_refresh();return 1;
   }
   if(id==IDC_SHELL_DICTIONARY) {shell_toggle_settings();dict_manager_open();return 1;}
+  if(id==IDC_SHELL_SYNC) {shell_toggle_settings();sy_open();return 1;}
   if(id>=IDC_STYLE_BASE && id<IDC_STYLE_BASE+24) {
     int i=(id-IDC_STYLE_BASE)/3,op=(id-IDC_STYLE_BASE)%3;
     if(op<2) {
@@ -231,7 +234,9 @@ static void shell_panel_layout(void) {
   panel_place(style_save,SHELL_PANEL_PAD+PANEL_PRESET_W+8,PANEL_PRESET_Y,PANEL_RIGHT-SHELL_PANEL_PAD-PANEL_PRESET_W-8,SHELL_CONTROL_H);
   panel_place_track(shell_segments,3,PANEL_THEME_Y,PANEL_THEME_W);
   panel_place_track(shell_tap_buttons,2,PANEL_TAP_Y,PANEL_TAP_W);
-  panel_place(shell_dictionary_button,SHELL_PANEL_PAD,PANEL_DICTIONARY_Y,PANEL_RIGHT-SHELL_PANEL_PAD,SHELL_CONTROL_H);
+  { int half=(PANEL_RIGHT-SHELL_PANEL_PAD-8)/2; /* dictionary and cloud sync share the row */
+    panel_place(shell_dictionary_button,SHELL_PANEL_PAD,PANEL_DICTIONARY_Y,half,SHELL_CONTROL_H);
+    panel_place(shell_sync_button,SHELL_PANEL_PAD+half+8,PANEL_DICTIONARY_Y,PANEL_RIGHT-SHELL_PANEL_PAD-half-8,SHELL_CONTROL_H); }
 }
 
 static float shell_ease(float x) {
@@ -263,7 +268,7 @@ static void shell_toggle_settings(void) {
   if(!shell_panel_open && shell_toc_open) shell_toc_set(0,0);
   BOOL animations=FALSE;
   SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0);
-  shell_panel_open=!shell_panel_open;
+  shell_panel_open=!shell_panel_open;host_a11y_panel_toggled(shell_panel,shell_panel_open);
   shell_animation_from=shell_animation_value;shell_animation_start=host_probe_ms();
   shell_animating=animations;
   if(shell_panel_open) { shell_settings_refresh(); ShowWindow(shell_panel,SW_SHOWNOACTIVATE); }
@@ -352,6 +357,7 @@ static void shell_create_panel(HWND parent) {
   shell_tap_buttons[0]=shell_panel_button(IDC_SHELL_TAP20,L"20 / 60 / 20");
   shell_tap_buttons[1]=shell_panel_button(IDC_SHELL_TAP25,L"25 / 50 / 25");
   shell_dictionary_button=shell_panel_button(IDC_SHELL_DICTIONARY,L"词典与生词本");
+  shell_sync_button=shell_panel_button(IDC_SHELL_SYNC,L"云同步");
   shell_settings_refresh();
 }
 

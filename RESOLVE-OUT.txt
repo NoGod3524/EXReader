@@ -35,13 +35,16 @@
   "errors": [],
   "passed": true
 ④ 其他失败项：本地未运行 CI，不知道 CI 上是否还有别的失败；需推送后看 CI。
-① Conflicts (merge origin/main):
- - OUT.txt: report file; conflict markers removed, both sides' content kept.
- - RESOLVE.md: add/add; markers removed, both sides kept.
- (CMakeLists.txt auto-merged cleanly. Local RESOLVE.md edits were committed first as a wip commit so the merge could run.)
-② API docs added: none needed (457/457 public functions documented, coverage 100%).
-③ check_sdk_docs.py exit=0; last lines:
-  "examples": 15, "capability_rows": 41, "binary": null, "errors": [], "passed": true
-④ Other failures: not checked (CI not inspected; no local build/tests run).
+RESOLVE-OUT (PR #129)
+1) Conflicts after merging origin/main:
+- RESOLVE.md (add/add): kept this task's brief (PR #129 / opds branch); main's PR #107 brief remains in main history.
+- tools/layers.json: kept include/exr/opds.h; main's include/exr/edit.h entry already exists lower in the file, so I did not duplicate the key. JSON parses.
+- Auto-merged, no conflict: CMakeLists.txt, OUT.txt, .gitignore.
+2) API docs added: none needed in this step. Earlier commit 93c3e231 already documented the exr_opds_* functions. Gate shows 462/462 documented.
+3) check_sdk_docs.py exit=0, last three lines:
+  "errors": [],
+  "passed": true
+}
+4) Other failures: not checked, CI not observed from here.
 
 

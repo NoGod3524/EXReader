@@ -1,0 +1,56 @@
+[package wrapper] ['C:\\Program Files\\PowerShell\\7\\pwsh.EXE', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b2-opds-20261110\\tools\\release\\build_packages.ps1', '-BuildDir', 'C:\\Users\\Oscar\\Documents\\Codex\\exr-opds-build', '-OutputDir', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke w4lmhb_9\\packages', '-Configuration', 'Release', '-Python', 'C:\\Python314\\python.exe']
+PASS package files and safe paths: 49 ordinary files; 13457257 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 18 API headers + version.h = 19 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 48 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [440]; minimum 389
+PASS CLI runtime layout and import library: import library lib/libexreader.dll.a; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke w4lmhb_9\packages\.exreader-package-p2z5_h1w\exreader-3.42.0-win-x64
+PASS package files and safe paths: 49 ordinary files; 13457257 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 18 API headers + version.h = 19 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 48 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [440]; minimum 389
+PASS CLI runtime layout and import library: import library lib/libexreader.dll.a; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke w4lmhb_9\packages\.exreader-package-p2z5_h1w\exreader-3.42.0-win-x64.zip
+Package: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke w4lmhb_9\packages\exreader-3.42.0-win-x64.zip
+Archive bytes: 6293500
+Archive SHA256: 3c1365f2c3b718a438daafa6f6cf25576ab09267a152c98454428bdf9f1385b6
+Unpacked: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke w4lmhb_9\packages\exreader-3.42.0-win-x64
+exit: 0
+
+[extracted package check] ['C:\\Python314\\python.exe', 'C:\\Users\\Oscar\\Documents\\Codex\\EXReader-b2-opds-20261110\\tools\\release\\check_release.py', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke w4lmhb_9\\independent extraction\\exreader-3.42.0-win-x64', '--json', 'C:\\Users\\Oscar\\Documents\\Codex\\opds-release-smoke-no-telemetry\\check-release.json']
+PASS package files and safe paths: 49 ordinary files; 13457257 bytes
+PASS package name and archive format: exreader-3.42.0-win-x64
+PASS required SDK files: LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll
+PASS version identity: package name = VERSION = version.h = source VERSION = cmake: 3.42.0
+PASS public headers: 18 API headers + version.h = 19 files
+PASS minimal example line limit: 64 lines <= 80
+PASS SHA256SUMS coverage and content: 48 SHA256 digests; exact coverage of all files except SHA256SUMS
+PASS library and CLI architecture: library and CLI: PE win-x64
+PASS public export count: lib/libexreader.dll: exr_* exports [440]; minimum 389
+PASS CLI runtime layout and import library: import library lib/libexreader.dll.a; bin DLL matches lib DLL
+PASS release: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke w4lmhb_9\independent extraction\exreader-3.42.0-win-x64
+exit: 0
+
+[README three commands] ['C:\\Program Files\\PowerShell\\7\\pwsh.EXE', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke w4lmhb_9\\quickstart.ps1']
+EXR_README_COMMAND_1
+EXR_README_COMMAND_2
+main.c
+LINK : fatal error LNK1181: cannot open input file 'lib\exreader.lib'
+Exception: C:\Users\Oscar\AppData\Local\Temp\exreader SDK smoke w4lmhb_9\quickstart.ps1:7
+Line |
+   7 |  if (-not $?) { throw 'README command failed' }
+     |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | README command failed
+exit: 1
+
+FAIL: README three commands failed with exit 1

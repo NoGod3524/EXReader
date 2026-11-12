@@ -1,0 +1,12 @@
+name: Native account sync session
+on:
+  push:
+    branches: [codex/reader-sync-session]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    uses: ./.github/workflows/reader-commands.yml
+    with:
+      session: true

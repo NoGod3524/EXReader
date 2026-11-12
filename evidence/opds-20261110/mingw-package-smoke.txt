@@ -1,0 +1,15 @@
+COMMAND ['gcc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-Iinclude', 'examples/minimal/main.c', '-Llib', '-lexreader', '-o', 'minimal.exe'] EXIT 0  
+COMMAND ['C:\\Users\\Oscar\\Documents\\Codex\\opds-mingw-smoke\\exreader-3.42.0-win-x64\\minimal.exe', 'examples/minimal/sample.epub', 'examples/minimal/font.ttf', 'page-1.pgm'] EXIT 0 Title: Native styled sample
+Pages: 2
+TOC entries: 1
+Output: page-1.pgm (720 x 1040, PGM)
+ 
+COMMAND ['C:\\Users\\Oscar\\Documents\\Codex\\opds-mingw-smoke\\exreader-3.42.0-win-x64\\bin\\exr-info.exe', '--version'] EXIT 0 EXReader 3.42.0
+ 
+COMMAND ['C:\\Users\\Oscar\\Documents\\Codex\\opds-mingw-smoke\\exreader-3.42.0-win-x64\\bin\\exr-info.exe', 'examples/minimal/sample.epub', 'examples/minimal/font.ttf'] EXIT 0 Version: 3.42.0
+Format: EPUB
+Title: Native styled sample
+Pages: 2
+TOC entries: 1
+ 
+PASS: relocated MinGW SDK, minimal example, nonwhite PGM, CLI and version

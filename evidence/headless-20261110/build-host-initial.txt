@@ -1,0 +1,11 @@
+In file included from examples/reader.c:4318:
+examples/windows/shell_sync.inc:923:12: error: 'sy_sync_now' defined but not used [-Werror=unused-function]
+  923 | static int sy_sync_now(sy_status *out) {
+      |            ^~~~~~~~~~~
+cc1.exe: all warnings being treated as errors
+gcc exited 1
+At C:\Users\Oscar\Documents\Codex\EXReader-b2-opds-20261110\docs\ui\acceptance\build_opds_host.ps1:8 char:28
++   if($LASTEXITCODE -ne 0) {throw "$Compiler exited $LASTEXITCODE"}
++                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (gcc exited 1:String) [], RuntimeException
+    + FullyQualifiedErrorId : gcc exited 1

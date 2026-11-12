@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "platform": "Windows",
+  "commands": [
+    "$env:PATH = \"$PWD\\lib;$env:PATH\"",
+    "cl /nologo /W4 /Iinclude examples\\minimal\\main.c lib\\exreader.lib /Feminimal.exe",
+    ".\\minimal.exe examples\\minimal\\sample.epub examples\\minimal\\font.ttf page-1.pgm"
+  ],
+  "archive_sha256": "3c1365f2c3b718a438daafa6f6cf25576ab09267a152c98454428bdf9f1385b6",
+  "archive_name": "exreader-3.42.0-win-x64.zip",
+  "error": "README three commands failed with exit 1"
+}
