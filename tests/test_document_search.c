@@ -82,8 +82,35 @@ static void mapping(const char *font_path) {
   }
   exr_font_free(font);exr_publication_free(p);puts("jump/anchor/glyph mapping 20/20 (10 vertical)");
 }
+/* 24 parts x 1 MiB exceed the 16 MiB snapshot budget: results stay exact,
+   evicted parts reload, and a provider that changes evicted text is rejected. */
+#define BIG_PARTS 24
+#define BIG_SIZE ((size_t)1024*1024)
+typedef struct {char *body[BIG_PARTS];int loads;} big_source;
+static exr_status big_load(void *ctx,size_t part,exr_document **out,exr_error *e) {
+  big_source *s=ctx;s->loads++;return exr_document_open_memory(EXR_TXT,s->body[part],BIG_SIZE,out,e);
+}
+static void bounded(void) {
+  big_source s={{0},0};exr_part parts[BIG_PARTS];exr_publication_input in={0};exr_publication *p=NULL;size_t i,n=0;
+  for(i=0;i<BIG_PARTS;i++) {
+    CHECK((s.body[i]=malloc(BIG_SIZE)));memset(s.body[i],'x',BIG_SIZE);
+    memcpy(s.body[i]+BIG_SIZE/2,"needle",6);memcpy(s.body[i]+BIG_SIZE-6,"needle",6);
+    parts[i]=(exr_part){"p","p.txt","",1};
+  }
+  in.parts=parts;in.part_count=BIG_PARTS;in.load=big_load;in.context=&s;
+  OK(exr_publication_create(&in,&p,&error));
+  CHECK(count(p,"needle",0)==2*BIG_PARTS);CHECK(s.loads==BIG_PARTS);
+  CHECK(count(p,"needle",0)==2*BIG_PARTS);CHECK(s.loads>BIG_PARTS);
+  /* The most recently searched part is still resident; an evicted one reloads. */
+  n=s.loads;CHECK(count(p,"xneedle",0)==2*BIG_PARTS);CHECK(s.loads>n);
+  s.body[0][10]='y';
+  CHECK(exr_publication_search_all(p,"needle",0,NULL,NULL,NULL,&n,&error)==EXR_FORMAT && n==0);
+  s.body[0][10]='x';CHECK(count(p,"needle",0)==2*BIG_PARTS);
+  exr_publication_free(p);
+  for(i=0;i<BIG_PARTS;i++) free(s.body[i]);
+}
 int main(int argc,char **argv) {
   CHECK(argc>=2);
-  if(!strcmp(argv[1],"basic")) basic();else if(!strcmp(argv[1],"unicode")) unicode();else if(!strcmp(argv[1],"flags")) flags();else if(!strcmp(argv[1],"errors")) errors();else {CHECK(argc==3);mapping(argv[2]);}
+  if(!strcmp(argv[1],"basic")) basic();else if(!strcmp(argv[1],"unicode")) unicode();else if(!strcmp(argv[1],"flags")) flags();else if(!strcmp(argv[1],"errors")) errors();else if(!strcmp(argv[1],"bounded")) bounded();else {CHECK(argc==3);mapping(argv[2]);}
   printf("search %s passed\n",argv[1]);return 0;
 }

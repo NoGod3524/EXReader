@@ -246,7 +246,9 @@ typedef int (*exr_search_fn)(void *context,const exr_search_result *result);
    No normalization, dictionary segmentation or visual-order transformation.
    Whole words use space/punctuation boundaries; CJK codepoints are units.
    Empty/invalid UTF-8 needles and unknown flags fail. Needle limit: 1 MiB.
-   Text snapshots are cached lazily until publication_free; reopen a mutable
+   Text snapshots are cached lazily in a 16 MiB least-recently-searched cache
+   until publication_free; evicted parts reload on demand, and a reload whose
+   text differs from the first snapshot fails EXR_FORMAT. Reopen a mutable
    provider to search a new revision. Cancellation/failure clears result/count. */
 EXR_API exr_status exr_publication_search(exr_publication *publication,exr_text_position from,
   const char *needle,unsigned flags,const exr_control *control,exr_search_result *result,exr_error *error);
