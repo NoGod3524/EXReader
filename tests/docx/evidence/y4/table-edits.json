@@ -1,0 +1,485 @@
+{
+  "library_sha256": "bf8fd70e9f2604013d22e857b4b287a1ba8b12b5f892a02e98e9acf73b4d6d77",
+  "documents": [
+    {
+      "id": "minitab-ch10",
+      "source_sha256": "e73c211e12cbd07e467d6c2f5b731a71d9b831d871f055a46e3de087f5b55d4d",
+      "edited_sha256": "ec7ba7f94edb85e414db24b4874aa0e1015508c09270ce13c8fdde09d0aa3532",
+      "status": "PASS",
+      "selected_table": 0,
+      "selected_cell": [
+        3,
+        0
+      ],
+      "row_counts": [
+        3,
+        4,
+        3
+      ],
+      "columns": 5,
+      "unchanged_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 336,
+          "after": 336,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 13865,
+          "after": 13865,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 10,
+          "after": 10,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 17,
+          "after": 17,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "edited_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 336,
+          "after": 336,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 13865,
+          "after": 13865,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 10,
+          "after": 10,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 17,
+          "after": 17,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "2160",
+              "bottom": "1440",
+              "left": "3240"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "media_bytes_unchanged": true,
+      "non_main_parts_unchanged": 38,
+      "persistent_edit": "table width; temporary row cell edited before deletion",
+      "original_cells_protected_or_empty": true,
+      "text_change_verified": false,
+      "reopen_and_undo_redo": true
+    },
+    {
+      "id": "soci-syllabus",
+      "source_sha256": "dbc1fe7c9f99521074ed300e224f3d4ec906aedfc60d917220d2ffcc882913d9",
+      "edited_sha256": "51aa4f6bfad26f60bbdfc14b7841f88b96b65ad22e6cf1bbcaa646d66cdd3693",
+      "status": "PASS",
+      "selected_table": 0,
+      "selected_cell": [
+        1,
+        0
+      ],
+      "row_counts": [
+        4,
+        5,
+        4
+      ],
+      "columns": 2,
+      "unchanged_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 117,
+          "after": 117,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 5555,
+          "after": 5555,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 2,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "edited_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 117,
+          "after": 117,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 5555,
+          "after": 5555,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 2,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "after": [
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            },
+            {
+              "top": "1440",
+              "right": "1440",
+              "bottom": "1440",
+              "left": "1440"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "media_bytes_unchanged": true,
+      "non_main_parts_unchanged": 25,
+      "persistent_edit": "cell text",
+      "original_cells_protected_or_empty": false,
+      "text_change_verified": true,
+      "reopen_and_undo_redo": true
+    },
+    {
+      "id": "ohchr-40-69",
+      "source_sha256": "ca0701fe199aae7f35de67bfff4c66c70d7db3c65029a74ac96b8587fd42e214",
+      "edited_sha256": "8cb070d0d5b0315ab07f6272b1c72f6f2205fe6dbf8228ed818cc920c522d7db",
+      "status": "PASS",
+      "selected_table": 0,
+      "selected_cell": [
+        2,
+        0
+      ],
+      "row_counts": [
+        2,
+        3,
+        2
+      ],
+      "columns": 4,
+      "unchanged_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 209,
+          "after": 209,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 71205,
+          "after": 71205,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 2,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 5,
+          "after": 5,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "after": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "edited_metrics": [
+        {
+          "metric": "paragraphs",
+          "before": 209,
+          "after": 209,
+          "status": "PASS"
+        },
+        {
+          "metric": "characters",
+          "before": 71205,
+          "after": 71205,
+          "status": "PASS"
+        },
+        {
+          "metric": "tables",
+          "before": 2,
+          "after": 2,
+          "status": "PASS"
+        },
+        {
+          "metric": "images",
+          "before": 0,
+          "after": 0,
+          "status": "PASS"
+        },
+        {
+          "metric": "footnotes",
+          "before": 5,
+          "after": 5,
+          "status": "PASS"
+        },
+        {
+          "metric": "section_margins",
+          "before": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "after": [
+            {
+              "top": "1417",
+              "right": "1134",
+              "bottom": "1134",
+              "left": "1134"
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "media_bytes_unchanged": true,
+      "non_main_parts_unchanged": 31,
+      "persistent_edit": "table width; temporary row cell edited before deletion",
+      "original_cells_protected_or_empty": true,
+      "text_change_verified": false,
+      "reopen_and_undo_redo": true
+    }
+  ],
+  "baseline_passed": 18,
+  "edited_passed": 18,
+  "metric_total": 18
+}

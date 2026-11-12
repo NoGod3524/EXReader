@@ -1,3 +1,26 @@
+① 冲突文件: OUT.txt — 两侧内容全部保留(仅删冲突标记); RESOLVE.md — 保留本分支版本(任务说明文件, 非报告); CMakeLists.txt 自动合并无冲突。
+② 补 API 文档: 无 (check_sdk_docs.py 已通过, 无 undocumented functions)。
+③ check_sdk_docs.py exit=0; 最后三行:
+  "errors": [],
+  "passed": true
+}
+④ 未查看 CI (未联网查 Actions); 本地无其他失败项已知。已推送 a8b3e75b 到 codex/vertical-expand-20261109。
+① 冲突文件清单与解决方式
+- 无冲突：git merge origin/main 自动合并成功（merge commit 98ca706e）。
+- 唯一障碍：工作区未跟踪的任务说明 RESOLVE.md 与 main 上已跟踪的同名文件冲突；已把本地未跟踪副本移出仓库（%TEMP%\RESOLVE-task.md），保留 main 的 RESOLVE.md。
+
+② 补了哪些 API 文档
+- 无需补充：合并后 check_sdk_docs.py 报 documented 469 / public 469（100%），ABI 稳定 394 / 实验 75 / 内部 0。
+
+③ check_sdk_docs.py exit code: 0
+最后三行输出:
+  "errors": [],
+  "passed": true
+}
+
+④ 其他失败项
+- 未在本地看到；未查询 CI（未运行 CI 查询）。
+
 ① 冲突文件（git merge origin/main）：
 - OUT.txt：报告文件，两侧内容全部保留（仅删除冲突标记，未丢任何行）。
 - RESOLVE.md：add/add 冲突，同样两侧全部保留（仅删除冲突标记）。
@@ -8,3 +31,5 @@
   "errors": [],
   "passed": true
 ④ 其他失败项：本地未运行 CI，不知道 CI 上是否还有别的失败；需推送后看 CI。
+
+
