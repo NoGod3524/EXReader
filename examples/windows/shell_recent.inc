@@ -190,6 +190,7 @@ static int shelf_before_exit(void) {
   return 1;
 }
 static void shelf_return(void) {
+  if(de_active() && !de_exit())return;
   if(!shell_active || shelf_requested)return;
   if(!shelf_before_exit())return;
   sm_tick();shelf_exit_pending=1;shelf_pump();

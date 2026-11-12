@@ -468,6 +468,79 @@ shell_theme shell_theme_contrast = shell_theme_dark; /* declared extern "C" in s
 static const shell_theme &theme_of(int dark) { return dark == 2 ? shell_theme_contrast : dark ? shell_theme_dark : shell_theme_light; }
 static float line_alpha(int dark, float normal) { return dark == 2 ? 1.f : normal; }
 
+extern "C" HRESULT shell_d2d_edit_layout(shell_d2d *s,const wchar_t *text,const wchar_t *family,
+                                         float size,float width,void **out,float *height) {
+  *out=nullptr;
+  IDWriteTextFormat *format=nullptr;
+  IDWriteTextLayout *layout=nullptr;
+  HRESULT hr=s->write->CreateTextFormat(family,nullptr,DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,DWRITE_FONT_STRETCH_NORMAL,size,L"zh-cn",&format);
+  if(SUCCEEDED(hr)) hr=s->write->CreateTextLayout(text,(UINT32)wcslen(text),format,
+    std::max(1.f,width),10000000.f,&layout);
+  if(format) format->Release();
+  DWRITE_TEXT_METRICS metrics={};
+  if(SUCCEEDED(hr)) hr=layout->GetMetrics(&metrics);
+  if(FAILED(hr)) {if(layout)layout->Release();return hr;}
+  *height=metrics.height;*out=layout;return S_OK;
+}
+
+extern "C" void shell_d2d_edit_release(void *layout) {
+  if(layout) static_cast<IDWriteTextLayout *>(layout)->Release();
+}
+
+extern "C" unsigned shell_d2d_edit_hit(void *p,float x,float y) {
+  BOOL trailing=FALSE,inside=FALSE;DWRITE_HIT_TEST_METRICS hit={};
+  if(FAILED(static_cast<IDWriteTextLayout *>(p)->HitTestPoint(x,y,&trailing,&inside,&hit))) return 0;
+  return hit.textPosition+(trailing ? hit.length:0);
+}
+
+extern "C" void shell_d2d_edit_position(void *p,unsigned at,float box[4]) {
+  DWRITE_HIT_TEST_METRICS hit={};float x=0,y=0;
+  static_cast<IDWriteTextLayout *>(p)->HitTestTextPosition(at,FALSE,&x,&y,&hit);
+  box[0]=x;box[1]=y;box[2]=hit.width;box[3]=hit.height;
+}
+
+extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int dark,
+  const shell_d2d_edit_row *rows,size_t count,float inset,float scroll) {
+  HRESULT hr=bind_dc(s,dc,area);if(FAILED(hr)) return hr;
+  const auto &c=theme_of(dark);
+  s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(c.layer_page));
+  s->dc_target->PushAxisAlignedClip(D2D1::RectF(0,0,(float)(area->right-area->left),
+    (float)(area->bottom-area->top)),D2D1_ANTIALIAS_MODE_ALIASED);
+  for(size_t i=0;i<count;i++) {
+    const auto &row=rows[i];float y=row.y-scroll;
+    if(!row.height || y+row.height<0 || y>area->bottom-area->top) continue;
+    auto layout=static_cast<IDWriteTextLayout *>(row.layout);
+    UINT32 needed=0;
+    layout->HitTestTextRange(row.start,row.length,inset,y,nullptr,0,&needed);
+    std::vector<DWRITE_HIT_TEST_METRICS> boxes(needed);
+    if(needed) layout->HitTestTextRange(row.start,row.length,inset,y,boxes.data(),needed,&needed);
+    s->dc_brush->SetColor(D2D1::ColorF(dark ? 0x82B5FF:0x3178D4,.35f));
+    for(const auto &b:boxes) s->dc_target->FillRectangle(
+      D2D1::RectF(b.left,b.top,b.left+b.width,b.top+b.height),s->dc_brush);
+    float caret[4];shell_d2d_edit_position(row.layout,row.caret,caret);
+    if(row.selected_break) {
+      float end[4]={};
+      // A paragraph mark gets its own small selection cell at the visual end.
+      UINT32 n=0;layout->GetLineMetrics(nullptr,0,&n);
+      std::vector<DWRITE_LINE_METRICS> lines(n);
+      if(n && SUCCEEDED(layout->GetLineMetrics(lines.data(),n,&n))) {
+        UINT32 length=0;for(const auto &line:lines) length+=line.length;
+        shell_d2d_edit_position(row.layout,length,end);
+        s->dc_target->FillRectangle(D2D1::RectF(inset+end[0],y+end[1],
+          inset+end[0]+6,y+end[1]+end[3]),s->dc_brush);
+      }
+    }
+    s->dc_brush->SetColor(D2D1::ColorF(c.text));
+    s->dc_target->DrawTextLayout(D2D1::Point2F(inset,y),layout,s->dc_brush);
+    if(row.show_caret) s->dc_target->FillRectangle(D2D1::RectF(inset+caret[0],y+caret[1],
+      inset+caret[0]+1,y+caret[1]+caret[3]),s->dc_brush);
+  }
+  s->dc_target->PopAxisAlignedClip();hr=s->dc_target->EndDraw();
+  if(hr==D2DERR_RECREATE_TARGET) {drop_dc_target(s);return S_FALSE;}
+  return hr;
+}
+
 
 /* One floating surface for every popup (settings, notes, footnotes, dictionary):
    the caller's pixels beneath, shadow-lg, a radius-14 surface with a line
