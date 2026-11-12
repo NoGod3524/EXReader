@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109\tests\vertical_expand.py", line 379, in <module>
+    if __name__=='__main__': main()
+                             ~~~~^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109\tests\vertical_expand.py", line 363, in main
+    test_group(sdk,font,Path(d),args.group)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-A5-20261109\tests\vertical_expand.py", line 217, in test_group
+    assert opening['codepoint']==0x300c and abs(opening['advance']-14)<.02,opening
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'start': 0, 'end': 3, 'codepoint': 12300, 'glyph': 15, 'x': 447.0, 'baseline': 36.0, 'advance': 26.0, 'size': 28.0, 'page': 0, 'node': 10, 'color': 255, 'flags': 144, 'clip_left': 36.0, 'clip_right': 684.0, 'line_height': 42.0, 'cluster_start': 0, 'cluster_end': 3, 'boundaries': 1, 'font_index': 0, 'offset_x': -14.0, 'offset_y': -24.0, 'bidi_level': 0, 'ink_bounds': [433.0, 51.6, 441.4, 60.0]}
