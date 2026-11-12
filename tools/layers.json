@@ -189,7 +189,7 @@
     "src/graphics_internal.h": "graphics",
     "src/hyphen_internal.h": "text",
     "src/hyphen_unicode_data.h": "text",
-  "src/hyphen_builtin_data.h": "text",
+    "src/hyphen_builtin_data.h": "text",
     "src/icc_internal.h": "graphics",
     "src/indic_data.h": "text",
     "src/layout_internal.h": "layout",
@@ -242,5 +242,3 @@
     "src/chapter_internal.h": "doc"
   }
 }
-
-
