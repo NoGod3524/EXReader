@@ -1,0 +1,11 @@
+{
+  "ref": "9841d30bdbfb4d93605f2e612cf1cd7f36f52623",
+  "recompiled": [
+    "docx_edit.c",
+    "docx_reflow.c",
+    "pager.c"
+  ],
+  "reused_sources_verified": true,
+  "method": "original #124 sources/header plus byte-identical candidate objects and identical dependencies",
+  "dll_sha256": "706dd69abfbfcb2daa653bf7eed4d5096d71a72d91ac4a70e20622a4b3c272e8"
+}
