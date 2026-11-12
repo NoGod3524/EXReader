@@ -1,0 +1,34 @@
+HOST	phase=1	engine=3.42.0	pid=5900
+STEP	1	shell	PASS	legacy panel
+STEP	2	shell_dpi	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	3	shell_client	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	4	wait_idle	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	5	shell_click	PASS	button invoked
+STEP	6	opds_show	PASS	opds action
+STEP	7	shell_measure	PASS	physical layout captured
+STEP	8	probe_wait	PASS	waited without blocking UI
+STEP	9	opds_load	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	10	opds_dump	PASS	opds action
+STEP	11	opds_open	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	12	opds_dump	PASS	opds action
+STEP	13	shell_measure	PASS	physical layout captured
+STEP	14	probe_wait	PASS	waited without blocking UI
+STEP	15	opds_next	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	16	opds_dump	PASS	opds action
+STEP	17	shell_measure	PASS	physical layout captured
+STEP	18	probe_wait	PASS	waited without blocking UI
+STEP	19	opds_back	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	20	opds_dump	PASS	opds action
+STEP	21	opds_open	PASS	page=0;status=书架为空：输入文件路径后点击“导入”。
+STEP	22	opds_dump	PASS	opds action
+STEP	23	shell_measure	PASS	physical layout captured
+STEP	24	probe_wait	PASS	waited without blocking UI
+STEP	25	opds_download	PASS	page=1;status=已打开《Pride and Prejudice》 · 从首个阅读章节开始。
+STEP	26	opds_dump	PASS	opds action
+STATE	27	opened	PASS	book_id=1;page=0;page_count=0;font=150;zoom=100;offset=0;page_text_len=0;range_len=0;notes=0;selected_id=1;selection_active=0;page_text_fnv=1469598103934665603;page_hash_len=0;bounded=1;part=0;generation=1;progress_record_preserved=0;part_path=OEBPS/wrap0000.html;book_bytes=609138;index_bytes=148096;parse_workspace_bytes=70215;peak_parse_workspace_bytes=447395;projection_bytes=0;page_cache_bytes=13674792;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=3;bitmap_bytes=2955264;dib_bytes=2955264;state=opened;title=Pride and Prejudice;kind=reflow;page_text=;offset_text=;status=已打开《Pride and Prejudice》 · 从首个阅读章节开始。
+SHELF	27	opened	PASS	title=Pride and Prejudice;author=;id=1;format=4
+STEP	27	state	PASS	state captured
+STEP	28	shell_measure	PASS	physical layout captured
+STEP	29	probe_wait	PASS	waited without blocking UI
+STEP	30	quit	PASS	closing
+DONE	30	eof	PASS	script finished

@@ -93,7 +93,7 @@ static void shell_toc_set(int open,int keyboard) {
   shell_toc_close_pending=0;
   BOOL animations=FALSE;SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION,0,&animations,0);
   if(open && shell_panel_open) shell_toggle_settings();
-  shell_toc_open=open;shell_toc_keyboard=keyboard;
+  shell_toc_open=open;shell_toc_keyboard=keyboard;host_a11y_panel_toggled(shell_toc_panel,open);
   shell_toc_from=shell_toc_value;shell_toc_start=host_probe_ms();
   shell_toc_duration=180*fabsf((open ? 1.f:0.f)-shell_toc_from);
   host_probe_log("toc_start_ms",shell_toc_start);host_probe_log("toc_from",shell_toc_from);
@@ -346,14 +346,7 @@ static int shell_toc_draw(const DRAWITEMSTRUCT *item) {
   free(label);return 1;
 }
 static int shell_toc_key(HWND focus,WPARAM key,int shift) {
-  if(key==VK_TAB && shell_active && !shell_panel_open) {
-    HWND stops[4]={shell_toc,shell_settings,shell_toc_open ? (shell_toc_count ? shell_toc_list:shell_toc_panel):g.page,g.page};
-    int count=shell_toc_open ? 4:3,at=0;for(int i=0;i<count;i++) if(stops[i]==focus) at=i;
-    HWND next=stops[(at+(shift ? count-1:1))%count];shell_toc_keyboard=1;SetFocus(next);
-    if(host_offscreen) shell_toc_test_focus=next;
-    SendMessageW(g.window,WM_CHANGEUISTATE,MAKEWPARAM(UIS_CLEAR,UISF_HIDEFOCUS),0);
-    InvalidateRect(shell_toc_list,NULL,FALSE);return 1;
-  }
+  if(key==VK_TAB && shell_active && !(GetKeyState(VK_CONTROL)&0x8000) && shell_tab_next(focus,shift)) return 1;
   if(shell_toc_open && key==VK_ESCAPE) {shell_toc_set(0,1);SetFocus(shell_toc);if(host_offscreen) shell_toc_test_focus=shell_toc;return 1;}
   if(!shell_toc_open || (focus!=shell_toc_list && focus!=shell_toc_panel)) return 0;
   int row=(int)SendMessageW(shell_toc_list,LB_GETCURSEL,0,0),old=row;

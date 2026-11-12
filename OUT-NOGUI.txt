@@ -1,0 +1,17 @@
+已完成并 push：`599a23e2`。Draft PR：[#129](https://github.com/NoGod3524/EXReader/pull/129)，无合并冲突，工作树干净。全程未启动 GUI、模拟输入或修改系统设置。
+
+① 接管自 Step 7，原进度末行结尾为：“Evidence in evidence/opds-20261110; OUT.txt finalization pending.”
+
+② 替换结果：
+
+| 原验收 | 无窗口替代 | 实际结果 |
+|---|---|---|
+| WebDAV 宿主驱动 | `check_sync.c` + 真 TCP mock | **15/15，HWND=0** |
+| OPDS 窗口验收 | 控制台探针 + 只 accept 的慢服务器 | **12/12**；超时映射 `12002` |
+| C2 外部 UIA | 静态注册断言 + 九张历史截图 | **44/44**，另有四个负向对照 |
+
+③ 无窗口 ctest **5/5**；宿主 `-Wall -Wextra -Werror` 编译通过。分层、版本和保护文件哈希检查通过。19 本原书重新核对哈希；SDK 字节一致，复用 **11,318 页、0 变化**的既有证据，本轮未重渲染。Gutenberg 首跑 9/12 的失败记录已保留。
+
+完整命令、实际输出及接管原文见[验收报告](C:/Users/Oscar/Documents/Codex/EXReader-b2-opds-20261110/OPDS-HEADLESS-OUT.txt)。
+
+④ 仍需真实窗口：外部 UIA 属性与事件、Tab/快捷键及焦点返回、焦点环、对比度观感、宿主下载导入与同步状态显示。原因和人工步骤已列入[主控验收清单](C:/Users/Oscar/Documents/Codex/EXReader-b2-opds-20261110/docs/a11y/C2-MANUAL-CHECK.md)，本机未执行。

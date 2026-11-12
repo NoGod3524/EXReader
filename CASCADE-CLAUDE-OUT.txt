@@ -1,25 +1,15 @@
-The build is still running in the background. I'll report when it finishes and I've run the tests.
+I merged `origin/main` into `codex/fix129-20261111` and pushed it to `codex/opds-catalog-20261110`. The push went through (`93c3e231..abee9440`). I didn't touch the PR or main, and I haven't seen CI results.
 
-The build is running in the background (log: `build/x/ninja.log`). The fix is one line in `src/pdf_objects.c`, but it isn't verified yet. I'll run the tests when the build finishes and report the numbers.
-tests/test_pdf_hybrid_xref.c` 和 `OUT2.txt`。这些不是我写的。
-- `OUT2.txt` 写着"The full-library build is still compiling. I'll continue once it finishes."，说明另一个会话正在编译并跑测试。
-- 我现在写代码、提交或推分支，会跟它撞车，所以没有做。
+- **Conflicts:** the merge had two, and `git status` now shows no U markers.
+  - **`RESOLVE.md`:** this was an add/add conflict, and I kept this task's brief. Main's version is the PR #107 brief, which stays in main's history. That is a pick of one side, not a union, because the two briefs name different PRs, directories and push targets.
+  - **`tools/layers.json`:** I kept `include/exr/opds.h`. Main's `include/exr/edit.h` entry already exists lower in the file, so I skipped the duplicate key. The file still parses as JSON.
+  - **Auto-merged:** `CMakeLists.txt`, `OUT.txt` and `.gitignore` merged without conflict.
+- **API docs:** I added none. The earlier commit `93c3e231` already documented the `exr_opds_*` functions, and `python -X utf8 tools\check_sdk_docs.py` exits 0 with 462 of 462 functions documented and `"passed": true`.
+- **Other failures:** I can't tell from here, since I didn't look at CI.
+- **Extra commit:** `RESOLVE.md` had uncommitted edits that blocked the merge, so I committed it first (`docs: update RESOLVE.md before merging main`).
+- **Report:** `RESOLVE-OUT.txt` is written and committed.
+- **Not committed:** `CASCADE-CLAUDE-OUT.txt` is still untracked.
 
-**对任务书的订正（两处前提都不成立）**
-- `classic_xref` 在 `src/pdf_objects.c:469-475` 已经处理 `/XRefStm`，调用的是 `stream_xref(..., hybrid=1)`。`/Prev` 链和"同 revision 内 stream 条目覆盖传统表"的合并逻辑也都已存在（L376-380）。引擎并没有拒绝混合引用。
-- `deck.pdf` 真正的失败点是 `stream_xref` 里的 `object>=size`（L341）。它的 xref 流是 `1038 0 obj`，`/Size` 却是 1038。PowerPoint 先数 `/Size` 再写这个对象，所以对象号等于 `/Size`。
-- 另一个会话的改动正是这一处：hybrid 模式下不再要求 `object<size`，非 hybrid 的纯 xref 流路径不变。我自己查出来的结论和它一致。
+That notification is just my idle-wait timer expiring. It needs no action, because the merge and push finished earlier.
 
-**我做的验证**
-- 我用 gcc 编译了一个小探针，只链接 `pdf_objects.c`、`pdf_ccitt.c`、`common.c`。miniz 和 crypto 用了临时桩（放在 `/tmp/pr`，不在仓库里），因为这里没有网络，CMake 拉不到依赖。
-- 带当前未提交改动时，`exr_pdf_open(deck.pdf)` 返回 status=0，`pdf-hybrid.pdf` 也是 0。
-- 没验证的部分：我没有重现"改动前 deck.pdf 报错"，也没跑 15 页渲染、`first_paint_ms`、完整 ctest 和像素对比，因为全量 CMake 构建在这里做不了。这些得等另一个会话的构建结果。
-
-**尚未完成的验收项**
-- 渲染、ctest 全绿、像素比对都还没有结果。
-- 4 组新增 ctest 看起来已经写好（`native-pdf-hybrid-deck` 加 `test_pdf_hybrid_xref.c` 的各场景），但我没有跑过。
-- draft PR 还没开。
-
-**需要你决定**
-- 要我等那个会话收尾，再接手验证、提交、推分支和开 draft PR 吗？
-- 还是你想让我现在就在这个工作树里继续？那样可能和它冲突。
+PR #129's branch is pushed with the conflicts resolved, and the docs gate passes. I'm stopping here as instructed.

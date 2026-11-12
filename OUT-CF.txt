@@ -1,19 +1,24 @@
-已推送 `914dff0a` 到指定分支 `codex/large-book-2-20261110`，工作树干净，落后 main 为 0。
+已在原分支 `codex/opds-catalog-20261110` 恢复并推送至 **`d3fa4956`**。工作树干净，落后 main 0 个提交；未新建分支、未合并 PR、未改 main。
 
-① 冲突处理已复核：
+① 沿用已完成的 12 个冲突文件解决结果；`shell_*` 均在 `examples/windows/`：
 
 | 文件 | 解决方式 |
 |---|---|
-| `OUT.txt` | 删除冲突标记，保留两侧报告。 |
-| `RESOLVE-OUT.txt` | 保留历次合并双方内容，删除标记。 |
-| `RESOLVE.md` | 删除标记，保留双方内容。 |
+| `OUT.txt` | 保留双方报告内容。 |
+| `RESOLVE-OUT.txt` | 保留双方报告内容。 |
+| `RESOLVE.md` | 合并双方记录，补回 PR107 说明。 |
+| `tools/layers.json` | 保留 main 登记及 OPDS 源码、头文件登记。 |
+| `examples/reader.c` | 保留新布局及 OPDS、同步功能接入。 |
+| `shell_d2d.cpp` | 将高对比度支持适配到新绘制 API。 |
+| `shell_dictionary.inc` | 保留新绘制方式及同步面板。 |
+| `shell_screen.inc` | 合并双方控件 ID，避免冲突。 |
+| `shell_search.inc` | 适配 main 控件 ID，保留搜索功能。 |
+| `shell_settings.inc` | 保留新设置布局及云同步入口。 |
+| `shell_shelf.inc` | 保留最近阅读功能并适配新书架结构。 |
+| `shell_shelfmeta.inc` | 在统一书架中保留 OPDS 书源入口。 |
 
-16 项父提交报告对照通过；本次恢复了 `OUT-CF.txt`，并追加保存中断文本和操作记录。
+② 构建成功；复核已有 JUnit 和日志：**ctest 403/403 通过，失败项：无**，已排除 `sdk-release`。源码与该测试版本一致，因此未重复运行。三个受保护文件字节未改，指定 SHA256 匹配。
 
-② 本地配置、构建已通过；复核已有 **ctest 403/403 通过**记录，失败项无，按要求排除 `sdk-release`。后续仅改报告，未重复运行。
+③ [PR #129](https://github.com/NoGod3524/EXReader/pull/129) 最终 head 已确认：**`MERGEABLE`**，`mergeStateStatus=BLOCKED`。
 
-③ [PR #127](https://github.com/NoGod3524/EXReader/pull/127) 最终 head 已确认 **MERGEABLE**。
-
-④ 尚待远端 CI：3 个工作流排队、1 个 pending。
-
-受保护文件保持一致。未新建分支、未修改 main、未合并 PR。
+④ 还差 **34 项待完成的 CI 检查，以及 Draft 转 Ready for review**；当前无失败检查。恢复和推送记录已保存到 [OUT-CF.txt](/C:/Users/Oscar/Documents/Codex/EXReader-b2-opds-20261110/OUT-CF.txt)。
