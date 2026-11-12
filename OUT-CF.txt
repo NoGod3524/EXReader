@@ -5782,3 +5782,7 @@ exit=0
 
 Permission deny rule "computer" matches no known tool - check for typos.
 exit=0
+
+## Recovery check (2026-11-11)
+- Merge of origin/main already done; branch is 0 behind / 19 ahead of main, no conflict markers, PR #116 mergeable=MERGEABLE, mergeStateStatus=BLOCKED (CI pending on 5110f4c8).
+- Working-tree OUT-CF.txt had been truncated to 0 bytes by the interrupted session; restored from HEAD.
