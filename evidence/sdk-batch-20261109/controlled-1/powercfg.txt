@@ -1,0 +1,189 @@
+[2026-11-09T16:13:31.8743512Z] powercfg /getactivescheme exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+
+[2026-11-09T16:13:31.9139550Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMIN exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: 893dee8e-2bef-41e0-89c6-b55d0929964c  (Minimum processor state)
+      GUID Alias: PROCTHROTTLEMIN
+      Minimum Possible Setting: 0x00000000
+      Maximum Possible Setting: 0x00000064
+      Possible Settings increment: 0x00000001
+      Possible Settings units: %
+    Current AC Power Setting Index: 0x00000005
+    Current DC Power Setting Index: 0x00000005
+
+
+[2026-11-09T16:13:31.9762179Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMAX exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: bc5038f7-23e0-4960-96da-33abaf5935ec  (Maximum processor state)
+      GUID Alias: PROCTHROTTLEMAX
+      Minimum Possible Setting: 0x00000000
+      Maximum Possible Setting: 0x00000064
+      Possible Settings increment: 0x00000001
+      Possible Settings units: %
+    Current AC Power Setting Index: 0x00000064
+    Current DC Power Setting Index: 0x00000064
+
+
+[2026-11-09T16:13:32.1703196Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PERFBOOSTMODE exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: be337238-0d82-4146-a960-4f3749d470c7  (Processor performance boost mode)
+      GUID Alias: PERFBOOSTMODE
+      Possible Setting Index: 000
+      Possible Setting Friendly Name: Disabled
+      Possible Setting Index: 001
+      Possible Setting Friendly Name: Enabled
+      Possible Setting Index: 002
+      Possible Setting Friendly Name: Aggressive
+      Possible Setting Index: 003
+      Possible Setting Friendly Name: Efficient Enabled
+      Possible Setting Index: 004
+      Possible Setting Friendly Name: Efficient Aggressive
+      Possible Setting Index: 005
+      Possible Setting Friendly Name: Aggressive At Guaranteed
+      Possible Setting Index: 006
+      Possible Setting Friendly Name: Efficient Aggressive At Guaranteed
+    Current AC Power Setting Index: 0x00000002
+    Current DC Power Setting Index: 0x00000002
+
+
+[2026-11-09T16:13:32.2641172Z] powercfg /getactivescheme exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+
+[2026-11-09T16:13:32.3465778Z] powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMIN 100 exit=0
+
+[2026-11-09T16:13:32.4333931Z] powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMAX 100 exit=0
+
+[2026-11-09T16:13:32.4586240Z] powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PERFBOOSTMODE 0 exit=0
+
+[2026-11-09T16:13:32.5350807Z] powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e exit=0
+
+[2026-11-09T16:13:32.5616527Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMIN exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: 893dee8e-2bef-41e0-89c6-b55d0929964c  (Minimum processor state)
+      GUID Alias: PROCTHROTTLEMIN
+      Minimum Possible Setting: 0x00000000
+      Maximum Possible Setting: 0x00000064
+      Possible Settings increment: 0x00000001
+      Possible Settings units: %
+    Current AC Power Setting Index: 0x00000064
+    Current DC Power Setting Index: 0x00000005
+
+
+[2026-11-09T16:13:32.6033154Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMAX exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: bc5038f7-23e0-4960-96da-33abaf5935ec  (Maximum processor state)
+      GUID Alias: PROCTHROTTLEMAX
+      Minimum Possible Setting: 0x00000000
+      Maximum Possible Setting: 0x00000064
+      Possible Settings increment: 0x00000001
+      Possible Settings units: %
+    Current AC Power Setting Index: 0x00000064
+    Current DC Power Setting Index: 0x00000064
+
+
+[2026-11-09T16:13:32.7421781Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PERFBOOSTMODE exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: be337238-0d82-4146-a960-4f3749d470c7  (Processor performance boost mode)
+      GUID Alias: PERFBOOSTMODE
+      Possible Setting Index: 000
+      Possible Setting Friendly Name: Disabled
+      Possible Setting Index: 001
+      Possible Setting Friendly Name: Enabled
+      Possible Setting Index: 002
+      Possible Setting Friendly Name: Aggressive
+      Possible Setting Index: 003
+      Possible Setting Friendly Name: Efficient Enabled
+      Possible Setting Index: 004
+      Possible Setting Friendly Name: Efficient Aggressive
+      Possible Setting Index: 005
+      Possible Setting Friendly Name: Aggressive At Guaranteed
+      Possible Setting Index: 006
+      Possible Setting Friendly Name: Efficient Aggressive At Guaranteed
+    Current AC Power Setting Index: 0x00000000
+    Current DC Power Setting Index: 0x00000002
+
+
+[2026-11-09T16:13:59.9345514Z] powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMIN 5 exit=0
+
+[2026-11-09T16:13:59.9531088Z] powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMAX 100 exit=0
+
+[2026-11-09T16:13:59.9728264Z] powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PERFBOOSTMODE 2 exit=0
+
+[2026-11-09T16:14:00.0286968Z] powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e exit=0
+
+[2026-11-09T16:14:00.0434482Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMIN exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: 893dee8e-2bef-41e0-89c6-b55d0929964c  (Minimum processor state)
+      GUID Alias: PROCTHROTTLEMIN
+      Minimum Possible Setting: 0x00000000
+      Maximum Possible Setting: 0x00000064
+      Possible Settings increment: 0x00000001
+      Possible Settings units: %
+    Current AC Power Setting Index: 0x00000005
+    Current DC Power Setting Index: 0x00000005
+
+
+[2026-11-09T16:14:00.0567625Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PROCTHROTTLEMAX exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: bc5038f7-23e0-4960-96da-33abaf5935ec  (Maximum processor state)
+      GUID Alias: PROCTHROTTLEMAX
+      Minimum Possible Setting: 0x00000000
+      Maximum Possible Setting: 0x00000064
+      Possible Settings increment: 0x00000001
+      Possible Settings units: %
+    Current AC Power Setting Index: 0x00000064
+    Current DC Power Setting Index: 0x00000064
+
+
+[2026-11-09T16:14:00.1327496Z] powercfg /qh 381b4222-f694-41f0-9685-ff5bb260df2e SUB_PROCESSOR PERFBOOSTMODE exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+  GUID Alias: SCHEME_BALANCED
+  Subgroup GUID: 54533251-82be-4824-96c1-47b60b740d00  (Processor power management)
+    GUID Alias: SUB_PROCESSOR
+    Power Setting GUID: be337238-0d82-4146-a960-4f3749d470c7  (Processor performance boost mode)
+      GUID Alias: PERFBOOSTMODE
+      Possible Setting Index: 000
+      Possible Setting Friendly Name: Disabled
+      Possible Setting Index: 001
+      Possible Setting Friendly Name: Enabled
+      Possible Setting Index: 002
+      Possible Setting Friendly Name: Aggressive
+      Possible Setting Index: 003
+      Possible Setting Friendly Name: Efficient Enabled
+      Possible Setting Index: 004
+      Possible Setting Friendly Name: Efficient Aggressive
+      Possible Setting Index: 005
+      Possible Setting Friendly Name: Aggressive At Guaranteed
+      Possible Setting Index: 006
+      Possible Setting Friendly Name: Efficient Aggressive At Guaranteed
+    Current AC Power Setting Index: 0x00000002
+    Current DC Power Setting Index: 0x00000002
+
+
+[2026-11-09T16:14:00.1471571Z] powercfg /getactivescheme exit=0
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)

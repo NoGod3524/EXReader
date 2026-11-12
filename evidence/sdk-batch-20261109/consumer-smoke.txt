@@ -1,0 +1,5 @@
+EXReader 3.42.0; 1 runs x 1 turns; warmup 2 pages; nearest-rank percentiles
+run 1: first 0.320900 ms; warmup 3.054900 ms; p50 1.423700 ms; p95 1.423700 ms
+sequence_ms: 1.423700
+cache hits: glyph 100.0000% (82/82); shaping 100.0000% (74/74); layout 0.0000% (0/1)
+p95 range/mean dispersion: 0.000000%; all p95 <=16ms: yes; dispersion <10%: yes
