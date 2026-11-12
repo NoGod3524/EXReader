@@ -1983,3 +1983,5 @@ Protected files byte-identical to origin/main; check_reading_release.py SHA256=6
 GitHub confirms PR 127 open, merged=false, mergeable=true, head=4b3cf028, original head branch. Next step: commit report recovery and push to that same branch.
 
 [Conflict union audit] 16 parent/report comparisons passed for completed merges f83e36b8, bdde27e3 and 8e7d65f7. OUT.txt, RESOLVE-OUT.txt and RESOLVE.md retain both parents after removing marker lines. OUT-CF.txt retains its committed recovery history plus the interrupted working-tree text. Current recovery changes only this report.
+
+[Recovery push result] Successfully pushed 3e59677eeef41ac23a81899cddeefe4861c8ce4f to origin/codex/large-book-2-20261110. GitHub confirmed this exact head is mergeable=true, open, merged=false; base remains fe9adf43. Immediately after push no workflow runs were listed yet; remote CI completion remains outstanding. This final documentation commit records that observed push result; no source changes or tests repeated.
