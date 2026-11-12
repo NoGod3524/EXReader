@@ -360,6 +360,7 @@ static int shell_search_key(const MSG *m) {
   if(m->wParam==VK_RETURN && (m->hwnd==shell_search_bar || IsChild(shell_search_bar,m->hwnd) || m->hwnd==g.page)) {
     if(shell_search_pending) shell_search_start();else shell_search_step((GetKeyState(VK_SHIFT)<0 || (host_offscreen && shell_search_test_shift)) ? -1:1);shell_search_test_shift=0;return 1;
   }
+  if(m->wParam==VK_TAB) return 0; /* the reading screen owns Tab order: shell_tab_next */
   if(m->hwnd==shell_search_bar || IsChild(shell_search_bar,m->hwnd)) return IsDialogMessageW(shell_search_bar,(MSG *)m)!=0;
   return 0;
 }

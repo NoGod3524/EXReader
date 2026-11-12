@@ -9,6 +9,13 @@ typedef struct shell_theme {
   uint32_t layer_page, layer_side, layer_float, surface2, surface3, desk;
   uint32_t text, text_secondary, text_disabled, accent, accent_hover, on_accent, line_rgb;
 } shell_theme;
+/* Windows high contrast: the host fills this from GetSysColor; the Direct2D layer
+   draws with it when told the theme is 2. Defined once, in shell_d2d.cpp. */
+#ifdef __cplusplus
+extern "C" shell_theme shell_theme_contrast;
+#else
+extern shell_theme shell_theme_contrast;
+#endif
 static const shell_theme shell_theme_light = {
   0xf5f5f2, 0xffffff, 0xffffff, 0xefeeea, 0xe7e6e1, 0xebeae6,
   0x1b1b1f, 0x5c5c65, 0x8b8b94, 0x4553e0, 0x3946cc, 0xffffff, 0x141420};
