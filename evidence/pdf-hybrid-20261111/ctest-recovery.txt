@@ -1,0 +1,68 @@
+Start testing: Nov 11 17:29 Eastern Standard Time
+----------------------------------------------------------
+165/307 Testing: native-pdf-hybrid-deck
+165/307 Test: native-pdf-hybrid-deck
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h/exreader-pdf-hybrid-test.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/tests/fixtures"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h
+"native-pdf-hybrid-deck" start time: Nov 11 17:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+pages=15 rendered=15 failures=0 first_paint_ms=14620.0
+ok
+<end of output>
+Test time = 128.60 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-hybrid-deck" end time: Nov 11 17:31 Eastern Standard Time
+"native-pdf-hybrid-deck" time elapsed: 00:02:08
+----------------------------------------------------------
+
+166/307 Testing: native-pdf-hybrid-merge
+166/307 Test: native-pdf-hybrid-merge
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h/exreader-pdf-hybrid-xref-test.exe" "merge"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h
+"native-pdf-hybrid-merge" start time: Nov 11 17:31 Eastern Standard Time
+Output:
+----------------------------------------------------------
+ok
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-hybrid-merge" end time: Nov 11 17:31 Eastern Standard Time
+"native-pdf-hybrid-merge" time elapsed: 00:00:00
+----------------------------------------------------------
+
+167/307 Testing: native-pdf-hybrid-chain
+167/307 Test: native-pdf-hybrid-chain
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h/exreader-pdf-hybrid-xref-test.exe" "chain"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h
+"native-pdf-hybrid-chain" start time: Nov 11 17:31 Eastern Standard Time
+Output:
+----------------------------------------------------------
+ok
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-hybrid-chain" end time: Nov 11 17:31 Eastern Standard Time
+"native-pdf-hybrid-chain" time elapsed: 00:00:00
+----------------------------------------------------------
+
+168/307 Testing: native-pdf-hybrid-bad-offset
+168/307 Test: native-pdf-hybrid-bad-offset
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h/exreader-pdf-hybrid-xref-test.exe" "bad-offset"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pdfxref-20261111/build/h
+"native-pdf-hybrid-bad-offset" start time: Nov 11 17:31 Eastern Standard Time
+Output:
+----------------------------------------------------------
+ok
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"native-pdf-hybrid-bad-offset" end time: Nov 11 17:31 Eastern Standard Time
+"native-pdf-hybrid-bad-offset" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 11 17:31 Eastern Standard Time
