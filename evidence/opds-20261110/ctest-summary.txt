@@ -1,0 +1,6 @@
+Command: ctest --test-dir ../exr-opds-build --output-on-failure -j 2
+Exit: 1
+99% tests passed, 1 tests failed out of 257
+Total Test time (real) = 956.69 sec
+The following tests FAILED:
+  1 - sdk-release (Timeout)

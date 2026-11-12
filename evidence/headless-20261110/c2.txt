@@ -1,0 +1,45 @@
+PASS registration_reachable: create_controls -> shell_create -> shell_a11y_names after panel creation
+PASS name_help_shell_back: 返回书架
+PASS name_help_shell_search_button: 全文搜索
+PASS name_help_shell_toc: 目录
+PASS name_help_shell_settings: 设置
+PASS name_help_shell_toc_panel: 目录面板
+PASS name_help_shell_toc_list: 目录列表
+PASS name_help_shell_panel: 阅读设置
+PASS name_help_shell_search_bar: 全文搜索栏
+PASS name_help_shell_search_edit: 搜索关键词
+PASS name_help_shell_search_prev: 上一处
+PASS name_help_shell_search_next: 下一处
+PASS name_help_shell_search_case: 区分大小写
+PASS name_help_shell_search_word: 全词匹配
+PASS name_help_shell_search_close: 关闭搜索
+PASS name_help_shell_segments[0]: 浅色主题
+PASS name_help_shell_segments[1]: 深色主题
+PASS name_help_shell_segments[2]: 跟随系统主题
+PASS name_help_style_preset: 排版预设
+PASS name_help_shell_tap_buttons[0]: 点击分区 20 / 60 / 20
+PASS name_help_shell_tap_buttons[1]: 点击分区 25 / 50 / 25
+PASS style_fields: 8 fields, increment/decrement names and help
+PASS native_help_style_save: native caption retained, explicit help registered
+PASS native_help_style_reset: native caption retained, explicit help registered
+PASS native_help_GetDlgItem(shell_panel, IDC_SHELL_DICTIONARY): native caption retained, explicit help registered
+PASS native_help_GetDlgItem(shell_panel, IDC_SHELL_SYNC): native caption retained, explicit help registered
+PASS native_property_registration: IAccPropServices name/help path present
+PASS page_name_help: page provider returns nonempty Name and HelpText
+PASS UIA_Text_TextChangedEventId: static provider event path; runtime delivery pending
+PASS UIA_Text_TextSelectionChangedEventId: static provider event path; runtime delivery pending
+PASS UiaRaiseStructureChangedEvent: static provider event path; runtime delivery pending
+PASS focus_stroke: 2px token used by draw path
+PASS contrast_palette: read system palette and apply it
+PASS contrast_read_only: host does not set high contrast
+PASS tab_configuration: declared order and visible/enabled filtering; actual focus pending
+PASS historical_01-text-page.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_02-page-focused.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_03-toc-button-focused.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_04-settings-button-focused.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_05-toc-open.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_06-settings-open.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_08-high-contrast-text.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_09-high-contrast-toc-focus.png: existing screenshot 1280x860, SHA256 checked
+PASS historical_10-high-contrast-toc-open.png: existing screenshot 1280x860, SHA256 checked
+44/44 static/evidence checks passed; runtime UIA pending

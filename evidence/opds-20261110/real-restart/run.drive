@@ -1,0 +1,9 @@
+shell|on
+shell_dpi|96
+shell_client|1280|800
+wait_idle
+shell_click|light
+sm_show|0
+sm_dump|shelf
+opds_dump|restarted
+quit
