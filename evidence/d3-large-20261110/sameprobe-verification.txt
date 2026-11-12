@@ -1,0 +1,6 @@
+Same-probe A/B: 3 books x 2 sides x 5 runs = 30; all page/part/TOC/search/target counts agree.
+Probe SHA256: 803a0a17d3fe3651ea2ed2674294bf2c8cda0bcde970591358aeec03d424ccb9
+pages | end WS A/B MiB | peak WS A/B MiB | full search A median/min, B median/min ms | turn p95 B median/min ms
+5901 40.94 43.21 59.59 59.64 {'median': 382.311, 'min': 244.618} {'median': 1716.44, 'min': 149.087} {'median': 106.57, 'min': 35.883}
+10964 48.16 49.57 59.73 59.73 {'median': 1551.155, 'min': 611.57} {'median': 1024.569, 'min': 615.003} {'median': 36.698, 'min': 14.594}
+26013 65.3 53.14 65.3 59.88 {'median': 1136.483, 'min': 862.198} {'median': 2664.782, 'min': 1089.736} {'median': 56.114, 'min': 13.961}

@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "archive_sha256": "c4800346cfc9dda5ad7e40d1cdae335e7e5492946382fb17d9da4fcdde625247",
+  "compiler": "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+  "import_library": "lib/libexreader.dll.a",
+  "commands": [
+    [
+      "C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "examples/minimal/main.c",
+      "lib/libexreader.dll.a",
+      "-o",
+      "minimal-gcc.exe"
+    ],
+    [
+      "C:\\Users\\Oscar\\Documents\\Codex\\large-book-d3\\package-gcc-smoke\\exreader-3.42.0-win-x64\\minimal-gcc.exe",
+      "examples/minimal/sample.epub",
+      "examples/minimal/font.ttf",
+      "page-gcc.pgm"
+    ]
+  ],
+  "pgm": {
+    "width": 720,
+    "height": 1040,
+    "bytes": 748816,
+    "nonwhite_pixels": 129549
+  }
+}
