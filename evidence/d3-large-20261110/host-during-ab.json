@@ -1,0 +1,14 @@
+{
+  "captured_at": "2026-11-10T17:52:56.7617394-05:00",
+  "cpu_load_percent": [
+    19
+  ],
+  "logical_processors": [
+    8
+  ],
+  "ram_total_kib": 16302648,
+  "ram_free_kib": 2107736,
+  "compiler_processes": 5,
+  "ctest_processes": 3,
+  "probe_processes": 1
+}
