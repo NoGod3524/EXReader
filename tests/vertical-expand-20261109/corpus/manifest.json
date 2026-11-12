@@ -1,0 +1,34 @@
+[
+  {
+    "id": "zh-lake",
+    "title": "湖上晨读",
+    "language": "zh-Hans",
+    "filename": "zh-lake.epub",
+    "sha256": "a6502bf7f7a7c61de9c4291d772a957ebd37bddef265f78a36a68848ddd444f4",
+    "provenance": "original MIT fixture"
+  },
+  {
+    "id": "zh-hill",
+    "title": "山城夜记",
+    "language": "zh-Hant",
+    "filename": "zh-hill.epub",
+    "sha256": "4bc2898706377c9243ceb6e0bf7f7f425ffbf20a7a8244f1fb61b47f9cc49d15",
+    "provenance": "original MIT fixture"
+  },
+  {
+    "id": "ja-stars",
+    "title": "星の観察日記",
+    "language": "ja",
+    "filename": "ja-stars.epub",
+    "sha256": "87251c789044b4a2066cc5b8f6908e6f3734d16a9ee38ee8d357a4912e5043dd",
+    "provenance": "original MIT fixture"
+  },
+  {
+    "id": "vertical-images",
+    "title": "图与文字的方向",
+    "language": "zh-Hans",
+    "filename": "vertical-images.epub",
+    "sha256": "87f5ec4df398e84799d03c7238f85489bf195a2f27d8708300177a7b899e58cc",
+    "provenance": "original MIT fixture"
+  }
+]
