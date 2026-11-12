@@ -102,6 +102,21 @@ const wchar_t *shell_d2d_family(const shell_d2d *shell, int style);
 void shell_d2d_metrics(const shell_d2d *shell, float values[8]);
 void shell_d2d_page_metrics(shell_d2d *shell, float values[12]);
 
+/* Editor layouts are disposable views; positions here are paragraph-local UTF-16. */
+HRESULT shell_d2d_edit_layout(shell_d2d *, const wchar_t *, const wchar_t *family,
+                             float size, float width, void **layout, float *height);
+void shell_d2d_edit_release(void *layout);
+unsigned shell_d2d_edit_hit(void *layout, float x, float y);
+void shell_d2d_edit_position(void *layout, unsigned at, float box[4]);
+typedef struct shell_d2d_edit_row {
+  void *layout;
+  float y, height;
+  unsigned start, length, caret;
+  int show_caret, selected_break;
+} shell_d2d_edit_row;
+HRESULT shell_d2d_edit_paint(shell_d2d *, HDC, const RECT *, int dark,
+                            const shell_d2d_edit_row *, size_t count, float inset, float scroll);
+
 #ifdef __cplusplus
 }
 #endif

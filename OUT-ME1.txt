@@ -1,0 +1,66 @@
+宿主 UI 已接入，[非驱动版 EXReader.exe](/C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/build/me1-release/EXReader.exe) 已构建。**七项指定验收通过，但存在一个 API 边界**：含未建模段落属性的空段新增 run、合段无法保留原 XML 模板，已设为受保护操作并停止扩展，未改引擎。
+
+完整交付记录：[OUT-ME1.txt](/C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/OUT-ME1.txt)。
+
+| 新文件 | 实际行数 |
+|---|---:|
+| [shell_docedit.inc](/C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/examples/windows/shell_docedit.inc) | 225 |
+| [shell_docedit_paint.inc](/C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/examples/windows/shell_docedit_paint.inc) | 160 |
+| [shell_docedit_input.inc](/C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/examples/windows/shell_docedit_input.inc) | 309 |
+
+[reader.c:4227](/C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/examples/reader.c:4227) 的插入上下文，原顺序保留：
+
+```c
+#include "windows/shell_sync.inc"
+#include "windows/shell_docedit.inc"
+#include "windows/shell_docedit_paint.inc"
+#include "windows/shell_docedit_input.inc"
+#endif
+```
+
+①–⑥使用真实宿主函数与 Direct2D 内存位图验证，无 HWND、无 SendInput：
+
+```powershell
+& build/me1-host/check_shell_docedit.exe tests/fixtures/rich.docx build/me1-evidence
+```
+
+实际输出：
+
+```text
+1 PASS fixture=tests/fixtures/rich.docx blocks=29 text_pixels=3831 caret_pixels=23 bitmap=build/me1-evidence/editor.bmp
+2 typed=ABC dirty=1 write/open ABC=1; backspace=3 write/open restored_original=1 PASS
+3 Enter block_count=29 -> 30 Ctrl+Z=29 PASS
+4 PASS UTF-8: runs 0:1,0:3,2:3,2:7 -> block 1; Shift selects CJK+emoji; selection_pixels=883; replace undo; Delete/Backspace join; redo
+5 PASS Ctrl+S -> exr_edit_docx_open text_equal=1 bytes=413 path=build/me1-evidence/edited.docx
+6 PASS edit dirty=1 title=*; save dirty=0 title=no*; reopen dirty=0; failed save dirty=1; exit Cancel/Save/Discard
+```
+
+绘制证据：[editor.bmp](/C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/build/me1-evidence/editor.bmp)。
+
+⑦回归命令：
+
+```powershell
+ctest --test-dir build/me1 -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure -j 6
+```
+
+```text
+100% tests passed out of 416
+
+Total Test time (real) =  91.81 sec
+```
+
+本工作树实际枚举 **418 项**，排除指定两项后为 **416 项**。
+
+当前工作树没有 prepush 脚本，已用现有 `deepseekHarness\ops\prepush-check.ps1 -Worktree $PWD.Path` 执行，未跳过文档门禁：
+
+```text
+ok    无冲突标记残留
+ok    code/docs 结构扫描
+ok    check_sdk_docs.py
+
+全部通过 —— 可以推
+```
+
+`src/**`、受保护检查脚本和版本例外文件均未修改；检查脚本 SHA256 仍为 `6EB22A30…FAFFB2B`。
+
+未做：富文本工具条、表格可视化编辑、图片拖放、多窗口、拼写检查、精确分页，以及上述需要保留段落模板的新 run／合段 API 边界。
