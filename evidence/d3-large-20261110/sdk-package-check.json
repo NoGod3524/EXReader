@@ -1,0 +1,63 @@
+{
+  "package": "C:\\Users\\Oscar\\AppData\\Local\\Temp\\exreader SDK smoke e0kxo2lx\\independent extraction\\exreader-3.42.0-win-x64",
+  "checks": [
+    {
+      "check": "package files and safe paths",
+      "passed": true,
+      "detail": "48 ordinary files; 13716184 bytes"
+    },
+    {
+      "check": "package name and archive format",
+      "passed": true,
+      "detail": "exreader-3.42.0-win-x64"
+    },
+    {
+      "check": "required SDK files",
+      "passed": true,
+      "detail": "LICENSE, README.md, SHA256SUMS, VERSION, bin/exr-info.exe, examples/minimal/FONT-LICENSE.md, examples/minimal/font.ttf, examples/minimal/main.c, examples/minimal/sample.epub, lib/libexreader.dll"
+    },
+    {
+      "check": "version identity",
+      "passed": true,
+      "detail": "package name = VERSION = version.h = source VERSION = cmake: 3.42.0"
+    },
+    {
+      "check": "public headers",
+      "passed": true,
+      "detail": "17 API headers + version.h = 18 files"
+    },
+    {
+      "check": "minimal example line limit",
+      "passed": true,
+      "detail": "64 lines <= 80"
+    },
+    {
+      "check": "SHA256SUMS coverage and content",
+      "passed": true,
+      "detail": "47 SHA256 digests; exact coverage of all files except SHA256SUMS"
+    },
+    {
+      "check": "library and CLI architecture",
+      "passed": true,
+      "detail": "library and CLI: PE win-x64"
+    },
+    {
+      "check": "public export count",
+      "passed": true,
+      "detail": "lib/libexreader.dll: exr_* exports [435]; minimum 389"
+    },
+    {
+      "check": "CLI runtime layout and import library",
+      "passed": true,
+      "detail": "import library lib/libexreader.dll.a; bin DLL matches lib DLL"
+    }
+  ],
+  "passed": true,
+  "version": "3.42.0",
+  "platform": "win-x64",
+  "file_count": 48,
+  "size_bytes": 13716184,
+  "export_counts": [
+    435
+  ]
+}

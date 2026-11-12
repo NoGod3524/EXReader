@@ -1,0 +1,87 @@
+{
+ "output": "C:\\Users\\Oscar\\Documents\\Codex\\large-book-d3\\books\\v11.epub",
+ "bytes": 9234187,
+ "sha256": "816be0c67ebd969be261128edf5c81b94ccc205094006b5788d13dcfb0f89ccc",
+ "volumes": [
+  {
+   "volume": "v01",
+   "source": "hongloumeng-24264.epub",
+   "title": "紅樓夢",
+   "repeat": false,
+   "spine_items": 31
+  },
+  {
+   "volume": "v02",
+   "source": "pg23962.epub",
+   "title": "西遊記",
+   "repeat": false,
+   "spine_items": 13
+  },
+  {
+   "volume": "v03",
+   "source": "pg23950.epub",
+   "title": "三國志演義",
+   "repeat": false,
+   "spine_items": 12
+  },
+  {
+   "volume": "v04",
+   "source": "pg23863.epub",
+   "title": "水滸傳",
+   "repeat": false,
+   "spine_items": 10
+  },
+  {
+   "volume": "v05",
+   "source": "pg23910.epub",
+   "title": "封神演義",
+   "repeat": false,
+   "spine_items": 14
+  },
+  {
+   "volume": "v06",
+   "source": "pg24226.epub",
+   "title": "史記",
+   "repeat": false,
+   "spine_items": 13
+  },
+  {
+   "volume": "v07",
+   "source": "pg24230.epub",
+   "title": "今古奇觀",
+   "repeat": false,
+   "spine_items": 14
+  },
+  {
+   "volume": "v08",
+   "source": "xingshihengyan-24239.epub",
+   "title": "醒世恆言",
+   "repeat": false,
+   "spine_items": 21
+  },
+  {
+   "volume": "v09",
+   "source": "pg24141.epub",
+   "title": "警世通言",
+   "repeat": false,
+   "spine_items": 8
+  },
+  {
+   "volume": "v10",
+   "source": "pg24032.epub",
+   "title": "儒林外史",
+   "repeat": false,
+   "spine_items": 6
+  },
+  {
+   "volume": "v11",
+   "source": "tangshi300-52323.epub",
+   "title": "唐诗三百首",
+   "repeat": false,
+   "spine_items": 3
+  }
+ ],
+ "spine_items": 145,
+ "text_chars_non_space": 6131260,
+ "images": 11
+}
