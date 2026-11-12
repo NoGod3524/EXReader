@@ -1,19 +1,19 @@
 # EXReader C SDK API 参考
 
-本参考覆盖当前 `include/` 的 **20/20 个公开头文件、462/462 个公开函数声明（100%）**，
+本参考覆盖当前 `include/` 的 **19/19 个公开头文件、469/469 个公开函数声明（100%）**，
 按 **15/15 个模块**组织，每个模块附一个完整、独立的 C11 程序。
-17 个头文件声明函数；`exreader.h`、`exr/core.h` 为聚合入口，`exr/version.h` 提供版本宏。
+16 个头文件声明函数；`exreader.h`、`exr/core.h` 为聚合入口，`exr/version.h` 提供版本宏。
 `EXR_API` 函数声明是本参考的统计口径；类型、枚举、宏和回调类型不另计为导出函数。
 
 原 SDK 文档验收时，Windows 聚合 DLL 的 427 个具名导出全部覆盖：**427/427（100%）**；
-当前 [ABI 契约](../tools/abi/contract.json) 的 **394/394** 项也全部覆盖，现在另外记录 68 个未冻结声明。
+当前 [ABI 契约](../tools/abi/contract.json) 的 **394/394** 项也全部覆盖，现在另外记录 75 个未冻结声明。
 任务中的“约 389”是 [历史 ABI 快照](ABI.md) 的数值，不能作为当前总数。
 真实编译、运行与导出比对见 [示例验收](examples/README.md)、[编译输出](examples/compile-output.txt)、
 [运行输出](examples/test-output.txt)、[机器统计](examples/verification.json)。
 
 合入 main 后新增的编辑模型与重排声明见 `exr/edit.h`、`exr/reflow.h`。当前 main 没有 `src/docx_edit.c`；
 模型函数须配置 `EXR_EDIT_MODEL_SOURCE` 接入匹配的 X1 实现，重排函数在缺少模型时返回 `EXR_UNSUPPORTED`。
-这里的 462 是头文件声明数，不是默认 DLL 导出实测数；上面的编译和机器统计保留原验收时间点，
+这里的 469 是头文件声明数，不是默认 DLL 导出实测数；上面的编译和机器统计保留原验收时间点，
 新增接口的配置、限制和锚点字段见 [X2 接口说明](X2_REFLOW.md)。
 
 ## 阅读约定与 ABI 分类
@@ -21,13 +21,13 @@
 | 标注 | 本参考中函数数 | 含义 |
 |---|---:|---|
 | 稳定 | 394 | 已列入当前 ABI 1 符号契约；沿用现有交付冻结口径，不新增跨版本二进制布局保证 |
-| 实验 | 68 | 当前公开头文件已声明，尚未加入冻结清单；其中 edit.h 的模型声明需要外部 X1 实现，不能假设默认 DLL 已导出；升级时核对签名与结构布局 |
-| 内部 | 0 / 462 | 当前公开声明没有内部入口；`src/` 私有函数及第三方依赖不属于 SDK 合约，不应由外部调用 |
+| 实验 | 75 | 当前公开头文件已声明，尚未加入冻结清单；其中 edit.h 的模型声明需要外部 X1 实现，不能假设默认 DLL 已导出；升级时核对签名与结构布局 |
+| 内部 | 0 / 469 | 当前公开声明没有内部入口；`src/` 私有函数及第三方依赖不属于 SDK 合约，不应由外部调用 |
 
 “内部”适用于所有仅出现在 `src/*_internal.h` 等私有声明中的实现，例如
 `exr_fail`、`exr_control_poll`、`exr_grow`、`exr_copy`（[私有基础头](../src/base_internal.h)）。
 某些平台动态库可能暴露这些实现或第三方符号；可被链接器找到不等于公开 API。
-本页 0/462 仅说明公开函数的分类，不表示引擎没有内部函数，也不把历史其他平台的多余导出数量当作本次测量。
+本页 0/469 仅说明公开函数的分类，不表示引擎没有内部函数，也不把历史其他平台的多余导出数量当作本次测量。
 
 所有字符串均为 UTF-8。普通文本范围用规范化文本的 UTF-8 字节半开区间 `[start, end)`，
 不是原文件偏移、Unicode 字符序号或 CFI 的 UTF-16 code units。索引通常从 0 起；`SIZE_MAX`
@@ -67,13 +67,13 @@ provider、读取源、分配内存的接口还可能传播相应回调、I/O、
 | 字典 | 6 | [dictionary.c](examples/dictionary.c) |
 | 渲染 | 4 | [render.c](examples/render.c) |
 | 全文索引 | 9 | [textindex.c](examples/textindex.c) |
-| 文档 | 60 | [document.c](examples/document.c) |
+| 文档 | 72 | [document.c](examples/document.c) |
 | 分页 | 58 | [pagination.c](examples/pagination.c) |
 | 搜索 | 10 | [search.c](examples/search.c) |
 | 标注 | 45 | [annotation.c](examples/annotation.c) |
 | 目录 | 17 | [toc.c](examples/toc.c) |
 | 书库 | 49 | [library.c](examples/library.c) |
-| 格式与转换 | 34 | [formats.c](examples/formats.c) |
+| 格式与转换 | 29 | [formats.c](examples/formats.c) |
 | 固定版面与 PDF | 12 | [pdf.c](examples/pdf.c) |
 | 音频 | 76 | [audio.c](examples/audio.c) |
 
@@ -2393,6 +2393,34 @@ int main(void) {
 
 **所有权** 成功删除使该块借用视图失效；ID 永不复用。
 
+### `exr_edit_delete_image`
+
+**签名** `exr_status exr_edit_delete_image(exr_edit_doc *doc,exr_edit_id image_id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型；`image_id` 可为新插入的图片块 ID、导入的绘图 run ID（含表格单元格内 run），或要移除绘图并保留文字的段落 ID。
+
+**返回与失败** 成功返回 EXR_OK；新图片块被删除，导入段落/run 仅移除图片绘图，保留文字及其他内容。无效 ID、未找到图片或缺少所需原包部件为 EXR_ARGUMENT；XML 解析、预算或分配错误会传播。写出时清理图片关系及任何 OPC 部件都不再引用的媒体。参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** doc 为借用输入，不被消费；模型管理删除及历史保留的内存。成功后被删除或修改块的原借用视图失效，调用方不单独释放图片或 run。
+
+### `exr_edit_delete_table`
+
+**签名** `exr_status exr_edit_delete_table(exr_edit_doc *doc,exr_edit_id table_id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型；`table_id` 为要整体删除的表格块 ID，亦可指定仅保留原 XML 的表格块。
+
+**返回与失败** 成功返回 EXR_OK，删除整张表格。空模型、无效 ID 或非表格块为 EXR_ARGUMENT；历史记录分配失败可返回 EXR_MEMORY。参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** doc 为借用输入，不被消费；表格、行和单元格内存由模型及历史记录管理。删除后该表格的借用视图失效，ID 永不复用，无返回分配。
+
 ### `exr_edit_doc_create`
 
 **签名** `exr_status exr_edit_doc_create(const exr_edit_section *sections,size_t section_count, const exr_edit_block *blocks,size_t block_count,const exr_edit_part *parts,size_t part_count, const exr_edit_options *options,exr_edit_doc **out);`
@@ -2421,6 +2449,48 @@ int main(void) {
 
 **所有权** 消费模型；所有借用视图及活动事务句柄失效，先释放关联 pager。
 
+### `exr_edit_docx_open`
+
+**签名** `exr_status exr_edit_docx_open(const char *path,const exr_edit_options *options, exr_edit_doc **out,exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `path` 为 UTF-8 DOCX 文件路径；`options` 可为 NULL，使用默认历史深度；`out` 为非空模型输出；`error` 为可选诊断输出。
+
+**返回与失败** 成功返回 EXR_OK，读取 OPC 包并保留未知 XML 与包部件；XML 仅支持 UTF-8/US-ASCII。空参数为 EXR_ARGUMENT，读取失败为 EXR_IO；还可能返回 EXR_FORMAT、EXR_ENCODING、EXR_UNSUPPORTED、EXR_LIMIT 或 EXR_MEMORY。失败时 *out=NULL。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** 路径和选项仅在调用期间借用，文件数据由 SDK 读取并复制到独立模型；成功后调用方拥有 *out，使用 exr_edit_doc_free 释放。
+
+### `exr_edit_docx_read`
+
+**签名** `exr_status exr_edit_docx_read(const void *data,size_t size, const exr_edit_options *options,exr_edit_doc **out,exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `data`/`size` 为非空 DOCX 包字节及字节数；`options` 可为 NULL，使用默认历史深度；`out` 为非空模型输出；`error` 为可选诊断输出。
+
+**返回与失败** 成功返回 EXR_OK，解析 DOCX 并保留未知 XML 与包部件；XML 仅支持 UTF-8/US-ASCII。空输入或输出为 EXR_ARGUMENT，输入或解压预算超限为 EXR_LIMIT；格式、编码、不支持内容及分配失败分别可能返回 EXR_FORMAT、EXR_ENCODING、EXR_UNSUPPORTED、EXR_MEMORY。失败时 *out=NULL。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** 输入缓冲区和选项在调用期间借用；模型深拷贝所需数据，返回后调用方可释放输入。成功后 *out 的所有权转给调用方，用 exr_edit_doc_free 释放。
+
+### `exr_edit_docx_write`
+
+**签名** `exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data, size_t *size,exr_error *error);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为编辑模型；`data`、`size` 为非空输出指针，接收 DOCX 包内存及字节数；`error` 为可选诊断输出。
+
+**返回与失败** 成功返回 EXR_OK，将模型写入内存中的 DOCX 包，保留未知 XML/部件并清理已删除图片的关系及无引用媒体；编辑会使原数字签名失效。空参数或非法模型为 EXR_ARGUMENT，缺少原始 XML 模板所需主部件可返回 EXR_UNSUPPORTED；还可能返回 EXR_FORMAT、EXR_ENCODING、EXR_LIMIT 或 EXR_MEMORY。失败清空可用的输出：*data=NULL、*size=0。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** doc 为借用输入，不被消费。成功缓冲区由 SDK 分配，所有权转给调用方，使用 exr_free(*data) 释放；输出不是模型内部的借用视图。
+
 ### `exr_edit_find_block`
 
 **签名** `const exr_edit_block *exr_edit_find_block(const exr_edit_doc *doc,exr_edit_id id);`
@@ -2434,6 +2504,20 @@ int main(void) {
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
 **所有权** 借用指针，块被修改/删除即失效。
+
+### `exr_edit_insert_image`
+
+**签名** `exr_status exr_edit_insert_image(exr_edit_doc *doc,exr_edit_id after_id, const void *bytes,size_t size,double width_pt,double height_pt,exr_edit_id *new_id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型；`after_id` 为锚点块 ID，0 表示开头；`bytes`/`size` 为 PNG/JPEG 原始字节及非零长度；`width_pt`、`height_pt` 为有限正数，单位为点；`new_id` 为非空新块 ID 输出。
+
+**返回与失败** 成功返回 EXR_OK，插入图片块，保存原始载荷而不重新编码。非法锚点、输出或尺寸为 EXR_ARGUMENT，超输入预算为 EXR_LIMIT，非 PNG/JPEG 签名为 EXR_FORMAT；图片解码错误会传播，分配可返回 EXR_MEMORY。失败清零 *new_id；参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** 图片字节在调用期间借用并深拷贝，返回后可释放输入；图片及新块由模型分配和释放。new_id 为宿主标量输出，无指针所有权转移。
 
 ### `exr_edit_insert_paragraph`
 
@@ -2547,6 +2631,20 @@ int main(void) {
 
 **所有权** 属性由模型持有；修改后重新取得视图。
 
+### `exr_edit_set_run_text`
+
+**签名** `exr_status exr_edit_set_run_text(exr_edit_doc *doc,exr_edit_id block_id, size_t run_index,const char *text,size_t text_size);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`block_id` 为段落块 ID；`run_index` 从 0 起；`text`/`text_size` 为有效 UTF-8/XML 文本及字节数，允许 NULL/0 清空，长度不是字符数。
+
+**返回与失败** 成功返回 EXR_OK，替换一个 TEXT run 的文字，保留 ID、直接属性、原始 XML 模板及相邻 opaque run。无效 ID、索引、长度或文本为 EXR_ARGUMENT，非段落块或 opaque run 为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY。参与事务及 undo/redo；事务内失败会锁存状态，后续命令失败直至回滚，提交失败事务会整体回滚。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** 输入文字可别名模型的借用文本，调用期间借用并复制；新文字由模型分配和释放。成功修改使该块原有借用视图失效，无返回内存需要调用方释放。
+
 ### `exr_edit_split_paragraph`
 
 **签名** `exr_status exr_edit_split_paragraph(exr_edit_doc *doc,exr_edit_id block_id, size_t run_index,size_t byte_offset);`
@@ -2560,6 +2658,76 @@ int main(void) {
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
 **所有权** 段落属性复制；修改后重新取得借用视图。
+
+### `exr_edit_table_delete_row`
+
+**签名** `exr_status exr_edit_table_delete_row(exr_edit_doc *doc,exr_edit_id table_id,size_t row_index);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table_id` 为已建模的表格块 ID；`row_index` 为从 0 起的物理行索引。
+
+**返回与失败** 成功返回 EXR_OK。非法模型、ID、越界行索引或删除唯一一行为 EXR_ARGUMENT；无表格模型或删除会破坏垂直合并链为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY。参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** doc 为借用输入；模型及历史记录管理删除行的内存。成功修改使该表格原有借用视图失效，无返回分配，也不需调用方释放行或单元格。
+
+### `exr_edit_table_insert_row`
+
+**签名** `exr_status exr_edit_table_insert_row(exr_edit_doc *doc,exr_edit_id table_id,size_t after_row_index);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table_id` 为已建模的表格块 ID；`after_row_index` 为从 0 起的物理行索引，在其后插入；SIZE_MAX 表示在首行前插入。
+
+**返回与失败** 成功返回 EXR_OK，按表格列数创建空单元格并从锚点行（前插时为首行）的可用段落继承格式。非法模型、ID 或行索引为 EXR_ARGUMENT；无表格模型或插入位置会拆开垂直合并链为 EXR_UNSUPPORTED；容量溢出为 EXR_LIMIT，分配失败为 EXR_MEMORY。参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** doc 为借用输入；新行、单元格及段落由模型分配和释放。成功修改使该表格原有借用视图失效，无返回分配。
+
+### `exr_edit_table_set_borders`
+
+**签名** `exr_status exr_edit_table_set_borders(exr_edit_doc *doc,exr_edit_id table_id,exr_edit_borders spec);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table_id` 为已建模的表格块 ID；`spec` 为 EXR_EDIT_BORDER_NONE、EXR_EDIT_BORDER_SINGLE 或 EXR_EDIT_BORDER_DOUBLE。
+
+**返回与失败** 成功返回 EXR_OK，更新表格边框供 DOCX 写出。非法模型、ID 或枚举为 EXR_ARGUMENT，无表格模型为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY。参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** doc 为借用输入，边框枚举按值复制；新表格快照及历史由模型分配和释放。成功修改使该表格原有借用视图失效，无返回分配。
+
+### `exr_edit_table_set_cell_text`
+
+**签名** `exr_status exr_edit_table_set_cell_text(exr_edit_doc *doc,exr_edit_id table_id, size_t row,size_t col,const exr_edit_run *runs,size_t count);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table_id` 为已建模的表格块 ID；`row`、`col` 为从 0 起的物理行/单元格索引；`runs`/`count` 为 TEXT run 数组及数量，NULL/0 清空单元格文本。
+
+**返回与失败** 成功返回 EXR_OK，以单个段落替换目标单元格内容，沿用原首块的段落属性，输入 run 取得新 ID。非法索引、数组或非 TEXT run 为 EXR_ARGUMENT；无表格模型或受保护单元格（合并、嵌套表格、底纹、opaque 内容）为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY；其他行/单元格仍可编辑。参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** 输入 run、文字及属性在调用期间借用，文字和属性复制到模型；输入 run 的 ID 与 opaque XML 不沿用。模型分配和释放新内容；成功修改使该表格原有借用视图失效，无返回分配。
+
+### `exr_edit_table_set_width`
+
+**签名** `exr_status exr_edit_table_set_width(exr_edit_doc *doc,exr_edit_id table_id,int32_t twips);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table_id` 为已建模的表格块 ID；`twips` 为正表格宽度，单位为 twip（1/20 点）。
+
+**返回与失败** 成功返回 EXR_OK，更新表格宽度供 DOCX 写出。非法模型、ID 或非正宽度为 EXR_ARGUMENT，无表格模型为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY。参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+
+**线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
+
+**所有权** doc 为借用输入，宽度按值复制；新表格快照及历史由模型分配和释放。成功修改使该表格原有借用视图失效，无返回分配。
 
 ### `exr_edit_undo`
 
@@ -5274,8 +5442,6 @@ int main(void) {
 ```c
 /* SPDX-License-Identifier: MIT */
 #include <exr/formats.h>
-#include <exr/opds.h>
-#include <string.h>
 #include <stdio.h>
 
 int main(void) {
@@ -5289,18 +5455,7 @@ int main(void) {
   else
     fprintf(stderr, "%s\n", error.message);
   exr_document_free(document);
-  if (status != EXR_OK) return 1;
-  const char atom[] = "<feed xmlns='http://www.w3.org/2005/Atom'><title>Catalog</title>"
-    "<entry><title>Example</title><link rel='http://opds-spec.org/acquisition' "
-    "type='application/epub+zip' href='../books/a.epub'/></entry></feed>";
-  exr_opds_feed feed = {0};
-  status = exr_opds_parse(atom, sizeof(atom) - 1, "https://example.test/catalog/root.xml", &feed, &error);
-  int catalog_ok = status == EXR_OK && feed.entry_count == 1 && feed.entries[0].download_url &&
-    !strcmp(feed.entries[0].download_url, "https://example.test/books/a.epub");
-  if (catalog_ok) printf("OPDS entries=%zu title=%s\n", feed.entry_count, feed.title);
-  else fprintf(stderr, "OPDS parse failed: %s\n", error.message);
-  exr_opds_feed_free(&feed);
-  return catalog_ok ? 0 : 1;
+  return status == EXR_OK ? 0 : 1;
 }
 ```
 
@@ -5709,77 +5864,6 @@ int main(void) {
 **线程** 同一对象及共享回调上下文的操作由宿主串行；同步回调在调用线程运行，不要重入当前对象。
 
 **所有权** 输入借用；data 用 exr_free。成功字节独立于 doc。
-
-### `exr_opds_parse`
-
-**签名** `exr_status exr_opds_parse(const void *data, size_t size, const char *base_url, exr_opds_feed *out, exr_error *error);`
-
-**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
-
-**参数** `data/size` 为 Atom 字节；`base_url` 为相对地址基准；`out` 指向空 feed；`error` 可 NULL。
-
-**返回与失败** EXR_OK 返回 OPDS 1.x 内容；无效参数 ARGUMENT，损坏 XML/结构 FORMAT，输入超过 16 MiB、4096 条目或 64 层嵌套 LIMIT，分配失败 MEMORY。失败清零输出。
-
-**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
-
-**所有权** 输入仅调用期间借用；feed 内字符串、条目和地址由 exr_opds_feed_free 统一释放。再次填充前先释放旧 feed。
-
-### `exr_opds_feed_free`
-
-**签名** `void exr_opds_feed_free(exr_opds_feed *feed);`
-
-**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
-
-**参数** `feed` 为解析结果，可 NULL。
-
-**返回与失败** 无返回值；NULL 无操作，释放后结构清零。
-
-**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
-
-**所有权** 释放 feed 的所有成员，不释放宿主持有的 feed 结构本身。
-
-### `exr_opds_parse_search`
-
-**签名** `exr_status exr_opds_parse_search(const void *data, size_t size, const char *base_url, char **template_url, exr_error *error);`
-
-**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
-
-**参数** `data/size` 为 OpenSearch XML；`base_url` 用来解析相对模板；`template_url` 接收结果；`error` 可 NULL。
-
-**返回与失败** EXR_OK 返回 Atom/OPDS 搜索模板；参数 ARGUMENT、损坏 XML/缺少模板 FORMAT、输入上限 LIMIT、内存 MEMORY；失败输出 NULL。
-
-**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
-
-**所有权** 输入借用；成功的模板字符串由 exr_free 释放。
-
-### `exr_opds_search_url`
-
-**签名** `exr_status exr_opds_search_url(const char *template_url, const char *query, char **out, exr_error *error);`
-
-**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
-
-**参数** `template_url` 含 `{searchTerms}`；`query` 为非空 UTF-8 搜索词；`out` 接收展开地址；`error` 可 NULL。
-
-**返回与失败** EXR_OK 返回百分号编码后的查询地址；空查询/缺少搜索参数 ARGUMENT，查询超过 1 KiB LIMIT，分配失败 MEMORY。其他模板参数展开为空。
-
-**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
-
-**所有权** 输入借用；成功地址由 exr_free 释放，失败输出 NULL。
-
-### `exr_opds_resolve_url`
-
-**签名** `exr_status exr_opds_resolve_url(const char *base_url, const char *reference, char **out, exr_error *error);`
-
-**ABI** 实验。声明：[opds.h](../include/exr/opds.h)。
-
-**参数** `base_url` 为相对引用的基准；`reference` 为地址引用；`out` 接收解析结果；`error` 可 NULL。
-
-**返回与失败** EXR_OK 按 RFC 3986 合并路径；无效参数或相对地址缺少有效基准 ARGUMENT，地址长度超限 LIMIT，内存失败 MEMORY。地址文本解析不执行网络请求。
-
-**线程** 独立输入和输出可并发；同一输出对象的填充、读取与释放由宿主串行。
-
-**所有权** 输入借用；成功字符串由 exr_free 释放，失败输出 NULL。
-
 
 ## 固定版面与 PDF
 
