@@ -9,6 +9,9 @@ env:
   EXR_APPLE_SDK_VERSION: '3.41.0'
   EXR_APPLE_PAGE_THEME: 'ON'
   EXR_APPLE_RAW3: 'OFF'
+defaults:
+  run:
+    shell: bash
 jobs:
   sdk:
     name: Team24 Apple installed ${{ matrix.target }}

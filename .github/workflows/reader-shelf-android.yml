@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 jobs:
   android-shelf:
     runs-on: ubuntu-latest
@@ -36,7 +39,7 @@ jobs:
           echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           echo "$sdk/platform-tools" >> "$GITHUB_PATH"
           echo "$sdk/emulator" >> "$GITHUB_PATH"
-          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          printf 'y\n%.0s' {1..100} | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
           "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "ndk;27.0.12077973" "cmake;3.22.1" "emulator" "system-images;android-34;default;x86_64"
           sudo apt-get update -qq
           sudo apt-get install -y patchelf
@@ -99,7 +102,6 @@ jobs:
       - name: Preflight original 45 plus review 10 plus bounded 11
         id: preflight
         if: always()
-        continue-on-error: true
         env:
           ANDROID_HOST_UPSTREAM: '{"build":"${{ steps.build.outcome }}","static":"${{ steps.build.outcome }}","emulator":"${{ steps.emulator.outcome }}"}'
         run: |

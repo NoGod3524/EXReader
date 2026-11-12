@@ -22,6 +22,8 @@ jobs:
       - name: Verify exact base and permitted source scope
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           python tests/reader_same_source/guard.py --source "$env:GITHUB_SHA" --report build/composition-source-windows.json
           if ($LASTEXITCODE) { throw 'Composition source admission failed' }
           python -m py_compile tests/windows_organization_projection/check_ui.py tests/windows_organization_projection/cloud_ui.py tests/windows_organization_projection/verify.py
@@ -29,11 +31,15 @@ jobs:
       - name: Build and run retained composed Windows checks
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           python tests/reader_wave3_c09/build.py
           if ($LASTEXITCODE) { throw 'Composed host build or retained checks failed' }
       - name: Build installed raw command consumer
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           $prefix = "$pwd/build/c09/raw-stage;$pwd/build/c09/product-stage;$pwd/build/c09/sdk-stage"
           cmake -S tests/reader_windows_raw3/metadata-consumer -B build/organization-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DRAW_METADATA=ON "-DCMAKE_PREFIX_PATH=$prefix"
           if ($LASTEXITCODE) { throw 'Consumer configuration failed' }
@@ -45,13 +51,25 @@ jobs:
           if ($LASTEXITCODE) { throw 'Cloud readback build failed' }
       - name: Retain independent native cloud import regression
         id: cloud
-        run: python tests/windows_organization_projection/cloud_ui.py
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python tests/windows_organization_projection/cloud_ui.py
       - name: Two Windows hosts synchronize organization through HTTPS
         if: ${{ always() && steps.cloud.outcome != 'skipped' }}
-        run: python tests/windows_organization_projection/check_ui.py
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python tests/windows_organization_projection/check_ui.py
       - name: Browse 170 seeded members in each group on the real host
         if: ${{ always() && steps.cloud.outcome != 'skipped' }}
-        run: python tests/windows_organization_projection/paged_ui.py
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python tests/windows_organization_projection/paged_ui.py
       - name: Preserve evidence and failures
         id: upload
         if: always()
