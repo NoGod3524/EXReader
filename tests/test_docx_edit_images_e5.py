@@ -3,13 +3,11 @@
 import argparse
 import ctypes as c
 import hashlib
-import io
 import re
 import struct
 import time
 from pathlib import Path
 import xml.etree.ElementTree as ET
-from zipfile import ZipFile
 
 from test_docx_edit_io import Block, ID, package, repack, unzip
 from test_docx_edit_table_image import API, png, paragraph, SECT, WP, A
@@ -64,22 +62,6 @@ def drawing(rid='image1', width=123456, height=234567):
             f'<a:blip r:embed="{rid}"/></wp:anchor></w:drawing>')
 
 
-def without_zip_timestamps(data):
-    """Ignore only miniz's wall-clock DOS date/time fields, preserving all other bytes."""
-    result = bytearray(data)
-    with ZipFile(io.BytesIO(data)) as archive:
-        central = archive.start_dir
-        for entry in archive.infolist():
-            local = entry.header_offset
-            assert data[local:local + 4] == b'PK\x03\x04'
-            assert data[central:central + 4] == b'PK\x01\x02'
-            result[local + 10:local + 14] = b'\0' * 4
-            result[central + 12:central + 16] = b'\0' * 4
-            name, extra, comment = struct.unpack_from('<HHH', data, central + 28)
-            central += 46 + name + extra + comment
-    return bytes(result)
-
-
 def main(library):
     registration = (Path(__file__).parent / 'fixtures/docx-real/codex/register.cmake').read_text()
     preload_pattern = re.search(r'if\(test MATCHES "([^"]+)"', registration)[1]
@@ -113,7 +95,6 @@ def main(library):
         assert c.string_at(bitmap.pixels, 4) == b'\xff\x00\x00\xff'
     finally:
         api.dll.exr_bitmap_free(c.byref(bitmap))
-    print('1 PNG/BMP/GIF insert: EXR_OK; GIF frame 0=red, frame 1=green, display=frame 0')
     source = package(body=paragraph('before') + SECT)
     for name, data, fmt in [('PNG', png(), 1), ('BMP', bmp(), 4), ('GIF', gif(), 3)]:
         doc = api.read(source)
@@ -148,7 +129,7 @@ def main(library):
             if name == 'PNG':
                 # Cross a DOS timestamp boundary; ASan can do this even without a delay.
                 time.sleep(2.1)
-                assert without_zip_timestamps(api.write(doc)) == without_zip_timestamps(before)
+                assert api.write(doc) == before
             bad = b'this is a text file renamed to .png'
             out = ID(999)
             assert api.insert_image(doc, 0, bad, len(bad), 10, 10, c.byref(out)) == 5
@@ -160,12 +141,13 @@ def main(library):
             assert after_count == count, (count, after_count)
             assert [bytes(api.block_at(doc, i).contents) for i in range(count)] == blocks_before
             assert (bytes(view(block)), payload(block)) == image_before
-            assert without_zip_timestamps(after) == without_zip_timestamps(before)
+            assert after == before
             print(f'3/4 {name}: reopen IMAGE format={fmt}, twips=250x485 (EMU=158750x307975), payload byte-identical ({len(data)} bytes)')
         finally:
             api.doc_free(doc)
+    print('1 PNG/BMP/GIF insert: EXR_OK; GIF frame 0=red, frame 1=green, display=frame 0')
     print('2 renamed text.png: EXR_FORMAT; output ID=0; model/payload unchanged; '
-          'serialized bytes identical except ZIP DOS timestamps')
+          'serialized bytes identical including ZIP DOS timestamps')
 
     # Same-run mixed content, identical images, following text, and table cell anchors.
     raw = '<w:r><w:t>left</w:t>' + drawing() * 2 + '<w:t>right</w:t></w:r>'
