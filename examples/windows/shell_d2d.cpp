@@ -468,6 +468,13 @@ shell_theme shell_theme_contrast = shell_theme_dark; /* declared extern "C" in s
 static const shell_theme &theme_of(int dark) { return dark == 2 ? shell_theme_contrast : dark ? shell_theme_dark : shell_theme_light; }
 static float line_alpha(int dark, float normal) { return dark == 2 ? 1.f : normal; }
 
+struct edit_color { DWRITE_TEXT_RANGE range; uint32_t rgb; };
+struct edit_layout {
+  IDWriteTextLayout *text=nullptr;
+  std::vector<edit_color> colors;
+  ~edit_layout() {if(text)text->Release();}
+};
+
 extern "C" HRESULT shell_d2d_edit_layout(shell_d2d *s,const wchar_t *text,const wchar_t *family,
                                          float size,float width,void **out,float *height) {
   *out=nullptr;
@@ -481,36 +488,70 @@ extern "C" HRESULT shell_d2d_edit_layout(shell_d2d *s,const wchar_t *text,const 
   DWRITE_TEXT_METRICS metrics={};
   if(SUCCEEDED(hr)) hr=layout->GetMetrics(&metrics);
   if(FAILED(hr)) {if(layout)layout->Release();return hr;}
-  *height=metrics.height;*out=layout;return S_OK;
+  auto view=new(std::nothrow) edit_layout;
+  if(!view) {layout->Release();return E_OUTOFMEMORY;}
+  view->text=layout;*height=metrics.height;*out=view;return S_OK;
+}
+
+extern "C" HRESULT shell_d2d_edit_style(shell_d2d *s,void *p,unsigned start,unsigned length,
+  const wchar_t *family,float size,unsigned bold,unsigned italic,int has_color,uint32_t rgb,int *missing) {
+  auto view=static_cast<edit_layout *>(p);auto text=view->text;
+  DWRITE_TEXT_RANGE range={start,length};*missing=0;
+  HRESULT hr=S_OK;
+  if(family && *family) {
+    IDWriteFontCollection *fonts=nullptr;UINT32 index=0;BOOL exists=FALSE;
+    hr=s->write->GetSystemFontCollection(&fonts,FALSE);
+    if(SUCCEEDED(hr)) hr=fonts->FindFamilyName(family,&index,&exists);
+    if(fonts)fonts->Release();
+    if(FAILED(hr))return hr;
+    if(exists)hr=text->SetFontFamilyName(family,range);else *missing=1;
+  }
+  if(SUCCEEDED(hr) && size>0)hr=text->SetFontSize(size,range);
+  if(SUCCEEDED(hr))hr=text->SetFontWeight(bold ? DWRITE_FONT_WEIGHT_BOLD:DWRITE_FONT_WEIGHT_NORMAL,range);
+  if(SUCCEEDED(hr))hr=text->SetFontStyle(italic ? DWRITE_FONT_STYLE_ITALIC:DWRITE_FONT_STYLE_NORMAL,range);
+  if(SUCCEEDED(hr) && has_color) {
+    try {view->colors.push_back({range,rgb});} catch(...) {return E_OUTOFMEMORY;}
+  }
+  return hr;
+}
+extern "C" HRESULT shell_d2d_edit_align(void *p,unsigned alignment,float *height) {
+  auto text=static_cast<edit_layout *>(p)->text;
+  const DWRITE_TEXT_ALIGNMENT values[]={DWRITE_TEXT_ALIGNMENT_LEADING,DWRITE_TEXT_ALIGNMENT_CENTER,
+    DWRITE_TEXT_ALIGNMENT_TRAILING,DWRITE_TEXT_ALIGNMENT_JUSTIFIED};
+  HRESULT hr=text->SetTextAlignment(values[alignment<4 ? alignment:0]);
+  DWRITE_TEXT_METRICS metrics={};
+  if(SUCCEEDED(hr))hr=text->GetMetrics(&metrics);
+  if(SUCCEEDED(hr))*height=metrics.height;
+  return hr;
 }
 
 extern "C" void shell_d2d_edit_release(void *layout) {
-  if(layout) static_cast<IDWriteTextLayout *>(layout)->Release();
+  delete static_cast<edit_layout *>(layout);
 }
 
 extern "C" unsigned shell_d2d_edit_hit(void *p,float x,float y) {
   BOOL trailing=FALSE,inside=FALSE;DWRITE_HIT_TEST_METRICS hit={};
-  if(FAILED(static_cast<IDWriteTextLayout *>(p)->HitTestPoint(x,y,&trailing,&inside,&hit))) return 0;
+  if(FAILED(static_cast<edit_layout *>(p)->text->HitTestPoint(x,y,&trailing,&inside,&hit))) return 0;
   return hit.textPosition+(trailing ? hit.length:0);
 }
 
 extern "C" void shell_d2d_edit_position(void *p,unsigned at,float box[4]) {
   DWRITE_HIT_TEST_METRICS hit={};float x=0,y=0;
-  static_cast<IDWriteTextLayout *>(p)->HitTestTextPosition(at,FALSE,&x,&y,&hit);
+  static_cast<edit_layout *>(p)->text->HitTestTextPosition(at,FALSE,&x,&y,&hit);
   box[0]=x;box[1]=y;box[2]=hit.width;box[3]=hit.height;
 }
 
 extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int dark,
-  const shell_d2d_edit_row *rows,size_t count,float inset,float scroll) {
+  const shell_d2d_edit_row *rows,size_t count,float inset,float scroll,float top) {
   HRESULT hr=bind_dc(s,dc,area);if(FAILED(hr)) return hr;
   const auto &c=theme_of(dark);
   s->dc_target->BeginDraw();s->dc_target->Clear(D2D1::ColorF(c.layer_page));
-  s->dc_target->PushAxisAlignedClip(D2D1::RectF(0,0,(float)(area->right-area->left),
+  s->dc_target->PushAxisAlignedClip(D2D1::RectF(0,top,(float)(area->right-area->left),
     (float)(area->bottom-area->top)),D2D1_ANTIALIAS_MODE_ALIASED);
-  for(size_t i=0;i<count;i++) {
+  for(size_t i=0;i<count && SUCCEEDED(hr);i++) {
     const auto &row=rows[i];float y=row.y-scroll;
     if(!row.height || y+row.height<0 || y>area->bottom-area->top) continue;
-    auto layout=static_cast<IDWriteTextLayout *>(row.layout);
+    auto view=static_cast<edit_layout *>(row.layout);auto layout=view->text;
     UINT32 needed=0;
     layout->HitTestTextRange(row.start,row.length,inset,y,nullptr,0,&needed);
     std::vector<DWRITE_HIT_TEST_METRICS> boxes(needed);
@@ -532,11 +573,20 @@ extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int
       }
     }
     s->dc_brush->SetColor(D2D1::ColorF(c.text));
-    s->dc_target->DrawTextLayout(D2D1::Point2F(inset,y),layout,s->dc_brush);
+    // Effects belong to this DC target only; clear them before device recreation.
+    for(const auto &color:view->colors) {
+      ID2D1SolidColorBrush *brush=nullptr;
+      hr=s->dc_target->CreateSolidColorBrush(D2D1::ColorF(color.rgb),&brush);
+      if(SUCCEEDED(hr)) {layout->SetDrawingEffect(brush,color.range);brush->Release();}
+      else break;
+    }
+    if(SUCCEEDED(hr))s->dc_target->DrawTextLayout(D2D1::Point2F(inset,y),layout,s->dc_brush);
+    for(const auto &color:view->colors)layout->SetDrawingEffect(nullptr,color.range);
     if(row.show_caret) s->dc_target->FillRectangle(D2D1::RectF(inset+caret[0],y+caret[1],
       inset+caret[0]+1,y+caret[1]+caret[3]),s->dc_brush);
   }
-  s->dc_target->PopAxisAlignedClip();hr=s->dc_target->EndDraw();
+  s->dc_target->PopAxisAlignedClip();HRESULT end=s->dc_target->EndDraw();
+  if(SUCCEEDED(hr))hr=end;
   if(hr==D2DERR_RECREATE_TARGET) {drop_dc_target(s);return S_FALSE;}
   return hr;
 }

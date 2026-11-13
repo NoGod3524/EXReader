@@ -1,0 +1,50 @@
+已实现。七项验收通过，完整记录见 [OUT-E2C.txt](C:/Users/Oscar/Documents/Codex/EXReader-e2c-20261112/OUT-E2C.txt)。[最终宿主 EXReader.exe](C:/Users/Oscar/Documents/Codex/EXReader-e2c-20261112/build/e2c-host/EXReader.exe) 已构建。
+
+| 文件 | 行数变化 |
+|---|---:|
+| `shell_docedit_toolbar.inc` | 新增 217 行 |
+| `docs/READER-WINDOWS-DOCEDIT.md` | 新增 56 行 |
+| `reader.c` | +1 / −0 |
+| `check_shell_docedit.c` | +124 / −1 |
+| `shell_d2d.cpp` | +60 / −10 |
+| `shell_d2d.h` | +6 / −1 |
+| `shell_docedit.inc` | +22 / −2 |
+| `shell_docedit_input.inc` | +42 / −19 |
+| `shell_docedit_paint.inc` | +28 / −6 |
+
+①–⑥命令，全程无 HWND、无 SendInput：
+
+```powershell
+& build/e2c-host/check_shell_docedit.exe tests/fixtures/rich.docx build/e2c-evidence
+```
+
+真实输出：
+
+```text
+E2c 1 PASS select=5 Ctrl+B write/open present.BOLD=1 bold=1 (partial selection -> whole run)
+E2c 2 PASS Ctrl+B again write/open present.BOLD=1 bold=0 (explicit override)
+E2c 3 PASS Ctrl+Shift+. size_half_points=24->26 points=12->13 ink_height=14->16 px
+E2c 4 PASS toolbar palette red=FF0000 text_red_pixels=425 bitmap=build/e2c-evidence/rich-red.bmp
+E2c 5 PASS no selection Ctrl+B then AB: prefix.bold=0 AB.bold=1; write/open retained
+E2c 6 PASS Ctrl+L/E/R line_start_x=24.00/269.46/514.93 px; hit-test roundtrip; Ctrl+J=JUSTIFY
+```
+
+⑦命令与输出：
+
+```powershell
+ctest --test-dir build/e2c -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure -j 6
+```
+
+```text
+100% tests passed out of 416
+Total Test time (real) =  90.53 sec
+```
+
+字体回退：`rich.docx` 无缺失字体；故障注入的 `EXReader Missing Font E2c` 回退到 `Segoe UI`，位图与直接使用默认字体逐像素一致。
+
+已知边界：
+
+- 部分选区按整个 run 应用属性。
+- 无选区插入不同格式时，含 `pStyle`、tabs、扩展属性等未建模模板的段落会拒绝重建并整笔回滚；解除此限制需要保留模板的 insert-run API。
+
+prepush（含文档门禁）和 `git diff --check` 均通过。`src/**`、受保护脚本和版本例外文件均未修改。
