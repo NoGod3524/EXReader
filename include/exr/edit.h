@@ -82,7 +82,8 @@ struct exr_edit_table {
   const exr_edit_row *rows; size_t row_count,column_count;
   int32_t width_twips;
   exr_edit_borders borders;
-  unsigned changed; /* Writer bookkeeping: width=1, borders=2. */
+  unsigned changed; /* Writer bookkeeping: width=1, borders=2, grid=4. */
+  const int32_t *column_widths; /* column_count twip widths; NULL uses width/column_count. */
 };
 typedef struct {
   const void *data; size_t size; /* Original PNG/JPEG payload, never re-encoded. */
@@ -146,7 +147,8 @@ EXR_API exr_status exr_edit_insert_paragraph(exr_edit_doc *doc,exr_edit_id after
 /* UTF-8 scalar boundary, not a character index. (run_count,0) splits at end.
    Left block retains its ID; the next block gets a fresh ID. Whole moved runs
    retain IDs; only the right fragment of a divided run gets a fresh ID.
-   Opaque runs can only be split before them (offset 0). Paragraph props copy. */
+   Opaque runs can only be split before them (offset 0). Paragraph props copy.
+   Editable cell paragraphs split within their owning cell. */
 EXR_API exr_status exr_edit_split_paragraph(exr_edit_doc *doc,exr_edit_id block_id,
   size_t run_index,size_t byte_offset);
 EXR_API exr_status exr_edit_set_paragraph_props(exr_edit_doc *doc,exr_edit_id block_id,
@@ -171,6 +173,14 @@ EXR_API exr_status exr_edit_table_delete_row(exr_edit_doc *doc,exr_edit_id table
 EXR_API exr_status exr_edit_table_set_cell_text(exr_edit_doc *doc,exr_edit_id table_id,
   size_t row,size_t col,const exr_edit_run *runs,size_t count);
 EXR_API exr_status exr_edit_table_set_width(exr_edit_doc *doc,exr_edit_id table_id,int32_t twips);
+/* Editable paragraphs in document order; NULL for invalid indices/protected cells.
+   Empty cells return their existing placeholder paragraph, if any. Borrowed view. */
+EXR_API const exr_edit_block *exr_edit_table_cell_paragraph(
+  const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column,size_t index);
+/* Requires doc's active transaction. Positive twips; sets grid[column] and
+   table width to the sum of all columns. Undo/redo restores both. */
+EXR_API exr_status exr_edit_table_set_column_width(
+  exr_edit_doc *doc,exr_edit_tx *tx,exr_edit_id table,size_t column,int32_t width_twips);
 EXR_API exr_status exr_edit_table_set_borders(exr_edit_doc *doc,exr_edit_id table_id,exr_edit_borders spec);
 EXR_API exr_status exr_edit_delete_table(exr_edit_doc *doc,exr_edit_id table_id);
 /* Payload length is required for a C byte buffer. Dimensions are points, finite

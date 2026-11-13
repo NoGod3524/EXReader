@@ -1,0 +1,109 @@
+已完成，九项验收全部通过。完整命令、输出和边界记录见 [OUT-ME3.txt](/C:/Users/Oscar/Documents/Codex/EXReader-e3-20261112/OUT-ME3.txt)。
+
+| 文件 | 行数变化 |
+|---|---:|
+| `src/docx_edit_table.c` | 341 → 395（+64 / −10） |
+| `src/docx_edit.c` | 642 → 694（+58 / −6） |
+| `src/docx_edit_internal.h` | 57 → 55 |
+| `src/docx_edit_model_internal.h` | 10 → 14 |
+| `include/exr/edit.h` | 200 → 210 |
+| `docs/API.md` | 7328 → 7356 |
+| `CMakeLists.txt` | +3 |
+| `tests/test_docx_edit_alloc.c` | +24 |
+| `tests/test_docx_edit_table_image.py` | +2 / −1 |
+| `tests/test_docx_edit_e3.py` | 新增 229 行 |
+
+①–⑦命令与真实输出：
+
+```powershell
+python -X utf8 tests/test_docx_edit_e3.py --library build/e3/libexreader.dll --output build/e3/evidence
+```
+
+```text
+1 PASS 2x2 DOCX cell(0,0) split=EXR_OK cell.blocks=1->2
+2 PASS cell_paragraph[0,1]=[A,0]; both belong to cell(0,0); index=2 NULL
+3 PASS set_column_width(0,3000) gridCol=[3000,2400] tblW=5400
+4 PASS set_column_width(1,2600) gridCol=[3000,2600] tblW=5600
+5 PASS undo gridCol=[3000,2400] tblW=5400
+6 PASS file write/read gridCol[0]=3000 gridCol[1]=2400 tblW=5400; memory/XML/reopened equal
+7 PASS column=99 EXR_ARGUMENT(1); model unchanged; failed commit rolled back
+```
+
+退出码 `0`。另外验证了拆段 undo/redo、事务回滚、空段落、多段落、UTF-8 边界、命名空间、非法事务和宽度溢出。
+
+⑧命令与真实输出：
+
+```powershell
+ctest --test-dir build/e3 -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure -j 6
+```
+
+```text
+417/417 Test #29: native-docx-edit-e3 ... Passed 0.35 sec
+
+100% tests passed out of 417
+
+Total Test time (real) = 75.57 sec
+ctest_exit=0
+```
+
+⑨命令：
+
+```powershell
+python -X utf8 tools/check_sdk_docs.py --output build/e3/sdk-docs.json
+```
+
+真实输出关键字段如下，完整 JSON 已收入交付记录：
+
+```text
+  "documented_functions": 482,
+  "public_functions": 482,
+  "coverage_percent": 100.0,
+```
+
+```text
+  "errors": [],
+  "passed": true
+}
+sdk_docs_exit=0
+```
+
+prepush（含文档门禁）退出 `0`；层检查无反向依赖，`edit.h` 已登记为 `doc`。分配测试注入 127 次失败，全部保持原状或回滚，无存活分配。受保护脚本 SHA256 未变，版本例外文件未改动。全程无 GUI、无 SendInput。
+
+`docs/API.md` 新增两条原文：
+
+```markdown
+### `exr_edit_table_cell_paragraph`
+
+**签名** `const exr_edit_block *exr_edit_table_cell_paragraph( const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column,size_t index);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table` 为表格块 ID；`row`、`column` 为从 0 起的物理行/单元格索引；`index` 为单元格内按文档顺序排列的可编辑段落索引，从 0 起。
+
+**返回与失败** 返回只读段落块，ID 可传给 exr_edit_split_paragraph，两段留在原单元格。空单元格返回已有占位段落（若存在）。非法模型、ID、越界索引、无表格模型或受保护单元格返回 NULL。普通多段落单元格可查询；含合并、嵌套表、底纹或 opaque 内容的单元格不可编辑。只读查询可在事务内外调用，不产生历史，也不锁存事务失败；拆段参与当前事务及 undo/redo。
+
+**线程** 同一模型的读取、写出、修改、事务及释放由调用方串行化，不得并发。
+
+**所有权** 返回模型持有的借用视图，不可释放；所属表格修改、undo/redo、回滚或模型释放后须重新获取。查询不分配占位段落。
+
+### `exr_edit_table_set_column_width`
+
+**签名** `exr_status exr_edit_table_set_column_width( exr_edit_doc *doc,exr_edit_tx *tx,exr_edit_id table,size_t column,int32_t width_twips);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`tx` 必须是该模型当前活动事务，`table` 为已建模表格块 ID；`column` 为从 0 起的网格列索引；`width_twips` 为正宽度，单位 twip（1/20 点）。
+
+**返回与失败** 成功返回 EXR_OK，同时设置内存列宽、w:gridCol[column] 和整表宽度 w:tblW（各列之和），参与事务及 undo/redo。非法模型、ID、事务、越界列或非正宽度为 EXR_ARGUMENT；无表格模型为 EXR_UNSUPPORTED；总宽超过 INT32_MAX 为 EXR_LIMIT，分配失败为 EXR_MEMORY。失败不修改模型，事务内失败遵循锁存/提交回滚规则。缺少网格宽度的模型按原整表宽度除以列数初始化其他列；exr_edit_table_set_width 保持仅设置整表宽度的原语义。
+
+**线程** 同一模型的读取、写出、修改、事务及释放由调用方串行化，不得并发。
+
+**所有权** doc、tx 为借用输入，本函数不消费事务；宽度按值复制，列宽数组及历史快照由模型分配和释放。成功修改使原表格及单元格借用视图失效，无返回分配。
+```
+
+已知边界：
+
+- 受保护单元格继续禁止拆段；没有占位段落时查询返回 `NULL`。
+- “块数 +1”指目标单元格的 `block_count`；顶层块计数保持原语义。
+- 宽度必须为正，总宽超过 `INT32_MAX` 返回 `EXR_LIMIT`。
+- 实验结构 `exr_edit_table` 新增 `column_widths` 指针，宿主及 FFI 需更新结构布局。
