@@ -55,11 +55,13 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
     for(i=offsetof(exr_fixed_input,draw_ex);i<input->struct_size;i++) if(((const unsigned char *)input)[i]) return exr_fail(e,EXR_ARGUMENT,"Truncated extended draw provider field");
     snapshot.draw_ex=NULL;
   }
-  if(!input->draw || !input->pages || !input->page_count) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
+  if(!input->draw || (input->page_count && !input->pages)) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
   if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
   d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
-  d->pages=calloc(input->page_count,sizeof(*d->pages)); ids=calloc(input->page_count,sizeof(*ids));
-  if(!d->pages || !ids) { status=exr_fail(e,EXR_MEMORY,"Fixed page directory allocation failed"); goto done; }
+  if(input->page_count) {
+    d->pages=calloc(input->page_count,sizeof(*d->pages)); ids=calloc(input->page_count,sizeof(*ids));
+    if(!d->pages || !ids) { status=exr_fail(e,EXR_MEMORY,"Fixed page directory allocation failed"); goto done; }
+  }
   d->count=input->page_count; status=copy_string(input->title,&strings,&title,e); d->title=(char *)title;
   for(i=0;status==EXR_OK && i<d->count;i++) {
     char generated[32]; const exr_fixed_page *p=&input->pages[i]; exr_fixed_page *v=&d->pages[i];
@@ -70,7 +72,7 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
     ids[i]=v->id;
   }
   if(status==EXR_OK) {
-    qsort(ids,d->count,sizeof(*ids),compare_id);
+    if(d->count) qsort(ids,d->count,sizeof(*ids),compare_id);
     for(i=1;i<d->count;i++) if(!strcmp(ids[i-1],ids[i])) { status=exr_fail(e,EXR_ARGUMENT,"Duplicate fixed page IDs"); break; }
   }
 done:

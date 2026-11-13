@@ -1,0 +1,38 @@
+[
+  {
+    "file": "empty.pptx",
+    "pages": 0,
+    "cx": 9144000,
+    "cy": 6858000
+  },
+  {
+    "file": "title.pptx",
+    "pages": 1,
+    "cx": 9144000,
+    "cy": 6858000
+  },
+  {
+    "file": "layouts.pptx",
+    "pages": 5,
+    "cx": 9144000,
+    "cy": 6858000
+  },
+  {
+    "file": "wide.pptx",
+    "pages": 1,
+    "cx": 12192000,
+    "cy": 6858000
+  },
+  {
+    "file": "standard.pptx",
+    "pages": 1,
+    "cx": 9144000,
+    "cy": 6858000
+  },
+  {
+    "file": "twenty.pptx",
+    "pages": 20,
+    "cx": 9144000,
+    "cy": 6858000
+  }
+]
