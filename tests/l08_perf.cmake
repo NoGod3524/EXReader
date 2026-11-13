@@ -1,0 +1,5 @@
+function(l08_perf_target)
+  add_executable(exreader-l08-perf "${CMAKE_SOURCE_DIR}/tests/test_l08_reflow_perf.c")
+  target_link_libraries(exreader-l08-perf PRIVATE exreader)
+endfunction()
+cmake_language(DEFER CALL l08_perf_target)
