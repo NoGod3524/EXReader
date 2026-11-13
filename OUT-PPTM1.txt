@@ -1,0 +1,28 @@
+已完成，完整验收输出见 [OUT-PPTM1.txt](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/OUT-PPTM1.txt)。
+
+| 夹具 | 引擎 pages | PowerPoint |
+|---|---:|---:|
+| 1 页 | 1 | 1 |
+| 5 页 | 5 | 5 |
+| 20 页 | 20 | 20 |
+| 空演示文稿 | 0 | 0 |
+
+非空页均为 **720×540 pt**，文件和内存入口的共 52 次白页渲染全部成功。
+
+- 新文件：`ppt_cfb.c` 222 行、`ppt_records.c` 77 行、`ppt.c` 100 行；内部头文件 21 行，已登记分层清单。
+- 新增六组 `native-ppt-{cfb,records,slides,size,truncated,wrongformat}` 全通过，共 **63 项检查**。
+- 最终全量 **423/423 通过**，仅排除指定两项；分层检查及 `prepush-check.ps1` 均通过。
+
+坏签名及 `.docx` 改名的错误原文：
+
+```text
+CFB invalid signature at offset 0
+```
+
+截断至 1/3：
+
+```text
+CFB truncated/invalid sector at offset 299008
+```
+
+M1 仅提供白页，不绘制母版、备注或嵌入对象；加密 PPT 尚不支持。增量保存采用最后一个 DocumentContainer 快照，完整编辑映射重建留待后续。
