@@ -368,8 +368,18 @@ exr_status exr_edit_layout_after(exr_edit_doc *doc,exr_pager *pager,exr_edit_id 
     /* Converge only inside the verified unchanged suffix, matching both block
        identity and continuation line. Matching just block ID breaks split paras. */
     if(generated && c.block>=new_end && c.block<next.count) {
-      size_t old_block=old_end+(c.block-new_end);
-      for(i=dirty_page;i<r->count;i++) if(r->pages[i].start.block==old_block && r->pages[i].start.line==c.line) { old_stop=i;goto converged; }
+      size_t old_block=old_end+(c.block-new_end),lo=dirty_page,hi=r->count;
+      /* Page cursors are ordered, including continuations of long paragraphs.
+         A changed wrap may propagate to EOF: do not rescan all old pages for
+         every newly generated page in that case. */
+      while(lo<hi) {
+        size_t mid=lo+(hi-lo)/2;cursor start=r->pages[mid].start;
+        if(start.block<old_block || (start.block==old_block && start.line<c.line)) lo=mid+1;
+        else hi=mid;
+      }
+      if(lo<r->count && r->pages[lo].start.block==old_block && r->pages[lo].start.line==c.line) {
+        old_stop=lo;goto converged;
+      }
     }
     status=make_page(r,&next,c,&cache,&token,&page,0,e);if(status!=EXR_OK) goto failed;
     exr_layout_free(page);
