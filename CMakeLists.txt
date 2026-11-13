@@ -212,6 +212,11 @@ endif()
 if(EXR_FULL_TESTS)
   enable_testing()
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  foreach(group empty title layouts wide standard twenty errors defaults missing order detection limit)
+    add_test(NAME native-pptx-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_skeleton.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
   foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py

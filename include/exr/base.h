@@ -51,7 +51,8 @@ typedef enum {
   EXR_RTF,
   EXR_MOBI,
   EXR_PDF,
-  EXR_CBZ
+  EXR_CBZ,
+  EXR_PPTX /* PresentationML fixed pages; appended to preserve format ABI values. */
 } exr_format;
 typedef struct {
   exr_status code;
