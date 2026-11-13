@@ -38,7 +38,7 @@ function(exr_docx_real_tests)
     endif()
     get_property(docx_tests DIRECTORY PROPERTY TESTS)
     foreach(test IN LISTS docx_tests)
-      if(test MATCHES "^native-docx-(edit-io-|edit-x6-|edit-e[34]$|editor-e2e$|realworld-matrix$|real-)"
+      if(test MATCHES "^native-docx-(edit-io-|edit-x6-|edit-e[345]$|editor-e2e$|realworld-matrix$|real-)"
           AND NOT test MATCHES "(reproducible|oracle-mutations|text-allocation)$")
         set_property(TEST "${test}" APPEND PROPERTY ENVIRONMENT_MODIFICATION
           "LD_PRELOAD=path_list_prepend:${asan_runtime}" "PYTHONMALLOC=set:malloc")

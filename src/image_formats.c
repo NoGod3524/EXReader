@@ -35,7 +35,7 @@ static uint32_t le16(const unsigned char *p) { return (uint32_t)p[0] | ((uint32_
 static uint32_t le32(const unsigned char *p) { return le16(p) | (le16(p + 2) << 16); }
 #endif
 
-static image_kind detect(const void *data,size_t size) {
+int exr_image_format_detect(const void *data,size_t size) {
   const unsigned char *p = data;
   size_t i;
   if(!p || !size) return EXR_IMAGE_UNKNOWN;
@@ -360,7 +360,7 @@ static exr_status probe_page(const unsigned char *data,size_t size,uint32_t *wid
   image_kind kind;
   if(!data || !size || !width || !height || !pages) return exr_fail(e,EXR_ARGUMENT,"Invalid image header input/output");
   *width = *height = 0; *pages = 0;
-  kind = detect(data,size);
+  kind = exr_image_format_detect(data,size);
   switch(kind) {
     case EXR_IMAGE_PNG:
     case EXR_IMAGE_JPEG:
@@ -413,7 +413,7 @@ exr_status exr_image_page_dimensions(const void *data,size_t size,size_t page,ui
     /* Re-probe walking directories/frames for codecs whose pages can differ. */
     uint32_t w = 0,h = 0; size_t n = 0;
 #if defined(EXR_ENABLE_IMAGE_TIFF)
-    if(detect(data,size) == EXR_IMAGE_TIFF) {
+    if(exr_image_format_detect(data,size) == EXR_IMAGE_TIFF) {
       tiff_memory memory; TIFF *tif = tiff_open(data,size,&memory,e);
       if(!tif) return e ? e->code : EXR_FORMAT;
       if(!TIFFSetDirectory(tif,(tdir_t)page) || !TIFFGetField(tif,TIFFTAG_IMAGEWIDTH,&w) || !TIFFGetField(tif,TIFFTAG_IMAGELENGTH,&h)) {
@@ -435,7 +435,7 @@ exr_status exr_image_decode_page_control(const void *data,size_t size,size_t pag
   if(status != EXR_OK) return status;
   if(page >= pages) return exr_fail(e,EXR_LIMIT,"Image page index exceeds page count");
   if(exr_control_cancel(control,e) != EXR_OK) return EXR_CANCELLED;
-  kind = detect(data,size);
+  kind = exr_image_format_detect(data,size);
   /* Reject a multi-frame expansion before the codec allocates its frame
      array. GIF compositing needs every preceding frame; WebP animation keeps
      one canvas but walks preceding frames. */
