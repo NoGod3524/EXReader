@@ -21,14 +21,14 @@ static int escape(exr_buffer *b,const char *s) {
 }
 exr_status exr_edit_insert_image(exr_edit_doc *d,exr_edit_id after,const void *bytes,size_t size,double width,double height,exr_edit_id *id) {
   exr_edit_image im={0}; exr_edit_block b={0}; exr_bitmap bitmap={0}; exr_status s=exr_edit_ready(d);
-  const unsigned char *p=bytes;
   if (id) *id=0;
   if (s) return s;
   if (!id || !bytes || !size || !isfinite(width) || !isfinite(height) || width<=0 || height<=0 ||
       width>(double)INT32_MAX/12700 || height>(double)INT32_MAX/12700) return exr_edit_failure(d,EXR_ARGUMENT);
   if (size>EXR_MAX_INPUT) return exr_edit_failure(d,EXR_LIMIT);
-  im.jpeg=size>=3 && p[0]==0xff && p[1]==0xd8 && p[2]==0xff;
-  if (!im.jpeg && (size<8 || memcmp(bytes,"\x89PNG\r\n\x1a\n",8))) return exr_edit_failure(d,EXR_FORMAT);
+  im.format=(unsigned)exr_image_format_detect(bytes,size);
+  if (im.format<EXR_EDIT_IMAGE_PNG || im.format>EXR_EDIT_IMAGE_BMP) return exr_edit_failure(d,EXR_FORMAT);
+  im.jpeg=im.format==EXR_EDIT_IMAGE_JPEG;
   s=exr_image_decode(bytes,size,&bitmap,NULL); exr_bitmap_free(&bitmap);
   if (s) return exr_edit_failure(d,s);
   im.data=bytes; im.size=size; im.width_emu=(int64_t)llround(width*12700); im.height_emu=(int64_t)llround(height*12700);
@@ -96,7 +96,10 @@ exr_status exr_edit_delete_image(exr_edit_doc *d,exr_edit_id id) {
   if (s) return s;
   if (!id) return exr_edit_failure(d,EXR_ARGUMENT);
   { const exr_edit_block *b=exr_edit_find_block(d,id);
-    if (b && b->kind==EXR_EDIT_IMAGE) return exr_edit_replace(d,id,NULL);
+    if (b && b->kind==EXR_EDIT_IMAGE) {
+      if (!b->image->anchor_run_id) return exr_edit_replace(d,id,NULL);
+      return exr_edit_delete_block(d,id);
+    }
   }
   parts=exr_edit_parts(d,&count); s=exr_edit_main_part(parts,count,main,NULL);
   if (s) return exr_edit_failure(d,EXR_ARGUMENT);
@@ -139,6 +142,133 @@ static void relpath(const char *main,char path[2048]) {
   const char *slash=strrchr(main,'/'); size_t dir=slash ? (size_t)(slash-main)+1 : 0;
   snprintf(path,2048,"%.*s_rels/%s.rels",(int)dir,main,main+dir);
 }
+static unsigned image_format(const exr_edit_image *im) { return im->format ? im->format : im->jpeg ? EXR_EDIT_IMAGE_JPEG : EXR_EDIT_IMAGE_PNG; }
+static const char *image_extension(const exr_edit_image *im) {
+  static const char *ext[]={"", "png", "jpeg", "gif", "bmp"}; return ext[image_format(im)];
+}
+static const char *image_mime(const exr_edit_image *im) {
+  static const char *mime[]={"", "image/png", "image/jpeg", "image/gif", "image/bmp"}; return mime[image_format(im)];
+}
+/* Assign source IDs before creating anchor views, including protected cells. */
+static void source_ids(exr_edit_block *b,exr_edit_id *next) {
+  size_t i,j,k; b->id=(*next)++;
+  for (i=0;i<b->run_count;i++) ((exr_edit_run *)b->runs)[i].id=(*next)++;
+  if (b->table) for (i=0;i<b->table->row_count;i++) {
+    exr_edit_row *r=(exr_edit_row *)b->table->rows+i; r->id=(*next)++;
+    for (j=0;j<r->cell_count;j++) {
+      exr_edit_cell *c=(exr_edit_cell *)r->cells+j; c->id=(*next)++;
+      for (k=0;k<c->block_count;k++) source_ids((exr_edit_block *)c->blocks+k,next);
+    }
+  }
+}
+static int64_t emu(const char *s) {
+  char *end; long long v;
+  if (!s || !*s || strlen(s)>18) return 0;
+  v=strtoll(s,&end,10); return !*end && v>0 ? (int64_t)v : 0;
+}
+static int64_t vml_size(const char *style,const char *key) {
+  const char *p=style; size_t len=strlen(key);
+  while (p && *p) {
+    char *end; double v,scale; const char *colon;
+    while (*p==' ' || *p=='\t' || *p==';') p++;
+    colon=strchr(p,':'); if (!colon) break;
+    if ((size_t)(colon-p)==len && !memcmp(p,key,len)) {
+      v=strtod(colon+1,&end);
+      while (*end==' ') end++;
+      scale=!strncmp(end,"pt",2) ? 12700 : !strncmp(end,"px",2) ? 9525 :
+        !strncmp(end,"in",2) ? 914400 : !strncmp(end,"cm",2) ? 360000 :
+        !strncmp(end,"mm",2) ? 36000 : !strncmp(end,"pc",2) ? 152400 : 0;
+      if (isfinite(v) && v>0 && scale && v*scale<(double)INT64_MAX) return (int64_t)llround(v*scale);
+      return 0;
+    }
+    p=strchr(colon,';');
+  }
+  return 0;
+}
+static exr_status decode_paragraph_images(const source_xml *x,const source_xml *rels,
+    const exr_edit_part *parts,size_t np,const char *main,const exr_edit_block *p,
+    exr_edit_block **out,size_t *count,size_t *capacity) {
+  size_t r,n,j,k;
+  for (r=0;r<p->run_count;r++) {
+    const exr_edit_run *run=p->runs+r; size_t start=NONE;
+    if (run->kind!=EXR_EDIT_OPAQUE_RUN || !run->opaque_size || !memchr(run->opaque_xml,'<',run->opaque_size)) continue;
+    for (n=0;n<x->tree->node_count;n++) if (x->tree->nodes[n].name &&
+        run->opaque_size==x->spans[n].end-x->spans[n].start && run->opaque_size &&
+        !memcmp(run->opaque_xml,x->bytes+x->spans[n].start,run->opaque_size)) { start=n; break; }
+    if (start==NONE) continue;
+    for (n=start;n<x->tree->node_count && x->spans[n].start<x->spans[start].end;n++) {
+      exr_edit_image im={0}; exr_edit_block b={0}; const char *rid=NULL; size_t refs=0;
+      const exr_edit_part *media=NULL; exr_bitmap bitmap={0}; exr_status status;
+      if (!exr_edit_xml_word(x->tree->nodes+n,"drawing") && !exr_edit_xml_word(x->tree->nodes+n,"pict")) continue;
+      for (j=n+1;j<x->tree->node_count && x->spans[j].start<x->spans[n].end;j++) {
+        const exr_node *v=x->tree->nodes+j;
+        if (local(v,A,"blip") || local(v,AS,"blip")) { rid=exr_edit_xml_attribute(v,R,RS,"embed"); refs++; }
+        if (local(v,"urn:schemas-microsoft-com:vml","imagedata")) { rid=exr_edit_xml_attribute(v,R,RS,"id"); refs++; }
+        if (local(v,WP,"extent") || local(v,WPS,"extent")) {
+          im.width_emu=emu(exr_node_attribute(v,"cx")); im.height_emu=emu(exr_node_attribute(v,"cy"));
+        }
+        if (local(v,"urn:schemas-microsoft-com:vml","shape")) {
+          const char *style=exr_node_attribute(v,"style"); im.width_emu=vml_size(style,"width"); im.height_emu=vml_size(style,"height");
+        }
+      }
+      if (refs!=1 || !rid || !rels->tree) continue;
+      for (k=0;k<rels->tree->node_count;k++) {
+        const exr_node *v=rels->tree->nodes+k; const char *id=exr_node_attribute(v,"Id");
+        const char *type=exr_node_attribute(v,"Type"),*target=exr_node_attribute(v,"Target"),*mode=exr_node_attribute(v,"TargetMode"); char path[2048];
+        if (local(v,REL,"Relationship") && id && !strcmp(id,rid) && type &&
+            (!strcmp(type,R "/image") || !strcmp(type,RS "/image")) && target &&
+            (!mode || strcmp(mode,"External")) && exr_resolve_path(main,target,path)) media=exr_edit_part_named(parts,np,path);
+      }
+      if (!media) continue;
+      im.format=(unsigned)exr_image_format_detect(media->data,media->size);
+      if (im.format<EXR_EDIT_IMAGE_PNG || im.format>EXR_EDIT_IMAGE_BMP) continue;
+      status=exr_image_decode(media->data,media->size,&bitmap,NULL);
+      if (status) { if (status==EXR_MEMORY) return status; continue; }
+      if (!im.width_emu) im.width_emu=(int64_t)bitmap.width*9525;
+      if (!im.height_emu) im.height_emu=(int64_t)bitmap.height*9525;
+      exr_bitmap_free(&bitmap);
+      im.data=media->data; im.size=media->size; im.jpeg=im.format==EXR_EDIT_IMAGE_JPEG; im.anchor_run_id=run->id;
+      im.anchor_offset=x->spans[n].start-x->spans[start].start;
+      b.kind=EXR_EDIT_IMAGE; b.section_id=p->section_id;
+      b.opaque_xml=x->bytes+x->spans[n].start; b.opaque_size=x->spans[n].end-x->spans[n].start;
+      b.image=malloc(sizeof(im)); if (!b.image) return EXR_MEMORY;
+      memcpy((void *)b.image,&im,sizeof(im));
+      if (!exr_grow((void **)out,capacity,*count+1,sizeof(**out))) { free((void *)b.image); return EXR_MEMORY; }
+      (*out)[(*count)++]=b;
+    }
+  }
+  return EXR_OK;
+}
+static exr_status decode_owner_images(const source_xml *x,const source_xml *rels,
+    const exr_edit_part *parts,size_t np,const char *main,const exr_edit_block *b,
+    exr_edit_block **out,size_t *count,size_t *capacity) {
+  size_t i,j,k; exr_status status;
+  if (b->kind==EXR_EDIT_PARAGRAPH) return decode_paragraph_images(x,rels,parts,np,main,b,out,count,capacity);
+  if (b->table) for (i=0;i<b->table->row_count;i++) for (j=0;j<b->table->rows[i].cell_count;j++) {
+    const exr_edit_cell *c=b->table->rows[i].cells+j;
+    for (k=0;k<c->block_count;k++) {
+      exr_edit_block p=c->blocks[k]; p.section_id=b->section_id;
+      status=decode_owner_images(x,rels,parts,np,main,&p,out,count,capacity); if (status) return status;
+    }
+  }
+  return EXR_OK;
+}
+exr_status exr_edit_images_decode(const source_xml *x,const exr_edit_part *parts,size_t np,
+    const char *main,exr_edit_block **blocks,size_t *count,size_t sections) {
+  exr_edit_block *out=NULL; size_t n=0,capacity=0,i; exr_edit_id next=sections+1;
+  source_xml rels={0}; char rp[2048]; const exr_edit_part *part; exr_status status=EXR_OK;
+  relpath(main,rp); part=exr_edit_part_named(parts,np,rp);
+  if (part) { status=exr_edit_xml_parse(&rels,part->data,part->size,"Relationships",NULL); if (status) return status; }
+  for (i=0;i<*count;i++) source_ids(*blocks+i,&next);
+  for (i=0;i<*count;i++) {
+    if (!exr_grow((void **)&out,&capacity,n+1,sizeof(*out))) { status=EXR_MEMORY; break; }
+    out[n++]=(*blocks)[i];
+    status=decode_owner_images(x,&rels,parts,np,main,*blocks+i,&out,&n,&capacity); if (status) break;
+  }
+  exr_edit_xml_free(&rels);
+  if (status) { for (i=0;i<n;i++) free((void *)out[i].image); free(out); return status; }
+  free(*blocks); *blocks=out; *count=n; return EXR_OK;
+}
 static int rel_id(const source_xml *x,const char *id) {
   size_t i;
   if (!x->tree) return 0;
@@ -160,17 +290,17 @@ exr_status exr_edit_images_prepare(const exr_edit_doc *d,const char *main,const 
       value=strtoull(v,&end,10); if (!*end && value<=UINT32_MAX && value>drawing) drawing=(uint32_t)value;
     }
   }
-  for (i=0;i<exr_edit_block_count(d);i++) if (exr_edit_block_at(d,i)->kind==EXR_EDIT_IMAGE) k++;
+  for (i=0;i<exr_edit_block_count(d);i++) if (exr_edit_block_at(d,i)->kind==EXR_EDIT_IMAGE && !exr_edit_block_at(d,i)->image->anchor_run_id) k++;
   if (k) { images=calloc(k,sizeof(*images)); if (!images) { s=EXR_MEMORY; goto done; } }
   k=0;
   for (i=0;i<exr_edit_block_count(d);i++) {
     const exr_edit_block *b=exr_edit_block_at(d,i); edit_image_output *im; unsigned suffix=0;
     const char *slash; size_t dir;
-    if (b->kind!=EXR_EDIT_IMAGE) continue;
+    if (b->kind!=EXR_EDIT_IMAGE || b->image->anchor_run_id) continue;
     if (drawing==UINT32_MAX) { s=EXR_LIMIT; goto done; }
     im=images+k++; im->block=b; im->drawing_id=++drawing; slash=strrchr(main,'/'); dir=slash ? (size_t)(slash-main)+1 : 0;
     do {
-      int length=snprintf(im->target,sizeof(im->target),"media/exr-image-%llu-%u.%s",(unsigned long long)b->id,suffix++,b->image->jpeg ? "jpeg" : "png");
+      int length=snprintf(im->target,sizeof(im->target),"media/exr-image-%llu-%u.%s",(unsigned long long)b->id,suffix++,image_extension(b->image));
       if (length<0 || dir+(size_t)length>=sizeof(im->part)) { s=EXR_LIMIT; goto done; }
       memcpy(im->part,main,dir); strcpy(im->part+dir,im->target);
     } while (exr_edit_part_named(parts,np,im->part));
@@ -218,7 +348,7 @@ static int relationship(exr_buffer *b,const edit_image_output *im,int strict) {
    per-part Override if a new extension conflicts with an existing declaration. */
 static int content_types(exr_buffer *b,const exr_edit_part *part,const edit_image_output *images,size_t count,
     const removed_rel *removed,size_t nr,const unsigned char *keep) {
-  source_xml x={0}; size_t i,j,at; int png=0,jpeg=0; exr_status s;
+  source_xml x={0}; size_t i,j,at; int seen[5]={0}; exr_status s;
   if (!part) return 0;
   s=exr_edit_xml_parse(&x,part->data,part->size,"Types",NULL); if (s) return 0;
   if (!exr_append(b,x.bytes,x.spans[x.root].start) || !exr_edit_xml_start(b,&x,x.root,"Types")) goto fail;
@@ -227,8 +357,8 @@ static int content_types(exr_buffer *b,const exr_edit_part *part,const edit_imag
     const exr_node *n=x.tree->nodes+i; int drop=0;
     if (local(n,CT,"Default")) {
       const char *ext=exr_node_attribute(n,"Extension"),*type=exr_node_attribute(n,"ContentType");
-      if (ext && !strcmp(ext,"png")) png=type && !strcmp(type,"image/png") ? 1 : -1;
-      if (ext && !strcmp(ext,"jpeg")) jpeg=type && !strcmp(type,"image/jpeg") ? 1 : -1;
+      for (j=0;j<count;j++) if (ext && !strcmp(ext,image_extension(images[j].block->image)))
+        seen[image_format(images[j].block->image)]=type && !strcmp(type,image_mime(images[j].block->image)) ? 1 : -1;
     }
     if (local(n,CT,"Override")) {
       const char *name=exr_node_attribute(n,"PartName");
@@ -239,12 +369,12 @@ static int content_types(exr_buffer *b,const exr_edit_part *part,const edit_imag
   }
   if (!xml_append_tail(b,&x,at)) goto fail;
   for (i=0;i<count;i++) {
-    int *seen=images[i].block->image->jpeg ? &jpeg : &png;
-    const char *ext=images[i].block->image->jpeg ? "jpeg" : "png",*mime=images[i].block->image->jpeg ? "image/jpeg" : "image/png";
-    if (!*seen) {
+    int *declared=seen+image_format(images[i].block->image);
+    const char *ext=image_extension(images[i].block->image),*mime=image_mime(images[i].block->image);
+    if (!*declared) {
       if (!put(b,"<Default xmlns=\"" CT "\" Extension=\"") || !put(b,ext) || !put(b,"\" ContentType=\"") || !put(b,mime) || !put(b,"\"/>")) goto fail;
-      *seen=1;
-    } else if (*seen<0 && (!put(b,"<Override xmlns=\"" CT "\" PartName=\"/") || !escape(b,images[i].part) || !put(b,"\" ContentType=\"") || !put(b,mime) || !put(b,"\"/>"))) goto fail;
+      *declared=1;
+    } else if (*declared<0 && (!put(b,"<Override xmlns=\"" CT "\" PartName=\"/") || !escape(b,images[i].part) || !put(b,"\" ContentType=\"") || !put(b,mime) || !put(b,"\"/>"))) goto fail;
   }
   if (!exr_edit_xml_end(b,&x,x.root,"Types") || !exr_append(b,x.bytes+x.spans[x.root].end,x.size-x.spans[x.root].end)) goto fail;
   exr_edit_xml_free(&x); return 1;
@@ -323,13 +453,13 @@ exr_status exr_edit_images_package(mz_zip_archive *zip,const exr_edit_part *part
     for (j=0;j<nr;j++) if (!keep[j] && !strcmp(parts[i].name,removed[j].target)) drop=1;
     if (drop) continue;
     if ((ni || nr) && !strcmp(parts[i].name,rp)) {
-      if (!mz_zip_writer_add_mem(zip,rp,relbuf.data,relbuf.size,6)) goto done;
+      if (!exr_edit_zip_add_part(zip,rp,relbuf.data,relbuf.size)) goto done;
     } else if ((ni || nr) && !strcmp(parts[i].name,"[Content_Types].xml")) {
-      if (!mz_zip_writer_add_mem(zip,parts[i].name,types.data,types.size,6)) goto done;
-    } else if (!mz_zip_writer_add_mem(zip,parts[i].name,parts[i].data,parts[i].size,6)) goto done;
+      if (!exr_edit_zip_add_part(zip,parts[i].name,types.data,types.size)) goto done;
+    } else if (!exr_edit_zip_add_part(zip,parts[i].name,parts[i].data,parts[i].size)) goto done;
   }
-  if (ni && !relpart && !mz_zip_writer_add_mem(zip,rp,relbuf.data,relbuf.size,6)) goto done;
-  for (i=0;i<ni;i++) if (!mz_zip_writer_add_mem(zip,images[i].part,images[i].block->image->data,images[i].block->image->size,6)) goto done;
+  if (ni && !relpart && !exr_edit_zip_add_part(zip,rp,relbuf.data,relbuf.size)) goto done;
+  for (i=0;i<ni;i++) if (!exr_edit_zip_add_part(zip,images[i].part,images[i].block->image->data,images[i].block->image->size)) goto done;
   s=EXR_OK;
 done:
   exr_edit_xml_free(&rels); exr_edit_xml_free(&old); exr_edit_xml_free(&now);

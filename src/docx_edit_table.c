@@ -93,11 +93,24 @@ exr_status exr_edit_table_set_width(exr_edit_doc *d,exr_edit_id id,int32_t twips
   t=*b->table; t.width_twips=twips; t.changed|=1; v=*b; v.table=&t;
   return exr_edit_replace(d,id,&v);
 }
+static const exr_edit_cell *table_cell(const exr_edit_doc *d,exr_edit_id id,size_t row,size_t col) {
+  const exr_edit_block *b=exr_edit_find_block(d,id);
+  if (!b || !b->table || row>=b->table->row_count || col>=b->table->rows[row].cell_count) return NULL;
+  return b->table->rows[row].cells+col;
+}
+size_t exr_edit_table_cell_block_count(const exr_edit_doc *d,exr_edit_id id,size_t row,size_t col) {
+  const exr_edit_cell *cell=table_cell(d,id,row,col);
+  return cell ? cell->block_count : 0;
+}
+const exr_edit_block *exr_edit_table_cell_block_at(
+  const exr_edit_doc *d,exr_edit_id id,size_t row,size_t col,size_t index) {
+  const exr_edit_cell *cell=table_cell(d,id,row,col);
+  return cell && index<cell->block_count ? cell->blocks+index : NULL;
+}
 const exr_edit_block *exr_edit_table_cell_paragraph(
   const exr_edit_doc *d,exr_edit_id id,size_t row,size_t col,size_t index) {
-  const exr_edit_block *b=exr_edit_find_block(d,id); const exr_edit_cell *c; size_t i;
-  if (!b || !b->table || row>=b->table->row_count || col>=b->table->rows[row].cell_count) return NULL;
-  c=b->table->rows[row].cells+col;
+  const exr_edit_cell *c=table_cell(d,id,row,col); size_t i;
+  if (!c) return NULL;
   if (!exr_edit_cell_can_split(c)) return NULL;
   for (i=0;i<c->block_count;i++) if (c->blocks[i].kind==EXR_EDIT_PARAGRAPH) {
     if (!index) return c->blocks+i;
@@ -245,7 +258,7 @@ static int cell_write(exr_buffer *b,const source_xml *x,const exr_edit_cell *c,s
   size_t pr=exr_edit_xml_child(x,n,"tcPr"),i,at=x->spans[n].open,j=0;
   if (!exr_edit_xml_start(b,x,n,"tc")) return 0;
   if (c->changed&CELL_PATCHED) {
-    /* Drawing deletion patches paragraphs in place, including inside protected
+    /* Text edits and drawing deletion patch paragraphs in place, including protected
        cells. Nested tables, shading, comments and whitespace retain their bytes. */
     for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
       if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;

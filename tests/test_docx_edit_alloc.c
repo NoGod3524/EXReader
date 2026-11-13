@@ -124,6 +124,31 @@ int main(void) {
     if (!s) break;
   }
   CHECK(fail_at<128);
+  /* Every allocation in a cell run edit must leave both split paragraphs intact
+     on failure, in automatic and explicit transactions. */
+  for (transaction=0;transaction<2;transaction++) for (fail_at=0;fail_at<128;fail_at++) {
+    exr_edit_doc *d=NULL; exr_edit_tx *t=NULL; exr_edit_id id,left; exr_status s;
+    CHECK(make_table_image(&d)==EXR_OK);
+    left=exr_edit_block_at(d,0)->table->rows[0].cells[0].blocks[0].id;
+    CHECK(exr_edit_split_paragraph(d,left,0,2)==EXR_OK);
+    id=exr_edit_block_at(d,0)->table->rows[0].cells[0].blocks[1].id;
+    if (transaction) { t=exr_edit_begin(d); CHECK(t); }
+    remaining=fail_at; s=exr_edit_set_run_text(d,id,0,"B2",2); remaining=SIZE_MAX;
+    if (t) CHECK(exr_edit_commit(t)==s);
+    CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].block_count==2);
+    CHECK(!strcmp(exr_edit_find_block(d,left)->runs[0].text,"ce"));
+    if (!s) {
+      CHECK(!strcmp(exr_edit_find_block(d,id)->runs[0].text,"B2"));
+      CHECK(exr_edit_undo(d)==EXR_OK);
+    } else { CHECK(s==EXR_MEMORY); covered++; }
+    CHECK(!strcmp(exr_edit_find_block(d,id)->runs[0].text,"ll"));
+    CHECK(exr_edit_undo(d)==EXR_OK);
+    CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].block_count==1);
+    CHECK(!strcmp(exr_edit_find_block(d,left)->runs[0].text,"cell"));
+    exr_edit_doc_free(d); CHECK(!live);
+    if (!s) break;
+  }
+  CHECK(fail_at<128);
   printf("docx-edit-allocation: %zu injected failures, all atomic/rolled back, zero live allocations\n",covered);
   return 0;
 }

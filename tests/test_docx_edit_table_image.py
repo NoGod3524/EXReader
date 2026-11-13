@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 import struct
 import sys
+import time
 import xml.etree.ElementTree as ET
 import zlib
 
@@ -359,6 +360,15 @@ def run_group(group, api, output=None):
             tid, _ = api.table(doc)
             image = api.image(doc, tid, payload, width, height)
             saved = api.write(doc)
+            if group == 'image-small':
+                # ZIP DOS timestamps tick every two seconds. Compare every byte.
+                time.sleep(2.1)
+                assert api.write(doc) == saved
+                bad, rejected = b'text renamed to .png', ID(999)
+                count = api.block_count(doc)
+                assert api.insert_image(doc, 0, bad, len(bad), 10, 10, c.byref(rejected)) == 5
+                assert not rejected.value and api.block_count(doc) == count
+                assert api.write(doc) == saved
             assert dimensions(saved) == [(width, height)]
             assert media(source).items() <= media(saved).items()
             assert payload in media(saved).values()
