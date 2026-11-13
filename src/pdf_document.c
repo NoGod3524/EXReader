@@ -2,7 +2,6 @@
 #include "pdf_raster_internal.h"
 #include "font_internal.h"
 #include "pdf_crypto.h"
-#include "ppt_internal.h"
 typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;
   exr_metadata_entry *metadata; size_t metadata_count;
@@ -275,10 +274,6 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
   exr_fixed_open_options options; unsigned char *copy; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL;
-  if(format==EXR_PPT) {
-    status=exr_fixed_open_options_copy(input,&options,e);if(status!=EXR_OK) return status;
-    return exr_ppt_open_memory(data,size,&options,out,e);
-  }
   if(!data || !size || size>EXR_MAX_INPUT) return exr_fail(e,size>EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,"Invalid fixed document bytes");
   if(!exr_format_is_fixed(format)) return exr_fail(e,EXR_FORMAT,"No built-in fixed reader for this format");
   status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
