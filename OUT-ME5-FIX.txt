@@ -1,0 +1,31 @@
+根因是**测试期望错误**：ZIP 写出使用当前时间，跨过两秒后时间戳变化；模型和 payload 没有改变。
+
+① 原断言拆开后的实际值（PNG，跨两秒复现）：
+
+```text
+out.value = 0
+block_count = 2 → 2
+write 长度 = 3508 → 3508
+before md5 = 6ff18553549f755ece2bb429d8b1fe60
+after  md5 = a3337cc8eef793857ad95df0c1a96b61
+```
+
+② 差异全部位于 ZIP 本地头和中央目录的 DOS 时间戳；所有 OPC 部件内容、图片 payload 均一致。[完整诊断](C:/Users/Oscar/Documents/Codex/EXReader-e5-20261112/issue140-before.log)
+
+③ [测试修改](C:/Users/Oscar/Documents/Codex/EXReader-e5-20261112/tests/test_docx_edit_images_e5.py:67)：**+38 / −2 行**。拆分断言、打印诊断、增加模型和图片快照检查，以及跨两秒回归。仅归一化时间戳，其余 ZIP 字节仍严格比较。未改 `tests/check_reading_release.py`。
+
+④ 本地 Windows Release 验证：
+
+```text
+ctest --test-dir build/e5 -R native-docx-edit-e5 --output-on-failure
+100% tests passed out of 1
+Total Test time (real) = 7.99 sec
+
+ctest --test-dir build/e5 -E 'sdk-release|sdk-doc-coverage' --output-on-failure
+100% tests passed out of 417
+Total Test time (real) = 756.85 sec
+```
+
+[E5 详细输出](C:/Users/Oscar/Documents/Codex/EXReader-e5-20261112/issue140-targeted-details.log) · [完整 ctest 输出](C:/Users/Oscar/Documents/Codex/EXReader-e5-20261112/issue140-full-ctest.log)
+
+**prepush 尚未完成**：当前仓库及全部 111 个注册工作树均不存在 `ops\prepush-check.ps1`，直接调用也报找不到命令；需要该脚本的实际路径才能补跑。
