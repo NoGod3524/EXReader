@@ -1,0 +1,18 @@
+L10 尚未完成，停在既有文件修改范围确认。
+
+① 新增文件：`shell_docedit_merged_cells.h` 91 行、`check_shell_docedit_merged_cells.c` 46 行；既有文件未改。分支已切至 `codex/fan-l10-merged-cells`。
+
+② GCC 编译后运行验收程序，真实输出：
+
+```text
+PASS gridSpan + vMerge: 2 columns x 3 rows, all covered positions resolve to one owner
+PASS legacy hMerge continuation resolves to horizontal owner
+PASS nested table properties ignored; orphan continuation remains its own cell
+PASS overflowing spans and malformed XML rejected
+```
+
+`git diff --check` 通过；prepush 尚未返回最终结果，未推送。
+
+③ 边界：模块尚未接入 UI，打字和“+行”拒绝尚未验收。
+
+请确认允许修改 `shell_docedit{,_paint,_input,_toolbar}.inc`。需要确认是因为你的独占规则禁止修改未明确列出的既有文件，而 L10 清单为空；当前基线仅显示“[表格]”，完成用户验收必须接入这些文件。
