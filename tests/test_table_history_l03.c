@@ -80,6 +80,34 @@ int main(void) {
   assert(exr_edit_redo(doc)==EXR_OK); /* rejected operation preserves redo */
   puts("delete-row undo/redo; rejected width preserves redo PASS");
   assert(exr_edit_undo(doc)==EXR_OK);
+  /* A failed compound text edit must roll back and leave redo available. */
+  assert(de_table_text(doc,id,1,0,"\xff",1)==EXR_ARGUMENT);same(doc,states[3]);
+  assert(exr_edit_redo(doc)==EXR_OK);same(doc,deleted);
+  assert(exr_edit_undo(doc)==EXR_OK);
+  assert(de_table_text(doc,id,1,0,"\nA\n\n",4)==EXR_OK);
+  assert(exr_edit_table_cell_block_count(doc,id,1,0)==4);
+  const char *expected[]={"","A","",""};
+  for(size_t i=0;i<4;i++) {
+    const exr_edit_block *p=exr_edit_table_cell_paragraph(doc,id,1,0,i);
+    assert(p);size_t offset=0;
+    for(size_t j=0;j<p->run_count;j++) {
+      assert(offset+p->runs[j].text_size<=strlen(expected[i]));
+      if(p->runs[j].text_size)
+        assert(!memcmp(p->runs[j].text,expected[i]+offset,p->runs[j].text_size));
+      offset+=p->runs[j].text_size;
+    }
+    assert(offset==strlen(expected[i]));
+  }
+  exr_edit_doc *multiline=snapshot(doc);
+  assert(exr_edit_undo(doc)==EXR_OK);same(doc,states[3]);
+  assert(exr_edit_redo(doc)==EXR_OK);same(doc,multiline);
+  assert(de_table_text(doc,id,1,0,"",0)==EXR_OK);
+  assert(exr_edit_table_cell_block_count(doc,id,1,0)==1);
+  assert(exr_edit_undo(doc)==EXR_OK);same(doc,multiline);
+  assert(exr_edit_redo(doc)==EXR_OK);
+  assert(exr_edit_undo(doc)==EXR_OK);
+  exr_edit_doc_free(multiline);
+  puts("compound rollback; leading/consecutive/trailing Enter; empty text undo/redo PASS");
   assert(de_table_text(doc,id,1,0,"branch",6)==EXR_OK);
   assert(exr_edit_redo(doc)==EXR_ARGUMENT);
   for(int i=0;i<4;i++)exr_edit_doc_free(states[i]);
