@@ -1,0 +1,9 @@
+尚未完成验收，等待扩展接入范围的答复。
+
+① 新增 [shell_docedit_find.inc](/C:/Users/Oscar/Documents/Codex/EXReader-fan-L05/examples/windows/shell_docedit_find.inc)，187 行；未修改既有文件。
+
+② 已运行指定 prepush 命令，进程仍无输出，不能报告通过。三处命中、全部替换及一次撤销尚未验证。
+
+③ 当前支持区分大小写的正文段落字面匹配、跨文本 run 匹配。文件尚未接入宿主，快捷键暂不可用。
+
+独占规则未授权修改既有文件；需允许最小宿主接入改动，才能完成用户可用的功能。
