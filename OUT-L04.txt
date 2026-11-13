@@ -1,0 +1,25 @@
+模型与传输验收通过，**快捷键尚未接线，未推送**。
+
+① 新增 [clipboard.inc](/C:/Users/Oscar/Documents/Codex/EXReader-fan-L04/examples/windows/shell_docedit_clipboard.inc) 202 行；测试文件共 158 行；接线补丁 17 行。既有文件零改动。
+
+② 验收命令：
+
+```powershell
+pwsh -NoProfile -File examples/windows/check_shell_docedit_clipboard.ps1
+```
+
+真实输出摘录，退出码 0：
+
+```text
+PASS cell-to-cell paste retains destination bold and both sibling paragraphs
+L04 clipboard model acceptance PASS (no GUI / no SendInput)
+L04 Windows clipboard transport acceptance PASS (isolated clipboard / no GUI)
+PASS actual Windows host syntax check
+PASS two-line wiring patch applies cleanly (not applied)
+```
+
+指定的 `prepush-check.ps1 -Worktree .` 也通过，退出码 0。
+
+③ 边界：单元格 UI 待接入；无文本 run 的空单元格暂不支持粘贴；跨段剪切保留段落结构。
+
+你限定只能新增文件，因此未修改键盘分发。是否允许应用已验过的 [两行接线补丁](/C:/Users/Oscar/Documents/Codex/EXReader-fan-L04/examples/windows/shell_docedit_clipboard_wiring.patch)，修改 `shell_docedit_input.inc`，让 Ctrl+C/X/V 实际生效？
