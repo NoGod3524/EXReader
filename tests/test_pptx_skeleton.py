@@ -73,7 +73,9 @@ class Engine:
                 if mode == 'file':
                     status = self.lib.exr_fixed_open(str(path).encode(), None, C.byref(doc), C.byref(error))
                 else:
-                    status = self.lib.exr_fixed_open_memory(10, data, len(data), None, C.byref(doc), C.byref(error))
+                    # EXR_PPTX 在 EXR_PPT 合入后是 9（EXR_PPT=8）；不要写死到别处
+                    EXR_PPTX = 11
+                    status = self.lib.exr_fixed_open_memory(EXR_PPTX, data, len(data), None, C.byref(doc), C.byref(error))
                 text = error.message.decode()
                 assert status == code and error.code == code, (mode, status, text)
                 assert message in text, (message, text)
@@ -171,3 +173,4 @@ if __name__ == '__main__':
     parser.add_argument('group')
     args = parser.parse_args()
     run(Engine(args.library.resolve()), args.group)
+
