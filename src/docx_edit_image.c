@@ -2,6 +2,7 @@
 #include "docx_edit_internal.h"
 #include <exr/graphics.h>
 #include <math.h>
+#include <ctype.h>
 #define REL "http://schemas.openxmlformats.org/package/2006/relationships"
 #define CT "http://schemas.openxmlformats.org/package/2006/content-types"
 #define WP "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
@@ -16,8 +17,101 @@ static int local(const exr_node *n,const char *space,const char *name) {
   return n->name && !strncmp(n->name,space,length) && n->name[length]=='|' && !strcmp(n->name+length+1,name);
 }
 static int escape(exr_buffer *b,const char *s) {
-  for (;*s;s++) if (!put(b,*s=='&' ? "&amp;" : *s=='\"' ? "&quot;" : *s=='<' ? "&lt;" : *s=='>' ? "&gt;" : (char[2]){*s,0})) return 0;
+  for (;*s;s++) if (!put(b,*s=='&' ? "&amp;" : *s=='\"' ? "&quot;" : *s=='\'' ? "&apos;" : *s=='<' ? "&lt;" : *s=='>' ? "&gt;" : (char[2]){*s,0})) return 0;
   return 1;
+}
+/* Replace only attribute values; keep prefixes, extension attributes and children. */
+static int resize_tag(exr_buffer *out,const source_xml *x,size_t n,
+    const char *key1,const char *value1,const char *key2,const char *value2) {
+  size_t at=x->spans[n].start,end=x->spans[n].open,copy=at; unsigned seen=0;
+  while (at<end && !isspace((unsigned char)x->bytes[at]) && x->bytes[at]!='/' && x->bytes[at]!='>') at++;
+  while (at<end) {
+    size_t name,length,start; char quote; const char *value=NULL;
+    while (at<end && isspace((unsigned char)x->bytes[at])) at++;
+    if (at==end || x->bytes[at]=='/' || x->bytes[at]=='>') break;
+    name=at;
+    while (at<end && !isspace((unsigned char)x->bytes[at]) && x->bytes[at]!='=') at++;
+    length=at-name;
+    while (at<end && x->bytes[at]!='=') at++;
+    if (at==end) return 0;
+    at++; while (at<end && isspace((unsigned char)x->bytes[at])) at++;
+    if (at==end || (x->bytes[at]!='\'' && x->bytes[at]!='"')) return 0;
+    quote=x->bytes[at++]; start=at;
+    while (at<end && x->bytes[at]!=quote) at++;
+    if (at==end) return 0;
+    if (strlen(key1)==length && !memcmp(x->bytes+name,key1,length)) { value=value1; seen|=1; }
+    if (key2 && strlen(key2)==length && !memcmp(x->bytes+name,key2,length)) { value=value2; seen|=2; }
+    if (value) {
+      if (!exr_append(out,x->bytes+copy,start-copy) || !escape(out,value)) return 0;
+      copy=at;
+    }
+    at++;
+  }
+  if (!exr_append(out,x->bytes+copy,at-copy)) return 0;
+  if (!(seen&1) && (!put(out," ") || !put(out,key1) || !put(out,"=\"") || !escape(out,value1) || !put(out,"\""))) return 0;
+  if (key2 && !(seen&2) && (!put(out," ") || !put(out,key2) || !put(out,"=\"") || !escape(out,value2) || !put(out,"\""))) return 0;
+  return exr_append(out,x->bytes+at,end-at);
+}
+exr_status exr_edit_image_resize_xml(const exr_edit_doc *d,const exr_edit_block *image,
+    int64_t width,int64_t height,void **xml,size_t *size) {
+  const exr_edit_part *parts,*part; const exr_edit_block *p;
+  size_t np,run,offset,n,i,start,end,at; exr_edit_id paragraph;
+  char main[2048],w[32],h[32]; source_xml original={0},x={0};
+  exr_buffer wrapped={0},out={0}; exr_status s; int found=0;
+  *xml=NULL; *size=0;
+  s=exr_edit_image_position(d,image,&paragraph,&run,&offset); if (s) return s;
+  p=exr_edit_find_block(d,paragraph); if (!p) return EXR_ARGUMENT;
+  parts=exr_edit_parts(d,&np); s=exr_edit_main_part(parts,np,main,NULL); if (s) return s;
+  part=exr_edit_part_named(parts,np,main); if (!part) return EXR_ARGUMENT;
+  s=exr_edit_xml_parse(&original,part->data,part->size,"document",NULL); if (s) goto done;
+  n=exr_edit_xml_locate(&original,p->opaque_xml,p->opaque_size,"p",NONE);
+  if (n==NONE) { s=EXR_UNSUPPORTED; goto done; }
+  /* Keep every ancestor namespace, including declarations on table/cell/p.
+     Reparse the current run so consecutive resizes never use stale byte spans. */
+  start=original.spans[n].open+offset; end=start+image->opaque_size;
+  s=EXR_MEMORY;
+  if (!exr_append(&wrapped,original.bytes,original.spans[n].open) ||
+      !exr_append(&wrapped,p->runs[run].opaque_xml,p->runs[run].opaque_size) ||
+      !exr_append(&wrapped,original.bytes+original.spans[n].close,original.size-original.spans[n].close)) goto done;
+  s=exr_edit_xml_parse(&x,wrapped.data,wrapped.size,"document",NULL); if (s) goto done;
+  snprintf(w,sizeof(w),"%lld",(long long)width); snprintf(h,sizeof(h),"%lld",(long long)height);
+  at=start; s=EXR_MEMORY;
+  for (i=0;i<x.tree->node_count;i++) {
+    const exr_node *v=x.tree->nodes+i; int extent,vml;
+    if (!v->name || x.spans[i].start<start || x.spans[i].end>end) continue;
+    extent=local(v,WP,"extent") || local(v,WPS,"extent") ||
+      ((local(v,A,"ext") || local(v,AS,"ext")) && v->parent!=NONE &&
+       (local(x.tree->nodes+v->parent,A,"xfrm") || local(x.tree->nodes+v->parent,AS,"xfrm")));
+    vml=local(v,"urn:schemas-microsoft-com:vml","shape");
+    if (!extent && !vml) continue;
+    if (!exr_append(&out,x.bytes+at,x.spans[i].start-at)) goto done;
+    if (extent) {
+      if (!resize_tag(&out,&x,i,"cx",w,"cy",h)) goto done;
+    } else {
+      exr_buffer style={0}; const char *text=exr_node_attribute(v,"style"); char dims[128];
+      while (text && *text) {
+        const char *tail=strchr(text,';'),*key=text,*colon,*key_end; size_t length=tail ? (size_t)(tail-text):strlen(text);
+        while ((size_t)(key-text)<length && isspace((unsigned char)*key)) key++;
+        colon=memchr(key,':',length-(size_t)(key-text));
+        key_end=colon;
+        while (key_end && key_end>key && isspace((unsigned char)key_end[-1])) key_end--;
+        if (!colon || !((key_end-key==5 && !memcmp(key,"width",5)) || (key_end-key==6 && !memcmp(key,"height",6)))) {
+          if (!exr_append(&style,text,length) || !put(&style,";")) { free(style.data); goto done; }
+        }
+        text=tail ? tail+1:NULL;
+      }
+      snprintf(dims,sizeof(dims),"width:%.10fpt;height:%.10fpt",(double)width/12700.,(double)height/12700.);
+      if (!put(&style,dims) || !exr_append(&style,"",1)) { free(style.data); goto done; }
+      if (!resize_tag(&out,&x,i,"style",style.data,NULL,NULL)) { free(style.data); goto done; }
+      free(style.data);
+    }
+    at=x.spans[i].open; found=1;
+  }
+  if (!found) { s=EXR_UNSUPPORTED; goto done; }
+  if (!exr_append(&out,x.bytes+at,end-at)) goto done;
+  *xml=out.data; *size=out.size; out.data=NULL; s=EXR_OK;
+done:
+  exr_edit_xml_free(&original); exr_edit_xml_free(&x); free(wrapped.data); free(out.data); return s;
 }
 exr_status exr_edit_insert_image(exr_edit_doc *d,exr_edit_id after,const void *bytes,size_t size,double width,double height,exr_edit_id *id) {
   exr_edit_image im={0}; exr_edit_block b={0}; exr_bitmap bitmap={0}; exr_status s=exr_edit_ready(d);
