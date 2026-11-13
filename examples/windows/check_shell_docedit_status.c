@@ -34,5 +34,18 @@ int main(void) {
   de_status_count_block(&outer,&after);
   assert(!after.words && !after.characters && after.paragraphs==1);
   puts("PASS opaque XML excluded; empty paragraph retained");
+  /* Woman technologist = three code points; e + combining acute = two. */
+  run.kind=EXR_EDIT_TEXT;
+  run.text="\xf0\x9f\x91\xa9\xe2\x80\x8d\xf0\x9f\x92\xbb"
+    "e\xcc\x81";
+  run.text_size=strlen(run.text);after=(de_status_counts){0};
+  de_status_count_block(&block,&after);
+  assert(after.words==5 && after.characters==5);
+  puts("PASS joined emoji and combining mark counted as five code points");
+  exr_edit_run split[2]={run,run};
+  block.runs=split;block.run_count=2;after=(de_status_counts){0};
+  de_status_count_block(&block,&after);
+  assert(after.words==10 && after.characters==10 && after.paragraphs==1);
+  puts("PASS formatting runs do not add characters or paragraphs");
   return 0;
 }
