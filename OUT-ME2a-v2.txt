@@ -1,0 +1,20 @@
+已完成并本地提交 **`334b1383`**：表格 UI、首个 run 插入、事务撤销及保存往返均已打通。
+
+真实验收结果：
+
+```text
+① border_pixels=58 caret_pixels=22，光标在 (0,0) 格内
+② Ctrl+S → 重开 cell(0,0)=AB
+③ Enter paragraphs=1->2；输入 X → [AB|X]
+④ 一次 Ctrl+Z → [AB|empty]，Enter 保留
+⑤ +行 2->3；-行 3->2，各一笔事务
+⑥ 列宽像素 160.0->168.0->160.0
+⑦ 删表后 table block absent，border layouts=0
+⑧ 重开 rows=2 columns=2 widths=[2520,2400]，全部格内文本一致
+⑨ 100% tests passed out of 420（按要求排除两项）
+⑩ check_sdk_docs.py exit 0；486/486，100%
+```
+
+[逐项原始输出、命令和截图](C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/evidence/me2a-tables/README.md) · [已构建的 EXReader](C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables-host/EXReader.exe)
+
+**未推送**：仓库缺少 `ops/prepush-check.ps1`，实际调用返回 exit 64；未绕过推送门禁。
