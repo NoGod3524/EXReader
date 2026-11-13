@@ -2721,13 +2721,27 @@ int main(void) {
 
 **ABI** 实验（[公开头文件](../include/exr/edit.h)）。
 
-**参数** doc、block_id 指定段落，run_index/byte_offset 为 run 内 UTF-8 标量边界；(run_count,0) 表示末尾。
+**参数** doc、block_id 指定顶层段落或 exr_edit_table_cell_paragraph 返回的可编辑单元格段落，run_index/byte_offset 为 run 内 UTF-8 标量边界；(run_count,0) 表示末尾。
 
-**返回与失败** 返回 exr_status；左块保留 ID，右块新 ID，完整移动的 run 保留 ID，拆开的右片段新 ID；opaque run 仅允许 offset=0。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 成功返回 EXR_OK；左块保留 ID，右块新 ID，完整移动的 run 保留 ID，拆开的右片段新 ID；顶层 opaque run 仅允许 offset=0。单元格拆出的两段均留在原单元格。非法模型、ID、位置或 UTF-8 非标量边界为 EXR_ARGUMENT，非段落或受保护单元格为 EXR_UNSUPPORTED；分配失败为 EXR_MEMORY，ID/容量耗尽为 EXR_LIMIT。参与当前事务及 undo/redo，事务内失败遵循锁存/回滚规则。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
 **所有权** 段落属性复制；修改后重新取得借用视图。
+
+### `exr_edit_table_cell_paragraph`
+
+**签名** `const exr_edit_block *exr_edit_table_cell_paragraph( const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column,size_t index);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table` 为表格块 ID；`row`、`column` 为从 0 起的物理行/单元格索引；`index` 为单元格内按文档顺序排列的可编辑段落索引，从 0 起。
+
+**返回与失败** 返回只读段落块，ID 可传给 exr_edit_split_paragraph，两段留在原单元格。空单元格返回已有占位段落（若存在）。非法模型、ID、越界索引、无表格模型或受保护单元格返回 NULL。普通多段落单元格可查询；含合并、嵌套表、底纹或 opaque 内容的单元格不可编辑。只读查询可在事务内外调用，不产生历史，也不锁存事务失败；拆段参与当前事务及 undo/redo。
+
+**线程** 同一模型的读取、写出、修改、事务及释放由调用方串行化，不得并发。
+
+**所有权** 返回模型持有的借用视图，不可释放；所属表格修改、undo/redo、回滚或模型释放后须重新获取。查询不分配占位段落。
 
 ### `exr_edit_table_delete_row`
 
@@ -2784,6 +2798,20 @@ int main(void) {
 **线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
 
 **所有权** 输入 run、文字及属性在调用期间借用，文字和属性复制到模型；输入 run 的 ID 与 opaque XML 不沿用。模型分配和释放新内容；成功修改使该表格原有借用视图失效，无返回分配。
+
+### `exr_edit_table_set_column_width`
+
+**签名** `exr_status exr_edit_table_set_column_width( exr_edit_doc *doc,exr_edit_tx *tx,exr_edit_id table,size_t column,int32_t width_twips);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`tx` 必须是该模型当前活动事务，`table` 为已建模表格块 ID；`column` 为从 0 起的网格列索引；`width_twips` 为正宽度，单位 twip（1/20 点）。
+
+**返回与失败** 成功返回 EXR_OK，同时设置内存列宽、w:gridCol[column] 和整表宽度 w:tblW（各列之和），参与事务及 undo/redo。非法模型、ID、事务、越界列或非正宽度为 EXR_ARGUMENT；无表格模型为 EXR_UNSUPPORTED；总宽超过 INT32_MAX 为 EXR_LIMIT，分配失败为 EXR_MEMORY。失败不修改模型，事务内失败遵循锁存/提交回滚规则。缺少网格宽度的模型按原整表宽度除以列数初始化其他列；exr_edit_table_set_width 保持仅设置整表宽度的原语义。
+
+**线程** 同一模型的读取、写出、修改、事务及释放由调用方串行化，不得并发。
+
+**所有权** doc、tx 为借用输入，本函数不消费事务；宽度按值复制，列宽数组及历史快照由模型分配和释放。成功修改使原表格及单元格借用视图失效，无返回分配。
 
 ### `exr_edit_table_set_width`
 

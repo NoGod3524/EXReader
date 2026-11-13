@@ -51,10 +51,12 @@ static exr_status command(exr_edit_doc *d,unsigned op) {
 static exr_status make_table_image(exr_edit_doc **out) {
   exr_edit_run run={0}; exr_edit_block p={0},blocks[2]={{0}};
   exr_edit_cell cell={0}; exr_edit_row row={0}; exr_edit_table table={0}; exr_edit_image image={0};
+  int32_t width=2400;
   run.text="cell"; run.text_size=4; p.runs=&run; p.run_count=1;
   cell.blocks=&p; cell.block_count=1; cell.opaque_xml="<w:tc/>"; cell.opaque_size=7;
   row.cells=&cell; row.cell_count=1; row.opaque_xml="<w:tr/>"; row.opaque_size=7;
   table.rows=&row; table.row_count=table.column_count=1;
+  table.width_twips=width; table.column_widths=&width;
   blocks[0].kind=EXR_EDIT_TABLE; blocks[0].table=&table;
   image.data="payload"; image.size=7; image.width_emu=image.height_emu=12700;
   blocks[1].kind=EXR_EDIT_IMAGE; blocks[1].image=&image;
@@ -100,6 +102,28 @@ int main(void) {
     }
     CHECK(fail_at<64);
   }
+  for (transaction=0;transaction<2;transaction++) for (fail_at=0;fail_at<128;fail_at++) {
+    exr_edit_doc *d=NULL; exr_edit_tx *t=NULL; exr_edit_id id; exr_status s;
+    CHECK(make_table_image(&d)==EXR_OK);
+    id=exr_edit_block_at(d,0)->table->rows[0].cells[0].blocks[0].id;
+    if (transaction) { t=exr_edit_begin(d); CHECK(t); }
+    remaining=fail_at; s=exr_edit_split_paragraph(d,id,0,2); remaining=SIZE_MAX;
+    if (!s) {
+      if (t) CHECK(exr_edit_commit(t)==EXR_OK);
+      CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].block_count==2);
+      CHECK(exr_edit_undo(d)==EXR_OK);
+    } else {
+      CHECK(s==EXR_MEMORY);
+      if (t) CHECK(exr_edit_commit(t)==EXR_MEMORY);
+      covered++;
+    }
+    CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].block_count==1);
+    CHECK(!strcmp(exr_edit_block_at(d,0)->table->rows[0].cells[0].blocks[0].runs[0].text,"cell"));
+    CHECK(exr_edit_block_at(d,0)->table->column_widths[0]==2400);
+    exr_edit_doc_free(d); CHECK(!live);
+    if (!s) break;
+  }
+  CHECK(fail_at<128);
   printf("docx-edit-allocation: %zu injected failures, all atomic/rolled back, zero live allocations\n",covered);
   return 0;
 }
