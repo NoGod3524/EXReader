@@ -2,6 +2,7 @@
 #include "pdf_raster_internal.h"
 #include "font_internal.h"
 #include "pdf_crypto.h"
+#include "ppt_internal.h"
 typedef struct {
   unsigned char *data; size_t size,count; exr_pdf_file *file; exr_pdf_page_info *pages; exr_font *font;
   exr_metadata_entry *metadata; size_t metadata_count;
@@ -274,6 +275,10 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
   exr_fixed_open_options options; unsigned char *copy; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL;
+  if(format==EXR_PPT) {
+    status=exr_fixed_open_options_copy(input,&options,e);if(status!=EXR_OK) return status;
+    return exr_ppt_open_memory(data,size,&options,out,e);
+  }
   if(!data || !size || size>EXR_MAX_INPUT) return exr_fail(e,size>EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,"Invalid fixed document bytes");
   if(!exr_format_is_fixed(format)) return exr_fail(e,EXR_FORMAT,"No built-in fixed reader for this format");
   status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
@@ -303,8 +308,14 @@ exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,e
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
   title=path; for(at=path;*at;at++) if(*at=='/' || *at=='\\') title=at+1;
   at=strrchr(title,'.');
+  if(at && (at[1]=='p' || at[1]=='P') && (at[2]=='p' || at[2]=='P') && (at[3]=='t' || at[3]=='T') && !at[4])
+    return exr_ppt_open_file(path,&options,out,e);
   if(at && (at[0]=='.' && (at[1]=='c' || at[1]=='C') && (at[2]=='b' || at[2]=='B') && (at[3]=='z' || at[3]=='Z') && !at[4])) return exr_cbz_open_file(path,title,&options,out,e);
   status=exr_map_file(path,&mapping,e);
+  if(status==EXR_OK && mapping.size>=8 && !memcmp(mapping.address,"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",8)) {
+    status=exr_ppt_open_memory(mapping.address,mapping.size,&options,out,e);
+    exr_unmap(&mapping);return status;
+  }
   if(status==EXR_OK) return open_data((unsigned char *)mapping.address,mapping.size,title,&options,&mapping,1,out,e);
   status=exr_read(path,&data,&size,e); if(status!=EXR_OK) return status;
   return open_data(data,size,title,&options,NULL,0,out,e);

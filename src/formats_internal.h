@@ -83,5 +83,5 @@ void exr_mobi_huff_free(exr_mobi_huff *huff);
 uint32_t exr_windows1252(unsigned char byte);
 exr_status exr_rtf(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_fb2(exr_document *doc, const void *data, size_t size, exr_error *error);
-static inline int exr_format_is_fixed(exr_format format) { return format==EXR_PDF || format==EXR_CBZ; }
+static inline int exr_format_is_fixed(exr_format format) { return format==EXR_PDF || format==EXR_CBZ || format==EXR_PPT; }
 #endif

@@ -32,7 +32,7 @@ typedef struct {
   exr_pdf_security_info *pdf_security; /* Optional, initialize struct_size; written on success. */
 } exr_fixed_open_options;
 EXR_API int exr_pdf_crypto_available(void);
-/* Built-in fixed-format readers (PDF and CBZ). Memory input is copied;
+/* Built-in fixed-format readers (PDF, CBZ and legacy PPT). Memory input is copied;
    file input uses UTF-8 paths. No system font lookup or eager page painting. */
 EXR_API exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
                                           const exr_fixed_open_options *options,
