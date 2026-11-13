@@ -2609,13 +2609,27 @@ int main(void) {
 
 **ABI** 实验（[公开头文件](../include/exr/edit.h)）。
 
-**参数** doc 为模型，after_id=0 表示开头；runs/count 为文字片段，props 可为 NULL，new_id 接收新块 ID。
+**参数** doc 为模型，after_id=0 表示开头；after_id 也可为 exr_edit_table_cell_paragraph 返回的可编辑单元格段落 ID，此时在同格该段之后插入；runs/count 为文字片段，props 可为 NULL，new_id 接收新块 ID。
 
-**返回与失败** 返回 exr_status；新 run 获得新 ID，节继承锚点（开头用首节），空 props 为继承属性集；失败清空输出 ID。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 成功返回 EXR_OK，新段及 run 获得新 ID，节继承锚点（开头用首节），空 props 为继承属性集；保留同格其他段落、run 及其 ID。非法锚点或参数为 EXR_ARGUMENT，受保护单元格为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY，容量或 ID 耗尽为 EXR_LIMIT；失败清空输出 ID。参与当前事务及 undo/redo，事务内失败遵循锁存/回滚规则。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
 **所有权** 输入可别名借用视图；新内容由模型管理。
+
+### `exr_edit_insert_run`
+
+**签名** `exr_status exr_edit_insert_run(exr_edit_doc *doc,exr_edit_tx *tx, exr_edit_id paragraph,size_t offset,const char *text,size_t len, const exr_edit_run_props *props);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为模型，tx 必须为 doc 当前的活动事务；paragraph 为顶层或可编辑单元格段落 ID。offset 为 run 插入位置（0..run_count），在该 run 之前插入，run_count 表示追加；零 run 段落使用 0。text/len 为非空 UTF-8/XML 文字及字节数；props 可为 NULL，表示空的继承属性集。
+
+**返回与失败** 成功返回 EXR_OK，创建一个新 ID 的 TEXT run，保留段落及相邻 run 的 ID、文字、属性和 XML 模板，不改变段落数。空指针、零长度、非法文本/属性/ID、越界 offset 或不匹配的事务为 EXR_ARGUMENT；非段落或受保护单元格（合并、嵌套表、底纹及 opaque 内容）为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY，容量或 ID 耗尽为 EXR_LIMIT。顶层段落可在 opaque run 前后插入，opaque run 保持原样。参与当前事务及 undo/redo；失败不改变模型，锁存事务失败，提交失败事务会整体回滚。
+
+**线程** 同一模型的读取、写出、修改、事务及释放须由宿主串行；调用期间不得修改输入缓冲区。
+
+**所有权** text 和 props 在调用期间借用并深拷贝，可别名当前模型视图；返回后可释放输入。新 run 由模型持有并释放。成功后须重新取得段落视图；格内修改使所属表格及子视图失效，无输出内存需释放。
 
 ### `exr_edit_memory_bytes`
 
@@ -2721,7 +2735,7 @@ int main(void) {
 
 **ABI** 实验（[公开头文件](../include/exr/edit.h)）。
 
-**参数** `doc` 为模型，`block_id` 为段落块 ID；`run_index` 从 0 起；`text`/`text_size` 为有效 UTF-8/XML 文本及字节数，允许 NULL/0 清空，长度不是字符数。
+**参数** `doc` 为模型，`block_id` 为段落块 ID；`run_index` 从 0 起，必须指向已有 run；零 run 段落上任意索引均为 EXR_ARGUMENT，先用 exr_edit_insert_run 创建文字 run。`text`/`text_size` 为有效 UTF-8/XML 文本及字节数，允许 NULL/0 清空，长度不是字符数。
 
 **返回与失败** 成功返回 EXR_OK，替换一个 TEXT run 的文字，保留 ID、直接属性、原始 XML 模板及相邻 opaque run。block_id 可为普通段落或可编辑单元格段落 ID；单元格编辑保留同格其他段落、run 和 ID，不改变顶层块数。无效 ID、索引、长度或文本为 EXR_ARGUMENT，非段落块、opaque run 或受保护单元格（合并、嵌套表、底纹及 opaque 内容）为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY。参与事务及 undo/redo；事务内失败会锁存状态，后续命令失败直至回滚，提交失败事务会整体回滚。
 

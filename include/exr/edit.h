@@ -149,9 +149,19 @@ EXR_API size_t exr_edit_memory_bytes(const exr_edit_doc *doc);
 
 /* after_id 0 prepends. Runs receive fresh IDs; section inherits from anchor
    (first section at start). NULL props uses an empty/inheriting property set.
+   An editable cell paragraph anchor inserts within the same cell.
    Input buffers may alias borrowed views. Output ID is cleared on failure. */
 EXR_API exr_status exr_edit_insert_paragraph(exr_edit_doc *doc,exr_edit_id after_id,
   const exr_edit_run *runs,size_t count,const exr_edit_para_props *props,exr_edit_id *new_id);
+/* Requires doc's active transaction. Insert a new TEXT run before offset
+   (0..run_count); offset 0 creates the first run of an empty paragraph.
+   Supports top-level and editable cell paragraphs; siblings retain their IDs.
+   text must be non-NULL, len positive, and valid UTF-8/XML text.
+   NULL props uses an empty/inheriting property set. Inputs may alias views.
+   Participates in transactions/undo/redo; invalid inputs return EXR_ARGUMENT. */
+EXR_API exr_status exr_edit_insert_run(exr_edit_doc *doc,exr_edit_tx *tx,
+  exr_edit_id paragraph,size_t offset,const char *text,size_t len,
+  const exr_edit_run_props *props);
 /* UTF-8 scalar boundary, not a character index. (run_count,0) splits at end.
    Left block retains its ID; the next block gets a fresh ID. Whole moved runs
    retain IDs; only the right fragment of a divided run gets a fresh ID.
@@ -167,6 +177,8 @@ EXR_API exr_status exr_edit_set_run_props(exr_edit_doc *doc,exr_edit_id block_id
    IDs, direct properties, original XML template and neighbouring opaque runs
    are retained. Buffers may alias borrowed text; NULL/0 clears the run.
    Editable cell paragraphs are updated without replacing sibling paragraphs.
+   Requires an existing run: every index in a zero-run paragraph returns
+   EXR_ARGUMENT; first use exr_edit_insert_run to insert text there.
    Protected cells and opaque runs return EXR_UNSUPPORTED.
    Participates in transactions/undo/redo. */
 EXR_API exr_status exr_edit_set_run_text(exr_edit_doc *doc,exr_edit_id block_id,

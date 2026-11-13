@@ -149,6 +149,42 @@ int main(void) {
     if (!s) break;
   }
   CHECK(fail_at<128);
+  /* M-E6: first-run insertion and cell paragraph insertion must be atomic at
+     every allocation, including a tx with earlier successful commands. */
+  for (op=0;op<3;op++) for (transaction=0;transaction<2;transaction++) {
+    for (fail_at=0;fail_at<128;fail_at++) {
+      exr_edit_doc *d=NULL; exr_edit_tx *t=NULL; exr_edit_id left,id,out=99; exr_status s;
+      const exr_edit_block *p;
+      CHECK(make_table_image(&d)==EXR_OK);
+      left=exr_edit_block_at(d,0)->table->rows[0].cells[0].blocks[0].id;
+      CHECK(exr_edit_split_paragraph(d,left,1,0)==EXR_OK);
+      id=exr_edit_block_at(d,0)->table->rows[0].cells[0].blocks[1].id;
+      if (op<2 || transaction) { t=exr_edit_begin(d); CHECK(t); }
+      if (transaction) CHECK(exr_edit_set_run_text(d,left,0,"prior",5)==EXR_OK);
+      p=exr_edit_find_block(d,left);
+      remaining=fail_at;
+      if (op==0) s=exr_edit_insert_run(d,t,id,0,p->runs[0].text,p->runs[0].text_size,&p->runs[0].props);
+      else if (op==1) s=exr_edit_insert_run(d,t,left,0,p->runs[0].text,p->runs[0].text_size,&p->runs[0].props);
+      else s=exr_edit_insert_paragraph(d,id,p->runs,p->run_count,&p->props,&out);
+      remaining=SIZE_MAX;
+      if (t) CHECK(exr_edit_commit(t)==s);
+      if (!s) {
+        CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].block_count==(op==2 ? 3u : 2u));
+        CHECK(exr_edit_find_block(d,op==2 ? out : op==0 ? id : left)->run_count==(op==1 ? 2u : 1u));
+        CHECK(exr_edit_undo(d)==EXR_OK);
+      } else { CHECK(s==EXR_MEMORY); if (op==2) CHECK(!out); covered++; }
+      CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].block_count==2);
+      CHECK(!exr_edit_find_block(d,id)->run_count);
+      CHECK(exr_edit_find_block(d,left)->run_count==1);
+      CHECK(!strcmp(exr_edit_find_block(d,left)->runs[0].text,"cell"));
+      CHECK(exr_edit_block_at(d,0)->table->column_widths[0]==2400);
+      CHECK(exr_edit_undo(d)==EXR_OK);
+      CHECK(exr_edit_block_at(d,0)->table->rows[0].cells[0].block_count==1);
+      exr_edit_doc_free(d); CHECK(!live);
+      if (!s) break;
+    }
+    CHECK(fail_at<128);
+  }
   printf("docx-edit-allocation: %zu injected failures, all atomic/rolled back, zero live allocations\n",covered);
   return 0;
 }
