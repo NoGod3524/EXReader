@@ -1,28 +1,49 @@
-**发现真实 API 缺口，已按硬约束停止 UI 实现。**
+已完成，七项验收通过。未改 `src/**`、`tests/check_reading_release.py`，未使用 GUI 自动化。
 
-Enter 能把单元格拆成两段，但后续改字没有可保留其他段落的接口。headless 复现命令：
+修改文件均在 `examples/windows/`：
+
+| 文件 | 总行数 | 新增/删除 |
+|---|---:|---:|
+| `shell_docedit.inc` | 306 | +40/-14 |
+| `shell_docedit_paint.inc` | 245 | +49/-17 |
+| `shell_docedit_input.inc` | 380 | +39/-20 |
+| `shell_docedit_toolbar.inc` | 266 | +23/-14 |
+| `check_shell_docedit.c` | 288 | +15/-15 |
+| `check_shell_table.c` | 239 | +141/-44 |
+| `CMakeLists.txt` | 115 | +2/-1 |
+
+①—⑥ 命令：
 
 ```powershell
-& build/me2a-gap/api-gap.exe
+ctest --test-dir build/tables-host -R windows-table-ui -V
 ```
 
-真实输出：
+真实输出摘录：
 
 ```text
-Enter: paragraphs=2 text=A|B
-find_block(cell_paragraph_id): NULL
-set_run_text(cell_paragraph_id): EXR_ARGUMENT (1)
-set_cell_text fallback: paragraphs=1 text=XB (A paragraph lost)
-M-E2a BLOCKED: need paragraph-scoped cell text editing, including empty paragraphs
+1 PASS existing rich.docx (Content/main.xml) -> Tab cell=(0,0); border_pixels=58; merged-cell edit rolls back
+2 PASS typed X1 -> Ctrl+S -> reopened cell(0,0)=X1
+3 PASS Tab (0,0)->(0,1)->(1,0)->(1,1); Shift+Tab reverses; Right enters cell
+4 PASS toolbar +row ABOVE 2->3; -row 3->2; each undo/redo is one transaction; text retained
+5 PASS toolbar column +5%/-5% twips=2400->2520->2394 pixels=160.0->168.0->159.6
+6 PASS toolbar delete confirmation No unchanged / Yes deletes; block_count 3->2; border layouts=0; toolbar hidden
 ```
 
-需要补充：**格内段落级文字编辑 API，支持空段输入、保留同格其他段落及属性，并参与事务和 undo/redo。**
+⑦ 命令及输出：
 
-交付文件：
+```powershell
+ctest --test-dir build/tables -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure -j 6
+```
 
-| 文件 | 行数 |
-|---|---:|
-| [复现程序](evidence/me2a-api-gap.c) | 新增 41 行 |
-| [完整命令、输出及验收状态](OUT-ME2a.txt) | 61 行 |
+```text
+100% tests passed out of 420
+Total Test time (real) =  84.44 sec
+```
 
-七项 UI 验收均未执行。`src/**` 和受保护脚本未修改；无 GUI 自动化。prepush（含文档门禁）及 `git diff --check` 通过，未提交或推送。
+另已通过原有 M-E1/M-E2c 驱动，以及 Enter、`Ctrl+Alt+Enter`、换行导航、中文/emoji 删除、缺省列宽等分验收。
+
+已知边界：合并格按物理行列导航；受保护单元格编辑和跨格删除会回滚；宽表暂无水平滚动。列宽 ±5% 按当前宽度计算，因此连续加减不完全复原。
+
+完整命令、原始输出和新增证据文件行数见[验收报告](C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/evidence/me2a-ui-20261113/report.txt)，附[截图](C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/evidence/me2a-ui-20261113/table-edited.png)与[保存的 DOCX](C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/evidence/me2a-ui-20261113/table-edited.docx)。
+
+未推送：执行 `pwsh -NoProfile -File ops/prepush-check.ps1` 返回 **exit 64**，仓库缺少该脚本，推送门禁尚未通过。
