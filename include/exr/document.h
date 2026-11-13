@@ -217,7 +217,8 @@ typedef struct {
   exr_control control;
 } exr_fixed_render_options;
 /* Metadata is copied. Provider context ownership transfers only on success.
-   Empty IDs become page-1, page-2, ...; effective IDs must be unique. */
+     Empty IDs become page-1, page-2, ...; effective IDs must be unique.
+     page_count==0 accepts a NULL pages pointer for an empty document. */
 EXR_API exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **out,exr_error *error);
 EXR_API void exr_fixed_free(exr_fixed_document *document);
 EXR_API exr_status exr_fixed_load_metadata(exr_fixed_document *document,const exr_control *control,

@@ -56,6 +56,7 @@
     "canvas.c": "graphics",
     "case.c": "base",
     "cbz.c": "pdf",
+    "pptx.c": "pdf",
     "cfi.c": "doc",
     "cfi_syntax.c": "doc",
     "cfi_offset.c": "doc",
