@@ -2,10 +2,14 @@
 """M-E5 image acceptance through the public ABI, with independent ZIP/XML checks."""
 import argparse
 import ctypes as c
+import hashlib
+import io
 import re
 import struct
+import time
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from zipfile import ZipFile
 
 from test_docx_edit_io import Block, ID, package, repack, unzip
 from test_docx_edit_table_image import API, png, paragraph, SECT, WP, A
@@ -58,6 +62,22 @@ def position(api, doc, block):
 def drawing(rid='image1', width=123456, height=234567):
     return (f'<w:drawing xmlns:wp="{WP}"><wp:anchor><wp:extent cx="{width}" cy="{height}"/>'
             f'<a:blip r:embed="{rid}"/></wp:anchor></w:drawing>')
+
+
+def without_zip_timestamps(data):
+    """Ignore only miniz's wall-clock DOS date/time fields, preserving all other bytes."""
+    result = bytearray(data)
+    with ZipFile(io.BytesIO(data)) as archive:
+        central = archive.start_dir
+        for entry in archive.infolist():
+            local = entry.header_offset
+            assert data[local:local + 4] == b'PK\x03\x04'
+            assert data[central:central + 4] == b'PK\x01\x02'
+            result[local + 10:local + 14] = b'\0' * 4
+            result[central + 12:central + 16] = b'\0' * 4
+            name, extra, comment = struct.unpack_from('<HHH', data, central + 28)
+            central += 46 + name + extra + comment
+    return bytes(result)
 
 
 def main(library):
@@ -122,14 +142,30 @@ def main(library):
             finally:
                 api.doc_free(reopened)
             before, count = api.write(doc), api.block_count(doc)
+            blocks_before = [bytes(api.block_at(doc, i).contents) for i in range(count)]
+            block, = images(api, doc)
+            image_before = bytes(view(block)), payload(block)
+            if name == 'PNG':
+                # Cross a DOS timestamp boundary; ASan can do this even without a delay.
+                time.sleep(2.1)
+                assert without_zip_timestamps(api.write(doc)) == without_zip_timestamps(before)
             bad = b'this is a text file renamed to .png'
             out = ID(999)
             assert api.insert_image(doc, 0, bad, len(bad), 10, 10, c.byref(out)) == 5
-            assert not out.value and api.block_count(doc) == count and api.write(doc) == before
+            after_count, after = api.block_count(doc), api.write(doc)
+            print(f'{name} rejected insert: out.value={out.value}; block_count={count}->{after_count}; '
+                  f'write before: len={len(before)} md5={hashlib.md5(before).hexdigest()}; '
+                  f'after: len={len(after)} md5={hashlib.md5(after).hexdigest()}', flush=True)
+            assert not out.value, out.value
+            assert after_count == count, (count, after_count)
+            assert [bytes(api.block_at(doc, i).contents) for i in range(count)] == blocks_before
+            assert (bytes(view(block)), payload(block)) == image_before
+            assert without_zip_timestamps(after) == without_zip_timestamps(before)
             print(f'3/4 {name}: reopen IMAGE format={fmt}, twips=250x485 (EMU=158750x307975), payload byte-identical ({len(data)} bytes)')
         finally:
             api.doc_free(doc)
-    print('2 renamed text.png: EXR_FORMAT; output ID=0; model and serialized bytes unchanged')
+    print('2 renamed text.png: EXR_FORMAT; output ID=0; model/payload unchanged; '
+          'serialized bytes identical except ZIP DOS timestamps')
 
     # Same-run mixed content, identical images, following text, and table cell anchors.
     raw = '<w:r><w:t>left</w:t>' + drawing() * 2 + '<w:t>right</w:t></w:r>'
