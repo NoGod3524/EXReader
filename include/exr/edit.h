@@ -85,10 +85,14 @@ struct exr_edit_table {
   unsigned changed; /* Writer bookkeeping: width=1, borders=2, grid=4. */
   const int32_t *column_widths; /* column_count twip widths; NULL uses width/column_count. */
 };
+typedef enum { EXR_EDIT_IMAGE_PNG=1,EXR_EDIT_IMAGE_JPEG,EXR_EDIT_IMAGE_GIF,EXR_EDIT_IMAGE_BMP } exr_edit_image_format;
 typedef struct {
-  const void *data; size_t size; /* Original PNG/JPEG payload, never re-encoded. */
+  const void *data; size_t size; /* Original payload, never re-encoded; borrowed read-only. */
   int64_t width_emu,height_emu; /* 12700 EMU = 1 point. */
-  unsigned jpeg;
+  unsigned jpeg; /* Compatibility flag; use format for new code. */
+  unsigned format; /* exr_edit_image_format; 0 in legacy seeds uses jpeg. */
+  exr_edit_id anchor_run_id; /* Imported inline image: owning run; 0 = standalone block. */
+  size_t anchor_offset; /* Original byte offset in run XML; position() tracks later edits. */
 } exr_edit_image;
 struct exr_edit_block {
   exr_edit_id id,section_id;
@@ -99,7 +103,9 @@ struct exr_edit_block {
      properties in paragraph templates and retains all other source bytes. */
   const void *opaque_xml; size_t opaque_size;
   const exr_edit_table *table; /* TABLE: NULL keeps an opaque legacy seed. */
-  const exr_edit_image *image; /* IMAGE: new payload; imported drawings remain opaque runs. */
+  const exr_edit_image *image; /* IMAGE: payload and exact EMU dimensions (635 EMU = 1 twip).
+    Imported images follow their owning paragraph/table as anchor views. The
+    original run XML remains the lossless writer template, emitted only once. */
 };
 typedef struct {
   exr_edit_id id;
@@ -195,13 +201,21 @@ EXR_API exr_status exr_edit_table_set_column_width(
 EXR_API exr_status exr_edit_table_set_borders(exr_edit_doc *doc,exr_edit_id table_id,exr_edit_borders spec);
 EXR_API exr_status exr_edit_delete_table(exr_edit_doc *doc,exr_edit_id table_id);
 /* Payload length is required for a C byte buffer. Dimensions are points, finite
-   and positive. PNG and JPEG are accepted by signature. after_id 0 prepends.
+   and positive. The existing decoder accepts PNG/JPEG/BMP/GIF. GIF uses frame 0
+   for display; the complete original GIF payload is retained. after_id 0 prepends.
    Delete accepts a new image block ID, an imported drawing run ID (including
    table-cell runs), or a paragraph ID to remove its drawings while keeping text.
    Export prunes removed image relationships and media unused by any OPC part. */
 EXR_API exr_status exr_edit_insert_image(exr_edit_doc *doc,exr_edit_id after_id,
   const void *bytes,size_t size,double width_pt,double height_pt,exr_edit_id *new_id);
 EXR_API exr_status exr_edit_delete_image(exr_edit_doc *doc,exr_edit_id image_id);
+/* Locate an imported image in its current paragraph (including table cells).
+   run_index and byte_offset identify the drawing/pict within the run's XML.
+   Standalone images return paragraph_id=0, run_index=byte_offset=0.
+   Read-only, borrowed block must be a current view from doc. Outputs required
+   and cleared on failure; same single-thread/lifetime rules as block_at. */
+EXR_API exr_status exr_edit_image_position(const exr_edit_doc *doc,const exr_edit_block *block,
+  exr_edit_id *paragraph_id,size_t *run_index,size_t *byte_offset);
 
 /* No nested transactions. NULL means invalid document, active tx or allocation
    failure. Outside a tx each successful command is one undo entry.
