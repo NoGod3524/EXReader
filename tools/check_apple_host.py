@@ -62,11 +62,16 @@ def main():
         if not candidates:
             raise RuntimeError('No available '+args.device+' simulator')
         runtime, device = sorted(candidates, key=lambda row: (row[0], row[1]['name']), reverse=True)[0]
-        udid = device['udid']
-        booted_here = device['state'] != 'Booted'
+        # Runner images contain pre-created devices whose data may need migration.
+        # Use the same model/runtime with fresh data, and own only this new device.
+        name = 'EXReader host '+args.device
+        device_type = device['deviceTypeIdentifier']
+        udid = command('xcrun', 'simctl', 'create', name, device_type, runtime)
         try:
-            if booted_here:
-                command('xcrun', 'simctl', 'boot', udid)
+            (output/'device.json').write_text(json.dumps({
+                'runtime': runtime, 'name': name, 'deviceTypeIdentifier': device_type,
+                'udid': udid, 'state': 'Shutdown'}, indent=2)+'\n')
+            command('xcrun', 'simctl', 'boot', udid)
             subprocess.run(['xcrun', 'simctl', 'bootstatus', udid, '-b'], check=True, timeout=180)
             command('xcrun', 'simctl', 'install', udid, args.bundle.absolute())
             container = Path(command('xcrun', 'simctl', 'get_app_container', udid, 'org.exreader.host', 'data'))
@@ -78,10 +83,9 @@ def main():
             shutil.copyfile(source, report)
             time.sleep(1)
             command('xcrun', 'simctl', 'io', udid, 'screenshot', output/'screen.png')
-            (output/'device.json').write_text(json.dumps({'runtime': runtime, **device}, indent=2)+'\n')
         finally:
-            if booted_here:
-                subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False)
+            subprocess.run(['xcrun', 'simctl', 'shutdown', udid], check=False)
+            subprocess.run(['xcrun', 'simctl', 'delete', udid], check=False)
     result = json.loads(report.read_text())
     if result.get('passed') is not True or result.get('check_count', 0) < 20:
         raise RuntimeError('Reference host self-check failed; retained report: '+str(report))
