@@ -1,0 +1,6 @@
+已修复并推送，最新提交 `f094c9ec`。
+
+- 改用独立测试模拟器，保留原超时和断言；补齐手动 CI 入口默认值。
+- 完整手动 CI 中，`native / apple-mobile`、`reading-required-core` 均通过；iPhone/iPad 各 21 项自检通过。[运行记录](https://github.com/NoGod3524/EXReader/actions/runs/43409265360)
+- 每次推送前均通过完整 prepush。
+- 仅改 3 个相关文件；两个受保护文件未动，全程无 GUI / SendInput。
