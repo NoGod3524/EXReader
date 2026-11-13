@@ -55,10 +55,10 @@ def stage(destination):
         modified = original
         for before, after in replacements:
             modified = replace_once(modified, before, after)
-        (destination / name).write_text(modified, encoding='utf-8')
+        (destination / name).write_text(modified, encoding='utf-8', newline='\n')
         patch.extend(difflib.unified_diff(original.splitlines(True), modified.splitlines(True),
                                          fromfile='a/' + name, tofile='b/' + name))
-    (destination.parent / 'integration.patch').write_text(''.join(patch), encoding='utf-8')
+    (destination.parent / 'integration.patch').write_text(''.join(patch), encoding='utf-8', newline='\n')
     print('Staged three host integration files; original worktree files unchanged.', flush=True)
 
 
@@ -80,11 +80,17 @@ def main():
         for line in options.dependency_cache.read_text().splitlines():
             if line.startswith('FETCHCONTENT_SOURCE_DIR_') and '=' in line:
                 key, value = line.split('=', 1)
-                args.append('-D' + key.split(':')[0] + '=' + value)
+                key = key.split(':')[0]
+                if not value:
+                    source = options.dependency_cache.parent / '_deps' / (key.removeprefix('FETCHCONTENT_SOURCE_DIR_').lower() + '-src')
+                    if source.is_dir():
+                        value = source.resolve().as_posix()
+                if value:
+                    args.append('-D' + key + '=' + value)
     subprocess.run(args, check=True)
     subprocess.run(['cmake', '--build', str(build), '--target', 'check_shell_docedit_a11y',
                     'EXReaderL07', '-j', '2'], check=True)
-    subprocess.run(['ctest', '--test-dir', str(build), '--output-on-failure'], check=True)
+    subprocess.run(['ctest', '--test-dir', str(build), '--verbose', '--output-on-failure'], check=True)
 
 
 if __name__ == '__main__':
