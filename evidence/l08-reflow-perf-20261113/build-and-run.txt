@@ -1,0 +1,55 @@
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 4.4.2
+-- 
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix ....... 
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     rand_s ................... ON
+-- 
+-- ===========================================================================
+-- Configuring done (2.6s)
+-- Generating done (0.7s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf
+[0/2] Re-checking globbed directories...
+ninja: no work to do.
+paragraphs position incremental_p50_ms full_p50_ms ratio incremental_max_ms max_key_ratio
+1 start 0.103700 0.118000 0.878814 0.137700 1.062222
+1 middle 0.070600 0.098400 0.717480 0.104200 0.866135
+1 end 0.070500 0.098200 0.717923 0.090600 1.094053
+100 start 0.114300 1.927900 0.059287 0.136800 0.072740
+100 middle 0.102100 1.707000 0.059813 0.126300 0.073298
+100 end 0.098900 1.793100 0.055156 0.192600 0.099679
+200 start 0.137000 3.477900 0.039392 0.205500 0.055061
+200 middle 0.155800 3.581400 0.043503 0.206500 0.056731
+200 end 0.147000 3.430400 0.042852 0.258900 0.059948
+1000 start 0.445500 16.746500 0.026603 0.593100 0.035909
+1000 middle 0.442600 16.081500 0.027522 0.619400 0.034238
+1000 end 0.441300 16.080800 0.027443 1.079400 0.066879
+anchor: page 8 offset 8 -> page 9 offset 8, block 1080 byte 8
+anchor UTF8: page 1 offset 4 -> page 1 offset 30, block 100031 byte 4
+anchor split: page 5 offset 12 -> page 5 offset 13, byte 12 -> 6
+anchor replacement: page 0 offset 16 -> page 0 offset 23, text target
+l08-reflow-perf: passed

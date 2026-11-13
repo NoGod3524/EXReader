@@ -1,0 +1,40 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: native-l08-reflow-perf
+
+1: Test command: C:\Users\Oscar\Documents\Codex\EXReader-fan-L08\build\l08-perf\exreader-l08-perf.exe "C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/tests/fixtures/fonts/primary.ttf"
+1: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf
+1: Test timeout computed to be: 10000000
+1: paragraphs position incremental_p50_ms full_p50_ms ratio incremental_max_ms max_key_ratio
+1: 1 start 0.107500 0.121400 0.885502 0.137700 1.100465
+1: 1 middle 0.086000 0.118800 0.723906 0.125300 0.912600
+1: 1 end 0.083100 0.107900 0.770158 0.117100 1.022707
+1: 100 start 0.122900 2.575600 0.047717 2.200700 1.168596
+1: 100 middle 0.117800 2.058300 0.057232 0.164700 0.072488
+1: 100 end 0.125800 2.079700 0.060489 0.313600 0.140805
+1: 200 start 0.165500 4.137500 0.040000 0.209700 0.051328
+1: 200 middle 0.158300 4.220200 0.037510 0.252000 0.066250
+1: 200 end 0.150100 4.633200 0.032397 0.228400 0.045574
+1: 1000 start 0.489600 19.170400 0.025539 0.542900 0.028277
+1: 1000 middle 0.455200 18.478000 0.024635 0.508000 0.028085
+1: 1000 end 0.438200 17.786800 0.024636 0.533600 0.030000
+1: anchor: page 8 offset 8 -> page 9 offset 8, block 1080 byte 8
+1: anchor UTF8: page 1 offset 4 -> page 1 offset 30, block 100031 byte 4
+1: anchor split: page 5 offset 12 -> page 5 offset 13, byte 12 -> 6
+1: anchor replacement: page 0 offset 16 -> page 0 offset 23, text target
+1: l08-reflow-perf: passed
+1/1 Test #1: native-l08-reflow-perf ...........   Passed    8.32 sec
+
+The following tests passed:
+	native-l08-reflow-perf
+
+100% tests passed out of 1
+
+Total Test time (real) =   8.35 sec
