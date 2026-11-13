@@ -249,6 +249,7 @@ static void blocks_free(exr_edit_block *blocks,size_t n) {
     for (j=0;j<blocks[i].run_count;j++) free((void *)blocks[i].runs[j].text);
     free((void *)blocks[i].runs);
     exr_edit_table_decode_free((exr_edit_table *)blocks[i].table);
+    free((void *)blocks[i].image);
   }
   free(blocks);
 }
@@ -376,6 +377,7 @@ exr_status exr_edit_docx_read(const void *data,size_t size,const exr_edit_option
   status=exr_edit_xml_parse(&x,p->data,p->size,"document",e); if (status) goto done;
   if (x.body==NONE || !exr_edit_xml_word(x.tree->nodes+x.root,"document")) { status=EXR_FORMAT; goto done; }
   status=decode_blocks(&x,&sections,&ns,&blocks,&nb); if (status) goto done;
+  status=exr_edit_images_decode(&x,parts,np,main,&blocks,&nb,ns); if (status) goto done;
   status=exr_edit_doc_create(sections,ns,blocks,nb,parts,np,options,out);
 done:
   exr_edit_xml_free(&x); exr_document_free(readonly); blocks_free(blocks,nb); free(sections);
@@ -887,7 +889,8 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
         emitted=1; j++; continue;
       }
       while (next<nb && exr_edit_block_at(doc,next)->section_id==b->section_id &&
-          trivia_block(exr_edit_block_at(doc,next))) next++;
+          (trivia_block(exr_edit_block_at(doc,next)) ||
+           (exr_edit_block_at(doc,next)->image && exr_edit_block_at(doc,next)->image->anchor_run_id))) next++;
       if (b->kind==EXR_EDIT_PARAGRAPH) {
         int last=paragraph_break && (next==nb || exr_edit_block_at(doc,next)->section_id!=b->section_id);
         if (last) {
@@ -904,6 +907,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
       } else if (b->kind==EXR_EDIT_TABLE) {
         if (!exr_edit_table_write(&xml,&x,b)) goto done;
       } else if (b->kind==EXR_EDIT_IMAGE) {
+        if (b->image->anchor_run_id) { j++; continue; }
         if (image_index>=image_count || !exr_edit_image_write(&xml,&x,images+image_index++)) goto done;
       } else if (!exr_append(&xml,b->opaque_xml,b->opaque_size)) goto done;
       j++;

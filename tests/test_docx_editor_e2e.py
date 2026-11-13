@@ -72,7 +72,8 @@ def run(api, folder):
         assert len(api.paragraphs(doc)) == paragraphs
         assert len(api.blocks(doc, 1)) == 1
         assert api.table(doc)[1].count == rows
-        assert len(api.blocks(doc, 4)) == images
+        # The source drawing is now a structured IMAGE too; images counts inserts.
+        assert len(api.blocks(doc, 4)) == images + 1
         count = c.c_size_t()
         api.sections(doc, c.byref(count))
         assert count.value == 2

@@ -41,6 +41,10 @@ exr_status exr_edit_main_part(const exr_edit_part *parts,size_t n,char name[2048
 exr_status exr_edit_table_decode(const source_xml *x,size_t n,exr_edit_table **out);
 void exr_edit_table_decode_free(exr_edit_table *t);
 int exr_edit_table_write(exr_buffer *b,const source_xml *x,const exr_edit_block *block);
+/* Reuses the image decoder's signature detector (PNG=1, JPEG=2, GIF=3, BMP=4). */
+int exr_image_format_detect(const void *data,size_t size);
+exr_status exr_edit_images_decode(const source_xml *x,const exr_edit_part *parts,size_t np,
+  const char *main,exr_edit_block **blocks,size_t *count,size_t sections);
 /* Names and IDs are selected once per write and shared by drawing/OPC output. */
 typedef struct {
   const exr_edit_block *block;
