@@ -136,9 +136,9 @@ static void de_refresh(int reveal) {
   de.blink=1;
   if(!g.page)return;
   RECT area;GetClientRect(g.page,&area);
-  if(de_measure(area.right,area.bottom) && reveal && de.caret_block<de.row_count) {
-    float box[4];shell_d2d_edit_row *row=&de.rows[de.caret_block];
-    shell_d2d_edit_position(row->layout,de_offset(de_caret()),box);
+  if(de_measure(area.right,area.bottom) && reveal && de.caret.view<de.row_count) {
+    float box[4];shell_d2d_edit_row *row=&de.rows[de.caret.view];
+    shell_d2d_edit_position(row->layout,de_offset(de_caret_pos()),box);
     float top=row->y+box[1],bottom=top+box[3];
     if(top<de.scroll_y+de_toolbar_height())de.scroll_y=top-de_toolbar_height();
     if(bottom>de.scroll_y+de.height)de.scroll_y=bottom-de.height;
@@ -146,7 +146,7 @@ static void de_refresh(int reveal) {
   de_scroll(0);de_title();
 }
 static de_pos de_hit(float x,float y) {
-  if(!de.row_count)return de_caret();
+  if(!de.row_count)return de_caret_pos();
   y+=de.scroll_y;
   size_t block=de.row_count-1;
   for(size_t i=0;i<de.row_count;i++) {
@@ -167,13 +167,13 @@ static de_pos de_hit(float x,float y) {
       if(block>=distance && de_block_at(de.doc,block-distance)->kind==EXR_EDIT_PARAGRAPH)
         return de_end(block-distance);
     }
-    return de_caret();
+    return de_caret_pos();
   }
   return de_from_offset(block,shell_d2d_edit_hit(de.rows[block].layout,x-de.inset-de.rows[block].x,y-de.rows[block].y));
 }
 static HRESULT de_paint_dc(HDC dc,const RECT *area) {
   if(!de_measure(area->right-area->left,area->bottom-area->top))return E_FAIL;
-  de_pos a=de_normalize(de_anchor()),b=de_normalize(de_caret());
+  de_pos a=de_normalize(de_anchor()),b=de_normalize(de_caret_pos());
   if(de_compare(a,b)>0) {de_pos temp=a;a=b;b=temp;}
   int selected=de_compare(a,b)!=0;
   for(size_t i=0;i<de.row_count;i++) {
@@ -185,8 +185,8 @@ static HRESULT de_paint_dc(HDC dc,const RECT *area) {
       row->length=end>=row->start ? end-row->start:0;
       row->selected_break=i<b.block;
     }
-    row->caret=i==de.caret_block ? de_offset(de_caret()):0;
-    row->show_caret=i==de.caret_block && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
+    row->caret=i==de.caret.view ? de_offset(de_caret_pos()):0;
+    row->show_caret=i==de.caret.view && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
   }
   HRESULT hr=shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),de.rows,de.row_count,
     de.inset,de.scroll_y,de_toolbar_height());
@@ -198,16 +198,48 @@ static void de_paint(HWND window) {
   if(hr==S_FALSE)InvalidateRect(window,NULL,FALSE);
 }
 static void de_vertical(int direction) {
-  if(de.caret_block>=de.row_count)return;
-  shell_d2d_edit_row *row=&de.rows[de.caret_block];float box[4];
-  shell_d2d_edit_position(row->layout,de_offset(de_caret()),box);
-  float y=row->y+box[1]+(direction<0 ? -box[3]*.5f:box[3]*1.5f);
-  de_set_caret(de_hit(de.inset+row->x+box[0],y-de.scroll_y));
+  if(!de_measure(de.width,de.height) || de.caret.view>=de.row_count)return;
+  shell_d2d_edit_row *row=&de.rows[de.caret.view];float box[4];
+  shell_d2d_edit_position(row->layout,de_offset(de_caret_pos()),box);
+  float x=de.inset+row->x+box[0];
+  float local_y=box[1]+(direction<0 ? -box[3]*.5f:box[3]*1.5f);
+  if(de.caret_in_table && (local_y<0 || local_y>=row->height)) {
+    de_cell cell=de_cell_at(de.caret.view);
+    size_t target=SIZE_MAX,count=de_block_count(de.doc);
+    /* Continue within this cell, then the same physical column of the next row.
+       Padding and taller siblings must not trap the caret. */
+    size_t neighbour=direction<0 ? de.caret.view-1:de.caret.view+1;
+    if(neighbour<count && de_same_cell(de.caret.view,neighbour))target=neighbour;
+    else {
+      for(size_t i=0;i<count;i++) {
+        de_cell next=de_cell_at(i);
+        if(next.table==cell.table && next.col==cell.col &&
+          (direction<0 ? cell.row>0 && next.row==cell.row-1:next.row==cell.row+1) &&
+          de_block_at(de.doc,i)->kind==EXR_EDIT_PARAGRAPH) {
+          target=i;if(direction>0)break;
+        }
+      }
+      if(target==SIZE_MAX) {
+        size_t i=de.caret.view;
+        while(direction<0 ? i>0:i+1<count) {
+          i=direction<0 ? i-1:i+1;
+          if(de_cell_at(i).table!=cell.table && de_block_at(de.doc,i)->kind==EXR_EDIT_PARAGRAPH) {target=i;break;}
+        }
+      }
+    }
+    if(target!=SIZE_MAX) {
+      row=&de.rows[target];
+      de_set_caret(de_from_offset(target,shell_d2d_edit_hit(row->layout,
+        x-de.inset-row->x,direction<0 ? row->height-1:0)));
+    }
+    return;
+  }
+  de_set_caret(de_hit(x,row->y+local_y-de.scroll_y));
 }
 static void de_line_edge(int end) {
-  if(de.caret_block>=de.row_count)return;
-  shell_d2d_edit_row *row=&de.rows[de.caret_block];float box[4];
-  shell_d2d_edit_position(row->layout,de_offset(de_caret()),box);
-  de_set_caret(de_from_offset(de.caret_block,shell_d2d_edit_hit(row->layout,
+  if(de.caret.view>=de.row_count)return;
+  shell_d2d_edit_row *row=&de.rows[de.caret.view];float box[4];
+  shell_d2d_edit_position(row->layout,de_offset(de_caret_pos()),box);
+  de_set_caret(de_from_offset(de.caret.view,shell_d2d_edit_hit(row->layout,
     end ? (float)de.width:0,box[1]+box[3]*.5f)));
 }

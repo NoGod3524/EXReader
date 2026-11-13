@@ -82,7 +82,8 @@ if(EXR_READER_WINDOWS_SHELL)
     target_link_libraries(check_shell_table PRIVATE m)
   endif()
   enable_testing()
-  add_test(NAME windows-table-ui COMMAND check_shell_table "${CMAKE_CURRENT_BINARY_DIR}/table-evidence")
+  add_test(NAME windows-table-ui COMMAND check_shell_table "${CMAKE_CURRENT_BINARY_DIR}/table-evidence"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/fixtures/rich.docx")
   target_compile_features(check_shell_docedit PRIVATE cxx_std_17)
   target_compile_definitions(check_shell_docedit PRIVATE EXR_READER_WINDOWS_SHELL=1)
   target_link_libraries(check_shell_docedit PRIVATE EXReader::exreader comdlg32 gdi32 uiautomationcore shell32 user32

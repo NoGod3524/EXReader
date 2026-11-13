@@ -165,7 +165,7 @@ static exr_status de_delete_range(de_pos a,de_pos b) {
   de_set_caret(de_normalize(a));return EXR_OK;
 }
 static exr_status de_insert(exr_edit_tx *tx,const char *text,size_t n) {
-  de_pos p=de_normalize(de_caret());const exr_edit_block *b=de_block_at(de.doc,p.block);
+  de_pos p=de_normalize(de_caret_pos());const exr_edit_block *b=de_block_at(de.doc,p.block);
   if(!b || b->kind!=EXR_EDIT_PARAGRAPH)return EXR_UNSUPPORTED;
   exr_edit_run_props pending=de.pending_props;
   const exr_edit_run *at=p.run<b->run_count && b->runs[p.run].kind==EXR_EDIT_TEXT ? &b->runs[p.run]:NULL;
@@ -207,7 +207,7 @@ enum { DE_TYPE,DE_BACKSPACE,DE_DELETE,DE_ENTER };
 static int de_edit(int operation,const char *text,size_t n) {
   if(!de.doc)return 0;
   exr_edit_run_props pending=de.pending_props;
-  de_pos caret=de_caret(),anchor=de_anchor();int selected=de_selected();
+  de_pos caret=de_caret_pos(),anchor=de_anchor();int selected=de_selected();
   de_pos other=caret;
   if(!selected && (operation==DE_BACKSPACE || operation==DE_DELETE)) {
     other=de_step(caret,operation==DE_BACKSPACE ? -1:1);
@@ -219,7 +219,7 @@ static int de_edit(int operation,const char *text,size_t n) {
     else if(operation==DE_BACKSPACE || operation==DE_DELETE)status=de_delete_range(caret,other);
     if(status==EXR_OK && operation==DE_TYPE)status=de_insert(tx,text,n);
     if(status==EXR_OK && operation==DE_ENTER) {
-      de_pos p=de_normalize(de_caret());const exr_edit_block *b=de_block_at(de.doc,p.block);
+      de_pos p=de_normalize(de_caret_pos());const exr_edit_block *b=de_block_at(de.doc,p.block);
       status=b ? exr_edit_split_paragraph(de.doc,b->id,p.run,p.byte):EXR_ARGUMENT;
       if(status==EXR_OK)de_set_caret(de_normalize(de_start(p.block+1)));
     }
@@ -227,14 +227,27 @@ static int de_edit(int operation,const char *text,size_t n) {
   }
   if(status==EXR_OK) {
     if(operation==DE_ENTER)de.pending_props=pending;
-    de.dirty=1;de.layout_dirty=1;de_set_anchor(de_caret());de_refresh(1);return 1;
+    de.dirty=1;de.layout_dirty=1;de_set_anchor(de_caret_pos());de_refresh(1);return 1;
   }
   de_set_caret(caret);de_set_anchor(anchor);de.pending_props=pending;
   set_status(L"无法编辑此位置（受保护内容或内存不足）；此次修改已撤回。");return 0;
 }
-static int de_key(WPARAM key,int control,int shift) {
+static int de_leave_table(void) {
+  if(!de.caret_in_table)return 0;
+  de_cell cell=de_cell_at(de.caret.view);exr_edit_id id=0;
+  exr_edit_tx *tx=exr_edit_begin(de.doc);
+  exr_status status=tx ? exr_edit_insert_paragraph(de.doc,cell.table,NULL,0,NULL,&id):EXR_MEMORY;
+  if(tx) {if(status==EXR_OK)status=exr_edit_commit(tx);else exr_edit_rollback(tx);}
+  if(status!=EXR_OK) {set_status(L"无法在表格下方插入段落。");return 0;}
+  for(size_t i=0;i<de_block_count(de.doc);i++)if(de_block_at(de.doc,i)->id==id) {
+    de_set_caret(de_start(i));de_set_anchor(de_caret_pos());break;
+  }
+  de.dirty=1;de.layout_dirty=1;de_refresh(1);return 1;
+}
+static int de_key_modifiers(WPARAM key,int control,int shift,int alt) {
   if(!de.doc)return 0;
   de.high_surrogate=0;
+  if(control && alt && key==VK_RETURN && de.caret_in_table) {de_leave_table();return 1;}
   if(control) {
     if(key=='B' || key=='I') {de_command(key=='B' ? DE_BOLD:DE_ITALIC,0);return 1;}
     if(shift && (key==VK_OEM_PERIOD || key==VK_OEM_COMMA)) {
@@ -249,7 +262,7 @@ static int de_key(WPARAM key,int control,int shift) {
       exr_status status=key=='Z' ? exr_edit_undo(de.doc):exr_edit_redo(de.doc);
       if(status==EXR_OK) {
         de.dirty=1;de.layout_dirty=1;
-        de_pos p=de_normalize(de_caret());
+        de_pos p=de_normalize(de_caret_pos());
         const exr_edit_block *b=de_block_at(de.doc,p.block);
         if(!b || b->kind!=EXR_EDIT_PARAGRAPH) {
           p=de_start(0);while(p.block<de_block_count(de.doc) &&
@@ -267,27 +280,27 @@ static int de_key(WPARAM key,int control,int shift) {
       return 1;
     }
     if(key==VK_HOME || key==VK_END) {
-      de_pos p=de_caret();
+      de_pos p=de_caret_pos();
       while(key==VK_HOME ? p.block>0:p.block+1<de_block_count(de.doc)) {
         size_t i=key==VK_HOME ? p.block-1:p.block+1;p.block=i;
       }
       if(de_block_at(de.doc,p.block)->kind==EXR_EDIT_PARAGRAPH)
         de_set_caret(key==VK_HOME ? de_start(p.block):de_end(p.block));
-      if(!shift)de_set_anchor(de_caret());de_refresh(1);return 1;
+      if(!shift)de_set_anchor(de_caret_pos());de_refresh(1);return 1;
     }
     return 0;
   }
   if(key==VK_ESCAPE) {de_exit();return 1;}
   if(key==VK_TAB) {
-    de_cell current=de_cell_at(de.caret_block);size_t count=de_block_count(de.doc);
-    size_t i=de.caret_block;
+    de_cell current=de_cell_at(de.caret.view);size_t count=de_block_count(de.doc);
+    size_t i=de.caret.view;
     while(shift ? i>0:i+1<count) {
       i=shift ? i-1:i+1;de_cell next=de_cell_at(i);
       const exr_edit_block *b=de_block_at(de.doc,i);
       if(b->kind==EXR_EDIT_PARAGRAPH &&
-        (!current.table ? next.table!=0:!de_same_cell(de.caret_block,i))) {
+        (!current.table ? next.table!=0:!de_same_cell(de.caret.view,i))) {
         if(shift && next.table)while(i && de_same_cell(i,i-1))i--;
-        de_set_caret(de_start(i));de_set_anchor(de_caret());de_refresh(1);break;
+        de_set_caret(de_start(i));de_set_anchor(de_caret_pos());de_refresh(1);break;
       }
     }
     return 1;
@@ -298,12 +311,15 @@ static int de_key(WPARAM key,int control,int shift) {
   if(key==VK_PRIOR || key==VK_NEXT) {de_scroll((float)(key==VK_PRIOR ? -de.height:de.height));return 1;}
   if(key!=VK_LEFT && key!=VK_RIGHT && key!=VK_UP && key!=VK_DOWN && key!=VK_HOME && key!=VK_END)return 0;
   if(!shift && de_selected() && (key==VK_LEFT || key==VK_RIGHT)) {
-    de_pos a=de_anchor(),b=de_caret();int cmp=de_compare(a,b);
+    de_pos a=de_anchor(),b=de_caret_pos();int cmp=de_compare(a,b);
     de_set_caret(key==VK_LEFT ? (cmp<0 ? a:b):(cmp>0 ? a:b));
-  } else if(key==VK_LEFT || key==VK_RIGHT)de_set_caret(de_step(de_caret(),key==VK_LEFT ? -1:1));
+  } else if(key==VK_LEFT || key==VK_RIGHT)de_set_caret(de_step(de_caret_pos(),key==VK_LEFT ? -1:1));
   else if(key==VK_UP || key==VK_DOWN)de_vertical(key==VK_UP ? -1:1);
   else de_line_edge(key==VK_END);
-  if(!shift)de_set_anchor(de_caret());de_refresh(1);return 1;
+  if(!shift)de_set_anchor(de_caret_pos());de_refresh(1);return 1;
+}
+static int de_key(WPARAM key,int control,int shift) {
+  return de_key_modifiers(key,control,shift,0);
 }
 static void de_character(wchar_t ch) {
   if(ch<32 || ch==127)return; /* Return/Backspace handled exactly once in WM_KEYDOWN. */
@@ -319,10 +335,11 @@ static void de_character(wchar_t ch) {
 }
 static int de_translate(const MSG *message) {
   if(!de.doc)return 0;
-  if(message->message==WM_KEYDOWN && (message->hwnd==g.window || message->hwnd==g.page ||
+  if((message->message==WM_KEYDOWN || (message->message==WM_SYSKEYDOWN &&
+    message->wParam==VK_RETURN && (GetKeyState(VK_CONTROL)&0x8000))) && (message->hwnd==g.window || message->hwnd==g.page ||
     message->hwnd==de_button)) {
     int control=(GetKeyState(VK_CONTROL)&0x8000)!=0,shift=(GetKeyState(VK_SHIFT)&0x8000)!=0;
-    if(de_key(message->wParam,control,shift))return 1;
+    if(de_key_modifiers(message->wParam,control,shift,(GetKeyState(VK_MENU)&0x8000)!=0))return 1;
     /* Let TranslateMessage produce WM_CHAR for printable keys. */
     TranslateMessage(message);DispatchMessageW(message);return 1;
   }
@@ -333,8 +350,10 @@ static int de_message(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
   if(!de.doc)return 0;
   if(message==WM_PAINT) {de_paint(window);return 1;}
   if(message==WM_CHAR) {de_character((wchar_t)wparam);return 1;}
-  if(message==WM_KEYDOWN) {
-    de_key(wparam,(GetKeyState(VK_CONTROL)&0x8000)!=0,(GetKeyState(VK_SHIFT)&0x8000)!=0);return 1;
+  if(message==WM_KEYDOWN || (message==WM_SYSKEYDOWN && wparam==VK_RETURN &&
+    (GetKeyState(VK_CONTROL)&0x8000))) {
+    de_key_modifiers(wparam,(GetKeyState(VK_CONTROL)&0x8000)!=0,
+      (GetKeyState(VK_SHIFT)&0x8000)!=0,(GetKeyState(VK_MENU)&0x8000)!=0);return 1;
   }
   if(message==WM_TIMER && wparam==DE_TIMER) {de.blink=!de.blink;InvalidateRect(window,NULL,FALSE);return 1;}
   if(message==WM_SIZE) {de.layout_dirty=1;de_refresh(1);return 1;}
@@ -348,7 +367,7 @@ static int de_message(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
     int x=(short)LOWORD(lparam),y=(short)HIWORD(lparam);
     if(y<0)de_scroll(-17);else if(y>de.height)de_scroll(17);
     de_set_caret(de_hit((float)x,(float)y));
-    if(message==WM_LBUTTONDOWN && !(GetKeyState(VK_SHIFT)&0x8000))de_set_anchor(de_caret());
+    if(message==WM_LBUTTONDOWN && !(GetKeyState(VK_SHIFT)&0x8000))de_set_anchor(de_caret_pos());
     de_refresh(1);return 1;
   }
   if(message==WM_LBUTTONUP) {de.mouse_down=0;if(GetCapture()==window)ReleaseCapture();return 1;}

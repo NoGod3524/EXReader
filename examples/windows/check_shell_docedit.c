@@ -78,7 +78,7 @@ static void rich_readback(unsigned bold) {
   assert((props->present&EXR_EDIT_BOLD) && props->bold==bold);exr_edit_doc_free(doc);
 }
 static int rich_ink_height(void) {
-  de_set_anchor(de_caret());de.blink=0;
+  de_set_anchor(de_caret_pos());de.blink=0;
   uint32_t *pixels=paint_memory(600,240);int first=240,last=-1;
   uint32_t background=pixels[239*600];
   for(int y=(int)de_toolbar_height();y<240;y++)for(int x=0;x<600;x++)
@@ -95,7 +95,7 @@ static void rich_acceptance(const char *directory) {
   char path[MAX_PATH],bmp[MAX_PATH];snprintf(path,sizeof(path),"%s/rich-edited.docx",directory);
   rich_seed("甲乙丙丁戊ABCDE",path);
   for(int i=0;i<5;i++)de_key(VK_RIGHT,0,1);
-  assert(de.caret_byte==15 && de_selected());assert(de_key('B',1,0));
+  assert(de.caret.byte==15 && de_selected());assert(de_key('B',1,0));
   assert(rich_run(0)->props.bold==1);rich_readback(1);
   puts("E2c 1 PASS select=5 Ctrl+B write/open present.BOLD=1 bold=1 (partial selection -> whole run)");
   assert(de_key('B',1,0));assert(rich_run(0)->props.bold==0);rich_readback(0);
@@ -107,13 +107,13 @@ static void rich_acceptance(const char *directory) {
   de_set_anchor(de_start(0));de_set_caret(de_end(0));rich_click(DE_COLOR);assert(de.color_panel);
   RECT red=de_color_box(2);assert(de_toolbar_click((red.left+red.right)/2.f,(red.top+red.bottom)/2.f));
   assert(!de.color_panel && rich_run(0)->props.color_rgb==0xff0000);
-  de_set_anchor(de_caret());de.blink=0;uint32_t *pixels=paint_memory(600,240);size_t red_pixels=0;
+  de_set_anchor(de_caret_pos());de.blink=0;uint32_t *pixels=paint_memory(600,240);size_t red_pixels=0;
   for(int y=(int)de_toolbar_height();y<240;y++)for(int x=0;x<600;x++) {
     uint32_t rgb=pixels[y*600+x];red_pixels+=((rgb>>16)&255)>180 && ((rgb>>8)&255)<100 && (rgb&255)<100;
   }
   assert(red_pixels>0);snprintf(bmp,sizeof(bmp),"%s/rich-red.bmp",directory);save_bitmap(bmp,pixels,600,240);free(pixels);
   printf("E2c 4 PASS toolbar palette red=FF0000 text_red_pixels=%zu bitmap=%s\n",red_pixels,bmp);
-  rich_seed("prefix",path);de_set_caret(de_end(0));de_set_anchor(de_caret());
+  rich_seed("prefix",path);de_set_caret(de_end(0));de_set_anchor(de_caret_pos());
   de_key('B',1,0);assert(de.pending_props.bold && !de.dirty && !rich_run(0)->props.bold);
   de_character(L'A');de_character(L'B');
   assert(!strcmp(rich_run(0)->text,"prefix") && !rich_run(0)->props.bold);
@@ -167,7 +167,7 @@ static void rich_acceptance(const char *directory) {
   assert(exr_edit_doc_create(NULL,0,&styled_block,1,&part,1,NULL,&de.doc)==EXR_OK);
   de.layout_dirty=1;reset_caret();exr_edit_run_props effective=de_current_props();
   assert(effective.bold && effective.italic && effective.size_half_points==28 && !strcmp(effective.font,"Segoe UI"));
-  de_set_caret(de_end(0));de_set_anchor(de_caret());de_key('B',1,0);assert(!de.pending_props.bold && (de.pending_props.present&EXR_EDIT_BOLD));
+  de_set_caret(de_end(0));de_set_anchor(de_caret_pos());de_key('B',1,0);assert(!de.pending_props.bold && (de.pending_props.present&EXR_EDIT_BOLD));
   assert(!de_edit(DE_TYPE,"X",1) && !strcmp(rich_run(0)->text,"styled") && !de.dirty);
   assert(de.pending_props.present&EXR_EDIT_BOLD); /* Protected templates keep the pending edit. */
   de_set_anchor(de_start(0));de_key('B',1,0);assert(rich_run(0)->props.bold);
@@ -204,7 +204,7 @@ int main(int argc,char **argv) {
   assert(caret_pixels>0 && text_pixels>0);free(visible);free(hidden);
   printf("1 PASS fixture=%s blocks=%zu text_pixels=%zu caret_pixels=%zu bitmap=%s\n",argv[1],blocks,text_pixels,caret_pixels,bmp);
   reset_caret();page_procedure(NULL,WM_CHAR,L'A',0);page_procedure(NULL,WM_CHAR,L'B',0);page_procedure(NULL,WM_CHAR,L'C',0);
-  const exr_edit_block *first=exr_edit_block_at(de.doc,de.caret_block);
+  const exr_edit_block *first=exr_edit_block_at(de.doc,de.caret.view);
   assert(first->runs[0].text_size>=3 && !memcmp(first->runs[0].text,"ABC",3));
   printf("2 typed=ABC dirty=%d ",de.dirty);
   char *typed=model_text(de.doc);de_key('S',1,0);file_text_equal(path,typed);free(typed);
@@ -218,22 +218,22 @@ int main(int argc,char **argv) {
   seed_runs();
   size_t expected_run[]={0,0,2,2,0},expected_byte[]={1,3,3,7,0};
   for(int i=0;i<5;i++) {
-    de_key(VK_RIGHT,0,0);assert(de.caret_run==expected_run[i] && de.caret_byte==expected_byte[i]);
-    assert(de.caret_block==(i==4 ? 1u:0u));
+    de_key(VK_RIGHT,0,0);assert(de.caret.run==expected_run[i] && de.caret.byte==expected_byte[i]);
+    assert(de.caret.view==(i==4 ? 1u:0u));
   }
-  de_key(VK_LEFT,0,0);assert(de.caret_block==0 && de.caret_run==2 && de.caret_byte==7);
+  de_key(VK_LEFT,0,0);assert(de.caret.view==0 && de.caret.run==2 && de.caret.byte==7);
   de_key(VK_LEFT,0,1);de_key(VK_LEFT,0,1);assert(de_selected());
-  assert(de.caret_run==0 && de.caret_byte==3);
-  de.blink=0;uint32_t *selection=paint_memory(600,240);de_set_anchor(de_caret());
+  assert(de.caret.run==0 && de.caret.byte==3);
+  de.blink=0;uint32_t *selection=paint_memory(600,240);de_set_anchor(de_caret_pos());
   uint32_t *unselected=paint_memory(600,240);size_t selection_pixels=0;
   for(size_t i=0;i<600*240;i++)selection_pixels+=selection[i]!=unselected[i];
   assert(selection_pixels>0);free(selection);free(unselected);
   de_key(VK_RIGHT,0,1);de_key(VK_RIGHT,0,1);char *before=model_text(de.doc);
   de_character(L'X');de_key('Z',1,0);same_text(before);free(before);
-  reset_caret();de_set_caret(de_end(0));de_set_anchor(de_caret());
+  reset_caret();de_set_caret(de_end(0));de_set_anchor(de_caret_pos());
   de_key(VK_DELETE,0,0);assert(exr_edit_block_count(de.doc)==1);
   de_key('Z',1,0);assert(exr_edit_block_count(de.doc)==2);
-  de_set_caret(de_start(1));de_set_anchor(de_caret());de_key(VK_BACK,0,0);
+  de_set_caret(de_start(1));de_set_anchor(de_caret_pos());de_key(VK_BACK,0,0);
   assert(exr_edit_block_count(de.doc)==1);de_key('Z',1,0);
   de_key('Y',1,0);assert(exr_edit_block_count(de.doc)==1);
   printf("4 PASS UTF-8: runs 0:1,0:3,2:3,2:7 -> block 1; Shift selects CJK+emoji; selection_pixels=%zu; replace undo; Delete/Backspace join; redo\n",selection_pixels);
@@ -256,8 +256,8 @@ int main(int argc,char **argv) {
   for(int i=0;i<60;i++) {de_key(VK_END,1,0);de_key(VK_RETURN,0,0);de_character(L'x');}
   assert(de_measure(300,120));de_key(VK_NEXT,0,0);assert(de.scroll_y==120);
   de_key(VK_PRIOR,0,0);assert(de.scroll_y==0);
-  de_key(VK_HOME,1,0);de_key(VK_DOWN,0,0);assert(de.caret_block>0);
-  de_key(VK_UP,0,0);assert(de.caret_block==0);
+  de_key(VK_HOME,1,0);de_key(VK_DOWN,0,0);assert(de.caret.view>0);
+  de_key(VK_UP,0,0);assert(de.caret.view==0);
   de_key('A',1,0);assert(de_selected());de_character(L'Q');assert(exr_edit_block_count(de.doc)==1);
   de_key('Z',1,0);assert(exr_edit_block_count(de.doc)==62);
   puts("extra PASS Home/End, Up/Down, PageUp/PageDown=viewport 120, Ctrl+A replace/undo, empty paragraph typing");
