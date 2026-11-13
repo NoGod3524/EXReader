@@ -1,0 +1,106 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 291
+    Start 291: native-ppt-cfb
+
+291: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/check_ppt.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1/exreader-ppt-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy" "cfb"
+291: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1
+291: Test timeout computed to be: 10000000
+291: file: EXR_FORMAT: CFB unsupported header geometry at offset 26
+291: file: EXR_LIMIT: CFB total stream size exceeds 256 MiB
+291: file: EXR_LIMIT: CFB total stream size exceeds 256 MiB
+291: file: EXR_FORMAT: CFB truncated/cyclic mini stream at offset 0
+291: file: EXR_FORMAT: CFB overlapping or cyclic chain at offset 1536
+291: file: EXR_FORMAT: CFB invalid/cyclic directory tree at offset 128
+291: file: EXR_FORMAT: CFB invalid DIFAT termination/count at offset 68
+291: native-ppt-cfb: 13 checks passed
+1/6 Test #291: native-ppt-cfb ...................   Passed    1.49 sec
+test 292
+    Start 292: native-ppt-records
+
+292: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/check_ppt.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1/exreader-ppt-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy" "records"
+292: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1
+292: Test timeout computed to be: 10000000
+292: records: EXR_OK: warning: count mismatch
+292: file: EXR_OK: PPT warning: SlidePersistAtom count 2 differs from Slide container count 3; using SlidePersistAtom
+292: records: EXR_OK: warning: count mismatch
+292: records: EXR_OK: warning: count mismatch
+292: records: EXR_LIMIT: PPT record recursion depth exceeds 64 at offset 520
+292: records: EXR_FORMAT: PPT short SlidePersistAtom at offset 16
+292: native-ppt-records: 11 checks passed
+2/6 Test #292: native-ppt-records ...............   Passed    1.16 sec
+test 293
+    Start 293: native-ppt-slides
+
+293: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/check_ppt.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1/exreader-ppt-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy" "slides"
+293: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1
+293: Test timeout computed to be: 10000000
+293: slides-1.ppt: engine=1 PowerPoint=1 white=OK
+293: slides-5.ppt: engine=5 PowerPoint=5 white=OK
+293: slides-20.ppt: engine=20 PowerPoint=20 white=OK
+293: slides-0.ppt: engine=0 PowerPoint=0 white=OK
+293: file: EXR_LIMIT: PPT exceeds 10000 slides
+293: cancel: EXR_CANCELLED: Operation cancelled
+293: native-ppt-slides: 11 checks passed
+3/6 Test #293: native-ppt-slides ................   Passed    1.51 sec
+test 294
+    Start 294: native-ppt-size
+
+294: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/check_ppt.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1/exreader-ppt-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy" "size"
+294: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1
+294: Test timeout computed to be: 10000000
+294: file: EXR_OK: PPT warning: SlidePersistAtom count 1 differs from Slide container count 0; using SlidePersistAtom
+294: native-ppt-size: 9 checks passed
+4/6 Test #294: native-ppt-size ..................   Passed    0.76 sec
+test 295
+    Start 295: native-ppt-truncated
+
+295: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/check_ppt.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1/exreader-ppt-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy" "truncated"
+295: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1
+295: Test timeout computed to be: 10000000
+295: file: EXR_FORMAT: CFB truncated/invalid sector at offset 299008
+295: records: EXR_FORMAT: PPT record length exceeds stream/container at offset 164
+295: records: EXR_FORMAT: PPT truncated record header at offset 204
+295: memory: EXR_FORMAT: CFB invalid signature at offset 0
+295: file: EXR_FORMAT: CFB invalid signature at offset 0
+295: memory: EXR_FORMAT: CFB invalid signature at offset 0
+295: file: EXR_FORMAT: CFB invalid signature at offset 0
+295: memory: EXR_FORMAT: CFB truncated header at offset 8
+295: file: EXR_FORMAT: CFB truncated header at offset 8
+295: memory: EXR_FORMAT: CFB truncated header at offset 64
+295: file: EXR_FORMAT: CFB truncated header at offset 64
+295: memory: EXR_FORMAT: CFB truncated header at offset 511
+295: file: EXR_FORMAT: CFB truncated header at offset 511
+295: file: EXR_FORMAT: PPT record length exceeds stream/container at offset 164
+295: native-ppt-truncated: 14 checks passed
+5/6 Test #295: native-ppt-truncated .............   Passed    0.53 sec
+test 296
+    Start 296: native-ppt-wrongformat
+
+296: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/check_ppt.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1/exreader-ppt-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy" "wrongformat"
+296: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/build/ppt-m1
+296: Test timeout computed to be: 10000000
+296: file: EXR_FORMAT: CFB invalid signature at offset 0
+296: file: EXR_FORMAT: CFB invalid signature at offset 0
+296: file: EXR_FORMAT: 不是 PowerPoint 97-2003 文档: missing PowerPoint Document stream
+296: file: EXR_FORMAT: PPT missing DocumentContainer at offset 0
+296: native-ppt-wrongformat: 5 checks passed
+6/6 Test #296: native-ppt-wrongformat ...........   Passed    0.44 sec
+
+The following tests passed:
+	native-ppt-cfb
+	native-ppt-records
+	native-ppt-slides
+	native-ppt-size
+	native-ppt-truncated
+	native-ppt-wrongformat
+
+100% tests passed out of 6
+
+Total Test time (real) =   5.96 sec

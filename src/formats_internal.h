@@ -84,5 +84,5 @@ uint32_t exr_windows1252(unsigned char byte);
 exr_status exr_rtf(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_fb2(exr_document *doc, const void *data, size_t size, exr_error *error);
 exr_status exr_zip_format(const void *data,size_t size,exr_format *format,exr_error *error);
-static inline int exr_format_is_fixed(exr_format format) { return format==EXR_PDF || format==EXR_CBZ || format==EXR_PPTX; }
+static inline int exr_format_is_fixed(exr_format format) { return format==EXR_PDF || format==EXR_CBZ || format==EXR_PPT || format==EXR_PPTX; }
 #endif

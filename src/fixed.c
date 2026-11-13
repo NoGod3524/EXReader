@@ -72,7 +72,7 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
     ids[i]=v->id;
   }
   if(status==EXR_OK) {
-    if(d->count>1) qsort(ids,d->count,sizeof(*ids),compare_id);
+    if(d->count) qsort(ids,d->count,sizeof(*ids),compare_id);
     for(i=1;i<d->count;i++) if(!strcmp(ids[i-1],ids[i])) { status=exr_fail(e,EXR_ARGUMENT,"Duplicate fixed page IDs"); break; }
   }
 done:
