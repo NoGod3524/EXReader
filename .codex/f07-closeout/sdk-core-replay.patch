@@ -1,0 +1,451 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a5ed27fc..5ce797bc 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -34,6 +34,7 @@ option(EXR_ENABLE_IMAGE_WEBP "Enable WebP still/animation decoding (libwebp)" ON
+ option(EXR_ENABLE_IMAGE_TIFF "Enable TIFF multi-page decoding (libtiff)" ON)
+ option(EXR_ENABLE_IMAGE_AVIF "Enable AVIF decoding (libavif + libaom)" ON)
+ option(EXR_BUILD_SHARED_COMPAT "Build the legacy aggregate shared library" ON)
++option(EXR_USE_SHARED_SQLITE_PROVIDER "Use the installed public SQLite provider in SDK and product" OFF)
+ if(EXR_ENABLE_PDF_EDIT AND NOT EXR_ENABLE_PDF)
+   message(FATAL_ERROR "PDF editing requires EXR_ENABLE_PDF=ON")
+ endif()
+diff --git a/apps/reader/store/native/CMakeLists.txt b/apps/reader/store/native/CMakeLists.txt
+index 81b98dfa..cda571a2 100644
+--- a/apps/reader/store/native/CMakeLists.txt
++++ b/apps/reader/store/native/CMakeLists.txt
+@@ -8,6 +8,17 @@ if(MSVC)
+   add_compile_options(/utf-8)
+ endif()
+ include(FetchContent)
++option(EXR_USE_SHARED_SQLITE_PROVIDER "Use the installed public SQLite provider in SDK and product" OFF)
++find_package(Threads REQUIRED)
++if(EXR_USE_SHARED_SQLITE_PROVIDER)
++  find_package(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
++  add_library(reader_catalog_sqlite INTERFACE)
++  target_link_libraries(reader_catalog_sqlite INTERFACE EXReaderSQLiteProvider::sqlite3)
++  get_target_property(_provider_includes EXReaderSQLiteProvider::sqlite3 INTERFACE_INCLUDE_DIRECTORIES)
++  find_path(_provider_sqlite_include sqlite3.h PATHS ${_provider_includes}
++    NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH REQUIRED)
++  set(reader_catalog_sqlite_header "${_provider_sqlite_include}/sqlite3.h")
++else()
+ # A product dependency with its own public SQLite API; no SDK private headers.
+ # Keep the same upstream version and compile limits as the frozen reading SDK.
+ FetchContent_Declare(reader_catalog_sqlite_source
+@@ -25,6 +36,8 @@ target_link_libraries(reader_catalog_sqlite PUBLIC Threads::Threads ${CMAKE_DL_L
+ if(UNIX)
+   target_link_libraries(reader_catalog_sqlite PUBLIC m)
+ endif()
++set(reader_catalog_sqlite_header "${reader_catalog_sqlite_source_SOURCE_DIR}/sqlite3.h")
++endif()
+ file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../001_catalog.sql" catalog_sql)
+ string(REPLACE "\\" "\\\\" catalog_sql "${catalog_sql}")
+ string(REPLACE "\"" "\\\"" catalog_sql "${catalog_sql}")
+@@ -47,7 +60,11 @@ add_library(reader_catalog STATIC catalog.c)
+ target_include_directories(reader_catalog PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+   $<INSTALL_INTERFACE:include/exreader-product>
+   PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+-target_link_libraries(reader_catalog PRIVATE reader_catalog_sqlite Threads::Threads)
++if(EXR_USE_SHARED_SQLITE_PROVIDER)
++  target_link_libraries(reader_catalog PUBLIC reader_catalog_sqlite PRIVATE Threads::Threads)
++else()
++  target_link_libraries(reader_catalog PRIVATE reader_catalog_sqlite Threads::Threads)
++endif()
+ if(MSVC)
+   target_compile_options(reader_catalog PRIVATE /W4 /WX)
+ else()
+@@ -55,7 +72,7 @@ else()
+ endif()
+ include(CMakePackageConfigHelpers)
+ install(TARGETS reader_catalog reader_catalog_sqlite EXPORT EXReaderProductCatalogTargets ARCHIVE DESTINATION lib)
+-install(FILES catalog.h "${reader_catalog_sqlite_source_SOURCE_DIR}/sqlite3.h"
++install(FILES catalog.h "${reader_catalog_sqlite_header}"
+   DESTINATION include/exreader-product)
+ install(FILES ../001_catalog.sql ../002_originals.sql ../003_original_staging.sql ../../../../licenses/sqlite-public-domain.txt
+   DESTINATION share/exreader-product)
+diff --git a/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in b/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in
+index 0294f7ef..f1aa1cb4 100644
+--- a/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in
++++ b/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in
+@@ -1,6 +1,13 @@
+ @PACKAGE_INIT@
++set(EXReaderProductCatalog_USE_SHARED_SQLITE_PROVIDER @EXR_USE_SHARED_SQLITE_PROVIDER@)
+ include(CMakeFindDependencyMacro)
+ find_dependency(Threads)
++if(@EXR_USE_SHARED_SQLITE_PROVIDER@)
++  find_dependency(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
++  if(NOT EXReaderSQLiteProvider_ID STREQUAL "@EXReaderSQLiteProvider_ID@")
++    message(FATAL_ERROR "ProductCatalog SQLite provider configuration differs")
++  endif()
++endif()
+ # Exact dependency hook; independent of old builders' CMAKE_PREFIX_PATH overrides.
+ set(_hash_prefix "${READER_ORIGINAL_HASH_PREFIX}")
+ set(_hash_env "$ENV{EXREADER_ORIGINAL_HASH_PREFIX}")
+diff --git a/cmake/EXReaderConfig.cmake.in b/cmake/EXReaderConfig.cmake.in
+index 94df1ec8..1c01fe25 100644
+--- a/cmake/EXReaderConfig.cmake.in
++++ b/cmake/EXReaderConfig.cmake.in
+@@ -1,6 +1,7 @@
+ @PACKAGE_INIT@
+ set(EXReader_VERSION "@PROJECT_VERSION@")
+ set(EXReader_ABI_VERSION @EXR_ABI_VERSION@)
++set(EXReader_USE_SHARED_SQLITE_PROVIDER @EXR_USE_SHARED_SQLITE_PROVIDER@)
+ include("${CMAKE_CURRENT_LIST_DIR}/EXReaderDependencies.cmake")
+ include("${CMAKE_CURRENT_LIST_DIR}/EXReaderTargets.cmake")
+ foreach(component core pdf pdf_edit audio library textindex)
+diff --git a/cmake/deps.cmake b/cmake/deps.cmake
+index 79fa964b..48f0dcdd 100644
+--- a/cmake/deps.cmake
++++ b/cmake/deps.cmake
+@@ -22,7 +22,7 @@ FetchContent_Declare(expat URL "https://codeload.github.com/libexpat/libexpat/ta
+ FetchContent_Declare(miniz URL "https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2" URL_HASH SHA256=98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb)
+ FetchContent_Declare(sqlite URL "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip" URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
+ FetchContent_MakeAvailable(freetype expat miniz)
+-if(EXR_ENABLE_LIBRARY OR EXR_BUILD_TEXT_INDEX)
++if((EXR_ENABLE_LIBRARY OR EXR_BUILD_TEXT_INDEX) AND NOT EXR_USE_SHARED_SQLITE_PROVIDER)
+   FetchContent_MakeAvailable(sqlite)
+ endif()
+ FetchContent_Declare(stb URL "https://codeload.github.com/nothings/stb/tar.gz/2c980bb59875b0d32144a71867fbdebb2f77cd20" URL_HASH SHA256=9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515)
+@@ -218,6 +218,11 @@ if(EXR_ENABLE_AUDIO AND EXR_ENABLE_AAC)
+   set_target_properties(faad_drm faad_fixed faad_drm_fixed PROPERTIES EXCLUDE_FROM_ALL TRUE)
+ endif()
+ if(EXR_ENABLE_LIBRARY OR EXR_BUILD_TEXT_INDEX)
++if(EXR_USE_SHARED_SQLITE_PROVIDER)
++find_package(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)
++add_library(exr_sqlite INTERFACE)
++target_link_libraries(exr_sqlite INTERFACE EXReaderSQLiteProvider::sqlite3)
++else()
+ add_library(exr_sqlite STATIC ${sqlite_SOURCE_DIR}/sqlite3.c)
+ target_include_directories(exr_sqlite PUBLIC ${sqlite_SOURCE_DIR})
+ # The default SQLITE_MAX_LENGTH (1e9) is below the 1 GiB streaming-import
+@@ -236,3 +241,4 @@ if(NOT WIN32)
+ endif()
+ 
+ endif()
++endif()
+diff --git a/cmake/install_dependencies.cmake b/cmake/install_dependencies.cmake
+index 0fc6b4ee..0157c177 100644
+--- a/cmake/install_dependencies.cmake
++++ b/cmake/install_dependencies.cmake
+@@ -6,6 +6,12 @@ if(UNIX)
+   string(APPEND exr_dependency_config "include(CMakeFindDependencyMacro)\nfind_dependency(Threads)\n")
+ endif()
+ foreach(vendor IN LISTS vendors)
++  if(vendor STREQUAL "exr_sqlite" AND EXR_USE_SHARED_SQLITE_PROVIDER)
++    string(APPEND exr_dependency_config "include(CMakeFindDependencyMacro)\nfind_dependency(EXReaderSQLiteProvider 1.0.0 EXACT CONFIG REQUIRED)\n")
++    string(APPEND exr_dependency_config "if(NOT EXReaderSQLiteProvider_ID STREQUAL \"${EXReaderSQLiteProvider_ID}\")\n  message(FATAL_ERROR \"SDK SQLite provider configuration differs\")\nendif()\n")
++    string(APPEND exr_dependency_config "if(NOT TARGET EXReader::vendor_exr_sqlite)\n  add_library(EXReader::vendor_exr_sqlite INTERFACE IMPORTED)\n  set_property(TARGET EXReader::vendor_exr_sqlite PROPERTY INTERFACE_LINK_LIBRARIES EXReaderSQLiteProvider::sqlite3)\nendif()\n")
++    continue()
++  endif()
+   get_target_property(vendor_files ${vendor} EXR_VENDOR_FILES)
+   if(NOT vendor_files)
+     set(vendor_files ${vendor})
+diff --git a/tools/apple_swift.py b/tools/apple_swift.py
+index 94176b50..7f71a3b2 100644
+--- a/tools/apple_swift.py
++++ b/tools/apple_swift.py
+@@ -23,9 +23,28 @@ WAVE3_MODULES = (
+ )
+ 
+ 
++def shared_provider_files(sdk, product_prefix=None):
++    product = Path(product_prefix) if product_prefix else Path(sdk)
++    manifest_path = product / 'share/exreader-apple/product.json'
++    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
++    if manifest.get('sqlite_provider_mode') != 'shared':
++        return {}
++    prefix = Path(manifest['sqlite_provider_prefix']).resolve()
++    runtime = (prefix / manifest['sqlite_provider_runtime']).resolve()
++    if not runtime.is_relative_to(prefix) or not runtime.is_file():
++        raise RuntimeError('Shared SQLite runtime missing or outside its prefix')
++    sdk_runtime = Path(sdk) / 'lib/libexreader.dylib'
++    if not sdk_runtime.is_file():
++        raise RuntimeError('Shared profile requires the installed dynamic SDK')
++    return {'shared_provider': runtime, 'shared_sdk': sdk_runtime}
++
++
+ def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False):
+     sdk = Path(sdk).absolute()
+     product = Path(product_prefix).absolute() if product_prefix else sdk
++    manifest_path = product / 'share/exreader-apple/product.json'
++    manifest = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
++    shared_sqlite = manifest.get('sqlite_provider_mode') == 'shared'
+     if wave3 and not selector_bytes_candidate:
+         raise RuntimeError('Wave3 requires the explicit raw selector product family')
+     if selector_bytes_candidate:
+@@ -51,7 +70,20 @@ def flags(sdk, product_prefix=None, selector_bytes_candidate=False, wave3=False)
+     if product != sdk:
+         includes = (product / 'include', sdk / 'include', product / 'include/exreader-product', module)
+     libraries = tuple(target for _, target, _ in WAVE3_MODULES) + LIBRARIES if wave3 else LIBRARIES
++    if shared_sqlite:
++        libraries = tuple(name for name in libraries if name != 'reader_catalog_sqlite')
+     archives = [product / 'lib' / ('lib' + name + '.a') for name in libraries]
++    if shared_sqlite:
++        provider_prefix = Path(manifest['sqlite_provider_prefix']).resolve()
++        provider = json.loads((provider_prefix / 'share/exreader-sqlite/provider.json').read_text())
++        if (provider.get('config_id') != manifest.get('sqlite_provider_id')
++                or provider.get('runtime_library') != manifest.get('sqlite_provider_runtime')):
++            raise RuntimeError('Product SQLite provider differs from the installed public package')
++        runtime = (provider_prefix / provider['runtime_library']).resolve()
++        if not runtime.is_relative_to(provider_prefix):
++            raise RuntimeError('SQLite provider runtime escaped its installed prefix')
++        archives.append(runtime)
++        includes = (*includes, provider_prefix / 'include/exreader-sqlite')
+     if wave3:
+         bridge = Path(__file__).absolute().parents[1] / 'apps/reader/apple-feature-integration/include'
+         includes = (*includes, bridge)
+@@ -98,7 +130,8 @@ def main():
+     raw_include = ['-I', str(args.product_prefix.absolute() / 'include')] if args.selector_bytes_candidate and args.product_prefix else []
+     subprocess.run(['xcrun', 'swiftc', *raw_include, *arguments, *flags(args.sdk, args.product_prefix, args.selector_bytes_candidate), '-Xlinker', '-map',
+                     '-Xlinker', str(mapping)], check=True)
+-    Path(str(output) + '.product.json').write_text(json.dumps(inspect(output, mapping, args.selector_bytes_candidate), indent=2) + '\n')
++    Path(str(output) + '.product.json').write_text(json.dumps(inspect(output, mapping, args.selector_bytes_candidate,
++        **shared_provider_files(args.sdk, args.product_prefix)), indent=2) + '\n')
+ 
+ 
+ if __name__ == '__main__':
+diff --git a/tools/build_apple_host.py b/tools/build_apple_host.py
+index df023420..09c31c88 100644
+--- a/tools/build_apple_host.py
++++ b/tools/build_apple_host.py
+@@ -14,6 +14,7 @@ import sys
+ from host_font import fetch as host_font
+ from run_benchmarks import make_epub
+ from apple_swift import flags as product_flags
++from apple_swift import shared_provider_files
+ from check_apple_product import inspect as inspect_product
+ 
+ ROOT = Path(__file__).absolute().parents[1]
+@@ -83,7 +84,9 @@ def main():
+     if args.page_theme:
+         command += ['-D', 'EXR_APPLE_PAGE_THEME']
+     run(*command)
+-    (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map', args.selector_bytes_candidate), indent=2)+'\n')
++    shared_files = shared_provider_files(sdk, args.product_prefix)
++    (output/'product-link.json').write_text(json.dumps(inspect_product(executable, output/'product-link.map',
++        args.selector_bytes_candidate, **shared_files), indent=2)+'\n')
+     source_sha = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
+     info = {'CFBundleExecutable': 'EXReader', 'CFBundleIdentifier': 'org.exreader.host',
+             'CFBundleName': 'EXReader', 'CFBundleDisplayName': 'EXReader',
+@@ -122,6 +125,19 @@ def main():
+     for library in libraries:
+         shutil.copyfile(library, frameworks/library.name)
+         run('codesign', '--force', '--sign', '-', frameworks/library.name)
++    if shared_files:
++        provider = shared_files['shared_provider']
++        framework = next((p for p in provider.parents if p.suffix == '.framework'), None)
++        if framework:
++            installed = frameworks / framework.name
++            shutil.copytree(framework, installed, symlinks=True)
++        else:
++            prefix = Path(json.loads(((args.product_prefix or sdk)/'share/exreader-apple/product.json').read_text())['sqlite_provider_prefix'])
++            for library in (prefix/'lib').glob('libreader_sqlite3*.dylib'):
++                shutil.copyfile(library, frameworks/library.name)
++                run('codesign', '--force', '--sign', '-', frameworks/library.name)
++            installed = frameworks / provider.name
++        run('codesign', '--force', '--sign', '-', installed)
+     run('codesign', '--force', '--deep', '--sign', '-', app)
+     manifest = {'schema': 1, 'source_sha': source_sha, 'sdk_version': version,
+                 'page_theme_enabled': args.page_theme,
+diff --git a/tools/build_apple_product.py b/tools/build_apple_product.py
+index ee4b5532..7cedf395 100644
+--- a/tools/build_apple_product.py
++++ b/tools/build_apple_product.py
+@@ -17,6 +17,8 @@ def main():
+     parser.add_argument('--product-prefix', type=Path)
+     parser.add_argument('--wave3', action='store_true', help='Install the explicit raw five-feature host profile')
+     parser.add_argument('--organization', action='store_true', help='Install the revision-aware organization metadata owner')
++    parser.add_argument('--shared-sqlite-provider', action='store_true')
++    parser.add_argument('--sqlite-provider-prefix', type=Path)
+     parser.add_argument('--selector-bytes-candidate', action='store_true',
+                         default=os.environ.get('EXR_APPLE_RAW3', 'OFF') == 'ON')
+     parser.add_argument('--sdk-version', choices=('3.40.0', '3.41.0', '3.42.0'),
+@@ -27,6 +29,22 @@ def main():
+     root = Path(__file__).absolute().parents[1]
+     sdk = args.sdk.absolute()
+     stage = args.product_prefix.absolute() if args.product_prefix else sdk
++    provider = None
++    provider_prefix = args.sqlite_provider_prefix.resolve() if args.sqlite_provider_prefix else sdk.resolve()
++    if args.sqlite_provider_prefix and not args.shared_sqlite_provider:
++        parser.error('--sqlite-provider-prefix requires --shared-sqlite-provider')
++    if args.shared_sqlite_provider:
++        stale = [stage / 'lib/libreader_catalog_sqlite.a', sdk / 'lib/exreader/libexr_vendor_exr_sqlite.a']
++        if any(path.exists() for path in stale):
++            parser.error('Shared-provider profile requires clean prefixes without legacy SQLite archives')
++        provider = json.loads((provider_prefix / 'share/exreader-sqlite/provider.json').read_text())
++        if provider.get('package') != 'EXReaderSQLiteProvider' or provider.get('version') != '1.0.0':
++            parser.error('Wrong public SQLite provider package')
++        if not (provider_prefix / provider['runtime_library']).is_file():
++            parser.error('Public SQLite provider runtime is missing')
++        sdk_config = (sdk / 'lib/cmake/EXReader/EXReaderConfig.cmake').read_text()
++        if not re.search(r'set\(EXReader_USE_SHARED_SQLITE_PROVIDER\s+ON\)', sdk_config):
++            parser.error('Shared product requires SDK built with the same shared-provider profile')
+     hash_prefix = (stage / 'opds-hash').resolve()
+     if os.environ.get('EXR_APPLE_RAW3', 'OFF') not in ('OFF', 'ON'):
+         parser.error('EXR_APPLE_RAW3 must be explicitly OFF or ON')
+@@ -58,6 +76,9 @@ def main():
+                 'EXReaderWebDAV', 'EXReaderSync', 'EXReaderSession', 'EXReaderCredentials', 'EXReaderReadingState',
+                 'EXReaderSearch', 'EXReaderNavigation', 'EXReaderReadingCommands', 'EXReaderAnnotationView')
+     common += ['-D' + name + '_DIR=' + str((sdk if name == 'EXReader' else stage) / 'lib/cmake' / name) for name in packages]
++    if provider:
++        common += ['-DEXR_USE_SHARED_SQLITE_PROVIDER=ON',
++                   '-DEXReaderSQLiteProvider_DIR=' + str(provider_prefix / 'lib/cmake/EXReaderSQLiteProvider')]
+     common += ['-DEXR_READER_SELECTOR_BYTES_CANDIDATE=' + ('ON' if args.selector_bytes_candidate else 'OFF')]
+     modules = [('opds-hash', 'extras/opds'),
+                ('catalog', 'apps/reader/store/native'), ('revisions', 'apps/reader/revisions'),
+@@ -108,6 +129,10 @@ def main():
+                     product_prefix=str(stage), sdk_prefix=str(sdk),
+                     original_hash_prefix=str(hash_prefix), original_hash_package='EXReaderOPDSHash 0.1.0',
+                     exact_candidate_family=family if args.selector_bytes_candidate else {})
++    if provider:
++        manifest.update(sqlite_provider='EXReaderSQLiteProvider::sqlite3', sqlite_provider_mode='shared',
++                        sqlite_provider_prefix=str(provider_prefix), sqlite_provider_id=provider['config_id'],
++                        sqlite_provider_runtime=provider['runtime_library'])
+     (stage / 'share/exreader-apple').mkdir(parents=True, exist_ok=True)
+     (stage / 'share/exreader-apple/product.json').write_text(json.dumps(manifest, indent=2) + '\n')
+ 
+diff --git a/tools/check_apple_product.py b/tools/check_apple_product.py
+index ed7f6259..1d9e4e34 100644
+--- a/tools/check_apple_product.py
++++ b/tools/check_apple_product.py
+@@ -6,6 +6,29 @@ import json
+ from pathlib import Path
+ import re
+ import subprocess
++import sys
++
++
++def validate_shared(images, provider_id, sdk_id):
++    """Validate the application-controlled main/SDK/provider image closure."""
++    assert len(images) == 3 and set(images) == {'main', 'sdk', 'provider'}
++    assert provider_id != sdk_id and provider_id.startswith('@rpath/')
++    for role, image in images.items():
++        dependencies = re.findall(r'(?m)^\s+(\S+)\s+\(', image['dependencies'])
++        assert not re.search(r'libsqlite3(?:\.|\s)', image['dependencies']), 'system SQLite linked directly'
++        definitions = re.findall(r'(?m)^.*\b([A-Za-z?])\s+(_sqlite3_\w+)\s*$', image['symbols'])
++        defined = {name for kind, name in definitions if kind not in ('U', 'w', 'v')}
++        if role == 'provider':
++            assert {'_sqlite3_open_v2', '_sqlite3_close', '_sqlite3_prepare_v2'}.issubset(defined), 'incomplete public provider'
++        else:
++            assert not defined, role + ' embeds a second SQLite implementation'
++            refs = {name for kind, name in definitions if kind == 'U'}
++            assert refs, role + ' has no public SQLite reference'
++            assert dependencies.count(provider_id) == 1, role + ' does not bind the unique provider'
++        for dependency in re.findall(r'(?m)^\s+(@(?:rpath|loader_path|executable_path)/\S+)\s+\(', image['dependencies']):
++            assert dependency in (provider_id, sdk_id), 'unassessed application image: ' + dependency
++    assert re.findall(r'(?m)^\s+(\S+)\s+\(', images['main']['dependencies']).count(sdk_id) == 1, 'dynamic SDK missing or duplicated'
++    return provider_id
+ 
+ 
+ def validate(dependencies, symbols, link_map):
+@@ -24,14 +47,27 @@ def validate(dependencies, symbols, link_map):
+     return providers[0]
+ 
+ 
+-def inspect(binary, link_map, selector_bytes_candidate=False):
++def inspect(binary, link_map, selector_bytes_candidate=False, shared_provider=None, shared_sdk=None):
+     dependencies = subprocess.check_output(['otool', '-L', str(binary)], text=True)
+     symbols = subprocess.check_output(['nm', '-g', str(binary)], text=True)
+     mapping = Path(link_map).read_text(encoding='utf-8', errors='surrogateescape')
+     Path(str(link_map) + '.symbols.txt').write_text(symbols)
+     Path(str(link_map) + '.dependencies.txt').write_text(dependencies)
++    shared_images = None
++    if shared_provider is not None:
++        assert shared_sdk is not None, 'shared profile requires the actual SDK image'
++        assert not re.search(r'libexr_(?:library|core)\.a', mapping), 'second static SDK provider'
++        assert 'libreader_reading_state.a' not in mapping, 'host must use its dynamic SDK resolver'
++        shared_images = {'main': {'dependencies': dependencies, 'symbols': symbols}}
++        for role, image in [('sdk', shared_sdk), ('provider', shared_provider)]:
++            shared_images[role] = {
++                'sha256': hashlib.sha256(Path(image).read_bytes()).hexdigest(),
++                'dependencies': subprocess.check_output(['otool', '-L', str(image)], text=True),
++                'symbols': subprocess.check_output(['nm', '-g', str(image)], text=True)}
++        provider_id = subprocess.check_output(['otool', '-D', str(shared_provider)], text=True).splitlines()[1].strip()
++        sdk_id = subprocess.check_output(['otool', '-D', str(shared_sdk)], text=True).splitlines()[1].strip()
+     try:
+-        provider = validate(dependencies, symbols, mapping)
++        provider = validate_shared(shared_images, provider_id, sdk_id) if shared_images else validate(dependencies, symbols, mapping)
+     except AssertionError:
+         print(json.dumps({'binary': str(binary),
+                           'sqlite_open_symbols': [line for line in symbols.splitlines() if 'sqlite3_open' in line],
+@@ -81,7 +117,7 @@ def inspect(binary, link_map, selector_bytes_candidate=False):
+             assert len(definitions) == len(providers) == 1, 'missing/duplicate actual raw provider: ' + symbol
+     wrong_owner = re.sub(r'(?m)^(0x[0-9a-fA-F]+\s+0x[0-9a-fA-F]+\s+\[\s*)\d+(\]\s+_sqlite3_open_v2\s*)$',
+                          r'\g<1>999999\2', mapping)
+-    cases = [('system_sqlite', dependencies + '\n/usr/lib/libsqlite3.dylib', symbols, mapping),
++    cases = [] if shared_images else [('system_sqlite', dependencies + '\n/usr/lib/libsqlite3.dylib', symbols, mapping),
+              ('missing_symbol', dependencies, '', mapping),
+              ('duplicate_symbol', dependencies, symbols + '\n0 T _sqlite3_open_v2\n', mapping),
+              ('duplicate_provider', dependencies, symbols, mapping + '\n' + provider),
+@@ -95,7 +131,25 @@ def inspect(binary, link_map, selector_bytes_candidate=False):
+             rejected.append(name)
+         else:
+             raise AssertionError('accepted altered provider evidence: ' + name)
++    if shared_images:
++        import copy
++        for name, role, field, added in [
++            ('duplicate_main_sqlite', 'main', 'symbols', '\n0 T _sqlite3_open_v2\n'),
++            ('duplicate_sdk_sqlite', 'sdk', 'symbols', '\n0 T _sqlite3_open_v2\n'),
++            ('system_sqlite', 'main', 'dependencies', '\n /usr/lib/libsqlite3.dylib (compatibility version 1.0.0)\n'),
++            ('unassessed_image', 'sdk', 'dependencies', '\n @rpath/unknown.dylib (compatibility version 1.0.0)\n')]:
++            altered = copy.deepcopy(shared_images)
++            altered[role][field] += added
++            try:
++                validate_shared(altered, provider_id, sdk_id)
++            except AssertionError:
++                rejected.append(name)
++            else:
++                raise AssertionError('accepted altered shared-provider evidence: ' + name)
+     return {'accepted': True, 'binary_sha256': hashlib.sha256(Path(binary).read_bytes()).hexdigest(),
++            'sqlite_provider_mode': 'shared' if shared_images else 'legacy',
++            'runtime_binding_assessed': False,
++            'shared_images': shared_images,
+             'selector_bytes_candidate': selector_bytes_candidate,
+             'sqlite_provider': provider, 'system_sqlite_fallback': False,
+             'static_sdk_linked': False, 'reading_resolver_linked': False,
+@@ -107,6 +161,9 @@ def inspect(binary, link_map, selector_bytes_candidate=False):
+ 
+ 
+ def main():
++    if sys.argv[1:] == ['--self-test-shared']:
++        self_test_shared()
++        return
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument('--binary', type=Path, required=True)
+     parser.add_argument('--map', type=Path, required=True)
+@@ -117,5 +174,35 @@ def main():
+     print(json.dumps({key: value for key, value in result.items() if key != 'dependencies'}))
+ 
+ 
++def self_test_shared():
++    import copy
++    provider = '@rpath/libreader_sqlite3.1.dylib'
++    sdk = '@rpath/libexreader.1.dylib'
++    def dependency(name):
++        return '\t' + name + ' (compatibility version 1.0.0, current version 1.0.0)\n'
++    images = {
++        'main': {'dependencies': dependency(sdk) + dependency(provider), 'symbols': ' U _sqlite3_open_v2\n'},
++        'sdk': {'dependencies': dependency(sdk) + dependency(provider), 'symbols': ' U _sqlite3_close\n'},
++        'provider': {'dependencies': dependency(provider),
++                     'symbols': '0 T _sqlite3_open_v2\n1 T _sqlite3_close\n2 T _sqlite3_prepare_v2\n'}}
++    assert validate_shared(images, provider, sdk) == provider
++    for name, role, field, value in [
++        ('main_embedded', 'main', 'symbols', '0 T _sqlite3_open_v2\n'),
++        ('sdk_embedded', 'sdk', 'symbols', '0 T _sqlite3_close\n'),
++        ('missing_provider', 'sdk', 'dependencies', dependency(sdk)),
++        ('missing_sdk', 'main', 'dependencies', dependency(provider)),
++        ('wrong_provider', 'main', 'dependencies', dependency(sdk) + dependency('@rpath/other.dylib')),
++        ('empty_provider', 'provider', 'symbols', '')]:
++        altered = copy.deepcopy(images)
++        altered[role][field] = value
++        try:
++            validate_shared(altered, provider, sdk)
++        except AssertionError:
++            pass
++        else:
++            raise AssertionError('accepted shared-provider negative: ' + name)
++    print('Shared Apple ownership positive/negative checks passed')
++
++
+ if __name__ == '__main__':
+     main()

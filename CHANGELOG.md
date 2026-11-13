@@ -7,6 +7,10 @@
 补充对应CLI和书库回归，并保留删除书籍后旧阅读器失效的行为；SDK版本、ABI和书库schema不变。
 逐项修复和Windows GCC/MSVC验证见 `docs/AUDIT-FIXES-2026-10-31.md`。
 
+2026-10-22未发布审计修复：修复15项已确认问题，覆盖转换工具的批输入保护、覆盖优先级和NUL拒绝，
+CBZ失败清理/短读/帧顺序、TIFF透明度、SVG描边边界/默认描边/透明度，以及Apple宿主的跨章翻页与失败回滚。
+每项均补回归；Windows GCC全量163项通过，Apple运行验收单独标注。逐项映射见 `docs/AUDIT-FIXES-2026-10-22.md`。
+
 3.39.0：集成WP7的Bengali、Tamil、Telugu、Kannada、Malayalam、Thai、Khmer、Myanmar专用塑形。
 每脚本50条真实字体及50条合成字体序列，固定HarfBuzz14.6.0参考共800例；
 glyph严格相等、cluster按声明的包含口径、advance/offset固定1.5px@200px容差。

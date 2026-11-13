@@ -1,0 +1,62 @@
+{
+  "objective": "完成f07到完全的收尾没有一点点问题",
+  "completion_proven": false,
+  "current_state_revalidated": true,
+  "candidate_hashes_match": true,
+  "retained_evidence_hashes_match": true,
+  "reverse_patch_check_passed": true,
+  "requirements": [
+    {
+      "id": "A1",
+      "result": "incomplete",
+      "evidence": "build-package-observations.json",
+      "missing": "Full final Apple link order/MAP and unique archive selection; equal symbol sets occur in both product and SDK archives."
+    },
+    {
+      "id": "A2",
+      "result": "incomplete",
+      "evidence": [
+        "local-peer-observations.json",
+        "build-package-observations.json",
+        "apple-bindings-observations.json"
+      ],
+      "proved": "Six input artifact digests, common source receipts, program hashes and main-image observations. Apple matching SDK bytes/export tables retained.",
+      "missing": "Complete linked-image/runtime resolution closure, Windows/GTK archive attribution, and single-provider proof."
+    },
+    {
+      "id": "A3",
+      "result": "partial",
+      "evidence": "local-peer-observations.json",
+      "proved": "ELF GNU version records directly parsed; Android SQLite indices all 1; main Apple and GTK full symbol observations retained.",
+      "missing": "Full weak-symbol coverage for stripped Windows and Android binaries. Non-ELF GNU version sections are not applicable and are not counted as assessed."
+    },
+    {
+      "id": "A4",
+      "result": "incomplete",
+      "evidence": "apple-bindings-observations.json",
+      "proved": "Apple dlsym imports bind to libSystem.",
+      "missing": "Call argument/target dataflow and no-private-entry dependence proof."
+    },
+    {
+      "id": "A5",
+      "result": "historical_runs_retained_new_run_not_authorized",
+      "evidence": "final-observation-metadata.json",
+      "missing": "No confirmed remaining CI budget; local candidate is not represented as a new CI artifact."
+    },
+    {
+      "id": "delivery",
+      "result": "local_review_candidate_ready_formal_closure_incomplete",
+      "evidence": "candidate.patch",
+      "missing": "Owner decisions on scope and formal acceptance; no commit/push/catalog change performed."
+    }
+  ],
+  "blocked_audit": {
+    "previous_condition_resolved": true,
+    "new_authorization_condition_turns": 1,
+    "condition": "Readonly diagnosis completed; production/SDK edits remain explicitly excluded pending user response."
+  },
+  "confirmed_requirement": "整个应用的 SDK／产品映像共用一个 SQLite 实现",
+  "read_only_diagnosis_completed": true,
+  "previous_source_authorization_block_resolved": true,
+  "pending_action": "Implement independent local candidate for named scope; no commit/push/catalog edit/CI. Later package paths and CI budget remain separate."
+}

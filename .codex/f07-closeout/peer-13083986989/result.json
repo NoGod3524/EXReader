@@ -1,0 +1,486 @@
+{
+  "source_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+  "run_id": "41306566948",
+  "attempt": "1",
+  "passed": true,
+  "platform": "macos",
+  "physical_device": false,
+  "same_apple_sandbox": false,
+  "checks": [
+    "real app imported/opened EPUB and exposed public SDK saved selector",
+    "received Android progress; native reading.jump public resolver restored exact part/path/start/end",
+    "HTTPS original bytes and SHA256 match fixed F5 real EPUB"
+  ],
+  "commands": [
+    {
+      "role": "resources",
+      "exit": 0
+    },
+    {
+      "role": "project",
+      "exit": 0
+    },
+    {
+      "role": "native-ui",
+      "exit": 0
+    },
+    {
+      "role": "package",
+      "exit": 0
+    }
+  ],
+  "original_sha256": "4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036",
+  "original_bytes": 189249,
+  "book_identity": "epub:4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036",
+  "sdk_version": "3.42.0",
+  "f04_stage": "six-host-reading-preparation-v2",
+  "device": {
+    "name": "macOS runner",
+    "physical_device": false
+  },
+  "cases": [
+    {
+      "name": "testActualApplicationRelay()",
+      "result": "Passed",
+      "duration": "1m 39s",
+      "steps": [],
+      "step_count": 0
+    }
+  ],
+  "remote_title": "Alice's Adventures in Wonderland",
+  "location": {
+    "end": 930,
+    "exact": "",
+    "part": 1,
+    "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+    "prefix": " MILLENNIUM FULCRUM EDITION 3.0\n",
+    "start": 930,
+    "suffix": "Contents\nCHAPTER I.\nDown the Rab"
+  },
+  "page_text_sha256": "b4bb4a41deafa53b11683a9a4f153559735021586d4d4371ac2b86fa61e2e65f",
+  "expected_location": {
+    "exact": "",
+    "prefix": " MILLENNIUM FULCRUM EDITION 3.0\n",
+    "suffix": "Contents\nCHAPTER I.\nDown the Rab",
+    "start": 930,
+    "end": 930,
+    "part": 1,
+    "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+    "head": "de44f9e7488748b987cde4951a1c990e"
+  },
+  "program": {
+    "sha256": "f897162e4c1b83ab5396e7da3554426a167fe9c38f222df081a7115801d94a3f",
+    "bytes": 9653680,
+    "bundle_source_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+    "bundle_id": "org.exreader.host"
+  },
+  "installed_sdk_checker": {
+    "accepted": true,
+    "binary_sha256": "f897162e4c1b83ab5396e7da3554426a167fe9c38f222df081a7115801d94a3f",
+    "selector_bytes_candidate": true,
+    "sqlite_provider": "[ 38] /Users/runner/work/EXReader/EXReader/sdk-input/team24-apple-sdk-macos-f04/raw-products/lib/libreader_catalog_sqlite.a(sqlite3.c.o)",
+    "system_sqlite_fallback": false,
+    "static_sdk_linked": false,
+    "reading_resolver_linked": false,
+    "installed_search_linked": true,
+    "installed_navigation_linked": true,
+    "installed_reading_commands_linked": true,
+    "installed_annotation_view_linked": true,
+    "dependencies": "/Users/runner/work/EXReader/EXReader/build/apple-android/macos-peer/derived/Build/Products/Debug/EXReaderHost.app/Contents/MacOS/EXReaderHost:\n\t@rpath/libexreader.1.dylib (compatibility version 1.0.0, current version 3.42.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1900.180.0)\n\t/usr/lib/libxml2.2.dylib (compatibility version 10.0.0, current version 10.9.0)\n\t/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 3502.1.255)\n\t/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation (compatibility version 150.0.0, current version 3502.1.255)\n\t/System/Library/Frameworks/Security.framework/Versions/A/Security (compatibility version 1.0.0, current version 61439.120.27)\n\t/System/Library/Frameworks/Cocoa.framework/Versions/A/Cocoa (compatibility version 1.0.0, current version 24.0.0)\n\t/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n\t/System/Library/Frameworks/AppKit.framework/Versions/C/AppKit (compatibility version 45.0.0, current version 2575.60.5)\n\t/System/Library/Frameworks/Combine.framework/Versions/A/Combine (compatibility version 1.0.0, current version 3022.0.0)\n\t/System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics (compatibility version 64.0.0, current version 1889.5.3)\n\t/System/Library/Frameworks/CryptoKit.framework/Versions/A/CryptoKit (compatibility version 1.0.0, current version 1.0.0)\n\t/System/Library/Frameworks/SwiftUI.framework/Versions/A/SwiftUI (compatibility version 1.0.0, current version 6.5.4)\n\t/usr/lib/swift/libswiftCore.dylib (compatibility version 1.0.0, current version 0.0.0)\n\t/usr/lib/swift/libswiftCoreFoundation.dylib (compatibility version 1.0.0, current version 120.100.0, weak)\n\t/usr/lib/swift/libswiftCoreImage.dylib (compatibility version 1.0.0, current version 2.0.0, weak)\n\t/usr/lib/swift/libswiftDarwin.dylib (compatibility version 1.0.0, current version 310.100.8)\n\t/usr/lib/swift/libswiftDataDetection.dylib (compatibility version 1.0.0, current version 801.2.0, weak)\n\t/usr/lib/swift/libswiftDispatch.dylib (compatibility version 1.0.0, current version 54.0.0)\n\t/usr/lib/swift/libswiftIOKit.dylib (compatibility version 1.0.0, current version 1.0.0, weak)\n\t/usr/lib/swift/libswiftMetal.dylib (compatibility version 1.0.0, current version 368.12.0, weak)\n\t/usr/lib/swift/libswiftOSLog.dylib (compatibility version 1.0.0, current version 8.0.0, weak)\n\t/usr/lib/swift/libswiftObjectiveC.dylib (compatibility version 1.0.0, current version 940.4.0, weak)\n\t/usr/lib/swift/libswiftQuartzCore.dylib (compatibility version 1.0.0, current version 4.0.0, weak)\n\t/usr/lib/swift/libswiftSpatial.dylib (compatibility version 1.0.0, current version 1.0.0, weak)\n\t/usr/lib/swift/libswiftUniformTypeIdentifiers.dylib (compatibility version 1.0.0, current version 840.8.0)\n\t/usr/lib/swift/libswiftXPC.dylib (compatibility version 1.0.0, current version 69.120.3, weak)\n\t/usr/lib/swift/libswift_Concurrency.dylib (compatibility version 1.0.0, current version 0.0.0)\n\t/usr/lib/swift/libswiftos.dylib (compatibility version 1.0.0, current version 1062.100.1, weak)\n\t/usr/lib/swift/libswiftsimd.dylib (compatibility version 1.0.0, current version 21.0.0, weak)\n\t/usr/lib/swift/libswiftFoundation.dylib (compatibility version 1.0.0, current version 1.0.0)\n\t/usr/lib/swift/libswiftCoreGraphics.dylib (compatibility version 1.0.0, current version 1.0.0)\n",
+    "negative_checks": [
+      "system_sqlite",
+      "missing_symbol",
+      "duplicate_symbol",
+      "duplicate_provider",
+      "wrong_symbol_owner",
+      "static_sdk",
+      "static_resolver"
+    ]
+  },
+  "f04_checkpoints": {
+    "incoming-bookmark": {
+      "abi_version": 1,
+      "books": [
+        {
+          "bounded_memory": {
+            "checkpoint_bytes": 0,
+            "explicit_snapshot_bytes": 0,
+            "index_bytes": 149213,
+            "page_cache_bytes": 66048,
+            "parse_workspace_bytes": 125719,
+            "peak_parse_workspace_bytes": 602448,
+            "projection_bytes": 1361,
+            "swift_page_text_bytes": 159
+          },
+          "epub_progress": {
+            "end": 930,
+            "exact": "",
+            "part": 1,
+            "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+            "prefix": " MILLENNIUM FULCRUM EDITION 3.0\n",
+            "start": 930,
+            "suffix": "Contents\nCHAPTER I.\nDown the Rab"
+          },
+          "format": "EPUB",
+          "id": 1,
+          "notes": [],
+          "page": 6,
+          "page_text_sha256": "b4bb4a41deafa53b11683a9a4f153559735021586d4d4371ac2b86fa61e2e65f",
+          "part": 1,
+          "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+          "position": 0,
+          "reading_offset": 930,
+          "storage": "epub",
+          "title": "Alice's Adventures in Wonderland",
+          "unresolved_progress": false
+        }
+      ],
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "schema": 2,
+      "sdk_version": "3.42.0",
+      "state_hash": "9d81ff35",
+      "retained_records": [
+        {
+          "revision_id": "31a7deb755154f25b1a89e8e9974b033",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjMxYTdkZWI3NTUxNTRmMjViMWE4OWU4ZTk5NzRiMDMzIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6W10sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiIzLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiJzaW5nIHRoaXMgZUJvb2suXHUwMDBhVGl0bGU6IEFsaWNlJ3MgIiwic3VmZml4IjoiQWR2ZW50dXJlcyBpbiBXb25kZXJsYW5kXHUwMDBhQXV0aG9yOiIsInN0YXJ0Ijo1MjIsImVuZCI6NTIyfX19fQ==",
+          "sha256": "c39c04cc0b058d9cf23cc4ddc59dad1f835f805dc6ed6ef186f21c2697020dbe"
+        },
+        {
+          "revision_id": "3404da350cc940168e19be625b3fbd92",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjM0MDRkYTM1MGNjOTQwMTY4ZTE5YmU2MjViM2ZiZDkyIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiJDb250IiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6ImVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiYml0LSIsInN0YXJ0Ijo5MzAsImVuZCI6OTM0fX0sInRleHQiOiJGMDRfQU5EUk9JRF9OT1RFIn19",
+          "sha256": "28ea020a5496a0a2852b5dc24c3e8309a0982e453ef09287132b05a088b1e2f8"
+        },
+        {
+          "revision_id": "61ad31ad888a48bd9b22837dbbf8d8e6",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjYxYWQzMWFkODg4YTQ4YmQ5YjIyODM3ZGJiZjhkOGU2IiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6InNpbmcgdGhpcyBlQm9vay5cdTAwMGFUaXRsZTogQWxpY2UncyAiLCJzdWZmaXgiOiJBZHZlbnR1cmVzIGluIFdvbmRlcmxhbmRcdTAwMGFBdXRob3I6Iiwic3RhcnQiOjUyMiwiZW5kIjo1MjJ9fSwidGV4dCI6IkYwNF9XSU5ET1dTX0JPT0tNQVJLIn19",
+          "sha256": "833a503c702633b518d682ab43c011c7a3f923fc4b04752b4a236c1b9cc85ea3"
+        },
+        {
+          "revision_id": "70bd60b7d5ca4d3b876325a35d072fe3",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjcwYmQ2MGI3ZDVjYTRkM2I4NzYzMjVhMzVkMDcyZmUzIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiIgTUlMTEVOTklVTSBGVUxDUlVNIEVESVRJT04gMy4wXHUwMDBhIiwic3VmZml4IjoiQ29udGVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiIiwic3RhcnQiOjkzMCwiZW5kIjo5MzB9fSwidGV4dCI6IkYwNF9BTkRST0lEX0JPT0tNQVJLIn19",
+          "sha256": "b13bca36112aa296dc486d646e55befe832874e554cdce5237e122ad45b7b253"
+        },
+        {
+          "revision_id": "8008b70c6b2a47f7bc229d558f911c91",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjgwMDhiNzBjNmIyYTQ3ZjdiYzIyOWQ1NThmOTExYzkxIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IkFkdmVudHVyZXMgaW4gV29uZGVybGFuZFx1MDAwYUF1dGhvcjogTGV3aXMgQ2Fycm9sbFx1MDAwYVJlbGVhc2UgZGF0ZTogSnVuZSAyNywgMjAwOCBbZUJvb2sgIzExXVx1MDAwYU1vc3QgcmVjZW50bHkgdXBkYXRlZDogSnVuZSAyNiwgMjAyNVx1MDAwYUxhbmd1YWdlOiBFbmdsaXNoIiwicHJlZml4Ijoic2luZyB0aGlzIGVCb29rLlx1MDAwYVRpdGxlOiBBbGljZSdzICIsInN1ZmZpeCI6Ilx1MDAwYU90aGVyIGluZm9ybWF0aW9uIGFuZCBmb3JtYXRzOiAiLCJzdGFydCI6NTIyLCJlbmQiOjY2M319LCJ0ZXh0IjoiRjA0X1dJTkRPV1NfTk9URSJ9fQ==",
+          "sha256": "df5b83569db627868833280b1afbcfa6e8ab001dac388c7677e2b0d52145dead"
+        },
+        {
+          "revision_id": "de44f9e7488748b987cde4951a1c990e",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImRlNDRmOWU3NDg4NzQ4Yjk4N2NkZTQ5NTFhMWM5OTBlIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6WyIzMWE3ZGViNzU1MTU0ZjI1YjFhODllOGU5OTc0YjAzMyJdLCJwYXlsb2FkIjp7ImJvb2tfa2V5IjoiZXB1Yjo0ZjgxMjQ1ZDMxMzgwYWMxZDZlYWZiOWEzMjFlMzY5MTM2OWJjNzA5ODU3MzZhZTRiY2NmODQ5YTRmNzg0MDM2IiwibG9jYXRpb24iOnsibW9kZSI6ImVwdWJfY2hhcHRlciIsInBhcnNlcl92ZXJzaW9uIjoiZXhyZWFkZXItc2RrLTMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6IiBNSUxMRU5OSVVNIEZVTENSVU0gRURJVElPTiAzLjBcdTAwMGEiLCJzdWZmaXgiOiJDb250ZW50c1x1MDAwYUNIQVBURVIgSS5cdTAwMGFEb3duIHRoZSBSYWIiLCJzdGFydCI6OTMwLCJlbmQiOjkzMH19fX0=",
+          "sha256": "ac8ce5c4c52575b3e27949621d8aed790f471682dc00a3d41619591ea6afe2f7"
+        }
+      ]
+    },
+    "incoming-note": {
+      "abi_version": 1,
+      "books": [
+        {
+          "bounded_memory": {
+            "checkpoint_bytes": 0,
+            "explicit_snapshot_bytes": 0,
+            "index_bytes": 149213,
+            "page_cache_bytes": 66048,
+            "parse_workspace_bytes": 125719,
+            "peak_parse_workspace_bytes": 602448,
+            "projection_bytes": 1361,
+            "swift_page_text_bytes": 159
+          },
+          "epub_progress": {
+            "end": 930,
+            "exact": "",
+            "part": 1,
+            "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+            "prefix": " MILLENNIUM FULCRUM EDITION 3.0\n",
+            "start": 930,
+            "suffix": "Contents\nCHAPTER I.\nDown the Rab"
+          },
+          "format": "EPUB",
+          "id": 1,
+          "notes": [],
+          "page": 6,
+          "page_text_sha256": "b4bb4a41deafa53b11683a9a4f153559735021586d4d4371ac2b86fa61e2e65f",
+          "part": 1,
+          "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+          "position": 0,
+          "reading_offset": 930,
+          "storage": "epub",
+          "title": "Alice's Adventures in Wonderland",
+          "unresolved_progress": false
+        }
+      ],
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "schema": 2,
+      "sdk_version": "3.42.0",
+      "state_hash": "9d81ff35",
+      "retained_records": [
+        {
+          "revision_id": "31a7deb755154f25b1a89e8e9974b033",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjMxYTdkZWI3NTUxNTRmMjViMWE4OWU4ZTk5NzRiMDMzIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6W10sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiIzLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiJzaW5nIHRoaXMgZUJvb2suXHUwMDBhVGl0bGU6IEFsaWNlJ3MgIiwic3VmZml4IjoiQWR2ZW50dXJlcyBpbiBXb25kZXJsYW5kXHUwMDBhQXV0aG9yOiIsInN0YXJ0Ijo1MjIsImVuZCI6NTIyfX19fQ==",
+          "sha256": "c39c04cc0b058d9cf23cc4ddc59dad1f835f805dc6ed6ef186f21c2697020dbe"
+        },
+        {
+          "revision_id": "3404da350cc940168e19be625b3fbd92",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjM0MDRkYTM1MGNjOTQwMTY4ZTE5YmU2MjViM2ZiZDkyIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiJDb250IiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6ImVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiYml0LSIsInN0YXJ0Ijo5MzAsImVuZCI6OTM0fX0sInRleHQiOiJGMDRfQU5EUk9JRF9OT1RFIn19",
+          "sha256": "28ea020a5496a0a2852b5dc24c3e8309a0982e453ef09287132b05a088b1e2f8"
+        },
+        {
+          "revision_id": "61ad31ad888a48bd9b22837dbbf8d8e6",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjYxYWQzMWFkODg4YTQ4YmQ5YjIyODM3ZGJiZjhkOGU2IiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6InNpbmcgdGhpcyBlQm9vay5cdTAwMGFUaXRsZTogQWxpY2UncyAiLCJzdWZmaXgiOiJBZHZlbnR1cmVzIGluIFdvbmRlcmxhbmRcdTAwMGFBdXRob3I6Iiwic3RhcnQiOjUyMiwiZW5kIjo1MjJ9fSwidGV4dCI6IkYwNF9XSU5ET1dTX0JPT0tNQVJLIn19",
+          "sha256": "833a503c702633b518d682ab43c011c7a3f923fc4b04752b4a236c1b9cc85ea3"
+        },
+        {
+          "revision_id": "70bd60b7d5ca4d3b876325a35d072fe3",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjcwYmQ2MGI3ZDVjYTRkM2I4NzYzMjVhMzVkMDcyZmUzIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiIgTUlMTEVOTklVTSBGVUxDUlVNIEVESVRJT04gMy4wXHUwMDBhIiwic3VmZml4IjoiQ29udGVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiIiwic3RhcnQiOjkzMCwiZW5kIjo5MzB9fSwidGV4dCI6IkYwNF9BTkRST0lEX0JPT0tNQVJLIn19",
+          "sha256": "b13bca36112aa296dc486d646e55befe832874e554cdce5237e122ad45b7b253"
+        },
+        {
+          "revision_id": "8008b70c6b2a47f7bc229d558f911c91",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjgwMDhiNzBjNmIyYTQ3ZjdiYzIyOWQ1NThmOTExYzkxIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IkFkdmVudHVyZXMgaW4gV29uZGVybGFuZFx1MDAwYUF1dGhvcjogTGV3aXMgQ2Fycm9sbFx1MDAwYVJlbGVhc2UgZGF0ZTogSnVuZSAyNywgMjAwOCBbZUJvb2sgIzExXVx1MDAwYU1vc3QgcmVjZW50bHkgdXBkYXRlZDogSnVuZSAyNiwgMjAyNVx1MDAwYUxhbmd1YWdlOiBFbmdsaXNoIiwicHJlZml4Ijoic2luZyB0aGlzIGVCb29rLlx1MDAwYVRpdGxlOiBBbGljZSdzICIsInN1ZmZpeCI6Ilx1MDAwYU90aGVyIGluZm9ybWF0aW9uIGFuZCBmb3JtYXRzOiAiLCJzdGFydCI6NTIyLCJlbmQiOjY2M319LCJ0ZXh0IjoiRjA0X1dJTkRPV1NfTk9URSJ9fQ==",
+          "sha256": "df5b83569db627868833280b1afbcfa6e8ab001dac388c7677e2b0d52145dead"
+        },
+        {
+          "revision_id": "de44f9e7488748b987cde4951a1c990e",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImRlNDRmOWU3NDg4NzQ4Yjk4N2NkZTQ5NTFhMWM5OTBlIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6WyIzMWE3ZGViNzU1MTU0ZjI1YjFhODllOGU5OTc0YjAzMyJdLCJwYXlsb2FkIjp7ImJvb2tfa2V5IjoiZXB1Yjo0ZjgxMjQ1ZDMxMzgwYWMxZDZlYWZiOWEzMjFlMzY5MTM2OWJjNzA5ODU3MzZhZTRiY2NmODQ5YTRmNzg0MDM2IiwibG9jYXRpb24iOnsibW9kZSI6ImVwdWJfY2hhcHRlciIsInBhcnNlcl92ZXJzaW9uIjoiZXhyZWFkZXItc2RrLTMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6IiBNSUxMRU5OSVVNIEZVTENSVU0gRURJVElPTiAzLjBcdTAwMGEiLCJzdWZmaXgiOiJDb250ZW50c1x1MDAwYUNIQVBURVIgSS5cdTAwMGFEb3duIHRoZSBSYWIiLCJzdGFydCI6OTMwLCJlbmQiOjkzMH19fX0=",
+          "sha256": "ac8ce5c4c52575b3e27949621d8aed790f471682dc00a3d41619591ea6afe2f7"
+        }
+      ]
+    },
+    "edited-records": {
+      "abi_version": 1,
+      "books": [
+        {
+          "bounded_memory": {
+            "checkpoint_bytes": 0,
+            "explicit_snapshot_bytes": 0,
+            "index_bytes": 149213,
+            "page_cache_bytes": 66048,
+            "parse_workspace_bytes": 125719,
+            "peak_parse_workspace_bytes": 602448,
+            "projection_bytes": 1361,
+            "swift_page_text_bytes": 159
+          },
+          "epub_progress": {
+            "end": 930,
+            "exact": "",
+            "part": 1,
+            "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+            "prefix": " MILLENNIUM FULCRUM EDITION 3.0\n",
+            "start": 930,
+            "suffix": "Contents\nCHAPTER I.\nDown the Rab"
+          },
+          "format": "EPUB",
+          "id": 1,
+          "notes": [],
+          "page": 6,
+          "page_text_sha256": "b4bb4a41deafa53b11683a9a4f153559735021586d4d4371ac2b86fa61e2e65f",
+          "part": 1,
+          "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+          "position": 0,
+          "reading_offset": 930,
+          "storage": "epub",
+          "title": "Alice's Adventures in Wonderland",
+          "unresolved_progress": false
+        }
+      ],
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "schema": 2,
+      "sdk_version": "3.42.0",
+      "state_hash": "9d81ff35",
+      "retained_records": [
+        {
+          "revision_id": "305f2dbed0fc4465b54a793cb345e470",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjMwNWYyZGJlZDBmYzQ0NjViNTRhNzkzY2IzNDVlNDcwIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbIjcwYmQ2MGI3ZDVjYTRkM2I4NzYzMjVhMzVkMDcyZmUzIl0sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJhbm5vdGF0aW9uX2lkIjoiOWNlYmUyMzA4NTE5NGY3NjhjMGJmNDhhMTYwMTc1OTQiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiJleHJlYWRlci1zZGstMy40Mi4wIiwiYW5jaG9yX3ZlcnNpb24iOjIsInBhcnRfcGF0aCI6Ik9FQlBTLzQwNDAyMjczMjQ1NTYzOTA1MzdfMTEtaC0wLmh0bS54aHRtbCIsInBhcnQiOjEsInNlbGVjdG9yIjp7ImV4YWN0IjoiIiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6IkNvbnRlbnRzXHUwMDBhQ0hBUFRFUiBJLlx1MDAwYURvd24gdGhlIFJhYiIsInN0YXJ0Ijo5MzAsImVuZCI6OTMwfX0sInRleHQiOiJGMDRfQU5EUk9JRF9CT09LTUFSS0YwNF9NQUNPU19CT09LTUFSSyJ9fQ==",
+          "sha256": "3dbab4d3ad587d576fcff63759fb9ce1a9f10729814ad1502c2868cf8fee591a"
+        },
+        {
+          "revision_id": "31a7deb755154f25b1a89e8e9974b033",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjMxYTdkZWI3NTUxNTRmMjViMWE4OWU4ZTk5NzRiMDMzIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6W10sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiIzLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiJzaW5nIHRoaXMgZUJvb2suXHUwMDBhVGl0bGU6IEFsaWNlJ3MgIiwic3VmZml4IjoiQWR2ZW50dXJlcyBpbiBXb25kZXJsYW5kXHUwMDBhQXV0aG9yOiIsInN0YXJ0Ijo1MjIsImVuZCI6NTIyfX19fQ==",
+          "sha256": "c39c04cc0b058d9cf23cc4ddc59dad1f835f805dc6ed6ef186f21c2697020dbe"
+        },
+        {
+          "revision_id": "3404da350cc940168e19be625b3fbd92",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjM0MDRkYTM1MGNjOTQwMTY4ZTE5YmU2MjViM2ZiZDkyIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiJDb250IiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6ImVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiYml0LSIsInN0YXJ0Ijo5MzAsImVuZCI6OTM0fX0sInRleHQiOiJGMDRfQU5EUk9JRF9OT1RFIn19",
+          "sha256": "28ea020a5496a0a2852b5dc24c3e8309a0982e453ef09287132b05a088b1e2f8"
+        },
+        {
+          "revision_id": "61ad31ad888a48bd9b22837dbbf8d8e6",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjYxYWQzMWFkODg4YTQ4YmQ5YjIyODM3ZGJiZjhkOGU2IiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6InNpbmcgdGhpcyBlQm9vay5cdTAwMGFUaXRsZTogQWxpY2UncyAiLCJzdWZmaXgiOiJBZHZlbnR1cmVzIGluIFdvbmRlcmxhbmRcdTAwMGFBdXRob3I6Iiwic3RhcnQiOjUyMiwiZW5kIjo1MjJ9fSwidGV4dCI6IkYwNF9XSU5ET1dTX0JPT0tNQVJLIn19",
+          "sha256": "833a503c702633b518d682ab43c011c7a3f923fc4b04752b4a236c1b9cc85ea3"
+        },
+        {
+          "revision_id": "70bd60b7d5ca4d3b876325a35d072fe3",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjcwYmQ2MGI3ZDVjYTRkM2I4NzYzMjVhMzVkMDcyZmUzIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiIgTUlMTEVOTklVTSBGVUxDUlVNIEVESVRJT04gMy4wXHUwMDBhIiwic3VmZml4IjoiQ29udGVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiIiwic3RhcnQiOjkzMCwiZW5kIjo5MzB9fSwidGV4dCI6IkYwNF9BTkRST0lEX0JPT0tNQVJLIn19",
+          "sha256": "b13bca36112aa296dc486d646e55befe832874e554cdce5237e122ad45b7b253"
+        },
+        {
+          "revision_id": "8008b70c6b2a47f7bc229d558f911c91",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjgwMDhiNzBjNmIyYTQ3ZjdiYzIyOWQ1NThmOTExYzkxIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IkFkdmVudHVyZXMgaW4gV29uZGVybGFuZFx1MDAwYUF1dGhvcjogTGV3aXMgQ2Fycm9sbFx1MDAwYVJlbGVhc2UgZGF0ZTogSnVuZSAyNywgMjAwOCBbZUJvb2sgIzExXVx1MDAwYU1vc3QgcmVjZW50bHkgdXBkYXRlZDogSnVuZSAyNiwgMjAyNVx1MDAwYUxhbmd1YWdlOiBFbmdsaXNoIiwicHJlZml4Ijoic2luZyB0aGlzIGVCb29rLlx1MDAwYVRpdGxlOiBBbGljZSdzICIsInN1ZmZpeCI6Ilx1MDAwYU90aGVyIGluZm9ybWF0aW9uIGFuZCBmb3JtYXRzOiAiLCJzdGFydCI6NTIyLCJlbmQiOjY2M319LCJ0ZXh0IjoiRjA0X1dJTkRPV1NfTk9URSJ9fQ==",
+          "sha256": "df5b83569db627868833280b1afbcfa6e8ab001dac388c7677e2b0d52145dead"
+        },
+        {
+          "revision_id": "aa40f8091a1245409d217ea558731df7",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImFhNDBmODA5MWExMjQ1NDA5ZDIxN2VhNTU4NzMxZGY3IiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbIjM0MDRkYTM1MGNjOTQwMTY4ZTE5YmU2MjViM2ZiZDkyIl0sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJhbm5vdGF0aW9uX2lkIjoiNzY3NmQyYWRlMWIxNDUxYTkyY2VkMWMzM2I4MDYzZGYiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiJleHJlYWRlci1zZGstMy40Mi4wIiwiYW5jaG9yX3ZlcnNpb24iOjIsInBhcnRfcGF0aCI6Ik9FQlBTLzQwNDAyMjczMjQ1NTYzOTA1MzdfMTEtaC0wLmh0bS54aHRtbCIsInBhcnQiOjEsInNlbGVjdG9yIjp7ImV4YWN0IjoiQ29udCIsInByZWZpeCI6IiBNSUxMRU5OSVVNIEZVTENSVU0gRURJVElPTiAzLjBcdTAwMGEiLCJzdWZmaXgiOiJlbnRzXHUwMDBhQ0hBUFRFUiBJLlx1MDAwYURvd24gdGhlIFJhYmJpdC0iLCJzdGFydCI6OTMwLCJlbmQiOjkzNH19LCJ0ZXh0IjoiRjA0X0FORFJPSURfTk9URUYwNF9NQUNPU19OT1RFIn19",
+          "sha256": "b493802c3335c8ecaa495d7e002c27df72300a57f5e4ded36cdd889ab61a0236"
+        },
+        {
+          "revision_id": "dc07b02776c340c48b6ab5bef5624c12",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImRjMDdiMDI3NzZjMzQwYzQ4YjZhYjViZWY1NjI0YzEyIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6WyJkZTQ0ZjllNzQ4ODc0OGI5ODdjZGU0OTUxYTFjOTkwZSJdLCJwYXlsb2FkIjp7ImJvb2tfa2V5IjoiZXB1Yjo0ZjgxMjQ1ZDMxMzgwYWMxZDZlYWZiOWEzMjFlMzY5MTM2OWJjNzA5ODU3MzZhZTRiY2NmODQ5YTRmNzg0MDM2IiwibG9jYXRpb24iOnsibW9kZSI6ImVwdWJfY2hhcHRlciIsInBhcnNlcl92ZXJzaW9uIjoiMy40Mi4wIiwiYW5jaG9yX3ZlcnNpb24iOjIsInBhcnRfcGF0aCI6Ik9FQlBTLzQwNDAyMjczMjQ1NTYzOTA1MzdfMTEtaC0wLmh0bS54aHRtbCIsInBhcnQiOjEsInNlbGVjdG9yIjp7ImV4YWN0IjoiIiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6IkNvbnRlbnRzXHUwMDBhQ0hBUFRFUiBJLlx1MDAwYURvd24gdGhlIFJhYiIsInN0YXJ0Ijo5MzAsImVuZCI6OTMwfX19fQ==",
+          "sha256": "01618ad57cc8a32c5c4e720f127ee9bd574f6c242423137968d9236affbcec84"
+        },
+        {
+          "revision_id": "de44f9e7488748b987cde4951a1c990e",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImRlNDRmOWU3NDg4NzQ4Yjk4N2NkZTQ5NTFhMWM5OTBlIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6WyIzMWE3ZGViNzU1MTU0ZjI1YjFhODllOGU5OTc0YjAzMyJdLCJwYXlsb2FkIjp7ImJvb2tfa2V5IjoiZXB1Yjo0ZjgxMjQ1ZDMxMzgwYWMxZDZlYWZiOWEzMjFlMzY5MTM2OWJjNzA5ODU3MzZhZTRiY2NmODQ5YTRmNzg0MDM2IiwibG9jYXRpb24iOnsibW9kZSI6ImVwdWJfY2hhcHRlciIsInBhcnNlcl92ZXJzaW9uIjoiZXhyZWFkZXItc2RrLTMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6IiBNSUxMRU5OSVVNIEZVTENSVU0gRURJVElPTiAzLjBcdTAwMGEiLCJzdWZmaXgiOiJDb250ZW50c1x1MDAwYUNIQVBURVIgSS5cdTAwMGFEb3duIHRoZSBSYWIiLCJzdGFydCI6OTMwLCJlbmQiOjkzMH19fX0=",
+          "sha256": "ac8ce5c4c52575b3e27949621d8aed790f471682dc00a3d41619591ea6afe2f7"
+        }
+      ]
+    },
+    "uploaded": {
+      "abi_version": 1,
+      "books": [
+        {
+          "epub_progress": {
+            "end": 930,
+            "exact": "",
+            "part": 1,
+            "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+            "prefix": " MILLENNIUM FULCRUM EDITION 3.0\n",
+            "start": 930,
+            "suffix": "Contents\nCHAPTER I.\nDown the Rab"
+          },
+          "format": "EPUB",
+          "id": 1,
+          "position": 0,
+          "storage": "epub",
+          "title": "Alice's Adventures in Wonderland"
+        }
+      ],
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "schema": 2,
+      "sdk_version": "3.42.0",
+      "state_hash": "baeb261a",
+      "retained_records": [
+        {
+          "revision_id": "305f2dbed0fc4465b54a793cb345e470",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjMwNWYyZGJlZDBmYzQ0NjViNTRhNzkzY2IzNDVlNDcwIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbIjcwYmQ2MGI3ZDVjYTRkM2I4NzYzMjVhMzVkMDcyZmUzIl0sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJhbm5vdGF0aW9uX2lkIjoiOWNlYmUyMzA4NTE5NGY3NjhjMGJmNDhhMTYwMTc1OTQiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiJleHJlYWRlci1zZGstMy40Mi4wIiwiYW5jaG9yX3ZlcnNpb24iOjIsInBhcnRfcGF0aCI6Ik9FQlBTLzQwNDAyMjczMjQ1NTYzOTA1MzdfMTEtaC0wLmh0bS54aHRtbCIsInBhcnQiOjEsInNlbGVjdG9yIjp7ImV4YWN0IjoiIiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6IkNvbnRlbnRzXHUwMDBhQ0hBUFRFUiBJLlx1MDAwYURvd24gdGhlIFJhYiIsInN0YXJ0Ijo5MzAsImVuZCI6OTMwfX0sInRleHQiOiJGMDRfQU5EUk9JRF9CT09LTUFSS0YwNF9NQUNPU19CT09LTUFSSyJ9fQ==",
+          "sha256": "3dbab4d3ad587d576fcff63759fb9ce1a9f10729814ad1502c2868cf8fee591a"
+        },
+        {
+          "revision_id": "31a7deb755154f25b1a89e8e9974b033",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjMxYTdkZWI3NTUxNTRmMjViMWE4OWU4ZTk5NzRiMDMzIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6W10sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiIzLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiJzaW5nIHRoaXMgZUJvb2suXHUwMDBhVGl0bGU6IEFsaWNlJ3MgIiwic3VmZml4IjoiQWR2ZW50dXJlcyBpbiBXb25kZXJsYW5kXHUwMDBhQXV0aG9yOiIsInN0YXJ0Ijo1MjIsImVuZCI6NTIyfX19fQ==",
+          "sha256": "c39c04cc0b058d9cf23cc4ddc59dad1f835f805dc6ed6ef186f21c2697020dbe"
+        },
+        {
+          "revision_id": "3404da350cc940168e19be625b3fbd92",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjM0MDRkYTM1MGNjOTQwMTY4ZTE5YmU2MjViM2ZiZDkyIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiJDb250IiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6ImVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiYml0LSIsInN0YXJ0Ijo5MzAsImVuZCI6OTM0fX0sInRleHQiOiJGMDRfQU5EUk9JRF9OT1RFIn19",
+          "sha256": "28ea020a5496a0a2852b5dc24c3e8309a0982e453ef09287132b05a088b1e2f8"
+        },
+        {
+          "revision_id": "61ad31ad888a48bd9b22837dbbf8d8e6",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjYxYWQzMWFkODg4YTQ4YmQ5YjIyODM3ZGJiZjhkOGU2IiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6InNpbmcgdGhpcyBlQm9vay5cdTAwMGFUaXRsZTogQWxpY2UncyAiLCJzdWZmaXgiOiJBZHZlbnR1cmVzIGluIFdvbmRlcmxhbmRcdTAwMGFBdXRob3I6Iiwic3RhcnQiOjUyMiwiZW5kIjo1MjJ9fSwidGV4dCI6IkYwNF9XSU5ET1dTX0JPT0tNQVJLIn19",
+          "sha256": "833a503c702633b518d682ab43c011c7a3f923fc4b04752b4a236c1b9cc85ea3"
+        },
+        {
+          "revision_id": "70bd60b7d5ca4d3b876325a35d072fe3",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjcwYmQ2MGI3ZDVjYTRkM2I4NzYzMjVhMzVkMDcyZmUzIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiIgTUlMTEVOTklVTSBGVUxDUlVNIEVESVRJT04gMy4wXHUwMDBhIiwic3VmZml4IjoiQ29udGVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiIiwic3RhcnQiOjkzMCwiZW5kIjo5MzB9fSwidGV4dCI6IkYwNF9BTkRST0lEX0JPT0tNQVJLIn19",
+          "sha256": "b13bca36112aa296dc486d646e55befe832874e554cdce5237e122ad45b7b253"
+        },
+        {
+          "revision_id": "8008b70c6b2a47f7bc229d558f911c91",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjgwMDhiNzBjNmIyYTQ3ZjdiYzIyOWQ1NThmOTExYzkxIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IkFkdmVudHVyZXMgaW4gV29uZGVybGFuZFx1MDAwYUF1dGhvcjogTGV3aXMgQ2Fycm9sbFx1MDAwYVJlbGVhc2UgZGF0ZTogSnVuZSAyNywgMjAwOCBbZUJvb2sgIzExXVx1MDAwYU1vc3QgcmVjZW50bHkgdXBkYXRlZDogSnVuZSAyNiwgMjAyNVx1MDAwYUxhbmd1YWdlOiBFbmdsaXNoIiwicHJlZml4Ijoic2luZyB0aGlzIGVCb29rLlx1MDAwYVRpdGxlOiBBbGljZSdzICIsInN1ZmZpeCI6Ilx1MDAwYU90aGVyIGluZm9ybWF0aW9uIGFuZCBmb3JtYXRzOiAiLCJzdGFydCI6NTIyLCJlbmQiOjY2M319LCJ0ZXh0IjoiRjA0X1dJTkRPV1NfTk9URSJ9fQ==",
+          "sha256": "df5b83569db627868833280b1afbcfa6e8ab001dac388c7677e2b0d52145dead"
+        },
+        {
+          "revision_id": "aa40f8091a1245409d217ea558731df7",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImFhNDBmODA5MWExMjQ1NDA5ZDIxN2VhNTU4NzMxZGY3IiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbIjM0MDRkYTM1MGNjOTQwMTY4ZTE5YmU2MjViM2ZiZDkyIl0sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJhbm5vdGF0aW9uX2lkIjoiNzY3NmQyYWRlMWIxNDUxYTkyY2VkMWMzM2I4MDYzZGYiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiJleHJlYWRlci1zZGstMy40Mi4wIiwiYW5jaG9yX3ZlcnNpb24iOjIsInBhcnRfcGF0aCI6Ik9FQlBTLzQwNDAyMjczMjQ1NTYzOTA1MzdfMTEtaC0wLmh0bS54aHRtbCIsInBhcnQiOjEsInNlbGVjdG9yIjp7ImV4YWN0IjoiQ29udCIsInByZWZpeCI6IiBNSUxMRU5OSVVNIEZVTENSVU0gRURJVElPTiAzLjBcdTAwMGEiLCJzdWZmaXgiOiJlbnRzXHUwMDBhQ0hBUFRFUiBJLlx1MDAwYURvd24gdGhlIFJhYmJpdC0iLCJzdGFydCI6OTMwLCJlbmQiOjkzNH19LCJ0ZXh0IjoiRjA0X0FORFJPSURfTk9URUYwNF9NQUNPU19OT1RFIn19",
+          "sha256": "b493802c3335c8ecaa495d7e002c27df72300a57f5e4ded36cdd889ab61a0236"
+        },
+        {
+          "revision_id": "dc07b02776c340c48b6ab5bef5624c12",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImRjMDdiMDI3NzZjMzQwYzQ4YjZhYjViZWY1NjI0YzEyIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6WyJkZTQ0ZjllNzQ4ODc0OGI5ODdjZGU0OTUxYTFjOTkwZSJdLCJwYXlsb2FkIjp7ImJvb2tfa2V5IjoiZXB1Yjo0ZjgxMjQ1ZDMxMzgwYWMxZDZlYWZiOWEzMjFlMzY5MTM2OWJjNzA5ODU3MzZhZTRiY2NmODQ5YTRmNzg0MDM2IiwibG9jYXRpb24iOnsibW9kZSI6ImVwdWJfY2hhcHRlciIsInBhcnNlcl92ZXJzaW9uIjoiMy40Mi4wIiwiYW5jaG9yX3ZlcnNpb24iOjIsInBhcnRfcGF0aCI6Ik9FQlBTLzQwNDAyMjczMjQ1NTYzOTA1MzdfMTEtaC0wLmh0bS54aHRtbCIsInBhcnQiOjEsInNlbGVjdG9yIjp7ImV4YWN0IjoiIiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6IkNvbnRlbnRzXHUwMDBhQ0hBUFRFUiBJLlx1MDAwYURvd24gdGhlIFJhYiIsInN0YXJ0Ijo5MzAsImVuZCI6OTMwfX19fQ==",
+          "sha256": "01618ad57cc8a32c5c4e720f127ee9bd574f6c242423137968d9236affbcec84"
+        },
+        {
+          "revision_id": "de44f9e7488748b987cde4951a1c990e",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImRlNDRmOWU3NDg4NzQ4Yjk4N2NkZTQ5NTFhMWM5OTBlIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6WyIzMWE3ZGViNzU1MTU0ZjI1YjFhODllOGU5OTc0YjAzMyJdLCJwYXlsb2FkIjp7ImJvb2tfa2V5IjoiZXB1Yjo0ZjgxMjQ1ZDMxMzgwYWMxZDZlYWZiOWEzMjFlMzY5MTM2OWJjNzA5ODU3MzZhZTRiY2NmODQ5YTRmNzg0MDM2IiwibG9jYXRpb24iOnsibW9kZSI6ImVwdWJfY2hhcHRlciIsInBhcnNlcl92ZXJzaW9uIjoiZXhyZWFkZXItc2RrLTMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6IiBNSUxMRU5OSVVNIEZVTENSVU0gRURJVElPTiAzLjBcdTAwMGEiLCJzdWZmaXgiOiJDb250ZW50c1x1MDAwYUNIQVBURVIgSS5cdTAwMGFEb3duIHRoZSBSYWIiLCJzdGFydCI6OTMwLCJlbmQiOjkzMH19fX0=",
+          "sha256": "ac8ce5c4c52575b3e27949621d8aed790f471682dc00a3d41619591ea6afe2f7"
+        }
+      ]
+    },
+    "position": {
+      "abi_version": 1,
+      "books": [
+        {
+          "bounded_memory": {
+            "checkpoint_bytes": 0,
+            "explicit_snapshot_bytes": 0,
+            "index_bytes": 149213,
+            "page_cache_bytes": 66048,
+            "parse_workspace_bytes": 125719,
+            "peak_parse_workspace_bytes": 602448,
+            "projection_bytes": 1361,
+            "swift_page_text_bytes": 159
+          },
+          "epub_progress": {
+            "end": 930,
+            "exact": "",
+            "part": 1,
+            "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+            "prefix": " MILLENNIUM FULCRUM EDITION 3.0\n",
+            "start": 930,
+            "suffix": "Contents\nCHAPTER I.\nDown the Rab"
+          },
+          "format": "EPUB",
+          "id": 1,
+          "notes": [],
+          "page": 6,
+          "page_text_sha256": "b4bb4a41deafa53b11683a9a4f153559735021586d4d4371ac2b86fa61e2e65f",
+          "part": 1,
+          "path": "OEBPS/4040227324556390537_11-h-0.htm.xhtml",
+          "position": 0,
+          "reading_offset": 930,
+          "storage": "epub",
+          "title": "Alice's Adventures in Wonderland",
+          "unresolved_progress": false
+        }
+      ],
+      "font_sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "schema": 2,
+      "sdk_version": "3.42.0",
+      "state_hash": "9d81ff35",
+      "retained_records": [
+        {
+          "revision_id": "31a7deb755154f25b1a89e8e9974b033",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjMxYTdkZWI3NTUxNTRmMjViMWE4OWU4ZTk5NzRiMDMzIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6W10sInBheWxvYWQiOnsiYm9va19rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJsb2NhdGlvbiI6eyJtb2RlIjoiZXB1Yl9jaGFwdGVyIiwicGFyc2VyX3ZlcnNpb24iOiIzLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiJzaW5nIHRoaXMgZUJvb2suXHUwMDBhVGl0bGU6IEFsaWNlJ3MgIiwic3VmZml4IjoiQWR2ZW50dXJlcyBpbiBXb25kZXJsYW5kXHUwMDBhQXV0aG9yOiIsInN0YXJ0Ijo1MjIsImVuZCI6NTIyfX19fQ==",
+          "sha256": "c39c04cc0b058d9cf23cc4ddc59dad1f835f805dc6ed6ef186f21c2697020dbe"
+        },
+        {
+          "revision_id": "3404da350cc940168e19be625b3fbd92",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjM0MDRkYTM1MGNjOTQwMTY4ZTE5YmU2MjViM2ZiZDkyIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI3Njc2ZDJhZGUxYjE0NTFhOTJjZWQxYzMzYjgwNjNkZiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiJDb250IiwicHJlZml4IjoiIE1JTExFTk5JVU0gRlVMQ1JVTSBFRElUSU9OIDMuMFx1MDAwYSIsInN1ZmZpeCI6ImVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiYml0LSIsInN0YXJ0Ijo5MzAsImVuZCI6OTM0fX0sInRleHQiOiJGMDRfQU5EUk9JRF9OT1RFIn19",
+          "sha256": "28ea020a5496a0a2852b5dc24c3e8309a0982e453ef09287132b05a088b1e2f8"
+        },
+        {
+          "revision_id": "61ad31ad888a48bd9b22837dbbf8d8e6",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjYxYWQzMWFkODg4YTQ4YmQ5YjIyODM3ZGJiZjhkOGU2IiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI0ZGZhNjJkNDExZDU0MGIwYTg2MjdkMWQ4NmYzODY2NyIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6InNpbmcgdGhpcyBlQm9vay5cdTAwMGFUaXRsZTogQWxpY2UncyAiLCJzdWZmaXgiOiJBZHZlbnR1cmVzIGluIFdvbmRlcmxhbmRcdTAwMGFBdXRob3I6Iiwic3RhcnQiOjUyMiwiZW5kIjo1MjJ9fSwidGV4dCI6IkYwNF9XSU5ET1dTX0JPT0tNQVJLIn19",
+          "sha256": "833a503c702633b518d682ab43c011c7a3f923fc4b04752b4a236c1b9cc85ea3"
+        },
+        {
+          "revision_id": "70bd60b7d5ca4d3b876325a35d072fe3",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjcwYmQ2MGI3ZDVjYTRkM2I4NzYzMjVhMzVkMDcyZmUzIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI5Y2ViZTIzMDg1MTk0Zjc2OGMwYmY0OGExNjAxNzU5NCIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6ImV4cmVhZGVyLXNkay0zLjQyLjAiLCJhbmNob3JfdmVyc2lvbiI6MiwicGFydF9wYXRoIjoiT0VCUFMvNDA0MDIyNzMyNDU1NjM5MDUzN18xMS1oLTAuaHRtLnhodG1sIiwicGFydCI6MSwic2VsZWN0b3IiOnsiZXhhY3QiOiIiLCJwcmVmaXgiOiIgTUlMTEVOTklVTSBGVUxDUlVNIEVESVRJT04gMy4wXHUwMDBhIiwic3VmZml4IjoiQ29udGVudHNcdTAwMGFDSEFQVEVSIEkuXHUwMDBhRG93biB0aGUgUmFiIiwic3RhcnQiOjkzMCwiZW5kIjo5MzB9fSwidGV4dCI6IkYwNF9BTkRST0lEX0JPT0tNQVJLIn19",
+          "sha256": "b13bca36112aa296dc486d646e55befe832874e554cdce5237e122ad45b7b253"
+        },
+        {
+          "revision_id": "8008b70c6b2a47f7bc229d558f911c91",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6IjgwMDhiNzBjNmIyYTQ3ZjdiYzIyOWQ1NThmOTExYzkxIiwiZW50aXR5X2tpbmQiOiJhbm5vdGF0aW9uIiwiZW50aXR5X2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNjo4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsIm9wZXJhdGlvbiI6InB1dCIsImxvY2F0aW9uX2tpbmQiOiJlcHViX2NoYXB0ZXIiLCJwYXJlbnRzIjpbXSwicGF5bG9hZCI6eyJib29rX2tleSI6ImVwdWI6NGY4MTI0NWQzMTM4MGFjMWQ2ZWFmYjlhMzIxZTM2OTEzNjliYzcwOTg1NzM2YWU0YmNjZjg0OWE0Zjc4NDAzNiIsImFubm90YXRpb25faWQiOiI4MDdlMzFiZTE1YTY0ZWFjYTU5NmVmMDE1MjhjYmU4YiIsImxvY2F0aW9uIjp7Im1vZGUiOiJlcHViX2NoYXB0ZXIiLCJwYXJzZXJfdmVyc2lvbiI6IjMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IkFkdmVudHVyZXMgaW4gV29uZGVybGFuZFx1MDAwYUF1dGhvcjogTGV3aXMgQ2Fycm9sbFx1MDAwYVJlbGVhc2UgZGF0ZTogSnVuZSAyNywgMjAwOCBbZUJvb2sgIzExXVx1MDAwYU1vc3QgcmVjZW50bHkgdXBkYXRlZDogSnVuZSAyNiwgMjAyNVx1MDAwYUxhbmd1YWdlOiBFbmdsaXNoIiwicHJlZml4Ijoic2luZyB0aGlzIGVCb29rLlx1MDAwYVRpdGxlOiBBbGljZSdzICIsInN1ZmZpeCI6Ilx1MDAwYU90aGVyIGluZm9ybWF0aW9uIGFuZCBmb3JtYXRzOiAiLCJzdGFydCI6NTIyLCJlbmQiOjY2M319LCJ0ZXh0IjoiRjA0X1dJTkRPV1NfTk9URSJ9fQ==",
+          "sha256": "df5b83569db627868833280b1afbcfa6e8ab001dac388c7677e2b0d52145dead"
+        },
+        {
+          "revision_id": "de44f9e7488748b987cde4951a1c990e",
+          "raw_base64": "eyJ2ZXJzaW9uIjoxLCJpZCI6ImRlNDRmOWU3NDg4NzQ4Yjk4N2NkZTQ5NTFhMWM5OTBlIiwiZW50aXR5X2tpbmQiOiJwcm9ncmVzcyIsImVudGl0eV9rZXkiOiJlcHViOjRmODEyNDVkMzEzODBhYzFkNmVhZmI5YTMyMWUzNjkxMzY5YmM3MDk4NTczNmFlNGJjY2Y4NDlhNGY3ODQwMzYiLCJvcGVyYXRpb24iOiJwdXQiLCJsb2NhdGlvbl9raW5kIjoiZXB1Yl9jaGFwdGVyIiwicGFyZW50cyI6WyIzMWE3ZGViNzU1MTU0ZjI1YjFhODllOGU5OTc0YjAzMyJdLCJwYXlsb2FkIjp7ImJvb2tfa2V5IjoiZXB1Yjo0ZjgxMjQ1ZDMxMzgwYWMxZDZlYWZiOWEzMjFlMzY5MTM2OWJjNzA5ODU3MzZhZTRiY2NmODQ5YTRmNzg0MDM2IiwibG9jYXRpb24iOnsibW9kZSI6ImVwdWJfY2hhcHRlciIsInBhcnNlcl92ZXJzaW9uIjoiZXhyZWFkZXItc2RrLTMuNDIuMCIsImFuY2hvcl92ZXJzaW9uIjoyLCJwYXJ0X3BhdGgiOiJPRUJQUy80MDQwMjI3MzI0NTU2MzkwNTM3XzExLWgtMC5odG0ueGh0bWwiLCJwYXJ0IjoxLCJzZWxlY3RvciI6eyJleGFjdCI6IiIsInByZWZpeCI6IiBNSUxMRU5OSVVNIEZVTENSVU0gRURJVElPTiAzLjBcdTAwMGEiLCJzdWZmaXgiOiJDb250ZW50c1x1MDAwYUNIQVBURVIgSS5cdTAwMGFEb3duIHRoZSBSYWIiLCJzdGFydCI6OTMwLCJlbmQiOjkzMH19fX0=",
+          "sha256": "ac8ce5c4c52575b3e27949621d8aed790f471682dc00a3d41619591ea6afe2f7"
+        }
+      ]
+    }
+  },
+  "cleanup_errors": []
+}

@@ -1,0 +1,311 @@
+{
+  "schema": 1,
+  "date": "2026-10-22",
+  "source_commit": "9dfb155a1e42a5ee82fabc4beea41db575a309fa",
+  "engine_version": "3.39.0",
+  "changes": "local_uncommitted_unreleased",
+  "audit": "docs/AUDIT-2026-10-22.md",
+  "report": "docs/AUDIT-FIXES-2026-10-22.md",
+  "counts": {
+    "implementation_fixes": 15,
+    "regression_coverage_added": 15,
+    "P1": 3,
+    "P2": 12,
+    "findings_with_local_regressions_passed": 12,
+    "findings_with_apple_ui_regressions_not_executed": 3
+  },
+  "findings": [
+    {
+      "id": "A01",
+      "priority": 1,
+      "title": "Batch output overwrites another input",
+      "implementation_status": "implemented",
+      "fix": "Compare every proposed output with every batch input before execution, including rejected jobs and file aliases.",
+      "regression_coverage": "`tests/check_convert_cli.py::scenario_batch_input_protection`: earlier/later inputs, rejected input, hard link; independent items still succeed and original input hashes remain unchanged.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A02",
+      "priority": 1,
+      "title": "CBZ error cleanup dereferences unallocated pages",
+      "implementation_status": "implemented",
+      "fix": "Share null-safe page-directory cleanup across probe, allocation and expansion failures.",
+      "regression_coverage": "`tests/test_cbz.c`: oversized-image rejection returns `EXR_LIMIT` with null output; subsequent normal open/render succeeds; cancellation cleans a partially initialized directory.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A03",
+      "priority": 1,
+      "title": "Manifest default overrides item overwrite:false",
+      "implementation_status": "implemented",
+      "fix": "Keep CLI overwrite authorization separate from the manifest default.",
+      "regression_coverage": "`scenario_overwrite_precedence`: five CLI/item/default combinations, including item false overriding manifest true and CLI true overriding item false.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A04",
+      "priority": 2,
+      "title": "NUL truncates manifest paths",
+      "implementation_status": "implemented",
+      "fix": "Reject embedded NUL during manifest string parsing.",
+      "regression_coverage": "`scenario_manifest_nul`: input, output, ID, root, output root and field-name cases all fail before file changes.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A05",
+      "priority": 2,
+      "title": "CBZ rejects legal short reads",
+      "implementation_status": "implemented",
+      "fix": "Retry legal short reads; stop on cancellation, zero bytes or an oversized callback result.",
+      "regression_coverage": "`tests/test_cbz.c::source_reads`: seven-byte callbacks import successfully; invalid callbacks/cancellation return the expected error and no book ID.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A06",
+      "priority": 2,
+      "title": "TIFF alpha is applied twice",
+      "implementation_status": "implemented",
+      "fix": "Convert libtiff's packed associated RGBA to public straight-alpha byte RGBA.",
+      "regression_coverage": "`tests/test_image_formats.c` compares alpha and translucent color with PNG; `tests/test_cbz_formats.c::alpha_pages` compares composed pages with at most one channel-level quantization difference.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A07",
+      "priority": 2,
+      "title": "CBZ natural-sort ties interleave member frames",
+      "implementation_status": "implemented",
+      "fix": "Resolve full member-name ties before comparing frame indices.",
+      "regression_coverage": "`tests/test_cbz_formats.c::natural_frames`: three animated members with numeric/case ties retain member order, frame order and page IDs.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A08",
+      "priority": 2,
+      "title": "SVG stroke margins inflate cumulative bounds",
+      "implementation_status": "implemented",
+      "fix": "Measure each stroke's actual outline and union its bounds, avoiding repeated expansion of the shared box.",
+      "regression_coverage": "`tests/test_font_svg.c::reliability`: one versus 100 overlapping stroked rectangles produce identical pixels without artificial limit errors.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A09",
+      "priority": 2,
+      "title": "SVG miter joins are clipped",
+      "implementation_status": "implemented",
+      "fix": "Reuse canvas stroke geometry for cap/join bounds.",
+      "regression_coverage": "`stroke_reference`: full-page canvas comparisons for acute miters, very large miter limits and shear, plus equivalent padded/unpadded scenes.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A10",
+      "priority": 2,
+      "title": "SVG default stroke draws outlines",
+      "implementation_status": "implemented",
+      "fix": "Initialize SVG stroke to none and skip unpainted geometry.",
+      "regression_coverage": "Default versus explicit none, inherited versus explicit stroke, and blank default-line/no-paint comparisons.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A11",
+      "priority": 2,
+      "title": "SVG percentage opacity is rejected",
+      "implementation_status": "implemented",
+      "fix": "Parse opacity's numeric value and unit in the correct order.",
+      "regression_coverage": "Equivalent decimal/percentage fill, stroke and group opacity; invalid units and out-of-range values remain rejected.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A12",
+      "priority": 2,
+      "title": "SVG root opacity is skipped",
+      "implementation_status": "implemented",
+      "fix": "Traverse root paint/opacity exactly once around the selected glyph subtree.",
+      "regression_coverage": "Root/group equivalence, selected glyph inside defs, root glyph ID, inherited paint, root transform, zero opacity and cancellation.",
+      "local_regression_status": "passed_gcc_and_msvc"
+    },
+    {
+      "id": "A13",
+      "priority": 2,
+      "title": "Previous chapter uses missing or stale last-page cache",
+      "implementation_status": "implemented",
+      "fix": "Discover the previous chapter's final page under the current layout; clear cached endpoints on font changes.",
+      "regression_coverage": "Apple `ReaderModel.runSelfTest`: reopen at chapter 2, then Previous; increase/decrease font and repeat.",
+      "local_regression_status": "apple_ui_not_executed"
+    },
+    {
+      "id": "A14",
+      "priority": 2,
+      "title": "Apple host turns through auxiliary EPUB parts",
+      "implementation_status": "implemented",
+      "fix": "Traverse only parts marked `inReadingOrder`.",
+      "regression_coverage": "Apple self-test: skip a non-linear spine item in both directions and stop before auxiliary XHTML.",
+      "local_regression_status": "apple_ui_not_executed"
+    },
+    {
+      "id": "A15",
+      "priority": 2,
+      "title": "Failed chapter turn leaves inconsistent state",
+      "implementation_status": "implemented",
+      "fix": "Restore document, pager, location, frame, endpoint cache and saved progress after a failed turn.",
+      "regression_coverage": "Apple self-test: deferred malformed chapter leaves handles/frame, persisted position, annotation location and readable page unchanged.",
+      "local_regression_status": "apple_ui_not_executed"
+    }
+  ],
+  "validation": {
+    "gcc_release": {
+      "build": "passed",
+      "ctest": {
+        "expected": 163,
+        "passed": 163,
+        "failed": 0,
+        "elapsed_seconds": 84.44
+      },
+      "ctest_directory": "build/audit-fixes-20261022/ctest",
+      "ctest_redirects": "Generated definitions copied with only conversion CLI/benchmark work and report destinations redirected to fresh directories.",
+      "cli": {
+        "expected": 52,
+        "actual": 52,
+        "passed": 52,
+        "failed": 0,
+        "elapsed_seconds": 18.855
+      }
+    },
+    "msvc_release": {
+      "build": "passed",
+      "ctest": {
+        "expected": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "tests": [
+        "native-cbz",
+        "native-image-formats",
+        "native-cbz-formats",
+        "native-font-svg"
+      ],
+      "cli": {
+        "expected": 52,
+        "actual": 52,
+        "passed": 52,
+        "failed": 0,
+        "elapsed_seconds": 12.003
+      },
+      "dependency_sources": "Existing locally cached dependency sources; TLS verification unchanged."
+    },
+    "cli_before_fix": {
+      "expected": 52,
+      "actual": 52,
+      "passed": 41,
+      "failed": 11,
+      "elapsed_seconds": 6.994,
+      "new_scenarios": 15,
+      "new_defect_cases_failed": 11,
+      "new_control_cases_passed": 4,
+      "failing_scenarios": [
+        "batch-protect-later-input",
+        "batch-protect-earlier-input",
+        "batch-protect-rejected-input",
+        "batch-protect-input-hardlink",
+        "overwrite-precedence-0",
+        "manifest-nul-input",
+        "manifest-nul-output",
+        "manifest-nul-id",
+        "manifest-nul-root",
+        "manifest-nul-output_root",
+        "manifest-nul-key"
+      ]
+    },
+    "conversion_memory": {
+      "passed": true,
+      "budget_bytes": 33554432,
+      "items": 100,
+      "elapsed_seconds": 21.071694,
+      "peak_rss_bytes": 30289920,
+      "output_bytes": 5385717,
+      "single_peak_rss_bytes": 28659712,
+      "peak_delta_bytes": 1630208,
+      "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+      "unfinished": 0,
+      "failed": 0,
+      "temporary_files_remaining": 0
+    },
+    "apple": {
+      "ui_execution": "not_run",
+      "reason": "Windows host has no Swift or Apple toolchain.",
+      "ci_path": "Existing macOS, iPhone and iPad host self-tests; checker requires named regression results.",
+      "fixture_validation": "passed via rebuilt C API and actual bundled Reader.otf font",
+      "fixture_results": {
+        "Navigation.epub": {
+          "reading_order": [
+            true,
+            false,
+            true,
+            false
+          ],
+          "first_chapter_pages": {
+            "28": 3,
+            "48": 11
+          },
+          "second_chapter_status": 0
+        },
+        "BrokenChapter.epub": {
+          "reading_order": [
+            true,
+            false,
+            true,
+            false
+          ],
+          "first_chapter_pages": {
+            "28": 1,
+            "48": 1
+          },
+          "second_chapter_status": 5
+        }
+      }
+    },
+    "python_tooling_compilation": "passed",
+    "diff_whitespace_check": "passed"
+  },
+  "source_sha256": {
+    "tools/convert.c": "62baa3677d343cf606687be8b52f0a755f153235fc16441e6de6ad8511bef9e5",
+    "tools/convert_json.c": "61bc8cd843b3aa1be77b2bc49b75d452985ac6e70c8c98600a4a6f2e2feba91a",
+    "src/cbz.c": "84196363811514c181490372debab674fb587ae586d6b091066a9ddd27bbd969",
+    "src/image_formats.c": "8c244ef66ec4331cdebb4492e4990f29f6592096bcefc61405421b2474b24664",
+    "src/font_svg.c": "70bb9e49f9988bbddc0b28e3cbb091425636676fff2d4fab78e8daaa67cac584",
+    "examples/apple/ReaderApp.swift": "6bf0a136c685e9783ad4b36f56738fb7a3f5dcc6ca306ade2d44a24ec0430beb",
+    "tests/check_convert_cli.py": "ad1ae25bb7b9d5d14ba69520556037ad507dbb03b1ac2212a0debf9ac71e36bb",
+    "tests/test_cbz.c": "c83f248b88e35b5521b77e48ce76ea673aa42f04cabe7b3759883c1419d07bdc",
+    "tests/test_cbz_formats.c": "18721db8b5ff4083bebb488127245199ecc76982920268514cb64b62d22eb7fc",
+    "tests/test_image_formats.c": "9ac8a31366539dd678ca30d534a19fdd62550bae95b62f27451c49e6d9892aa5",
+    "tests/test_font_svg.c": "0dd300f593e6ad39627872764318c3c9f851fbbc605ec36e5e4a182c360043e0",
+    "tools/build_apple_host.py": "a554fe3c2e28235bcc31503b8662668bbf9dd920059971cc3e429c232b6642a4",
+    "tools/check_apple_host.py": "cfd80934f2dfd0176105749d89598e126d97dcf2bed086f08a97b5609255e3cf",
+    "tools/generate_svg_reliability_test_font.py": "5a610088d6b4a600c39d73cf6455dc144a191e8b16a15a3d2225878d7e471c97",
+    "tests/fixtures/fonts/svg-reliability.ttf": "a48319d5071eccae04f2e3dd40384567507ba369f4e75ef9e4a220e898e65f64",
+    "tests/fixtures/fonts/svg-reliability.json": "25e55e77c75965856d2615f9314503dc241f6519db1a38d5e5e9f85c373411ee",
+    "tests/fixtures/fonts/README.md": "b64a27673f59fc046dd3300dca42a00a6216f167e738267fb85c16c45226a46e",
+    "docs/CONVERSION.md": "b9075b349c768aa9bb8f0cebda2a28c324ce9ddac65df66b8fae1cf2fa36c1bc",
+    "CHANGELOG.md": "754bd851470ce096d5be6f38a0dcc7a15d7d7b61ce127aacf4b4d1334234102c",
+    "docs/AUDIT-FIXES-2026-10-22.md": "3c0326f558c1506616ad2dfa6a2b7e4dbb853cbf04239ae73c440e01ef1d2e8f"
+  },
+  "evidence_sha256": {
+    "build/audit-fixes-20261022/build-r2.log": "851e6cbfe335b20c086cb00e2ce1d5fb34806f35a3e05cc4d42b691e5f53e51a",
+    "build/audit-fixes-20261022/full-ctest.log": "0cc029d5f5f143c93f351ed5459282c532495fbaf1ebb833a1838177e9d7adcf",
+    "build/audit-fixes-20261022/full-ctest-console.log": "0cc029d5f5f143c93f351ed5459282c532495fbaf1ebb833a1838177e9d7adcf",
+    "build/audit-fixes-20261022/ctest/CTestTestfile.cmake": "be096c925740adbcf3b9e2f2775d706501821dc58acd78a55fe2fe4c393c7d7c",
+    "build/audit-fixes-20261022/cli-before-r2.json": "d1da3f9e05b319e5b5c622238da5179bfb3834c76b8d5c05c8fae3aad870380e",
+    "build/audit-fixes-20261022/cli-before-r2.log": "6e9196ff26eb61fb6bbb0be3e77d25c0e4dc2eec1e3bbe9ab2fe5a306ebd3b9d",
+    "build/audit-fixes-20261022/cli-after.json": "e91b8786607a510e21e71f8a2dd13d0b815effe49e73cb7fffb816b17b93c40b",
+    "build/audit-fixes-20261022/cli-after.log": "4202b87f6a81d512f7f12c90db25080f89cbeeac6f91b8048808a6274382152c",
+    "build/audit-fixes-20261022/full-native-convert-cli.json": "232f0cb52d7fbdd0bcce67a40505598dbe7b7bb82224d2ee2aaaad185cb5bd43",
+    "build/audit-fixes-20261022/full-native-convert-benchmark.json": "bdff7434f2d49944dd71c9b9d063c67b2a2b639d135c85c57bbdd4989f93d12e",
+    "build/audit-fixes-20261022/media.log": "ff36b4f3238d83c9ecea35d7ceced02847322f4fb937e0477515cb3ae3a8280f",
+    "build/audit-fixes-20261022/svg.log": "9e94da14d177264024d2401493377e444517cf0f1f185bf520dc5078d313c3d2",
+    "build/audit-fixes-20261022/msvc-configure.log": "0e08ef0c01c3cc88e37b50cb73a5b44b2a465d773cc3cd247a327b5248c821f8",
+    "build/audit-fixes-20261022/msvc-build-r2.log": "0e7400e2c75b720b68282101f61d7f1e3d4f317a8854221259d13e1e1a352410",
+    "build/audit-fixes-20261022/msvc-tests.log": "f65dbe2f957a9819f338dc89b3ce661e5ab03543b48c2d6eaf3ed5d5866d8ab0",
+    "build/audit-fixes-20261022/msvc-cli.json": "3d10bdfc93ce45048cb039841b8b7f6b0ef2e19a3228f755b4dbef4a8d538e82",
+    "build/audit-fixes-20261022/msvc-cli.log": "4202b87f6a81d512f7f12c90db25080f89cbeeac6f91b8048808a6274382152c",
+    "build/audit-20261022/bindings/regression-fixtures.json": "c33bb493296d38ec8b04aadaeb9151468595b85d40b9f2dce8ad383ef590b763"
+  }
+}

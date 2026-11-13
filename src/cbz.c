@@ -45,22 +45,33 @@ static int compare_pages(const void *left,const void *right) {
     }
   }
   if(*a || *b) return *a ? 1 : -1;
+  { int order=strcmp(original_a,original_b);if(order) return order; }
   if(la->frame != lb->frame) return la->frame < lb->frame ? -1 : 1;
-  return strcmp(original_a,original_b);
+  return 0;
+}
+static void free_pages(comic_page *pages,size_t count) {
+  size_t i;
+  if(!pages) return;
+  for(i=0;i<count;i++) { free(pages[i].name); free(pages[i].id); }
+  free(pages);
 }
 static void release(void *context) {
-  comic *d=context;size_t i;if(!d) return;
+  comic *d=context;if(!d) return;
   mz_zip_reader_end(&d->zip);
   if(!d->borrowed && d->source.release) d->source.release(d->source.context);
-  for(i=0;i<d->count;i++) { free(d->pages[i].name); free(d->pages[i].id); }
-  exr_metadata_free(d->metadata,d->metadata_count);free(d->pages);free(d->data);free(d);
+  free_pages(d->pages,d->count);
+  exr_metadata_free(d->metadata,d->metadata_count);free(d->data);free(d);
 }
 static size_t read_source(void *context,mz_uint64 offset,void *buffer,size_t size) {
-  comic *d=context;size_t n;
-  if(d->io_error.code!=EXR_OK || exr_control_cancel(d->control,&d->io_error)!=EXR_OK) return 0;
-  n=d->source.read_at(d->source.context,offset,buffer,size);
-  if(n!=size) exr_fail(&d->io_error,EXR_IO,"Cannot read CBZ archive source");
-  return n;
+  comic *d=context;size_t done=0;
+  while(done<size) {
+    size_t n;
+    if(d->io_error.code!=EXR_OK || exr_control_cancel(d->control,&d->io_error)!=EXR_OK) break;
+    n=d->source.read_at(d->source.context,offset+done,(unsigned char *)buffer+done,size-done);
+    if(!n || n>size-done) { exr_fail(&d->io_error,EXR_IO,"Cannot read CBZ archive source");break; }
+    done+=n;
+  }
+  return done;
 }
 static exr_status archive_error(comic *d,exr_error *e,const char *message) {
   if(d->io_error.code!=EXR_OK) { if(e) *e=d->io_error;return d->io_error.code; }
@@ -193,8 +204,7 @@ static exr_status member_pages(comic *d,mz_uint index,const mz_zip_archive_file_
   }
   free(data);
   if(status!=EXR_OK) {
-    for(i=0;i<page_count;i++) { free((*out)[i].name); free((*out)[i].id); }
-    free(*out); *out=NULL; return status;
+    free_pages(*out,page_count); *out=NULL; return status;
   }
   *count=page_count; return EXR_OK;
 }
@@ -296,10 +306,10 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
     { comic_page *expanded=NULL;size_t expanded_count=0;
       status=member_pages(d,i,&st,name,(size_t)st.m_uncomp_size,&work,&expanded,&expanded_count,e);
       if(status!=EXR_OK) goto done;
-      if(d->count>(size_t)10000-expanded_count) { free(expanded);status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 pages after frame expansion");goto done; }
+      if(d->count>(size_t)10000-expanded_count) { free_pages(expanded,expanded_count);status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 pages after frame expansion");goto done; }
       if(d->count+expanded_count>capacity) {
         comic_page *grown=realloc(d->pages,(d->count+expanded_count)*sizeof(*grown));
-        if(!grown) { free(expanded);status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
+        if(!grown) { free_pages(expanded,expanded_count);status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
         d->pages=grown;capacity=d->count+expanded_count;
       }
       memcpy(d->pages+d->count,expanded,expanded_count*sizeof(*expanded));free(expanded);d->count+=expanded_count;

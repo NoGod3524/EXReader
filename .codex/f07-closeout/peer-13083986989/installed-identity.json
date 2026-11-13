@@ -1,0 +1,2387 @@
+{
+  "source_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+  "run_id": "41306566948",
+  "attempt": "1",
+  "target": "macos",
+  "sdk_version": "3.42.0",
+  "sdk_content_candidate": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_content_paths": [
+    "src",
+    "include",
+    "cmake",
+    "CMakeLists.txt",
+    "bindings"
+  ],
+  "sdk_files": {
+    "LICENSE": {
+      "bytes": 1078,
+      "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+    },
+    "CHANGELOG.md": {
+      "bytes": 135227,
+      "sha256": "347edfe45632f810fd8c66145ed5c366f24e66a2a6ba66d058e4ad20bf234be2"
+    },
+    "THIRD_PARTY_NOTICES.md": {
+      "bytes": 20818,
+      "sha256": "aca41304e60a5f617bf232f5024fc101fc2ba32f79f55e50c88cd74aeda213b6"
+    },
+    "README.md": {
+      "bytes": 30275,
+      "sha256": "2c270380b7e8ab76828495e0cb7169878d3f47971eb185510c720e7a97e79c33"
+    },
+    "include/reader_annotation_view.h": {
+      "bytes": 9730,
+      "sha256": "2ea382fb4087983f5a426027d928b50df487c989da7e12f1b4c87d5418ed62c8"
+    },
+    "include/exr_credentials.h": {
+      "bytes": 3198,
+      "sha256": "ab4e90d9146634c85a39dbba6e9698bd58a2c1c1ad78df01d6c0db00641ea2d4"
+    },
+    "include/reader_projection.h": {
+      "bytes": 9266,
+      "sha256": "298b120b4172ee1d296994a1ceaa90bbf968039f57afc3a8c0fab193d332fc3f"
+    },
+    "include/reader_navigation.h": {
+      "bytes": 14924,
+      "sha256": "100a4490b7cc1f69653e26e5e8e7f97f643783540fd95ed28ce1d14adf12d7f8"
+    },
+    "include/reader_reading_commands.h": {
+      "bytes": 4649,
+      "sha256": "0e600bf326994261be2c60499985438018eb4a54b08f4949e9b16daccef723af"
+    },
+    "include/reader_session.h": {
+      "bytes": 3616,
+      "sha256": "6dc03258f7ea435c0a5c342f96e3fd0fe863e9861e9297d1f13bf7cf51f94e8c"
+    },
+    "include/reader_reading_state.h": {
+      "bytes": 7862,
+      "sha256": "b27002bfeced7ce9f0f8d8c1f59af10b5d9ec9c318ac9e01866e42a34467d6cf"
+    },
+    "include/exreader.h": {
+      "bytes": 224,
+      "sha256": "69ba8847b65a583b257360caf9f76b9fc3fc1ff113231da2fef7dc3c82f53c9f"
+    },
+    "include/reader_search.h": {
+      "bytes": 9354,
+      "sha256": "80e3dd7372992c15e63406c4f40b7095b1c0cafc04c445b71606407ec7065ab7"
+    },
+    "include/reader_revisions.h": {
+      "bytes": 7699,
+      "sha256": "7e7a39735f65bbb234ffba796931bc7fe635005559446b54624ef6cddae6d0d4"
+    },
+    "include/reader_metadata.h": {
+      "bytes": 6030,
+      "sha256": "15a987735ee324949e68723cc09e80553892fb2fa3820d006a77c125dd26e7c7"
+    },
+    "include/reader_commands.h": {
+      "bytes": 4697,
+      "sha256": "fdd1dccd6fe47b05da9e563649b394a296917d9587b5bbb6e962e86e4387ec79"
+    },
+    "include/module.modulemap": {
+      "bytes": 86,
+      "sha256": "b28467c2098c129aca42bd62b12d09e6d5856b2fe05d98352838763fad272b7b"
+    },
+    "include/reader_sync.h": {
+      "bytes": 3052,
+      "sha256": "1366dc90333870ff01f7ed12bdfb32f53bc474ba3a0de294af8bd5b7c86fb734"
+    },
+    "include/exr_webdav.h": {
+      "bytes": 4823,
+      "sha256": "efef0f4a1d04f6c3e790da339065f45c33e4aecbaf5e4d3c3ac4025f00e72971"
+    },
+    "docs/VERSIONING.md": {
+      "bytes": 9704,
+      "sha256": "5908ae6c5970fe4d0a0e82edbc73143b4740511243e3899f675721bb2b78dc24"
+    },
+    "docs/WP6-BOUNDED-READER.md": {
+      "bytes": 4411,
+      "sha256": "3e7a83835f8b9d9ab10db741b74457d664030e03120c0a8e79950587a328e4f6"
+    },
+    "docs/NATIVE_VALIDATION.md": {
+      "bytes": 317078,
+      "sha256": "db18d3eeda417bf7ec38861a301027e26b110fa9325c584dc43d081c0ab19d9d"
+    },
+    "docs/styled-page.png": {
+      "bytes": 42756,
+      "sha256": "7844c30e67dfd268315d864c72f9894f6fce4f7882b112b8ccd713c145fea835"
+    },
+    "docs/SDK_COMPATIBILITY.md": {
+      "bytes": 50522,
+      "sha256": "6aecac635b7b486a7185321995c5ea6903a7aa841df1e4eb6e9c3b302a29f3ed"
+    },
+    "docs/NATIVE_API.md": {
+      "bytes": 240870,
+      "sha256": "e814a8e1416b91afb4ce01b6e7c28de3af91fe4be5f7311a2e59072c1c92fa30"
+    },
+    "docs/PERFORMANCE.md": {
+      "bytes": 48357,
+      "sha256": "0858da8d8e2e3fbeea49e5b2b7c021e23e67651dc5f80661b5613f9a31c1b067"
+    },
+    "docs/native-page.png": {
+      "bytes": 54528,
+      "sha256": "9f91eece7dac3fbdfbb3adacd02ecff5c763a18f8005f3ef289fbf2056279732"
+    },
+    "docs/WP8_COLR_V1.md": {
+      "bytes": 10181,
+      "sha256": "11d4817006d95e6d3183d973cfdaa60807e56e1b8cb3734d1bcc8ccaff811e36"
+    },
+    "docs/WP12A-STREAMING.md": {
+      "bytes": 6410,
+      "sha256": "3a07c5746698dcf26512bb56919474eb0bd6999b60a098f3509771ad6cac088a"
+    },
+    "docs/WP8_SVG_FONTS.md": {
+      "bytes": 6525,
+      "sha256": "417664e120fd9f082c263c343f10be60d8ba92f715aae7c171540ba9672417cf"
+    },
+    "docs/WP7-SCRIPTS.md": {
+      "bytes": 7051,
+      "sha256": "9eae4092256bbc911b5f6fa502fe41885ae37bdcc3c2a46108ab6b0f020ecadd"
+    },
+    "docs/SUPPORT_MATRIX.md": {
+      "bytes": 16909,
+      "sha256": "8829231e4228cf2a97d1832a4012a58ec9b4eae09ac0e00011caa8b12fa84348"
+    },
+    "docs/CONVERSION.md": {
+      "bytes": 13998,
+      "sha256": "e95bac3e5856856f9cfe1ee1f0db86d341f8e3b43e08699ba715be757c0601b0"
+    },
+    "docs/complex-text.png": {
+      "bytes": 38007,
+      "sha256": "0cb63d58c76df9f25dc3c10ad6426f94976f86bdba4d81201346bcd3b1505004"
+    },
+    "docs/WP12A-FORMATS.md": {
+      "bytes": 7298,
+      "sha256": "9ff9b0012dfa5aae042a633df1a1c1f0314c552f7e92e022cf1b0acc18c2af1c"
+    },
+    "examples/CMakeLists.txt": {
+      "bytes": 2089,
+      "sha256": "ce5186a15e6134e594cb72cdf2623ac7a955a060388513479df12bdcf24ccc16"
+    },
+    "examples/compat.c": {
+      "bytes": 437,
+      "sha256": "3a9792e893e8dbf6e3727efc8f38b98ae15353a3f734484bb2bfcc6daf882a78"
+    },
+    "examples/lazy.c": {
+      "bytes": 3178,
+      "sha256": "9ba374ab00e68ccf47c926c2f137cf38c1910babb8dc50d9e991a07002fecf24"
+    },
+    "examples/wave.c": {
+      "bytes": 1509,
+      "sha256": "51d4dcb2c83972e03580e84064172e2d3087975d4a878372c58a0818a25fe3dd"
+    },
+    "examples/font.c": {
+      "bytes": 2815,
+      "sha256": "1a3fcddb3bef2c92697d6c9a8a7ef866853e9ef223eef5c40ed279fba47683d8"
+    },
+    "examples/pcm.c": {
+      "bytes": 3140,
+      "sha256": "92676fd068e76d7ada4e1de0710eebdb879b6b9be37e97dc122511ba1df424e7"
+    },
+    "examples/entry.h": {
+      "bytes": 1070,
+      "sha256": "a499a3a350ac5bf1b8972ebc5e2802c8cfd86ceb43ef04f43ad372eb05cab9ae"
+    },
+    "examples/search.c": {
+      "bytes": 2282,
+      "sha256": "a29c19354429494e4c2913d92d0ed22f29f459f8d265c19be3561e2f2c801c94"
+    },
+    "examples/construct.c": {
+      "bytes": 2478,
+      "sha256": "2bae48b271cb9f2325bee99a39a0db2448664c77b7aba2661182c6cf180b5c2f"
+    },
+    "examples/reader.c": {
+      "bytes": 264672,
+      "sha256": "a849ecd741698d0391550740ea90aca92cabdbe4522affd672f3bff50f9bfcd9"
+    },
+    "examples/page.c": {
+      "bytes": 2257,
+      "sha256": "71bc9d73ff4204f60bfa1ce4b4c2327a15f60e132b68f7b1ff4a0b8e11dad725"
+    },
+    "examples/hyphen.c": {
+      "bytes": 5118,
+      "sha256": "18a8b07332b9f3cb3be4953849e39301e1469245e35540b6576c71503d197af2"
+    },
+    "examples/shaping.c": {
+      "bytes": 2646,
+      "sha256": "bd2f6927270de5d2527c4e11fcdd581b42bdfc62e52a67b5b106fe9845d68f57"
+    },
+    "examples/fixed.c": {
+      "bytes": 1787,
+      "sha256": "6af493018bfe46ebd1e4d51a0f5186207370e6acf7ca342f267e89ed96926af3"
+    },
+    "examples/text.c": {
+      "bytes": 1212,
+      "sha256": "14078e7ac6b9d80d1bcd2e64530db687d1c0133fdeb9f531f91a1777b01196bb"
+    },
+    "examples/anchor.c": {
+      "bytes": 1941,
+      "sha256": "063885810f5fef2f285f3c2f3cc6eebf984a76f7b3353c82cabc10f609334a90"
+    },
+    "examples/window.c": {
+      "bytes": 2477,
+      "sha256": "8ddf53337a7b3f6ce9a22378626d6ea28c4d8548e3840b73ef36dbf81c88f00e"
+    },
+    "lib/libexr_layout.a": {
+      "bytes": 320472,
+      "sha256": "80c43abd72af99cc56b5bc9a2d811951dcfa90a5da7a99e72772ca305e92fd90"
+    },
+    "lib/libexr_pdf_edit.a": {
+      "bytes": 102368,
+      "sha256": "95e9b26ef0ee6be46a572804ddcccd6baf1d59bfe21efaf838127fdf7c9549da"
+    },
+    "lib/libreader_reading_state_codec.a": {
+      "bytes": 26160,
+      "sha256": "88127b2a53070d2aa11bb2e82513c5cfecc3914c6c4c994ab32138397321b4da"
+    },
+    "lib/libexr_text.a": {
+      "bytes": 422720,
+      "sha256": "10feeda3607e4f668e9fe3f9a252e2664e50515c120c086e30b1d0ee8654c2e0"
+    },
+    "lib/libexr_textindex.a": {
+      "bytes": 16576,
+      "sha256": "25fdf648b2edc52f8baf5d02e3c7f7e0e8a07b37990bf4bd5bfaae36a9137e85"
+    },
+    "lib/libreader_sync.a": {
+      "bytes": 85912,
+      "sha256": "5d1d49b08a2f2217d907ee5e11853d7f62f14f3543a53a7756bd2f8b8bde9229"
+    },
+    "lib/libexr_formats.a": {
+      "bytes": 313504,
+      "sha256": "3482e1457b7af19a316b48d7c360cd27d7ff571eae28b13a75044ee40d27ba79"
+    },
+    "lib/libexr_credentials.a": {
+      "bytes": 9072,
+      "sha256": "ec32c1ff6102e04a239dab137b2488e39e75c0eb2398a4882f0b4e561c692345"
+    },
+    "lib/libreader_catalog.a": {
+      "bytes": 62584,
+      "sha256": "d0a0f266e7df44ff0950420dc2d4538a0552aad0362cd2bfa21a38f500740da4"
+    },
+    "lib/libexr_library.a": {
+      "bytes": 107888,
+      "sha256": "b926fa9c0a43e933b9708744f97c16b42ba9e35effd3edb854a2ede3562250b0"
+    },
+    "lib/libaom.a": {
+      "bytes": 1819920,
+      "sha256": "1c4a11bc8960aed647d4a7a10e721d103dbac26c7d3a01714154a19744bf1237"
+    },
+    "lib/libexreader.3.42.0.dylib": {
+      "bytes": 8044800,
+      "sha256": "04797d8b35ae483333efc25514f2e2bdfd8ddef83585429aae801738efa4f2d4"
+    },
+    "lib/libwebpdecoder.a": {
+      "bytes": 339520,
+      "sha256": "1d9e7f0dda467690f59c13fe9d41be11f9ee1b8a67b069751002f1426f9ae1cf"
+    },
+    "lib/libreader_reading_state.a": {
+      "bytes": 15968,
+      "sha256": "131688588bd40f93818ef0598ac4935b5363593d9c6c6f809831062908a0efef"
+    },
+    "lib/libreader_revision_hash.a": {
+      "bytes": 18904,
+      "sha256": "328171c531a45aadd3432f823af021ba92bc8d3642bf524343447b6c97343fa5"
+    },
+    "lib/libexreader.dylib": {
+      "bytes": 8044800,
+      "sha256": "04797d8b35ae483333efc25514f2e2bdfd8ddef83585429aae801738efa4f2d4"
+    },
+    "lib/libreader_navigation.a": {
+      "bytes": 63216,
+      "sha256": "b5b946bc562712434917f41cc13a5d23eeb0061739432d4115a45b8cf72f135e"
+    },
+    "lib/libexr_graphics.a": {
+      "bytes": 684264,
+      "sha256": "f4dadbffe30b2934dad92015d41e65cc581b406af3b6232ce0e9dc76005661c4"
+    },
+    "lib/libexr_doc.a": {
+      "bytes": 148552,
+      "sha256": "5a672d261e7ed354406a425afcc99a6bf882304c52eb5494ffe9e2b43c71fcd0"
+    },
+    "lib/libsharpyuv.a": {
+      "bytes": 24096,
+      "sha256": "3492811de439dc573034e6a17185e70ac7fe62d3ce81f868bd171bf27fe1e4f5"
+    },
+    "lib/libwebp.a": {
+      "bytes": 642136,
+      "sha256": "8bfca56abc6bb0995b3ff25c1763839b76348f9b29e76b8c238ca6107f00146e"
+    },
+    "lib/libexr_render.a": {
+      "bytes": 16184,
+      "sha256": "6f255df0ca261b66079cad1097546d30c331cbfaa023347f5ee73f6d243f513c"
+    },
+    "lib/libreader_revisions.a": {
+      "bytes": 161600,
+      "sha256": "ce4e6e7a4dd48b030c54d82144c40a5f9890db816f1a595cd8cc4e2373fd1f33"
+    },
+    "lib/libwebpdemux.a": {
+      "bytes": 12448,
+      "sha256": "2e728482bdd6dcf16c5f0cc6076ec98e802cd5516b654258e91a2b00f5f4aed8"
+    },
+    "lib/libreader_search.a": {
+      "bytes": 25352,
+      "sha256": "3f4e13c0bb7bf95e3671a014682deb78e84a9af8f8a1c5b6b507b1263358853d"
+    },
+    "lib/libexr_webdav.a": {
+      "bytes": 107128,
+      "sha256": "ee41822458ec9861c3c351a740d8b963e9973bdee5860c10bfdfcd94c51f2440"
+    },
+    "lib/libexr_audio.a": {
+      "bytes": 161648,
+      "sha256": "e7ad15be3080e24c5820ed26d6df44718809a1d584631a9a31ed03f3c9cda03e"
+    },
+    "lib/libreader_original_import.a": {
+      "bytes": 31840,
+      "sha256": "70528e03c49486807781e2a96f76af955742f411f2c50ff31726e340e2bad7fe"
+    },
+    "lib/libreader_catalog_sqlite.a": {
+      "bytes": 1692832,
+      "sha256": "21bbf9d2be0fdf5e4794507a45f7851ec55889278a9e98f8c90e789315f2d81b"
+    },
+    "lib/libexr_base.a": {
+      "bytes": 265904,
+      "sha256": "c0b14818f7609b7eaa81549ab0725b8462a02aa8e8d833c2348aa58801f8e969"
+    },
+    "lib/libexreader.1.dylib": {
+      "bytes": 8044800,
+      "sha256": "04797d8b35ae483333efc25514f2e2bdfd8ddef83585429aae801738efa4f2d4"
+    },
+    "lib/libreader_session.a": {
+      "bytes": 24960,
+      "sha256": "ba0d59d0bf326d2b068b489fd610f4c8f06c32d4a15e943b6d00e7b8043c1bd8"
+    },
+    "lib/libexr_pdf.a": {
+      "bytes": 642568,
+      "sha256": "f4b446279414f92383691585007ba18c13aa648b0da64d32cdbcd7af08405e1f"
+    },
+    "lib/libreader_annotation_view.a": {
+      "bytes": 28416,
+      "sha256": "95914a3f5f51a06cda40b871ee462442237fa70fd22a7e431c547b614aaa8fd9"
+    },
+    "lib/libwebpmux.a": {
+      "bytes": 47240,
+      "sha256": "986ce44da77544f2f91d7634f16ff2e7af41182dc9c60e0774cb6e6f45b4fcbe"
+    },
+    "lib/libreader_commands.a": {
+      "bytes": 51384,
+      "sha256": "04526ff655f7b535f9dabdbd2910f574344d31dd215a0a307b8a6ee08e50e10f"
+    },
+    "lib/libreader_reading_commands.a": {
+      "bytes": 39312,
+      "sha256": "9a271fea66e16aef9226723132860f26ae5f67514189c93722a902ec90e06227"
+    },
+    "lib/libreader_desktop_metadata.a": {
+      "bytes": 105368,
+      "sha256": "c4f6c75fa71278019012662a518793e5c2e6be33074a65d1c8cfc3abc6ff6564"
+    },
+    "include/exreader-product/catalog.h": {
+      "bytes": 10378,
+      "sha256": "ca55b525cff33d81d725f4a342f193d37538951ba82b9c0edee32c2e79085d04"
+    },
+    "include/exreader-product/original_import.h": {
+      "bytes": 2175,
+      "sha256": "eb294a6328c60d0cd515c47746b511318f5667647bb8546fef5a8c52bb6039d2"
+    },
+    "include/exreader-product/sqlite3.h": {
+      "bytes": 695737,
+      "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+    },
+    "include/exr/core.h": {
+      "bytes": 121,
+      "sha256": "927283b6ec31dbf2c495a88725fc98ed7af75879cdaa3502d5f54e5144679990"
+    },
+    "include/exr/formats.h": {
+      "bytes": 8088,
+      "sha256": "3f7d2cd90fa5b7514b0507d8fb279ec4fef86e622918af9b114f3bb18d1c370b"
+    },
+    "include/exr/text.h": {
+      "bytes": 17375,
+      "sha256": "c6fb1adda319b620179177ec6775b1098628444d5cc40f61163d34ab3ae159cf"
+    },
+    "include/exr/library.h": {
+      "bytes": 15104,
+      "sha256": "9874664063f15c02daeed8cd11634f9f233f2fe4736075107a7c7092b0a30742"
+    },
+    "include/exr/audio.h": {
+      "bytes": 15544,
+      "sha256": "cac99ff20ece707958be51ac5c8f0d6d96eef15adb4e368ba4104cc9bcb4a201"
+    },
+    "include/exr/layout.h": {
+      "bytes": 17467,
+      "sha256": "eb357136dedb897096d068fb3b4c885feee39b3e4d24cf3fa6dfb631e4df37be"
+    },
+    "include/exr/document.h": {
+      "bytes": 17446,
+      "sha256": "448be21ba9ef508dd52e318a42bc6e0b635bba4a1c2ce824ab362f08c47df3e8"
+    },
+    "include/exr/pdf_edit.h": {
+      "bytes": 6445,
+      "sha256": "1865e5a4a2c5dca06b9e3d7cb5f5f7b1267f74301676af79adc6f8f4d5ebc0e1"
+    },
+    "include/exr/graphics.h": {
+      "bytes": 15209,
+      "sha256": "3b383a57d542fdbc9553334ba33e4abf8274b3b5c4090b8a0f8d78b45c4f74b1"
+    },
+    "include/exr/pdf.h": {
+      "bytes": 2111,
+      "sha256": "b62c6b5e7bb483fd7d87af48d1d3ccd792a9b4e43ce1f0cbea11e46385eef448"
+    },
+    "include/exr/textindex.h": {
+      "bytes": 2899,
+      "sha256": "d0f51a23480542adc4865601ca5bf5ece26ab334a20efc7cc0fe71aa748c5e79"
+    },
+    "include/exr/render.h": {
+      "bytes": 1539,
+      "sha256": "ad90ca6713937076a7b6b1d5ac9aa4eaf97a8517ea65b134f94e1ab972289436"
+    },
+    "include/exr/base.h": {
+      "bytes": 4380,
+      "sha256": "f6a28f2492713da9c63ff3a5c52246d8adb387dce683054fe2b615fc8d8857ab"
+    },
+    "include/aom/aomdx.h": {
+      "bytes": 19833,
+      "sha256": "2df31f09ec3053873b8ee9bc46eadeb5b1b3d361c3596dfdbef7272a864fe161"
+    },
+    "include/aom/aom_frame_buffer.h": {
+      "bytes": 3327,
+      "sha256": "33393bcc818b2d0c22526515b875d14a74417d29b4e8580b760469c265007ee2"
+    },
+    "include/aom/aom_integer.h": {
+      "bytes": 2166,
+      "sha256": "9af5a90e9cfd1290e2b763647efc7abdb1ad3113382986fcfa300f23176bb106"
+    },
+    "include/aom/aom.h": {
+      "bytes": 3874,
+      "sha256": "b25cc7277ade68ba9c43903c0139b8aad081a301d085f48390439ce6ebe76982"
+    },
+    "include/aom/aom_image.h": {
+      "bytes": 24052,
+      "sha256": "4dfe0362cff3b7f995be867b93bb90667ed03e9d7f1d9f1d6f24cde1d49d58af"
+    },
+    "include/aom/aom_codec.h": {
+      "bytes": 21326,
+      "sha256": "2771dcd2e2250a130821b5742cf188109487784b032f1c3500650cf587809f82"
+    },
+    "include/aom/aom_decoder.h": {
+      "bytes": 10670,
+      "sha256": "39aa4e4328bab8aee530e47cf4ef920b8428db7db4b262ed52501c896c4b32b6"
+    },
+    "include/webp/mux.h": {
+      "bytes": 25966,
+      "sha256": "c72cf593f8194c671efcade33f1678294380120d45a337511d612a3acb643f35"
+    },
+    "include/webp/types.h": {
+      "bytes": 3133,
+      "sha256": "5ec7cd176fa921379ae463cecb2ab1616068031e58ad705f51c1f3bbc7d70aa3"
+    },
+    "include/webp/demux.h": {
+      "bytes": 15998,
+      "sha256": "984983b09785e2af7e8c5cefd2e2f08d2116870c13108445665b11256aa82fec"
+    },
+    "include/webp/mux_types.h": {
+      "bytes": 3259,
+      "sha256": "d3313ad38c26d17abd244ab683e662dedead1489ec0f910bc31eba7ce2f8838c"
+    },
+    "include/webp/encode.h": {
+      "bytes": 28480,
+      "sha256": "009eb07d15f117b7e26484d0bc0c2a6a571ba378c7ddac0ea4322596167aeab1"
+    },
+    "include/webp/decode.h": {
+      "bytes": 23960,
+      "sha256": "300db34c56d965ee8304f0f0e947ba226403362833ce5d956c6d5f9814a5297f"
+    },
+    "include/webp/sharpyuv/sharpyuv_csp.h": {
+      "bytes": 2152,
+      "sha256": "80c23c727edb1ce6a42b38f9458c3d75c572856c898f0cd913ba03468afb9d3a"
+    },
+    "include/webp/sharpyuv/sharpyuv.h": {
+      "bytes": 7669,
+      "sha256": "c55431721d8800d9a9db37e3851f145f5d4402d3881645ea3a28e4ac503e0ec6"
+    },
+    "opds-hash/lib/libopds_sha256_stream.a": {
+      "bytes": 4728,
+      "sha256": "ca7bd69f93c84d58dd79f70ac8337a0d01ed4e3ef7f4408f8f5a830d925235ab"
+    },
+    "opds-hash/include/exreader-opds-hash/opds_sha256_stream.h": {
+      "bytes": 1540,
+      "sha256": "b16b9d714b97606ee374d727a90c3ba372ce59e59b9f7792711cc66ceb736ca2"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashTargets.cmake": {
+      "bytes": 4232,
+      "sha256": "c25ed0eedce9f370915c3971ca59c14eb52bc519063cb00cf21dcabbf45efcd5"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashTargets-release.cmake": {
+      "bytes": 975,
+      "sha256": "e6d9cd62cc1b93aa2e4518d6f31361445d61e11a757069be3b6ed40d91fb3ba8"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfig.cmake": {
+      "bytes": 5017,
+      "sha256": "9c57f722cddb372748fa587b21ee27c12e65f54945e2605c1213f5b93853c585"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfigVersion.cmake": {
+      "bytes": 3277,
+      "sha256": "bcfadc3a489a3340bf62e83ccd41b9b9de34c51e5bc281539cad9e5a7bd947f6"
+    },
+    "examples/apple/HostSearch.swift": {
+      "bytes": 11490,
+      "sha256": "40f2077046885dea45b836e8bddd684c959a5fde898a4baf47a44483a8a8afc4"
+    },
+    "examples/apple/LegacySelfTest.swift": {
+      "bytes": 14767,
+      "sha256": "a073c69e46d2c3f40abbd592ef75455b97a913afc1e596fd74a4cd9ed257f0f0"
+    },
+    "examples/apple/HostAccount.swift": {
+      "bytes": 22749,
+      "sha256": "ba148f82a16ddf82e5b1975998e45e866b5f3080ecc7c08972023405625811a3"
+    },
+    "examples/apple/SelectableText.swift": {
+      "bytes": 9220,
+      "sha256": "1a5efc0e74b05df3a1105b9f5731b47cb1d9d5fd55f4fe0d5a82be601a9b324d"
+    },
+    "examples/apple/HostRaw3Review.swift": {
+      "bytes": 5970,
+      "sha256": "9705304abd8ab8237df489a70c54edb12a9c9a287138fa019830a39da47be845"
+    },
+    "examples/apple/HostModel.swift": {
+      "bytes": 166569,
+      "sha256": "18805cd581726321f4a719d5f77a843ca36ec95e0469a56eec6d15d789c04c35"
+    },
+    "examples/apple/HostWave3Review.swift": {
+      "bytes": 14125,
+      "sha256": "69c68906e79c4ca4250ea76cf9f151481537615ae0a725654fcf385f2f55f072"
+    },
+    "examples/apple/HostOrganization.swift": {
+      "bytes": 20875,
+      "sha256": "9190911839eeda7e2ba9f13254b86e0845524c4c43be2d73d6abb6ecbc024238"
+    },
+    "examples/apple/HostSearchViews.swift": {
+      "bytes": 2681,
+      "sha256": "e3102e1b2e2fd31e918afca269cf37fba816ba51e2b84685a1acdd3e2497e457"
+    },
+    "examples/apple/HostCatalog.swift": {
+      "bytes": 31135,
+      "sha256": "daec8e519f6ebfa00b3c452cc3449cbc57959873dee7d75d29e0511eae21afaf"
+    },
+    "examples/apple/HostNavigationViews.swift": {
+      "bytes": 4397,
+      "sha256": "f7eb5a20ad417ea94201ea2cf2075eaa93aa6578ed044d4563a4f82e45c43c1c"
+    },
+    "examples/apple/HostAccountViews.swift": {
+      "bytes": 10028,
+      "sha256": "839b08b9756d8d4f3e52ea9217d201d41ca3481703014f4314fbaf13b1e49717"
+    },
+    "examples/apple/HostWave3Views.swift": {
+      "bytes": 23465,
+      "sha256": "00951b7ec893e3b04f5016112de417894e5194a19c33c4e42ce1a79df163414e"
+    },
+    "examples/apple/HostSDK.swift": {
+      "bytes": 61520,
+      "sha256": "5e35e4bd2a6e39d8a6836af3394bdae7e05e48451e72a12709f9d04981af334b"
+    },
+    "examples/apple/HostNavigation.swift": {
+      "bytes": 20114,
+      "sha256": "19011af718743e5da22441f6f63ffc1c196254d2a947f5e46421341e35ab0842"
+    },
+    "examples/apple/HostReadingRecordViews.swift": {
+      "bytes": 7595,
+      "sha256": "57274cd7ece1e05d3852c851e660d3bc505b792134426f92582ace26d59d7372"
+    },
+    "examples/apple/ReaderApp.swift": {
+      "bytes": 1126,
+      "sha256": "e2e7ebb1196f255660174fad1c6b4a3447f822f8ddd757d7e978d91f13a9c4b1"
+    },
+    "examples/apple/HostPageThemeViews.swift": {
+      "bytes": 2898,
+      "sha256": "279d7aeb3eb63c429fbe7de49b671c10a2ef2d333c5fc1296e79ffaa8f031e72"
+    },
+    "examples/apple/HostReadingRecords.swift": {
+      "bytes": 34528,
+      "sha256": "7b722dc887042409b7597c9144db1f5d00eea710e74327717b9fdc32cc9f8f7d"
+    },
+    "examples/apple/HostViews.swift": {
+      "bytes": 56289,
+      "sha256": "fb32bba455eff070bc109c70bed1a61edfc4bbe9311267fe34173d606b9c4c6b"
+    },
+    "examples/apple/HostWave3.swift": {
+      "bytes": 25138,
+      "sha256": "81262d7768a9fa0e49f6281a1dd2b7d8d7c9628aa6aa46ad2d198ad30ca10155"
+    },
+    "examples/fixed-pages/pdf-public-text.pdf": {
+      "bytes": 8845,
+      "sha256": "5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc"
+    },
+    "examples/fixed-pages/pdf-public.pdf": {
+      "bytes": 12585,
+      "sha256": "4f6fdc7b4dc13363aae532953ccf863c6be853c3c8b63de4718bc45dafbeb49d"
+    },
+    "examples/fixed-pages/comic.cbz": {
+      "bytes": 908,
+      "sha256": "08df7ceb8771ab82610651c2299072b8fc299d3f8fba3996ee6e12054ea6701f"
+    },
+    "examples/fixed-pages/encrypted-r6.pdf": {
+      "bytes": 1932,
+      "sha256": "2b21c48d9b032c850933d5aad6e16d3091ddd72c77cb2945098e6b6ffb93866f"
+    },
+    "examples/shaping-fonts/shaping.ttf": {
+      "bytes": 4544,
+      "sha256": "b66e374ced7db181f0e7aeca113bbc81ce9f56eb02afbd73b805988681a411f5"
+    },
+    "examples/shaping-fonts/README.md": {
+      "bytes": 5912,
+      "sha256": "15d9c37a4ccd15172e7d7749905ebf88ae8c7af462e8513983f48f1128e15871"
+    },
+    "examples/books/float-long-main.epub": {
+      "bytes": 1791,
+      "sha256": "9607a9f3d12cb314fe3bec7a8d116b09c721dd666498cde7b95f5cf81fc5617c"
+    },
+    "examples/books/hyphen-case-insertion.epub": {
+      "bytes": 1723,
+      "sha256": "641972e8ed65b53d2d3832754ef880f704e497cf6b32ae308abe654326d8fa39"
+    },
+    "examples/books/table-fragments-12.epub": {
+      "bytes": 1793,
+      "sha256": "8bfc602779e43bab6069c840ce21adb652cd817cb3e86de7b1180331f10c55d3"
+    },
+    "examples/books/hyphen-rematch-long.epub": {
+      "bytes": 1758,
+      "sha256": "51d0aa35b8bdac3fc2e6b2a1dc69bc6d1f0ab746bd239bac8b0b65ca7214c9e4"
+    },
+    "examples/books/hyphen-boundary-ri.epub": {
+      "bytes": 1771,
+      "sha256": "9324a24db1ced35cb1a1888ca594d8c607355fb2cef2ce777f8e65b3d276d1a0"
+    },
+    "examples/books/hyphen-bidi-long.epub": {
+      "bytes": 1753,
+      "sha256": "f0bb07b9a9a6291cafb0e013fa98c5e73cbe75af0db250cade7f3adcadfc5c34"
+    },
+    "examples/books/hyphen-bidi-future-neutral.epub": {
+      "bytes": 1741,
+      "sha256": "d8554962b97f4563ef70b363f867b4b687158bec7fea8e4b53588ee8defaa193"
+    },
+    "examples/books/float-bfc-stream.epub": {
+      "bytes": 1856,
+      "sha256": "74d067c399429ab78d5b9e4ef302b1afa6cf7795319b5209e5b89b1553aff9d0"
+    },
+    "examples/books/hyphen-stem-case.epub": {
+      "bytes": 1737,
+      "sha256": "ac96873be473c2d1abe58c19e145fbe682063194290ac9c7847bb7542daec8f1"
+    },
+    "examples/books/layout.epub": {
+      "bytes": 3054,
+      "sha256": "555232f55a9f2dc0414ea0a36bb749ce027af67457d11d5924393a7cac787714"
+    },
+    "examples/books/hyphen-long.epub": {
+      "bytes": 1717,
+      "sha256": "3da9b8bb2490b4aba076865a92ce29f5c56a08c89589ba7024b3dea4e35aecb8"
+    },
+    "examples/books/hyphen-bidi-leading.epub": {
+      "bytes": 1767,
+      "sha256": "18116766bf72d387e2ab8593c3a239315f3d97f4ad5b7746f75b77a0ba21b4cf"
+    },
+    "examples/books/hyphen-rewrite-long.epub": {
+      "bytes": 1741,
+      "sha256": "3ed84adb465019498440de26c9df809ba41921fd6bd93d9f12c790e955155fe9"
+    },
+    "examples/books/float-both.epub": {
+      "bytes": 1765,
+      "sha256": "ab57d909ed062ed569ec1d8fdd450330dfa528f1d81b3d3e71dd220c0709d970"
+    },
+    "examples/books/hyphen-compound.epub": {
+      "bytes": 1742,
+      "sha256": "6a299b264f64b39aa49a8239bd894baedf8713cc55261bdbb29d2f2190aff323"
+    },
+    "examples/books/hyphen-canonical.epub": {
+      "bytes": 1746,
+      "sha256": "847752c587e37d6d811d04d205a37954dbe7954cd6a90a789bdf3430807f48bd"
+    },
+    "examples/books/hyphen-stem-long.epub": {
+      "bytes": 1731,
+      "sha256": "d9f0a072c7155c0faed5a78cf14a52a45dacdad612b10de52179ac272054e26f"
+    },
+    "examples/books/hyphen-insertion-long.epub": {
+      "bytes": 1723,
+      "sha256": "ee3d86d710d2f16bfb4b8915ea96e5688803db453bd02f1d87369e0c8236125f"
+    },
+    "examples/audio/pcm.wav": {
+      "bytes": 6444,
+      "sha256": "996b782980d914c1f5e4faf64f51911563a19a319ce9ce5210d54adcc2481384"
+    },
+    "examples/audio/metadata.m4b": {
+      "bytes": 4009,
+      "sha256": "c92c42c2c195deb2b5c46ec743656ff19938730a9612846b40cf91cb121a3ffe"
+    },
+    "examples/linux/metadata.inc": {
+      "bytes": 8895,
+      "sha256": "f7fae59827900e3e42918e9f2d2a1a3f965792b11fb8d19a69838d1ca454ae19"
+    },
+    "examples/linux/reading.c": {
+      "bytes": 56674,
+      "sha256": "996d51f45879a4d209dde99015151034725c5d0c9e2ea2a43ea3298484426ff9"
+    },
+    "examples/linux/CMakeLists.txt": {
+      "bytes": 3532,
+      "sha256": "58836d8556adfde1a05d096bca4250fe02c413b123ab2c7ba570a87d671f798d"
+    },
+    "examples/linux/wave3_ui.inc": {
+      "bytes": 29337,
+      "sha256": "dbca4829ebb0b4d5bfbcf5673650f58f0aa3b079eb967c171a8c98290caf4715"
+    },
+    "examples/linux/navigation_backend.inc": {
+      "bytes": 19291,
+      "sha256": "2f13024943f8df1233c3110ee0ab9327e10ac3843b81e94391346654fdc3de22"
+    },
+    "examples/linux/received.inc": {
+      "bytes": 27140,
+      "sha256": "8101d0f7e3cafe7a538d9ba563da9a941b3fa72bddc5af891307c131a158d26c"
+    },
+    "examples/linux/batch_import_ui.inc": {
+      "bytes": 13356,
+      "sha256": "1ec1e3e085312ddb9dc5bc474a5426201c753ad6c50d9729831544d4f51bad72"
+    },
+    "examples/linux/batch_import_backend.inc": {
+      "bytes": 14491,
+      "sha256": "d6fd536827f224819714bb1f39d33da6071ee09cff7a7f036626ee1566b8204e"
+    },
+    "examples/linux/metadata_ui.inc": {
+      "bytes": 7604,
+      "sha256": "9e418e19e96cd7a8ebcdfb54fc81dc3441cd7e0940a8d378294f697f0cfe750c"
+    },
+    "examples/linux/navigation_ui.inc": {
+      "bytes": 17247,
+      "sha256": "a0b9c72dcf6f2d22bf0d32b52ec9683efc63786be3927307227dacf009701488"
+    },
+    "examples/linux/collections_ui.inc": {
+      "bytes": 39041,
+      "sha256": "5250e785dd041eef5abd367d4184e0d338a523438a737a9f4d68e95c1d26fa4b"
+    },
+    "examples/linux/reader.c": {
+      "bytes": 74074,
+      "sha256": "95e3e503621ea8036d2fba97b1c7325f96b3e00ad8df2c34fb07c973020e94e2"
+    },
+    "examples/linux/reading.h": {
+      "bytes": 11441,
+      "sha256": "fc529bb747ee9a2b5f2dfd92b88d96adb0832fd5b25ea6491c08ea33f2707927"
+    },
+    "examples/linux/drop_import_ui.inc": {
+      "bytes": 4987,
+      "sha256": "96db6ce5562e41d756e897005c9cadf0daf074212400ebb149b5a1476be400af"
+    },
+    "examples/linux/accounts_ui.inc": {
+      "bytes": 40948,
+      "sha256": "ee6aacc8c26249c53a3b11d3013af96b2841dace21284131c688c0f39d3e9e05"
+    },
+    "examples/linux/reading_records_ui.inc": {
+      "bytes": 26576,
+      "sha256": "a1a22243447c226cd22a80118c59ca17f5f315c3519238edc6f97afd2f286fb1"
+    },
+    "examples/linux/search_backend.inc": {
+      "bytes": 11320,
+      "sha256": "51d3915d968c8814cce114909f4f69232a1c12faf09b95e713c155d46a4dd98e"
+    },
+    "examples/linux/collections.inc": {
+      "bytes": 21203,
+      "sha256": "10cc7fc2658a5e8f205171126636ffd22af5605ada41fad90ce6b2e8017c788f"
+    },
+    "examples/linux/reading_records_backend.inc": {
+      "bytes": 42302,
+      "sha256": "569ca09840c7ac5a8ed63f674fd27ec7141b169f85b97534857038b9cc139d81"
+    },
+    "examples/linux/search_ui.inc": {
+      "bytes": 11262,
+      "sha256": "ca792286d2f3673f443f330b88ce1ac73d805d38cfabec537acffbafb3335eb8"
+    },
+    "examples/linux/preferences_ui.inc": {
+      "bytes": 31546,
+      "sha256": "9bb2ef8f636e2ece40b158373efdbcc1e161f8ff28f9aabbef713d15c52dd214"
+    },
+    "examples/linux/accounts.inc": {
+      "bytes": 23363,
+      "sha256": "a1d201edf50e5592786405674c53fb337fce647e6298411d9f2c8ae75867ad6d"
+    },
+    "examples/linux/wave3_backend.inc": {
+      "bytes": 39652,
+      "sha256": "45839f24601d3d76bfb04d833f5898981ad7969a73eeac6a1826adbe21830a53"
+    },
+    "examples/android/.gitignore": {
+      "bytes": 179,
+      "sha256": "fa16e84cec5c25ef9398c96eef8eb8568f23d9ea3c3df939fc2319e0258d4c3b"
+    },
+    "examples/android/build.gradle": {
+      "bytes": 130,
+      "sha256": "759472cd3e7a73c4737d694ee3c5ba49983fab7a425badb29758ccd933d5d845"
+    },
+    "examples/android/gradle.properties": {
+      "bytes": 172,
+      "sha256": "b2b2211da6903cc4457fc09a5b7ce2e643ea7d9415e4f8b9bae53cbfb38bf0df"
+    },
+    "examples/android/settings.gradle": {
+      "bytes": 873,
+      "sha256": "efe38baf701f5a62125fbfb39258fe8a04c0146f4f4c76c331e2fe4b5be7431c"
+    },
+    "examples/windows/CMakeLists.txt": {
+      "bytes": 1358,
+      "sha256": "e7d3c9538c5320977da4b084891f379d20e6b17f80c48dfd51f423a0c88b27d6"
+    },
+    "examples/windows/README.md": {
+      "bytes": 2297,
+      "sha256": "c0417b242bce3f6e3837f1ed8061c6a3dcb47a17827f2b8a6ea8a4b1846bec8d"
+    },
+    "examples/fonts/oversize.ttf": {
+      "bytes": 1120,
+      "sha256": "03fd84cf0a5664fb022065695cf92ed758038fb1e3bbfd7213e371ba95aea0f7"
+    },
+    "examples/fonts/uvs.ttf": {
+      "bytes": 1440,
+      "sha256": "db3c307cd65ed16181c47e05b8db0667a2660b62d48a2be175f6d8088edfd05b"
+    },
+    "examples/fonts/pdf-cubic.otf": {
+      "bytes": 968,
+      "sha256": "ff8e59679aff79c33483442778ea30d221bf68e7f996fd65b4c2e98327e7d38f"
+    },
+    "examples/fonts/fallback.ttf": {
+      "bytes": 1328,
+      "sha256": "5d4a7b9a96b087aa89cae2e9ebb9fab81f9b1bfba4dc0e97e29b6432fd02a0c6"
+    },
+    "examples/fonts/vertical-vrt2.ttf": {
+      "bytes": 1716,
+      "sha256": "1e61c51e4abf8bcf9148ad8cc393125162e3df822bbf2a452b8bbe866a7dfe76"
+    },
+    "examples/fonts/pdf-names.ttf": {
+      "bytes": 1000,
+      "sha256": "4170136c73f536af936381112fbf424d3e23f5a07220cb59aae138b5bd801698"
+    },
+    "examples/fonts/bitmap.ttf": {
+      "bytes": 3652,
+      "sha256": "b197c58d0ed858a2134bad58d03decd912cb5dee2080284dc7ea0802a8b525b6"
+    },
+    "examples/fonts/pdf-symbol.ttf": {
+      "bytes": 956,
+      "sha256": "e20b4390fee27c9445b8fccba22ea191935c113fcc8f9c2955738f43e62554c7"
+    },
+    "examples/fonts/marks.ttf": {
+      "bytes": 1108,
+      "sha256": "5c40b4fd3ee288351db1eb28ff92e2f0e1b2256739fd47ad343f1a07fc112e85"
+    },
+    "examples/fonts/cbdt.ttf": {
+      "bytes": 3004,
+      "sha256": "ff3829855610c05294f5b8e94cb8832072e8f6af5f74916044fbd03ae5ea920e"
+    },
+    "examples/fonts/primary.ttf": {
+      "bytes": 1176,
+      "sha256": "ce360aed7a09322e2c815ed9c06ce9e3304cdfb886b19493e9e59216d622bfed"
+    },
+    "examples/fonts/colrv1.ttf": {
+      "bytes": 6812,
+      "sha256": "6f2d20017ee066e049ff54d8285e67720360cc72182f569f20d111bfe41651b0"
+    },
+    "examples/fonts/pdf-cid.otf": {
+      "bytes": 1012,
+      "sha256": "352527ca95c3f9efb58569d8db0a3a591d722b91d43c671ce56bed41563a510f"
+    },
+    "examples/fonts/color.ttf": {
+      "bytes": 3760,
+      "sha256": "86ca5558811aae81749d0057a348e9b7c453d1e6fe66f553d3fbb3bb38314c15"
+    },
+    "examples/fonts/README.md": {
+      "bytes": 4561,
+      "sha256": "94e3f7896564a8a8640e885342647ede0309b77fee91fb2f07ec1228c4932a9c"
+    },
+    "examples/fonts/collection.ttc": {
+      "bytes": 2420,
+      "sha256": "fa825a267502d9bd1f7218573862cf3ef8ea673cc8d99198c0256cc48bf21c27"
+    },
+    "examples/fonts/svgfont.ttf": {
+      "bytes": 378852,
+      "sha256": "d4bdaeac0b2b43ddc3c3e250ff562890f26fbd344d6e0683fdc03d79f919f961"
+    },
+    "examples/fonts/vertical-vert.ttf": {
+      "bytes": 1684,
+      "sha256": "04b0fb70479d83344706b1a2caf6a33da484aaafae2efb72496872b0810f4df4"
+    },
+    "examples/fonts/variable.ttf": {
+      "bytes": 2688,
+      "sha256": "02c1529a150e918a053ce709a98cb037f2c37cc85604654a3114b6d80a322553"
+    },
+    "examples/fonts/svgfont.json": {
+      "bytes": 2497,
+      "sha256": "78591304a32bdf948de112afda536de1ff9ddf8f8534646585d549c33720f8e7"
+    },
+    "examples/fonts/colrv1-var.ttf": {
+      "bytes": 1456,
+      "sha256": "2be8aea25d8e1af0a91f93837bea4ff85c34648463c04bebab40444ef7bad7ba"
+    },
+    "examples/fonts/pdf-unicode.ttf": {
+      "bytes": 988,
+      "sha256": "f45a46337959a29f008bae11794579800ca8628d65c8c0ef9e11c01260944122"
+    },
+    "examples/fonts/emoji.ttf": {
+      "bytes": 3740,
+      "sha256": "8988a05d5260318364d19ac7507070f9206629377958641b8ef2bfadfa852bf7"
+    },
+    "examples/fonts/vertical-plain.ttf": {
+      "bytes": 1492,
+      "sha256": "9753cb00bbbff5e9f18b856a06e35b4c36b1d3555a1d368d2db74cb1b1889b1e"
+    },
+    "examples/fonts/glyph-only.ttf": {
+      "bytes": 1060,
+      "sha256": "df780425e941567bb72ae18891bf7d6cb623d4f49cb964289cf7e6179b0a8bea"
+    },
+    "examples/apple/product/ReaderProduct.h": {
+      "bytes": 564,
+      "sha256": "df63feeaa2ec62daf563aa5f266c3636542e91ed8c207b96f0e49291d9938c02"
+    },
+    "examples/apple/product/module.modulemap": {
+      "bytes": 220,
+      "sha256": "da71d3da9025d1081547bd3fc70ad0081d2b5869d06b1ade2b479f597f8e27f3"
+    },
+    "examples/apple/product/ProductSQLite.h": {
+      "bytes": 56,
+      "sha256": "3d6c57ed7975372d6f495ade3db3cfd24bf3bcfa0c9336db8b1815325ced5999"
+    },
+    "examples/android/app/build.gradle": {
+      "bytes": 7229,
+      "sha256": "240fa07273fe453a11b66cd0d88be00b8b2c08f58cac525c817296f67ce68aa8"
+    },
+    "examples/android/ci/emulator.sh": {
+      "bytes": 2787,
+      "sha256": "d35990e6e0b1b3a271481c2626fb08c1df8800f8a754ee6fbea503c8c4d4eb9e"
+    },
+    "examples/android/uitest/build.gradle": {
+      "bytes": 906,
+      "sha256": "3520490bc9acc58c9831889273f7936d5619c4cc424833f12beb990b2f563d17"
+    },
+    "examples/android/app/src/main/AndroidManifest.xml": {
+      "bytes": 1510,
+      "sha256": "99f681427c6b8d608a2ab6380b9ddbb80e2fa40f21b658cce45a3b044920bfea"
+    },
+    "examples/android/app/src/androidTest/java/org/exreader/host/ProductFixture.java": {
+      "bytes": 2931,
+      "sha256": "40f41286048f2996bdb722098bc5c5cc994cbc5754ada880a998489a26b3de41"
+    },
+    "examples/android/app/src/androidTest/java/org/exreader/host/HistoryCompatTest.java": {
+      "bytes": 7573,
+      "sha256": "01c386a26879b3799e06984bac809541ab33c7d109ea4ce81a571484e21229ed"
+    },
+    "examples/android/app/src/androidTest/java/org/exreader/host/ShelfCatalogTest.java": {
+      "bytes": 24450,
+      "sha256": "91fdd920b698b8878070ceb5b6cad462a48d9e29d98e6cc54a72625939d5a6ea"
+    },
+    "examples/android/app/src/androidTest/java/org/exreader/host/CatalogStoreTest.java": {
+      "bytes": 19331,
+      "sha256": "5135db4ceaf9814ab9a35cab8f34ac98ce884557b8790e591e295c43b607c8f5"
+    },
+    "examples/android/app/src/androidTest/java/org/exreader/host/OrganizationTest.java": {
+      "bytes": 21234,
+      "sha256": "bb321a9953e10759aac5094a1616e00881bf0e422ff8a91203fa09e4c9968141"
+    },
+    "examples/android/app/src/androidTest/java/org/exreader/host/ProductOwnerTest.java": {
+      "bytes": 22668,
+      "sha256": "e8872ed5ee01e000ce64d8b49b597739a0b35a85d4401df75dfc24a317481db9"
+    },
+    "examples/android/app/src/androidTest/java/org/exreader/host/ImportMappingTest.java": {
+      "bytes": 26927,
+      "sha256": "1bbc25908e865b60c79ac2a963750be9d800cd9473827989a71433210c5c77d8"
+    },
+    "examples/android/app/src/main/cpp/cbz_renderer_jni.inc": {
+      "bytes": 8661,
+      "sha256": "7870cca8232191f5cfd566dac277a7870a6a1425c8371d76cada041f05d4d5d8"
+    },
+    "examples/android/app/src/main/cpp/preferences_jni.inc": {
+      "bytes": 6932,
+      "sha256": "d006f0b6b6719bc5475c2733d95b35b1d1c982131e8fa6e8b8c217a83903f12d"
+    },
+    "examples/android/app/src/main/cpp/navigation_jni.inc": {
+      "bytes": 21171,
+      "sha256": "b7734eb480a54ffb5880d3c40d233d6a0d2cc420e05e301132aceca43abddf6b"
+    },
+    "examples/android/app/src/main/cpp/CMakeLists.txt": {
+      "bytes": 10448,
+      "sha256": "6447ebee78512ee8d23b48a0857e4e65edf9baff20eecf5f1d01fc9b76270430"
+    },
+    "examples/android/app/src/main/cpp/page_theme_jni.inc": {
+      "bytes": 3791,
+      "sha256": "f173afe1b00305f0d73aad2c5e7b063fe557c6ae5459b80a47c330d76c1159d8"
+    },
+    "examples/android/app/src/main/cpp/wave3_product_jni.inc": {
+      "bytes": 17942,
+      "sha256": "41b70e7139ff650ef9999e3cdaa1c66e86c791c92dfd25b810cc78edfc4da2b8"
+    },
+    "examples/android/app/src/main/cpp/bounded_epub_jni.inc": {
+      "bytes": 25190,
+      "sha256": "9639e65f14af00976629719bf02a3716e0f8ff85ecb4c5095487bba79102d7a0"
+    },
+    "examples/android/app/src/main/cpp/search_jni.inc": {
+      "bytes": 16607,
+      "sha256": "f364cc40f4ce2e0c40a361695957f5f0d55ff504ee98304323b58df7720ee39b"
+    },
+    "examples/android/app/src/main/cpp/exreader_host_jni.c": {
+      "bytes": 34551,
+      "sha256": "6bc430a4440e389f849e3acf7651198e27f828eba46323cea8ae89463ebcc59b"
+    },
+    "examples/android/app/src/main/cpp/wave3_sdk_jni.inc": {
+      "bytes": 13106,
+      "sha256": "fba2391493d825ef91507f4d044d951a05d9c08966b71404d5301f8f5d5bc26f"
+    },
+    "examples/android/app/src/main/cpp/reading_product_jni.inc": {
+      "bytes": 23276,
+      "sha256": "31af59ec9f31348dee23cf8817081f3fb9b95d0c1cefb0738251775f91458d5a"
+    },
+    "examples/android/app/src/main/cpp/catalog_jni.cpp": {
+      "bytes": 23249,
+      "sha256": "46b8356aa0880f405c980928420ff2ba16e198c9b2c50a19ceb71780aed8f5e1"
+    },
+    "examples/android/app/src/main/cpp/sync_jni.cpp": {
+      "bytes": 15929,
+      "sha256": "05bd79ae9e2f23d1277e45f10d246732eca71ee26dac5de2a68f22296ba82774"
+    },
+    "examples/android/app/src/main/cpp/reading_sdk_jni.inc": {
+      "bytes": 13218,
+      "sha256": "ec3de8569934367b8cae08e5d7860330af72e1ef2256d91504c666a6832ef4cd"
+    },
+    "examples/android/app/src/main/res/layout/activity_main.xml": {
+      "bytes": 13932,
+      "sha256": "7c6be3c7dbbcf6e39f97d6dd26d054f2ec4a817c20b75094578a8c12320bac84"
+    },
+    "examples/android/app/src/main/res/values/styles.xml": {
+      "bytes": 456,
+      "sha256": "c78cd36890cd270fe1a27ba28f52d7de70810b6e1aa5635fe1201f0eccd6d0fb"
+    },
+    "examples/android/app/src/main/res/values/strings.xml": {
+      "bytes": 115,
+      "sha256": "e2b4caea2797eb3a115584c91c609206179c65cebc718e97ea2642c4e4f9894a"
+    },
+    "examples/android/app/src/main/res/values/ids.xml": {
+      "bytes": 107,
+      "sha256": "6a5d869d0267853a955a58d21c8f77eb9668bee82ace42bc262bcd03adf4cead"
+    },
+    "examples/android/app/src/main/java/org/exreader/EXReaderException.java": {
+      "bytes": 240,
+      "sha256": "ac68326b210491fde30df6e2d6f2d361d666859af9d80bc35eed78f6dba16060"
+    },
+    "examples/android/app/src/main/java/org/exreader/EXReader.java": {
+      "bytes": 24447,
+      "sha256": "34beef37318751fc01dcdfccfccfb223c3de02a3497ab59f65e2f3d0b13473c4"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/OrganizationPanel.java": {
+      "bytes": 21192,
+      "sha256": "28ccf0b30d2c1715a7fb25b469ae5afe8b04bfa39175dca76e14f8c94e4b2e3d"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NavigationPanel.java": {
+      "bytes": 9438,
+      "sha256": "731db683db971a4186aa37f11600f5fc117bb00ebc8a702fd1ba6424df88590b"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/JumpPanel.java": {
+      "bytes": 2509,
+      "sha256": "1819cb978af53fc888f52dbaeddefe3ac263962e0ecb5acf889b508a7d82cc47"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/AnnotationPanel.java": {
+      "bytes": 9128,
+      "sha256": "cac238e61be51cc1581209c70446d083c56be0c5b9f9fe1b04cf8dffda79b443"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/FixedSession.java": {
+      "bytes": 9947,
+      "sha256": "143780884e6eba41a3008990c5070d7674ab340d49f6652ee4a6d7ab0240d7af"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingRecord.java": {
+      "bytes": 2272,
+      "sha256": "ca134e0efd42463b80f86fc0b2ee1ae3655a2d601cb63e5e1e2f232ec64657f1"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/PageTheme.java": {
+      "bytes": 1110,
+      "sha256": "7d9ddccc49dd57a452a93e70e0d16308004034ec234951b98b078c0afae237b5"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/FontPanel.java": {
+      "bytes": 5681,
+      "sha256": "ba65c9385802c7f4b252019866b366995cc47675ca4d18eae869c98b42c6f509"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingControl.java": {
+      "bytes": 1361,
+      "sha256": "68d98d31a9cc726b8f957de58bdd0986138668b67d117106f1b55151757a6b38"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeLibrary.java": {
+      "bytes": 10182,
+      "sha256": "15fa11cd77b5fe63c73f0331d218f48c38de5c788ce981284794554f2712f4d5"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReflowSession.java": {
+      "bytes": 19509,
+      "sha256": "de8429575e12064cec4c11833004417efca0d1b6ece90509db054019cf469b8a"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeReadingSdk.java": {
+      "bytes": 4412,
+      "sha256": "ff8328126d2a277b1bf34943b3cce65db8870fe63595acdf54a72e1db77aed65"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/Selection.java": {
+      "bytes": 557,
+      "sha256": "a0faec4bdcf7e393b6613de8f14194c5c59f3104de950cb52c17a054e625005c"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/BookStore.java": {
+      "bytes": 12736,
+      "sha256": "4a2c2389a90f734f9ec5809c0011c2bc64f8271add8d4967e68fa3907efb08af"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/HostTask.java": {
+      "bytes": 1357,
+      "sha256": "b5ed9a1f4049e826106dee3d0fd170e3d15d66fb4411f41d2e2b261128c4d9ff"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingRequests.java": {
+      "bytes": 9086,
+      "sha256": "93664478aebc2e2645f1b6a85b3e8842b8ccc604304499b35bd9871726d34259"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/OrganizationStore.java": {
+      "bytes": 9578,
+      "sha256": "d5605de288c268589d0d702466c8a5a67e8486d93eb620acd685f5daa7295b57"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/MainActivity.java": {
+      "bytes": 133045,
+      "sha256": "7d69a55a9a2bc641f0144a05a303825eb38fd5f81de295094b16e4798fdfd2ef"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/PageLoad.java": {
+      "bytes": 946,
+      "sha256": "31be7ccb76f9208a49f178e713e272bd1a78a6cedfcc6ee982c737b02f230847"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeCatalog.java": {
+      "bytes": 5839,
+      "sha256": "2b03b1e1d91150961c77abc2bb69a1de2d7798b9da640b456aca8e05c8eaee34"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/OriginalExportPanel.java": {
+      "bytes": 4133,
+      "sha256": "434afcf7126d8d834a5f728aa29a73363bd09abf3884416b6471214624245438"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/AccountStore.java": {
+      "bytes": 2683,
+      "sha256": "edb37ba8f48c5be71b1b973445948bf4b4b6ec2cf5a27b20c44d7d28a6880a56"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/FontSelection.java": {
+      "bytes": 665,
+      "sha256": "508cc9567e33dbfb56ba5bf1c89921410248db7a7e755d646e9a685462270f0d"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/CatalogStore.java": {
+      "bytes": 11288,
+      "sha256": "36b4406cb06bf83d5afcff844f11607325e1117a012ec3e34929597d8e07d585"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeWave3.java": {
+      "bytes": 8273,
+      "sha256": "03bee00b671c92355af5c8b781e7d8f07f2f9a01678a08f094f57dac53cc6a87"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/SearchPanel.java": {
+      "bytes": 6761,
+      "sha256": "c0fb4406b9a363bb2e8599f35d83075197f812f263207b3876e30d9b83d4effb"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingHistory.java": {
+      "bytes": 2388,
+      "sha256": "71f7102fcf0e9b6ff85b42895b2298710adca48125451580dd838292a637c9c9"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingCapture.java": {
+      "bytes": 2647,
+      "sha256": "338d475469d0d6114b4763998535801243c630d8e578d8f41546c620047e900e"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/IntentJournal.java": {
+      "bytes": 10478,
+      "sha256": "ab7f6c5cccb5fed770382e7338a64bbe0a1c056d8daec18e9b73d21683966cf9"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeCbz.java": {
+      "bytes": 4179,
+      "sha256": "888a9d612dfa1235034f7f5f5dd28c6b1c5583bd741539c1f0139f043155ff13"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/Wave3Dialog.java": {
+      "bytes": 3554,
+      "sha256": "77294a30e43b225267f2ca4d0cc129b5daf48f848b574694a0e037593034f95f"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/Wave3Host.java": {
+      "bytes": 2164,
+      "sha256": "50e9a46e631e99f6570b2a224bde916f5bb27238113c084ce5de8621d49e5871"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ShelfWindowMetrics.java": {
+      "bytes": 4811,
+      "sha256": "80c72ae98f3a222a03611e9a1cee1fbfe02145a99224031223448700eea2e045"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingPreferences.java": {
+      "bytes": 1177,
+      "sha256": "ed0f0d04a3b896aa2ffb1f1cc6d22f81359cfc169f316dfcc8dc787ef93d471d"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeReadingProduct.java": {
+      "bytes": 4424,
+      "sha256": "3a1b26e55bd476b67c8cf652b614ca0fa4c77635e21b755effd2e69e12ab7ff1"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/CatalogShelf.java": {
+      "bytes": 14674,
+      "sha256": "a1f97d4206ec7edcd2b979758b6bfedb6eaa027bd9caa35b463dc78d65a051c0"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativePreferences.java": {
+      "bytes": 641,
+      "sha256": "2d6b2c025b0c4a39b7dfd781c7366dfe0c1a62ded169219c4e1d8333d80c5593"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingPanel.java": {
+      "bytes": 15572,
+      "sha256": "b94dad7c241ac8541f22a829d2a8d843141230c2d1dd92aa0646b8944e65eb8e"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReaderView.java": {
+      "bytes": 33846,
+      "sha256": "81f407cfb413f28f4812334d08a0f41fbff6d9c69617d50f96027cb7e393431f"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeSearch.java": {
+      "bytes": 7163,
+      "sha256": "673b46b6036660c927b592d9805d4dff9165cbd5e7771d99b7333d44fd2cd854"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeOriginalExport.java": {
+      "bytes": 2419,
+      "sha256": "79bc85429e4638dd401c161ae93ba006474d2be180f9866e5d0790481a212c25"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/SyncController.java": {
+      "bytes": 13389,
+      "sha256": "5abf1f070810f1674e1ff63e3c2914315cff6cbd71b5854b2bbbcdcf9b11f5ee"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/SyncPanel.java": {
+      "bytes": 9819,
+      "sha256": "7f2cb92a2fc20a24f72e06d246c02f80a0e7be218531c334b49505496f34930b"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeSync.java": {
+      "bytes": 2922,
+      "sha256": "1f64eb242ef78a7a88bbe21f7b3b0745ffd45bc436fbddc10478a5be72534d86"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeNavigation.java": {
+      "bytes": 6482,
+      "sha256": "2b420c834343b26bb1ebf4d5d11ecad39d58efd9d1a7cce5ee002cca20c99b3c"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/BoundedEpub.java": {
+      "bytes": 16840,
+      "sha256": "5aa4f5a83589e11381a24e4d1a422d22978cab46e1e3cf0cffddb36edfa99e74"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ThemeReflow.java": {
+      "bytes": 1718,
+      "sha256": "44d087d016f304576c1931806365242af507a01bc97fb8c09d7c37ad79fcb702"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/SyncOriginal.java": {
+      "bytes": 2684,
+      "sha256": "9f6b04d4611b8c0a6314a773ce64a1dca024b227163d8095aa42e8aa9fbd6c87"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ImportController.java": {
+      "bytes": 5228,
+      "sha256": "6aef265316f57528e5b3bd80a317ec630266070f65742a5d75bfc6c2f34de154"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ShelfStatusView.java": {
+      "bytes": 824,
+      "sha256": "3da7b799a92d5ee10b915a5a00b6dff29671a48cecc8c3f279a61bebf24c02ee"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/Wave3Files.java": {
+      "bytes": 5192,
+      "sha256": "8b146dfe154352d02fb5c1f608e70e4b1820ec92e8383acaf51424598a7dfce9"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/NativeFonts.java": {
+      "bytes": 3229,
+      "sha256": "c29c8aa5d03028bb888b951f90aa10bcbf12d11a51b4e0b0239f54d51dcbcf21"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/PreferencesPanel.java": {
+      "bytes": 6586,
+      "sha256": "0292e5637ff3d06896a036d80fcef3667d6d7aed9a7266149919ad84424d0f4e"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingParserPolicy.java": {
+      "bytes": 849,
+      "sha256": "57d9c1baf3e67a699d01f5f7934ab357617176f812cea1936325558656b9e88f"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/PageSnapshot.java": {
+      "bytes": 2910,
+      "sha256": "0cff12b814ec5781dbd246e89ca5419a270ab0cb12d2e821d1e6c775a4610db8"
+    },
+    "examples/android/app/src/main/java/org/exreader/host/ReadingVersion.java": {
+      "bytes": 1585,
+      "sha256": "cabacb82dce722bfe23264db4b74c73d5ba615cd82f039320e7b92610c884be4"
+    },
+    "examples/android/app/src/debug/cpp/catalog_fixture.inc": {
+      "bytes": 6891,
+      "sha256": "2233452289480e4c699223c19d9a64dd0106846f501c9fafded16f1339464086"
+    },
+    "examples/android/uitest/src/main/AndroidManifest.xml": {
+      "bytes": 218,
+      "sha256": "f05293fd164fa7b9bbddf6a481d7c8b8f9ae1c18a9d6753a66569d174c2d3359"
+    },
+    "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/OrganizationWalkthroughTest.java": {
+      "bytes": 11461,
+      "sha256": "cfcc5a44a2e1460555c970afe9c76e254f93d24e901ecf1e8aafd873e9b5fbf4"
+    },
+    "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostWalkthroughTest.java": {
+      "bytes": 53681,
+      "sha256": "bc7a98e3c706032c6ddd940048cc908ad6e31746dd85257bceda3a9eeb1df373"
+    },
+    "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/ShelfWalkthroughTest.java": {
+      "bytes": 17484,
+      "sha256": "6ac9964133223cc4e420eb90c010cfb15f08a168b2ee05f29537487e568ab26c"
+    },
+    "examples/android/uitest/src/androidTest/java/org/exreader/host/uitest/HostReviewTest.java": {
+      "bytes": 40313,
+      "sha256": "aad6b2fd72bb38fb541c6ec3dd22a0d4fdde564cb57f6b047b05604e3bfce11a"
+    },
+    "lib/exreader/libexr_vendor_webpdemux.a": {
+      "bytes": 12448,
+      "sha256": "7850acb51785efa33ad25aa62b97f0cf9abd60647001c06121d5f05887358749"
+    },
+    "lib/exreader/libexr_vendor_webp.a": {
+      "bytes": 642136,
+      "sha256": "9b012a331150fcfab8f635761149852687c86cfed120828aac43558250b12e54"
+    },
+    "lib/exreader/libexr_vendor_freetype.a": {
+      "bytes": 962504,
+      "sha256": "fd428c9ee63988e8d2fcd5cb3f8f3bfeb3c690c8405054de88cf5f7060cbd673"
+    },
+    "lib/exreader/libexr_vendor_tiff.a": {
+      "bytes": 597984,
+      "sha256": "64a8a609442481697ba05393f2fb2220664563e15ff823f192a064e8ac5dc9d9"
+    },
+    "lib/exreader/libexr_vendor_zlibstatic.a": {
+      "bytes": 104104,
+      "sha256": "284869008810024ddc3a6069031a7a1007c73f07edb4817379838258d9a99792"
+    },
+    "lib/exreader/libexr_vendor_miniz.a": {
+      "bytes": 98640,
+      "sha256": "dd7a71ab8f7fbee19297a1a69798006f26ff7e87c97c8e33fd8ad23e926a20a1"
+    },
+    "lib/exreader/libexr_vendor_sharpyuv.a": {
+      "bytes": 24096,
+      "sha256": "73a79e46b92276546bec187cbb4576f5e44f6e3eb6ac9243103db15959f1a43e"
+    },
+    "lib/exreader/libexr_vendor_exr_crypto.a": {
+      "bytes": 38520,
+      "sha256": "6b19acdb58ef4a6d3100d499729f939f442b9bdca2cdfbdd1b16e22a4aa39490"
+    },
+    "lib/exreader/libexr_vendor_expat.a": {
+      "bytes": 214328,
+      "sha256": "1460c4eb31e3f10c7481ba436024eeff10384324158540e56a7c98436b55dfd4"
+    },
+    "lib/exreader/libexr_vendor_aom.a": {
+      "bytes": 1819920,
+      "sha256": "712eda45eb01004980b06a75958a676908099c306d97fca5a26980d135d60d7c"
+    },
+    "lib/exreader/libexr_vendor_avif.a": {
+      "bytes": 267032,
+      "sha256": "cd79827d7fbbd5d6c1f34e80609284c83a1d36e30d6289c1c861fe2239520c5f"
+    },
+    "lib/exreader/libexr_vendor_exr_sqlite.a": {
+      "bytes": 2049952,
+      "sha256": "5c684170405743dc677961261a2da1248779111c5ee9f7f7b94a28fdef48bf3e"
+    },
+    "lib/exreader/libexr_vendor_exr_jpx.a": {
+      "bytes": 424992,
+      "sha256": "4e723a425ae3f3575a02bb6f9101241309bba10c1b36f9fe7daf569470a12f66"
+    },
+    "lib/exreader/libexr_vendor_exr_lcms.a": {
+      "bytes": 551904,
+      "sha256": "7a3aa15b24a671e1b4647e92ba8a5676fe32d6bf98588ed1b473a2958d5b01d2"
+    },
+    "lib/pkgconfig/aom.pc": {
+      "bytes": 300,
+      "sha256": "5e5fa76ceb53059ba17982c26303198207b5554e74c7fea8d4419eceb5130ded"
+    },
+    "lib/pkgconfig/libwebp.pc": {
+      "bytes": 271,
+      "sha256": "96b5769ad8294502f63f9763a31a84c770fc676d4477ccf961853518e9073735"
+    },
+    "lib/pkgconfig/libwebpmux.pc": {
+      "bytes": 303,
+      "sha256": "2102f82444021593f394ad3565a0dad6fd1278d40ef9f4340462501e4576b318"
+    },
+    "lib/pkgconfig/libsharpyuv.pc": {
+      "bytes": 257,
+      "sha256": "30c884390e7a438f1c5bbccba284939cc7849fe7bd80db40888dc81164d0ff66"
+    },
+    "lib/pkgconfig/libwebpdecoder.pc": {
+      "bytes": 269,
+      "sha256": "7f806003201ed81e83fe50154a98d7fdfd5a16fdb60010b11e9dcf1e392ce4db"
+    },
+    "lib/pkgconfig/libwebpdemux.pc": {
+      "bytes": 287,
+      "sha256": "d8658362fc465ce35936501aab63e3fe22c86f968ea43b2dbeafab0931b41a3c"
+    },
+    "lib/cmake/EXReader/EXReaderTargets-release.cmake": {
+      "bytes": 6892,
+      "sha256": "4441be3fedb15d753c2176b5f485b911a67e6b3f5001305bd6b12b75cd82d0b2"
+    },
+    "lib/cmake/EXReader/EXReaderConfigVersion.cmake": {
+      "bytes": 2765,
+      "sha256": "eaa3779e33977bb3c24b201b8d6bb65fa46a5da3785c7260d26e901f853c192d"
+    },
+    "lib/cmake/EXReader/EXReaderTargets.cmake": {
+      "bytes": 9761,
+      "sha256": "29d9a11e96a26b2c825f860bae6bd0bddda57438f5ef90b8a00ecb7271fcd748"
+    },
+    "lib/cmake/EXReader/EXReaderDependencies.cmake": {
+      "bytes": 7666,
+      "sha256": "043760c2406cc4e305479816534808dd10e472f01437c691625f56a6e1b88002"
+    },
+    "lib/cmake/EXReader/EXReaderConfig.cmake": {
+      "bytes": 1421,
+      "sha256": "a77f4420d9c3a15eaddea3624d84ed1ebef117058ab06a783e729f0448478908"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationTargets-release.cmake": {
+      "bytes": 980,
+      "sha256": "1e45fade0ea1e46e448b9300388ded702aece23bf2756920ac81a67b151a420e"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationConfig.cmake": {
+      "bytes": 1081,
+      "sha256": "bff4a664758013ee15b405d508fdf6847fea206e5152d9c9176aaddfe6d50c13"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationTargets.cmake": {
+      "bytes": 4302,
+      "sha256": "28bce88011e4f956ef1e9065d99f348d5502f3a65e88089af4329ce26d52b71f"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataConfig.cmake": {
+      "bytes": 1809,
+      "sha256": "54175e86095ccee95705ce58164b7fc772c82f31133f9c93fbf14863df66a52b"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataTargets.cmake": {
+      "bytes": 4388,
+      "sha256": "49c05bb35e953889d4c9be8fcddd771244561337e2b4a79f92ef3f39eead51c4"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataTargets-release.cmake": {
+      "bytes": 1047,
+      "sha256": "131b9598217285721754ed852a962b3f16b49d309d57b269c097c06cc94a1b81"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsTargets.cmake": {
+      "bytes": 4270,
+      "sha256": "f1b7f785d09481b8a9bdba27a2a4a08fdda1de8136b7a53fb14d9228051b72dc"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsTargets-release.cmake": {
+      "bytes": 956,
+      "sha256": "05b5f8b8d646cf2a15dc33bcf619104bd6e0802a8420904912bd1b61f94b169c"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsConfig.cmake": {
+      "bytes": 1939,
+      "sha256": "389ada78b5b1c34a04f5d8149276b4ca76b7dc7690c04d0b84869d95e9f1f4c4"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionTargets-release.cmake": {
+      "bytes": 944,
+      "sha256": "5980e545f2b034b3f080b28149bf5ce5cbd1d2537e44e966f0f49485d4f2cf12"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionTargets.cmake": {
+      "bytes": 4282,
+      "sha256": "01e08646348e853f1881f06acf07eb1595d0718c196b8fa28dadd4d5f242e3ad"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionConfig.cmake": {
+      "bytes": 1916,
+      "sha256": "85157f1fc853b7596794a0f46f02e4ccc97f11bb5c5f985c62ff89a599e2efb7"
+    },
+    "lib/cmake/AOM/AOMTargets.cmake": {
+      "bytes": 4088,
+      "sha256": "7771537b0e2e9e21bd4e83789e5f86ef4d8a733fd6e5603b709186232c480578"
+    },
+    "lib/cmake/AOM/AOMTargets-release.cmake": {
+      "bytes": 805,
+      "sha256": "a562839d85e17049a3bad6721798484a5117d1e23b9be8f41058315fb5d55192"
+    },
+    "lib/cmake/AOM/AOMConfig.cmake": {
+      "bytes": 1429,
+      "sha256": "6e99a503d8515bcfb63bd8c783417cc774391260c21e86c77530d991fadca5c2"
+    },
+    "lib/cmake/AOM/AOMConfigVersion.cmake": {
+      "bytes": 2765,
+      "sha256": "559904c4312567a7b733a46e10b7eef4733ccaaa68204d0a4415afa9479bcfea"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsTargets-release.cmake": {
+      "bytes": 1047,
+      "sha256": "ee899d11bd3ccce04f4e8b632157f62700f35d79318aad4402de388c5acbae72"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsConfig.cmake": {
+      "bytes": 1903,
+      "sha256": "e4007b884cc8fed9eb1f7d380a12b8a78632bd3a5391f37941113005647b2aa6"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsTargets.cmake": {
+      "bytes": 4350,
+      "sha256": "2c44b35e3fd8cb7cfc1b605a1851d49f0a1dd6d56fd59405f98a0be982b0a27d"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewTargets-release.cmake": {
+      "bytes": 1035,
+      "sha256": "f1e1e4dd209e4f3f24a2a8a2ca2e7d057b1885c880811c91521c2d4076fb7a42"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewConfig.cmake": {
+      "bytes": 1659,
+      "sha256": "5d27ef6c488cb062fd1e7e1229fbc112e347f04531fd3237387feadc919a160c"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewTargets.cmake": {
+      "bytes": 4341,
+      "sha256": "071a88537ebb433a60722710bc3a6f8400c692329bc1c53825104384ccb8c5cf"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfigVersion.cmake": {
+      "bytes": 2762,
+      "sha256": "4440cdfab7c7e4e4fffcf0d81d698fcd80290c4f2a8d32c4f8242993b0af951d"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets.cmake": {
+      "bytes": 5243,
+      "sha256": "a05b072d1a961849983abe30d097097e70de472390933506d922961852cf7165"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfig.cmake": {
+      "bytes": 2506,
+      "sha256": "8a3bd3b892fdb07e6559f560f2bbdc1b7b6c58a5044ece536bd54833c6f51430"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets-release.cmake": {
+      "bytes": 2282,
+      "sha256": "85c3cffb545e77434bb2660e3b4f7eacac579ad66d531d11789b5daf7a6602ee"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsConfigVersion.cmake": {
+      "bytes": 2762,
+      "sha256": "4440cdfab7c7e4e4fffcf0d81d698fcd80290c4f2a8d32c4f8242993b0af951d"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsTargets.cmake": {
+      "bytes": 4295,
+      "sha256": "8a14c2a859a64a9070cdc624a814ebf476e5be74ec35e2f98775f9ce9042dd09"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsConfig.cmake": {
+      "bytes": 1151,
+      "sha256": "2d67169c2e667934580eb67784c14b759bf9c61beb24305e97846c9136477da9"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsTargets-release.cmake": {
+      "bytes": 969,
+      "sha256": "88c85a97bd7cbde348635cdd9fc0b5c99000efc8e7001ec4d84df011c8716c1c"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncTargets.cmake": {
+      "bytes": 4261,
+      "sha256": "efc99fdb7a9f9d165af900adc80347916bc12a8a31a611f2f189b807f88d28d2"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncTargets-release.cmake": {
+      "bytes": 908,
+      "sha256": "1a5ef42012ab444b7e0a62d18eeb039845e01ad3d1d3d036764cad7f69bb4d18"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncConfig.cmake": {
+      "bytes": 3586,
+      "sha256": "e9a987701222671a147bd5d232fc662c54223c35f2f8c60411d568d3820064a5"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets.cmake": {
+      "bytes": 4585,
+      "sha256": "1dd4d90a3b4672d8109b836572bd2662514fabe4729c2ee2164465944d832d7d"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets-release.cmake": {
+      "bytes": 1584,
+      "sha256": "fdd6fcbdf96bbcf18c1952913a06e9a3b7599b3cafc0d647603438c2d12ab05a"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "15a58af4e0902d1dd2a2d9e33fa84405e77881008125480fa408c8188e9010c0"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsConfig.cmake": {
+      "bytes": 8591,
+      "sha256": "eb0994b6d733c314d76881213515f740d6173892ab78d0ee6d071d4487ee0eb2"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchTargets-release.cmake": {
+      "bytes": 932,
+      "sha256": "977c3a5d8f8b1b1fb8aa87a1e200b73c2780fd55edbbeb7c5aab9d7d529ebd84"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchConfig.cmake": {
+      "bytes": 1073,
+      "sha256": "b317ba3e2a4100e5df3b689ef7d3cd81ff333d5f6b40ab4552d53d72d71cee26"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchTargets.cmake": {
+      "bytes": 4266,
+      "sha256": "33235c8bc3d454384c177453f1f2a2cf16456f547427afea3a1a066d393440f7"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets-release.cmake": {
+      "bytes": 1686,
+      "sha256": "1d0d0acc0cb0c0e6636fb347cf3cfffdebf8e102be0ebd0842e7c9356d44d0cf"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateConfig.cmake": {
+      "bytes": 2447,
+      "sha256": "45b5de85ebd12f70966f7c34d65e67b57c0a83628d0a5429253037d3329c66bb"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets.cmake": {
+      "bytes": 4905,
+      "sha256": "07fe47d3d564beba4b1e8dcce05ac83daf10cc9cc14b3daac83f94b03c4cbaf5"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVTargets.cmake": {
+      "bytes": 4283,
+      "sha256": "8c792f66771ba3ef15e27f46990b0f24d2c1a6913aa26cecf521fafa84606f1a"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVTargets-release.cmake": {
+      "bytes": 918,
+      "sha256": "12223dfa4e08b3d82433619a9465ddb35f0c309d91f85540dbccc08dfd12414b"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVConfig.cmake": {
+      "bytes": 1195,
+      "sha256": "0dbbf335f799ce54c33916640e96042e4c403899ae3e2de83c0d4955cd27130e"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVConfigVersion.cmake": {
+      "bytes": 2762,
+      "sha256": "bef27358917b8deca0715d09e7d3004f9fb86c7b5a76fc12ca8c48481d93aa7c"
+    },
+    "lib/cmake/EXReaderWebDAVObserved/EXReaderWebDAVObservedConfig.cmake": {
+      "bytes": 1685,
+      "sha256": "c1401ce94631d908e25444f271cb516ea5ed063c905f0bf4d178909de4531c91"
+    },
+    "lib/cmake/EXReaderWebDAVObserved/EXReaderWebDAVObservedConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "bindings/swift/EXReader.swift": {
+      "bytes": 31838,
+      "sha256": "46ff13eef371dd08a7e8893f7be563df99b03ddd3753fef97452656cd1109f0e"
+    },
+    "bindings/swift/Smoke.swift": {
+      "bytes": 32512,
+      "sha256": "28f52def26114cd9693ede1fe6cfe98532a53f6b14ead17e50d4d3e34d071789"
+    },
+    "bindings/jni/consumer-rules.pro": {
+      "bytes": 234,
+      "sha256": "7d92fa777c618137622d35d57db0046b24877b769f71bd8076f84b02b878f4f0"
+    },
+    "bindings/jni/EXReaderException.java": {
+      "bytes": 240,
+      "sha256": "ac68326b210491fde30df6e2d6f2d361d666859af9d80bc35eed78f6dba16060"
+    },
+    "bindings/jni/Smoke.java": {
+      "bytes": 31523,
+      "sha256": "cf3f54344a06cbe75ff88d508d3b7078ca2e3b9a3b3026206cbf88c719351a66"
+    },
+    "bindings/jni/exreader_jni.c": {
+      "bytes": 41445,
+      "sha256": "5f6f3968dceeb61c60ccdbff92afef05f6cf29b41ecaa757125257ca663873d2"
+    },
+    "bindings/jni/EXReader.java": {
+      "bytes": 24447,
+      "sha256": "34beef37318751fc01dcdfccfccfb223c3de02a3497ab59f65e2f3d0b13473c4"
+    },
+    "share/exreader/LICENSE": {
+      "bytes": 1078,
+      "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+    },
+    "share/exreader/THIRD_PARTY_NOTICES.md": {
+      "bytes": 20818,
+      "sha256": "aca41304e60a5f617bf232f5024fc101fc2ba32f79f55e50c88cd74aeda213b6"
+    },
+    "share/exreader-product/002_originals.sql": {
+      "bytes": 758,
+      "sha256": "25cd59e8cc894a620cce072ff58b7791602c5b25ba8bc7d5df96ab02dbe2c8db"
+    },
+    "share/exreader-product/003_original_staging.sql": {
+      "bytes": 1233,
+      "sha256": "b5b170d15f05a36917cf2d677d5cc115283880ae1b7ec9ece6cea973ab92ae7a"
+    },
+    "share/exreader-product/sqlite-public-domain.txt": {
+      "bytes": 761,
+      "sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc"
+    },
+    "share/exreader-product/001_catalog.sql": {
+      "bytes": 10051,
+      "sha256": "d3d4a7d2f0f855286f212e73f165ec4c7109786be984e1f51440a4727197f473"
+    },
+    "share/exreader-credentials/LICENSE.txt": {
+      "bytes": 1078,
+      "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+    },
+    "share/exreader-apple/product.json": {
+      "bytes": 1017,
+      "sha256": "c40f6a79b9a20ca829b3495ce667b022fe46d1f83b61c24403290a128c52fe93"
+    },
+    "share/exreader-webdav/LICENSE.txt": {
+      "bytes": 1078,
+      "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+    },
+    "share/exreader/licenses/default-cmyk-profile.txt": {
+      "bytes": 507,
+      "sha256": "45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da"
+    },
+    "share/exreader/licenses/libtiff/LICENSE.md": {
+      "bytes": 1164,
+      "sha256": "0780558a8bfba0af1160ec1ff11ade4f41c0d7deafd6ecfc796b492a788e380d"
+    },
+    "share/exreader/licenses/lcms/LICENSE": {
+      "bytes": 1080,
+      "sha256": "6dbd60437f8ef91d8de1f08ad75882547fd4931bfcc3566a0735f28db1484d31"
+    },
+    "share/exreader/licenses/libaom/LICENSE": {
+      "bytes": 1316,
+      "sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2"
+    },
+    "share/exreader/licenses/libaom/PATENTS": {
+      "bytes": 5701,
+      "sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61"
+    },
+    "share/exreader/licenses/unicode/LICENSE.txt": {
+      "bytes": 1995,
+      "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+    },
+    "share/exreader/licenses/freetype/FTL.TXT": {
+      "bytes": 6743,
+      "sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f"
+    },
+    "share/exreader/licenses/freetype/LICENSE.TXT": {
+      "bytes": 2149,
+      "sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b"
+    },
+    "share/exreader/licenses/libavif/LICENSE": {
+      "bytes": 20415,
+      "sha256": "165abf92cc04b39e80d29cadea7a6a7e8fddf59407d4ad2616507a7ebe8216f9"
+    },
+    "share/exreader/licenses/minimp3/LICENSE": {
+      "bytes": 6556,
+      "sha256": "6a1ee543e5282cd9061881edf462e6fdab181f328da71fc2c9a6950a80e94d01"
+    },
+    "share/exreader/licenses/expat/COPYING": {
+      "bytes": 1144,
+      "sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87"
+    },
+    "share/exreader/licenses/openjpeg/LICENSE": {
+      "bytes": 2112,
+      "sha256": "a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6"
+    },
+    "share/exreader/licenses/wp7-fonts/noto-sans-test-fonts.txt": {
+      "bytes": 4383,
+      "sha256": "754f0e221aa7d5a915489f3bf1f20fe53ddc35ab2834a4d91656d78f9622de70"
+    },
+    "share/exreader/licenses/mbedtls/LICENSE": {
+      "bytes": 29852,
+      "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+    },
+    "share/exreader/licenses/pdf-font-data/adobe-glyph-list.txt": {
+      "bytes": 1456,
+      "sha256": "c85f2b0da9de3e0a96cb42594708d19f7696945bb185cfd98c262f8f2d6f3aa7"
+    },
+    "share/exreader/licenses/pdf-font-data/pdfjs.txt": {
+      "bytes": 10209,
+      "sha256": "8d1fb64269e430755e4f12c2eb113d71b4b2a33ad11db0069e09ebb47415ca53"
+    },
+    "share/exreader/licenses/sqlite/sqlite-public-domain.txt": {
+      "bytes": 761,
+      "sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc"
+    },
+    "share/exreader/licenses/miniz/LICENSE": {
+      "bytes": 1184,
+      "sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3"
+    },
+    "share/exreader/licenses/zlib/LICENSE": {
+      "bytes": 1002,
+      "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+    },
+    "share/exreader/licenses/stb/LICENSE": {
+      "bytes": 2510,
+      "sha256": "bebfe904b14301657e4e5d655c811d51fd31b97c455b9cc2d8600d6bac6cff63"
+    },
+    "share/exreader/licenses/libwebp/PATENTS": {
+      "bytes": 1436,
+      "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
+    },
+    "share/exreader/licenses/libwebp/COPYING": {
+      "bytes": 1496,
+      "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+    },
+    "share/exreader/licenses/expat/upstream-root/COPYING": {
+      "bytes": 1144,
+      "sha256": "73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e"
+    },
+    "share/WebP/cmake/WebPTargets-release.cmake": {
+      "bytes": 2721,
+      "sha256": "98bee20921759b793eac9ca772f9cf80028e3ae20c3f9c686fd0844917af2bb7"
+    },
+    "share/WebP/cmake/WebPTargets.cmake": {
+      "bytes": 5265,
+      "sha256": "dcbcd663f896c066e733ce188421f6c21345e7facbc0aac29f338da2967a45cb"
+    },
+    "share/WebP/cmake/WebPConfigVersion.cmake": {
+      "bytes": 1861,
+      "sha256": "896f616ce435e9381ccf3b8cfa2a00b0375cf97e6d9af58403921ccb07308687"
+    },
+    "share/WebP/cmake/WebPConfig.cmake": {
+      "bytes": 1363,
+      "sha256": "111cef2dee52a0002e63fb16c4a2c1da0861153ec29ed13f7b8cc5365e45f2c9"
+    }
+  },
+  "raw_files": {
+    "include/reader_annotation_view.h": {
+      "bytes": 9730,
+      "sha256": "2ea382fb4087983f5a426027d928b50df487c989da7e12f1b4c87d5418ed62c8"
+    },
+    "include/exr_credentials.h": {
+      "bytes": 3198,
+      "sha256": "ab4e90d9146634c85a39dbba6e9698bd58a2c1c1ad78df01d6c0db00641ea2d4"
+    },
+    "include/reader_sync_view.h": {
+      "bytes": 7898,
+      "sha256": "02f85f53c23e5cbc99e26b955eddb934aea73ebf1540252351aace65e7732eb3"
+    },
+    "include/reader_projection.h": {
+      "bytes": 9266,
+      "sha256": "298b120b4172ee1d296994a1ceaa90bbf968039f57afc3a8c0fab193d332fc3f"
+    },
+    "include/reader_navigation.h": {
+      "bytes": 14924,
+      "sha256": "100a4490b7cc1f69653e26e5e8e7f97f643783540fd95ed28ce1d14adf12d7f8"
+    },
+    "include/reader_reading_commands.h": {
+      "bytes": 4649,
+      "sha256": "0e600bf326994261be2c60499985438018eb4a54b08f4949e9b16daccef723af"
+    },
+    "include/reader_annotation_import_raw3.h": {
+      "bytes": 6038,
+      "sha256": "ea70c8bfe61bc824ea47b31e9390112161c0dedead5d4e0dff7b00e9185c61c8"
+    },
+    "include/reader_session.h": {
+      "bytes": 3616,
+      "sha256": "6dc03258f7ea435c0a5c342f96e3fd0fe863e9861e9297d1f13bf7cf51f94e8c"
+    },
+    "include/reader_reading_state.h": {
+      "bytes": 7862,
+      "sha256": "b27002bfeced7ce9f0f8d8c1f59af10b5d9ec9c318ac9e01866e42a34467d6cf"
+    },
+    "include/reader_font_library.h": {
+      "bytes": 5031,
+      "sha256": "c65d671823c5e298168a928f30af117e7542f5bfcc5d99e91e780964c8911361"
+    },
+    "include/reader_annotation_import.h": {
+      "bytes": 4694,
+      "sha256": "94f16b512af1c401b27d824a3df6d5dec36b0db24b300291e762d0ecf9b69a91"
+    },
+    "include/reader_search.h": {
+      "bytes": 9354,
+      "sha256": "80e3dd7372992c15e63406c4f40b7095b1c0cafc04c445b71606407ec7065ab7"
+    },
+    "include/reader_annotation_export.h": {
+      "bytes": 7217,
+      "sha256": "cc84723d018c8d14462f524fe9d1b085204ccd0c06016f5bfd7eb120954780da"
+    },
+    "include/reader_original_export.h": {
+      "bytes": 4737,
+      "sha256": "3c2d47208e45470c772d1d32e8745326a53c8e2fd1d3196ae1f4ea88470f4a68"
+    },
+    "include/reader_reading_state_retained_raw_v1.h": {
+      "bytes": 1166,
+      "sha256": "18583f8a5125a40ab98b08ac5771a989a826cf0be4c3bf2ef649cddcfff40507"
+    },
+    "include/reader_revisions.h": {
+      "bytes": 7699,
+      "sha256": "7e7a39735f65bbb234ffba796931bc7fe635005559446b54624ef6cddae6d0d4"
+    },
+    "include/reader_jump_history.h": {
+      "bytes": 11963,
+      "sha256": "961f9edb89645c376c52bef80f8c07fb2837d45e6b0ffff16a9359fc4c63c48a"
+    },
+    "include/reader_annotation_export_raw3.h": {
+      "bytes": 1497,
+      "sha256": "9c9dbd0a344bd30ebdd9d159399084c75682bf15e0a3f331c97529e1e9509904"
+    },
+    "include/reader_metadata.h": {
+      "bytes": 6030,
+      "sha256": "15a987735ee324949e68723cc09e80553892fb2fa3820d006a77c125dd26e7c7"
+    },
+    "include/reader_commands.h": {
+      "bytes": 4697,
+      "sha256": "fdd1dccd6fe47b05da9e563649b394a296917d9587b5bbb6e962e86e4387ec79"
+    },
+    "include/reader_selector_bytes_v1.h": {
+      "bytes": 2038,
+      "sha256": "87254aa2f4592f994b169efde9982f927acf5dcfc060549b4e2c13efe228214c"
+    },
+    "include/reader_sync.h": {
+      "bytes": 3052,
+      "sha256": "1366dc90333870ff01f7ed12bdfb32f53bc474ba3a0de294af8bd5b7c86fb734"
+    },
+    "include/exr_webdav.h": {
+      "bytes": 4823,
+      "sha256": "efef0f4a1d04f6c3e790da339065f45c33e4aecbaf5e4d3c3ac4025f00e72971"
+    },
+    "lib/libreader_reading_state_codec.a": {
+      "bytes": 33608,
+      "sha256": "d2a794512c785935fec672e96829b95375abeed67e192a44b6b211b6615921c2"
+    },
+    "lib/libreader_sync.a": {
+      "bytes": 87296,
+      "sha256": "52bd16bec5b44024c342de6b8a3842d15e84c8512bbf9a6ff8adf3a518e0f710"
+    },
+    "lib/libreader_jump_history.a": {
+      "bytes": 28104,
+      "sha256": "871ebdb03a93a3c0f67e3b6fcf6435d11c65a32e66588de897327ad00a003f1b"
+    },
+    "lib/libexr_credentials.a": {
+      "bytes": 9072,
+      "sha256": "1dfbfd0ad810ff45dc34ab65d93ccdb44b9329400b5cd53f04a4adbb2037401e"
+    },
+    "lib/libreader_sync_view.a": {
+      "bytes": 20896,
+      "sha256": "6aac1a54ee85f24ef9f6c47939c6bfa5c4d46ffd54d989f7f7911a2b2d98567a"
+    },
+    "lib/libreader_catalog.a": {
+      "bytes": 62584,
+      "sha256": "cf04d5fd5a071530ba7f8d97c516af8601b31e3f63caa4cf361a46d545abd76c"
+    },
+    "lib/libreader_original_export.a": {
+      "bytes": 31336,
+      "sha256": "fc882592bafdffd06d165210a6a4792c1c391c3449792686c1534bfc24619587"
+    },
+    "lib/libreader_reading_state.a": {
+      "bytes": 17080,
+      "sha256": "97e6e3e5581b775f343ed95424b8540707e68a3584225269d3c55e1a71c5a036"
+    },
+    "lib/libreader_revision_hash.a": {
+      "bytes": 18904,
+      "sha256": "de8174a03c34ad4a1f913a94f11dbcd9a2f38bbad8bfda32e73b2652ae6f2103"
+    },
+    "lib/libreader_navigation.a": {
+      "bytes": 63216,
+      "sha256": "55fd7845bb88267328231154595b332b53564ae3f0fabfef9ad3c338771fe3dd"
+    },
+    "lib/libreader_annotation_export.a": {
+      "bytes": 94592,
+      "sha256": "c5fe0b586f8312bffa386419f1cd59f942100c8fc9941b6d051e7e0d5af0b8dd"
+    },
+    "lib/libreader_revisions.a": {
+      "bytes": 182856,
+      "sha256": "8d6430addf6fd93f172fa852813c104b303a81431bb9371e4382bbd791584878"
+    },
+    "lib/libreader_search.a": {
+      "bytes": 25352,
+      "sha256": "d23ef766be894d72571680166d2bdc376dba9f2622a1b702163ef22398256b25"
+    },
+    "lib/libexr_webdav.a": {
+      "bytes": 107128,
+      "sha256": "673850f44c944cd02d911a944cbd1d77e22c6510f28d2ec597e522a93fadfd10"
+    },
+    "lib/libreader_annotation_import.a": {
+      "bytes": 88392,
+      "sha256": "4f2800cd16f60265ef83cba40c57a3e498d9ed89c3d314f7013d0cc3f3439558"
+    },
+    "lib/libreader_font_library.a": {
+      "bytes": 95488,
+      "sha256": "5b5143598bc90a57a33e8f91aac1665921783dcaf56f1b6bf82533a0fc5a5a6e"
+    },
+    "lib/libreader_original_import.a": {
+      "bytes": 31840,
+      "sha256": "4009e1d8083fbaf2030ffa110642ffeca6d2b19dee034519ff5d599ccf04d8fc"
+    },
+    "lib/libreader_catalog_sqlite.a": {
+      "bytes": 1692832,
+      "sha256": "5cbea47cd81d5964a5662b3f37ce38a512f37b49f53ae180b7ea63380337a34a"
+    },
+    "lib/libreader_session.a": {
+      "bytes": 25648,
+      "sha256": "8b9293b38b27dc6ade6c91560906ad5a06031a2805183086d603780d4fee2d73"
+    },
+    "lib/libreader_annotation_view.a": {
+      "bytes": 29272,
+      "sha256": "2f6e90f95406ff1c930a525f02ec59d072211c39bef66a47f9b659e94936ae8b"
+    },
+    "lib/libreader_commands.a": {
+      "bytes": 52944,
+      "sha256": "80bef9968a8205602723fb204f6e6aefc1f6f63add9f9d80d548f1bd1756d7bf"
+    },
+    "lib/libreader_reading_commands.a": {
+      "bytes": 40720,
+      "sha256": "9162a581757c5d29927daa3248d7621fd983ca53898551dcadbcd90cdbac3dce"
+    },
+    "lib/libreader_desktop_metadata.a": {
+      "bytes": 106624,
+      "sha256": "ac1b27d6ffaccdf3d87bcf07a5347578c3e76462bfa8c0a1c04433f0ee698333"
+    },
+    "include/exreader-product/catalog.h": {
+      "bytes": 10378,
+      "sha256": "ca55b525cff33d81d725f4a342f193d37538951ba82b9c0edee32c2e79085d04"
+    },
+    "include/exreader-product/original_import.h": {
+      "bytes": 2175,
+      "sha256": "eb294a6328c60d0cd515c47746b511318f5667647bb8546fef5a8c52bb6039d2"
+    },
+    "include/exreader-product/sqlite3.h": {
+      "bytes": 695737,
+      "sha256": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166"
+    },
+    "opds-hash/lib/libopds_sha256_stream.a": {
+      "bytes": 4728,
+      "sha256": "e2a4cd8dca20df0be3a80eadac22f6a4278e3238e2b7f0222cdab16581e68215"
+    },
+    "opds-hash/include/exreader-opds-hash/opds_sha256_stream.h": {
+      "bytes": 1540,
+      "sha256": "b16b9d714b97606ee374d727a90c3ba372ce59e59b9f7792711cc66ceb736ca2"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashTargets.cmake": {
+      "bytes": 4232,
+      "sha256": "c25ed0eedce9f370915c3971ca59c14eb52bc519063cb00cf21dcabbf45efcd5"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashTargets-release.cmake": {
+      "bytes": 975,
+      "sha256": "e6d9cd62cc1b93aa2e4518d6f31361445d61e11a757069be3b6ed40d91fb3ba8"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfig.cmake": {
+      "bytes": 5017,
+      "sha256": "9c57f722cddb372748fa587b21ee27c12e65f54945e2605c1213f5b93853c585"
+    },
+    "opds-hash/lib/cmake/EXReaderOPDSHash/EXReaderOPDSHashConfigVersion.cmake": {
+      "bytes": 3277,
+      "sha256": "bcfadc3a489a3340bf62e83ccd41b9b9de34c51e5bc281539cad9e5a7bd947f6"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationTargets-release.cmake": {
+      "bytes": 980,
+      "sha256": "1e45fade0ea1e46e448b9300388ded702aece23bf2756920ac81a67b151a420e"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationConfig.cmake": {
+      "bytes": 1081,
+      "sha256": "bff4a664758013ee15b405d508fdf6847fea206e5152d9c9176aaddfe6d50c13"
+    },
+    "lib/cmake/EXReaderNavigation/EXReaderNavigationTargets.cmake": {
+      "bytes": 4302,
+      "sha256": "28bce88011e4f956ef1e9065d99f348d5502f3a65e88089af4329ce26d52b71f"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataConfig.cmake": {
+      "bytes": 1808,
+      "sha256": "e7d40cf860170b335962230ea762192c21222151d75701bb8e9377db74e33271"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataTargets.cmake": {
+      "bytes": 4487,
+      "sha256": "e90da3c36344e6fe735218a37b25955e66a46c746e066bc3d23a3e0777e2de98"
+    },
+    "lib/cmake/EXReaderDesktopMetadata/EXReaderDesktopMetadataTargets-release.cmake": {
+      "bytes": 1047,
+      "sha256": "131b9598217285721754ed852a962b3f16b49d309d57b269c097c06cc94a1b81"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsTargets.cmake": {
+      "bytes": 4342,
+      "sha256": "aaf133c646a93c0bdc000ec70eba2726e5f72c608735d280896e89163165aa48"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsTargets-release.cmake": {
+      "bytes": 956,
+      "sha256": "05b5f8b8d646cf2a15dc33bcf619104bd6e0802a8420904912bd1b61f94b169c"
+    },
+    "lib/cmake/EXReaderCommands/EXReaderCommandsConfig.cmake": {
+      "bytes": 1937,
+      "sha256": "41a9f1e4b6235183eb6c20e116fe474764606b01efde1a1051f039e48db83e3a"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionTargets-release.cmake": {
+      "bytes": 944,
+      "sha256": "5980e545f2b034b3f080b28149bf5ce5cbd1d2537e44e966f0f49485d4f2cf12"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionTargets.cmake": {
+      "bytes": 4354,
+      "sha256": "f0d42bfa88c09f3de8cd5bd4fecf9d4d76542460ed0b9ff8d88d8a5480d18e90"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderSession/EXReaderSessionConfig.cmake": {
+      "bytes": 1914,
+      "sha256": "8eec27c0968a983adf4a581afb4eac4753b02f1cb6d99f957ef391356a31620a"
+    },
+    "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets-release.cmake": {
+      "bytes": 1059,
+      "sha256": "030d20e91978ed6f0743ffd4bb8a1320d14b3d4520710541bc5a4a2a59219d39"
+    },
+    "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets.cmake": {
+      "bytes": 4467,
+      "sha256": "0818eadd32bb8d0c8f802bfff0e47a7c266cae8035c31d8fbcdba8ef94272b24"
+    },
+    "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfig.cmake": {
+      "bytes": 1832,
+      "sha256": "38c2c6907676e9fb0629a2e4cd5dc7c43655430ad3f98aae0b453da2cece88c1"
+    },
+    "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfig.cmake": {
+      "bytes": 1849,
+      "sha256": "79d28181663c20722178c64645181177a979dbb67597289f4e2bcbb941bd7c1a"
+    },
+    "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets.cmake": {
+      "bytes": 4467,
+      "sha256": "ac0202ff7e2a39a29cf4e659434a366dcfa86180bd3132050460ca3c356aff0f"
+    },
+    "lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets-release.cmake": {
+      "bytes": 1059,
+      "sha256": "c268fff6150d79c8c16876649253871866ddae8b12cd53897dab20112fb6d59a"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsTargets-release.cmake": {
+      "bytes": 1047,
+      "sha256": "ee899d11bd3ccce04f4e8b632157f62700f35d79318aad4402de388c5acbae72"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsConfig.cmake": {
+      "bytes": 1901,
+      "sha256": "a59a6c96bf330be27e5ff7396b161f0371b1840df904c1e8d325649c29f03a37"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderReadingCommands/EXReaderReadingCommandsTargets.cmake": {
+      "bytes": 4422,
+      "sha256": "887e77fe514f5ab88b4fb2a549ae219c8dafaa8559d63e0a850a40c9daf7c931"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewTargets-release.cmake": {
+      "bytes": 1035,
+      "sha256": "f1e1e4dd209e4f3f24a2a8a2ca2e7d057b1885c880811c91521c2d4076fb7a42"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewConfig.cmake": {
+      "bytes": 1658,
+      "sha256": "4eee02773ef210770c8e707f2df8781fba4895951bad0250ed663f26c392eaa6"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderAnnotationView/EXReaderAnnotationViewTargets.cmake": {
+      "bytes": 4413,
+      "sha256": "28e5b81a17dfa0aeab32fe7a85a9e1efa9142ec91bcaf92c91eacd31c215e2f7"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfigVersion.cmake": {
+      "bytes": 2762,
+      "sha256": "4440cdfab7c7e4e4fffcf0d81d698fcd80290c4f2a8d32c4f8242993b0af951d"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets.cmake": {
+      "bytes": 5243,
+      "sha256": "a05b072d1a961849983abe30d097097e70de472390933506d922961852cf7165"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfig.cmake": {
+      "bytes": 2506,
+      "sha256": "8a3bd3b892fdb07e6559f560f2bbdc1b7b6c58a5044ece536bd54833c6f51430"
+    },
+    "lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets-release.cmake": {
+      "bytes": 2282,
+      "sha256": "85c3cffb545e77434bb2660e3b4f7eacac579ad66d531d11789b5daf7a6602ee"
+    },
+    "lib/cmake/EXReaderJumpHistory/EXReaderJumpHistoryTargets.cmake": {
+      "bytes": 4397,
+      "sha256": "535c0b48b9cb58b440a6ac9ff22161d312f1e8cef971797c1b3a6ab561c0b7e5"
+    },
+    "lib/cmake/EXReaderJumpHistory/EXReaderJumpHistoryConfig.cmake": {
+      "bytes": 1663,
+      "sha256": "48b63227f19a82092c7a449a264a03c1334778d1dd8c87544b844daa62fbbb3d"
+    },
+    "lib/cmake/EXReaderJumpHistory/EXReaderJumpHistoryConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderJumpHistory/EXReaderJumpHistoryTargets-release.cmake": {
+      "bytes": 999,
+      "sha256": "0c845b83060c4b3af9ee641866add91d172daf992b2a2acf3e0af1438b179439"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsConfigVersion.cmake": {
+      "bytes": 2762,
+      "sha256": "4440cdfab7c7e4e4fffcf0d81d698fcd80290c4f2a8d32c4f8242993b0af951d"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsTargets.cmake": {
+      "bytes": 4295,
+      "sha256": "8a14c2a859a64a9070cdc624a814ebf476e5be74ec35e2f98775f9ce9042dd09"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsConfig.cmake": {
+      "bytes": 1151,
+      "sha256": "2d67169c2e667934580eb67784c14b759bf9c61beb24305e97846c9136477da9"
+    },
+    "lib/cmake/EXReaderCredentials/EXReaderCredentialsTargets-release.cmake": {
+      "bytes": 969,
+      "sha256": "88c85a97bd7cbde348635cdd9fc0b5c99000efc8e7001ec4d84df011c8716c1c"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncTargets.cmake": {
+      "bytes": 4333,
+      "sha256": "a96d84d7ffec2bc2b0fd5088e99aa31849a7dbaeff0be1b7d92edda3e7b2475b"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncTargets-release.cmake": {
+      "bytes": 908,
+      "sha256": "1a5ef42012ab444b7e0a62d18eeb039845e01ad3d1d3d036764cad7f69bb4d18"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderSync/EXReaderSyncConfig.cmake": {
+      "bytes": 3584,
+      "sha256": "5e91e548f1e8d34a9e0d50908e1830ee200a4848a6348a1ef31dc93868315c2c"
+    },
+    "lib/cmake/EXReaderSyncView/EXReaderSyncViewConfig.cmake": {
+      "bytes": 1999,
+      "sha256": "68207e44566791e453e2aeaa7e31581ef528439ba2ff12d982028ed21820d64d"
+    },
+    "lib/cmake/EXReaderSyncView/EXReaderSyncViewTargets-release.cmake": {
+      "bytes": 963,
+      "sha256": "b7d9a9e06d871454fc515b320d73d9d2b7ae837f086ad8b282c3b26b2b76ae73"
+    },
+    "lib/cmake/EXReaderSyncView/EXReaderSyncViewConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderSyncView/EXReaderSyncViewTargets.cmake": {
+      "bytes": 4342,
+      "sha256": "1242b95f2c959f59f99f2f532a8677a7fc955f8c9c50662b5b62118256d9bd20"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets.cmake": {
+      "bytes": 4695,
+      "sha256": "61a88fdef78aed7616bc15df0321cdba7389c1790778a8a26934f4b8e40432ca"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets-release.cmake": {
+      "bytes": 1584,
+      "sha256": "fdd6fcbdf96bbcf18c1952913a06e9a3b7599b3cafc0d647603438c2d12ab05a"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "264039e00e98497141a1f51986a7ca1bb7011536001ceb46f775b44e6b112d5e"
+    },
+    "lib/cmake/EXReaderRevisions/EXReaderRevisionsConfig.cmake": {
+      "bytes": 8589,
+      "sha256": "bbd5dcf2051d2368333636c5bce621c3bc5294fd6e01cb7ca22b4e5d9b9c22c7"
+    },
+    "lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfig.cmake": {
+      "bytes": 1301,
+      "sha256": "fbf3824a08d3a9c6675256a9e6d671117273c3877199217689d7415799a7538d"
+    },
+    "lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets.cmake": {
+      "bytes": 4301,
+      "sha256": "70aace3d2e15265c271a7a8521613dabd75fafc0ebf1b9a7e0cc9c4902c874ee"
+    },
+    "lib/cmake/EXReaderFontLibrary/EXReaderSdkTargetGuard.cmake": {
+      "bytes": 3812,
+      "sha256": "ed4afb715047021a165a8e8e18bc7d36b71f25422c1d5725fc7bdfc43fb1091b"
+    },
+    "lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderFontLibrary/EXReaderFontLibraryTargets-release.cmake": {
+      "bytes": 999,
+      "sha256": "acb8f008c96d4525f0148e69c38ba5a66497ab531464442f9564aeaa365acd13"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchTargets-release.cmake": {
+      "bytes": 932,
+      "sha256": "977c3a5d8f8b1b1fb8aa87a1e200b73c2780fd55edbbeb7c5aab9d7d529ebd84"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchConfig.cmake": {
+      "bytes": 1073,
+      "sha256": "b317ba3e2a4100e5df3b689ef7d3cd81ff333d5f6b40ab4552d53d72d71cee26"
+    },
+    "lib/cmake/EXReaderSearch/EXReaderSearchTargets.cmake": {
+      "bytes": 4266,
+      "sha256": "33235c8bc3d454384c177453f1f2a2cf16456f547427afea3a1a066d393440f7"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets-release.cmake": {
+      "bytes": 1686,
+      "sha256": "1d0d0acc0cb0c0e6636fb347cf3cfffdebf8e102be0ebd0842e7c9356d44d0cf"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "f1f7887f16102d42a1ec373d902e672111bcb69a72c17a29ad093105426391cd"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateConfig.cmake": {
+      "bytes": 2445,
+      "sha256": "63f8f2a9e376afbd204dd6845535a780cd1fae1c88e1ef897bc1bdba8859e296"
+    },
+    "lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets.cmake": {
+      "bytes": 5013,
+      "sha256": "4ae6158a1041b719b0acd90d2aca37f2741169081e30859dfb8a8b23f07500ab"
+    },
+    "lib/cmake/EXReaderOriginalExport/EXReaderOriginalExportTargets.cmake": {
+      "bytes": 4345,
+      "sha256": "7b18cd2dcf75ecf26607e7adcd025033e24326f4fdcc4c24372ed1a847a9def9"
+    },
+    "lib/cmake/EXReaderOriginalExport/EXReaderOriginalExportTargets-release.cmake": {
+      "bytes": 1035,
+      "sha256": "909674b9753d1f07a49f7cdbce53a3e0d39efd2abd3bfbb01631e12df809f57c"
+    },
+    "lib/cmake/EXReaderOriginalExport/EXReaderOriginalExportConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "lib/cmake/EXReaderOriginalExport/EXReaderOriginalExportConfig.cmake": {
+      "bytes": 1235,
+      "sha256": "6519f30ed4aaefc76f9db6858dd08f4c740c06e3697a8ebce0428800e43eb6cf"
+    },
+    "lib/cmake/EXReaderOriginalExport/EXReaderSdkTargetGuard.cmake": {
+      "bytes": 3812,
+      "sha256": "ed4afb715047021a165a8e8e18bc7d36b71f25422c1d5725fc7bdfc43fb1091b"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVTargets.cmake": {
+      "bytes": 4283,
+      "sha256": "8c792f66771ba3ef15e27f46990b0f24d2c1a6913aa26cecf521fafa84606f1a"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVTargets-release.cmake": {
+      "bytes": 918,
+      "sha256": "12223dfa4e08b3d82433619a9465ddb35f0c309d91f85540dbccc08dfd12414b"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVConfig.cmake": {
+      "bytes": 1195,
+      "sha256": "0dbbf335f799ce54c33916640e96042e4c403899ae3e2de83c0d4955cd27130e"
+    },
+    "lib/cmake/EXReaderWebDAV/EXReaderWebDAVConfigVersion.cmake": {
+      "bytes": 2762,
+      "sha256": "bef27358917b8deca0715d09e7d3004f9fb86c7b5a76fc12ca8c48481d93aa7c"
+    },
+    "lib/cmake/EXReaderWebDAVObserved/EXReaderWebDAVObservedConfig.cmake": {
+      "bytes": 1685,
+      "sha256": "c1401ce94631d908e25444f271cb516ea5ed063c905f0bf4d178909de4531c91"
+    },
+    "lib/cmake/EXReaderWebDAVObserved/EXReaderWebDAVObservedConfigVersion.cmake": {
+      "bytes": 3675,
+      "sha256": "6cecb804c170b7d5262a13684a8949f8d1c01a5d72898b1cd64f9e3ebfe448dd"
+    },
+    "share/exreader-product/002_originals.sql": {
+      "bytes": 758,
+      "sha256": "25cd59e8cc894a620cce072ff58b7791602c5b25ba8bc7d5df96ab02dbe2c8db"
+    },
+    "share/exreader-product/003_original_staging.sql": {
+      "bytes": 1233,
+      "sha256": "b5b170d15f05a36917cf2d677d5cc115283880ae1b7ec9ece6cea973ab92ae7a"
+    },
+    "share/exreader-product/sqlite-public-domain.txt": {
+      "bytes": 761,
+      "sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc"
+    },
+    "share/exreader-product/001_catalog.sql": {
+      "bytes": 10051,
+      "sha256": "d3d4a7d2f0f855286f212e73f165ec4c7109786be984e1f51440a4727197f473"
+    },
+    "share/exreader-credentials/LICENSE.txt": {
+      "bytes": 1078,
+      "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+    },
+    "share/exreader-apple/product.json": {
+      "bytes": 1416,
+      "sha256": "365c4042c227d01d88a32a5379a3d1505a2bcf855ccf8cb47708f1cd9bdf93ef"
+    },
+    "share/exreader-webdav/LICENSE.txt": {
+      "bytes": 1078,
+      "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+    }
+  }
+}

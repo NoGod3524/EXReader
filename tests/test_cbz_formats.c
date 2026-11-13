@@ -23,10 +23,37 @@ static void expect_page(exr_fixed_document *d,size_t page,const char *id,unsigne
   for(y=0;y<bitmap.height;y++) for(x=0;x<bitmap.width;x++) for(k=0;k<4;k++) CHECK(bitmap.pixels[(size_t)y*bitmap.stride+x*4+k]<=255);
   exr_bitmap_free(&bitmap);
 }
+static void natural_frames(const char *root) {
+  static const char *names[]={"Page1.gif","page01.gif","page1.gif"};
+  mz_zip_archive zip={0};void *archive=NULL;size_t size=0,count,member,frame;exr_fixed_document *d=NULL;
+  CHECK(mz_zip_writer_init_heap(&zip,0,0));
+  for(member=3;member>0;member--) put_file(&zip,names[member-1],root,"images/gif/animation.gif");
+  CHECK(mz_zip_writer_finalize_heap_archive(&zip,&archive,&size));CHECK(mz_zip_writer_end(&zip));
+  OK(exr_fixed_open_memory(EXR_CBZ,archive,size,NULL,&d,&error));
+  exr_fixed_pages(d,&count);CHECK(count==12);
+  for(member=0;member<3;member++) for(frame=0;frame<4;frame++) {
+    char id[64];
+    if(frame) snprintf(id,sizeof(id),"%s#%zu",names[member],frame);else snprintf(id,sizeof(id),"%s",names[member]);
+    expect_page(d,member*4+frame,id,8,8);
+  }
+  exr_fixed_free(d);mz_free(archive);
+}
+static void alpha_pages(const char *root) {
+  mz_zip_archive zip={0};void *archive=NULL;size_t size=0,i;exr_fixed_document *d=NULL;exr_bitmap png={0},tiff={0};
+  CHECK(mz_zip_writer_init_heap(&zip,0,0));
+  put_file(&zip,"1.png",root,"images/png/alpha.png");put_file(&zip,"2.tif",root,"images/tiff/alpha.tif");
+  CHECK(mz_zip_writer_finalize_heap_archive(&zip,&archive,&size));CHECK(mz_zip_writer_end(&zip));
+  OK(exr_fixed_open_memory(EXR_CBZ,archive,size,NULL,&d,&error));
+  OK(exr_fixed_render(d,0,1,NULL,&png,&error));OK(exr_fixed_render(d,1,1,NULL,&tiff,&error));
+  CHECK(png.width==tiff.width && png.height==tiff.height && png.stride==tiff.stride);
+  for(i=0;i<(size_t)png.stride*png.height;i++) CHECK(abs((int)png.pixels[i]-tiff.pixels[i])<=1);
+  exr_bitmap_free(&png);exr_bitmap_free(&tiff);exr_fixed_free(d);mz_free(archive);
+}
 int main(int argc,char **argv) {
   mz_zip_archive zip;void *archive=NULL;size_t size=0,count,i;exr_fixed_document *d=NULL;const exr_fixed_page *pages;
   const char *info="<ComicInfo><Title>Formats</Title><Writer>WP12a</Writer></ComicInfo>";
   CHECK(argc==2);
+  natural_frames(argv[1]);
   memset(&zip,0,sizeof(zip));CHECK(mz_zip_writer_init_heap(&zip,0,0));
   put_file(&zip,"Chapter/1.png",argv[1],"images/png/solid.png");
   put_file(&zip,"Chapter/2.gif",argv[1],"images/gif/animation.gif");
@@ -41,6 +68,7 @@ int main(int argc,char **argv) {
   { exr_status opened=exr_fixed_open_memory(EXR_CBZ,archive,size,NULL,&d,&error);
     if(opened==EXR_UNSUPPORTED) { printf("skip CBZ format matrix: %s\n",error.message);mz_free(archive);return 0; }
     CHECK(opened==EXR_OK); }
+  alpha_pages(argv[1]);
   CHECK(!strcmp(exr_fixed_title(d),"Formats"));
   pages=exr_fixed_pages(d,&count);
   CHECK(count==14);

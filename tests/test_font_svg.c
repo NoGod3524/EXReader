@@ -364,6 +364,103 @@ static void layout_identity(exr_font *font) {
   exr_document_free(document);
 }
 
+/* IDs in the separate audit regression font; the reference font is unchanged. */
+enum {
+  R_DEFAULT_STROKE = 2, R_NO_STROKE, R_EXPLICIT_STROKE, R_INHERITED_STROKE,
+  R_FILL_DECIMAL, R_FILL_PERCENT, R_STROKE_DECIMAL, R_STROKE_PERCENT,
+  R_GROUP_DECIMAL, R_GROUP_PERCENT, R_ROOT_OPACITY, R_ROOT_SELECTED,
+  R_ROOT_SELECTED_REFERENCE, R_ROOT_ID, R_ROOT_TRANSFORM, R_ROOT_TRANSFORM_REFERENCE,
+  R_ONE_STROKE, R_MANY_STROKES, R_MITER, R_MITER_PADDED, R_MITER_LARGE_LIMIT,
+  R_BAD_FILL_PERCENT, R_BAD_STROKE_PERCENT, R_BAD_OPACITY_UNIT, R_BAD_OPACITY_PERCENT,
+  R_ROOT_ZERO, R_DEFAULT_LINE, R_NO_PAINT, R_MITER_SHEAR
+};
+
+static void same_scene(exr_font *font, unsigned first, unsigned second, float size) {
+  exr_status status;
+  exr_bitmap a = render_glyph(font, first, size, 0x000000ff, 0, NULL, &status), b;
+  CHECK(status == EXR_OK);
+  b = render_glyph(font, second, size, 0x000000ff, 0, NULL, &status);
+  CHECK(status == EXR_OK);
+  CHECK(a.width == b.width && a.height == b.height && a.stride == b.stride);
+  CHECK(!memcmp(a.pixels, b.pixels, (size_t)a.stride*a.height));
+  exr_bitmap_free(&a); exr_bitmap_free(&b);
+}
+
+static void stroke_reference(exr_font *font, unsigned id, const double matrix[6]) {
+  exr_path_segment path[3] = {
+    {EXR_PATH_MOVE, {{100, 900}}}, {EXR_PATH_LINE, {{500, 100}}}, {EXR_PATH_LINE, {{600, 900}}}
+  };
+  exr_canvas_config config = {0};
+  exr_draw_style style = exr_draw_style_defaults();
+  exr_canvas *canvas = NULL;
+  exr_bitmap image = scene(font, id);
+  const exr_bitmap *reference;
+  size_t i;
+  unsigned difference = 0;
+  config.width = image.width; config.height = image.height; config.channels = 4;
+  config.background = 0xffffffff;
+  OK(exr_canvas_create(&config, &canvas, &error));
+  style.flags = EXR_DRAW_STROKE; style.stroke = 0xff0000ff;
+  style.line.width = 100; style.line.join = EXR_JOIN_MITER; style.line.miter_limit = 20;
+  OK(exr_canvas_path(canvas, path, 3, matrix, &style, &error));
+  reference = exr_canvas_bitmap(canvas);
+  CHECK(reference->stride == image.stride);
+  /* Compare against the full page canvas, without the SVG glyph allocation.
+     Allow one unit for the extra straight-alpha glyph compositing step. */
+  for (i = 0; i < (size_t)image.stride*image.height; i++) {
+    unsigned delta = (unsigned)abs((int)image.pixels[i] - (int)reference->pixels[i]);
+    if (delta > difference) difference = delta;
+  }
+  CHECK(difference <= 1);
+  exr_canvas_free(canvas); exr_bitmap_free(&image);
+}
+
+static void reliability(const char *directory) {
+  exr_font *font = open_font(directory, "svg-reliability.ttf");
+  exr_bitmap image;
+  exr_status status;
+  unsigned id;
+  same_scene(font, R_DEFAULT_STROKE, R_NO_STROKE, 100);
+  same_scene(font, R_EXPLICIT_STROKE, R_INHERITED_STROKE, 100);
+  image = scene(font, R_DEFAULT_STROKE); white(&image, 228, 150); exr_bitmap_free(&image);
+  image = scene(font, R_INHERITED_STROKE); near(&image, 228, 150, 0, 0, 0, 0); exr_bitmap_free(&image);
+  same_scene(font, R_FILL_DECIMAL, R_FILL_PERCENT, 100);
+  same_scene(font, R_STROKE_DECIMAL, R_STROKE_PERCENT, 100);
+  same_scene(font, R_GROUP_DECIMAL, R_GROUP_PERCENT, 100);
+  same_scene(font, R_ROOT_OPACITY, R_GROUP_DECIMAL, 100);
+  /* Selected defs content inherits root paint and root opacity surrounds the
+     whole selection. A root glyph ID must not apply those attributes twice. */
+  same_scene(font, R_ROOT_SELECTED, R_ROOT_SELECTED_REFERENCE, 100);
+  same_scene(font, R_ROOT_ID, R_ROOT_SELECTED_REFERENCE, 100);
+  same_scene(font, R_ROOT_TRANSFORM, R_ROOT_TRANSFORM_REFERENCE, 100);
+  image = scene(font, R_ROOT_ZERO); white(&image, 250, 150); exr_bitmap_free(&image);
+  same_scene(font, R_ROOT_ZERO, R_DEFAULT_LINE, 100);
+  same_scene(font, R_ROOT_ZERO, R_NO_PAINT, 100);
+  /* Equal visible geometry must not gain bounds through repeated strokes or
+     lose a miter tip when the nonpainting padding is removed. */
+  same_scene(font, R_ONE_STROKE, R_MANY_STROKES, 200);
+  same_scene(font, R_MITER, R_MITER_PADDED, 100);
+  same_scene(font, R_MITER, R_MITER_LARGE_LIMIT, 100);
+  {
+    const double normal[6] = {.1, 0, 0, .1, 220, 100};
+    const double shear[6] = {.12, .03, -.02, .08, 220, 100};
+    stroke_reference(font, R_MITER, normal);
+    stroke_reference(font, R_MITER_LARGE_LIMIT, normal);
+    stroke_reference(font, R_MITER_SHEAR, shear);
+  }
+  for (id = R_BAD_FILL_PERCENT; id <= R_BAD_OPACITY_PERCENT; id++) {
+    image = render_glyph(font, id, 100, 0x000000ff, 0, NULL, &status);
+    CHECK(status == EXR_FORMAT && !image.pixels);
+  }
+  for (id = 0; id <= 8; id++) {
+    cancel_state state = {0, id};
+    exr_control control = {cancelled, NULL, &state};
+    image = render_glyph(font, R_ROOT_SELECTED, 100, 0x000000ff, 0, &control, &status);
+    CHECK(status == EXR_CANCELLED && !image.pixels);
+  }
+  exr_font_free(font);
+}
+
 int main(int argc, char **argv) {
   exr_font *font;
   CHECK(argc == 3);
@@ -377,6 +474,7 @@ int main(int argc, char **argv) {
   limits(font);
   layout_identity(font);
   exr_font_free(font);
+  reliability(argv[1]);
   printf("%u SVG font element, transform, rejection, limit and identity checks passed\n", checks);
   return 0;
 }

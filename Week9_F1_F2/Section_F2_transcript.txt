@@ -1,0 +1,505 @@
+YouTube transcript
+Video ID: Ssh74N9SkOo
+Language: en
+Captions: auto-generated
+
+[0:00] in this next section we talk about
+[0:02] compound interest which is a much more
+[0:04] common type of interest so let's start
+[0:07] with an example let's say a bank offers
+[0:09] an account with interest and interest
+[0:10] rate of 6% it's compounded annually and
+[0:13] we just want to know how much money we
+[0:14] have after each year so let's say we
+[0:18] start with $100
+[0:23] so after year 1 I have that $100 plus
+[0:32] that $100 earns interest so 6% of 100 is
+[0:39] $6 so at the end of year one I have 106
+[0:43] dollars but now after year 2 at the
+[0:50] beginning of year 2 I have that 106
+[0:53] dollars and then that 106 dollars is
+[1:01] going to earn its own 6% interest so 6%
+[1:10] of 106 let's calculate that out so I do
+[1:13] 106 times point zero 6 and that gives me
+[1:19] 6 dollars and 36 cents so I end up with
+[1:22] a hundred and one hundred and twelve
+[1:27] dollars and 36 cents so before we're
+[1:33] doing simple interest we would have just
+[1:35] gotten that six dollars of interest
+[1:38] every year but now this 6 dollars I got
+[1:42] after the first year it can go ahead and
+[1:45] earn its own interest during that second
+[1:47] year so I end up with this extra 36
+[1:49] cents then after year three I have that
+[1:56] 112 dollars and 36 cents and now that
+[2:00] 112 dollars and 36 cents earns its own
+[2:04] 6% interest so 112 36 times that 6% is
+[2:14] $6.74 so I add that on to the 112 36
+[2:21] that I had before and I end up with now
+[2:24] a hundred and nineteen dollars and ten
+[2:28] cents alright so before with simple
+[2:30] interest I would have only had 118 at
+[2:32] this point but now I've got an extra $10
+[2:35] ten because my interest is earning
+[2:37] interest as we go so let's think about
+[2:40] some ways that we can kind of simplify
+[2:42] these expressions so we can start coming
+[2:44] up with a formula here so for this first
+[2:47] one I noticed that I have a hundred
+[2:49] twice so I can factor that 100 out and I
+[2:54] can write that as one because there's a
+[2:57] one left when i factor it out the first
+[2:59] term plus point zero zero point zero six
+[3:04] and then that's that and that gives me
+[3:10] that 106 so now let's look at the second
+[3:15] one I'm going to factor out that 106 so
+[3:20] that 106 then I get 1 plus 0.06 but we
+[3:25] remember that that 106 that just came up
+[3:28] from here so that 100 at 6 itself was
+[3:31] equal to 100 times one plus point zero
+[3:36] point zero 6 and then I have this extra
+[3:43] new 1 plus 0.06 so altogether I have 100
+[3:51] times 1 plus 0.06 squared and we do the
+[4:00] same thing for the last one so this is
+[4:03] going to be 112 point 36 times 1 plus
+[4:11] 0.06 but this 112 point 36 that was the
+[4:17] amount I had up above I said that was
+[4:20] equal to 100 times 1 plus 0.06
+[4:26] squared and that I'm multiplying that by
+[4:29] another one plus 0.06 so all together I
+[4:33] end up with 100 times 1 plus 0.06 cubed
+[4:41] so the number of years we have gives us
+[4:45] this power on this one plus 0.06 so we
+[4:49] can sort of start figuring out what this
+[4:51] formula is going to look like so before
+[4:53] we go and come up with that formula we
+[4:55] want it to be a little bit more general
+[4:57] so let's say that I have interest which
+[5:00] is compounded monthly instead of just
+[5:02] compounded once per year so what does
+[5:05] that mean that means instead of waiting
+[5:07] to the end of the year to give us our
+[5:09] interest they're going to give us the
+[5:11] interest every month so let's say I do
+[5:13] after month one so after month one I'm
+[5:20] gonna have that $100 I started with plus
+[5:23] the interest but if I have a 6% annual
+[5:31] interest they don't give me that full 6%
+[5:35] every month they're gonna give me a
+[5:36] portion of that so I'm gonna take that
+[5:39] annual interest and I'm gonna divide it
+[5:42] by the number of times it's compounded
+[5:44] so I divide it by 12 because there's 12
+[5:46] months in a year so that gives me a
+[5:48] point five percent so I get 0.005
+[5:59] interest per month
+[6:06] so I have 1 plus 0.005 of interest after
+[6:14] month 1 and then after month 2 let's go
+[6:24] ahead and simplify this using the trick
+[6:26] we saw from last time so then that's
+[6:28] gonna just be 100 times 1 plus this new
+[6:35] interest rate 0.005
+[6:41] so then after month 2 we do that same
+[6:47] thing again so I'm gonna have the amount
+[6:49] I had before Plus that times my interest
+[7:00] rate
+[7:06] so if i factor out that 100
+[7:14] sorry Gabe this was the overall amount
+[7:18] in the bank and then I have to take that
+[7:21] amount plus that amount times the
+[7:23] interest so if i factor out that 100
+[7:31] times 1 plus 0.005 because I see those
+[7:36] terms in common I'm left with a 1 plus
+[7:40] 0.005 so that's a 100 times 1 plus 0.005
+[7:48] squared so let's see if we can go
+[7:53] through and pick out these important
+[7:55] pieces that show up in these formulas so
+[7:57] I can see my principal P that gets
+[8:03] multiplied times 1 plus whatever
+[8:06] interest rate I'm getting and then I
+[8:11] raised that to the N where the N is that
+[8:13] number of years and I see the same thing
+[8:16] down here I have the principal times 1
+[8:19] plus now a my interest rate
+[8:22] I had to divide that by the number of
+[8:25] times I was compounding per year so
+[8:28] let's call this n number of times
+[8:33] compounded and then I raised that to the
+[8:42] total months here so if we want that to
+[8:49] instead be in years we have to do some
+[8:51] sort of a change so in the next slide
+[8:53] we'll go ahead and put together these
+[8:55] formulas ok so let's build our formulas
+[8:58] from what we talked about last time so
+[9:00] the amount of money we're gonna have so
+[9:02] that's our future value we saw was equal
+[9:05] to the principal times the amount of
+[9:08] interest we got plus the amount we had
+[9:11] in the bank right so that one
+[9:12] represented the amount of money we had
+[9:13] already plus if it was just compounded
+[9:16] once per year I had my interest rate R
+[9:19] as a decimal and I just needed to raise
+[9:22] that to the T power where the T was that
+[9:25] number of years okay so in this case
+[9:28] it's where my M is equal to one with the
+[9:30] number of times compounded it's one now
+[9:34] if it's compounded and the times per
+[9:36] year instead we said that we still are
+[9:39] going to have that same P but now my
+[9:42] interest rate is gonna get divided by
+[9:45] that M because I'm not gonna get the
+[9:48] full interest every time I'm just gonna
+[9:50] get one M of that and then I still want
+[9:54] this to be how much I have after T years
+[9:57] so I need to figure out how many times
+[10:00] I'm gonna get interest so after two
+[10:03] years
+[10:04] if I get interest M times per year I'm
+[10:07] gonna have had interest M times T times
+[10:09] so the formula for compounded interest
+[10:13] if it's compounded M times per year is
+[10:15] this one and really this works even if M
+[10:18] equals one so you don't need to worry
+[10:20] about remembering that other formula you
+[10:22] can just stick with this one so this is
+[10:24] the formula you need to make sure you
+[10:26] remember let's look at some of these
+[10:32] typical M values added that to the side
+[10:34] over here so if they say that something
+[10:37] is being compounded annually that just
+[10:39] means once per year so that means my M
+[10:41] would be 1 semi-annually means twice per
+[10:44] year so that's gonna be Emmie khals to
+[10:47] monthly once every month would give you
+[10:50] that your M equals 12 weekly is once a
+[10:54] week so there's 52 weeks in a year so
+[10:56] we're gonna say M equals 52 and then
+[10:59] daily we're gonna say M equals 365 so
+[11:04] we'll assume it's not a leap here okay
+[11:08] so let's say we want to go ahead and
+[11:10] calculate it so do some sample problems
+[11:13] and where do you try to use desmos to
+[11:14] help us so we're gonna start with $6,000
+[11:17] and we want to know how much money do we
+[11:18] have after 10 years if we assume a 5%
+[11:21] interest rate and either simple interest
+[11:24] or interest compounded annually or
+[11:26] interest compounded daily so what I want
+[11:30] to do here is I want to set up decimals
+[11:31] to sort of have these formulas built in
+[11:33] so that if I'm trying to solve a lot of
+[11:36] these different types of problems then
+[11:38] we can kind of just change the numbers
+[11:39] as we go instead of having to put in
+[11:41] these come
+[11:41] formulas each time so here's what that's
+[11:43] gonna look like I'm gonna go ahead and
+[11:45] put in all my variables so I have P
+[11:47] equals 6,000 we can just put that in I
+[11:52] know that my time is 10 years so I'll
+[11:56] put that in I have an interest rate of
+[11:59] 0.05 so we put that in and we'll put an
+[12:05] M of 1 so the number of times compounded
+[12:07] per year of 1 to the red store camp on
+[12:10] did annually 1 okay so now that I have
+[12:13] all these in I can actually just put in
+[12:16] the formula and it will calculate things
+[12:17] for me so if I wanted to do the simple
+[12:20] interest I can just write P times 1 plus
+[12:24] R times T and it knows what p and r and
+[12:29] t are so it can go ahead and actually
+[12:31] calculate that out so we get that 9,000
+[12:35] if I want to do the next one compounded
+[12:38] annually my formula is P times 1 plus R
+[12:43] over m to the M times rate times it
+[12:51] doesn't go down so I'm gonna put the T
+[12:53] and off there are times in between them
+[12:55] and then that gives me the compounded
+[12:57] annually so let's go ahead and put those
+[12:59] numbers in here so I got my $9,000 for
+[13:04] simple interest and I got nine thousand
+[13:08] seven hundred and seventy three dollars
+[13:11] and thirty seven cents for compounded
+[13:14] annually now if I wanted to compounded
+[13:17] daily instead the only thing I need to
+[13:20] change is that I need my M which was
+[13:22] before one to be 365 so I can simply go
+[13:28] in and change that M to 365 and now if
+[13:32] we scroll down it's going to update and
+[13:35] give us the amount if I'm compounded
+[13:37] daily instead so I get nine thousand
+[13:39] eight hundred and ninety one 0.99 so if
+[13:47] it was simple interest
+[13:48] I only have nine thousand dollars
+[13:50] compounded annually gives me an extra
+[13:53] seven hundred and seventy three dollars
+[13:55] and if it's compounded daily then I end
+[13:57] up with 891 more than that simple
+[14:00] interest so the more times we compound -
+[14:03] the more money we'll end up getting okay
+[14:06] one other thing I want to do while we're
+[14:07] here in desmos is actually compare with
+[14:10] these different things look like so I
+[14:12] want to compare the growth rate of a
+[14:14] simple interest to the growth rate of
+[14:16] something compounded annually so what
+[14:19] I'm gonna do is I'm going to go back to
+[14:20] my simple interest formula and I'm just
+[14:22] gonna go ahead and graph this so we'll
+[14:26] go back into here and I want the Y the
+[14:30] output to tell me how much money I have
+[14:34] after X years so we can't see the graph
+[14:38] right because we know we start with
+[14:40] 6,000 so we're just not gonna be showing
+[14:43] enough space here so I'm gonna go into
+[14:45] the settings and I'm gonna change my
+[14:47] Axios it's the x-axis that's
+[14:49] representing the years so we'll start
+[14:52] with zero and maybe go up to fifteen
+[14:54] years and for the y-axis I know I'm
+[14:57] starting with around $6,000 so maybe
+[15:00] I'll start a little bit below that and
+[15:02] I'm going up to somewhere around $10,000
+[15:06] in ten years so maybe we'll go up to
+[15:08] $15,000 overall so that gives me sort of
+[15:13] a better chance of finding my graph and
+[15:16] now that I find it I can kind of zoom in
+[15:18] and zoom out and we can see that when
+[15:20] you have this simple interest you're
+[15:22] just going to get a line we're just
+[15:23] gonna get a linear function so let's
+[15:25] compare that now to our compound
+[15:28] interest so I'm going again put in a y
+[15:30] equals and I want to change my T to an X
+[15:34] so it's telling me how much money I have
+[15:36] after X years and we can see that they
+[15:39] both start out at that 6,000 but then
+[15:43] that compounded right now compounded
+[15:46] daily is growing much much faster than
+[15:49] that simple interest so that's how we
+[15:51] have that much money and as we go for
+[15:53] more and more years it's going to be
+[15:55] growing significantly faster so it's
+[15:58] gonna be all the way up around 50,000
+[16:00] dollars a little after 40 years where my
+[16:03] simple interest would still be less than
+[16:04] 20,000 so compound interest can grow
+[16:07] very very quickly
+[16:10] so this is an example we had in the last
+[16:12] section and we want to go ahead and
+[16:14] adjust it and see what's gonna happen so
+[16:16] before we had a thousand dollars and we
+[16:19] wanted to have a million dollars in ten
+[16:20] years and we tried to figure out what
+[16:22] simple interest rate we needed so let's
+[16:25] just go ahead and keep track so we had a
+[16:27] nine hundred and ninety nine percent
+[16:29] simple interest rate and now I want to
+[16:34] just change the problem so I want to say
+[16:37] what interest rate do we need if
+[16:42] interest is compounded D so now I have a
+[16:50] compound interest instead of a simple
+[16:53] interest so my future value is still a
+[16:56] million my T is still a hundred and my
+[17:00] present value is still a thousand but
+[17:03] I'm gonna have a different formula here
+[17:04] so let's go ahead and get rid of the old
+[17:07] formula for simple interest and we can
+[17:10] put in our new formula here so what do
+[17:13] we have
+[17:14] remember that for compound interest my
+[17:17] future value is P times 1 plus R over m
+[17:22] to the M T it's compounded daily so M is
+[17:28] equal to 365 so we can go ahead and put
+[17:34] in the stuff that we have so I have a
+[17:37] million let's get our zeroes correct
+[17:41] equals one thousand one plus the
+[17:46] interest rate is what I'm trying to find
+[17:49] R over N 365 to the Mt so 365 times 100
+[18:01] quite a big number there so now I'm
+[18:05] trying to solve for this R so the first
+[18:07] thing I need to do is divide by a
+[18:10] thousand so I'm gonna divide both sides
+[18:13] by a thousand here so I get 1,000 equals
+[18:20] one plus
+[18:22] are over 365 to the 365 times 100 and
+[18:30] now because that's a power I need to
+[18:33] take that route so I need to do 365
+[18:37] times 100 so that's three hundred and
+[18:40] thirty six thousand five hundred root of
+[18:43] 1,000 so depending on the type of
+[18:46] calculator you have you may or may not
+[18:49] be able to do this but let's go ahead
+[18:51] and see if desmos can do this for us so
+[18:53] I'm going to put in my 1002 putting this
+[19:02] brute let's go ahead and just write out
+[19:05] that other side if you remember the 360
+[19:10] there 36500 the root is the same as one
+[19:14] thousand to the one over thirty-six
+[19:19] thousand five hundred power so that's
+[19:22] one plus R over 365 36500
+[19:33] and now I've got that value it's one
+[19:38] point zero zero zero one so I'm going to
+[19:41] go ahead and subtract one from both
+[19:43] sides so I get that complicated
+[19:46] expression minus one equals R over 365
+[19:53] so then if I multiply both sides by 365
+[20:03] that gives me my are so I'm going to go
+[20:05] ahead and put that into decimals and I
+[20:09] get R is equal to zero point zero six
+[20:18] nine
+[20:19] or six point nine percent so before when
+[20:24] I wanted a million dollars in a hundred
+[20:26] years I needed a nine hundred and ninety
+[20:29] nine percent simple interest rate but
+[20:32] now if it's compounded daily I only need
+[20:35] a six point nine percent interest rate
+[20:37] so compounding daily makes a huge
+[20:39] difference let's go ahead and do the
+[20:42] same calculation this next problem is
+[20:45] only about ten years so it's not going
+[20:50] to be as big of a difference because I
+[20:51] don't have as much time for that
+[20:53] compound to make a difference so before
+[20:56] let's record this in the corner before
+[20:58] we needed a ten percent simple interest
+[21:02] rate so let's go ahead and change it to
+[21:08] the interest being compounded daily so
+[21:18] we have our formula is the future value
+[21:22] equals P times 1 plus R over N to the M
+[21:28] T I want to find my interest rate R so
+[21:32] that my money doubles in 10 years so I
+[21:35] want to P where I start with P one plus
+[21:40] R over 365 to the 365 times 10 so I get
+[21:49] dividing by P 2 equals 1 plus R over 365
+[21:57] to the 300 let's see five times ten
+[22:01] which is three thousand six hundred and
+[22:02] fifty so then I have to take that route
+[22:05] so I get two to the one over three
+[22:09] thousand six hundred and fifty equals
+[22:12] one plus R over 365
+[22:16] subtracting 1/2 to the 1 over 36 50
+[22:21] minus 1 equals R over 365 and then
+[22:27] finally R is going to be 365 times 2 to
+[22:32] the power of 1 over 36 50 minus 1 so if
+[22:38] we used s most to calculate that out
+[22:39] I've got my 365 times 2 to the 1 over
+[22:45] 365 0 minus 1 and I get my R is zero
+[22:57] point zero 6 9 3 so it actually looks
+[23:01] very similar to the interest rate above
+[23:02] which tells me that that's six point
+[23:05] nine three percent so if it's only ten
+[23:09] years then my 10% interest rate is just
+[23:12] going to go down to a six point nine
+[23:14] three percent interest rate for
+[23:17] compounded daily so ten years isn't
+[23:22] gonna make this big of a difference is a
+[23:23] hundred years because for a hundred
+[23:26] years I've that interest that I care in
+[23:28] those first few years it's really gonna
+[23:29] become big so that makes a big
+[23:32] difference for us let's say we're trying
+[23:36] to decide between two different bank
+[23:37] accounts where we want to get savings
+[23:40] accounts think a has an eight point five
+[23:43] zero percent interest rate and it's
+[23:45] compounded semi-annually and Bank B
+[23:47] offers an eight point four eight percent
+[23:49] interest rate it's compounded daily
+[23:50] right so bank pays interest rate is a
+[23:53] little bit higher but it's compounded
+[23:55] less often and we've seen that when
+[23:57] you're compounded more often you end up
+[23:59] getting more money so we want to know if
+[24:01] that extra compounding is gonna make up
+[24:03] for the fact that Bank B has a slightly
+[24:06] lower interest rate so there's a couple
+[24:08] different ways we can approach this
+[24:09] problem so first let's just think about
+[24:11] how much money how much money we have
+[24:18] after the first year because I don't
+[24:22] give us sort of a way to compare these
+[24:24] different accounts so for Bank a the
+[24:27] money after the amount of money after
+[24:29] the first year
+[24:30] is however much I put in P times 1 plus
+[24:35] the interest rate as a decimal point oh
+[24:37] eight five divided by the number of
+[24:42] times compounded per year two to the two
+[24:45] times one so for example let's say we
+[24:51] have $100 then I would get 100 times 1
+[24:59] plus 0.05 over 2 squared which is 108
+[25:11] 0.68 1 all right so I'm just going to do
+[25:15] a couple extra decimal places here so we
+[25:17] can really picture everything so that
+[25:21] means right I didn't really just get an
+[25:23] 8.5% interest rate my $100 ended up
+[25:28] getting and eight dollars and sixty
+[25:32] eight cents of interest so this is like
+[25:36] we got an $8 and 68 and I get a couple
+[25:41] extra points there interest so eight
+[25:47] dollars in 60 cents an interest so that
+[25:50] is an eight point six one eight point
+[25:54] six eight 1% annual interest rate so I
+[25:59] can take my interest rate which was
+[26:01] compounded semi-annually and turn it
+[26:04] into this annual interest rate and
+[26:06] that's gonna help me to then know how to
+[26:10] compare these different banks so now
+[26:12] let's look at Bank B again after time of
+[26:20] one year I'm gonna have one plus here
+[26:23] this interest rate is 0.08 for 8 it's
+[26:27] compounded daily so that's over 365 to
+[26:31] the 365 times 1 because it's just after
+[26:34] one year so if my P is 100 for example I
+[26:38] would have 100 times 1 plus 0.08 for
+[26:44] eight over 365 to the 365 which is 108
+[26:53] point eight four nine so this account
+[27:02] it's like we got an eight point eight
+[27:06] four you can round that up to eight
+[27:08] point eight five percent annual interest
+[27:14] so there's two different ways I can sort
+[27:16] of think about solving this problem I
+[27:17] can just look at how much money I have
+[27:19] and pick which one's bigger
+[27:22] that's the bank account I should choose
+[27:24] or I can compare these annual interests
+[27:29] well we ended up effectively getting as
+[27:31] our annual interest see which one has a
+[27:34] bigger interest rate this value here is
+[27:38] called the effective annual interest
+[27:41] rate that effective annual interest rate
+[27:49] tells you how much money or what
+[27:53] interest rate you would need so that you
+[27:55] would get that same amount of money if
+[27:57] it was only compounded once per year
+[27:59] instead of being compounded many times
+[28:01] per year so I can calculate out an
+[28:04] effective annual interest rate and
+[28:05] that's going to tell me how much I'm
+[28:10] gonna get at the end of the year so then
+[28:12] I can compare different accounts so if
+[28:15] we kind of think about how we could get
+[28:17] this this are uff that's my effective
+[28:20] annual interest rate
+[28:31] I'm gonna take the amount of money I
+[28:34] have after one year
+[28:36] so I have my P times one plus that
+[28:42] interest rate R over m to the M that's
+[28:45] the amount of money I have after one
+[28:47] year but then I want to be able to think
+[28:50] of this as a percent so I would then
+[28:52] divide by that and then I started with
+[28:55] so I can actually get rid of those Peas
+[28:59] so this is just the interest rate it
+[29:02] doesn't have the amount of money but
+[29:05] then that's gonna be like one point zero
+[29:07] eight and I want that to just be the 8%
+[29:12] not the one point oh eight percent so
+[29:14] then I subtract away a one so my
+[29:18] effective annual interest rate is given
+[29:20] by this formula it tells us what
+[29:25] interest rate we're getting every year
+[29:27] so then we can compare two different
+[29:29] types of accounts

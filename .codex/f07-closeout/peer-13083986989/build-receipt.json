@@ -1,0 +1,16 @@
+{
+  "source_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+  "run_id": "41306566948",
+  "attempt": "1",
+  "platform": "macos",
+  "sdk_source": "8357eafa28423a7ab93ba08b823af80f01ad1505",
+  "sdk_version": "3.42.0",
+  "recipe": "tests/apple_sdk342_host/build.py",
+  "recipe_sha256": "76ebc41b0eed848c2aa31537abff00954657a3d5a460f2f46c65c50ae6112407",
+  "host_runtime_accepted": false,
+  "F04_accepted": false,
+  "original_hash_prefix": null,
+  "parser_policy_checks": null,
+  "installed_identity_sha256": "e0b0772ed6bbdf12aa6a24fb14a7bf6dc79168b8da3b5dffcd6ae73789170eac",
+  "program": null
+}

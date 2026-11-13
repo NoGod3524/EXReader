@@ -48,6 +48,17 @@ static void matrix(const char *root,const char *format,const char *extension,uns
     if(!strcmp(v->name,"alpha") && strcmp(format,"gif") && strcmp(format,"bmp")) {
       CHECK(bitmap.pixels[3]<=tolerance);
       CHECK(abs((int)bitmap.pixels[(v->w-1)*4+3]-255)<=tolerance);
+      if(!strcmp(format,"tiff")) {
+        exr_bitmap reference={0};size_t pixel;unsigned k;
+        read_rgba(root,"png","alpha.png",&reference);
+        CHECK(reference.width==bitmap.width && reference.height==bitmap.height);
+        for(pixel=0;pixel<(size_t)bitmap.width*bitmap.height;pixel++) {
+          unsigned a=bitmap.pixels[pixel*4+3];CHECK(a==reference.pixels[pixel*4+3]);
+          /* Associated 8-bit decoding loses at most one composited channel step. */
+          if(a) for(k=0;k<3;k++) CHECK((unsigned)abs((int)bitmap.pixels[pixel*4+k]-reference.pixels[pixel*4+k])*a<=255);
+        }
+        exr_bitmap_free(&reference);
+      }
     }
     if(!strcmp(v->name,"checker")) {
       CHECK(bitmap.pixels[0]<=tolerance || bitmap.pixels[0]>=255-tolerance);

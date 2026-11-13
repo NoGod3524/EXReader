@@ -1,0 +1,2782 @@
+[
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/00/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/01/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/02/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/03/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/04/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/05/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/06/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/07/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/08/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/09/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/10/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/11/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/12/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/13/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/14/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/15/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/16/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/17/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/18/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/19/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/20/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/21/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/22/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/23/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/24/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/25/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/26/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/27/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/28/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/29/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/30/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/31/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/31/317edef0737540669008cb699149f089-f91c08229b85f0d961f260f85a96798c4a1e68e4cc7288e269b9e6fa562c4bcc.json",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/objects/4f/4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036.epub",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/31/31a7deb755154f25b1a89e8e9974b033-c39c04cc0b058d9cf23cc4ddc59dad1f835f805dc6ed6ef186f21c2697020dbe.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/32/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/33/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/34/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/34/3404da350cc940168e19be625b3fbd92-28ea020a5496a0a2852b5dc24c3e8309a0982e453ef09287132b05a088b1e2f8.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/35/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/36/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/37/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/38/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/39/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/40/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/41/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/42/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/43/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/44/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/45/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/46/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/47/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/48/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/49/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/50/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/51/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/52/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/53/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/54/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/55/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/56/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/57/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/58/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/59/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/60/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/61/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/61/61ad31ad888a48bd9b22837dbbf8d8e6-833a503c702633b518d682ab43c011c7a3f923fc4b04752b4a236c1b9cc85ea3.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/62/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/63/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/64/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/65/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/66/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/67/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/68/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/69/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/70/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/70/70bd60b7d5ca4d3b876325a35d072fe3-b13bca36112aa296dc486d646e55befe832874e554cdce5237e122ad45b7b253.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/71/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/72/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/73/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/74/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/75/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/76/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/77/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/78/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/79/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/80/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/80/8008b70c6b2a47f7bc229d558f911c91-df5b83569db627868833280b1afbcfa6e8ab001dac388c7677e2b0d52145dead.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/81/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/82/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/83/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/84/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/85/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/86/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/87/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/88/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/89/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/90/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/91/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/92/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/93/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/94/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/95/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/96/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/97/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/98/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/99/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/aa/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ab/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ac/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ad/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ae/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/af/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ba/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/be/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bf/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ca/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ce/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cf/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/da/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/db/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/dc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/dd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/de/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/de/de44f9e7488748b987cde4951a1c990e-ac8ce5c4c52575b3e27949621d8aed790f471682dc00a3d41619591ea6afe2f7.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/df/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ea/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/eb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ec/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ed/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ee/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ef/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fa/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fe/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ff/",
+    "authenticated": true
+  },
+  {
+    "method": "MKCOL",
+    "path": "/dav/exreader-sync-v1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/",
+    "authenticated": true
+  },
+  {
+    "method": "MKCOL",
+    "path": "/dav/exreader-sync-v1/objects/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/objects/",
+    "authenticated": true
+  },
+  {
+    "method": "MKCOL",
+    "path": "/dav/exreader-sync-v1/objects/4f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/objects/4f/",
+    "authenticated": true
+  },
+  {
+    "method": "PUT",
+    "path": "/dav/exreader-sync-v1/objects/4f/4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036.epub",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/objects/4f/4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036.epub",
+    "authenticated": true
+  },
+  {
+    "method": "MKCOL",
+    "path": "/dav/exreader-sync-v1/revisions/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/",
+    "authenticated": true
+  },
+  {
+    "method": "MKCOL",
+    "path": "/dav/exreader-sync-v1/revisions/dc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/dc/",
+    "authenticated": true
+  },
+  {
+    "method": "PUT",
+    "path": "/dav/exreader-sync-v1/revisions/dc/dc07b02776c340c48b6ab5bef5624c12-01618ad57cc8a32c5c4e720f127ee9bd574f6c242423137968d9236affbcec84.json",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/dc/dc07b02776c340c48b6ab5bef5624c12-01618ad57cc8a32c5c4e720f127ee9bd574f6c242423137968d9236affbcec84.json",
+    "authenticated": true
+  },
+  {
+    "method": "PUT",
+    "path": "/dav/exreader-sync-v1/objects/4f/4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036.epub",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/objects/4f/4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036.epub",
+    "authenticated": true
+  },
+  {
+    "method": "MKCOL",
+    "path": "/dav/exreader-sync-v1/revisions/30/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/30/",
+    "authenticated": true
+  },
+  {
+    "method": "PUT",
+    "path": "/dav/exreader-sync-v1/revisions/30/305f2dbed0fc4465b54a793cb345e470-3dbab4d3ad587d576fcff63759fb9ce1a9f10729814ad1502c2868cf8fee591a.json",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/30/305f2dbed0fc4465b54a793cb345e470-3dbab4d3ad587d576fcff63759fb9ce1a9f10729814ad1502c2868cf8fee591a.json",
+    "authenticated": true
+  },
+  {
+    "method": "PUT",
+    "path": "/dav/exreader-sync-v1/objects/4f/4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036.epub",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/objects/4f/4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036.epub",
+    "authenticated": true
+  },
+  {
+    "method": "MKCOL",
+    "path": "/dav/exreader-sync-v1/revisions/aa/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/aa/",
+    "authenticated": true
+  },
+  {
+    "method": "PUT",
+    "path": "/dav/exreader-sync-v1/revisions/aa/aa40f8091a1245409d217ea558731df7-b493802c3335c8ecaa495d7e002c27df72300a57f5e4ded36cdd889ab61a0236.json",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/aa/aa40f8091a1245409d217ea558731df7-b493802c3335c8ecaa495d7e002c27df72300a57f5e4ded36cdd889ab61a0236.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/00/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/01/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/02/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/03/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/04/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/05/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/06/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/07/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/08/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/09/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/0f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/10/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/11/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/12/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/13/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/14/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/15/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/16/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/17/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/18/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/19/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/1f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/20/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/21/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/22/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/23/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/24/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/25/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/26/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/27/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/28/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/29/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/2f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/30/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/30/305f2dbed0fc4465b54a793cb345e470-3dbab4d3ad587d576fcff63759fb9ce1a9f10729814ad1502c2868cf8fee591a.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/31/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/31/317edef0737540669008cb699149f089-f91c08229b85f0d961f260f85a96798c4a1e68e4cc7288e269b9e6fa562c4bcc.json",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/31/31a7deb755154f25b1a89e8e9974b033-c39c04cc0b058d9cf23cc4ddc59dad1f835f805dc6ed6ef186f21c2697020dbe.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/32/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/33/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/34/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/34/3404da350cc940168e19be625b3fbd92-28ea020a5496a0a2852b5dc24c3e8309a0982e453ef09287132b05a088b1e2f8.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/35/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/36/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/37/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/38/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/39/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/3f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/40/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/41/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/42/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/43/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/44/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/45/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/46/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/47/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/48/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/49/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/4f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/50/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/51/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/52/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/53/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/54/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/55/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/56/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/57/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/58/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/59/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/5f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/60/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/61/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/61/61ad31ad888a48bd9b22837dbbf8d8e6-833a503c702633b518d682ab43c011c7a3f923fc4b04752b4a236c1b9cc85ea3.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/62/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/63/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/64/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/65/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/66/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/67/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/68/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/69/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/6f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/70/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/70/70bd60b7d5ca4d3b876325a35d072fe3-b13bca36112aa296dc486d646e55befe832874e554cdce5237e122ad45b7b253.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/71/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/72/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/73/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/74/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/75/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/76/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/77/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/78/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/79/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/7f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/80/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/80/8008b70c6b2a47f7bc229d558f911c91-df5b83569db627868833280b1afbcfa6e8ab001dac388c7677e2b0d52145dead.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/81/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/82/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/83/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/84/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/85/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/86/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/87/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/88/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/89/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/8f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/90/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/91/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/92/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/93/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/94/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/95/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/96/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/97/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/98/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/99/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9a/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9b/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9c/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9d/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9e/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/9f/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/a9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/aa/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/aa/aa40f8091a1245409d217ea558731df7-b493802c3335c8ecaa495d7e002c27df72300a57f5e4ded36cdd889ab61a0236.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ab/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ac/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ad/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ae/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/af/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/b9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ba/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/be/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/bf/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/c9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ca/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ce/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/cf/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/d9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/da/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/db/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/dc/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/dc/dc07b02776c340c48b6ab5bef5624c12-01618ad57cc8a32c5c4e720f127ee9bd574f6c242423137968d9236affbcec84.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/dd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/de/",
+    "authenticated": true
+  },
+  {
+    "method": "GET",
+    "path": "/dav/exreader-sync-v1/revisions/de/de44f9e7488748b987cde4951a1c990e-ac8ce5c4c52575b3e27949621d8aed790f471682dc00a3d41619591ea6afe2f7.json",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/df/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/e9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ea/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/eb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ec/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ed/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ee/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ef/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f0/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f1/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f2/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f3/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f4/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f5/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f6/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f7/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f8/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/f9/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fa/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fb/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fc/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fd/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/fe/",
+    "authenticated": true
+  },
+  {
+    "method": "PROPFIND",
+    "path": "/dav/exreader-sync-v1/revisions/ff/",
+    "authenticated": true
+  }
+]

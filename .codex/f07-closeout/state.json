@@ -1,0 +1,118 @@
+{
+  "objective": "完成f07到完全的收尾没有一点点问题",
+  "status": "blocked",
+  "branch": "audit/f07-authoritative-symbols-20261103",
+  "head": "95100501eeef9c6325be8b3882aa400c99cf000f",
+  "candidate_worktree": "C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/.tmp/exr-baseline",
+  "changed_files": [
+    "tools/f07_authoritative_symbols_20261103.py",
+    ".github/workflows/f07-authoritative-symbols-20261103.yml",
+    "docs/reader-total-progress/F07_AUTHORITATIVE_SYMBOLS_20261103.md"
+  ],
+  "evidence": {
+    "artifact_id": 13248959179,
+    "run_id": 41674663275,
+    "source": "cf96cb82ae028e50f63f90478def5a610fdcb77f",
+    "zip_sha256": "d3227b9eb8caf178b3fdb31f83e32882328d57d95a5c7d366ab7babb807964b6",
+    "summary_sha256": "5367fce54ba8f835994cd0d43af0067617cc5bec128aa10c9951424c176ccbf2",
+    "summary_bytes": 25634,
+    "tools": {
+      "nm": "/usr/bin/llvm-nm-21",
+      "readobj": "/usr/bin/llvm-readobj-21",
+      "version": "21.1.8"
+    },
+    "actual_failed_operations": [
+      "macos --macho-dsymtab rc=1",
+      "iphone --macho-dsymtab rc=1",
+      "ipad --macho-dsymtab rc=1"
+    ],
+    "observation_archive_digest_matches_github_metadata": true
+  },
+  "checks": [
+    "Current authoritative checks are listed in current_checks; old standalone regression file has been removed from repository scope."
+  ],
+  "remaining": [
+    "Implement reviewed one-shared-provider architecture after explicit authorization",
+    "Select and authorize all six-target producer/package paths",
+    "Agree new SDK content baseline and public provider package identity",
+    "Close A1-A4 on the new candidate and retain full proof",
+    "Agree exact CI inputs/rounds/budget before any CI",
+    "Owner final acceptance/catalog/commit/push decision"
+  ],
+  "actions_not_taken": [
+    "no CI triggered",
+    "no commits",
+    "no push",
+    "no formal ledger edit",
+    "no previously refused operation retried"
+  ],
+  "authorization_boundary": "Previous denied operations must not be retried via alternate tools/environments/identities. Broad current goal does not establish new CI budget.",
+  "candidate_file_hashes": {
+    ".github/workflows/f07-authoritative-symbols-20261103.yml": "9a5b8fe9808a3fe6663bc3cb567991fda0e59bf938d1ef317915e327d0c86f1f",
+    "docs/reader-total-progress/F07_AUTHORITATIVE_SYMBOLS_20261103.md": "fc19fc94ef0a492674d25d3136c0941762f1fa5ade89cbd2fd423b2b88e23180",
+    "tools/f07_authoritative_symbols_20261103.py": "6237aa0fe69616adf61d093033a4e44c3f8f84ae0edde8684d6bd8f50cb4cf95"
+  },
+  "current_checks": [
+    "python -X utf8 -W error tools/f07_authoritative_symbols_20261103.py --self-test: passed",
+    "six original peer ZIP digests/receipts and final candidate observations: passed",
+    "four original build ZIP digests and recursive Windows/GTK package inventory: passed",
+    "git diff --check: passed; exactly three owned paths modified",
+    "candidate.patch reverse-application check: passed; source unchanged",
+    "Final observations match candidate script SHA-256; 6 inputs and 9 binaries, all operations complete",
+    "11 newly authorized source/config Git blob identities verified",
+    "Original build.py SHA-256 matches original build receipt",
+    "Updated three-file patch reverse-application check passed; only audit document changed during read-only diagnostic"
+  ],
+  "local_observations": {
+    "local-peer-observations.json": {
+      "sha256": "3f2aabb8531c9de37e44f230e139f1474d490a5976948852de634f8ffcfd0841",
+      "bytes": 65925327
+    },
+    "build-package-observations.json": {
+      "sha256": "6ff4b42ed1231af2884cb56abb1b5f2972ec3f46bb72dab4d9251daba724d798",
+      "bytes": 5700981
+    },
+    "apple-bindings-observations.json": {
+      "sha256": "995e3571fe4fdab85de746572b0b0e9f22ecbc8ec00e9efae151b5ee762f5277",
+      "bytes": 10587183
+    }
+  },
+  "new_findings": [
+    "All five ELF binaries have GNU version sections; observed SQLite names have no @ version suffix",
+    "Each Apple program and corresponding installed SDK libexreader.1.dylib define the same 288 SQLite names; both contain 274 nm T entries; process single-provider is unproven",
+    "Actual SDK dylib bytes match all Apple installed-identity manifests",
+    "Windows/GTK actual original build program hashes match peers; outer and nested packages contain no .a/.lib/.o/.obj/.map/.rsp",
+    "Original C05 prompt found and read at C:/Users/Oscar/exreader-dot-claude-20261030/C05/prompt.txt",
+    "ELF GNU version-index review: Android libexreader.so has 277 SQLite entries, all index 1; other ELF version tables have no SQLite entries",
+    "Apple program and SDK export tries each contain 277 SQLite exports; LC_DYLD_CHAINED_FIXUPS present; chained fixup output saved, no SQLite external binds observed",
+    "Apple dlsym imports bind to libSystem; target arguments remain unassessed",
+    "SDK exr_sqlite is private static, pulled into shared exreader via library/textindex.",
+    "ProductCatalog independently builds public reader_catalog_sqlite and Apple flags link that archive into host.",
+    "Existing checker validates main-image product ownership and requires dynamic SDK; it does not inspect embedded SDK SQLite.",
+    "SDK and product SQLite feature settings differ: SDK default enables FTS5, product does not; actual vendor archive nm has 58 Fts5 records vs product 0.",
+    "install_dependencies.cmake assumes static vendor files and STATIC IMPORTED; merely changing library type would break exported SDK package."
+  ],
+  "scope": "Current symbol audit three files only; no production/SDK/old-test/mainline edits, no new CI; historical C05 is a separate package",
+  "pending_user_input": "Approve SDK candidate-only commit/push (which triggers exactly one reviewed macos-14 job <=20 minutes); no mainline/catalog edits. Native Apple full-embedding controls and original two product tests are pending CI.",
+  "patch_sha256": "cb59446f07be9978d6d553d4f7bbc7db7d9ea22e99c718acaa11fff280a24a3a",
+  "completion_audit": "completion-audit.json",
+  "blocked_reason": "Read-only source authorization is resolved. New production/SDK implementation authorization has been requested; no such changes made.",
+  "work_stage": "local_sdk_replay_verified_awaiting_reviewed_commit_and_ci_authorization",
+  "read_only_source_authorization": "Granted and successfully exercised through original GitHub connector; 11 source/config contents authenticated.",
+  "confirmed_acceptance_requirement": "整个应用的 SDK／产品映像共用一个 SQLite 实现",
+  "diagnostic_manifest": "shared-provider-repair-plan.json",
+  "sdk_contract_candidate_worktree": "C:\\Users\\Oscar\\.codex\\worktrees\\sdk-shared-sqlite-provider\\EXReader",
+  "sdk_contract_evidence": "C:\\Users\\Oscar\\.codex\\worktrees\\sdk-shared-sqlite-provider\\EXReader\\evidence\\sdk-shared-sqlite-provider-20261103\\README.md",
+  "current_work_package": "SDK shared SQLite core contract, not attributed to F07; replayed onto 95100501",
+  "sdk_contract_latest": {
+    "worktree": "C:\\Users\\Oscar\\.codex\\worktrees\\sdk-shared-sqlite-provider\\EXReader",
+    "candidate": "e0c1c4586013910fcb4bd5c884b9a56dd07a9491",
+    "run_id": 41708081512,
+    "conclusion": "build and 4 tests passed; job red; CI-CONTROLS-001 open; CI-ADMISSION-001 closed P hygiene",
+    "review": "C:\\Users\\Oscar\\.codex\\worktrees\\sdk-shared-sqlite-provider\\EXReader\\evidence\\sdk-shared-sqlite-provider-20261103\\ci-41708081512\\review.md",
+    "local_followup": "C++17 test fix committed and pushed; validation blocked before build",
+    "ci_allowance": "authorized 2/2 consumed; no further request",
+    "catalog_changed": false,
+    "consumer_contract_fact": "C++17 仅测试目标需要，对外契约未变，SDK 消费者不需要 C++17。"
+  }
+}

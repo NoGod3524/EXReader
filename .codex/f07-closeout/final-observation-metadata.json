@@ -1,0 +1,23 @@
+{
+  "artifacts": [
+    {
+      "id": 13248959179,
+      "name": "f07-authoritative-symbols-41674663275-1",
+      "size_in_bytes": 3098,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13248959179",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13248959179/zip",
+      "expired": false,
+      "created_at": "2026-11-03T16:29:33Z",
+      "expires_at": "2027-02-01T16:29:08Z",
+      "updated_at": "2026-11-03T16:29:33Z",
+      "digest": "sha256:d3227b9eb8caf178b3fdb31f83e32882328d57d95a5c7d366ab7babb807964b6",
+      "workflow_run": {
+        "id": 41674663275,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "audit/f07-authoritative-symbols-20261103",
+        "head_sha": "cf96cb82ae028e50f63f90478def5a610fdcb77f"
+      }
+    }
+  ]
+}

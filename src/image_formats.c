@@ -278,6 +278,20 @@ static exr_status tiff_decode(const unsigned char *data,size_t size,size_t page,
   }
   if(status == EXR_OK && !TIFFReadRGBAImageOriented(tif,w,h,(uint32_t *)out->pixels,ORIENTATION_TOPLEFT,0))
     status = exr_fail(e,EXR_FORMAT,"TIFF decoding failed");
+  if(status == EXR_OK) {
+    size_t i;
+    /* libtiff returns packed, associated RGBA; the public bitmap uses straight
+       byte RGBA, including on hosts whose uint32_t byte order differs. */
+    for(i = 0; i < (size_t)w * h; i++) {
+      uint32_t pixel = ((uint32_t *)out->pixels)[i];
+      unsigned a = TIFFGetA(pixel),rgb[3] = {TIFFGetR(pixel),TIFFGetG(pixel),TIFFGetB(pixel)},k;
+      for(k = 0; k < 3; k++) {
+        unsigned value = a ? (rgb[k] * 255u + a / 2u) / a : 0;
+        out->pixels[i * 4 + k] = (unsigned char)(value > 255 ? 255 : value);
+      }
+      out->pixels[i * 4 + 3] = (unsigned char)a;
+    }
+  }
   if(status == EXR_OK && exr_control_cancel(control,e) != EXR_OK) status = EXR_CANCELLED;
   TIFFClose(tif);
   if(status != EXR_OK) clear_bitmap(out);

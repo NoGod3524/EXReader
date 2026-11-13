@@ -1092,6 +1092,7 @@ void exr_font_svg_free(exr_face *face) {
 typedef struct {
   svg_document *doc;
   exr_canvas *canvas;
+  svg_node *target;
   double foreground[3];
   double bbox[4];
   int has_bbox;
@@ -1104,6 +1105,7 @@ static void svg_state_default(svg_state *state) {
   state->fill[0] = state->fill[1] = state->fill[2] = 0;
   state->fill[3] = 1;
   state->stroke[3] = 1;
+  state->stroke_none = 1;
   state->fill_opacity = state->stroke_opacity = 1;
   state->stroke_width = 1;
   state->fill_rule = EXR_FILL_NONZERO;
@@ -1118,22 +1120,14 @@ static exr_status svg_number_attribute(svg_document *doc, const char *value, dou
 }
 
 static exr_status svg_opacity_attribute(svg_document *doc, const char *value, double *out) {
-  const char *end;
-  exr_status status;
+  const unsigned char *at, *end;
   if (!value) return EXR_OK;
-  if (!svg_numbers_text(value, out, 1)) return exr_fail(doc->error, EXR_FORMAT, "Invalid SVG opacity");
-  end = value + strlen(value);
-  if (end > value && end[-1] == '%') {
-    size_t length = (size_t)(end - value);
-    char buffer[64];
-    if (length >= sizeof(buffer)) return exr_fail(doc->error, EXR_LIMIT, "SVG opacity is too long");
-    memcpy(buffer, value, length - 1);
-    buffer[length - 1] = 0;
-    if (!svg_numbers_text(buffer, out, 1)) return exr_fail(doc->error, EXR_FORMAT, "Invalid SVG opacity");
-    *out /= 100;
-  }
+  at = (const unsigned char *)value; end = at + strlen(value);
+  if (!svg_number(&at, end, out)) return exr_fail(doc->error, EXR_FORMAT, "Invalid SVG opacity");
+  if (at < end && *at == '%') { *out /= 100; at++; }
+  while (at < end && svg_space(*at)) at++;
+  if (at != end) return exr_fail(doc->error, EXR_FORMAT, "Invalid SVG opacity");
   if (*out < 0 || *out > 1) return exr_fail(doc->error, EXR_FORMAT, "SVG opacity is outside 0..1");
-  (void)status;
   return EXR_OK;
 }
 
@@ -1232,8 +1226,8 @@ static void svg_bbox_point(svg_render *render, const double m[6], double x, doub
   if (oy > render->bbox[3]) render->bbox[3] = oy;
 }
 
-static void svg_path_bbox(svg_render *render, const exr_path_segment *segments, size_t count,
-                          const svg_state *state, int stroke) {
+static exr_status svg_path_bbox(svg_render *render, const exr_path_segment *segments, size_t count,
+                               const svg_state *state, int stroke) {
   size_t i, j;
   unsigned points;
   for (i = 0; i < count; i++) {
@@ -1242,13 +1236,27 @@ static void svg_path_bbox(svg_render *render, const exr_path_segment *segments, 
     for (j = 0; j < points; j++) svg_bbox_point(render, state->matrix, segments[i].points[j].x, segments[i].points[j].y);
   }
   if (stroke && state->stroke_width > 0) {
-    double scale = fmax(hypot(state->matrix[0], state->matrix[1]), hypot(state->matrix[2], state->matrix[3]));
-    double margin = state->stroke_width*scale;
-    if (render->has_bbox == 1) {
-      render->bbox[0] -= margin; render->bbox[1] -= margin;
-      render->bbox[2] += margin; render->bbox[3] += margin;
-    }
+    const double identity[6] = {1, 0, 0, 1, 0, 0};
+    exr_vector_polyline local = {0}, outline = {0};
+    exr_path_stroke line = {0};
+    double scale = hypot(state->matrix[0], state->matrix[1]) + hypot(state->matrix[2], state->matrix[3]);
+    exr_status status;
+    line.width = state->stroke_width; line.cap = state->cap;
+    line.join = state->join; line.miter_limit = state->miter_limit;
+    /* Measure the same stroke geometry as the canvas. A fixed margin clips
+       miters; applying any margin to the accumulated box grows prior shapes. */
+    status = exr_vector_flatten(segments, count, identity, .125/fmax(1, scale), &local,
+                                render->doc->work, render->doc->control, render->doc->error);
+    if (status == EXR_OK)
+      status = exr_vector_stroke(&local, &line, state->matrix, .125, &outline,
+                                 render->doc->work, render->doc->control, render->doc->error);
+    if (status == EXR_OK)
+      for (i = 0; i < outline.point_count; i++)
+        svg_bbox_point(render, identity, outline.points[i].x, outline.points[i].y);
+    exr_vector_polyline_free(&local); exr_vector_polyline_free(&outline);
+    if (status != EXR_OK) return status;
   }
+  return EXR_OK;
 }
 
 static uint32_t svg_pack(double rgba[4], double alpha) {
@@ -1264,6 +1272,8 @@ static exr_status svg_node_walk(svg_render *render, svg_node *node, const svg_st
 static exr_status svg_draw_shape(svg_render *render, svg_node *node, const svg_state *state, double opacity) {
   svg_path path;
   exr_status status;
+  exr_draw_style style = exr_draw_style_defaults();
+  svg_state current = *state;
   int is_line = node->element == SVG_LINE;
   memset(&path, 0, sizeof(path));
   path.doc = render->doc;
@@ -1273,21 +1283,19 @@ static exr_status svg_draw_shape(svg_render *render, svg_node *node, const svg_s
     free(path.segments);
     return status;
   }
+  if (is_line) current.fill_none = 1;
+  style.fill = svg_pack(current.fill, current.fill_opacity);
+  style.stroke = svg_pack(current.stroke, current.stroke_opacity);
+  style.flags = 0;
+  if (!current.fill_none && (style.fill & 255)) style.flags |= EXR_DRAW_FILL;
+  if (!current.stroke_none && current.stroke_width > 0 && (style.stroke & 255)) style.flags |= EXR_DRAW_STROKE;
+  if (!style.flags) { free(path.segments); return EXR_OK; }
   if (render->canvas) {
-    exr_draw_style style = exr_draw_style_defaults();
-    svg_state current = *state;
-    if (is_line) current.fill_none = 1;
-    style.fill = svg_pack(current.fill, current.fill_opacity);
-    style.stroke = svg_pack(current.stroke, current.stroke_opacity);
-    style.flags = 0;
-    if (!current.fill_none && (style.fill & 255)) style.flags |= EXR_DRAW_FILL;
-    if (!current.stroke_none && current.stroke_width > 0 && (style.stroke & 255)) style.flags |= EXR_DRAW_STROKE;
     style.rule = current.fill_rule;
     style.line.width = current.stroke_width;
     style.line.cap = current.cap;
     style.line.join = current.join;
     style.line.miter_limit = current.miter_limit;
-    if (!style.flags) { free(path.segments); return EXR_OK; }
     if (opacity < 1) {
       status = exr_canvas_begin_layer(render->canvas, opacity, EXR_BLEND_NORMAL, render->doc->error);
       if (status != EXR_OK) { free(path.segments); return status; }
@@ -1300,14 +1308,9 @@ static exr_status svg_draw_shape(svg_render *render, svg_node *node, const svg_s
     free(path.segments);
     return status;
   }
-  {
-    svg_state current = *state;
-    if (is_line) current.fill_none = 1;
-    svg_path_bbox(render, path.segments, path.count, &current,
-                  !current.stroke_none && current.stroke_width > 0);
-  }
+  status = svg_path_bbox(render, path.segments, path.count, &current, style.flags & EXR_DRAW_STROKE);
   free(path.segments);
-  return EXR_OK;
+  return status;
 }
 
 static exr_status svg_node_walk(svg_render *render, svg_node *node, const svg_state *parent) {
@@ -1329,11 +1332,14 @@ static exr_status svg_node_walk(svg_render *render, svg_node *node, const svg_st
   if (node->element == SVG_DEFS) { render->depth--; return EXR_OK; }
   if (node->element == SVG_GROUP || node->element == SVG_ROOT) {
     svg_node *child;
+    int selected = node == render->doc->root && render->target && render->target != node;
     if (render->canvas && opacity < 1) {
       status = exr_canvas_begin_layer(render->canvas, opacity, EXR_BLEND_NORMAL, render->doc->error);
       if (status != EXR_OK) { render->depth--; return status; }
     }
-    for (child = node->first; child; child = child->next) {
+    /* OT-SVG selects the glyph subtree as a use instance in the root viewport.
+       Keep the root's paint/opacity around it without drawing other glyphs. */
+    for (child = selected ? render->target : node->first; child; child = selected ? NULL : child->next) {
       status = svg_node_walk(render, child, &state);
       if (status != EXR_OK) {
         if (render->canvas && opacity < 1) exr_canvas_end_layer(render->canvas, 0, render->doc->error);
@@ -1341,7 +1347,7 @@ static exr_status svg_node_walk(svg_render *render, svg_node *node, const svg_st
         return status;
       }
       if (render->canvas && exr_control_cancel(render->doc->control, render->doc->error) != EXR_OK) {
-        exr_canvas_end_layer(render->canvas, 0, render->doc->error);
+        if (opacity < 1) exr_canvas_end_layer(render->canvas, 0, render->doc->error);
         render->depth--;
         return EXR_CANCELLED;
       }
@@ -1367,12 +1373,11 @@ static svg_node *svg_find_id(svg_document *doc, const char *id) {
 static exr_status svg_render_document(svg_render *render, uint32_t glyph, double size, int measure) {
   svg_document *doc = render->doc;
   svg_state state;
-  svg_node *target = NULL;
   char id[32];
   exr_status status;
   double sx, sy, ox, oy, left, top;
   snprintf(id, sizeof(id), "glyph%u", glyph);
-  target = svg_find_id(doc, id);
+  render->target = svg_find_id(doc, id);
   svg_state_default(&state);
   state.current[0] = render->foreground[0];
   state.current[1] = render->foreground[1];
@@ -1388,24 +1393,9 @@ static exr_status svg_render_document(svg_render *render, uint32_t glyph, double
   }
   state.matrix[0] = sx; state.matrix[1] = 0; state.matrix[2] = 0; state.matrix[3] = sy;
   state.matrix[4] = ox; state.matrix[5] = oy;
-  {
-    svg_state root_state = state;
-    int ready = 0;
-    status = svg_apply_attributes(render, doc->root, &root_state, &ready);
-    if (status != EXR_OK) return status;
-    root_state.matrix[0] = sx; root_state.matrix[1] = 0; root_state.matrix[2] = 0;
-    root_state.matrix[3] = sy; root_state.matrix[4] = ox; root_state.matrix[5] = oy;
-    state = root_state;
-  }
   if (measure) {
     render->has_bbox = 0;
-    if (target) status = svg_node_walk(render, target, &state);
-    else {
-      svg_node *child;
-      status = EXR_OK;
-      for (child = doc->root->first; child && status == EXR_OK; child = child->next)
-        status = svg_node_walk(render, child, &state);
-    }
+    status = svg_node_walk(render, doc->root, &state);
     if (status != EXR_OK) return status;
     if (render->has_bbox == 1) {
       left = floor(render->bbox[0]);
@@ -1421,14 +1411,7 @@ static exr_status svg_render_document(svg_render *render, uint32_t glyph, double
   state.matrix[4] -= left;
   state.matrix[5] -= top;
   render->depth = 0;
-  if (target) return svg_node_walk(render, target, &state);
-  {
-    svg_node *child;
-    status = EXR_OK;
-    for (child = doc->root->first; child && status == EXR_OK; child = child->next)
-      status = svg_node_walk(render, child, &state);
-    return status;
-  }
+  return svg_node_walk(render, doc->root, &state);
 }
 
 exr_status exr_font_svg(exr_face *face, uint32_t glyph, float pixels, uint32_t foreground,

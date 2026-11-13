@@ -16,6 +16,7 @@ exreader-convert --batch MANIFEST [--root DIR] [--output-root DIR] [--profile PR
 ```
 
 - 无交互确认；`--overwrite` 就是显式覆盖授权，参数已表达的授权不再询问。
+- 覆盖权限优先级：CLI `--overwrite` > 单项 `overwrite` > 清单顶层 `overwrite` > 默认禁止；单项显式 `false` 可拒绝清单默认覆盖。
 - `--from`/`--format` 是显式输入格式；扩展名与内容不一致时按声明选择解析器，但仍要求
   文档内容可被该解析器打开。显式声明 MOBI/KF8 变体时必须与字节一致。
 - `--capabilities` 必须单独使用，输出 JSON 能力查询。
@@ -109,6 +110,7 @@ PDF、CBZ、音频的跨媒介转换、MOBI/KF8 写回、OCR、DRM、音频转�
 顶层允许字段：`schema`（必须整数 1）、`profile`、`overwrite`、`root`、`output_root`、`items`。
 单项允许字段：`id`、`input`、`to`、`output`、`profile`、`format`（等价 `--from`）、`overwrite`。
 未知字段、重复 id、空 `items`、错误类型、非法 JSON 都是调用错误（退出码 2）。
+清单字符串和字段名中的 NUL（`\u0000`）也在文件操作前拒绝，避免路径截断。
 `items` 上限 100000；清单上限 16 MiB。
 
 ## 6. 文件保护与原子发布
@@ -117,6 +119,7 @@ PDF、CBZ、音频的跨媒介转换、MOBI/KF8 写回、OCR、DRM、音频转�
 - 源/目标同一文件拒绝，包括：相同路径、大小写别名（Windows）、相对/绝对别名、
   symlink/junction、硬链接、现有文件 identity 相同。目标尚不存在时比较解析后的父目录 +
   basename。
+- 批处理每个输出还会与全部输入比较，包括已拒绝项的输入；冲突输出在执行前拒绝，独立项继续处理。
 - 批处理清单本身及其文件别名也受保护：转换输出不能替换清单，报告与清单冲突时在转换开始前拒绝整个调用，`--overwrite` 不解除这一保护。
 - 默认不覆盖现有输出；`--overwrite` 才允许。即使覆盖也先写同目录唯一临时文件
   （`.名称.exreader-<pid>-<n>.tmp`，独占创建），写入并 flush/close 成功后原子发布：

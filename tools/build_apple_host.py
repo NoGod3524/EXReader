@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 from host_font import fetch as host_font
 from run_benchmarks import make_epub
 
@@ -18,6 +19,24 @@ ROOT = Path(__file__).absolute().parents[1]
 
 def run(*command):
     subprocess.run([str(x) for x in command], check=True)
+
+
+def make_navigation_books(resources):
+    """Exercise chapter boundaries through the real Apple host, including failures."""
+    def html(text):
+        return '<html xmlns="http://www.w3.org/1999/xhtml"><body>'+text+'</body></html>'
+
+    first = html('<p>First reading chapter.</p>'+('<p>'+('Navigation regression words. '*10)+'</p>')*8+
+                 '<p>FINAL FIRST CHAPTER</p>')
+    for name, broken in [('Navigation.epub', False), ('BrokenChapter.epub', True)]:
+        with zipfile.ZipFile(resources/name, 'w', zipfile.ZIP_DEFLATED) as book:
+            book.writestr('mimetype', 'application/epub+zip', compress_type=zipfile.ZIP_STORED)
+            book.writestr('META-INF/container.xml', '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="book.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
+            book.writestr('book.opf', '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">'+name+'</dc:identifier><dc:title>Navigation regression</dc:title><dc:language>en</dc:language></metadata><manifest><item id="first" href="first.xhtml" media-type="application/xhtml+xml"/><item id="optional" href="optional.xhtml" media-type="application/xhtml+xml"/><item id="second" href="second.xhtml" media-type="application/xhtml+xml"/><item id="auxiliary" href="auxiliary.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="first"/><itemref idref="optional" linear="no"/><itemref idref="second"/></spine></package>')
+            book.writestr('first.xhtml', html('<p>SAFE BEFORE BROKEN CHAPTER</p>') if broken else first)
+            book.writestr('optional.xhtml', html('<p>SKIPPED NONLINEAR</p>'))
+            book.writestr('second.xhtml', '<html><body><p>broken' if broken else html('<p>SECOND READING CHAPTER</p>'))
+            book.writestr('auxiliary.xhtml', html('<p>SKIPPED AUXILIARY</p>'))
 
 
 def main():
@@ -77,6 +96,7 @@ def main():
     for name, source in [('Sample.pdf', 'pdf-public.pdf')]:
         shutil.copyfile(ROOT/'tests/fixtures'/source, resources/name)
     make_epub(resources/'Sample.epub', 3, 16384, single_paragraph=True)
+    make_navigation_books(resources)
     font = host_font(ROOT/'build/host-font-cache')
     shutil.copyfile(font/'Reader.otf', resources/'Reader.otf')
     shutil.copyfile(font/'OFL.txt', resources/'Noto-OFL.txt')

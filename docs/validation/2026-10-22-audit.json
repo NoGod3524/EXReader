@@ -1,0 +1,309 @@
+{
+  "date": "2026-10-22",
+  "source_commit": "9dfb155a1e42a5ee82fabc4beea41db575a309fa",
+  "engine_version": "3.39.0",
+  "platform": "Windows GCC Release",
+  "counts": {
+    "total": 15,
+    "new": 8,
+    "existing": 7,
+    "P1": 3,
+    "P2": 12
+  },
+  "findings": [
+    {
+      "id": "A01",
+      "priority": 1,
+      "origin": "new",
+      "title": "Batch output overwrites another input",
+      "file": "tools/convert.c",
+      "line": 622,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A02",
+      "priority": 1,
+      "origin": "existing-F1",
+      "title": "CBZ error cleanup dereferences unallocated pages",
+      "file": "src/cbz.c",
+      "line": 196,
+      "verification": "current-source-and-prior-reproduction"
+    },
+    {
+      "id": "A03",
+      "priority": 1,
+      "origin": "new",
+      "title": "Manifest default overrides item overwrite:false",
+      "file": "tools/convert.c",
+      "line": 1283,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A04",
+      "priority": 2,
+      "origin": "new",
+      "title": "NUL truncates manifest paths",
+      "file": "tools/convert_json.c",
+      "line": 157,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A05",
+      "priority": 2,
+      "origin": "existing-F4",
+      "title": "CBZ rejects legal short reads",
+      "file": "src/cbz.c",
+      "line": 62,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A06",
+      "priority": 2,
+      "origin": "existing-F2",
+      "title": "TIFF alpha is applied twice",
+      "file": "src/image_formats.c",
+      "line": 279,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A07",
+      "priority": 2,
+      "origin": "existing-F3",
+      "title": "CBZ natural-sort ties interleave member frames",
+      "file": "src/cbz.c",
+      "line": 48,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A08",
+      "priority": 2,
+      "origin": "new",
+      "title": "SVG stroke margins inflate cumulative bounds",
+      "file": "src/font_svg.c",
+      "line": 1248,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A09",
+      "priority": 2,
+      "origin": "new",
+      "title": "SVG miter joins are clipped",
+      "file": "src/font_svg.c",
+      "line": 1246,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A10",
+      "priority": 2,
+      "origin": "existing-F5",
+      "title": "SVG default stroke draws outlines",
+      "file": "src/font_svg.c",
+      "line": 1106,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A11",
+      "priority": 2,
+      "origin": "existing-F6",
+      "title": "SVG percentage opacity is rejected",
+      "file": "src/font_svg.c",
+      "line": 1124,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A12",
+      "priority": 2,
+      "origin": "existing-F7",
+      "title": "SVG root opacity is skipped",
+      "file": "src/font_svg.c",
+      "line": 1428,
+      "verification": "runtime-reproduction"
+    },
+    {
+      "id": "A13",
+      "priority": 2,
+      "origin": "new",
+      "title": "Previous chapter uses missing or stale last-page cache",
+      "file": "examples/apple/ReaderApp.swift",
+      "line": 175,
+      "verification": "static-host-with-C-API-fixtures"
+    },
+    {
+      "id": "A14",
+      "priority": 2,
+      "origin": "new",
+      "title": "Apple host turns through auxiliary EPUB parts",
+      "file": "examples/apple/ReaderApp.swift",
+      "line": 171,
+      "verification": "static-host-with-C-API-fixtures"
+    },
+    {
+      "id": "A15",
+      "priority": 2,
+      "origin": "new",
+      "title": "Failed chapter turn leaves inconsistent state",
+      "file": "examples/apple/ReaderApp.swift",
+      "line": 172,
+      "verification": "static-host-with-C-API-fixtures"
+    }
+  ],
+  "validation": {
+    "build": "passed",
+    "ctest": {
+      "total": 163,
+      "passed": 161,
+      "failed": 2,
+      "failed_before_scenarios": [
+        "native-convert-cli",
+        "native-convert-benchmark"
+      ],
+      "reason": "PermissionError while deleting pre-existing work directories",
+      "fresh_directory_reruns": {
+        "cli_scenarios_passed": 37,
+        "cli_scenarios_total": 37,
+        "conversion_benchmark": "passed"
+      }
+    },
+    "batch_items": 100,
+    "batch_peak_rss_bytes": 30552064,
+    "single_peak_rss_bytes": 28278784,
+    "memory_budget_bytes": 33554432,
+    "memory_budget_passed": true
+  },
+  "not_run": [
+    "Linux sanitizers",
+    "macOS runtime",
+    "Swift UI/mobile devices",
+    "long reliability campaign",
+    "new CBZ crash execution"
+  ],
+  "runtime": {
+    "path": "build/wp7-integration-20261020/gcc/libexreader.dll",
+    "sha256": "4a8f276e7dde4feba8c838a2a100d2c388f97f82bdd2d04d247a70926069528c",
+    "bytes": 9752189
+  },
+  "converter": {
+    "path": "build/wp7-integration-20261020/gcc/exreader-convert.exe",
+    "sha256": "5ecf8c0af8a367ddfda114bc56c731c91d9a4a7c857cd8bf6c95a96b4b9c269b",
+    "bytes": 272535
+  },
+  "sources": [
+    {
+      "path": "examples/apple/ReaderApp.swift",
+      "sha256": "f656f6dd99d8d212873ad9a35f99b402ef0850d24938082d89b6f44d668cdbf0",
+      "bytes": 19530
+    },
+    {
+      "path": "src/cbz.c",
+      "sha256": "8ea9d0b197415e63700c4b39599f926bf26f84079cce595de6d84659398b8d4f",
+      "bytes": 22165
+    },
+    {
+      "path": "src/font_svg.c",
+      "sha256": "6aa2b9ba82d09a592974a6f543f3422d74d444949cc97f523647c629f195680f",
+      "bytes": 63070
+    },
+    {
+      "path": "src/image_formats.c",
+      "sha256": "4477edabd1c526c383980807609e6ee3b2a6eb56b20401b0ce4fc054b8b6eefe",
+      "bytes": 23884
+    },
+    {
+      "path": "tools/convert.c",
+      "sha256": "0112ed697fdff8123ea0e959da4d1619ace9faa3b1722c2dbb14a11214e1898b",
+      "bytes": 58138
+    },
+    {
+      "path": "tools/convert_json.c",
+      "sha256": "7f0a91493bd99bb65034968b11fbdf8e010a2e058fd3b1c5cdc05e897425d9a0",
+      "bytes": 13614
+    }
+  ],
+  "evidence": [
+    {
+      "path": "build/audit-20261022/build.log",
+      "sha256": "b669ee0127860e9619829d6b8f5feaad063f9e30a6d337ab8595bdfce051507e",
+      "bytes": 291
+    },
+    {
+      "path": "build/audit-20261022/ctest-console.log",
+      "sha256": "77856810c6296decea3c9ffd7f9ba5935b5f055470142f84a5b68144c7ba2b95",
+      "bytes": 21005
+    },
+    {
+      "path": "build/audit-20261022/cli.json",
+      "sha256": "5035ab51c262272714c1171598288614152d13a05f6803e32569e4d4e9ba4d07",
+      "bytes": 214339
+    },
+    {
+      "path": "build/audit-20261022/benchmark.json",
+      "sha256": "7927fb8c6e2be5dc48816c197a6bbb75255d6b090560479b52018711693dd9c4",
+      "bytes": 8897
+    },
+    {
+      "path": "build/audit-20261022/check_conversion_safety.py",
+      "sha256": "4f74518a4d8c951b80cb8041212f93446c5fe940b1946cb5e15171c79671fa90",
+      "bytes": 2322
+    },
+    {
+      "path": "build/audit-20261022/conversion/summary.json",
+      "sha256": "3c3aab7e8e9e74646500cf13825848c00549837c9a375acb48198b19cc91dee2",
+      "bytes": 19341
+    },
+    {
+      "path": "build/audit-20261022/check_media_contracts.py",
+      "sha256": "2119b08552f7547ee6407ccaea45cebfbb4563ffd9874575a19f407db8d65679",
+      "bytes": 2426
+    },
+    {
+      "path": "build/audit-20261022/media/tiff-alpha.json",
+      "sha256": "6568621f4b7ce7c0a3545903b12e242bf260850c29acb26e22503169a0cafc3b",
+      "bytes": 114
+    },
+    {
+      "path": "build/audit-20261022/media/cbz-short-read.json",
+      "sha256": "997e3d9a008ab8f2b1957b27768e052a8847a2ded649427978d0ca3d551b2e63",
+      "bytes": 167
+    },
+    {
+      "path": "build/audit-20261022/media/cbz-page-order.json",
+      "sha256": "edb80d23ac4b7ac431e5f6fb350ea2820eca80706686229ad639ba7ad3a8c3a7",
+      "bytes": 405
+    },
+    {
+      "path": "build/audit-20261022/pdf/probe_svg.py",
+      "sha256": "e43ba08f987fa15fcf8194007e3362c16c575ed1aceaab3245aee10fe42edc72",
+      "bytes": 3316
+    },
+    {
+      "path": "build/audit-20261022/pdf/svg-probes.json",
+      "sha256": "1882c94d898ac00c0554c06e8e593a2c30009917993de65a6c8968ba63980022",
+      "bytes": 4517
+    },
+    {
+      "path": "build/audit-20261022/bindings/probe.py",
+      "sha256": "3b56f5aeed48431a88b3821a467866111840b70f3ee4e6ac8abc9d2cb93dff83",
+      "bytes": 5998
+    },
+    {
+      "path": "build/audit-20261022/bindings/evidence.json",
+      "sha256": "9f890ad06ce45f7868073f4cf875eebe45bc9227a3bc756fc156442e8944f54f",
+      "bytes": 791
+    },
+    {
+      "path": "build/audit-completed-20261020/cbz-native-result.json",
+      "sha256": "b7413ca0e396606e82653d3cd587cf12c44aad18ebb864ae4712cf6f92f9f673",
+      "bytes": 153
+    },
+    {
+      "path": "build/audit-completed-20261020/cbz-limit-result.json",
+      "sha256": "f52508524ff804adb2a2bbf60b11d32b5da0211407063cd18253f16c06773b89",
+      "bytes": 274
+    }
+  ],
+  "report": {
+    "path": "docs/AUDIT-2026-10-22.md",
+    "sha256": "90928b387d3a2658f7430b6412773d8df2c80d95ca6ffe79046672ca5b6fd718",
+    "bytes": 12757
+  }
+}

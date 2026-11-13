@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "date": "2026-10-20",
+  "kind": "reliability-split-handoff",
+  "code_baseline": "07c6910c12dab572771440c7ce34157f079f80d9",
+  "engine_package_source": "e265cf462523da35ffb37b4ff3a38cc3b7bb13ff",
+  "code_modified_by_handoff": false,
+  "new_ci_started_by_handoff": false,
+  "agents_started_by_handoff": false,
+  "branches_created_by_handoff": false,
+  "handoff_documents": [
+    {
+      "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\docs\\RELIABILITY-SPLIT-HANDOFF.md",
+      "sha256": "976ad5c8d5850b8a29544a4e4da30c59765f32ee4019bb50ec2ba7207e31e028"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\docs\\HANDOFF-CONVERSION-MEMORY.md",
+      "sha256": "e800bce2eefd6249766b5a6df04a69e773e075f6a85f09c32b6538e07336a29c"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\docs\\HANDOFF-WP6-BOUNDED-CHAPTERS.md",
+      "sha256": "340df3e6b944fa6a55f98d8d30e3751782f1d30f3e9c0b5a0b8835d614981c4c"
+    },
+    {
+      "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\docs\\HANDOFF-WP16-RELEASE-AUDIT.md",
+      "sha256": "dfd8fefa79d79d0cb1e3d789f1a3ba072b24dd772ee94e960e59e930bf3f401a"
+    }
+  ],
+  "ci_snapshots": [
+    {
+      "id": 39521329265,
+      "source_sha": "e265cf462523da35ffb37b4ff3a38cc3b7bb13ff",
+      "status": "in_progress",
+      "conclusion": "",
+      "jobs": [
+        {
+          "name": "android",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "desktop (macos-15)",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "name": "apple-mobile",
+          "status": "in_progress",
+          "conclusion": ""
+        },
+        {
+          "name": "desktop (windows-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "fuzz",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "desktop (ubuntu-22.04)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "sanitizers",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "raw_record": {
+        "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\build\\wp7-integration-20261020\\handoff-ci-39521329265.json",
+        "sha256": "b95ead0cd4cb680b3eec634a53de8aba592d3652ceda48a09fa048e64df44840"
+      }
+    },
+    {
+      "id": 39521983620,
+      "source_sha": "07c6910c12dab572771440c7ce34157f079f80d9",
+      "status": "completed",
+      "conclusion": "failure",
+      "jobs": [
+        {
+          "name": "macos",
+          "status": "completed",
+          "conclusion": "failure"
+        }
+      ],
+      "raw_record": {
+        "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\build\\wp7-integration-20261020\\handoff-ci-39521983620.json",
+        "sha256": "17b4b6993b312e2e257cd53755d56e00900e358e970364f0090e0b7ed83d620d"
+      }
+    }
+  ],
+  "macos_diagnostic": [
+    {
+      "name": "default",
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\build\\wp7-integration-20261020\\macos-memory-diagnostic-r1\\default.json",
+        "sha256": "cd6dfc8f3bc29033f213baf40f402b35c92f3502325854fefb058b3d16d8a632"
+      },
+      "memory_budget_bytes": 33554432,
+      "memory_budget_passed": false,
+      "batch_100": {
+        "items": 100,
+        "elapsed_seconds": 5.739661,
+        "peak_rss_bytes": 142753792,
+        "output_bytes": 5385700,
+        "single_peak_rss_bytes": 27656192,
+        "peak_delta_bytes": 115097600,
+        "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+        "unfinished": 0,
+        "failed": 0
+      },
+      "temporary_files_remaining": 0
+    },
+    {
+      "name": "aggressive",
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\build\\wp7-integration-20261020\\macos-memory-diagnostic-r1\\aggressive.json",
+        "sha256": "dbd14f7d63aa54c0590026d01ef86b6b66d8ca07d937febf993ee36d7e878179"
+      },
+      "memory_budget_bytes": 33554432,
+      "memory_budget_passed": false,
+      "batch_100": {
+        "items": 100,
+        "elapsed_seconds": 5.786168,
+        "peak_rss_bytes": 169574400,
+        "output_bytes": 5385718,
+        "single_peak_rss_bytes": 28999680,
+        "peak_delta_bytes": 140574720,
+        "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+        "unfinished": 0,
+        "failed": 0
+      },
+      "temporary_files_remaining": 0
+    },
+    {
+      "name": "nano-off",
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\build\\wp7-integration-20261020\\macos-memory-diagnostic-r1\\nano-off.json",
+        "sha256": "db7a8545def26366022bdd1877ef691b74fa974876402928a1d8ed21ff94df59"
+      },
+      "memory_budget_bytes": 33554432,
+      "memory_budget_passed": false,
+      "batch_100": {
+        "items": 100,
+        "elapsed_seconds": 6.02408,
+        "peak_rss_bytes": 182321152,
+        "output_bytes": 5385717,
+        "single_peak_rss_bytes": 27557888,
+        "peak_delta_bytes": 154763264,
+        "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+        "unfinished": 0,
+        "failed": 0
+      },
+      "temporary_files_remaining": 0
+    },
+    {
+      "name": "both",
+      "evidence": {
+        "path": "C:\\Users\\Oscar\\OneDrive\\文档\\ChatGPT\\EXReader\\build\\wp7-integration-20261020\\macos-memory-diagnostic-r1\\both.json",
+        "sha256": "a96359b785ad31a795985220149f75473a9574857eab3b23389f1ae3759c8381"
+      },
+      "memory_budget_bytes": 33554432,
+      "memory_budget_passed": false,
+      "batch_100": {
+        "items": 100,
+        "elapsed_seconds": 6.1465,
+        "peak_rss_bytes": 157941760,
+        "output_bytes": 5385729,
+        "single_peak_rss_bytes": 27459584,
+        "peak_delta_bytes": 130482176,
+        "queue_note": "manifest is loaded once; items are converted and released one at a time; no 100-document queue",
+        "unfinished": 0,
+        "failed": 0
+      },
+      "temporary_files_remaining": 0
+    }
+  ],
+  "protected_files": {
+    "docs/validation/2026-10-19-shading-extent-ci.json": "a955abda1e35fd456172b2e78e1d687799e4ab5f1f977dec0efd7684aae9fdc1",
+    "src/internal.h": "c951b04a1611008b2e97437d6877bebabf29ec2c374a1c8166c9aca14f34e904"
+  },
+  "WP6_complete": false,
+  "WP16_complete": false,
+  "four_package_integration_complete": false,
+  "complete": false,
+  "note": "Snapshots are observations; refresh remote state on takeover. Four allocator variants fail the unchanged gate. Prepare A/B independently; C final acceptance waits for merged frozen source."
+}

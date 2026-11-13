@@ -1,0 +1,593 @@
+{
+  "artifacts": [
+    {
+      "id": 13084585434,
+      "name": "f04-diagnostic-audit-41306566948-1",
+      "size_in_bytes": 939,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084585434",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084585434/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:48:49Z",
+      "expires_at": "2026-12-01T12:48:48Z",
+      "updated_at": "2026-11-01T12:48:49Z",
+      "digest": "sha256:e48ab565464617b6851efeb39396f0c471744cdc0cbb6866fd06cbfd99496182",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084406571,
+      "name": "f04-windows-return-iphone-41306566948-1",
+      "size_in_bytes": 4205413,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084406571",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084406571/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:48:24Z",
+      "expires_at": "2026-12-01T12:48:22Z",
+      "updated_at": "2026-11-01T12:48:24Z",
+      "digest": "sha256:3863a0697693bb01f1f0e33441bd6eafa6dfce6ee5fa37f936d1ba0e7e4d39f7",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084361109,
+      "name": "f04-diagnostic-windows_return_gtk-41306566948-1",
+      "size_in_bytes": 4543,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084361109",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084361109/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:43:58Z",
+      "expires_at": "2026-12-01T12:43:57Z",
+      "updated_at": "2026-11-01T12:43:58Z",
+      "digest": "sha256:65e792986f61b42e1f9065fb13ac9cfd662d715a58d8f5ea33379794b8564633",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084331246,
+      "name": "f04-windows-return-gtk-41306566948-1",
+      "size_in_bytes": 4205344,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084331246",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084331246/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:43:57Z",
+      "expires_at": "2026-12-01T12:43:56Z",
+      "updated_at": "2026-11-01T12:43:57Z",
+      "digest": "sha256:4afa5e56337a0b258602ca4761cf11dcd121920eeacedbe4ae02730a9aa586fe",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084306206,
+      "name": "f04-auth-41306566948-1",
+      "size_in_bytes": 2110005,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084306206",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084306206/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:48:48Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:48:48Z",
+      "digest": "sha256:d481b8ad8319e5e0bb6fc8b5acf1e545e3722c3df2b2a56c930568c626949031",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084211932,
+      "name": "f04-diagnostic-ipad-41306566948-1",
+      "size_in_bytes": 6535,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084211932",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084211932/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:46:47Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:46:47Z",
+      "digest": "sha256:3bb23ef19a08f121f0fc7a525928fafce40cafd22cdcc1aa5e95654257cfe2e0",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084150819,
+      "name": "f04-windows-return-macos-41306566948-1",
+      "size_in_bytes": 4205408,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084150819",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084150819/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:43:00Z",
+      "expires_at": "2026-12-01T12:42:59Z",
+      "updated_at": "2026-11-01T12:43:00Z",
+      "digest": "sha256:3cd170458dff90624db1444dbb14ebb9700cef7b92a469998c24d2cf54b03cbd",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084086608,
+      "name": "f04-diagnostic-macos-41306566948-1",
+      "size_in_bytes": 6482,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084086608",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084086608/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:42:04Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:42:04Z",
+      "digest": "sha256:6a50721c402c9d28b52891b4367c12f9b2e4f168820b8b0c85a49c8bde82619e",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13084032549,
+      "name": "f04-iphone-peer-41306566948-1",
+      "size_in_bytes": 3412241,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084032549",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13084032549/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:47:16Z",
+      "expires_at": "2026-12-01T12:47:14Z",
+      "updated_at": "2026-11-01T12:47:16Z",
+      "digest": "sha256:cc4f59d193561194d762e609a382c22d5e0ce4d0672133e24cb43fdb080c33c2",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083986989,
+      "name": "f04-macos-peer-41306566948-1",
+      "size_in_bytes": 3419395,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083986989",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083986989/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:42:02Z",
+      "expires_at": "2026-12-01T12:42:00Z",
+      "updated_at": "2026-11-01T12:42:02Z",
+      "digest": "sha256:5b52dbf637fc764bcb028b5ecee2f9533fdf97661ae841eb5fe5553eca44cb26",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083956624,
+      "name": "f04-windows-return-android-41306566948-1",
+      "size_in_bytes": 4203657,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083956624",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083956624/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:37:59Z",
+      "expires_at": "2026-12-01T12:37:57Z",
+      "updated_at": "2026-11-01T12:37:59Z",
+      "digest": "sha256:0015e95ac368873724619a8e6e61c55ad04e2fbe781058299f5d559711e8696a",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083956477,
+      "name": "f04-diagnostic-android_peer-41306566948-1",
+      "size_in_bytes": 310,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083956477",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083956477/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:37:07Z",
+      "expires_at": "2026-12-01T12:37:06Z",
+      "updated_at": "2026-11-01T12:37:07Z",
+      "digest": "sha256:fa1f1151bf77a17236dff57203914c06a2c1e66b911f06242e882f9d9232dd30",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083942264,
+      "name": "f04-build-gtk-41306566948-1",
+      "size_in_bytes": 42096020,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083942264",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083942264/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:42:24Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:42:24Z",
+      "digest": "sha256:e84f29c61d0ccf746f1c7cc2cd427850a160b1fd9faf3f87641251ca07ce83cc",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083923124,
+      "name": "f04-windows-return-ipad-41306566948-1",
+      "size_in_bytes": 4205385,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083923124",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083923124/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:47:52Z",
+      "expires_at": "2026-12-01T12:47:51Z",
+      "updated_at": "2026-11-01T12:47:52Z",
+      "digest": "sha256:b93e10cdb92a00cb2d4ad4cc4e585f82b5121dc9c675ef36b51d60a67d741690",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083898419,
+      "name": "f04-diagnostic-windows_return_iphone-41306566948-1",
+      "size_in_bytes": 4583,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083898419",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083898419/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:48:25Z",
+      "expires_at": "2026-12-01T12:48:24Z",
+      "updated_at": "2026-11-01T12:48:25Z",
+      "digest": "sha256:ab4ec2353c17f17a9ccec903db602636c028d5fbf051092eb752da438c3f6404",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083892632,
+      "name": "f04-gtk-peer-41306566948-1",
+      "size_in_bytes": 5165508,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083892632",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083892632/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:43:05Z",
+      "expires_at": "2026-12-01T12:43:03Z",
+      "updated_at": "2026-11-01T12:43:05Z",
+      "digest": "sha256:48e61868a5546bad38df90098859d08b3f6c9f4f59506e884fe4796177780612",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083886661,
+      "name": "f04-build-android-41306566948-1",
+      "size_in_bytes": 39939060,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083886661",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083886661/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:35:51Z",
+      "expires_at": "2026-12-01T12:35:48Z",
+      "updated_at": "2026-11-01T12:35:51Z",
+      "digest": "sha256:ff84cb321c80ef3ac53dc17ae03343f127d0f6b3a76602273fabd7033064700a",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083881725,
+      "name": "f04-android-peer-41306566948-1",
+      "size_in_bytes": 20043430,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083881725",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083881725/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:37:06Z",
+      "expires_at": "2026-12-01T12:37:03Z",
+      "updated_at": "2026-11-01T12:37:06Z",
+      "digest": "sha256:4b98652ca3a72a5473640bc8d067fd70b5c35b7fed6da41bf59dbfc3a12a0488",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083877682,
+      "name": "f04-diagnostic-gtk-41306566948-1",
+      "size_in_bytes": 5314,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083877682",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083877682/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:43:06Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:43:06Z",
+      "digest": "sha256:a4528b7645862ea910d758f53d6cedca3937a2df301a072115453d072e08b550",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083873210,
+      "name": "f04-ipad-peer-41306566948-1",
+      "size_in_bytes": 3412241,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083873210",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083873210/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:46:45Z",
+      "expires_at": "2026-12-01T12:46:43Z",
+      "updated_at": "2026-11-01T12:46:45Z",
+      "digest": "sha256:552c8ffd99ff159619d34eef3424eef793f70d80268fafff5915c7a432141192",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083798606,
+      "name": "f04-diagnostic-windows_return_ipad-41306566948-1",
+      "size_in_bytes": 4575,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083798606",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083798606/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:47:54Z",
+      "expires_at": "2026-12-01T12:47:53Z",
+      "updated_at": "2026-11-01T12:47:54Z",
+      "digest": "sha256:36966349b8a0892548b7060cd2a24812212d07e887d6379bd5a01b8feb593b7f",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083688894,
+      "name": "f04-diagnostic-iphone-41306566948-1",
+      "size_in_bytes": 6524,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083688894",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083688894/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:47:18Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:47:18Z",
+      "digest": "sha256:92c1332d3f9fd4ed046c0ce853b79d862454eaa5fc2b5f2c2288202bc0d1c173",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083677508,
+      "name": "f04-diagnostic-windows_return_android-41306566948-1",
+      "size_in_bytes": 3839,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083677508",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083677508/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:38:00Z",
+      "expires_at": "2026-12-01T12:37:59Z",
+      "updated_at": "2026-11-01T12:38:00Z",
+      "digest": "sha256:913c52bae0fc8c8eb29bb64e5fa6fc56a2671ba0587b5299e543090df2dde7e8",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083581922,
+      "name": "f04-build-macos-41306566948-1",
+      "size_in_bytes": 22475890,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083581922",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083581922/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:30:39Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:30:39Z",
+      "digest": "sha256:2c45e5de5aebdb7aecd4284043251250ddbcea3a8ac4a73cd4a486845ddaf58b",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083547401,
+      "name": "f04-retained-linux-41306566948-1",
+      "size_in_bytes": 14734866,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083547401",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083547401/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:31:10Z",
+      "expires_at": "2026-12-01T12:31:08Z",
+      "updated_at": "2026-11-01T12:31:10Z",
+      "digest": "sha256:281f98954265e08cf29064b48b614feb391b887508d0357ae7c16fd03834e0f9",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083354773,
+      "name": "f04-build-iphonesimulator-41306566948-1",
+      "size_in_bytes": 22468633,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083354773",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083354773/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:31:28Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:31:28Z",
+      "digest": "sha256:0a604b5db02b5c812efbf04845cf1aafb97e6efa9040467b4d6b5100c900f38e",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083193636,
+      "name": "f04-diagnostic-windows_seed-41306566948-1",
+      "size_in_bytes": 2558,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083193636",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083193636/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:31:28Z",
+      "expires_at": "2026-12-01T12:31:27Z",
+      "updated_at": "2026-11-01T12:31:28Z",
+      "digest": "sha256:5a7c3df71cb8db1fe2f2d2b9e2e017fd1bb08ce9116bdfb6eb642908113bcf3a",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083193632,
+      "name": "f04-windows-seed-41306566948-1",
+      "size_in_bytes": 4201186,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083193632",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083193632/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:31:26Z",
+      "expires_at": "2026-12-01T12:31:24Z",
+      "updated_at": "2026-11-01T12:31:26Z",
+      "digest": "sha256:1a9fc4859ab4a0b51468c0d3ee594f16ec5ce7447329c909a676d7977e5522f4",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13083134951,
+      "name": "f04-diagnostic-windows_return_macos-41306566948-1",
+      "size_in_bytes": 4590,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083134951",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13083134951/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:43:01Z",
+      "expires_at": "2026-12-01T12:43:01Z",
+      "updated_at": "2026-11-01T12:43:01Z",
+      "digest": "sha256:67a329fe41d280a33a33a3766a747445c62e6b11228b1f8b1d9acab514cfc45a",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13082734165,
+      "name": "f04-build-windows-41306566948-1",
+      "size_in_bytes": 53053366,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13082734165",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13082734165/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:31:07Z",
+      "expires_at": "2027-01-30T12:27:13Z",
+      "updated_at": "2026-11-01T12:31:07Z",
+      "digest": "sha256:b83dbe7c451b4cd0d706d830f4bd20d315a5324065528890466d66f2bcad18f9",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    },
+    {
+      "id": 13082599361,
+      "name": "f04-diagnostic-retained_linux-41306566948-1",
+      "size_in_bytes": 7532,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13082599361",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/13082599361/zip",
+      "expired": false,
+      "created_at": "2026-11-01T12:31:12Z",
+      "expires_at": "2026-12-01T12:31:11Z",
+      "updated_at": "2026-11-01T12:31:12Z",
+      "digest": "sha256:8a99a2553a9ad92ebc47fcd33fbc0b571a363fa9a41ceef6e41520db6c2fa977",
+      "workflow_run": {
+        "id": 41306566948,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "dot/reader-suite-20261101",
+        "head_sha": "ec11cf862ca3b44483d7e8c4726ae748ab438337"
+      }
+    }
+  ]
+}

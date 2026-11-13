@@ -1,0 +1,268 @@
+YouTube transcript
+Video ID: fgNuVpihOGw
+Language: en
+Captions: auto-generated
+
+[0:01] but I'm going to move to chapter F so if
+[0:03] you're looking for chapter F it's in the
+[0:05] appendix of the book and it's on Finance
+[0:07] so we're gonna do some introductory
+[0:08] mathematical finance topics the first
+[0:11] one that we're going to talk about the
+[0:13] first section is on simple interest and
+[0:16] we're just gonna start by talking about
+[0:17] a couple different terms so when we're
+[0:20] talking about these interest situations
+[0:21] there's sort of two different things
+[0:22] that we can view or two different
+[0:24] perspectives so I can think about
+[0:26] putting money into a bank account and
+[0:28] earning interest on that bank account or
+[0:31] I can think about taking out a loan and
+[0:33] having to pay the interest on that loan
+[0:35] alright so those are sort of just the
+[0:38] two different perspectives that we can
+[0:39] keep so the first term we want to look
+[0:41] at is the principal or the present value
+[0:44] so we want to think of that as sort of
+[0:46] the amount of money we have now
+[0:56] so for example if I have a bank account
+[1:02] that's going to be my initial investment
+[1:06] the investment that we make now
+[1:22] so it's the additional deposit if we
+[1:26] have a loan then it's going to be the
+[1:29] initial loan amount
+[1:37] okay then we have their interest rate so
+[1:41] this is going to be the amount of
+[1:44] interest or the rate of the interest
+[1:48] charged and it's gonna be expressed as a
+[1:57] percent per year all right so maybe
+[2:01] we'll see some situations where it's per
+[2:03] month or per day but generally we're
+[2:04] gonna think of the interest rate is the
+[2:06] percent per year that you get charged of
+[2:08] interest either charging interest so you
+[2:12] have to pay that interest back if you
+[2:14] have a loan or if you have a bank
+[2:15] account then you get that interest when
+[2:19] I have a simple interest that's when I'm
+[2:22] just going to have interest on my
+[2:24] principal so that's just sort of a basic
+[2:27] interest on the principal the amount
+[2:32] that we put into the bank or the amount
+[2:34] of our loan that's spelled correctly
+[2:39] [Music]
+[2:45] so it's not compounded which means that
+[2:51] our interest doesn't earn or get charged
+[2:58] interest so what do I mean by that let's
+[3:01] say I put hundred dollars in the bank
+[3:05] and I have a ten percent interest rate
+[3:07] then after a year I'm going to have one
+[3:09] hundred and ten dollars and after two
+[3:12] years if that ten dollars of interest
+[3:14] can earn interest then I would get
+[3:17] eleven dollars of interest the next year
+[3:19] but if it can't I still get $10 so in a
+[3:22] simple interest situation your interest
+[3:25] isn't going to earn more interest and
+[3:27] then the future value or future amount
+[3:30] he's just gonna be the amount in the
+[3:33] account after we've earned interest at
+[3:41] whatever rate we've want for some amount
+[3:48] of time
+[3:53] okay so we'll see lots of examples of
+[3:55] using these questions though we want to
+[3:58] just kind of have a good feel for what
+[3:59] these words mean before we do that so
+[4:02] let's look at an example of simple
+[4:03] interest here let's say we're gonna
+[4:05] invest $100 for five years at a simple
+[4:08] interest rate of three percent we want
+[4:10] to know how much interest we have at the
+[4:12] end of each year so let's go through and
+[4:14] do this year by year so at the end of
+[4:18] year one I have five three percent
+[4:24] interest
+[4:25] so I you my interest is three percent of
+[4:26] that 100 those nice easy numbers to you
+[4:29] do but we would just do three percent of
+[4:33] 100 so we have three dollars worth of
+[4:36] interest at the end of that first year
+[4:38] at the end of year two I have three
+[4:43] percent interest from the first year and
+[4:49] then I have another three percent
+[4:53] interest from my second year so overall
+[4:59] I have three twice so I end up with six
+[5:02] dollars at the end of year three all
+[5:07] right I've got that oh three percent of
+[5:11] a hundred from the first three percent
+[5:13] from 100 for the second and three
+[5:17] percent of a hundred for the third so I
+[5:19] end up with nine the fourth year let's
+[5:24] sort of put all these together so I'm
+[5:28] gonna have that nine from the first
+[5:31] three plus another three from the fourth
+[5:37] year so I get twelve and we can sort of
+[5:42] see what's happening here four five I'm
+[5:45] gonna have five times that 100 times
+[5:48] 0.03 so that's going to be five times
+[5:52] that three dollars which is 15 so
+[5:55] because this is simple interest my
+[5:57] calculation is the same every single
+[5:59] year I'm always gonna get this three
+[6:02] percent of that a hundred even though
+[6:05] now I have that in
+[6:07] that interest doesn't gain interest
+[6:09] itself so at the end of year five I have
+[6:13] three dollars from each year so I have
+[6:16] 15 years dollars total in interest
+[6:18] so let's actually just do one more thing
+[6:20] let's see how much money we have after
+[6:27] five years well the amount of money I
+[6:31] have that's called my future value so
+[6:36] we'll say that F it's just the amount of
+[6:38] money I put in that principal plus the
+[6:40] interest I earned so the principal was a
+[6:43] hundred dollars
+[6:44] I got fifteen dollars of interest so my
+[6:47] future value is a hundred and fifteen
+[6:50] dollars so let's think about what we did
+[6:53] in general here so I had a principal of
+[6:56] P so that was my 100 the time of
+[6:59] investment in years
+[7:01] that's my T so it was my five years and
+[7:03] an annual simple interest rate of r so
+[7:06] that was my three percent and this has
+[7:08] to be expressed as a decimal then we
+[7:13] found that the interest was going to be
+[7:16] the principal times the interest rate
+[7:19] that gave you the interest for one year
+[7:22] and then if you multiply by the number
+[7:24] of years that gives you the interest
+[7:27] after two years so I can just write this
+[7:29] as P R T so P times R times T then the
+[7:36] future value is just the principal plus
+[7:39] the interest so that's just the
+[7:42] principal plus the principal times R
+[7:45] times T because that's what my interest
+[7:47] was so if I want I can factor out that P
+[7:51] and I get P times 1 plus R T so this is
+[7:58] how we can find the future value when we
+[8:00] have a simple interest so we have the
+[8:03] amount of interest at two years and the
+[8:06] future value after tears so let's
+[8:10] practice with some simple interest
+[8:11] questions here we've got the two
+[8:13] formulas at the top the first question
+[8:15] says we're going to borrow twelve
+[8:16] hundred dollars for 18 months at a
+[8:18] simple interest rate of five percent
+[8:20] we want to know how much interest is
+[8:23] owed so let's go ahead and lay out our
+[8:26] variables here so the principle the
+[8:29] amount I borrow in this case is $1200
+[8:32] the time is 18 months we always need to
+[8:37] express our time in years so 18 months
+[8:40] is a year and six months so that's one
+[8:43] point five years and then the simple
+[8:49] interest rate my R is five percent so I
+[8:52] have to express that as a decimal zero
+[8:54] point zero five and then I can figure
+[8:56] out my interest so my interest is just
+[8:59] the P times the R times the T so if we
+[9:07] do that out we'll do our 1200 times 0.05
+[9:15] times 1.5 and we get 90 so the amount of
+[9:22] interest is $90 okay so let's look at
+[9:27] the second question here how much money
+[9:29] should you put into an account that
+[9:31] earns 3% simple interest if you want
+[9:34] $1,000 after 10 years so here I want my
+[9:40] future value to be a thousand I know I
+[9:46] have simple interest my interest rate is
+[9:48] 3% and then the amount of time is 10
+[9:52] years so let's plug that into our future
+[9:55] value formula so I have 1,000 equals P
+[10:00] times 1 plus 0.03 times 10 but I'm
+[10:11] trying to solve for P here so we need to
+[10:16] do a little bit of algebra the first
+[10:18] thing I'm going to do is simplify down
+[10:20] my right hand side so I have P which is
+[10:23] what I'm looking for times 0.03 times 10
+[10:26] is just 0.3 plus 1 is 1.3 and then we're
+[10:32] trying to find that P there
+[10:34] the amount of money we should put it now
+[10:36] so I need to divide by that 1.3 so I'm
+[10:40] gonna get that P is equal to 1000
+[10:45] divided by 1.3 alright so I divided both
+[10:49] sides here by 1.3 to get that P by
+[10:53] itself so 1,000 divided by one point
+[10:58] three is seven hundred and sixty nine
+[11:02] dollars and twenty three cents so if I
+[11:05] put seven hundred and sixty nine dollars
+[11:08] and twenty three cents in my bank
+[11:09] account now and I earned a three percent
+[11:12] simple interest then after ten years I'm
+[11:14] gonna have that a thousand dollars let's
+[11:19] look at two more examples here in the
+[11:21] first one we have a thousand dollars and
+[11:23] we want to have a million dollars in a
+[11:25] hundred years
+[11:25] lots of good powers of ten here and we
+[11:28] want to know what simple interest rate
+[11:30] we need so my future value here is 1
+[11:34] million dollars my present value is a
+[11:39] thousand and then I don't know what my
+[11:43] interest rate is but I do know that my
+[11:45] time is a hundred years so I can put
+[11:49] everything into my formula so a million
+[11:54] equals a thousand times 1 plus 100 times
+[12:02] R and now I need to solve this for R so
+[12:06] the first thing I should do is divide
+[12:09] both sides by a thousand so I get
+[12:15] cancelling out my zeroes there 1000
+[12:18] equals one plus 100 R so then I'll
+[12:24] subtract one from both sides
+[12:27] 999 equals 100 are and then I'll divide
+[12:32] by 100
+[12:34] so I get R equals nine point nine nine
+[12:46] but remember that this interest rate is
+[12:49] our interest rate as a decimal so this
+[12:54] is really if I move the decimal place
+[12:57] twice and 999 % interest rate so when
+[13:06] we're working in the world of simple
+[13:09] interest we need a really high interest
+[13:11] rate in order to turn our $1,000 into a
+[13:15] million dollars in a hundred years well
+[13:17] look at this in different cases for a
+[13:19] different interest that we'll talk about
+[13:20] later in the course okay so what
+[13:24] interest rate do I need for our money to
+[13:26] double in ten years
+[13:28] so let's try that out here I just know
+[13:31] that I want it to double so I don't know
+[13:34] my P but my future value I want it to be
+[13:40] two times whatever that present value is
+[13:42] and then the time is ten years so let's
+[13:47] put that in so I get to P equals P times
+[13:52] 1 plus 10 R here I'm trying to solve for
+[13:59] my R so I'm hoping that my peas go away
+[14:02] and luckily we can first divide both
+[14:04] sides by P to get that 2 equals 1 plus
+[14:09] 10 R so we don't actually need to know
+[14:11] what that P is or if you want you can
+[14:14] just make up whatever number you want
+[14:15] for P you could use that 1000 you could
+[14:18] use a hundred and then just make your F
+[14:20] twice that and you'll get to the same
+[14:22] point so I do the same thing I subtract
+[14:25] my 1 from both sides so I end up with 1
+[14:31] equals 10 R then I divide by 10 so I get
+[14:38] R equals 1/10 or 0.1 0.1 so that tells
+[14:44] me I have a 10% interest rate so if I
+[14:50] have a 10% interest rate then my money
+[14:52] will double in 10 years which makes
+[14:55] sense right because if I have 10% for 10
+[14:57] years that gives me a hundred percent in
+[15:00] then I have the other money that I
+[15:02] started with so now I've doubled my
+[15:03] money

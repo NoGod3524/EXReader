@@ -101,7 +101,11 @@ private final class ReaderSession {
         page = defaults.integer(forKey: book.id + ".page")
         fontSize = defaults.object(forKey: book.id + ".fontSize") == nil ? 28 : defaults.float(forKey: book.id + ".fontSize")
         if let publication {
-            part = min(max(0, part), max(0, publication.parts.count - 1))
+            let parts = publication.parts
+            guard let first = parts.indices.first(where: { parts[$0].inReadingOrder }) else {
+                throw EXReaderError.invalidInput
+            }
+            if !parts.indices.contains(part) || !parts[part].inReadingOrder { part = first; page = 0 }
             document = try publication.load(part: part)
         } else { part = 0 }
         if let document { pager = try document.pager(font: font, config: config) }
@@ -150,38 +154,57 @@ private final class ReaderSession {
     }
     func turn(_ direction: Int) throws -> ReaderFrame {
         guard entry != nil else { throw EXReaderError.invalidInput }
-        if let fixed {
-            let index = page + direction
-            guard index >= 0, index < fixed.pageCount else { return try render() }
-            page = index
-            return try render()
-        }
-        guard let publication else {
-            let before = page
-            page = max(0, page + direction)
-            do { return try render() }
-            catch EXReaderError.engine(let code, _) where code == 1 { page = before; return try render() }
-        }
-        let before = page
-        if direction > 0 {
-            page += 1
-            do { return try render() }
-            catch EXReaderError.engine(let code, _) where code == 1 {
-                lastPages[part] = before
-                if part + 1 >= publication.parts.count { page = before; return try render() }
-                part += 1; page = 0
+        let previous = (document, pager, part, page, lastPages, lastFrame)
+        do {
+            if let fixed {
+                let index = page + direction
+                guard index >= 0, index < fixed.pageCount else { return try render() }
+                page = index
+                return try render()
             }
-        } else if page > 0 { page -= 1; return try render() }
-        else if part > 0 { part -= 1; page = lastPages[part] ?? 0 }
-        else { return try render() }
-        document = try publication.load(part: part)
-        pager = try document!.pager(font: font, config: config)
-        return try render()
+            guard let publication else {
+                let before = page
+                page = max(0, page + direction)
+                do { return try render() }
+                catch EXReaderError.engine(let code, _) where code == 1 { page = before; return try render() }
+            }
+            let parts = publication.parts
+            let before = page
+            if direction > 0 {
+                page += 1
+                do { return try render() }
+                catch EXReaderError.engine(let code, _) where code == 1 {
+                    lastPages[part] = before
+                    guard let next = parts.indices.first(where: { $0 > part && parts[$0].inReadingOrder }) else {
+                        page = before; return try render()
+                    }
+                    part = next; page = 0
+                }
+            } else if page > 0 { page -= 1; return try render() }
+            else if let prior = parts.indices.last(where: { $0 < part && parts[$0].inReadingOrder }) {
+                part = prior; page = lastPages[part] ?? 0
+            } else { return try render() }
+            document = try publication.load(part: part)
+            if direction < 0, lastPages[part] == nil {
+                let counting = try document!.pager(font: font, config: config)
+                var count = 0
+                while let _ = try counting.next() { count += 1 }
+                page = max(0, count - 1)
+                lastPages[part] = page
+            }
+            pager = try document!.pager(font: font, config: config)
+            return try render()
+        } catch {
+            (document, pager, part, page, lastPages, lastFrame) = previous
+            save()
+            throw error
+        }
     }
     func resizeFont(_ delta: Float) throws -> ReaderFrame {
         guard fixed == nil, let document else { return try render() }
         let offset = lastFrame?.sourceOffset ?? 0
         fontSize = min(48, max(18, fontSize + delta))
+        lastPages.removeAll()
         pager = try document.pager(font: font, config: config)
         page = 0
         while page < 20000 {
@@ -307,7 +330,7 @@ private final class ReaderModel: ObservableObject {
         guard let s = session else { throw EXReaderError.invalidInput }
         var checks = [String]()
         func check(_ value: Bool, _ name: String) throws {
-            guard value else { throw EXReaderError.invalidResult }
+            guard value else { throw EXReaderError.engine(code: -1, message: "Self-test failed: " + name) }
             checks.append(name)
         }
         let epub = Bundle.main.url(forResource: "Sample", withExtension: "epub")!
@@ -349,6 +372,63 @@ private final class ReaderModel: ObservableObject {
         try check(restored.library.count == s.library.count, "library_reopen")
         let last = try restored.open(book)
         try check(last.part == savedPart && last.page == savedPage, "resume_after_session_reopen")
+
+        let navigationDefaults = UserDefaults(suiteName: "org.exreader.host.navigation." + UUID().uuidString)!
+        let navigation = try ReaderSession(storage: s.storage.appendingPathComponent("navigation"), defaults: navigationDefaults)
+        let navigationURL = Bundle.main.url(forResource: "Navigation", withExtension: "epub")!
+        var terminal = try navigation.importBook(navigationURL)
+        let navigationBook = navigation.entry!
+        for _ in 0..<200 {
+            let next = try navigation.turn(1)
+            if next.part != terminal.part { break }
+            terminal = next
+        }
+        try check(terminal.page > 0 && terminal.text.contains("FINAL FIRST CHAPTER"), "navigation_multipage_fixture")
+        try check(navigation.part == 2, "navigation_skips_nonlinear_forward")
+        let finalReading = try navigation.render()
+        let atEnd = try navigation.turn(1)
+        try check(atEnd.part == finalReading.part && atEnd.page == finalReading.page && atEnd.text == finalReading.text,
+                  "navigation_stops_before_auxiliary")
+        let resumed = try ReaderSession(storage: navigation.storage, defaults: navigationDefaults)
+        _ = try resumed.open(navigationBook)
+        let previous = try resumed.turn(-1)
+        try check(previous.part == 0, "navigation_skips_nonlinear_backward")
+        try check(previous.page == terminal.page && previous.text == terminal.text && previous.bitmap.pixels == terminal.bitmap.pixels,
+                  "previous_chapter_after_reopen")
+        _ = try resumed.turn(1)
+        _ = try resumed.resizeFont(20)
+        let largePrevious = try resumed.turn(-1)
+        try check(largePrevious.part == 0 && largePrevious.page > terminal.page && largePrevious.text.contains("FINAL FIRST CHAPTER"),
+                  "previous_chapter_after_font_increase")
+        _ = try resumed.turn(1)
+        _ = try resumed.resizeFont(-20)
+        let smallPrevious = try resumed.turn(-1)
+        try check(smallPrevious.part == 0 && smallPrevious.page == terminal.page && smallPrevious.bitmap.pixels == terminal.bitmap.pixels,
+                  "previous_chapter_after_font_decrease")
+
+        let brokenURL = Bundle.main.url(forResource: "BrokenChapter", withExtension: "epub")!
+        let beforeFailure = try resumed.importBook(brokenURL)
+        let priorDocument = resumed.document, priorPager = resumed.pager
+        var transitionFailed = false
+        do { _ = try resumed.turn(1) }
+        catch EXReaderError.engine(let code, _) where code == 5 { transitionFailed = true }
+        try check(transitionFailed, "broken_chapter_reports_error")
+        try check(resumed.part == beforeFailure.part && resumed.page == beforeFailure.page &&
+                  resumed.document === priorDocument && resumed.pager === priorPager &&
+                  resumed.lastFrame?.text == beforeFailure.text, "failed_turn_restores_frame_and_handles")
+        resumed.save()
+        let brokenBook = resumed.entry!
+        try check(navigationDefaults.integer(forKey: brokenBook.id + ".part") == beforeFailure.part &&
+                  navigationDefaults.integer(forKey: brokenBook.id + ".page") == beforeFailure.page,
+                  "failed_turn_preserves_saved_position")
+        try resumed.annotate(beforeFailure.text)
+        let noteData = try Data(contentsOf: resumed.storage.appendingPathComponent("notes.json"))
+        let notes = try JSONDecoder().decode([[String: String]].self, from: noteData)
+        try check(notes.last?["part"] == String(beforeFailure.part) && notes.last?["page"] == String(beforeFailure.page),
+                  "failed_turn_preserves_annotation_location")
+        let afterFailure = try resumed.render()
+        try check(afterFailure.text == beforeFailure.text && afterFailure.bitmap.pixels == beforeFailure.bitmap.pixels,
+                  "failed_turn_preserves_readable_page")
         publish(last)
         writeTestReport(["passed": true, "checks": checks, "check_count": checks.count])
     }

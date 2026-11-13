@@ -305,6 +305,44 @@ def scenario_protection(r):
     ok = code == 3 and target_dir.is_dir() and not list(target_dir.iterdir())
     r.record("publish-failure", "target directory unchanged and temp cleaned", code, ok, stdout, err)
 
+def scenario_batch_input_protection(r):
+    # A01: protect inputs before any item publishes, including rejected items
+    # and file-identity aliases. The independent conversion must still succeed.
+    for name, hardlink, reject_reader, reverse in (
+            ("later-input", False, False, False),
+            ("earlier-input", False, False, True),
+            ("rejected-input", False, True, False),
+            ("input-hardlink", True, False, False)):
+        directory = r.work / "batch-input-protection" / name
+        a, b = directory / "a.txt", directory / "b.txt"
+        write_text(a, "Source A.")
+        write_text(b, "Original source B.")
+        original = {p: sha256(p) for p in (a, b)}
+        target = b
+        if hardlink:
+            target = directory / "b-hardlink.txt"
+            os.link(b, target)
+        output = directory / (name + ".txt")
+        writer = {"id": "writer", "input": str(a), "to": "txt", "output": str(target)}
+        reader = {"id": "reader", "input": str(b), "to": "pdf" if reject_reader else "txt",
+                  "output": str(output)}
+        items = [reader, writer] if reverse else [writer, reader]
+        m = directory / (name + ".json")
+        manifest(m, items, overwrite=True)
+        code, stdout, err, _ = r.run(["--batch", m])
+        data = json.loads(stdout) if stdout.strip().startswith("{") else {}
+        by_id = {item["id"]: item for item in data.get("items", [])}
+        ok = code == 3 and all(sha256(p) == digest for p, digest in original.items())
+        ok = ok and by_id.get("writer", {}).get("status") == "rejected"
+        ok = ok and not by_id.get("writer", {}).get("published", True)
+        if reject_reader:
+            ok = ok and not output.exists()
+        else:
+            ok = ok and by_id.get("reader", {}).get("status") == "ok"
+            ok = ok and output.read_bytes() == b.read_bytes()
+        r.record("batch-protect-" + name, "inputs unchanged; colliding output rejected", code, ok, stdout, err)
+
+
 def scenario_batch_path_errors(r):
     directory = r.work / "batch-path-errors"
     source, good = directory / "source.txt", directory / "good.txt"
@@ -383,6 +421,54 @@ def scenario_manifest_protection(r):
         ok = code == 3 and statuses == {"bad": "rejected", "good": "ok"}
         ok = ok and sha256(m) == before and sha256(target) == before and good.read_bytes() == source.read_bytes()
         r.record("manifest-output-" + name, "preserve manifest and publish independent item", code, ok, stdout, err)
+
+
+def scenario_overwrite_precedence(r):
+    # A03: CLI override > explicit item value > manifest default > false.
+    directory = r.work / "overwrite-precedence"
+    source = directory / "source.txt"
+    write_text(source, "Replacement text.")
+    cases = [(True, False, False, False), (True, None, False, True),
+             (False, True, False, True), (False, None, False, False),
+             (True, False, True, True)]
+    for index, (default, item_value, cli, permitted) in enumerate(cases):
+        target = directory / ("existing-%d.txt" % index)
+        write_text(target, "Keep the original.\n")
+        before = sha256(target)
+        item = {"input": str(source), "to": "txt", "output": str(target)}
+        if item_value is not None:
+            item["overwrite"] = item_value
+        m = directory / ("manifest-%d.json" % index)
+        manifest(m, [item], overwrite=default)
+        code, stdout, err, _ = r.run(["--batch", m] + (["--overwrite"] if cli else []))
+        ok = code == (0 if permitted else 3)
+        ok = ok and (target.read_bytes() == source.read_bytes() if permitted else sha256(target) == before)
+        r.record("overwrite-precedence-%d" % index, "replace only with effective authorization", code, ok, stdout, err)
+
+
+def scenario_manifest_nul(r):
+    # A04: embedded NUL must never redirect a path or alias a manifest field.
+    directory = r.work / "manifest-nul"
+    source, target = directory / "source.txt", directory / "existing.txt"
+    write_text(source, "Source text.\n")
+    write_text(target, "Keep the original.\n")
+    before = {p: sha256(p) for p in (source, target)}
+    for field in ("input", "output", "id", "root", "output_root", "key"):
+        write_text(target, "Keep the original.\n")
+        item = {"input": str(source), "output": str(target), "to": "txt", "id": "safe"}
+        top = {"overwrite": True}
+        if field in ("input", "output", "id"):
+            item[field] += "\x00suffix"
+        elif field == "key":
+            item["output\x00suffix"] = item.pop("output")
+        else:
+            top[field] = str(directory) + "\x00suffix"
+        m = directory / (field + ".json")
+        manifest(m, [item], **top)
+        code, stdout, err, _ = r.run(["--batch", m])
+        ok = code == 2 and all(sha256(p) == digest for p, digest in before.items())
+        ok = ok and not list(directory.glob("*.tmp"))
+        r.record("manifest-nul-" + field, "reject before file operations", code, ok, stdout, err)
 
 
 def scenario_paths_and_limit(r):
@@ -464,9 +550,12 @@ def main():
     scenario_preserve(r)
     scenario_batch(r)
     scenario_protection(r)
+    scenario_batch_input_protection(r)
     scenario_batch_path_errors(r)
     scenario_unicode_output_aliases(r)
     scenario_manifest_protection(r)
+    scenario_overwrite_precedence(r)
+    scenario_manifest_nul(r)
     scenario_paths_and_limit(r)
     scenario_cancel(r)
     expected = len(r.scenarios)

@@ -1,0 +1,125 @@
+{
+  "objective": "完成f07到完全的收尾没有一点点问题",
+  "user_confirmed_requirement": "整个应用的 SDK／产品映像共用一个 SQLite 实现",
+  "diagnostic_scope": "Explicitly authorized normal-process read-only diagnosis of fixed build.py and directly referenced link configuration; no production/SDK edits or CI.",
+  "diagnostic_completed": true,
+  "production_fix_implemented": false,
+  "ref": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
+  "sources": [
+    {
+      "path": "tests/apple_sdk342_host/build.py",
+      "git_blob": "6f6bd048c5e3d6dc1f690cc41dd94c9363480980",
+      "sha256": "76ebc41b0eed848c2aa31537abff00954657a3d5a460f2f46c65c50ae6112407",
+      "bytes": 4759,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/tests/apple_sdk342_host/build.py"
+    },
+    {
+      "path": "tools/build_apple_product.py",
+      "git_blob": "ee4b55320176df25ac23a04c65c95d2240f7eed1",
+      "sha256": "5a51945f4a8e5d2714680ccf2a08e5fe6d57e8b638f419dad148f11ba7315e05",
+      "bytes": 7911,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/tools/build_apple_product.py"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "git_blob": "a5ed27fcca1d709c2217c585da47dc55dc23c1d0",
+      "sha256": "eaf7eab45b6d0639c78d20644923adf5f8cb54651bc2a59c24035079d8939f10",
+      "bytes": 69893,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/CMakeLists.txt"
+    },
+    {
+      "path": "cmake/modules.cmake",
+      "git_blob": "f167c865a4c5f386e4bd02660cad3e773ef34c3c",
+      "sha256": "1f0de4b6ee5f147645c71b8f893bbe13c97f9cb3c9c3fa0ebbc54223066e90cd",
+      "bytes": 9264,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/cmake/modules.cmake"
+    },
+    {
+      "path": "cmake/deps.cmake",
+      "git_blob": "79fa964b50efe57dfdbd156cf4bb85c83886787b",
+      "sha256": "ab41bada326f9623e962c6ac2c2c685e29a98fef0bf97b435905a086e501b49d",
+      "bytes": 14561,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/cmake/deps.cmake"
+    },
+    {
+      "path": "apps/reader/store/native/CMakeLists.txt",
+      "git_blob": "81b98dfacf26ea58a30400df5e9513fee83fa24f",
+      "sha256": "12133a2d32ae1c92c94a4e38f26b7dc8fa419a991098223e6f7c1922bbe4ed1f",
+      "bytes": 7475,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/apps/reader/store/native/CMakeLists.txt"
+    },
+    {
+      "path": "tools/apple_swift.py",
+      "git_blob": "94176b5070126b90dc1b4c82b859a8358acafe7b",
+      "sha256": "680c64328c82b2cde4354e1607594b42bd2433e0dabd84cf3785c4ffa1bcdd9b",
+      "bytes": 6497,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/tools/apple_swift.py"
+    },
+    {
+      "path": "tools/check_apple_product.py",
+      "git_blob": "ed7f62597e01d4e045f679369805d27abc20b7bc",
+      "sha256": "551ddd87be7faf476a82bb391c29736454e7d501719a0a4913610fbcce195519",
+      "bytes": 8021,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/tools/check_apple_product.py"
+    },
+    {
+      "path": "cmake/install_dependencies.cmake",
+      "git_blob": "0fc6b4ee6cc53920771928f0d50560c6c02b6967",
+      "sha256": "dcc78835ee37b5a6455e8393c9a069c9fd4f763aad355e104712176d8da6e0fd",
+      "bytes": 1973,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/cmake/install_dependencies.cmake"
+    },
+    {
+      "path": "cmake/EXReaderConfig.cmake.in",
+      "git_blob": "94df1ec88d0725883be323886cc8a450bed5d471",
+      "sha256": "9878f5c9f4ff38777fe802a8a18bd6079744ca692eefdd0bc1e5b033cab6eced",
+      "bytes": 582,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/cmake/EXReaderConfig.cmake.in"
+    },
+    {
+      "path": "apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in",
+      "git_blob": "0294f7ef242aa5a9b246ff342457803a60feacb7",
+      "sha256": "22c2e1e7c8e0facab7b7418dafe483db3c531adee7c4c4bd5baff8616a5c3203",
+      "bytes": 1626,
+      "url": "https://github.com/NoGod3524/EXReader/blob/ec11cf862ca3b44483d7e8c4726ae748ab438337/apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in"
+    }
+  ],
+  "recipe_matches_original_receipt": true,
+  "causes": [
+    "SDK exr_sqlite is private static, pulled into shared exreader via library/textindex.",
+    "ProductCatalog independently builds public reader_catalog_sqlite and Apple flags link that archive into host.",
+    "Existing checker validates main-image product ownership and requires dynamic SDK; it does not inspect embedded SDK SQLite.",
+    "SDK and product SQLite feature settings differ: SDK default enables FTS5, product does not; actual vendor archive nm has 58 Fts5 records vs product 0.",
+    "install_dependencies.cmake assumes static vendor files and STATIC IMPORTED; merely changing library type would break exported SDK package."
+  ],
+  "proposal": "Extract an application-public EXReaderSQLiteProvider package with one shared implementation. SDK and ProductCatalog both depend on it through public imported targets, preserving dynamic SDK and eliminating embedded second implementations.",
+  "known_affected_paths": [
+    "extras/sqlite-provider/ (proposed new package; collision check required)",
+    "cmake/deps.cmake",
+    "cmake/modules.cmake",
+    "cmake/install_dependencies.cmake",
+    "cmake/EXReaderConfig.cmake.in",
+    "apps/reader/store/native/CMakeLists.txt",
+    "apps/reader/store/native/EXReaderProductCatalogConfig.cmake.in",
+    "tests/apple_sdk342_host/build.py",
+    "tools/build_apple_product.py",
+    "tools/apple_swift.py",
+    "tools/check_apple_product.py"
+  ],
+  "subsequent_paths_not_yet_authorized_or_selected": [
+    "six-target producer/package paths",
+    "new SDK baseline/version declaration",
+    "new scoped acceptance controls"
+  ],
+  "required_validation": [
+    "one SQLite defining shared image per app SDK/product closure",
+    "no SQLite implementation embedded in main SDK or product images",
+    "all SQLite bindings resolve to exact shared provider",
+    "no module SDK-private entry dependence",
+    "same provider compile configuration including required FTS5 and OMIT_LOAD_EXTENSION",
+    "shared initialize/config/shutdown lifetime correct",
+    "six-target identity chain and retained MAP/RSP/commands/member hashes",
+    "positive real product functionality plus negative provider/config/ABI/private-entry cases"
+  ],
+  "pending_authorization": "Implement independent local candidate for named scope; no commit/push/catalog edit/CI. Later package paths and CI budget remain separate."
+}
