@@ -1,22 +1,21 @@
-按硬约束“真缺 API 就停下来报缺口”，已停止实现。当前引擎有两个缺口：
+按“真缺 API 就停下来报缺口”的硬约束，已停止实现。当前引擎存在两处缺口：
 
-1. **BMP/GIF 不能直接插入。** `exr_edit_insert_image` 只接受 PNG/JPEG 签名，其他格式返回 `EXR_FORMAT`，即使解码器支持它们。见 [docx_edit_image.c:31](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/src/docx_edit_image.c:31)。
-2. **保存重开不能恢复结构化图片块。** DOCX 读取器将图片保留为 opaque run，不生成 `EXR_EDIT_IMAGE`，无法通过图片块 API 取得载荷和尺寸，阻塞验收⑥。见 [edit.h:102](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/include/exr/edit.h:102)、[docx_edit_io.c:271](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/src/docx_edit_io.c:271)。
+1. **BMP/GIF 无法插入**：`exr_edit_insert_image` 仅接受 PNG/JPEG 签名，其他格式返回 `EXR_FORMAT`。见 [docx_edit_image.c:31](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/src/docx_edit_image.c:31)。
+2. **保存重开不恢复图片块**：读取器将 drawing 保留为 opaque run，不生成带载荷、尺寸的 `EXR_EDIT_IMAGE`，阻塞验收⑥。见 [docx_edit_io.c:194](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/src/docx_edit_io.c:194)、[docx_edit_io.c:271](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/src/docx_edit_io.c:271)。
 
-交付状态：
+**文件变更：0 个文件，新增 0 行、删除 0 行。**
 
-| 项目 | 实际结果 |
+| 验收项 | 实际状态 |
 |---|---|
-| 新增／修改文件行数 | 0 个文件，0 行 |
-| ① 插入 PNG | 未执行：发现缺口后停止 |
+| ① PNG 插入、块数增加 | 未执行：发现缺口后停止 |
 | ② 图片颜色绘制 | 未执行 |
 | ③ 等比缩放 | 未执行 |
-| ④ 点选边框 | 未执行 |
+| ④ 点选高亮边框 | 未执行 |
 | ⑤ 删除与撤销 | 未执行 |
-| ⑥ 保存往返 | 被上述读取缺口阻塞，未执行 |
-| ⑦ ctest | 未执行 |
+| ⑥ 保存重开、尺寸一致 | 被读取缺口阻塞，未执行 |
+| ⑦ ctest（指定排除项） | 未执行 |
 
-实际检查命令与输出：
+以上七项没有执行命令或运行输出。实际检查命令及输出如下：
 
 ```text
 git status --short
@@ -34,6 +33,6 @@ ops/capture_window.py
 
 `ops\prepush-check.ps1` 当前不存在，无法运行；未提交、未推送。
 
-已确认边界：`exr_image_decode` 固定解码第 0 帧，因此 GIF 只取首帧。见 [images.c:152](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/src/images.c:152)。
+已确认边界：`exr_image_decode` 固定解码第 0 帧，GIF 只取首帧。见 [images.c:152](/C:/Users/Oscar/Documents/Codex/EXReader-e2b-20261112/src/images.c:152)。
 
-需要先由引擎补齐 **BMP/GIF 插入支持**及 **DOCX 图片读取为结构化图片块（含载荷和尺寸）**。
+需先补齐 **BMP/GIF 插入支持、DOCX 结构化图片块读取**，并提供 prepush 检查脚本。
