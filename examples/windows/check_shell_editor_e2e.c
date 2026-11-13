@@ -34,10 +34,9 @@ static void e2e_content(cv_text *out,const exr_edit_block *b) {
     for(size_t r=0;r<b->run_count;r++)if(b->runs[r].kind==EXR_EDIT_TEXT)bytes+=b->runs[r].text_size;
     if(!bytes)return;
     cv_text_string(out,"[p]");
-    for(size_t r=0;r<b->run_count;r++)if(b->runs[r].kind==EXR_EDIT_TEXT) {
-      char length[48];snprintf(length,sizeof(length),"%zu:",b->runs[r].text_size);
-      cv_text_string(out,length);cv_text_append(out,b->runs[r].text,b->runs[r].text_size);
-    }
+    char length[48];snprintf(length,sizeof(length),"%zu:",bytes);cv_text_string(out,length);
+    for(size_t r=0;r<b->run_count;r++)if(b->runs[r].kind==EXR_EDIT_TEXT)
+      cv_text_append(out,b->runs[r].text,b->runs[r].text_size);
     cv_text_string(out,"[/p]");
   } else if(b->kind==EXR_EDIT_PAGE_BREAK)cv_text_string(out,"[page-break]");
 }
@@ -59,7 +58,14 @@ static char *e2e_snapshot(exr_edit_doc *doc) {
   cv_text_string(&out,"");E2E_CHECK(out.data);return out.data;
 }
 static void e2e_same(const char *expected) {
-  char *actual=e2e_snapshot(de.doc);E2E_CHECK(!strcmp(expected,actual));free(actual);
+  char *actual=e2e_snapshot(de.doc);
+  if(strcmp(expected,actual)) {
+    size_t offset=0;while(expected[offset] && expected[offset]==actual[offset])offset++;
+    fprintf(stderr,"%s FAIL snapshot_expected=%zu snapshot_actual=%zu first_difference=%zu\n",
+      e2e_step,strlen(expected),strlen(actual),offset);
+    free(actual);exit(1);
+  }
+  free(actual);
 }
 static size_t e2e_images(void) {
   size_t count=0;
@@ -134,9 +140,7 @@ int main(int argc,char **argv) {
   e2e_step="3 table typing";
   const exr_edit_run *run=&exr_edit_find_block(de.doc,cell_id)->runs[cell_run];
   size_t old_size=run->text_size;
-  char *typed=malloc(old_size+4);E2E_CHECK(typed);
-  memcpy(typed,run->text,old_size);memcpy(typed+old_size,"\xe6\xa0\xbc",4);
-  E2E_OK(exr_edit_set_run_text(de.doc,cell_id,cell_run,typed,old_size+3));free(typed);
+  E2E_OK(de_replace_run(cell_id,cell_run,old_size,old_size,"\xe6\xa0\xbc",3));
   run=&exr_edit_find_block(de.doc,cell_id)->runs[cell_run];
   E2E_CHECK(run->text_size==old_size+3 && !memcmp(run->text+old_size,"\xe6\xa0\xbc",3));
   char *table_typed=e2e_snapshot(de.doc);E2E_CHECK(strcmp(body_typed,table_typed));
