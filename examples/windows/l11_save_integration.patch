@@ -1,0 +1,55 @@
+--- a/examples/windows/shell_docedit.inc
++++ b/examples/windows/shell_docedit.inc
+@@ -134,40 +134,7 @@
+ static void de_error(const wchar_t *operation,exr_status status,exr_error *error) {
+   wchar_t message[768];describe_error(message,768,operation,status,error);set_status(message);
+ }
+-static int de_save(void) {
+-  void *bytes=NULL;size_t size=0;exr_error error={0};
+-  if(!de.doc)return 0;
+-  exr_status status=exr_edit_docx_write(de.doc,&bytes,&size,&error);
+-  if(status!=EXR_OK) {de_error(L"无法生成 DOCX",status,&error);return 0;}
+-  wchar_t *path=host_wide(de.path,strlen(de.path)),dir[MAX_PATH],temp[MAX_PATH]=L"";
+-  HANDLE file=INVALID_HANDLE_VALUE;int ok=0;
+-  if(!path || wcslen(path)>=MAX_PATH)goto done;
+-  wcscpy(dir,path);wchar_t *slash=wcsrchr(dir,L'\\');
+-  if(!slash)slash=wcsrchr(dir,L'/');
+-  if(!slash)goto done;
+-  slash[1]=0;
+-  if(!GetTempFileNameW(dir,L"exr",0,temp))goto done;
+-  file=CreateFileW(temp,GENERIC_WRITE,0,NULL,TRUNCATE_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+-  if(file==INVALID_HANDLE_VALUE)goto done;
+-  size_t at=0;
+-  while(at<size) {
+-    DWORD written=0,want=(DWORD)((size-at)>0x100000 ? 0x100000:size-at);
+-    if(!WriteFile(file,(char *)bytes+at,want,&written,NULL) || written!=want)goto done;
+-    at+=written;
+-  }
+-  if(!FlushFileBuffers(file))goto done;
+-  if(!CloseHandle(file)) {file=INVALID_HANDLE_VALUE;goto done;}file=INVALID_HANDLE_VALUE;
+-  ok=ReplaceFileW(path,temp,NULL,0,NULL,NULL)!=0;
+-  if(!ok && GetLastError()==ERROR_FILE_NOT_FOUND)
+-    ok=MoveFileExW(temp,path,MOVEFILE_WRITE_THROUGH)!=0;
+-done:
+-  if(file!=INVALID_HANDLE_VALUE)CloseHandle(file);
+-  if(!ok && temp[0])DeleteFileW(temp);
+-  exr_free(bytes);free(path);
+-  if(ok) {de.dirty=0;de.saved=1;de_title();set_status(L"DOCX 已保存。");}
+-  else set_status(L"无法保存 DOCX；修改仍保留在编辑器中。");
+-  return ok;
+-}
++#include "shell_docedit_save.inc"
+ static int de_open(const char *path) {
+   if(de.doc || !path || strlen(path)>=sizeof(de.path))return 0;
+   exr_error error={0};exr_edit_doc *doc=NULL;
+--- a/examples/windows/shell_docedit_input.inc
++++ b/examples/windows/shell_docedit_input.inc
+@@ -228,7 +228,7 @@
+     if(key=='L' || key=='E' || key=='R' || key=='J') {
+       de_command(key=='L' ? DE_LEFT:key=='E' ? DE_CENTER:key=='R' ? DE_RIGHT:DE_JUSTIFY,0);return 1;
+     }
+-    if(key=='S') {de_save();return 1;}
++    if(key=='S') {if(shift)de_save_as(NULL);else de_save();return 1;}
+     if(key=='Z' || key=='Y') {
+       memset(&de.pending_props,0,sizeof(de.pending_props));
+       exr_status status=key=='Z' ? exr_edit_undo(de.doc):exr_edit_redo(de.doc);
