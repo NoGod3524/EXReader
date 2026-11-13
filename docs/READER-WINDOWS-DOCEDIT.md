@@ -7,9 +7,11 @@ new empty paragraph inserts its first run in the same transaction as the text
 edit; Ctrl+Z removes that input while retaining Enter and sibling paragraphs.
 
 While the caret is in a table, a second toolbar row shows `+行`, `−行`,
-`列宽+`, `列宽−`, and `删表`. Row insertion follows the current row; deletion
-removes the current row. Column width increases by 5%; the decrease button
-reverses that step, with integer-twip rounding. Each action is one undo entry.
+`列宽+`, `列宽−`, and `删表`. Row insertion precedes the current row; deletion
+removes the current row. Column width changes by +5% or −5% of its current
+value, rounded to integer twips. Each action is one undo entry.
+Deleting a table asks for confirmation. Ctrl+Alt+Enter inserts a paragraph
+immediately below the table so typing can continue outside it.
 Ctrl+S preserves table structure, all cell paragraphs and grid widths in DOCX.
 Merged, shaded, nested or opaque cells retain the engine's edit protection.
 

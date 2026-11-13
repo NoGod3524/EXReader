@@ -109,7 +109,11 @@ get_target_property(exr_type EXReader::exreader TYPE)
 if(exr_type STREQUAL "SHARED_LIBRARY")
   find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll
             PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
-  add_custom_command(TARGET EXReader POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:EXReader>"
-    VERBATIM)
+  # The console drivers must load the same SDK as the app, including when only
+  # a driver is built after an engine API change.
+  foreach(host EXReader check_shell_docedit check_shell_table)
+    add_custom_command(TARGET ${host} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:${host}>"
+      VERBATIM)
+  endforeach()
 endif()

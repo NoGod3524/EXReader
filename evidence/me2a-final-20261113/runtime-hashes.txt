@@ -1,0 +1,8 @@
+
+Algorithm Hash                                                             Path
+--------- ----                                                             ----
+SHA256    BE7EDC4A3C4272585845E3FD44B97DC026DF4F657B047E2E95F3DFC228ED5157 C:\Users\Oscar\Documents\Codex\EXReader-e2a-20261112\build\tables\libexreader.dll
+SHA256    BE7EDC4A3C4272585845E3FD44B97DC026DF4F657B047E2E95F3DFC228ED5157 C:\Users\Oscar\Documents\Codex\EXReader-e2a-20261112\build\tables\stage\bin\libexreader.dll
+SHA256    BE7EDC4A3C4272585845E3FD44B97DC026DF4F657B047E2E95F3DFC228ED5157 C:\Users\Oscar\Documents\Codex\EXReader-e2a-20261112\build\tables-host\libexreader.dll
+
+
