@@ -22,6 +22,8 @@ static struct {
 } da;
 static void da_update(void);
 static void da_action(int action);
+extern exr_status l07_edit_cell_paragraph(exr_edit_doc *,exr_edit_id,size_t,size_t,
+  const exr_edit_block *);
 static const exr_edit_block *da_table(void) {
   const exr_edit_block *b=exr_edit_find_block(de.doc,da.table);
   return b && b->table ? b:NULL;
@@ -32,6 +34,25 @@ static const exr_edit_block *da_paragraph(void) {
 static const exr_edit_run *da_run(void) {
   const exr_edit_block *b=da_paragraph();
   return b && da.run<b->run_count && b->runs[da.run].kind==EXR_EDIT_TEXT ? &b->runs[da.run]:NULL;
+}
+static int da_enabled(int action) {
+  const exr_edit_block *b=da_paragraph();
+  if(action==DA_TEXT)return b && (da_run() || !b->run_count);
+  if(action>=DA_PREV && action<=DA_REMOVE)return da_table()!=NULL;
+  return action>DA_TEXT && action<DA_COUNT;
+}
+/* One order for real Tab traversal and the headless keyboard driver. */
+static int da_next_control(int current,int backwards) {
+  for(int i=0;i<DA_COUNT;i++) {
+    current=(current+(backwards ? DA_COUNT-1:1))%DA_COUNT;
+    if(da_enabled(current))return current;
+  }
+  return DA_BODY;
+}
+static int da_control_key(int action,WPARAM key,int control,int shift) {
+  if(control || shift || action<=DA_TEXT || !da_enabled(action))return 0;
+  if(key!=VK_RETURN && key!=VK_SPACE)return 0;
+  da_action(action);return 1;
 }
 static void da_changed(exr_status status) {
   if(status==EXR_OK) {de.dirty=1;de.layout_dirty=1;de_refresh(1);}
@@ -54,7 +75,8 @@ static int da_replace(const char *text,size_t count) {
   if(r)status=exr_edit_set_run_text(de.doc,b->id,da.run,bytes,size);
   else {
     exr_edit_run run={0};run.text=bytes;run.text_size=size;
-    status=exr_edit_table_set_cell_text(de.doc,da.table,da.row,da.col,&run,1);
+    exr_edit_block paragraph=*b;paragraph.runs=&run;paragraph.run_count=1;
+    status=l07_edit_cell_paragraph(de.doc,da.table,da.row,da.col,&paragraph);
   }
   free(bytes);
   if(status==EXR_OK)da.byte=da.anchor=from+count;
@@ -68,7 +90,7 @@ static void da_update(void) {
       da.row+1,table->table->row_count,da.col+1,cells,da.para+1,da.run+1,
       b ? L"可输入文字，Tab 访问命令。":L"受保护的单元格，只读；可移动到其他单元格。");
   } else {
-    da.table=0;wcscpy(da.description,L"DOCX 编辑器命令。Ctrl+T 进入表格；Ctrl+S 保存；F6 返回正文。");
+    da.table=0;wcscpy(da.description,L"DOCX 编辑器命令。Ctrl+T 进入表格；Ctrl+S 保存；Tab 或 F6 访问命令，Esc 返回正文。");
   }
   if(!da.panel)return;
   SetWindowTextW(da.panel,da.description);
@@ -77,7 +99,7 @@ static void da_update(void) {
   host_a11y_describe(edit,NULL,da.description);
   wchar_t *wide=r ? host_wide(r->text,r->text_size):NULL;
   da.loading=1;SetWindowTextW(edit,wide ? wide:L"");free(wide);da.loading=0;
-  EnableWindow(edit,b && (r || !b->run_count));
+  EnableWindow(edit,da_enabled(DA_TEXT));
   if(r) {
     if(da.byte>r->text_size)da.byte=r->text_size;
     if(da.anchor>r->text_size)da.anchor=r->text_size;
@@ -86,7 +108,7 @@ static void da_update(void) {
     SendMessageW(edit,EM_SETSEL,de_units(r->text,da.anchor),de_units(r->text,da.byte));
     SendMessageW(edit,EM_SCROLLCARET,0,0);
   }
-  for(int i=DA_PREV;i<=DA_REMOVE;i++)EnableWindow(da.controls[i],table!=NULL);
+  for(int i=DA_PREV;i<DA_COUNT;i++)EnableWindow(da.controls[i],da_enabled(i));
   NotifyWinEvent(EVENT_OBJECT_DESCRIPTIONCHANGE,edit,OBJID_CLIENT,CHILDID_SELF);
 }
 static int da_enter_table(void) {
@@ -176,7 +198,8 @@ static void da_format(int command) {
   if(command>=DE_LEFT && command<=DE_JUSTIFY) {
     exr_edit_para_props props=b->props;props.present|=EXR_EDIT_ALIGN;
     props.alignment=(exr_edit_alignment)(command-DE_LEFT);
-    da_changed(exr_edit_set_paragraph_props(de.doc,b->id,&props));return;
+    exr_edit_block paragraph=*b;paragraph.props=props;
+    da_changed(l07_edit_cell_paragraph(de.doc,da.table,da.row,da.col,&paragraph));return;
   }
   if(!r)return;
   exr_edit_run_props props=de_resolve_props(b,r);
@@ -187,7 +210,12 @@ static void da_format(int command) {
     props.present|=EXR_EDIT_SIZE;unsigned size=props.size_half_points ? props.size_half_points:24;
     props.size_half_points=command==DE_SMALLER ? (size>3 ? size-2:2):(size<3274 ? size+2:3276);
   }
-  da_changed(exr_edit_set_run_props(de.doc,b->id,da.run,&props));
+  exr_edit_run *runs=malloc(b->run_count*sizeof(*runs));
+  if(!runs) {da_changed(EXR_MEMORY);return;}
+  memcpy(runs,b->runs,b->run_count*sizeof(*runs));runs[da.run].props=props;
+  exr_edit_block paragraph=*b;paragraph.runs=runs;
+  exr_status status=l07_edit_cell_paragraph(de.doc,da.table,da.row,da.col,&paragraph);
+  free(runs);da_changed(status);
 }
 static void da_action(int action) {
   if(action==DA_PREV || action==DA_NEXT)da_cell(action==DA_PREV ? -1:1);
@@ -210,7 +238,7 @@ static void da_action(int action) {
     dialog.Flags=OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST|OFN_NOCHANGEDIR;
     if(GetOpenFileNameW(&dialog))da_changed(da_insert_image_path(path));
   } else if(action==DA_SAVE) {de_save();da_update();}
-  else if(action==DA_BODY) {da.table=0;ShowWindow(da.panel,SW_HIDE);SetFocus(g.page);}
+  else if(action==DA_BODY) {da.table=0;da_update();ShowWindow(da.panel,SW_HIDE);SetFocus(g.page);}
   if(da.panel && IsWindowVisible(da.panel)) {
     SendMessageW(da.panel,WM_CHANGEUISTATE,MAKEWPARAM(UIS_CLEAR,UISF_HIDEFOCUS),0);
     if(action>=DA_PREV && action<=DA_TABLE && IsWindowEnabled(da.controls[DA_TEXT]))SetFocus(da.controls[DA_TEXT]);
@@ -276,16 +304,25 @@ static void da_close(void) {
 static int da_key(WPARAM key,int control,int shift) {
   if(!de.doc)return 0;
   if(control && key=='T') {da_enter_table();da_show();return 1;}
+  if(control && key=='S') {de_save();da_update();return 1;}
+  if(key==VK_TAB && !control) {
+    da_show();if(shift && da.panel)SetFocus(da.controls[DA_BODY]);return 1;
+  }
   if(key==VK_F6) {
     if(da.panel && IsWindowVisible(da.panel) && GetFocus()!=g.page) {
-      da.table=0;SetFocus(g.page);
+      da.table=0;da_update();SetFocus(g.page);
     } else da_show();
     return 1;
   }
   if(da.table) {
-    if(control && (key=='S' || key=='Z' || key=='Y')) {
-      if(key=='S')de_save();
-      else {exr_status s=key=='Z' ? exr_edit_undo(de.doc):exr_edit_redo(de.doc);da_changed(s);}
+    if(control && (key=='B' || key=='I' || key=='L' || key=='E' || key=='R' || key=='J' ||
+        (shift && (key==VK_OEM_PERIOD || key==VK_OEM_COMMA)))) {
+      da_format(key=='B' ? DE_BOLD:key=='I' ? DE_ITALIC:key=='L' ? DE_LEFT:
+        key=='E' ? DE_CENTER:key=='R' ? DE_RIGHT:key=='J' ? DE_JUSTIFY:
+        key==VK_OEM_PERIOD ? DE_LARGER:DE_SMALLER);return 1;
+    }
+    if(control && (key=='Z' || key=='Y')) {
+      exr_status s=key=='Z' ? exr_edit_undo(de.doc):exr_edit_redo(de.doc);da_changed(s);
       da_update();return 1;
     }
     if(key==VK_ESCAPE) {da_action(DA_BODY);return 1;}
@@ -300,11 +337,18 @@ static int da_translate(const MSG *message) {
   if(message->message==WM_KEYDOWN && (message->hwnd==g.page || message->hwnd==g.window ||
       (da.panel && (message->hwnd==da.panel || IsChild(da.panel,message->hwnd))))) {
     if(message->wParam==VK_F6 || (control && (message->wParam=='T' || message->wParam=='S' ||
-        (da.table && (message->wParam=='Z' || message->wParam=='Y'))))) {
-      da_key(message->wParam,control,shift);return 1;
+        message->wParam=='Z' || message->wParam=='Y' ||
+        (da.table && message->hwnd==da.controls[DA_TEXT])))) {
+      if(de_key(message->wParam,control,shift))return 1;
     }
     if(da.panel && IsWindowVisible(da.panel) && IsChild(da.panel,message->hwnd)) {
       if(message->wParam==VK_ESCAPE) {da_action(DA_BODY);return 1;}
+      int action=0;while(action<DA_COUNT && da.controls[action]!=message->hwnd)action++;
+      if(message->wParam==VK_TAB && !control && action<DA_COUNT) {
+        SendMessageW(da.panel,WM_CHANGEUISTATE,MAKEWPARAM(UIS_CLEAR,UISF_HIDEFOCUS),0);
+        SetFocus(da.controls[da_next_control(action,shift)]);return 1;
+      }
+      if(da_control_key(action,message->wParam,control,shift))return 1;
       if(IsDialogMessageW(da.panel,(MSG *)message))return 1;
       TranslateMessage(message);DispatchMessageW(message);return 1;
     }
