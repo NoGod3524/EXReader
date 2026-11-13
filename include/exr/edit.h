@@ -209,6 +209,10 @@ EXR_API exr_status exr_edit_delete_table(exr_edit_doc *doc,exr_edit_id table_id)
 EXR_API exr_status exr_edit_insert_image(exr_edit_doc *doc,exr_edit_id after_id,
   const void *bytes,size_t size,double width_pt,double height_pt,exr_edit_id *new_id);
 EXR_API exr_status exr_edit_delete_image(exr_edit_doc *doc,exr_edit_id image_id);
+/* Set display dimensions in points (finite, positive, at most INT32_MAX EMU).
+   Payload and anchor are retained. Participates in transactions/undo/redo. */
+EXR_API exr_status exr_edit_image_size(exr_edit_doc *doc,exr_edit_id image_id,
+  double width_pt,double height_pt);
 /* Locate an imported image in its current paragraph (including table cells).
    run_index and byte_offset identify the drawing/pict within the run's XML.
    Standalone images return paragraph_id=0, run_index=byte_offset=0.

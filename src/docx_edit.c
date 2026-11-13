@@ -2,6 +2,7 @@
 #include "docx_edit_model_internal.h"
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct edit_block {
   size_t refs;
@@ -750,6 +751,55 @@ static exr_status delete_anchor(exr_edit_doc *d,size_t index) {
   changes[0]=(edit_change){i,d->blocks[i],owner};
   changes[1]=(edit_change){index,d->blocks[index],NULL};
   s=modify(d,changes,2); block_unref(d,owner); return s;
+}
+exr_status exr_edit_image_size(exr_edit_doc *d,exr_edit_id id,double width,double height) {
+  size_t index,i,run=0,offset=0,xml_size=0; exr_edit_id paragraph=0;
+  edit_block *image=NULL,*owner=NULL; exr_edit_run *r=NULL; void *xml=NULL;
+  edit_change changes[2]; size_t count=1; exr_status s=ready(d);
+  int64_t w,h;
+  if (s) return s;
+  if (!isfinite(width) || !isfinite(height) || width<=0 || height<=0 ||
+      width>(double)INT32_MAX/12700 || height>(double)INT32_MAX/12700)
+    return command_failure(d,EXR_ARGUMENT);
+  w=(int64_t)llround(width*12700); h=(int64_t)llround(height*12700);
+  index=find_index(d,id);
+  if (!w || !h || index==SIZE_MAX || !d->blocks[index]->view.image)
+    return command_failure(d,EXR_ARGUMENT);
+  if (d->blocks[index]->view.image->width_emu==w && d->blocks[index]->view.image->height_emu==h) return EXR_OK;
+  image=block_copy(d,&d->blocks[index]->view);
+  if (!image) return command_failure(d,EXR_MEMORY);
+  if (image->view.image->anchor_run_id) {
+    block_location loc;
+    s=exr_edit_image_position(d,&d->blocks[index]->view,&paragraph,&run,&offset);
+    if (s || !locate_block(d,paragraph,&loc)) { s=EXR_ARGUMENT; goto done; }
+    i=loc.index;
+    s=exr_edit_image_resize_xml(d,&d->blocks[index]->view,w,h,&xml,&xml_size);
+    if (s) goto done;
+    owner=block_copy(d,&d->blocks[i]->view);
+    if (!owner) { s=EXR_MEMORY; goto done; }
+    r=mutable_anchor(&owner->view,paragraph,run);
+    if (!r || offset>r->opaque_size || image->view.opaque_size>r->opaque_size-offset ||
+        xml_size>SIZE_MAX-(r->opaque_size-image->view.opaque_size)) { s=EXR_ARGUMENT; goto done; }
+    {
+      size_t n=r->opaque_size-image->view.opaque_size+xml_size;
+      char *copy=allocate(d,n);
+      void *drawing=copy_bytes(d,xml,xml_size,0);
+      if (!copy || !drawing) { release(d,copy); release(d,drawing); s=EXR_MEMORY; goto done; }
+      memcpy(copy,r->opaque_xml,offset); memcpy(copy+offset,xml,xml_size);
+      memcpy(copy+offset+xml_size,(const char *)r->opaque_xml+offset+image->view.opaque_size,
+        r->opaque_size-offset-image->view.opaque_size);
+      release(d,r->opaque_xml); r->opaque_xml=copy; r->opaque_size=n;
+      release(d,image->view.opaque_xml); image->view.opaque_xml=drawing; image->view.opaque_size=xml_size;
+    }
+    changes[1]=(edit_change){i,d->blocks[i],owner}; count=2;
+  }
+  ((exr_edit_image *)image->view.image)->width_emu=w;
+  ((exr_edit_image *)image->view.image)->height_emu=h;
+  changes[0]=(edit_change){index,d->blocks[index],image};
+  s=modify(d,changes,count);
+done:
+  free(xml); block_unref(d,image); block_unref(d,owner);
+  return s ? command_failure(d,s) : EXR_OK;
 }
 exr_status exr_edit_delete_block(exr_edit_doc *d,exr_edit_id id) {
   size_t index; edit_change c; exr_status s=ready(d);

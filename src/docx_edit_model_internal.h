@@ -11,4 +11,7 @@ exr_status exr_edit_ready(exr_edit_doc *d);
 exr_status exr_edit_failure(exr_edit_doc *d,exr_status status);
 exr_status exr_edit_replace(exr_edit_doc *d,exr_edit_id id,const exr_edit_block *view);
 exr_status exr_edit_insert_block(exr_edit_doc *d,exr_edit_id after,const exr_edit_block *view,exr_edit_id *id);
+/* malloc-owned patched drawing XML; dimensions are exact EMUs. */
+exr_status exr_edit_image_resize_xml(const exr_edit_doc *d,const exr_edit_block *image,
+  int64_t width,int64_t height,void **xml,size_t *size);
 #endif
