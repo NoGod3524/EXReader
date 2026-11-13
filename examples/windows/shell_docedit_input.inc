@@ -1,12 +1,5 @@
 /* SPDX-License-Identifier: MIT */
 /* All model mutations, including replacing a selection, share one transaction. */
-/* Same stable Expat entry points as shell_epub.cpp; the SDK omits vendor headers. */
-extern void *XML_ParserCreate(const char *);
-extern void XML_ParserFree(void *);
-extern void XML_SetUserData(void *,void *);
-extern void XML_SetElementHandler(void *,void (*)(void *,const char *,const char **),void (*)(void *,const char *));
-extern int XML_Parse(void *,const char *,int,int);
-
 /* Rebuilding cannot carry the paragraph's original XML template through the
    public insert API. Only rebuild when every paragraph property is modeled;
    reject the whole transaction instead of dropping styles, tabs or extensions. */
@@ -164,24 +157,41 @@ static exr_status de_delete_range(de_pos a,de_pos b) {
 static exr_status de_insert(const char *text,size_t n) {
   de_pos p=de_normalize(de_caret());const exr_edit_block *b=exr_edit_block_at(de.doc,p.block);
   if(!b || b->kind!=EXR_EDIT_PARAGRAPH)return EXR_UNSUPPORTED;
-  if(p.run<b->run_count && b->runs[p.run].kind==EXR_EDIT_TEXT) {
+  exr_edit_run_props pending=de.pending_props;
+  const exr_edit_run *at=p.run<b->run_count && b->runs[p.run].kind==EXR_EDIT_TEXT ? &b->runs[p.run]:NULL;
+  exr_edit_run_props applied=at ? at->props:(exr_edit_run_props){0};
+  de_merge_props(&applied,&pending);
+  if(at && (!pending.present || !memcmp(&applied,&at->props,sizeof(applied)))) {
+    exr_edit_id id=b->id;
     exr_status status=de_replace_run(b->id,p.run,p.byte,p.byte,text,n);
-    if(status==EXR_OK) {p.byte+=n;de_set_caret(p);}return status;
+    if(status==EXR_OK && pending.present)status=exr_edit_set_run_props(de.doc,id,p.run,&applied);
+    if(status==EXR_OK) {p.byte+=n;de_set_caret(p);de.pending_props=pending;}return status;
   }
-  /* Empty paragraphs and positions adjacent to opaque content need a new run. */
+  /* Isolate pending input from preceding/following text through M-E1's guarded
+     paragraph rebuild. No public insert-run API; unsupported templates roll back. */
   if(!de_rebuild_safe(b))return EXR_UNSUPPORTED;
-  exr_edit_run *runs=calloc(b->run_count+1,sizeof(*runs));if(!runs)return EXR_MEMORY;
-  for(size_t i=0;i<p.run;i++)runs[i]=b->runs[i];
-  runs[p.run].kind=EXR_EDIT_TEXT;runs[p.run].text=text;runs[p.run].text_size=n;
-  for(size_t i=p.run;i<b->run_count;i++)runs[i+1]=b->runs[i];
+  exr_edit_run *runs=calloc(b->run_count+3,sizeof(*runs));if(!runs)return EXR_MEMORY;
+  size_t count=0;
+  for(size_t i=0;i<p.run;i++)runs[count++]=b->runs[i];
+  if(at && p.byte) {runs[count]=*at;runs[count++].text_size=p.byte;}
+  size_t inserted=count;
+  if(at)runs[count]=*at;
+  runs[count].kind=EXR_EDIT_TEXT;runs[count].text=text;runs[count].text_size=n;count++;
+  if(at && p.byte<at->text_size) {
+    runs[count]=*at;runs[count].text+=p.byte;runs[count++].text_size-=p.byte;
+  }
+  for(size_t i=p.run+(at ? 1:0);i<b->run_count;i++)runs[count++]=b->runs[i];
   exr_edit_id old=b->id,id=0;
-  exr_status status=exr_edit_insert_paragraph(de.doc,old,runs,b->run_count+1,&b->props,&id);
-  free(runs);if(status==EXR_OK)status=exr_edit_delete_block(de.doc,old);
-  if(status==EXR_OK) {p.byte=n;de_set_caret(p);}return status;
+  exr_status status=exr_edit_insert_paragraph(de.doc,old,runs,count,&b->props,&id);
+  free(runs);
+  if(status==EXR_OK && pending.present)status=exr_edit_set_run_props(de.doc,id,inserted,&applied);
+  if(status==EXR_OK)status=exr_edit_delete_block(de.doc,old);
+  if(status==EXR_OK) {p.run=inserted;p.byte=n;de_set_caret(p);de.pending_props=pending;}return status;
 }
 enum { DE_TYPE,DE_BACKSPACE,DE_DELETE,DE_ENTER };
 static int de_edit(int operation,const char *text,size_t n) {
   if(!de.doc)return 0;
+  exr_edit_run_props pending=de.pending_props;
   de_pos caret=de_caret(),anchor=de_anchor();int selected=de_selected();
   de_pos other=caret;
   if(!selected && (operation==DE_BACKSPACE || operation==DE_DELETE)) {
@@ -201,17 +211,26 @@ static int de_edit(int operation,const char *text,size_t n) {
     if(status==EXR_OK)status=exr_edit_commit(tx);else exr_edit_rollback(tx);
   }
   if(status==EXR_OK) {
+    if(operation==DE_ENTER)de.pending_props=pending;
     de.dirty=1;de.layout_dirty=1;de_set_anchor(de_caret());de_refresh(1);return 1;
   }
-  de_set_caret(caret);de_set_anchor(anchor);
+  de_set_caret(caret);de_set_anchor(anchor);de.pending_props=pending;
   set_status(L"无法编辑此位置（表格、图片、保留内容或内存不足）；此次修改已撤回。");return 0;
 }
 static int de_key(WPARAM key,int control,int shift) {
   if(!de.doc)return 0;
   de.high_surrogate=0;
   if(control) {
+    if(key=='B' || key=='I') {de_command(key=='B' ? DE_BOLD:DE_ITALIC,0);return 1;}
+    if(shift && (key==VK_OEM_PERIOD || key==VK_OEM_COMMA)) {
+      de_command(key==VK_OEM_PERIOD ? DE_LARGER:DE_SMALLER,0);return 1;
+    }
+    if(key=='L' || key=='E' || key=='R' || key=='J') {
+      de_command(key=='L' ? DE_LEFT:key=='E' ? DE_CENTER:key=='R' ? DE_RIGHT:DE_JUSTIFY,0);return 1;
+    }
     if(key=='S') {de_save();return 1;}
     if(key=='Z' || key=='Y') {
+      memset(&de.pending_props,0,sizeof(de.pending_props));
       exr_status status=key=='Z' ? exr_edit_undo(de.doc):exr_edit_redo(de.doc);
       if(status==EXR_OK) {
         de.dirty=1;de.layout_dirty=1;
@@ -292,7 +311,11 @@ static int de_message(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
   if(message==WM_SIZE) {de.layout_dirty=1;de_refresh(1);return 1;}
   if(message==WM_MOUSEWHEEL) {de_scroll(-(short)HIWORD(wparam)/120.f*51.f*shell_dpi/96.f);return 1;}
   if(message==WM_LBUTTONDOWN || (message==WM_MOUSEMOVE && de.mouse_down)) {
-    if(message==WM_LBUTTONDOWN) {SetFocus(window);SetCapture(window);de.mouse_down=1;}
+    if(message==WM_LBUTTONDOWN) {
+      SetFocus(window);
+      if(de_toolbar_click((float)(short)LOWORD(lparam),(float)(short)HIWORD(lparam)))return 1;
+      SetCapture(window);de.mouse_down=1;
+    }
     int x=(short)LOWORD(lparam),y=(short)HIWORD(lparam);
     if(y<0)de_scroll(-17);else if(y>de.height)de_scroll(17);
     de_set_caret(de_hit((float)x,(float)y));
