@@ -2575,19 +2575,33 @@ int main(void) {
 
 **所有权** 模型持有的借用指针，不可释放；块被修改/删除、undo/redo、回滚或模型释放后须重新获取；单元格块在所属表格任意修改后也须重新获取。
 
+### `exr_edit_image_position`
+
+**签名** `exr_status exr_edit_image_position(const exr_edit_doc *doc,const exr_edit_block *block, exr_edit_id *paragraph_id,size_t *run_index,size_t *byte_offset);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型；`block` 必须为该模型当前借用的 IMAGE 块；三个非空输出给出段落 ID、run 下标及 drawing/pict 在该 run 原始 XML 内的字节偏移。表格单元格内段落也可定位；独立插入块的三个输出均为 0。
+
+**返回与失败** 成功 EXR_OK；空参数、其他模型/非图片块或失效锚点为 EXR_ARGUMENT，清零所有非空输出；不修改模型或事务状态。`block->image` 提供原始载荷 `data/size`、格式 `format`、精确 `width_emu/height_emu`（635 EMU = 1 twip）。格式 PNG/JPEG/GIF/BMP 分别对应 image/png、image/jpeg、image/gif、image/bmp。导入块紧随所属段落或表格，是原 run 中 drawing/pict 的结构化视图，写回保留原锚点、关系和载荷；同段多图由位置区分。删除图片/段落/run 后相应视图随同一次 undo 记录移除。
+
+**线程** 同一模型的读取、修改、事务、写出及释放均由调用方串行。
+
+**所有权** block、image 及载荷均为只读借用视图，随对应块变更或移出模型失效；三个输出为调用方标量。GIF 只显示第 0 帧；不能解码的 EMF/WMF、损坏或超解码预算的图片继续保留为 opaque run 及原 OPC 媒体。CMYK JPEG 沿用现有解码器的 RGB 显示，原 JPEG 字节不变。无有效显示尺寸时按解码像素以 96 DPI 推导；复杂多载荷 drawing、嵌套未知 XML 保留 opaque。
+
 ### `exr_edit_insert_image`
 
 **签名** `exr_status exr_edit_insert_image(exr_edit_doc *doc,exr_edit_id after_id, const void *bytes,size_t size,double width_pt,double height_pt,exr_edit_id *new_id);`
 
 **ABI** 实验（[公开头文件](../include/exr/edit.h)）。
 
-**参数** `doc` 为模型；`after_id` 为锚点块 ID，0 表示开头；`bytes`/`size` 为 PNG/JPEG 原始字节及非零长度；`width_pt`、`height_pt` 为有限正数，单位为点；`new_id` 为非空新块 ID 输出。
+**参数** `doc` 为模型；`after_id` 为锚点块 ID，0 表示开头；`bytes`/`size` 为 PNG/JPEG/BMP/GIF 原始字节及非零长度；`width_pt`、`height_pt` 为有限正数，单位为点；`new_id` 为非空新块 ID 输出。
 
-**返回与失败** 成功返回 EXR_OK，插入图片块，保存原始载荷而不重新编码。非法锚点、输出或尺寸为 EXR_ARGUMENT，超输入预算为 EXR_LIMIT，非 PNG/JPEG 签名为 EXR_FORMAT；图片解码错误会传播，分配可返回 EXR_MEMORY。失败清零 *new_id；参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
+**返回与失败** 成功返回 EXR_OK，插入图片块，保存原始载荷而不重新编码。非法锚点、输出或尺寸为 EXR_ARGUMENT，超输入预算为 EXR_LIMIT，无法识别的格式为 EXR_FORMAT；图片解码错误会传播，分配可返回 EXR_MEMORY。失败清零 *new_id；参与事务及 undo/redo，事务内失败遵循锁存/回滚规则。
 
 **线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
 
-**所有权** 图片字节在调用期间借用并深拷贝，返回后可释放输入；图片及新块由模型分配和释放。new_id 为宿主标量输出，无指针所有权转移。
+**所有权** GIF 显示只取第 0 帧，原始动画载荷仍完整保留。图片字节在调用期间借用并深拷贝，返回后可释放输入；图片及新块由模型分配和释放。new_id 为宿主标量输出，无指针所有权转移。
 
 ### `exr_edit_insert_paragraph`
 

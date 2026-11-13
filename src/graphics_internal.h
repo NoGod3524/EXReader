@@ -53,4 +53,5 @@ exr_status exr_image_decode_page_control(const void *data,size_t size,size_t pag
 exr_status exr_image_decode_control(const void *data,size_t size,const exr_control *control,
   exr_bitmap *out,exr_error *error);
 
+int exr_image_format_detect(const void *data,size_t size);
 #endif
