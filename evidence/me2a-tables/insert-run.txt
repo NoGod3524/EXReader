@@ -1,0 +1,3 @@
+PASS insert_run: zero-run / sibling text / atomic undo-redo / aliased input / fresh IDs / failed transaction rollback / invalid UTF-8 / cell paragraph insert-delete / DOCX reopen
+PASS protected cell: EXR_UNSUPPORTED; transaction rolled back
+PASS imported [LEFT|empty|right]: insert X preserves both neighbors, IDs, pStyle, previous patch and DOCX reopen; undo restores empty

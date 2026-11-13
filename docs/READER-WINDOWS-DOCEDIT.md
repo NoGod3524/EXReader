@@ -1,5 +1,26 @@
 # Windows DOCX editor: rich text (M-E2c)
 
+Tables are rendered as cells with visible grid lines and paragraph-local
+DirectWrite layouts. Left/Right and Tab enter cells; Tab/Shift+Tab move between
+cells in row order. Enter splits a paragraph inside its cell. Typing into the
+new empty paragraph inserts its first run in the same transaction as the text
+edit; Ctrl+Z removes that input while retaining Enter and sibling paragraphs.
+
+While the caret is in a table, a second toolbar row shows `+行`, `−行`,
+`列宽+`, `列宽−`, and `删表`. Row insertion follows the current row; deletion
+removes the current row. Column width increases by 5%; the decrease button
+reverses that step, with integer-twip rounding. Each action is one undo entry.
+Ctrl+S preserves table structure, all cell paragraphs and grid widths in DOCX.
+Merged, shaded, nested or opaque cells retain the engine's edit protection.
+
+The headless table acceptance exercises this same host without creating a
+window, including toolbar hit testing and Direct2D border/caret pixels:
+
+```powershell
+cmake --build build/tables-host --target check_shell_table
+ctest --test-dir build/tables-host -R windows-table-ui -V
+```
+
 The editor toolbar above the document has bold, italic, size down/current/up,
 eight text colors, and left/center/right/justified paragraph alignment.
 Bold, italic, and alignment buttons show the caret's current format. Sizes
@@ -24,12 +45,13 @@ same transaction as insertion. Continued typing with that format extends the
 run. Moving the caret or undoing/redoing clears pending properties; Enter
 carries them into the next paragraph.
 
-Inserting a differently formatted run uses M-E1's guarded paragraph rebuild.
+Inserting differently formatted text within an existing run uses M-E1's guarded paragraph rebuild.
 Paragraphs with unmodeled templates (for example `pStyle`, tabs, or extension
 attributes) reject that insertion and roll back rather than lose their XML.
 Existing run formatting and paragraph alignment can still be applied there.
-A public insert-run API that retains the paragraph template would remove this
-boundary; no engine files were changed for this milestone.
+Empty paragraphs and run-boundary insertion use `exr_edit_insert_run`, which
+retains paragraph templates and sibling cell paragraphs. Inserting within an
+existing run still uses the guarded rebuild above.
 
 DirectWrite applies family, half-point size, weight, style, and color to each
 run's UTF-16 range, then handles wrapping, alignment, caret geometry, and hit

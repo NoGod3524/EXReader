@@ -28,6 +28,40 @@ typedef struct {
   wchar_t high_surrogate,title[512];
 } shell_docedit;
 static shell_docedit de;
+
+typedef struct { exr_edit_id table; size_t row,col,paragraph; } de_cell;
+/* A disposable document-order view; engine IDs remain the mutation addresses.
+   ponytail: scan on lookup; cache IDs if large-table profiling warrants it. */
+static const exr_edit_block *de_view(const exr_edit_doc *doc,size_t index,de_cell *where,size_t *count) {
+  size_t at=0;const exr_edit_block *found=NULL;
+  if(where)memset(where,0,sizeof(*where));
+  for(size_t i=0;i<exr_edit_block_count(doc);i++) {
+    const exr_edit_block *b=exr_edit_block_at(doc,i);
+    if(b->kind==EXR_EDIT_TABLE && b->table) {
+      const exr_edit_table *t=b->table;
+      for(size_t r=0;r<t->row_count;r++)for(size_t c=0;c<t->rows[r].cell_count;c++) {
+        const exr_edit_cell *cell=&t->rows[r].cells[c];
+        for(size_t p=0;p<cell->block_count;p++,at++)if(at==index) {
+          found=&cell->blocks[p];
+          if(where) {where->table=b->id;where->row=r;where->col=c;where->paragraph=p;}
+        }
+      }
+    } else {if(at==index)found=b;at++;}
+  }
+  if(count)*count=at;return found;
+}
+static size_t de_block_count(const exr_edit_doc *doc) {size_t n=0;de_view(doc,SIZE_MAX,NULL,&n);return n;}
+static const exr_edit_block *de_block_at(const exr_edit_doc *doc,size_t index) {return de_view(doc,index,NULL,NULL);}
+static de_cell de_cell_at(size_t index) {de_cell c;de_view(de.doc,index,&c,NULL);return c;}
+static int de_same_cell(size_t a,size_t b) {
+  de_cell x=de_cell_at(a),y=de_cell_at(b);
+  return x.table==y.table && (!x.table || (x.row==y.row && x.col==y.col));
+}
+static int32_t de_column_twips(const exr_edit_table *t,size_t col) {
+  int32_t value=t->column_widths && col<t->column_count ? t->column_widths[col]:
+    t->width_twips/(int32_t)t->column_count;
+  return value>0 ? value:2400;
+}
 enum { DE_TIMER=0xDE01 };
 static HWND de_button;
 static void de_refresh(int reveal);
@@ -45,6 +79,7 @@ static de_pos de_anchor(void) {
   de_pos p={de.sel_anchor_block,de.sel_anchor_run,de.sel_anchor_byte};return p;
 }
 static void de_set_caret(de_pos p) {
+  if((de_cell_at(de.caret_block).table!=0)!=(de_cell_at(p.block).table!=0))de.layout_dirty=1;
   if(de.caret_block!=p.block || de.caret_run!=p.run || de.caret_byte!=p.byte)
     memset(&de.pending_props,0,sizeof(de.pending_props));
   de.caret_block=p.block;de.caret_run=p.run;de.caret_byte=p.byte;
@@ -80,7 +115,7 @@ static int de_block_trivia(const exr_edit_block *b) {
 }
 static de_pos de_start(size_t block) { de_pos p={block,0,0};return p; }
 static de_pos de_end(size_t block) {
-  const exr_edit_block *b=exr_edit_block_at(de.doc,block);
+  const exr_edit_block *b=de_block_at(de.doc,block);
   de_pos p={block,b ? b->run_count:0,0};
   if(b && b->run_count && b->runs[b->run_count-1].kind==EXR_EDIT_TEXT) {
     p.run--;p.byte=b->runs[p.run].text_size;
@@ -89,10 +124,10 @@ static de_pos de_end(size_t block) {
 }
 /* Canonicalize equivalent run boundaries, without indexing the document text. */
 static de_pos de_normalize(de_pos p) {
-  size_t n=exr_edit_block_count(de.doc);
+  size_t n=de_block_count(de.doc);
   if(!n)return de_start(0);
   if(p.block>=n)p.block=n-1;
-  const exr_edit_block *b=exr_edit_block_at(de.doc,p.block);
+  const exr_edit_block *b=de_block_at(de.doc,p.block);
   if(p.run>b->run_count)p.run=b->run_count;
   if(p.run==b->run_count) {
     p.byte=0;
@@ -175,8 +210,8 @@ static int de_open(const char *path) {
   if(status!=EXR_OK) {de_error(L"无法编辑 DOCX",status,&error);return 0;}
   memset(&de,0,sizeof(de));de.doc=doc;strcpy(de.path,path);
   if(g.window)GetWindowTextW(g.window,de.title,512);
-  size_t n=exr_edit_block_count(doc),i=0;
-  while(i<n && exr_edit_block_at(doc,i)->kind!=EXR_EDIT_PARAGRAPH)i++;
+  size_t n=de_block_count(doc),i=0;
+  while(i<n && de_block_at(doc,i)->kind!=EXR_EDIT_PARAGRAPH)i++;
   if(i==n) {
     exr_edit_id id;exr_edit_tx *tx=exr_edit_begin(doc);
     status=tx ? exr_edit_insert_paragraph(doc,0,NULL,0,NULL,&id):EXR_MEMORY;
