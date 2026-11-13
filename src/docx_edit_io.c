@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "docx_edit_internal.h"
 #include <ctype.h>
+#include <time.h>
 
 #define DEFAULT_RPR "<w:rPr><w:rFonts w:ascii=\"Times New Roman\" w:hAnsi=\"Times New Roman\" w:eastAsia=\"Times New Roman\" w:cs=\"Times New Roman\"/><w:sz w:val=\"24\"/><w:szCs w:val=\"24\"/></w:rPr>"
 
@@ -827,6 +828,17 @@ static int trivia_block(const exr_edit_block *b) {
   return 1;
 }
 
+int exr_edit_zip_add_part(mz_zip_archive *zip,const char *name,const void *data,size_t size) {
+  MZ_TIME_T modified={0};
+#ifndef MINIZ_NO_TIME
+  /* Fixed local ZIP epoch keeps an unchanged model byte-identical across writes. */
+  struct tm epoch={0};
+  epoch.tm_year=80; epoch.tm_mday=1; epoch.tm_isdst=-1;
+  modified=mktime(&epoch);
+#endif
+  return mz_zip_writer_add_mem_ex_v2(zip,name,data,size,NULL,0,6,0,0,&modified,NULL,0,NULL,0);
+}
+
 exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,exr_error *e) {
   const exr_edit_part *parts,*p; const exr_edit_section *sections;
   size_t np,ns,nb,i,j,si=0,*sn=NULL; char main[2048]; source_xml x={0};
@@ -949,7 +961,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
     status=exr_edit_images_package(&zip,base,5,main,&xml,images,image_count,e); if (status) goto done;
     status=EXR_MEMORY;
   }
-  if (!mz_zip_writer_add_mem(&zip,main,xml.data,xml.size,6) || !mz_zip_writer_finalize_heap_archive(&zip,data,size)) goto done;
+  if (!exr_edit_zip_add_part(&zip,main,xml.data,xml.size) || !mz_zip_writer_finalize_heap_archive(&zip,data,size)) goto done;
   status=EXR_OK;
 done:
   if (status && *data) { mz_free(*data); *data=NULL; *size=0; }

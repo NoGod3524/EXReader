@@ -453,13 +453,13 @@ exr_status exr_edit_images_package(mz_zip_archive *zip,const exr_edit_part *part
     for (j=0;j<nr;j++) if (!keep[j] && !strcmp(parts[i].name,removed[j].target)) drop=1;
     if (drop) continue;
     if ((ni || nr) && !strcmp(parts[i].name,rp)) {
-      if (!mz_zip_writer_add_mem(zip,rp,relbuf.data,relbuf.size,6)) goto done;
+      if (!exr_edit_zip_add_part(zip,rp,relbuf.data,relbuf.size)) goto done;
     } else if ((ni || nr) && !strcmp(parts[i].name,"[Content_Types].xml")) {
-      if (!mz_zip_writer_add_mem(zip,parts[i].name,types.data,types.size,6)) goto done;
-    } else if (!mz_zip_writer_add_mem(zip,parts[i].name,parts[i].data,parts[i].size,6)) goto done;
+      if (!exr_edit_zip_add_part(zip,parts[i].name,types.data,types.size)) goto done;
+    } else if (!exr_edit_zip_add_part(zip,parts[i].name,parts[i].data,parts[i].size)) goto done;
   }
-  if (ni && !relpart && !mz_zip_writer_add_mem(zip,rp,relbuf.data,relbuf.size,6)) goto done;
-  for (i=0;i<ni;i++) if (!mz_zip_writer_add_mem(zip,images[i].part,images[i].block->image->data,images[i].block->image->size,6)) goto done;
+  if (ni && !relpart && !exr_edit_zip_add_part(zip,rp,relbuf.data,relbuf.size)) goto done;
+  for (i=0;i<ni;i++) if (!exr_edit_zip_add_part(zip,images[i].part,images[i].block->image->data,images[i].block->image->size)) goto done;
   s=EXR_OK;
 done:
   exr_edit_xml_free(&rels); exr_edit_xml_free(&old); exr_edit_xml_free(&now);

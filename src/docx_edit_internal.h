@@ -54,6 +54,7 @@ typedef struct {
 exr_status exr_edit_images_prepare(const exr_edit_doc *d,const char *main,const source_xml *x,
   edit_image_output **out,size_t *count);
 int exr_edit_image_write(exr_buffer *b,const source_xml *x,const edit_image_output *im);
+int exr_edit_zip_add_part(mz_zip_archive *zip,const char *name,const void *data,size_t size);
 exr_status exr_edit_images_package(mz_zip_archive *zip,const exr_edit_part *parts,size_t count,
   const char *main,const exr_buffer *xml,const edit_image_output *images,size_t image_count,exr_error *e);
 #endif
