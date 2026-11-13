@@ -187,6 +187,30 @@ def main(library):
             api.doc_free(doc)
     print('position/mutation: mixed runs, duplicate anchors, exact EMU, table cells, delete/undo/redo PASS')
 
+    # Identical run bytes can have different meanings under inherited namespaces.
+    raw = '<w:r>' + drawing() + '</w:r>'
+    for foreign_first in (False, True):
+        paragraphs = ['<w:p>' + raw + '</w:p>',
+                      '<w:p xmlns:a="urn:opaque">' + raw + '</w:p>']
+        if foreign_first:
+            paragraphs.reverse()
+        original = package(body=''.join(paragraphs) + SECT)
+        doc = api.read(original)
+        try:
+            block, = images(api, doc)
+            owner = api.paragraphs(doc)[int(foreign_first)].id
+            assert position(api, doc, block)[0] == owner
+            saved = api.write(doc)
+            assert unzip(saved) == unzip(original)
+            reopened = api.read(saved)
+            try:
+                assert len(images(api, reopened)) == 1
+            finally:
+                api.doc_free(reopened)
+        finally:
+            api.doc_free(doc)
+    print('scoped namespaces: identical run bytes resolve their own source anchor in both orders PASS')
+
     for filename in ('baseline.jpg', 'cmyk.jpg', 'ycck.jpg', 'cmyk-progressive.jpg'):
         data = (Path(__file__).parent / 'fixtures/pdf-images' / filename).read_bytes()
         doc = api.read(source)

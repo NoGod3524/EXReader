@@ -192,9 +192,11 @@ static exr_status decode_paragraph_images(const source_xml *x,const source_xml *
   for (r=0;r<p->run_count;r++) {
     const exr_edit_run *run=p->runs+r; size_t start=NONE;
     if (run->kind!=EXR_EDIT_OPAQUE_RUN || !run->opaque_size || !memchr(run->opaque_xml,'<',run->opaque_size)) continue;
+    /* Decoder runs still borrow source spans. Equal XML bytes can inherit
+       different namespaces, so locate the original span by identity. */
     for (n=0;n<x->tree->node_count;n++) if (x->tree->nodes[n].name &&
         run->opaque_size==x->spans[n].end-x->spans[n].start && run->opaque_size &&
-        !memcmp(run->opaque_xml,x->bytes+x->spans[n].start,run->opaque_size)) { start=n; break; }
+        run->opaque_xml==x->bytes+x->spans[n].start) { start=n; break; }
     if (start==NONE) continue;
     for (n=start;n<x->tree->node_count && x->spans[n].start<x->spans[start].end;n++) {
       exr_edit_image im={0}; exr_edit_block b={0}; const char *rid=NULL; size_t refs=0;
