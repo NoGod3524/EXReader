@@ -93,6 +93,36 @@ exr_status exr_edit_table_set_width(exr_edit_doc *d,exr_edit_id id,int32_t twips
   t=*b->table; t.width_twips=twips; t.changed|=1; v=*b; v.table=&t;
   return exr_edit_replace(d,id,&v);
 }
+const exr_edit_block *exr_edit_table_cell_paragraph(
+  const exr_edit_doc *d,exr_edit_id id,size_t row,size_t col,size_t index) {
+  const exr_edit_block *b=exr_edit_find_block(d,id); const exr_edit_cell *c; size_t i;
+  if (!b || !b->table || row>=b->table->row_count || col>=b->table->rows[row].cell_count) return NULL;
+  c=b->table->rows[row].cells+col;
+  if (!exr_edit_cell_can_split(c)) return NULL;
+  for (i=0;i<c->block_count;i++) if (c->blocks[i].kind==EXR_EDIT_PARAGRAPH) {
+    if (!index) return c->blocks+i;
+    index--;
+  }
+  return NULL;
+}
+exr_status exr_edit_table_set_column_width(
+  exr_edit_doc *d,exr_edit_tx *tx,exr_edit_id id,size_t col,int32_t twips) {
+  exr_status s=exr_edit_tx_ready(d,tx); const exr_edit_block *b;
+  exr_edit_block v; exr_edit_table t; int32_t *widths; int64_t sum=0; size_t i;
+  if (s) return s;
+  b=table_block(d,id,&s); if (!b) return s;
+  t=*b->table;
+  if (col>=t.column_count || twips<=0) return exr_edit_failure(d,EXR_ARGUMENT);
+  widths=malloc(t.column_count*sizeof(*widths));
+  if (!widths) return exr_edit_failure(d,EXR_MEMORY);
+  for (i=0;i<t.column_count;i++) {
+    widths[i]=i==col ? twips : t.column_widths ? t.column_widths[i] : t.width_twips/(int32_t)t.column_count;
+    sum+=widths[i];
+  }
+  if (sum>INT32_MAX) { free(widths); return exr_edit_failure(d,EXR_LIMIT); }
+  t.column_widths=widths; t.width_twips=(int32_t)sum; t.changed|=5u; v=*b; v.table=&t;
+  s=exr_edit_replace(d,id,&v); free(widths); return s;
+}
 exr_status exr_edit_table_set_borders(exr_edit_doc *d,exr_edit_id id,exr_edit_borders spec) {
   exr_status s; const exr_edit_block *b=table_block(d,id,&s); exr_edit_block v; exr_edit_table t;
   if (!b) return s;
@@ -122,7 +152,7 @@ void exr_edit_table_decode_free(exr_edit_table *t) {
     }
     free((void *)r->cells);
   }
-  free((void *)t->rows); free(t);
+  free((void *)t->column_widths); free((void *)t->rows); free(t);
 }
 static void template(const source_xml *x,size_t n,const void **xml,size_t *size) {
   *xml=x->bytes+x->spans[n].start; *size=x->spans[n].end-x->spans[n].start;
@@ -191,6 +221,17 @@ exr_status exr_edit_table_decode(const source_xml *x,size_t n,exr_edit_table **o
     if (columns>t->column_count) t->column_count=columns;
   }
   if (!t->row_count || t->column_count>16384) { status=EXR_OK; goto done; }
+  if (grid!=NONE) {
+    int32_t *widths=calloc(t->column_count,sizeof(*widths)); size_t col=0;
+    if (!widths) goto done;
+    t->column_widths=widths;
+    for (i=0;i<t->column_count;i++) widths[i]=t->width_twips/(int32_t)t->column_count;
+    if (grid!=NONE) for (i=x->tree->nodes[grid].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling)
+      if (exr_edit_xml_word(x->tree->nodes+i,"gridCol")) {
+        if (exr_edit_xml_integer(exr_edit_xml_wa(x->tree->nodes+i,"w"),&value) && value>=0) widths[col]=value;
+        col++;
+      }
+  }
   *out=t; return EXR_OK;
 done:
   exr_edit_table_decode_free(t); return status;
@@ -296,6 +337,27 @@ static int table_pr(exr_buffer *b,const source_xml *x,const exr_edit_table *t,si
   if (!(seen&2) && (wanted&2) && !table_prop(b,x,t,NONE,1)) return 0;
   return (n==NONE || exr_append(b,x->bytes+at,x->spans[n].close-at)) && exr_edit_xml_end(b,x,n,"tblPr");
 }
+static int grid_column(exr_buffer *b,const source_xml *x,const exr_edit_table *t,size_t n,size_t col) {
+  char value[32]; attr_edit a={"w",value};
+  snprintf(value,sizeof(value),"%d",t->column_widths ? t->column_widths[col] : t->width_twips/(int32_t)t->column_count);
+  return exr_edit_xml_attrs(b,x,n,"gridCol",&a,1);
+}
+static int table_grid(exr_buffer *b,const source_xml *x,const exr_edit_table *t,size_t n) {
+  size_t i,col=0,at=n==NONE ? 0 : x->spans[n].open;
+  if (n!=NONE && !(t->changed&4u)) return exr_edit_xml_raw(b,x,n);
+  if (!exr_edit_xml_start(b,x,n,"tblGrid")) return 0;
+  for (i=n==NONE ? NONE : x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
+    if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;
+    if (exr_edit_xml_word(x->tree->nodes+i,"gridCol")) {
+      if (!grid_column(b,x,t,i,col++)) return 0;
+    } else {
+      if (!exr_edit_xml_raw(b,x,i)) return 0;
+    }
+    at=x->spans[i].end;
+  }
+  while (col<t->column_count) if (!grid_column(b,x,t,NONE,col++)) return 0;
+  return (n==NONE || exr_append(b,x->bytes+at,x->spans[n].close-at)) && exr_edit_xml_end(b,x,n,"tblGrid");
+}
 int exr_edit_table_write(exr_buffer *b,const source_xml *x,const exr_edit_block *block) {
   const exr_edit_table *t=block->table; size_t n,i,at,ri=0,pr,grid;
   if (!t) return exr_append(b,block->opaque_xml,block->opaque_size);
@@ -311,15 +373,7 @@ int exr_edit_table_write(exr_buffer *b,const source_xml *x,const exr_edit_block 
   }
   pr=exr_edit_xml_child(x,n,"tblPr"); grid=exr_edit_xml_child(x,n,"tblGrid");
   if (!exr_edit_xml_start(b,x,n,"tbl") || !table_pr(b,x,t,pr)) return 0;
-  if (grid!=NONE) { if (!exr_edit_xml_raw(b,x,grid)) return 0; }
-  else {
-    if (!exr_edit_xml_start(b,x,NONE,"tblGrid")) return 0;
-    for (i=0;i<t->column_count;i++) {
-      char v[32]; attr_edit a={"w",v}; snprintf(v,sizeof(v),"%d",t->width_twips/(int32_t)t->column_count);
-      if (!exr_edit_xml_attrs(b,x,NONE,"gridCol",&a,1)) return 0;
-    }
-    if (!exr_edit_xml_end(b,x,NONE,"tblGrid")) return 0;
-  }
+  if (!table_grid(b,x,t,grid)) return 0;
   at=n==NONE ? 0 : x->spans[n].open;
   for (i=n==NONE ? NONE : x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
     if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;

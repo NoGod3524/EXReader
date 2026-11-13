@@ -114,7 +114,9 @@ static int block_valid(const exr_edit_block *b) {
     const exr_edit_table *t=b->table;
     if (!t->row_count || !t->rows || t->row_count>SIZE_MAX/sizeof(*t->rows) ||
         !t->column_count || t->column_count>16384 || t->width_twips<0 ||
-        t->borders<EXR_EDIT_BORDER_NONE || t->borders>EXR_EDIT_BORDER_DOUBLE || (t->changed&~3u)) return 0;
+        t->borders<EXR_EDIT_BORDER_NONE || t->borders>EXR_EDIT_BORDER_DOUBLE || (t->changed&~7u) ||
+        ((t->changed&4u) && !t->column_widths)) return 0;
+    if (t->column_widths) for (i=0;i<t->column_count;i++) if (t->column_widths[i]<0) return 0;
     for (i=0;i<t->row_count;i++) {
       const exr_edit_row *r=t->rows+i;
       if (!r->cell_count || !r->cells || r->cell_count>SIZE_MAX/sizeof(*r->cells) ||
@@ -158,7 +160,7 @@ static void view_free(exr_edit_doc *d,exr_edit_block *v) {
       }
       release(d,r->cells); release(d,r->opaque_xml);
     }
-    release(d,v->table->rows); release(d,v->table);
+    release(d,v->table->column_widths); release(d,v->table->rows); release(d,v->table);
   }
   if (v->image) {
     release(d,v->image->data); release(d,v->image);
@@ -203,7 +205,11 @@ static int view_copy(exr_edit_doc *d,exr_edit_block *b,const exr_edit_block *v) 
   if (v->table) {
     exr_edit_table *t=allocate(d,sizeof(*t)); exr_edit_row *rows;
     if (!t) return 0;
-    b->table=t; *t=*v->table; t->rows=NULL; t->row_count=0;
+    b->table=t; *t=*v->table; t->rows=NULL; t->row_count=0; t->column_widths=NULL;
+    if (v->table->column_widths) {
+      t->column_widths=copy_bytes(d,v->table->column_widths,t->column_count*sizeof(*t->column_widths),0);
+      if (!t->column_widths) return 0;
+    }
     rows=allocate(d,v->table->row_count*sizeof(*rows)); if (!rows) return 0;
     t->rows=rows;
     for (i=0;i<v->table->row_count;i++) {
@@ -508,14 +514,38 @@ exr_status exr_edit_insert_paragraph(exr_edit_doc *d,exr_edit_id after,const exr
   if (!s) *out=b->view.id;
   block_unref(d,b); return s;
 }
+int exr_edit_cell_can_split(const exr_edit_cell *cell) {
+  size_t i,j;
+  if (cell->unsupported&~EXR_EDIT_CELL_OPAQUE) return 0;
+  /* The decoder also marks plain multi-paragraph cells OPAQUE for legacy
+     whole-cell replacement. They can still be split without losing content. */
+  for (i=0;i<cell->block_count;i++) {
+    if (cell->blocks[i].kind!=EXR_EDIT_PARAGRAPH) return 0;
+    for (j=0;j<cell->blocks[i].run_count;j++)
+      if (cell->blocks[i].runs[j].kind!=EXR_EDIT_TEXT) return 0;
+  }
+  return 1;
+}
 exr_status exr_edit_split_paragraph(exr_edit_doc *d,exr_edit_id id,size_t at,size_t offset) {
-  size_t index,i,left_count,right_start; const exr_edit_block *v; exr_edit_block a,b;
+  size_t index,i,j,k,p=0,row=0,col=0,left_count,right_start; const exr_edit_block *v=NULL;
+  const exr_edit_cell *cell=NULL; exr_edit_block a,b;
   edit_block *left=NULL,*right=NULL; exr_edit_run *temp=NULL;
   edit_change c[2]; exr_status s=ready(d); int divided=0;
   if (s) return s;
   index=find_index(d,id);
-  if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
-  v=&d->blocks[index]->view;
+  if (index!=SIZE_MAX) v=&d->blocks[index]->view;
+  else for (i=0;i<d->count && !v;i++) {
+    const exr_edit_table *t=d->blocks[i]->view.table;
+    if (!t) continue;
+    for (j=0;j<t->row_count && !v;j++) for (k=0;k<t->rows[j].cell_count && !v;k++) {
+      const exr_edit_cell *candidate=t->rows[j].cells+k;
+      for (p=0;p<candidate->block_count;p++) if (candidate->blocks[p].id==id) {
+        if (!exr_edit_cell_can_split(candidate)) return command_failure(d,EXR_UNSUPPORTED);
+        v=candidate->blocks+p; cell=candidate; index=i; row=j; col=k; break;
+      }
+    }
+  }
+  if (!v) return command_failure(d,EXR_ARGUMENT);
   if (v->kind!=EXR_EDIT_PARAGRAPH) return command_failure(d,EXR_UNSUPPORTED);
   if (at>v->run_count || (at==v->run_count && offset)) return command_failure(d,EXR_ARGUMENT);
   left_count=at; right_start=at;
@@ -548,6 +578,24 @@ exr_status exr_edit_split_paragraph(exr_edit_doc *d,exr_edit_id id,size_t at,siz
   if (!right) { s=EXR_MEMORY; goto done; }
   right->view.id=fresh_id(d);
   if (!right->view.id) { s=EXR_LIMIT; goto done; }
+  if (cell) {
+    exr_edit_block table=d->blocks[index]->view; exr_edit_table t=*table.table;
+    exr_edit_row *rows=NULL; exr_edit_cell *cells=NULL; exr_edit_block *blocks=NULL;
+    if (cell->block_count>=SIZE_MAX/sizeof(*blocks)) { s=EXR_LIMIT; goto done; }
+    rows=copy_bytes(d,t.rows,t.row_count*sizeof(*rows),0);
+    cells=copy_bytes(d,t.rows[row].cells,t.rows[row].cell_count*sizeof(*cells),0);
+    blocks=allocate(d,(cell->block_count+1)*sizeof(*blocks));
+    if (!rows || !cells || !blocks) s=EXR_MEMORY;
+    else {
+      memcpy(blocks,cell->blocks,p*sizeof(*blocks));
+      blocks[p]=left->view; blocks[p+1]=right->view;
+      memcpy(blocks+p+2,cell->blocks+p+1,(cell->block_count-p-1)*sizeof(*blocks));
+      cells[col].blocks=blocks; cells[col].block_count++; cells[col].changed=CELL_REPLACED;
+      rows[row].cells=cells; t.rows=rows; table.table=&t;
+      s=exr_edit_replace(d,table.id,&table);
+    }
+    release(d,blocks); release(d,cells); release(d,rows); goto done;
+  }
   /* Whole runs retain their IDs; the divided run's right fragment was assigned above. */
   for (i=0;i<2;i++) { c[i].index=index+i; c[i].before=NULL; }
   c[0].before=d->blocks[index]; c[0].after=left; c[1].after=right;
@@ -610,6 +658,10 @@ exr_status exr_edit_delete_block(exr_edit_doc *d,exr_edit_id id) {
   return modify(d,&c,1);
 }
 exr_status exr_edit_ready(exr_edit_doc *d) { return ready(d); }
+exr_status exr_edit_tx_ready(exr_edit_doc *d,exr_edit_tx *tx) {
+  exr_status s=ready(d);
+  return s ? s : !tx || d->active!=tx ? command_failure(d,EXR_ARGUMENT) : EXR_OK;
+}
 exr_status exr_edit_failure(exr_edit_doc *d,exr_status s) { return command_failure(d,s); }
 exr_status exr_edit_replace(exr_edit_doc *d,exr_edit_id id,const exr_edit_block *v) {
   size_t index; edit_block *b=NULL; edit_change c; exr_status s=ready(d);

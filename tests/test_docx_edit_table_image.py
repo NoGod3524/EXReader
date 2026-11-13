@@ -31,7 +31,8 @@ class Row(c.Structure):
                 ('xml', c.c_void_p), ('xml_size', c.c_size_t), ('source_index', c.c_size_t)]
 class Table(c.Structure):
     _fields_ = [('rows', c.POINTER(Row)), ('count', c.c_size_t), ('columns', c.c_size_t),
-                ('width', c.c_int32), ('borders', c.c_int), ('changed', c.c_uint)]
+                ('width', c.c_int32), ('borders', c.c_int), ('changed', c.c_uint),
+                ('widths', c.POINTER(c.c_int32))]
 
 class API(Bridge):
     def __init__(self, library):

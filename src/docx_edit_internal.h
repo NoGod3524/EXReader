@@ -20,8 +20,6 @@ typedef struct {
   exr_status status;
 } source_xml;
 typedef struct { const char *key,*value; } attr_edit;
-/* Cell edits are separate from the imported vertical-merge markers. */
-enum { CELL_REPLACED=1u,CELL_VMERGE_START=2u,CELL_VMERGE_CONTINUE=4u,CELL_PATCHED=8u };
 int exr_edit_xml_word(const exr_node *n,const char *tag);
 const char *exr_edit_xml_attribute(const exr_node *n,const char *space,const char *strict,const char *key);
 const char *exr_edit_xml_wa(const exr_node *n,const char *key);
