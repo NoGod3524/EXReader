@@ -8,6 +8,7 @@ typedef struct {
   exr_edit_block block;
   exr_edit_run *runs;
   char *text;
+  size_t *refs; /* Immutable run/text payload shared by adjacent snapshots. */
   size_t size,start;
   uint64_t hash;
   line_metrics *metrics; /* Geometry only; glyph payloads remain in the pager LRU. */
@@ -29,7 +30,9 @@ typedef struct { exr_layout *layout;size_t block; } shape_cache;
 static void snapshot_free(snapshot *s) {
   size_t i;for(i=0;i<s->count;i++) {
     line_metrics *m=s->blocks[i].metrics;if(m && !--m->refs) free(m);
-    free(s->blocks[i].runs);free(s->blocks[i].text);
+    if(!s->blocks[i].refs || !--*s->blocks[i].refs) {
+      free(s->blocks[i].runs);free(s->blocks[i].text);free(s->blocks[i].refs);
+    }
   }
   free(s->blocks);memset(s,0,sizeof(*s));
 }
@@ -53,7 +56,7 @@ static uint64_t block_hash(const exr_edit_block *b) {
 #undef H
   return h;
 }
-static exr_status snapshot_read(exr_edit_doc *doc,snapshot *s,exr_error *e) {
+static exr_status snapshot_read(exr_edit_doc *doc,const snapshot *old,snapshot *s,exr_error *e) {
   size_t i,j;memset(s,0,sizeof(*s));s->count=exr_edit_block_count(doc);
   if(s->count>EXR_MAX_NODES) return exr_fail(e,EXR_LIMIT,"Too many editing blocks");
   s->blocks=calloc(s->count ? s->count : 1,sizeof(*s->blocks));
@@ -64,6 +67,15 @@ static exr_status snapshot_read(exr_edit_doc *doc,snapshot *s,exr_error *e) {
        ((b->props.present&EXR_EDIT_NUMBERING) && b->props.numbering_id)) goto unsupported;
     if((b->props.present&EXR_EDIT_KEEP_NEXT) && b->props.keep_next) goto unsupported;
     c->block=*b;c->hash=block_hash(b);c->start=s->size;
+    /* Verify every block rather than trusting a caller's dirty hint: edits,
+       undo and replacement models can change several disjoint regions. */
+    if(i<old->count && old->blocks[i].block.id==b->id && old->blocks[i].hash==c->hash) {
+      size_t start=c->start;*c=old->blocks[i];c->start=start;c->metrics=NULL;
+      ++*c->refs;
+      if(c->size>=EXR_MAX_TEXT-s->size) goto limit;
+      s->size+=c->size+1;continue;
+    }
+    c->refs=malloc(sizeof(*c->refs));if(!c->refs) goto memory;*c->refs=1;
     if(b->run_count>EXR_MAX_NODES/2-3) goto limit;
     c->runs=calloc(b->run_count ? b->run_count : 1,sizeof(*c->runs));
     if(!c->runs) goto memory;
@@ -280,7 +292,7 @@ exr_status exr_edit_layout_after(exr_edit_doc *doc,exr_pager *pager,exr_edit_id 
   if(!r || !doc || !repaginated) return exr_fail(e,EXR_ARGUMENT,"Missing editing pager/model/output");
   exr_pager_edit_busy(pager,1);
   r->config.control=exr_pager_edit_config(pager)->control;
-  status=snapshot_read(doc,&next,e);if(status!=EXR_OK) { exr_pager_edit_busy(pager,0);return status; }
+  status=snapshot_read(doc,&r->current,&next,e);if(status!=EXR_OK) { exr_pager_edit_busy(pager,0);return status; }
   /* ponytail: O(blocks + text bytes) snapshot comparison, no change hooks in X1.
      Add a model mutation journal if profiling larger editable files warrants it. */
   while(first<r->current.count && first<next.count && equal_block(&r->current.blocks[first],&next.blocks[first])) first++;
@@ -307,7 +319,8 @@ exr_status exr_edit_layout_after(exr_edit_doc *doc,exr_pager *pager,exr_edit_id 
        containing only identical prefix lines, even for a book-sized paragraph. */
     if(first<r->current.count) {
       size_t changed=r->current.blocks[first].start;
-      if(old_end==first+1 && new_end==first+1 && r->current.blocks[first].block.id==next.blocks[first].block.id) {
+      if(old_end==first+1 && new_end==first+1 && r->current.blocks[first].block.id==next.blocks[first].block.id &&
+         page_for_source(r,changed+r->current.blocks[first].size)>dirty_page) {
         shape_cache old_shape={0};size_t line=0;
         status=shape(r,&r->current,first,&old_shape,e);
         if(status==EXR_OK) status=shape(r,&next,first,&cache,e);
