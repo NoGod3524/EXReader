@@ -1,9 +1,10 @@
 PPT-M1 acceptance, 2026-11-13
 
-Baseline: 2be4f7b9. The implementation was already present in this baseline
-(introduced by 3f6f0386, memory routing corrected by 4c413869).
-This pass regenerated all four PowerPoint COM fixtures, extended wrong-format
-coverage to the public memory entry, and corrected its empty-input comment.
+Baseline: 35b84513 (contains 54436bfa). The native PPT-M1 implementation
+was already present (introduced by 3f6f0386, memory routing corrected by
+4c413869). This pass reviewed the three parser layers and public dispatch,
+regenerated all four fixtures using PowerPoint 16.0 COM, and reran acceptance.
+No parser changes or additional dependencies were needed.
 
 1. Source size (physical lines)
    src/ppt_cfb.c       222
@@ -69,6 +70,16 @@ coverage to the public memory entry, and corrected its empty-input comment.
    Encrypted presentations are not supported. At most 10000 fixed pages.
 
 6. Validation logs
+   Full CTest result: 437/437 passed, 398.91 seconds.
+   Build: cmake --build build/ppt-m1 -j 4 completed successfully.
+   PPT-specific CTest: all six groups passed, 67 checks in total
+   (cfb=13, records=11, slides=11, size=9, truncated=14, wrongformat=9).
+   Full CTest command:
+   ctest --test-dir build/ppt-m1 --output-on-failure -j 4
+     -E '^(sdk-release|sdk-doc-coverage)$'
+   Layer audit: 132 objects, 1540 references, zero inverse dependencies;
+   1161 source/header dependencies, zero inverse includes.
+   Shared prepush script: all checks passed.
    PPT groups and individual check counts are in ppt-tests.txt.
    Full CTest, layer checks and prepush results are in ctest.txt, layers.txt
    and prepush.txt. The shared prepush script is located at:
