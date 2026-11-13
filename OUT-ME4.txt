@@ -1,0 +1,85 @@
+已修复，八项验收全部通过。完整命令、原始输出和边界记录见 [OUT-ME4.txt](/C:/Users/Oscar/Documents/Codex/EXReader-e4-20261112/OUT-ME4.txt)。
+
+`find_block` 现在能定位单元格段落；`set_run_text` 只更新目标 run，保留同格其他段落，并参与 undo/redo。新增 `exr_edit_table_cell_block_count/at`，顶层枚举语义保持原样。
+
+| 文件 | 新增 / 删除行 |
+|---|---:|
+| `src/docx_edit.c` | +47 / −24 |
+| `src/docx_edit_table.c` | +17 / −4 |
+| `include/exr/edit.h` | +12 / −1 |
+| `docs/API.md` | +34 / −7 |
+| `CMakeLists.txt` | +3 / −0 |
+| `tests/fixtures/docx-real/codex/register.cmake` | +1 / −1 |
+| `tests/test_docx_edit_alloc.c` | +25 / −0 |
+| `tests/test_docx_edit_e4.py` | +179 / −0 |
+| `OUT-ME4.txt` | +182 / −0 |
+
+①–⑥的命令：
+
+```powershell
+python -X utf8 tests/test_docx_edit_e4.py --library build/e4/libexreader.dll --output build/e4/evidence
+```
+
+真实输出：
+
+```text
+1 PASS 2x2 Enter: paragraphs=2 text=A|B; cell count/at enumerates both; top-level unchanged
+2 PASS find_block(second id) != NULL text=B
+3 PASS set_run_text(second, B2)=EXR_OK paragraphs=2 text=A|B2; sibling/run IDs retained
+4 PASS undo once: paragraphs=2 text=A|B
+5 PASS redo + file write/read: paragraphs=2 text=A|B2; reopened paragraph remains editable
+6 PASS top-level find_block/set_run_text/undo: ordinary -> ordinary2 -> ordinary; count=1 IDs stable
+acceptance_exit=0
+```
+
+⑦的命令与真实输出：
+
+```powershell
+ctest --test-dir build/e4 -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure -j 6
+```
+
+```text
+100% tests passed out of 418
+
+Total Test time (real) = 177.45 sec
+ctest_exit=0
+```
+
+⑧的命令：
+
+```powershell
+python -X utf8 tools/check_sdk_docs.py --output build/e4/sdk-docs.json
+```
+
+真实输出关键字段：
+
+```text
+"documented_functions": 484,
+"public_functions": 484,
+"coverage_percent": 100.0,
+"errors": [],
+"passed": true
+sdk_docs_exit=0
+```
+
+两个新函数均补齐六标签文档，签名从头文件提取，ABI 标为实验。新增 ctypes 测试已登记 ASan 预载正则。
+
+预推送检查已通过：
+
+```powershell
+pwsh -NoProfile -File C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1 -Worktree C:/Users/Oscar/Documents/Codex/EXReader-e4-20261112
+```
+
+```text
+全部通过 —— 可以推
+prepush_exit=0
+```
+
+另外，156 个分配失败注入点全部保持原状或回滚，释放后无存活分配。两个受保护文件均无改动；全程无 GUI、无 SendInput。
+
+已知边界：
+
+- 合并、底纹、opaque 内容等受保护单元格可枚举和查找，改字返回 `EXR_UNSUPPORTED`。
+- 嵌套表作为 opaque 块保留，不递归暴露内部段落。
+- `set_run_text` 要求已有 TEXT run；空段落没有 run 时不能用它插字。样式和删除接口仍限顶层块。
+- 所属表格修改后，宿主须重新获取单元格借用视图。
