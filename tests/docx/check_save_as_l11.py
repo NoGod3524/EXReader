@@ -18,12 +18,19 @@ args = parser.parse_args()
 build = root / 'build/l11-save'
 overlay = build / 'source'
 overlay.mkdir(parents=True, exist_ok=True)
-for folder in ['examples', 'apps']:
-    shutil.copytree(root / folder, overlay / folder, dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns('*.png', '*.jpg', '*.bmp', '*.docx', '*.pdf', '*.epub'))
-(overlay / 'tools').mkdir(exist_ok=True)
-for name in ['convert_json.c', 'convert_json.h']:
-    shutil.copy2(root / 'tools' / name, overlay / 'tools' / name)
+print('Preparing L11 source overlay (tracked files only)', flush=True)
+# Copy source files only; apps can contain large local build caches.
+tracked = subprocess.check_output(['git', 'ls-files', '-z', 'examples', 'apps',
+                                  'tools/convert_json.c', 'tools/convert_json.h'], cwd=root)
+for name in tracked.decode('utf-8').split('\0'):
+    if not name:
+        continue
+    source = root / name
+    if source.suffix.lower() in {'.png', '.jpg', '.bmp', '.docx', '.pdf', '.epub'}:
+        continue
+    target = overlay / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, target)
 changes = {}
 name = 'examples/windows/shell_docedit.inc'
 source = (root / name).read_text(encoding='utf-8')
@@ -48,7 +55,7 @@ with cmake.open('a', encoding='utf-8') as out:
 add_executable(check_shell_docedit_save check_shell_docedit_save.c shell_d2d.cpp shell_epub.cpp shell_speech.cpp)
 target_compile_features(check_shell_docedit_save PRIVATE cxx_std_17)
 target_compile_definitions(check_shell_docedit_save PRIVATE EXR_READER_WINDOWS_SHELL=1)
-target_compile_options(check_shell_docedit_save PRIVATE -UNDEBUG -finput-charset=UTF-8)
+target_compile_options(check_shell_docedit_save PRIVATE -O0 -UNDEBUG -finput-charset=UTF-8)
 target_link_libraries(check_shell_docedit_save PRIVATE EXReader::exreader comdlg32 gdi32 uiautomationcore shell32 user32 winhttp crypt32 d2d1 dwrite advapi32 ole32 uuid EXReader::vendor_miniz EXReader::vendor_expat m)
 target_link_options(check_shell_docedit_save PRIVATE -static)
 ''')
@@ -65,6 +72,6 @@ evidence = build / 'evidence'
 evidence.mkdir(exist_ok=True)
 run([build / 'host/check_shell_docedit_save.exe', root / 'tests/fixtures/docx-edit/plain.docx', evidence])
 recent = json.loads((evidence / 'recent-books.json').read_text(encoding='utf-8'))
-assert Path(recent['books'][0]['path']) == (evidence / 'new document.docx').resolve()
+assert Path(recent['books'][0]['path']) == (evidence / 'new document 中文.docx').resolve()
 assert not list(evidence.glob('exr*.tmp'))
 print('PASS recent JSON destination verified; no temporary files remain', flush=True)

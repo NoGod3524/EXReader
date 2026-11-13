@@ -20,7 +20,7 @@ int main(int argc,char **argv) {
   exr_edit_run run={0};run.text="L11 中文 save-as";run.text_size=strlen(run.text);
   exr_edit_id id;assert(exr_edit_insert_paragraph(de.doc,0,&run,1,NULL,&id)==EXR_OK);
   de.dirty=1;
-  char target[MAX_PATH];snprintf(target,sizeof(target),"%s/new document.docx",argv[2]);
+  char target[MAX_PATH];snprintf(target,sizeof(target),"%s/new document \xe4\xb8\xad\xe6\x96\x87.docx",argv[2]);
   char *expected=model_text(de.doc);
   assert(de_save_as(target));assert(!de.dirty && de.saved);
   file_text_equal(de.path,expected);free(expected);
