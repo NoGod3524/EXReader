@@ -44,7 +44,9 @@ static exr_status de_image_measure(const exr_edit_doc *doc,size_t block,
    SIZE_MAX is the deselected state, including a click on whitespace. */
 static size_t de_image_hit(const de_image_view *views,size_t count,
     float x,float y,float scroll,float top,float viewport_height) {
-  if(!isfinite(x) || !isfinite(y) || y<top || y>=viewport_height)return SIZE_MAX;
+  if((count && !views) || !isfinite(x) || !isfinite(y) || !isfinite(scroll) ||
+      !isfinite(top) || !isfinite(viewport_height) || y<top || y>=viewport_height)
+    return SIZE_MAX;
   y+=scroll;
   for(size_t i=0;i<count;i++) {
     const de_image_view *v=views+i;

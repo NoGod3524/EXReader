@@ -68,12 +68,19 @@ int main(void) {
   assert(de_image_hit(&view,1,100,28,50,32,160)==SIZE_MAX);
   assert(de_image_hit(&view,1,100,38,40,32,160)==0);
   assert(de_image_hit(&view,1,176,78,0,32,160)==SIZE_MAX);
+  assert(de_image_hit(&view,1,100,116,0,32,160)==SIZE_MAX);
+  assert(de_image_hit(&view,1,100,160,0,32,160)==SIZE_MAX);
+  assert(de_image_hit(NULL,0,100,78,0,32,160)==SIZE_MAX);
+  assert(de_image_hit(NULL,1,100,78,0,32,160)==SIZE_MAX);
+  assert(de_image_hit(&view,1,100,78,NAN,32,160)==SIZE_MAX);
+  assert(de_image_hit(&view,1,100,78,0,NAN,160)==SIZE_MAX);
+  assert(de_image_hit(&view,1,100,78,0,32,NAN)==SIZE_MAX);
   de_image_release(&view);
   assert(de_image_measure(doc,0,24,40,600,144,&view)==EXR_OK);
   assert(view.width==600 && view.height==300);de_image_release(&view);
   assert(de_image_measure(doc,0,24,40,1000,96,&view)==EXR_OK);
   assert(view.width==400 && view.height==200 && view.x==324);de_image_release(&view);
-  puts("PASS aspect ratio, centering, DPI, scrolling, toolbar clipping, right edge");
+  puts("PASS aspect ratio, centering, DPI, scrolling, toolbar clipping, edges, invalid hit inputs");
   SelectObject(dc,old);DeleteObject(bitmap);DeleteDC(dc);
   exr_edit_doc_free(doc);shell_d2d_destroy(shell);CoUninitialize();return 0;
 }
