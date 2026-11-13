@@ -1,8 +1,8 @@
-已修复，八项验收全部通过。完整命令、原始输出和边界记录见 [OUT-ME4.txt](/C:/Users/Oscar/Documents/Codex/EXReader-e4-20261112/OUT-ME4.txt)。
+修复已在当前 HEAD 中（`b68fd895`，PR #139）。本轮重新构建并完成八项复验，全部通过；未新增源码改动。
 
-`find_block` 现在能定位单元格段落；`set_run_text` 只更新目标 run，保留同格其他段落，并参与 undo/redo。新增 `exr_edit_table_cell_block_count/at`，顶层枚举语义保持原样。
+原修复的文件行数（新增 / 删除）：
 
-| 文件 | 新增 / 删除行 |
+| 文件 | 行数 |
 |---|---:|
 | `src/docx_edit.c` | +47 / −24 |
 | `src/docx_edit_table.c` | +17 / −4 |
@@ -12,12 +12,12 @@
 | `tests/fixtures/docx-real/codex/register.cmake` | +1 / −1 |
 | `tests/test_docx_edit_alloc.c` | +25 / −0 |
 | `tests/test_docx_edit_e4.py` | +179 / −0 |
-| `OUT-ME4.txt` | +182 / −0 |
+| `OUT-ME4.txt` | +85 / −0 |
 
-①–⑥的命令：
+①–⑥命令：
 
 ```powershell
-python -X utf8 tests/test_docx_edit_e4.py --library build/e4/libexreader.dll --output build/e4/evidence
+python -X utf8 tests/test_docx_edit_e4.py --library build/e4/libexreader.dll --output build/e4/me4-current-evidence
 ```
 
 真实输出：
@@ -32,7 +32,7 @@ python -X utf8 tests/test_docx_edit_e4.py --library build/e4/libexreader.dll --o
 acceptance_exit=0
 ```
 
-⑦的命令与真实输出：
+⑦命令与输出：
 
 ```powershell
 ctest --test-dir build/e4 -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure -j 6
@@ -40,18 +40,15 @@ ctest --test-dir build/e4 -E '^(sdk-release|sdk-doc-coverage)$' --output-on-fail
 
 ```text
 100% tests passed out of 418
-
-Total Test time (real) = 177.45 sec
+Total Test time (real) = 196.20 sec
 ctest_exit=0
 ```
 
-⑧的命令：
+⑧命令与输出关键字段：
 
 ```powershell
-python -X utf8 tools/check_sdk_docs.py --output build/e4/sdk-docs.json
+python -X utf8 tools/check_sdk_docs.py --output build/e4/me4-current-sdk-docs.json
 ```
-
-真实输出关键字段：
 
 ```text
 "documented_functions": 484,
@@ -62,24 +59,30 @@ python -X utf8 tools/check_sdk_docs.py --output build/e4/sdk-docs.json
 sdk_docs_exit=0
 ```
 
-两个新函数均补齐六标签文档，签名从头文件提取，ABI 标为实验。新增 ctypes 测试已登记 ASan 预载正则。
+两个新函数已补六标签文档，签名匹配，ABI=实验；E4 ctypes 测试已登记 ASan 预载正则。
 
-预推送检查已通过：
+预推检查：
 
 ```powershell
 pwsh -NoProfile -File C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1 -Worktree C:/Users/Oscar/Documents/Codex/EXReader-e4-20261112
 ```
 
 ```text
+ok    无冲突标记残留
+ok    code/docs 结构扫描
+ok    check_sdk_docs.py
+
 全部通过 —— 可以推
 prepush_exit=0
 ```
 
-另外，156 个分配失败注入点全部保持原状或回滚，释放后无存活分配。两个受保护文件均无改动；全程无 GUI、无 SendInput。
+两个受保护文件均无改动，全程未开 GUI、未用 SendInput。
 
 已知边界：
 
-- 合并、底纹、opaque 内容等受保护单元格可枚举和查找，改字返回 `EXR_UNSUPPORTED`。
-- 嵌套表作为 opaque 块保留，不递归暴露内部段落。
-- `set_run_text` 要求已有 TEXT run；空段落没有 run 时不能用它插字。样式和删除接口仍限顶层块。
-- 所属表格修改后，宿主须重新获取单元格借用视图。
+- 合并、底纹等受保护单元格可查找和枚举，改字返回 `EXR_UNSUPPORTED`。
+- 嵌套表保留为 opaque 块，不递归暴露内部段落。
+- `set_run_text` 需要已有 TEXT run；零 run 空段落不能通过它插字。
+- 顶层枚举语义不变；单元格使用 `table_cell_block_count/at`。所属表格修改后须重新获取借用视图。
+
+[本次完整命令与原始输出](C:/Users/Oscar/Documents/Codex/EXReader-e4-20261112/build/e4/me4-current-report.txt)
