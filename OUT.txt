@@ -1,98 +1,43 @@
-# PR #132 跨平台修复：恢复与验收记录
+已恢复保存并推送：`2da6f987` → `codex/fix132-crossplatform`，工作树干净。修复提交 `63da4607` 已在 #132 中。远端显示 [#132](https://github.com/NoGod3524/EXReader/pull/132) 已于今天纽约时间 16:04 合并；本轮未执行合并。
 
-恢复日期：2026-11-11。起点 c3f72f96。
-修复提交：
-- 5947ab96：固定 ZIP creator OS。
-- 2f6db544：修正 DOCX Python/ctypes 测试宿主的 ASan 加载顺序。
-- 63da4607d133ef67f69c7a4fc460e377571b3d26：消除宿主压缩器对夹具字节的影响。
+① 两个命令各连续运行两次，四次均 **exit 0**：
 
-本轮从 git log 和工作树恢复，未重复修改已完成的源码。唯一未提交文件 OUT.txt 被中断工具的 weekly-limit 提示覆盖，现恢复为本报告。
-
-① 复现性
-
-本轮在 Windows 各连续执行两次，四次均 exit 0：
-
-python tests/fixtures/docx-real/codex/generate.py --check
+```text
+codex/generate.py --check
 30 original fixtures: deterministic bytes verified
-pass 1 exit=0; pass 2 exit=0
 
-python tests/fixtures/docx-real/argon/make_fixtures.py --check
-Verified 30 DOCX fixtures in C:\Users\Oscar\Documents\Codex\EXReader-fix132b-20261111\tests\fixtures\docx-real\argon (max size 14835 bytes < 60000).
-pass 1 exit=0; pass 2 exit=0
+argon/make_fixtures.py --check
+Verified 30 DOCX fixtures … (max size 14835 bytes < 60000).
+```
 
-Linux 与 Windows CI 同时通过两项复现性检查，见下方完整 CTest 日志。
+② 字节不一致有两个具体来源：
 
-② 跨平台不一致的具体来源
+- `ZipInfo.create_system` 随宿主变化，现固定为 `0`。
+- zlib/zlib-ng 生成不同 DEFLATE 字节，影响 ZIP 成员和 PNG IDAT。现使用 `ZIP_STORED` 与显式 stored DEFLATE 块。
 
-- ZipInfo.create_system 默认由宿主决定：Windows 为 0，Linux/macOS 为 3。两个生成器均显式固定为 0，保持已有固定时间戳、权限及排序后的成员顺序。
-- DEFLATE 压缩器实现：Windows Python 的 zlib-ng 与 Linux zlib 对相同输入可输出不同压缩字节，影响 ZIP 成员及 Codex 内嵌 PNG IDAT。仅固定 ZIP 元数据后，首轮 Linux 验证仍失败。
-- 最终 ZIP 使用 ZIP_STORED；PNG 使用显式编码的 stored DEFLATE 块，生成过程不调用压缩器。Codex PNG 改用 4-bit 调色板以保持相同 RGB 像素并满足原大小断言。
-- XML namespace 属性来自显式有序 tuple；文件使用 write_bytes，不经文本换行转换。严格字节相等断言保留。
-- 原有验收记录确认 XML/relationships 内容不变，33 个内嵌 PNG 解码后 RGB 像素相同；最大 Codex 文件 60444 < 61440 字节，Argon 14835 < 60000 字节。
-
-③ ASan 六项失败分类
-
-本地此前尝试 ASan 构建，MinGW 缺少 sanitizer/asan_interface.h、libasan 和 libubsan；验收采用真实 CI 日志。本轮未重复该已确认不可用的构建。
-
-原始失败日志（本轮重新读取）：
-https://github.com/NoGod3524/EXReader/actions/runs/43074571383/job/130710914112
-
-六项均逐项输出以下报错，进程 PID 为 15557 至 15562：
-ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+③ [原始 ASan 日志](https://github.com/NoGod3524/EXReader/actions/runs/43074571383/job/130710914112)逐项确认，六项均报 `ASan runtime does not come first in initial library list`：
 
 | 测试名 | 报错类型 | 修法 |
 |---|---|---|
-| native-docx-real-paragraph-markers | Python/ctypes 宿主 ASan runtime 加载顺序 | 每测试预加载同一 GCC 的 libasan，并设 PYTHONMALLOC=malloc |
-| native-docx-real-section-tail | Python/ctypes 宿主 ASan runtime 加载顺序 | 同上 |
-| native-docx-real-text-history | Python/ctypes 宿主 ASan runtime 加载顺序 | 同上 |
-| native-docx-real-text-alias | Python/ctypes 宿主 ASan runtime 加载顺序 | 同上 |
-| native-docx-real-text-validation | Python/ctypes 宿主 ASan runtime 加载顺序 | 同上 |
-| native-docx-real-text-transaction | Python/ctypes 宿主 ASan runtime 加载顺序 | 同上 |
+| native-docx-real-paragraph-markers | ASan 宿主加载顺序 | 预加载匹配 GCC 的 libasan |
+| native-docx-real-section-tail | 同上 | 同上 |
+| native-docx-real-text-history | 同上 | 同上 |
+| native-docx-real-text-alias | 同上 | 同上 |
+| native-docx-real-text-validation | 同上 | 同上 |
+| native-docx-real-text-transaction | 同上 | 同上 |
 
-这批日志中的真实诊断与任务起点的预判不同，按日志归类为宿主运行时配置问题。没有据此修改产品内存逻辑或测试断言。
+配置按测试设置 `LD_PRELOAD`、`PYTHONMALLOC=malloc`，保留 sanitizer 检查。
 
-修法位于 tests/fixtures/docx-real/codex/register.cmake，仅 Linux/GCC sanitizer 构建生效。通过编译器 -print-file-name=libasan.so 获取匹配的运行时，为相关 DOCX ctypes 测试设置 LD_PRELOAD 和 PYTHONMALLOC。没有全局预加载至 CTest，也没有关闭 ASan、UBSan 或 leak checking。
+④ 改动为两个生成器、60 个 DOCX、两个 manifest，以及夹具 CMake sanitizer 配置。严格断言保留；发布检查脚本 SHA256 仍为 `6eb22a30…`，版本例外表及 core 门禁无改动。本轮仅恢复报告。
 
-修复后六项均 Passed：
-paragraph-markers 0.26s; section-tail 0.26s; text-history 0.31s;
-text-alias 0.26s; text-validation 0.37s; text-transaction 0.27s。
-ASAN_OPTIONS=detect_leaks=1:halt_on_error=1
-UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1
+⑤ 修复提交的全量 CI：
 
-④ 改动清单与边界
+| 环境 | CTest |
+|---|---:|
+| [Linux](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130774925898) | **403/403** |
+| [Windows](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130774840719) | **403/403** |
+| [ASan/UBSan](https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130774888751) | **393/393** |
 
-修复相对 c3f72f96 的代码/夹具改动：
-- tests/fixtures/docx-real/codex/generate.py
-- tests/fixtures/docx-real/argon/make_fixtures.py
-- 两组共 60 个 DOCX 及两个 manifest.json：同步新的确定性字节与摘要。
-- tests/fixtures/docx-real/codex/register.cmake：Python 宿主 sanitizer 配置。
-- OUT.txt：恢复验收和接管报告。
+本地 MinGW 历史全量为 402/403，唯一失败是 SDK 验证要求 MSVC 产物；本地缺 ASan 运行库，sanitizer 验收采用上述 CI。最新 PR head 的 core 仍 queued，尚无通过结论。
 
-本轮仅恢复 OUT.txt，没有新增产品或构建改动。
-tests/check_reading_release.py 的 SHA256 本轮重新核对为：
-6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b
-tools/version_literal_exceptions.json 相对起点没有差异；未修改 core 聚合门禁或其它 PR 文件；未使用 GUI、SendInput 或系统设置。
-
-⑤ 全量 CTest 结果
-
-以下三个 job 本轮重新读取日志，checkout 均为修复提交 63da4607：
-
-| 环境 | 结果 | 时间 | 日志 |
-|---|---|---|---|
-| Linux Release | 403/403 PASS，0 failures | 135.58s | https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130774925898 |
-| Windows Release | 403/403 PASS | 153.93s | https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130774840719 |
-| ASan/UBSan | 393/393 PASS，0 failures | 672.01s | https://github.com/NoGod3524/EXReader/actions/runs/43086776176/job/130774888751 |
-
-此前本地 MinGW 全量 CTest：402/403，687.55s，exit 8。
-唯一失败 sdk-release：Windows README 验证要求 MSVC cl 与 lib/exreader.lib，本地 MinGW 产物为 lib/libexreader.dll.a，报 LNK1181。同一修复提交的 MSVC Windows CI 已通过全部 403 项。本轮未重新构建全量；已有构建目录已不在本工作树，先前重配还遇到 mbedtls 下载证书错误，保留真实 CI 作为全量依据。
-
-远端与交付状态
-
-- git merge-base --is-ancestor 验证修复 63da4607 已包含于 PR head a525c94e790e60ada2086dc75821917da8ca6415，exit 0。
-- git ls-remote 确认 PR 源分支 codex/dx-realworld-argon-20261110 指向该 head。修复已推送，无需重复推送源码。
-- GitHub API 显示 PR #132 在 2026-11-11 21:04:49 UTC（纽约 16:04:49）已合并，merge commit fe9adf438bdeff83b90ed4508f169d32fcd7b664。本轮没有调用合并操作，也没有再推送该已合并 PR 的源分支。
-- 最新 PR head 的 core run 43098216089 仍为 queued、尚无 jobs；不把它记作通过，也不修改聚合逻辑。
-  https://github.com/NoGod3524/EXReader/actions/runs/43098216089
-- 本报告保存于恢复分支 codex/fix132-crossplatform，保留全部恢复点。
-
-再次恢复核验：本轮重新读取 PR 元数据、原始 ASan 失败日志和三套通过日志；结果与上述记录一致。两个生成器各连续运行两次，四次均 exit 0。远端恢复分支原为 c6db8381，PR 源分支仍为 a525c94e；修复提交 63da4607 是该 head 的祖先。core run 43098216089 仍 queued 且无 jobs。当前只恢复报告，不重复构建已验收源码。
+完整记录：[OUT.txt](/C:/Users/Oscar/Documents/Codex/EXReader-fix132b-20261111/OUT.txt)。
