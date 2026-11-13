@@ -2401,7 +2401,7 @@ int main(void) {
 
 **参数** doc 为编辑模型，index 为零基块序号。
 
-**返回与失败** 返回只读块视图；调用前确认 index 小于 block_count。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 返回只读顶层块视图；模型为空或 index 越界返回 NULL。单元格内块通过 exr_edit_table_cell_block_count/at 枚举。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
@@ -2415,7 +2415,7 @@ int main(void) {
 
 **参数** doc 为编辑模型。
 
-**返回与失败** 返回块数量。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 返回顶层块数量，模型为空返回 0；不包含单元格内块，后者通过 exr_edit_table_cell_block_count/at 枚举。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
@@ -2569,11 +2569,11 @@ int main(void) {
 
 **参数** doc 为编辑模型，id 为稳定非零块 ID。
 
-**返回与失败** 按 ID 查询只读块；调用者检查返回指针是否为空。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 按 ID 查询顶层块或已建模单元格内块（包括受保护单元格中的块）。模型为空、ID 为 0 或不存在时返回 NULL。查询不分配、不修改模型、不锁存事务失败。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
-**所有权** 借用指针，块被修改/删除即失效。
+**所有权** 模型持有的借用指针，不可释放；块被修改/删除、undo/redo、回滚或模型释放后须重新获取；单元格块在所属表格任意修改后也须重新获取。
 
 ### `exr_edit_insert_image`
 
@@ -2709,11 +2709,11 @@ int main(void) {
 
 **参数** `doc` 为模型，`block_id` 为段落块 ID；`run_index` 从 0 起；`text`/`text_size` 为有效 UTF-8/XML 文本及字节数，允许 NULL/0 清空，长度不是字符数。
 
-**返回与失败** 成功返回 EXR_OK，替换一个 TEXT run 的文字，保留 ID、直接属性、原始 XML 模板及相邻 opaque run。无效 ID、索引、长度或文本为 EXR_ARGUMENT，非段落块或 opaque run 为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY。参与事务及 undo/redo；事务内失败会锁存状态，后续命令失败直至回滚，提交失败事务会整体回滚。
+**返回与失败** 成功返回 EXR_OK，替换一个 TEXT run 的文字，保留 ID、直接属性、原始 XML 模板及相邻 opaque run。block_id 可为普通段落或可编辑单元格段落 ID；单元格编辑保留同格其他段落、run 和 ID，不改变顶层块数。无效 ID、索引、长度或文本为 EXR_ARGUMENT，非段落块、opaque run 或受保护单元格（合并、嵌套表、底纹及 opaque 内容）为 EXR_UNSUPPORTED，分配失败为 EXR_MEMORY。参与事务及 undo/redo；事务内失败会锁存状态，后续命令失败直至回滚，提交失败事务会整体回滚。
 
 **线程** 需要调用方串行；同一模型的读取、写出、修改、事务及释放不得并发；调用期间不得修改输入缓冲区。
 
-**所有权** 输入文字可别名模型的借用文本，调用期间借用并复制；新文字由模型分配和释放。成功修改使该块原有借用视图失效，无返回内存需要调用方释放。
+**所有权** 输入文字可别名模型的借用文本，调用期间借用并复制；新文字由模型分配和释放。成功修改使该块原有借用视图失效；单元格编辑使所属表格及全部子视图失效，无返回内存需要调用方释放。
 
 ### `exr_edit_split_paragraph`
 
@@ -2728,6 +2728,34 @@ int main(void) {
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
 **所有权** 段落属性复制；修改后重新取得借用视图。
+
+### `exr_edit_table_cell_block_count`
+
+**签名** `size_t exr_edit_table_cell_block_count( const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table` 为表格块 ID；`row`、`column` 为从 0 起的物理行/单元格索引。
+
+**返回与失败** 返回该单元格已建模块的数量，包括受保护单元格及 opaque 块；非法模型、ID、无表格模型或越界行/列返回 0。无现存块时返回 0，不创建占位段落。只读查询可在事务内外调用，不产生历史，不锁存事务失败。顶层 block_count/at 保持原语义。
+
+**线程** 同一模型的读取、修改、写出、事务及释放由调用方串行化，不得并发。
+
+**所有权** 按值返回，无分配。
+
+### `exr_edit_table_cell_block_at`
+
+**签名** `const exr_edit_block *exr_edit_table_cell_block_at( const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column,size_t index);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** `doc` 为模型，`table` 为表格块 ID；`row`、`column` 为从 0 起的物理行/单元格索引；`index` 为从 0 起的单元格块索引。
+
+**返回与失败** 按文档顺序返回全部已建模块，包括受保护单元格及 opaque 块。非法模型、ID、无表格模型、越界行/列/index 返回 NULL。返回块的 ID 可传给 exr_edit_find_block；可编辑段落 ID 可传给 exr_edit_set_run_text。受保护单元格仍禁止修改；嵌套表保持为 opaque 块，不递归展开。只读查询可在事务内外调用，不产生历史，不锁存事务失败。顶层 block_count/at 保持原语义。
+
+**线程** 同一模型的读取、修改、写出、事务及释放由调用方串行化，不得并发。
+
+**所有权** 返回模型持有的只读借用视图，不可释放；所属表格修改、undo/redo、回滚或模型释放后须重新获取。
 
 ### `exr_edit_table_cell_paragraph`
 
@@ -7353,4 +7381,3 @@ int main(void) {
 **线程** 仅查询不可变数据；可并行只读，但不得与释放、引用计数变更或底层来源变更并发。
 
 **所有权** 字节与 MIME 字符串借用到 inspection_free。
-

@@ -231,6 +231,9 @@ if(EXR_FULL_TESTS)
   add_test(NAME native-docx-editor-e2e COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_editor_e2e.py
     --library $<TARGET_FILE:exreader>)
+  add_test(NAME native-docx-edit-e4 COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_e4.py
+    --library $<TARGET_FILE:exreader>)
   add_test(NAME native-docx-edit-e3 COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_e3.py
     --library $<TARGET_FILE:exreader>)
