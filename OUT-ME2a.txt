@@ -1,0 +1,28 @@
+**发现真实 API 缺口，已按硬约束停止 UI 实现。**
+
+Enter 能把单元格拆成两段，但后续改字没有可保留其他段落的接口。headless 复现命令：
+
+```powershell
+& build/me2a-gap/api-gap.exe
+```
+
+真实输出：
+
+```text
+Enter: paragraphs=2 text=A|B
+find_block(cell_paragraph_id): NULL
+set_run_text(cell_paragraph_id): EXR_ARGUMENT (1)
+set_cell_text fallback: paragraphs=1 text=XB (A paragraph lost)
+M-E2a BLOCKED: need paragraph-scoped cell text editing, including empty paragraphs
+```
+
+需要补充：**格内段落级文字编辑 API，支持空段输入、保留同格其他段落及属性，并参与事务和 undo/redo。**
+
+交付文件：
+
+| 文件 | 行数 |
+|---|---:|
+| [复现程序](evidence/me2a-api-gap.c) | 新增 41 行 |
+| [完整命令、输出及验收状态](OUT-ME2a.txt) | 61 行 |
+
+七项 UI 验收均未执行。`src/**` 和受保护脚本未修改；无 GUI 自动化。prepush（含文档门禁）及 `git diff --check` 通过，未提交或推送。
