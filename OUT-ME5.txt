@@ -1,0 +1,20 @@
+当前 HEAD 已包含 M‑E5 实现，本轮重新编译并完成八项验收。
+
+| 验收 | 真实结果 |
+|---|---|
+| ① | PNG/BMP/GIF 插入成功；GIF 默认显示第 0 帧 |
+| ② | 伪装 PNG 返回 `EXR_FORMAT(5)`；模型、载荷及整包字节不变 |
+| ③ | 重开后 IMAGE 存在，format 与 250×485 twips 尺寸一致 |
+| ④ | PNG/BMP/GIF 的 69/58/50 字节载荷逐字节一致 |
+| ⑤ | EMF 保留 opaque run，88 字节载荷完整保留 |
+| ⑥ | ctest **418/418 通过**，117.77 秒 |
+| ⑦ | 文档检查 exit 0，485/485 覆盖；新接口六标签齐全、ABI=实验 |
+| ⑧ | ctypes 测试已匹配 ASan 预载正则 |
+
+[交付报告：逐文件行数、八项命令与实际输出](C:/Users/Oscar/Documents/Codex/EXReader-e5-20261112/evidence/me5/recheck.txt)
+
+原实现涉及 12 个文件，+506/−33；本轮测试改动 +4/−22，移除时间戳归一化，改为严格字节比较；报告新增 142 行。两个禁止修改的文件均未改动，未使用 GUI。
+
+边界：GIF 只显示首帧；EMF/WMF 保留 opaque；CMYK/YCCK JPEG 沿用现有 RGB 解码，原始载荷不变。
+
+**未推送**：实际调用 `ops\prepush-check.ps1` 返回 exit 1，原因是脚本不存在，推送门禁尚未通过。

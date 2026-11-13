@@ -1,0 +1,7 @@
+已修复并推送至 `3364989e`。根因是 ZIP 写出使用当前时间，导致重复写出字节变化；已改为固定时间，并新增跨两秒的严格字节回归。
+
+- [native / sanitizers](https://github.com/NoGod3524/EXReader/actions/runs/43401554160/job/131805371304)：408/408 通过。
+- [reading-required-core](https://github.com/NoGod3524/EXReader/actions/runs/43401554160/job/131821640182)：通过。
+- 完整 `ops\prepush-check.ps1`：推送前通过。
+
+原有未提交改动已保留。
