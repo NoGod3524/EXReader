@@ -1,0 +1,142 @@
+M-E5 重新验收（2026-11-13，Windows/MinGW Release）
+
+起始 HEAD：17867a53。用户列出的缺口已在此 HEAD 的祖先提交
+3f7098fc 中实现；本轮检查现有实现、重新编译并重新执行验收。
+没有重新编写图片解析器，没有调用 GUI/SendInput，没有推送。
+
+实现的访问方式：
+- block->image->data/size：原始编码载荷，只读借用。
+- block->image->format：PNG=1、JPEG=2、GIF=3、BMP=4；MIME 分别是
+  image/png、image/jpeg、image/gif、image/bmp。
+- width_emu/height_emu：原始显示尺寸，除以 635 得 twips。
+- exr_edit_image_position：段落 ID、run 下标、drawing/pict 在 run XML
+  中的字节偏移。表格单元格也可定位，独立插入块返回三个 0。
+- 导入图片作为所属段落/表格之后的 IMAGE 锚点视图枚举；原 run XML
+  继续作为无损写出模板，不重复写入图片。
+
+文件与行数：
+原 M-E5 实现提交 3f7098fc（git show --numstat 3f7098fc）：
+文件                                              +行  -行
+CMakeLists.txt                                      3    0
+docs/API.md                                        17    3
+include/exr/edit.h                                 18    4
+src/docx_edit.c                                    87    4
+src/docx_edit_image.c                             145   15
+src/docx_edit_internal.h                            4    0
+src/docx_edit_io.c                                  5    1
+src/graphics_internal.h                             1    0
+src/image_formats.c                                 4    4
+tests/fixtures/docx-real/codex/register.cmake         1    1
+tests/test_docx_editor_e2e.py                         2    1
+tests/test_docx_edit_images_e5.py                   219    0
+共 12 个实现/测试/文档文件，+506/-33；不计原交付文本。
+
+本轮代码改动（相对起始 HEAD）：
+tests/test_docx_edit_images_e5.py：+4/-22。
+移除 ZIP 时间戳归一化，跨 2.1 秒和失败插入后的整包字节严格一致；
+成功提示移至三种图片均真正插入成功之后。ZIP 固定时间写出已由祖先
+提交 e27f26d5 实现，本轮测试不再容忍时间戳漂移。
+另新增本报告 evidence/me5/recheck.txt。
+
+构建命令：cmake --build build/e5 --parallel 4
+退出码：0。完整输出：recheck-build.log。
+
+①②③④⑤⑧命令：
+python tests/test_docx_edit_images_e5.py --library build/e5/libexreader.dll
+退出码：0。实际完整输出如下：
+8 ASan preload regex: native-docx-edit-e5 MATCH; LD_PRELOAD/PYTHONMALLOC registered (Linux/GNU)
+PNG rejected insert: out.value=0; block_count=2->2; write before: len=3508 md5=674937a0db2a8deab72a51313575a8b2; after: len=3508 md5=674937a0db2a8deab72a51313575a8b2
+3/4 PNG: reopen IMAGE format=1, twips=250x485 (EMU=158750x307975), payload byte-identical (69 bytes)
+BMP rejected insert: out.value=0; block_count=2->2; write before: len=3476 md5=cfee6ff328530f0a890d113c4705bfb4; after: len=3476 md5=cfee6ff328530f0a890d113c4705bfb4
+3/4 BMP: reopen IMAGE format=4, twips=250x485 (EMU=158750x307975), payload byte-identical (58 bytes)
+GIF rejected insert: out.value=0; block_count=2->2; write before: len=3481 md5=b62a06317524554b68c7de1e6bb7e64a; after: len=3481 md5=b62a06317524554b68c7de1e6bb7e64a
+3/4 GIF: reopen IMAGE format=3, twips=250x485 (EMU=158750x307975), payload byte-identical (50 bytes)
+1 PNG/BMP/GIF insert: EXR_OK; GIF frame 0=red, frame 1=green, display=frame 0
+2 renamed text.png: EXR_FORMAT; output ID=0; model/payload unchanged; serialized bytes identical including ZIP DOS timestamps
+position/mutation: mixed runs, duplicate anchors, exact EMU, table cells, delete/undo/redo PASS
+JPEG baseline/CMYK/YCCK/progressive: EXR_OK; format=JPEG; original bytes preserved
+VML pict: BMP detected from bytes, dimensions=12.5pt x 24.25pt, exact package preserved
+5 unsupported EMF: opaque run retained; 88 original payload bytes and all OPC parts unchanged
+
+① PNG/BMP/GIF 插入成功；两个 GIF 帧分别红/绿，默认显示首帧红色。
+② 伪装 PNG 的文本返回 EXR_FORMAT=5，ID 清零，块、载荷和整包不变。
+③ 三种格式重开后都有 IMAGE；format 与精确 EMU 尺寸均相同。
+④ PNG/BMP/GIF 原始载荷逐字节一致，分别 69/58/50 字节。
+⑤ 合成 EMF 的 VML pict 保留为 opaque run；88 字节媒体及全部部件不变。
+⑧ native-docx-edit-e5 匹配 ASan 正则，LD_PRELOAD/PYTHONMALLOC 已登记。
+本轮在 Windows 运行；Linux ASan 环境登记由测试读取 CMake 正则验证。
+
+⑥命令：
+ctest --test-dir build/e5 --output-on-failure -E 'sdk-release|sdk-doc-coverage' --parallel 4
+退出码：0。实际输出末尾：
+418/418 Test #224: native-sevenz-safety ...............................   Passed    0.14 sec
+
+100% tests passed out of 418
+
+Total Test time (real) = 117.77 sec
+完整输出：recheck-ctest.log。
+
+⑦命令：python tools/check_sdk_docs.py
+退出码：0。实际输出：
+{
+  "public_headers": 20,
+  "headers_declaring_functions": 17,
+  "modules": 15,
+  "module_names": [
+    "基础",
+    "图形",
+    "字体与文字",
+    "字典",
+    "渲染",
+    "全文索引",
+    "文档",
+    "分页",
+    "搜索",
+    "标注",
+    "目录",
+    "书库与持久化",
+    "格式与转换",
+    "固定版面与 PDF",
+    "音频"
+  ],
+  "documented_functions": 485,
+  "public_functions": 485,
+  "coverage_percent": 100.0,
+  "frozen_contract_functions": 394,
+  "abi": {
+    "稳定": 394,
+    "实验": 91,
+    "内部": 0
+  },
+  "examples": 15,
+  "capability_rows": 41,
+  "binary": null,
+  "errors": [],
+  "passed": true
+}
+新增 exr_edit_image_position 在 docs/API.md 有 ABI、参数、返回与失败、
+线程、所有权及签名六标签；ABI=实验。
+额外命令：
+python tools/check_sdk_docs.py --binary build/e5/libexreader.dll --output build/e5-sdk-docs-recheck.json
+退出码：0。485 个符号，missing=[]，extra=[]，passed=true。
+
+推送门禁：
+命令：& .\ops\prepush-check.ps1
+退出码：1。实际错误：
+The term '.\ops\prepush-check.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+工作区及主仓库均未找到该脚本；未伪造替代门禁，未执行推送。
+
+硬约束检查：
+git diff --exit-code -- tests/check_reading_release.py tools/version_literal_exceptions.json
+退出码：0，无输出。两个文件均未改动。
+
+已知边界：
+- GIF 的默认显示只取第 0 帧，保留整个原 GIF 载荷，不转码。
+- EMF/WMF、损坏或超过解码预算的图片保持 opaque run 与原 OPC 媒体。
+- CMYK/YCCK/渐进 JPEG 沿用已有 RGB 显示解码；测试确认原始载荷不变。
+- 缺少有效尺寸时按解码像素和 96 DPI 推导 EMU。
+- 结构化提取覆盖主文档段落及已建模表格单元格；复杂多载荷 drawing、
+  未建模嵌套 XML、页眉页脚图片继续按原 XML/包部件保留。
+- 查询是只读借用视图；同一模型所有访问由调用方串行，块变更、删除、
+  undo/redo 或释放后须重新获取视图。
