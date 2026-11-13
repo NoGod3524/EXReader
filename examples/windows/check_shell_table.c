@@ -91,7 +91,7 @@ static void existing_table_fixture(const char *path) {
   char *before=table_snapshot(de.doc);int was_dirty=de.dirty;
   assert(!de_edit(DE_TYPE,"X",1));char *after=table_snapshot(de.doc);
   assert(!strcmp(before,after) && de.dirty==was_dirty);free(before);free(after);
-  printf("1 PASS existing rich.docx (Content/main.xml) -> Tab cell=(0,0); border_pixels=%zu; merged-cell edit rolls back\n",border);
+  printf("extra PASS existing rich.docx (Content/main.xml) -> Tab cell=(0,0); border_pixels=%zu; merged-cell edit rolls back\n",border);
   de_close();
 }
 int main(int argc,char **argv) {
@@ -119,10 +119,10 @@ int main(int argc,char **argv) {
     for(int x=edge-1;x<=edge+1;x++)border+=(hidden[y*600+x]&0xffffff)!=(hidden[399*600]&0xffffff);
   for(size_t i=0;i<600*400;i++)caret+=visible[i]!=hidden[i];assert(border>0 && caret>0);
   snprintf(bmp,sizeof(bmp),"%s/table-ui.bmp",argv[1]);save_bitmap(bmp,visible,600,400);free(visible);free(hidden);
-  printf("extra PASS generated 2x2 fixture -> Tab cell=(0,0); border_pixels=%zu caret_pixels=%zu caret=(%.1f,%.1f) inside cell; hit-test PASS\n",border,caret,cx,cy);
-  de_character(L'X');de_character(L'1');check_cell(0,0,0,"X1");de_key('S',1,0);
-  de_close();assert(de_open(path));focus_cell(0,0);check_cell(0,0,0,"X1");
-  puts("2 PASS typed X1 -> Ctrl+S -> reopened cell(0,0)=X1");
+  printf("1 PASS generated 2x2 fixture -> Tab cell=(0,0); border_pixels=%zu caret_pixels=%zu caret=(%.1f,%.1f) inside cell; hit-test PASS\n",border,caret,cx,cy);
+  de_character(L'A');de_character(L'B');check_cell(0,0,0,"AB");de_key('S',1,0);
+  de_close();assert(de_open(path));focus_cell(0,0);check_cell(0,0,0,"AB");
+  puts("2 PASS typed AB -> Ctrl+S -> reopened cell(0,0)=AB");
   de_key(VK_TAB,0,0);assert(de_cell_at(de.caret.view).col==1);
   assert(de.caret.row==0 && de.caret.column==1);
   de_key(VK_TAB,0,0);assert(de_cell_at(de.caret.view).row==1 && de_cell_at(de.caret.view).col==0);
@@ -133,30 +133,48 @@ int main(int argc,char **argv) {
   de_key(VK_TAB,0,1);assert(de_cell_at(de.caret.view).col==0);
   de_key(VK_TAB,0,1);assert(!de_cell_at(de.caret.view).table);
   de_set_caret(de_end(0));de_set_anchor(de_caret_pos());de_key(VK_RIGHT,0,0);assert(de_cell_at(de.caret.view).table);
-  puts("3 PASS Tab (0,0)->(0,1)->(1,0)->(1,1); Shift+Tab reverses; Right enters cell");
+  puts("extra PASS Tab (0,0)->(0,1)->(1,0)->(1,1); Shift+Tab reverses; Right enters cell");
   de_set_caret(de_end(de.caret.view));de_set_anchor(de_caret_pos());de_key(VK_RETURN,0,0);
   assert(table_view()->rows[0].cells[0].block_count==2);
   assert(de_block_at(de.doc,de.caret.view)->run_count==0);
-  de_character(L'X');check_cell(0,0,0,"X1");check_cell(0,0,1,"X");check_cell(0,1,0,"keep");
-  puts("extra PASS Enter paragraphs=1->2 zero-run=0; typed X -> [X1|X]; sibling cell=keep");
+  de_character(L'X');check_cell(0,0,0,"AB");check_cell(0,0,1,"X");check_cell(0,1,0,"keep");
+  puts("3 PASS Enter paragraphs=1->2 run_count=0; typed X -> [AB|X]; sibling cell=keep");
   de_key('Z',1,0);assert(table_view()->rows[0].cells[0].block_count==2);
-  check_cell(0,0,0,"X1");check_cell(0,0,1,"");assert(de_block_at(de.doc,de.caret.view)->run_count==0);
-  puts("extra PASS one Ctrl+Z -> [X1|empty], Enter retained, inserted run removed");
+  check_cell(0,0,0,"AB");check_cell(0,0,1,"");assert(de_block_at(de.doc,de.caret.view)->run_count==0);
+  puts("4 PASS one Ctrl+Z -> [AB|empty], Enter retained, inserted run removed");
   de_key('Y',1,0);check_cell(0,0,1,"X");
+  /* Repeat Enter on an already multi-paragraph cell; retain every preceding
+     paragraph ID and prove first-run creation + text insertion is one edit. */
+  const exr_edit_cell *cell=&table_view()->rows[0].cells[0];
+  exr_edit_id preceding[2]={cell->blocks[0].id,cell->blocks[1].id};
+  de_set_caret(de_end(de.caret.view));de_set_anchor(de_caret_pos());
+  assert(de_key(VK_RETURN,0,0));
+  cell=&table_view()->rows[0].cells[0];assert(cell->block_count==3 && !cell->blocks[2].run_count);
+  exr_edit_id empty_id=cell->blocks[2].id;
+  assert(de_edit(DE_TYPE,"YZ",2));
+  cell=&table_view()->rows[0].cells[0];
+  assert(cell->blocks[0].id==preceding[0] && cell->blocks[1].id==preceding[1] && cell->blocks[2].id==empty_id);
+  check_cell(0,0,0,"AB");check_cell(0,0,1,"X");check_cell(0,0,2,"YZ");
+  assert(de_key('Z',1,0));cell=&table_view()->rows[0].cells[0];
+  assert(cell->block_count==3 && cell->blocks[2].id==empty_id && !cell->blocks[2].run_count);
+  check_cell(0,0,0,"AB");check_cell(0,0,1,"X");check_cell(0,0,2,"");
+  assert(de_key('Z',1,0));assert(table_view()->rows[0].cells[0].block_count==2);
+  puts("extra PASS repeated Enter -> [AB|X|YZ], all paragraph IDs retained; one undo removes YZ + first run, next undo removes Enter");
+  focus_cell(0,0);
   /* Use actual toolbar hit boxes, then prove one-step history for each row edit. */
   rich_click(DE_ADD_ROW);assert(table_view()->row_count==3);
-  check_cell(0,0,0,"");check_cell(1,0,0,"X1");assert(de.caret.row==1);
+  check_cell(0,0,0,"");check_cell(1,0,0,"AB");assert(de.caret.row==1);
   de_key('Z',1,0);assert(table_view()->row_count==2);
   de_key('Y',1,0);assert(table_view()->row_count==3);focus_cell(0,0);
   rich_click(DE_REMOVE_ROW);assert(table_view()->row_count==2);de_key('Z',1,0);assert(table_view()->row_count==3);
-  de_key('Y',1,0);assert(table_view()->row_count==2);check_cell(0,0,0,"X1");check_cell(0,0,1,"X");focus_cell(0,0);
-  puts("4 PASS toolbar +row ABOVE 2->3; -row 3->2; each undo/redo is one transaction; text retained");
+  de_key('Y',1,0);assert(table_view()->row_count==2);check_cell(0,0,0,"AB");check_cell(0,0,1,"X");focus_cell(0,0);
+  puts("5 PASS toolbar +row ABOVE 2->3; -row 3->2; each undo/redo is one transaction; text retained");
   assert(de_measure(600,400));row=&de.rows[de.caret.view];float w0=row->cell_box[2]-row->cell_box[0];
   rich_click(DE_WIDER);assert(de_measure(600,400));row=&de.rows[de.caret.view];float w1=row->cell_box[2]-row->cell_box[0];
   assert(w1>w0 && table_view()->column_widths[0]==2520);
   rich_click(DE_NARROWER);assert(de_measure(600,400));row=&de.rows[de.caret.view];float w2=row->cell_box[2]-row->cell_box[0];
   assert(w2<w1 && table_view()->column_widths[0]==2394);
-  printf("5 PASS toolbar column +5%%/-5%% twips=2400->2520->2394 pixels=%.1f->%.1f->%.1f\n",w0,w1,w2);
+  printf("6 PASS toolbar column +5%%/-5%% twips=2400->2520->2394 pixels=%.1f->%.1f->%.1f\n",w0,w1,w2);
   size_t blocks_before=exr_edit_block_count(de.doc);
   char *before_delete=table_snapshot(de.doc);int was_dirty=de.dirty;
   rich_click(DE_REMOVE_TABLE);assert(confirm_count==1 && de.dirty==was_dirty);
@@ -164,19 +182,19 @@ int main(int argc,char **argv) {
   confirm_choice=IDYES;rich_click(DE_REMOVE_TABLE);assert(confirm_count==2);
   assert(!table_view() && exr_edit_block_count(de.doc)==blocks_before-1);assert(!de.caret_in_table);
   assert(de_measure(600,400));for(size_t i=0;i<de.row_count;i++)assert(!de.rows[i].cell_border);
-  puts("6 PASS toolbar delete confirmation No unchanged / Yes deletes; block_count 3->2; border layouts=0; toolbar hidden");
+  puts("7 PASS toolbar delete confirmation No unchanged / Yes deletes; block_count 3->2; border layouts=0; toolbar hidden");
   de_key('Z',1,0);assert(table_view());focus_cell(0,0);rich_click(DE_WIDER);
   char *expected=table_snapshot(de.doc);de_key('S',1,0);assert(!de.dirty);de_close();assert(de_open(path));
   char *actual=table_snapshot(de.doc);assert(!strcmp(expected,actual));free(expected);free(actual);
   assert(table_view()->row_count==2 && table_view()->column_widths[0]==2514);
-  check_cell(0,0,0,"X1");check_cell(0,0,1,"X");check_cell(1,1,0,"keep");
-  puts("extra PASS Ctrl+S -> reopen: rows=2 columns=2 widths=[2514,2400] all cell paragraphs/text equal [X1|X], keep");
+  check_cell(0,0,0,"AB");check_cell(0,0,1,"X");check_cell(1,1,0,"keep");
+  puts("8 PASS Ctrl+S -> reopen: rows=2 columns=2 widths=[2514,2400] all cell paragraphs/text equal [AB|X], keep");
   focus_cell(0,0);size_t first=de.caret.view;
   de_set_caret(de_end(first));de_set_anchor(de_caret_pos());de_key(VK_DELETE,0,0);
-  assert(table_view()->rows[0].cells[0].block_count==1);check_cell(0,0,0,"X1X");
+  assert(table_view()->rows[0].cells[0].block_count==1);check_cell(0,0,0,"ABX");
   de_key('Z',1,0);assert(table_view()->rows[0].cells[0].block_count==2);
   de_set_caret(de_start(first+1));de_set_anchor(de_caret_pos());de_key(VK_BACK,0,0);
-  assert(table_view()->rows[0].cells[0].block_count==1);check_cell(0,0,0,"X1X");de_key('Z',1,0);
+  assert(table_view()->rows[0].cells[0].block_count==1);check_cell(0,0,0,"ABX");de_key('Z',1,0);
   de_set_caret(de_end(first+1));de_set_anchor(de_caret_pos());
   assert(!de_edit(DE_DELETE,NULL,0));check_cell(0,0,1,"X");check_cell(0,1,0,"keep");
   assert(de_measure(600,400));visible=paint_memory(600,400);
@@ -219,7 +237,7 @@ int main(int argc,char **argv) {
   assert(exr_edit_block_at(de.doc,2)->kind==EXR_EDIT_PARAGRAPH && !exr_edit_block_at(de.doc,2)->run_count);
   de_character(L'Q');assert(de_block_at(de.doc,de.caret.view)->runs[0].text[0]=='Q');
   de_key('Z',1,0);assert(exr_edit_block_count(de.doc)==blocks_before+1);
-  de_key('Z',1,0);assert(exr_edit_block_count(de.doc)==blocks_before);check_cell(0,0,0,"X1");
+  de_key('Z',1,0);assert(exr_edit_block_count(de.doc)==blocks_before);check_cell(0,0,0,"AB");
   puts("extra PASS Ctrl+Alt+Enter inserts empty paragraph immediately below table; typing and insertion undo separately");
   de_close();memset(&de,0,sizeof(de));
   exr_edit_block empty={0};exr_edit_cell no_width_cells[2]={{0}};
@@ -234,6 +252,16 @@ int main(int argc,char **argv) {
   assert(fabsf(fallback0-276)<.1f && fabsf(fallback1-276)<.1f);
   assert(fabsf(de.rows[1].cell_box[2]-(600-de.inset))<.1f);
   printf("extra PASS missing engine widths -> available 552px equally split %.1f/%.1fpx\n",fallback0,fallback1);
+  /* Deleting the only block still leaves a typing destination. Both removal
+     and the fallback paragraph belong to one undo entry. */
+  exr_edit_id only_table=exr_edit_block_at(de.doc,0)->id;
+  rich_click(DE_REMOVE_TABLE);assert(!table_view() && !de.caret_in_table);
+  assert(exr_edit_block_count(de.doc)==1 && exr_edit_block_at(de.doc,0)->kind==EXR_EDIT_PARAGRAPH);
+  de_character(L'Q');assert(exr_edit_block_at(de.doc,0)->runs[0].text[0]=='Q');
+  de_key('Z',1,0);assert(!exr_edit_block_at(de.doc,0)->run_count);
+  de_key('Z',1,0);assert(table_view() && exr_edit_block_count(de.doc)==1);
+  assert(exr_edit_block_at(de.doc,0)->id==only_table && de.caret_in_table);
+  puts("extra PASS only-table deletion leaves editable paragraph; typing undo then one deletion undo restores table + caret");
   de_close();shell_d2d_destroy(host_shell);exr_font_free(g.font);exr_font_manager_free(g.font_manager);CoUninitialize();
   puts("M-E2a table UI headless acceptance PASS (no HWND / no SendInput)");return 0;
 }
