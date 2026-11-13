@@ -130,6 +130,8 @@ EXR_API exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,
 
 /* Borrowed read-only views. Block/run views expire when that block changes or
    leaves the model; IDs remain stable. Sections and parts live until doc_free.
+   block_count/at enumerate top-level blocks; find_block also resolves cell blocks.
+   Cell views expire on any change to their owning table.
    Objects are single-threaded; callers serialize access. */
 EXR_API size_t exr_edit_block_count(const exr_edit_doc *doc);
 EXR_API const exr_edit_block *exr_edit_block_at(const exr_edit_doc *doc,size_t index);
@@ -158,7 +160,9 @@ EXR_API exr_status exr_edit_set_run_props(exr_edit_doc *doc,exr_edit_id block_id
 /* Replace one TEXT run with valid UTF-8/XML text (byte length, not characters).
    IDs, direct properties, original XML template and neighbouring opaque runs
    are retained. Buffers may alias borrowed text; NULL/0 clears the run.
-   Opaque runs return EXR_UNSUPPORTED. Participates in transactions/undo/redo. */
+   Editable cell paragraphs are updated without replacing sibling paragraphs.
+   Protected cells and opaque runs return EXR_UNSUPPORTED.
+   Participates in transactions/undo/redo. */
 EXR_API exr_status exr_edit_set_run_text(exr_edit_doc *doc,exr_edit_id block_id,
   size_t run_index,const char *text,size_t text_size);
 EXR_API exr_status exr_edit_delete_block(exr_edit_doc *doc,exr_edit_id block_id);
@@ -173,6 +177,13 @@ EXR_API exr_status exr_edit_table_delete_row(exr_edit_doc *doc,exr_edit_id table
 EXR_API exr_status exr_edit_table_set_cell_text(exr_edit_doc *doc,exr_edit_id table_id,
   size_t row,size_t col,const exr_edit_run *runs,size_t count);
 EXR_API exr_status exr_edit_table_set_width(exr_edit_doc *doc,exr_edit_id table_id,int32_t twips);
+/* All modelled cell blocks in document order, including protected/opaque blocks.
+   Invalid cells return 0/NULL; at also returns NULL for an out-of-range index.
+   Borrowed views; querying neither edits nor latches transaction failures. */
+EXR_API size_t exr_edit_table_cell_block_count(
+  const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column);
+EXR_API const exr_edit_block *exr_edit_table_cell_block_at(
+  const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column,size_t index);
 /* Editable paragraphs in document order; NULL for invalid indices/protected cells.
    Empty cells return their existing placeholder paragraph, if any. Borrowed view. */
 EXR_API const exr_edit_block *exr_edit_table_cell_paragraph(
