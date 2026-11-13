@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MIT
+# One command (configure + build + test): pwsh -File examples/windows/run_editor_e2e.ps1
 # cmake -S . -B build/l12 -DCMAKE_PROJECT_EXReader_INCLUDE=<absolute path to this file>
 # cmake --build build/l12 --target check_shell_editor_e2e
 # ctest --test-dir build/l12 -R ^native-shell-editor-e2e$ -V
@@ -7,6 +8,9 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
   function(exr_add_editor_e2e)
     if(NOT EXR_BUILD_TESTS)
       return()
+    endif()
+    if(NOT EXR_ENABLE_PDF OR NOT EXR_ENABLE_LIBRARY)
+      message(FATAL_ERROR "The real Windows host requires EXR_ENABLE_PDF=ON and EXR_ENABLE_LIBRARY=ON")
     endif()
     add_executable(check_shell_editor_e2e
       examples/windows/check_shell_editor_e2e.c
