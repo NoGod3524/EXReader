@@ -154,6 +154,7 @@ static char *parse_string(parser *p) {
           p->at += 6;
           cp = 0x10000 + ((cp - 0xd800) << 10) + (low - 0xdc00);
         } else if (cp >= 0xdc00 && cp <= 0xdfff) { fail(p, "Unpaired low surrogate"); free(out); return NULL; }
+        if (!cp) { fail(p, "NUL is not allowed in manifest strings"); free(out); return NULL; }
         if (!append_utf8(&out, &used, &capacity, cp)) goto memory;
       } else { fail(p, "Invalid escape"); free(out); return NULL; }
       continue;

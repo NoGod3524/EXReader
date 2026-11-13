@@ -85,6 +85,15 @@ def main():
     result = json.loads(report.read_text())
     if result.get('passed') is not True or result.get('check_count', 0) < 20:
         raise RuntimeError('Reference host self-check failed; retained report: '+str(report))
+    required = {'previous_chapter_after_reopen', 'previous_chapter_after_font_increase',
+                'previous_chapter_after_font_decrease', 'navigation_skips_nonlinear_forward',
+                'navigation_skips_nonlinear_backward', 'navigation_stops_before_auxiliary',
+                'broken_chapter_reports_error', 'failed_turn_restores_frame_and_handles',
+                'failed_turn_preserves_saved_position', 'failed_turn_preserves_annotation_location',
+                'failed_turn_preserves_readable_page'}
+    missing = required - set(result.get('checks', []))
+    if missing:
+        raise RuntimeError('Reference host omitted navigation regressions: '+', '.join(sorted(missing)))
     print(args.device+': '+str(result['check_count'])+' native host checks passed')
 
 

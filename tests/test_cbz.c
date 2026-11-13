@@ -16,6 +16,33 @@ static void *finish(mz_zip_archive *zip,size_t *size) { void *out=NULL;CHECK(mz_
 static void begin(mz_zip_archive *zip) { memset(zip,0,sizeof(*zip));CHECK(mz_zip_writer_init_heap(zip,0,0)); }
 static void put(mz_zip_archive *zip,const char *name,const void *data,size_t size) { CHECK(mz_zip_writer_add_mem(zip,name,data,size,MZ_NO_COMPRESSION)); }
 static int cancelled(void *context) { (void)context;return 1; }
+typedef struct { const unsigned char *data;size_t size,reads;unsigned mode; } short_source;
+static size_t short_read(void *context,uint64_t offset,void *buffer,size_t size) {
+  short_source *source=context;size_t n=size<7 ? size : 7;
+  source->reads++;
+  if(source->mode==1) return 0;
+  if(source->mode==2) return size+1;
+  if(offset>source->size || n>source->size-offset) return 0;
+  memcpy(buffer,source->data+(size_t)offset,n);return n;
+}
+static int short_cancel(void *context) { short_source *source=context;return source->reads>=2; }
+static void source_reads(const void *data,size_t size) {
+  short_source memory={data,size,0,0};exr_source source={0};exr_library *library=NULL;int64_t id;unsigned mode;
+  source.size=size;source.read_at=short_read;source.context=&memory;
+  OK(exr_library_open(":memory:",&library,&error));
+  OK(exr_library_import_source(library,EXR_CBZ,&source,"Short reads",&id,&error));CHECK(id>0 && memory.reads>2);
+  for(mode=1;mode<=3;mode++) {
+    memory.mode=mode;memory.reads=0;id=99;
+    source.control.cancelled=mode==3 ? short_cancel : NULL;source.control.context=&memory;
+    CHECK(exr_library_import_source(library,EXR_CBZ,&source,"Failed reads",&id,&error)==(mode==3 ? EXR_CANCELLED : EXR_IO));
+    CHECK(!id);
+  }
+  exr_library_close(library);
+}
+static int after_page_cancel(void *context) { return *(unsigned *)context>=2; }
+static void page_progress(void *context,exr_stage stage,uint64_t completed,uint64_t total) {
+  (void)stage;(void)completed;(void)total;(*(unsigned *)context)++;
+}
 static void pixels(exr_fixed_document *d,size_t page,const exr_bitmap *original) {
   exr_bitmap image={0};unsigned y,x,k;OK(exr_fixed_render(d,page,1,NULL,&image,&error));
   CHECK(image.width==original->width && image.height==original->height && image.channels==4);
@@ -45,6 +72,7 @@ int main(int argc,char **argv) {
   snprintf(path,sizeof(path),"%s/pdf-images/baseline.jpg",argv[1]);jpeg=read_file(path,&jpeg_size);OK(exr_image_decode(jpeg,jpeg_size,&jpg,&error));
   begin(&zip);put(&zip,"Chapter/10.png",png,png_size);put(&zip,"Chapter/2.png",png,png_size);put(&zip,"Chapter/1.png",png,png_size);put(&zip,"Chapter/01.PNG",png,png_size);
   put(&zip,"cover.JPEG",jpeg,jpeg_size);put(&zip,"__MACOSX/._page.png","junk",4);put(&zip,"notes.txt","text",4);put(&zip,"ComicInfo.xml",info,strlen(info));archive=finish(&zip,&size);
+  source_reads(archive,size);
   OK(exr_fixed_open_memory(EXR_CBZ,archive,size,NULL,&d,&error));CHECK(!strcmp(exr_fixed_title(d),"Comic & \xe4\xb8\xad\xe6\x96\x87"));
   pages=exr_fixed_pages(d,&count);CHECK(count==5 && !strcmp(pages[0].id,"Chapter/01.PNG") && !strcmp(pages[1].id,"Chapter/1.png") && !strcmp(pages[2].id,"Chapter/2.png") && !strcmp(pages[3].id,"Chapter/10.png"));
   CHECK(pages[0].geometry.y_down==1 && pages[0].geometry.bounds[2]==64 && pages[4].geometry.bounds[2]==jpg.width);
@@ -74,6 +102,17 @@ int main(int argc,char **argv) {
   OK(exr_library_books(restored,NULL,&books,&count,&error));CHECK(count==1 && books[0].position==3 && books[0].favorite);exr_books_free(books,count);exr_library_close(restored);
   invalid("empty.txt","",0,EXR_FORMAT);invalid("page.webp","bad",3,EXR_FORMAT);invalid("folder\\page.png",png,png_size,EXR_FORMAT);invalid("page.png","bad",3,EXR_FORMAT);
   invalid("page\xff.png",png,png_size,EXR_ENCODING);
+  /* A probe can report its page count before rejecting the dimensions. */
+  { void *huge;size_t n;
+    snprintf(path,sizeof(path),"%s/images/png/huge.png",argv[1]);huge=read_file(path,&n);
+    invalid("page.png",huge,n,EXR_LIMIT);free(huge);
+    OK(exr_fixed_open_memory(EXR_CBZ,archive,size,NULL,&d,&error));pixels(d,0,&original);exr_fixed_free(d);d=NULL;
+  }
+  /* Cancel after a page's strings are initialized; partial directories clean up. */
+  { unsigned progress=0;exr_fixed_open_options partial={0};
+    partial.struct_size=sizeof(partial);partial.control=(exr_control){after_page_cancel,page_progress,&progress};
+    CHECK(exr_fixed_open_memory(EXR_CBZ,archive,size,&partial,&d,&error)==EXR_CANCELLED && !d && progress==2);
+  }
   { unsigned char *extended=calloc(1,jpeg_size+8194);void *large;size_t n;CHECK(extended && jpeg_size>2);
     memcpy(extended,"\xff\xd8\xff\xe1\x20\x00",6);memcpy(extended+8196,(unsigned char *)jpeg+2,jpeg_size-2);
     begin(&zip);put(&zip,"page.jpg",extended,jpeg_size+8194);large=finish(&zip,&n);free(extended);

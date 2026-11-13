@@ -640,8 +640,18 @@ static int build_jobs(const cv_item_spec *specs, size_t count, const char *root,
     }
     job->preflight_ok = 1;
   }
-  /* Protect the batch manifest before any conversion. */
+  /* Protect every batch input, including inputs belonging to rejected jobs. */
   for (i = 0; i < count; i++) {
+    for (j = 0; jobs[i].preflight_ok && j < count; j++) {
+      char *local_error = NULL;
+      int same = 0;
+      if (!jobs[j].result.input) continue;
+      if (!cv_same_file(jobs[i].result.output, jobs[j].result.input, &same, &local_error))
+        reject_job(&jobs[i], EXR_IO, local_error ? local_error : "Cannot compare batch input and output");
+      else if (same)
+        reject_job(&jobs[i], EXR_ARGUMENT, "Output denotes an input file in the batch");
+      free(local_error);
+    }
     if (jobs[i].preflight_ok && manifest) {
       char *local_error = NULL;
       int same = 0;
@@ -1244,7 +1254,7 @@ static int convert_main(int argc, char **argv) {
   cv_manifest manifest;
   cv_job *jobs = NULL;
   size_t job_count = 0, i;
-  int single_used = 0, overwrite = 0, profile_set = 0, status = 0;
+  int single_used = 0, overwrite = 0, cli_overwrite = 0, profile_set = 0, status = 0;
   int manifest_profile_set = 0, defaulted = 1, all_ok = 1, report_ok = 1;
   cv_profile profile = CV_PROFILE_TEXT;
   const char *manifest_arg = NULL, *root_arg = NULL, *output_root_arg = NULL, *report_arg = NULL;
@@ -1259,7 +1269,7 @@ static int convert_main(int argc, char **argv) {
   install_cancel_handlers();
   {
     int parsed = parse_cli(argc, argv, &single, &single_used, &manifest_arg, &root_arg,
-                           &output_root_arg, &report_arg, &overwrite, &profile_set, &profile,
+                           &output_root_arg, &report_arg, &cli_overwrite, &profile_set, &profile,
                            &parse_error);
     if (parsed == 2) {
       cv_text_init(&json);
@@ -1275,6 +1285,7 @@ static int convert_main(int argc, char **argv) {
       return status;
     }
   }
+  overwrite = cli_overwrite;
   start_ms = cv_now_ms();
   cv_timestamp_now(started);
   cv_text_init(&json);
@@ -1339,7 +1350,7 @@ static int convert_main(int argc, char **argv) {
   if (job_count) {
     size_t built = 0;
     if (!build_jobs(specs, job_count, root, output_root, profile_set, profile,
-                    overwrite, manifest_arg, &jobs, &built, &parse_error)) {
+                    cli_overwrite, manifest_arg, &jobs, &built, &parse_error)) {
       status = invocation_error(parse_error ? parse_error : "Cannot prepare jobs");
       free(parse_error); parse_error = NULL;
       goto done;

@@ -1,0 +1,1461 @@
+STAT 1000Q - Exam 2 Review
+Original English transcripts downloaded from the course video player. Text is uncorrected, contains recognition errors, and does not include timestamps or visual content.
+
+=== PART 1: PROBABILITY (01:20:24) ===
+
+Exempt review.
+Exempt review part on probability. For our exempt
+review lectures, I will be using exempt
+practice problems. Today we go the
+probability part of exempt problem one in
+practice exam problems. For each problem you are giving the description
+of the problem, description of the
+type of the problem. It's not going to
+be the case on the exam when you study. When you practice,
+it's your job to determine what type
+of the problem you work on and proceed
+with the solution. Please do exactly that. The problem number one is a typical theoretical theoretical
+probability problem, where you are given the probability of events, some information
+about these events and you have a number of questions to answer which you have to use the
+formulas and definitions. This is one of
+such problems. You have to use all the information to
+answer the questions. You need to use all the
+information that is given that is provided in this particular
+problem. We are given that the probability
+of event A is 0.4 the probability
+of B is 0.3 and the probability
+of the union is 0.58 I'm going
+to underline it. If we are given
+probability of union, it means we have to use it, we are
+going to use it. The first question is, are events A and
+B independent? Let me rewrite all
+the information. We are given
+probability of event A 0.4 we are given probability of B
+0.3 we are given of the union which is 0.58
+The first question, events A and B
+independent. First, we start with the definition of two events being
+independent. By the definition, we know that two
+events, A and B, are independent if and only if the probability of the intersection equals product of the
+probabilities. However, we don't know
+the probability of intersection to check
+the independence, but we are given the
+probability of union. Using the probability
+of union, we can find the
+probability of intersection by
+using the addition. The addition rule is
+the rule that connects probability of union and probability of
+intersection. The addition rule, we know that
+probability of union and is
+probability of A plus probability of B minus probability
+of the intersection. We plug it in in
+the addition rule, probability of union
+0.58 probability of A 0.4 plus probability of B 0.3 minus we don't know probability
+of intersection. That's a variable that's unknown. Now we solve it. Four, probability
+of intersection, we have 0.58 equals 0.7 minus probability
+intersection. Using a little
+bit of algebra, we find it first, we subtract 0.7 from both sides of
+the equation. When we do it, we
+have negative 0.12 equals negative probability
+of intersection. Next set step, we multiply both sides of the
+equation by minus one. When we do it, we
+have probability of intersection 0.12 we found probability
+of intersection. Now we are ready to
+check independence. The probability
+of intersection must be equal product
+of probability, probability eight times probability, we check it. Probability of
+intersection calculated 0.12 equals probability
+of event A, 0.4 times probability
+of event 0.3 We have 0.12 equals 0.12 That's a
+true statement. The formula works. Our conclusion. And B. Independence. We check independence
+by using the definition of
+independence and our conclusion that
+and B are independent. This is how we answer
+such questions, inform us definitions and all the information
+that we are given in the
+problem provided with this is the answer to
+the first question. The second question in this problem are events A and B mutually
+exclusive? The second question, events A and B
+mutually exclusive? To answer this question, we use the definition of two events being
+mutually exclusive. By the definition of two events being
+mutually exclusive, we know that events
+A and B are mutually exclusive if the intersection
+is empty set. When they don't have
+any intersection, the intersection is
+empty set respectively, the probability
+the probability of the intersection
+is zero. If they don't have
+any intersection, it means the probability of the intersection
+is zero, then do we have it? No. We calculated probability of
+intersection and B, that's 0.12
+That's not zero. Using this
+information, since the probability of
+intersection A and B, this 0.12 we
+have calculated probability of
+the intersection in the first question, 0.12 and that's not
+zero respectively. Our conclusion, the events A and B are not
+mutually exclusive. This is the answer
+to this question. Please find more
+problems in our lecture videos on
+corresponding topic, Chapter 4.5
+corresponding quiz solution on this material. This is one type
+of the problem called theoretical
+probability problem, where you use formulas, definitions, and all the given information
+in the text to answer the quality
+theoretical questions. Problem number two,
+contingency table. We're given that
+an investment for classified its
+clients according to their gender and
+the composition of the investment
+portfolio. Primarily bonds,
+primarily stocks or Embank bonds and stocks. The number of
+clients falling into the various categories are shown in the
+following table. Portfolio
+composition table, where we have
+gender, male, female clients separated by gender,
+male, female, by the composition of the investment
+portfolio, stocks and balance mix
+of bonds and stocks. Using this
+contingency table, we answer the number
+probability questions. The first question, find the following
+probabilities. First, find the
+probability that the client
+selected at random from this form either is a mail or has a balance
+portfolio, or both. Our random experiment, we randomly select a
+client from this form. So first, when you answer probability
+questions, the first question
+you answer, is this an experiment with equally likely
+outcomes or not? Do we have equally
+likely chances for any client from this form to be randomly selected? We don't talk about
+male, female, about the composition of the investment
+portfolio. Any client, yes, we have equally
+likely chances that any client from this form be
+randomly selected. It means this is
+an experiment with equally
+likely outcomes. It means to calculate
+the probabilities, we will be using classic
+probability formula. Okay, you made this clear. Now we state the
+first question using the probability
+notation. In the first question, we asked to find
+the probability that a randomly
+selected client, either is keyword
+for union, has a balanced
+portfolio event. This event decoration
+is a union. We are looking for
+probability that a randomly selected
+client, either is male, has a balanced portfolio
+or that's Next, we state the
+probability question using the probability
+notation. The first question is, we are looking
+for probability that randomly
+selected client, either union has
+balanced portfolia. We use classic
+probability formula. Because this is
+an experiment with rely outcomes, it will be a number
+of outcomes. In event balanced
+portfolia, the denominator number
+comes in sample space. Number of vote comes
+in sample space. That's a total number of clients in this film. When we look at the table, when we summarize
+all these numbers, it gives us 1,000 The number of clients
+in this film is 1,000 That number of T comes in sample
+space names, favorable, event mail or balance portfolio,
+or both. Using contingency,
+we find this number. These are number of outcomes
+corresponding Male, male or balance
+portfolio or both? Male balance portfolio, that's, that's
+balance portfolio. And both denominator will be some of these
+four numbers. We plug it in, it
+will be 182025150. Let me check
+one more time. 182025150 sample of all
+these phone numbers. Then we use a calculator and the answer
+comes to 780, more than 1,000 This is the answer to
+the first question. Then the second question, find the probability
+that the client selected at random
+is a female, and keyword intersection has a bond portfolio, female intersections
+bonds portfolio. Next we state using
+probability notation, we are looking
+for probability that randomly selected
+client is a female. Intersection has
+balance portfolio. Now portfolio female
+and bonds portfolio. Let me write it here.
+Probability first, Cole balance portfolio. The second we
+are looking for probability female
+intersecting portfolio. To find the probability
+of this event, we use the classic
+probability formula. It will be fina number
+of comes in event, female end
+intersection bond portfolio denominator
+number of outcomes in sample space. Number of outcomes
+in sample space is 1,000 That's the
+total number of clients in this form. And nominator we find
+from contingency table, we find the number of
+outcomes favorable female and intersection
+bonds portfolio. We go to contingency table and find the number of outcomes favorable,
+Female and Bono. Female and bond
+portfolio at the same time intersection of these two
+events is 120. The number of females who at the same time have bond portfolio 120,
+denominator 120. And this is the answer to the second question, the qu number three Se find the
+probability that the employee
+selected is key word for conditional
+probability given that the employee has an
+unbalanced portfolio, balanced portfolio, unbalanced complement
+for balanced. Now we state our question using
+probability notation. This is conditional
+probability question. We are looking
+for probability that randomly
+selected employee is given that this employee unbalanced portfolia
+unbalanced. It means balance
+complement. Balance complement. This is how we state Pic using probability it pi. We are looking
+for probability that randomly client given has balance
+complement portfolia, balance complement
+portfolia. As soon as you recognize conditional
+probability equation, we use the conditional
+probability formula. Let me remind you the conditional
+probability formula. The probability of event given that event B has
+already occurred as a fraction eliminator
+probability of the intersection
+deliminator probability given probability B. This is the conditional
+probability formula that we now we apply the conditional
+probability formula for our problem,
+our notation. We write conditional
+probability formula using
+our notation. The probability that randomly selected
+client is a given that he has
+unbalanced portfolia of fraction denominator
+probability of intersection and has balance
+complement portfolio. Denominator probability of given balance
+complement the probability that randomly
+selected employee is a male and has balance complement
+portfolio, it will be number
+comes in mail and balance
+complement divided by number of comes
+in sample space, probability balance
+complement, number of comes
+in balance, complement
+divided by number of old comes in
+sample space. Probability of mail and
+balance complement. We go to our
+contingency table, intersection mail
+and balance. Complement and
+balance Complement. Balance, complement. It means everything
+but balance. We look for balance,
+complement. That's everything
+but balance. The intersection
+mail balance, complement Everything
+by balance will be the sum of
+these two numbers. This is the number of clients favorable mail and at the same time
+have balance, complement, portfolio, everything but balance. The sum of these
+two numbers, 180.200 the probability will be 180 plus 200/1000 Divided
+by probability, balance, complement, probability,
+balance, complement. Balance, compliment,
+balance, compliment that
+everything but balance, balance, compliment, balance, complement that, everything but
+the balance. This is balance
+compliment, opposite. In the event balanced, we have 400
+favorable outcomes. The rest 600 unbalanced. The probability
+unbalanced will be 601,000 will 601,000 So we have 380/1000 This is the
+answer to the question. This is the
+probability that a randomly selected
+client is a male given if we know he has unbalanced portfolio
+balanced component. Then the next question, question, question z. Find the probability
+that the employee selected is female given. That's key word for
+conditional probability that the employee has
+balanced portfolio. Using the probability
+notation, we are looking
+for probability that randomly
+selected employee is a female given she
+has balance portfolio. Balance portfolio. We stated our using
+probability notation. We are looking
+for probability given balanced portfolio. Again, what do
+we do? We apply the conditional
+probability formula. That's the fraction
+probability of the intersection, female intersection
+has balanced portfolio probability given probability
+balance portfolio, we find the probabilities
+in the table, probability of
+female, female, and at the same time
+has balance portfolio. We go to
+contingency table, we find this probability
+intersection female, female
+balance portfolio. The number of
+outcomes favorable, event female, and at the same time has a balance
+portfolio 150, the probability will
+be 150/100151000 that's probability
+of female. And has balance portfolio divided probability
+balance portfolio, probability
+balance portfolio. When you go to contingency table
+balance portfolio, the number of outcomes favorable balance
+portfolio is some of these
+two numbers. These are the outcomes favorable balanced
+portfolio, male balance portfolio, and female balance
+portfolio. 25150 will be right down. It will be 250
+plus 151000. We have 15050401 more time, let us check. Yes, 50 plus 150. That number four comes favorable balanced
+portfolio 400, order 1,000 This is the
+answer to question, the probability
+that the randomly selected client
+is a female, given that she has a
+balanced portfolio. The next question. Two events, A and B are
+defined as follows. Event the client
+selected is a male. Event B, the client selected has a
+balanced portfolio. The question are,
+these events are independent explain question state event that a randomly selected
+client is a male. Event B, that's a
+randomly selected client has a balanced portfolio. The question is, are events A and B
+independent? To answer this question, we need to check
+independence. So again, by using the definition of two events being independence, we know and independent if and only if the
+probability of the intersection equals
+product probability. That what we have to check probability in our
+case we need to check that probability of
+the intersection intersecting balance
+portfolia must be equal product of probability times probability
+balance portfolia. I rewrite the formula
+using our notation. That's what we
+have to check. The probability of male, let us use one more time, the probability
+that randomly selected client is a male using our contingency
+table mal, these are numbers
+favorable mal, the probability of
+mail will be some of these three numbers
+divided by sample size, by the number of outcomes in the
+sample space. Agim space, we
+don't talk about sample size
+with the sample size sample space. The probability randomly selected client is a male. That number of outcomes
+favorable event mail. And that the sum of the three number divided by number of outcomes
+in a sample space, which is 1,000 the total
+number of clients. So we write down it
+will be a number of outcomes in mail divided by number of outcomes
+in sample space. Sample space, number of outcomes
+favorable, mail, 180 plus 200 plus 250, we divide by 1,000 The
+probability will be 631,000 The
+probability that randomly selected client has a balanced portfolio, that a fraction number
+of balanced portfolio. This is number
+of favorable balanced portfolio divided by number of outcomes in the
+sample space, which is 1,000 It will be number in balance divided by number of outcomes
+in sample space. So it will be 250-15-2501 50/1000 So we have 401,000 That's
+the probability that randomly
+selected employ has a balanced portfolio. And finally, the probability the probability
+of intersection. And has balance
+portfolio that will be the number of comes in male and balance
+portfolio divided by number of old comes
+in sample space, we have a fraction number
+comes in event and balanced portfolio
+intersection and at the same time
+balance portfolio at the same time
+balance portfolio. 250, a number of comes
+in a sample space 1,000 we have 251000, that's the probability
+of intersection. So now we are ready to
+check independence. Probability of
+intersection 0.25 must be equals
+probability of male, which is 0.63 times probability of
+balance which is 0.4 When you multiply, the answer is no the same. The statement is not
+a correct statement, is not true statement. The left side and
+the right side are not equals
+to each other. So our conclusion
+that A and B are not independent. Lily, 0.63 times
+0.4 actually it gives us 0.2 0.5
+When you multiply, we have 0.252 To be exact, that's what we
+have. Independent. That's answer to
+this question. You can find more contingency table
+problems in our lecture videos in
+your correspondent. Please check on
+this material. Use practice
+exam a problem because this is an
+important problem when you use
+contingency table. And what did you find? The marginal and conditional
+probability questions. Answers to the questions? That's the second
+type of problem. Problem number three. Again, it says probability
+three on the exam. It's your job
+to recognize, to determine that this
+is probability three problem when you
+work, when you study, when you pre read the text and make this
+decision on your own, that to solve this problem you will be using the probability
+tree technique. Let's do the same here. The problem says at the beginning
+of each year, investment newsletter
+predicts whether or not the stock market will rise over
+the coming year. Historical evidence
+reveals that there is a 75 percents
+the stock market will rise in
+any given year. The news letter has
+predicted a rise for 80% over the years when the market
+actually rose. Has predicted
+arise for 40% over the years when
+the market fell. The first question, fine. The probability that the newsletters prediction for next year
+will be correct. First we have to
+construct, okay, why this is probability
+technique problem. Before we start working on
+probability problem, we need to answer
+this question. Is this an experiment with equally likely
+outcomes or not? Do we have equally likely
+chances for market to um, rise or fall? Equally likely
+chances to rise or fall at any given year? No, because according
+to the text, it says historical
+evidence reveals that there is
+a 75% chance. This is how we
+know that this is probability
+tree problem. According to the
+text, it says, historical evidence
+reveals that there is a 75% chance that the stock market
+will rise in any given year,
+respectively. 25% chances that market will fall in any
+given chances. Not equally likely chances to fall or to rise. That exactly means we construct probability
+three for this problem. Because this is an
+experiment with equal outcomes, not equally likely
+chances to rise or fall for stock market. Okay, it means we start constructing
+probability three. We start with the fuel
+state of branches. And the fuel state
+of branches stands for any given year. A stock market
+can rise or fall. This is the first
+set of branches. The events that are forming their
+set of branches, main events, and have
+marginal probabilities. First, in any
+year given year, market can rise, can fall. We assign the
+probabilities for these events
+from the text. According to the
+text one again, it says there is 75% chance that the market will rise in
+any given year. It means, respectively, the probability
+that stock market will rise in any
+given year is 0.75 Using this
+information, the probability is 0.75
+to rise respectively. The probability
+to fall is one -0.75 is 0.25 This is the probability
+to fall again, why these events
+are main events? Even from the text, you can see that these events have
+marginal probability. It says that
+historical evidence reveals that there is a 75% and that stock market will rise in
+any given year. This 75% chances that
+market will rise. They don't rely
+on anything. They don't depend. This number doesn't
+depend on anything. This is just the
+fact that regular probability 0.75
+regular chances. However, if you read carefully the text Father, it says the newsletter
+has predicted rise for 80% of the years when the
+market actually rose. 80% depends on the years when the market
+actually rose. Prediction was to rise 80% on the years when the market
+actually rose. That's conditional, 80% prediction
+depends on the years when market actually rose 40% over the years
+when the market fell. 40% prediction to rise over the years when fail. This 40% depends belongs to the years when
+market fell. That's conditional
+numbers. Even from the
+text you can see, we continue with
+our probability. We continue with
+constructing the second set of ranges. Second set of
+branches stands for if stock market rose
+at any given year. The prediction
+for this year, it was predicted to rise or predicted to fall. The prediction
+was to rise, prediction was to fall. What is the corresponding conditional probabilities for the events that are forming the second
+set of ranges? We go to the X
+and read again. The newsletter has
+predicted a rise for 80% of the years when
+the market actually, if the market
+actually rose, it was predicted to rise 80% of the times
+the probability that it was predicted to rise when it actually rose 0.8 Using this
+information, the probability
+predicted to rise 0.8 If it's actually rose, the prediction was to fall if the market respectively 0.21 -0.8 0.2 This is conditional probability
+that the prediction was to fall when the
+market actually rose. We continue if the market actually fill the predict was it was predicted to rise this year or
+predicted to fall again. We go to the text and assign the conditional
+probability for the second
+set of ranges. It says has rise for 40% of the years
+when the market fell. When the market fell, the prediction
+was to rise. Percent of years,
+the probability is 0.4 If the market fell, the prediction was to
+rise during this year, 0.4 according to the
+text respectively. If the market fell, the prediction
+was to fill one. -0.4 is 0.6 that
+the probability of predicted to fell
+when it's actually fall. Now we have probability corresponding to our
+random experiment. We have four
+possible outcomes. We have, our sample space has four possible
+outcomes. The first
+possible outcome, the rose any given year, and was predicted to rise. Market rose and was
+predicted to fall. Market fell and was
+predicted to rise. Market fell and
+was predicted to fell for outcomes. And now we are
+ready to answer any probability questions. The first
+question we have, find the probability
+that newsletters prediction for next year will be correct.
+What does it mean? Correct? It
+means if it was predicted to
+rise, it's rose. Or if it was predict
+to fail, fail. This is correct
+prediction. Let us state our
+first question using probability
+notation. The first question
+actually, before I proceed with the answering
+the questions, let me go way. Since I would like to
+do it as detailed, as much detailed
+as possible. Let me write
+down first for each outcome, the corresponding
+probabilities. Right away, the first
+possible outcome in our sample spaces rose and was predicted to rise the probability
+of this outcome by multiplication rule, product probabilities
+along the past. Let me write it
+down right away, 0.75 times 0.8
+The probability of next outcome rose and was predicted to fell. So 0.75 times 0.2 By the
+multiplication rule, the next outcome fell
+was predicted to rise. Fell was predicted to rise the probability
+of this outcome, 0.25 times 0.4
+And finally, the last outcome fell and was predicted to
+fall the probability of this outcome 0.25 times 0.6 Now we have
+everything all assigned probabilities
+for all outcomes. Okay, so the
+first question, what is the probability of correct prediction of correct prediction
+in the probability that the prediction for the next year
+will be correct. So that's a regular
+probability question. The probability of correct probability of
+correct prediction. What does it
+mean? Correct? Correct. It means rose and was
+predicted to rise. So it will be
+probability of outcome market
+actually rose and was predicted
+to rise plus, so let me mark down the outcome
+market actually rose and was predicted to rise or plus probability would come that market
+actually fall, actually fell and was
+predicted to fall. This is correct
+prediction, right? Rose and was
+predicted to rise or fell and was
+predicted to fall. So plus probability fall and was predicted to fall. These are correct
+prediction. Now the probability
+of event correct prediction is
+sum of probabilities, sum of probabilities of corresponding outcomes. We marked with the
+start two outcomes, favorable correct
+prediction. The probability of event correct prediction will be sum of
+probabilities, corresponding
+outcomes will be 0.75 times 0.8 And again, this is the probability
+that market actually rose and what was
+predicted to rise, plus probability
+of outcome when market actually fell. Was predicted to form the probability of
+this outcome is 0.25 times 0.6 When we
+use the calculator, the answer comes to 0.75 This is the answer to
+the first question. The second question find the probability
+that the market actually will rise if keyword conditional
+probability, if the newsletter has
+predicted to rise. Next to that conditional
+probability question, we are given information that news letter has
+predicted to rise. Which is the
+probability that market actually will rise if it, if it has predicted arise. Now using the probability
+nation question, we state our question. We're looking for probability that
+the market, actually the
+newsletter has predicted a rise given
+predicted arise. That's the 0
+probability question. Let me rewrite. We are looking
+for probability that market
+will give rise. As soon as you recognize conditional
+probability question, we use the conditional
+probability formula. Probability of event A given event B has
+already occurred. That's a fraction
+nominator probability of
+the intersection, the denominator
+probability given. That's conditional
+probability formula. We apply this formula for our equation
+for our nation. It will be a
+fraction probability of intersection
+probability predicted rise denominator given denominator
+probability predicted is
+predicted juries. Now we use our probability three to find these
+probabilities. We always start
+with denominator. Denominator is always
+greater denominator as part of the
+denominator. We start with
+denominator probability, predicted probability. And mark down all
+the outcomes. All the pass that gives
+us predicted rise. The first rose
+predicted is yes, This is favorable
+outcome to event predicted ice
+market with the star. Next outcome rose
+predicted, not interested. Next outcome, fall
+predicted rise. That gives us
+predicted ice. This is favorable outcome to event predicted ice. Finally, the last outcome predicted interested
+the event predicted to rise has two
+outcomes in our sample space that give the favorable
+predicted to rise. The probability of
+event predicted to rise is sum of probabilities of corresponding outcomes. The probability
+predicted to rise will be 0.75 times 0.8 plus 0.25 times 0.4 that's probability sample
+probabilities of favorable to the
+event outcomes. Can we use probability to, to find this
+probability now? Nominator, probability
+of intersection rows and predicted is and
+predicted juries. Nominator always one of the outcomes from
+a denominator, from a sample space,
+from the denominator, the probability of event rows and
+predicted ice. That's the first pass. That's the first pass. That's one of
+the two stars. Nominator always part of the denominator rows and predicted the
+probability of intersection rows and
+predicted Rice will be 0.75 times 0.8 Now when
+you use a calculator, the answer comes to, let me make it nicer. The answer comes
+to 0.6 or 0.7 467. So this is the answer
+to the second question. This is the conditional
+probability that the market will rise
+has predicted to rise. Next problem,
+problem number four. Again it's state
+probability tree but again it's your job to
+make the decision, to recognize that you will be using probability
+tree technique here. Okay. So this is a supermarket
+has in place who package and weight produce employee records
+the correct weight, 98% of the time employ B and C record the
+correct weight, 97.95% of the time
+respectively. Emp B and C handle 4,040.20% of the
+packaging respectively. A customer complains about the incorrect
+weight recorded on a package he
+has purchased. What is the
+probability that the package was
+weighted by employees? Okay, this is our
+random experiment. A customer purchase a package from
+this supermarket. The first question
+that you answer, is this an experiment
+with equally likely outcomes or not? In this supermarket, we
+have three employers, ABC, and they handle
+the packaging. 4,040.20% respectively. Employs ABC handle
+4,040.20% respectively. Each employee has weight on the packages he handle, correct weight and
+correct weight. A customer purchase a package from
+the supermarket. Do we have equally
+likely chances for any package purchased from this
+store being packaged? Done, weighted by
+employee A, B, and C. Do we have equally
+likely chances that the package was
+handled by employee B? C? No, because according to the tax employees
+ABC handle for 20 present with the
+package and respectively equally likely chances it means we construct probability
+tree technique. We use probability
+tree technique, this is an
+experiment is not equally likely chances, we start constructing
+probability, the probability
+customer purchase a package and this package has correct or
+incorrect weight set. The fuel set of branches contains main events. What is the main events? Randomly selected
+package was done by employing OBC, has correct
+incorrect weight on the package is secondary
+by common sense. By common sense.
+First, the package needs to be done by BOC, and then the package
+can have either correct or incorrect weight on
+it by common sense. Second, from the
+numbers in the problem, we have ABC handle 40, 40, 20% of the
+package respectively. These numbers
+don't depend on any the marginal numbers. However, the percentage of correct incorrect
+weight for ABC depends on there employee records the correct
+weight 98% of the time, 98% of the correct weight depends that the package
+was done by employ. A says conditional
+Employees B and C A record the correct weight 97% of the time of
+correct weight. It depends that
+the package was done by employee 95% of the time for correct weight
+on the package. This number depends that the package was
+done by employee. So these are
+conditional numbers. They depend that
+the package was done either by
+employee or OC. You read the
+tax and you pay your attention on
+text information, on the word in
+common sense. And at the same
+time numbers are there as well
+to help you. To see what events
+are main events, what events are the
+secondary ones. Even from the
+numbers, let's start. The first set of
+branches stands, that a randomly
+selected package can be done by
+employee A or B, C according to the text. According to the text it says that employees B, C handle 40% 40% and 20% of the packaging
+respectively. Using this
+information, Employ A handles 40% of
+the packaging. The probability that the randomly selected
+package was weighted by employee is 0.4 According to the text, employee handles 40% of the packaging packaging of the probability that randomly selected
+package was weighted by employee B 0.4
+respectively. The probability that randomly selected package was weighted by employ is 0.2 Because Employ handles 20% of the packaging, the probability
+randomly package was done by employees 0.2 We are done with this
+set of branches. Events are forming the set of branches main events. They have marginal
+probabilities, they're mutually
+exclusive. The package
+cannot be done by AN B or B and C. All events mutually
+exclusive. Some of branch probabilities
+equals to one. We followed all the rules for constructed
+probability three here. Now we start constructing the second set
+of branches. And the second set of
+branches stands for If a randomly
+selected package was done by employee, this package correct,
+correct weight on it or incorrect
+weight on it. If a randomly
+selected package was done by
+employee, again, it correct or incorrect
+weight on it. And finally, if a
+randomly selected package was done by employee, it can have correct or incorrect weight on it. Now, from the text, using the text
+information, we assigned this
+conditional probabilities. According to the text,
+it says employee, employee records
+the correct weight 98% of the time. It means if a package
+was done by employee, then the correct weight
+on this package, the probability that
+this package has correct weight is 0.98
+because according to the employ a records the correct weight
+98% of the time using this information assign the conditional
+probability the probability that package has
+correct weight. If it was done by employee
+0.98 respectively, incorrect one
+-0.98 is 0.02 Now, if the package was
+done by employee, the probability that this package has
+correct weight is 0.97 because
+according to the text, employee records
+the correct weight 97% of the time, The probability
+of correct weight if if it was done by employee 0.97 respectively incorrect
+0.03 Finally, if the package was
+done by employee, the probability that this package has
+correct weight 0.95 because according to the X records the
+correct weight 95% of the time, probability correct
+0.95 incorrect 0.5 We have constructed probability pointing to this random experiment. There are four
+possible outcomes. Random can be done by employ and has
+correct weight on it. The probability
+of this outcome by using
+multiplication rule. Product probability
+0.4 times 0.9 The next
+possible outcome, a randomly
+selected package, can be done by employ and incorrect
+weight on it. The probability 0.4 times 0.02 The next
+possible outcome, by employ and correct
+weight on it, the probability
+0.4 times 0.97 Next outcome by employ
+correct weight, the probability
+0.4 times 0.0 The next outcome
+by Emp weight the probability 0.2
+times 0.95 And finally, the last outcome by Emp, incorrect weight on the probability of
+this outcome, 0.2 times 0.05 Now
+we have everything. We have, our space and all assigned probabilities
+for all outcomes. Now we read the
+probability question. What do we need to find? A customer complains about the incorrect weight recorded on a package he has purchased.
+That's given. That's the
+partial knowledge of outcome of the
+experiment that we have. Our experiment that customer purchased
+a package. And we are given we know partial knowledge of outcome of this
+experiment. We know that
+customer complains about incorrect
+weight recorded on a package he
+has purchased. The question, what is
+the probability that this package with
+incorrect weight was weighted by employee? So this is a conditional probability question. Next, we state
+our question using probability
+notation. We are looking
+for probability that a package
+was weighted by employee given if we know that the package has an incorrect weight on it. Next, we write down our question using
+probability notation. We are looking
+for probability that package was done by employee given
+that the package has an incorrect weight. Again, as soon
+as you recognize conditional probability, we use the conditional
+probability formula. Probability of event given that event has
+already occurred. The probability that the package was
+weighted by Emp, given that the package has an incorrect weight,
+is the fraction, the probability
+of intersection that the package
+was done by Emp and has incorrect
+weight on it divided by probability given by incorrect weight. One more time, we use the conditional
+probability formula region with our notation. Let me remind you
+one more time, this is conditional
+probability formula that I used. I wrote this formula
+using our text notation. Now you find
+this probability use probability tree. We always start
+with denominator a probability of incorrect
+incorrect weight. So we go alone
+probability tree and mark down all the press that give us
+incorrect weight. The first psy interested next outcome by employ
+and incorrect weight. Yes, this is the
+outcome that is favorable to our event
+incorrect weight. The next outcome
+by employee, correct weight
+not interested. The next outcome by employee incorrect weight? Yes. The next outcome by employee and correct weight
+not interested. And finally, the
+last outcome by employee and
+incorrect weight. Yes, we have
+three outcomes. Favorable, correct weight, probability by
+employee and incorrect plus
+probability by employee and incorrect
+plus probability by employee and incorrect. That's our denominator. Nominator probability by employ and
+incorrect weight. The denominator is sum of probabilities of
+marked outcomes. It will be 0.4 times 0.02 That's
+probability that this was done by employ
+and incorrect weight plus probability by
+employee correct. 8.4 times 0.03 p probability by employ
+incorrect weight, 0.2 times 0.05
+That's denominator. Nominator always part
+of the denominator. As you can see, nominator
+probability that it was done by employ
+incorrect weight. This is the last pass. This is this is nominator. That denominator. When you use a calculator, the answer comes
+to one or three. That's the answer
+to this question. The probability three technique is
+very important. That's why you
+have two problems in your practice exam. That's why you had
+two problems in your, we spend the
+entire lecture, probability three
+problems making a point. This is very,
+very important technique to finding
+probabilities. When we have experiments, it does not
+equal outcomes. So make sure you
+practice and you're comfortable with
+this problem. Number five, again, it says multiplication
+principle, but it's up to you
+to determine when you work on the real exam. We read the problem and we determine
+this on our own. It says, what is the probability of having
+each of the numbers one through six appear in six consecutive
+rolls of a die? What is our random
+experiment? Our random experiment,
+we to die six times. Our random experiment is this experiment
+with equally likely out outcomes. Do we have equally
+likely chances to see any number one, any number from one through three,
+through six, from one through six when you toss for dice
+six times or not. The answer is yes. This is an experiment with
+equally likely outcomes. You have equally
+likely chances to see any number one through six to appear
+when you toss. It means we will be using the classic
+probability formula to calculate the
+probability. Our random
+experiment Ts six times event we are
+interested in event, we are interested in each or the numbers one. Okay, Let me write
+down through six appear in six. It mean we are
+interested every time we are interested to see a different number. It means every time we see a different number, every time we see a
+different number. This is experimented is equally
+likely outcomes. It means we look at
+probability formula. The probability of
+event is fraction, number of outcomes
+favorable event E divided by number of outcomes in sample space. We cannot construct
+sample space because too many outcomes. All we need, we just
+need to know the number. This is multiplication
+principle for us to use. This is a task that is composed of six
+consecutive operations. First, let us find the
+number of outcomes in sample space by using multiplication
+principle. Once again, this is a T that is composed of six
+consecutive operations. Operation one selected
+number for the stoic. How many choices do you have for your number when you dimer choices
+for each of these. When you die second time, you have six choices, again for each of these, when you third time, you have six
+choices for the 666, the entire task. That's by multiplication
+principle. By multiplication
+principle. By multiplication
+principle. The number of
+vote comes in sample space will be six times six
+times six times six times six times six, which is six to
+the power to six. Number of comes in sample space is six
+to the power to six. Now the number
+of vote comes in the event every time we see a different number. When to six times every time we see a
+different number. Again, that's
+multiplication principle, that we use next number
+of outcomes in event. Again, this is a task
+that is composed of six contiguity evaporation,
+123456 operation. One, selecting
+a number when to six times in how
+many possible ways? The first operation
+can be performed in six different ways
+to select number. Now for each of these, for each of these
+possible six numbers, operation on e,
+selecting number for the second operation
+for the second and die. If all numbers
+must be different, we have left only
+five choices, five numbers,
+because again, all numbers must
+be different. Five choices for each
+of these operation. Three can be performed
+in four different ways because we have
+taking two numbers. Operation four can be performed in three
+different ways. Operation five can
+be performed in two different ways for each of these operation, six can be performed in one way because only
+one number left. Again, by multiplication
+principle. Again, multiplication
+principle. The number of food
+comes in event, it will be six times five times four times three
+times two times one. Now, the probability of event by using classic
+probability formula, number of T
+comes in event E divided by number of Ot comes in sample space. Number of T comes in sample space six to
+the power to six. Number of vote comes in
+event six times five times four times three
+times two times one. When you use a calculator, the answer comes
+to 0.1 54.1 54. That's the answer
+to this question. That's the probability
+when you toss die six times every time you see a
+different number. This is the probability, the chances of this to happen is 1.5% chances
+approximately. Again, as you
+can see, this is very similar problem to license license
+plates paradox, where we use
+multiplication principle. Again, if you
+use a few times, you see very
+much similarity. All these problems
+the same as license plates problem we did during our class and the same as parade as you problem about choosing the president among
+five students. And we are done with probability to reviewing
+probability topic. Next lecture we
+continue our reviewing other
+random variables.
+
+=== PART 2: RANDOM VARIABLES (00:57:45) ===
+
+Exempt review part
+random variables. We continue working on practice problems,
+practice exempt problems. Today we go over the
+random problems, the types of random
+variable problems, discrete random variables, binormal random variables, and normal random
+variables. As I said during last lecture on
+your practice, for each problem you have description of
+the problem. Like for example,
+problem number six we continue
+working on today, it says binomial
+distribution. You know this is
+binomial problem. On the exam, you
+are not going to be provided with
+this information. That's very important
+when you practice. When you study, you read the text information, you determine
+what the type of the problem
+you work with, and proceed with the appropriate corresponding solution of the problem. When you study, please practice doing
+exactly that. We do it during our review lecture,
+this as well. This is a text,
+an official from the Securities
+Commission estimates that 70% of all investment
+bankers have profited from the use
+of insider information. If 15 investment
+bankers are selected at random from the Commission's registry, find the probability
+that question four or five have profited from insider information. This is binomial
+experiment. This is a random
+experiment that satisfies conditions. Condition number one. There are 15 trials, we have 15 randomly
+selected bankers. First, condition that
+number of trials, 15, 15 randomly
+selected bankers. Condition number
+two, For each trial, for each bank randomly
+selected banker, we have two outcomes. Only two outcomes
+we call success if randomly selected bank has profited from the use
+of insider information. Because we ask to
+calculate the probability four or five bankers have profited from
+insider information. So whenever a randomly
+selected banker has profited from the
+insider information, we call it success. When the answer is no, has not profited,
+we call it a failure only Outcomes, we have success whenever a randomly selected
+banker has profited, that success has
+not profited. That's failure. That
+condition number two. Condition number three, the probability
+of success, that's the
+probability profit, profit, and the
+probability of profit that
+randomly selected a banker has profited. According to the, it says an official from the Securities
+Commission estimates that 70% of all investor
+investment bankers have profited from the use of insider information. Using this information, the probability that any randomly
+selected banker has profited from the use of insider information is 0.7 Condition number four. All trials are
+independent. All 15 randomly
+selected bankers are selected randomly. Independence, This is, this is a binomial
+experiment. It means our binomial
+random variable counts the number of
+successes in trials, in this case 15 trials or binomial experiment. So our random variable is the number
+of bankers in a sample of 15 randomly
+selected bankers who have prohibited from the use of insider
+information. We write just a few words, the number of bankers, meaning in a sample of 15 randomly selected
+bankers who have prohibited from the use of insider
+information. According to the text, our variable is binomial. Because we have a
+binomial experiment, our variable has
+binomial distribution. This number of trials 15, and probability of success 0.7 the number
+of trials 15, probability of
+success 0.7 Now to calculate any binomial
+probability that binomial and
+variable checks any number of successes, we use the
+binomial formula. The first
+question, what is the probability that
+among 15 random banks, four or five, have profited from the
+insider information? We rewrite this question using
+probability notation. We are looking
+for probability that our random variable takes the number
+of successes, four plus the number
+of successes five. To calculate these
+probabilities, if we use the
+binomial formula, the binomial formula,
+let me remind you. The probability that
+binomial random variable takes any number
+of success, x is calculated as combination and
+choose x to the power two times times
+probability of success to the number of successes we
+are interested, times one minus p, that's probability of
+failure to the power to number of trials minus number of successes. So that's phenomenal. We use this binomial form to calculate probability. The probability of
+exactly four successes, exactly four bankers
+in a sample of 15 have profited will be combination
+number of trials, 15 choose number
+of success four times probability
+of success 0.7 to the power to number
+of successes four times one -0.7 0.3 to the power to number of trials 15
+minus number of successes four plus the probability exactly
+five successes. That's combination
+15 choose five times probability
+of success 0.7 to the power to number of successes five times one -0.7 0.3 to the power
+to number of trials, 15 minus number of
+successes five. We continue combination 15 choose four,
+that's a fraction. We start nominator
+15 and go down factors 15 potent five. Denominator is four
+factorial 4321. This combination
+15 choose four. Again, please remember
+you always can simplify nominator
+and denominator till denominator is one. And you always have left a few factors in nominator that you
+need to multiply. I'm not going to
+mark anything 0.7 to the power four times
+0.3 to the power 11. Plus combination 15 choose five, that's a fraction. We start nominator is 15 and we go down
+five factors. 15 point sent 12 11 and we divide by
+five factorial 54321. Again, you simplify
+nominator and denominator to
+denominator is one. You have left in nominator just a few factors
+to multiply. 0.7 to the power to five times 0.3 to
+the power to ten. When we use the
+calculator, the answer comes to the probability of
+exactly four successes. It will be 0.06 plus probability
+exactly five successes. It will be 0.003 The sum of these
+two numbers comes to 0.0 036. This is a
+probability that in a random sample of it
+randomly selected. Exactly four or five profited from the use
+of insider information. As you can see, it's very slim
+probability when we calculate
+expected value or binomial variable, expected number
+of bankers. Give us more sense of this probability
+of this result. This is the answer to
+the first question. The second question, find the probability that all 15 have profited from
+insider information. All 15. All 15, it means we're looking for the probability that our binomial random
+variable changes all 15 successes value
+of success 15. Question we are
+looking for probability that our
+random variable shakes exactly 15 successes by the, using
+binomial formula. We have probability,
+we have combination
+number of trials 15 choose number of successes 15
+times probability of success 0.7 to
+the power to number of successes 15
+times one -0.7 0.3 to the power to number of trials minus number of successes, 15 -15 We have
+combination 15, 15, special case,
+that's one. We have 0.7 to
+the power to 15.3 to the power
+20, that's just one. That's all we
+have left with 0.7 to the power to 15. It means, if you imagine this huge
+probability, three, it will be 15
+times success, success, success,
+success has profit, has profit has profited. 15 times the probability
+the answer comes to 0.005 This is the answer
+to this question. Probability
+exactly 15 success is all have profited. Now the question will
+help us to understand this small probabilities
+in question A and B. The next question, what is the expected number
+of bankers in the sample who have profited from
+insider information? The number of
+successes for binomial random
+variable, as you know, can be from zero, no successes up
+to 15 successes. But on average, taking into account all the
+possible values from zero up to 15 with the corresponding
+probabilities that are calculated by this
+binomial formula. How many bankers
+in a sample of 15 we expect
+to be profit? The question we
+are looking at, the expected value,
+binominal variable. Expected value of a binomial rental
+variable is calculated as n number of trial times
+probability of success. We use the binomial
+formula for expected value
+number of trials, 15 times probability
+of success, 0.7 When we calculate
+the answer comes to 10.5 10.5 this is
+expected number. Again, please point
+your attention, there are no 10.5
+vents in the sample, but this is the answer. This is the value of uh, that stands for
+expected valium of a random variable. That's weighted average. Weighted average weights are the corresponding
+probabilities. That explains why
+the probabilities in question A and
+B are so low. Because on average, the expected number
+of bankers is 10.54. Of five In question A stay away from
+expected value, the same as 15 stay away
+from expected value. That explains why we have such small
+probabilities. Let me add one more question just
+to discuss it. What is the
+probability that at least two bankers have profited in a sample of 15 randomly selected
+have profited? I'm going to add
+one more question using probability
+notation. We are looking
+for probabilities that our binomial and available k greater
+quals than two. At least two means
+two or more. Two or more if you have
+15 randomly selected. To calculate this
+probability, we need to calculate probability exactly
+two successes plus probability exactly three
+plus probability four and so on. And so all this
+probability up to 15 success and
+it's a lot of work. This is exactly
+where we use the complement by
+the complement true. We can rewrite it as one minus probability
+it's compliment, the complement
+will be opposite. Let me write down fully probability of
+its complement, its complement that's
+less than two. Probability that x takes less than two,
+that's complement. Less than two means 01. It will be one minus probability exactly zero, Minus probability one, the probability exactly
+zero, exactly one. It will be very
+slim probabilities because I'm not going
+to calculate it. I'm just making a point. If we had a question,
+at least two. We remember to use
+the compliment, I'm going just
+to estimated. We have calculated
+probability four or five.
+It's very slim. 15 slim are expected 0.5 10.5 the
+probability of 01, it will be too small. Even smaller. Too small, just making a point. The probability of two, it will be somewhere
+close to one. Okay? Problem
+number seven. Again, we get the problem and determine the type of the problem on our own. It says a pair of fair
+dice is rod 12 times. Note that for each role, the probability of getting seven is 1/6 By the way, we have calculated this probability in
+chapter four. First question, what is the probability
+that result? The result is seven
+exactly twice, which is our
+experiment experiment. We role a pair of dies, two dice roll 12 times. We ask to find
+the probability that the result is
+seven exactly twice. This is a binomial
+experiment. Once again, the first condition of
+binomial experiment, there are 12 trials, we roll two
+dice, 12 times. The second condition,
+for each trial, we have only two outcomes
+on two outcomes. Whenever we see the sum
+of two numbers seven, we call it success. So whenever as a result the sum of two
+numbers is seven, we call it success. When the sum is not seven, is not seven, we call it failure condition
+number three. The probability
+of success, the probability
+that seven is 16. Again, by the way, we have calculated
+this probability in chapter four, p one. This is a random
+experiment to Frits and the probability that sum of two numbers
+is seven is 16. We have calculated
+the same probability for each trial in
+condition number four. Independence that they
+don't have memories. Whatever we see after the fifth trial does not
+give us information. What is the result
+we are going to see on the sixth trial? This is the binomial
+experience. Our variable counts the
+number of successes, number of 712 trials, this binomial experiment. Now we state our
+dom variable. Our variable stands for
+the number of seven. The number of seven in 12 consecutive
+roles of two days. According to the text, our random variable has binomial distribution. This number of trials, 12, probability of success 16, The number of trials, 12, probability of
+success 16, Okay? By the way, the
+probability of success 16. Okay? So now when we stated our
+Biomed variable, we can ask any
+probability questions for Biomed variable using the binomial formula
+to calculate the Biomed variable checks any number of successes
+we're interested in, that's combination
+a number of trials and
+choose number of successes times
+probability of success to the
+number of successes times one minus p to the power to number of trials minus number
+of successes. The first
+question, what is the probability the result is seven exactly twice. We are looking for
+the probability that our random variable checks exactly two successes
+exactly twice. We see sum of two
+numbers is seven, equation eight, we are looking for probability x, check two successes
+binomial formula, we have combination
+number of trials 12 choose
+number of success two times probability
+of success 16 to the power to
+number of success two times probability
+of failure one -1/656 to the power to number of trials 12 minus number
+of successes two. We have combination 1202, the fraction we start
+denominator 12 and go down two factors
+including 12 12 times 11, denominator is two
+factorial two times one. As you can see, 2.12
+can be simplified by dividing by two times one. We 36 times 56
+to the Putin, we have 66 times 136 times 56 to the Putin. When we calculate
+the answer comes to 0.20 969. This is the probability of exactly two when two dies material times
+the probability that twice we see the sum of two
+numbers is seven. The second question, what is the probability that result is seven at least twice? At
+least twice. It means we are looking
+for probability that our variable two
+or more successes at least twice means two. Actually, I'm going to continue right in here. We're looking for
+probability that our, the available takes at
+least two successes. At two means 22 or more, it means two or three, or four, or 512. It's a lot of work. Whenever you have
+to cap probability, at least we
+consider to use the complement by
+the complement rule, it will be one
+minus probability x takes less than
+two successes, zero or one success by the complement
+minor component, we continue, so it'll be one minus rabbit zero for Pbbt one. One minus probability
+exactly zero successes. It will be by using
+the binomial formula, it will be
+combination number of trials 15 choose
+number of success is zero times probability of success 16 to the power to number of success is zero times probability of failure 56 to the power to
+number of trials, 15 minus number of
+success is zero. That's probability of
+exactly zero successes plus one probability
+exactly one success. It will be combination
+number of trials. I apologize. Number of tiles 12. That's why I need
+you need you. It's hard to talking to
+myself all the time. 12 combination the
+number of trials, 12 choose number
+of success one now times the probability
+of success 16. I use 15 from the
+last problem, it's stuck in my head. Last problem, we
+have 12 trials, that's why I
+still using 12, I apologize for that. So now the number
+of trials, 12, 15. Keep using 15. The probability of
+zero successes, combination 12, 12, number of trials
+choose number of successes zero times
+probability of success 16 to the power to number of successes zero times probability of failure 56 to the power to number of successes, number of trials 12 minus the number
+of success is zero plus
+probability exactly one success by using
+the binomial formula, that combination
+number of trials 12 choose number
+of success. Now one times
+probability of success 16 to the power to number of successes. Now one times the
+probability of failure one -1/6 gives us 56 to the power to
+number of trials, 12 minus number
+of successes. Now one we continue, we have one minus
+combination 120, that's special
+case, that's one. Any number to the power
+to zero, that's one. We have one minus
+probability, exactly zero successes. It will be 5/6 to
+the power to 12. That's all failures. 12 times seven,
+plus probability, exactly one success
+combination to 1201, that special
+case, that's 12. We have 12 times 1/6 times 5/6 to
+the power to 11. That's sum of
+probability 0/1 success. Now, when we use
+a calculator, the answer comes to 0.60. 186-76-1867 That's the answer.
+That's the answer. The second question that the probability
+of exactly twice, we see some of number
+7.12 two, okay. Next problem eight. An altered die has
+one on one phase, two Ts on three phases, and three Ts
+on two phases, the die is to be
+tossed twice. One more time.
+An alternate die has one on one face, two Ts on three phases, and three Ts on two faces. The die is to
+be tossed once. Let random variable being the number of dots
+on the bur face. This is our
+random variable, the number of
+dots on the base. First question, construct the probability
+distribution table, then find me. Let us rewrite our
+random variable. Our random variable
+is the number of dots on the
+absorbed face, the number of dots
+on the bed face. Construct probability
+distribution table. This random variable probability
+distribution table of discrete random
+variable is a table that contains the first lists all possible values. Discrete random
+variable can assume that x small. And the second row stands for the
+probability that our discrete random
+variable takes particular x in
+this problem, to fill out the probability
+distribution table, we use the text
+information. We read the text information
+and fill it out. Our random variable,
+the number of dots on the actual face. When we alter
+die one time, it says that an alter
+die has 111 phase, The first possible value
+of our and variable, the number of dots on the absorbed
+phase is one. From the text,
+there is one. According to the text, there is one phase
+like that with one. The probability of
+this possible value of one will be 16. Because one
+phase, one that out of six possible
+phases we continue, it says to three phases. The next possible value of discrete random
+variable is two. And there are three
+phases like that, the probability of
+this possible value will be three out of six. Next, we continue three next
+possible value, there are three
+dots on two phases, the next and the
+last possible value of our discrete
+random variable three. There are two
+phases like that, Two phases that
+the probability that our random
+variable three will be to 66 were done. We have constructed
+probability distribution table of this discrete
+random variable showing all possible
+values 123 an alter, we have the
+possible values 123, the corresponding
+probabilities. Please again
+notice that sum of all the probabilities
+comes to one. You check yourself, make sure that
+all the answers, as always, make sense. Sum of probabilities
+equals to one. Now the second question. Find the mean of x. Find the expected value. Possible values of this random variable
+can be one, or two, or three with these corresponding
+probabilities. However, on a what
+is expected value of a random variable? The question we calculate expected value of
+our random variable. And the formula for
+expected value of discrete random
+variable is given by some by all x I. We multiply sum
+of products, we check each
+possible value, multiply by the
+corresponding probability, We have first
+possible value of one times the
+corresponding probability, 1/6 plus the next
+possible value, two times the
+corresponding probability, 3/6 plus the next
+possible value three times the
+corresponding probability, 2/6 we have 1/6 plus one plus one, we have 2.106 That's
+expected value of this discrete
+random variable. Doesn't make sense. Perfect sense
+as you can see. As you can see, the highest probability
+that we have in probability
+distribution table is for possible value
+to the next, highest probability
+is possible value. It makes perfect sense. They expect that, uh, available of random
+variable stays 2-3 of course
+closer to two. This is exactly
+what we've got. 2.16 taking into account the possible varies and the probabilities expected via random variable 62.16 Please don't forget,
+go lottery problems. There are different
+types of approaches when we construct probability
+distribution table of discrete
+random variable. First, this approach
+when we use the text information to fill out the probability
+distribution table. This one, please. Again, don't
+forget to go over the lottery problems
+chapter six part one. Don't go over
+marble problem, chapter six part
+one problem. Marble problem. This problem is a type of the problem
+where in order to construct probability
+distribution table constructed
+probability three, we use probability
+three technique first. Then we use probability three to fill out the probability
+distribution table. Don't forget these
+problems and forget about another problem we did
+during our lecture when in order to fill out probability
+distribution table, constructed sample space,
+sign probabilities, and fill out the table using sample space and the sign probabilities. Problem number
+nine, the number of column inches of classified advertisement appearing on Mondays in a certain daily newspaper is roughly normally
+distributed. This means 327,
+standard ation 34. ". The first question, find the probability
+that the number of column inches is
+320-340 column inches. What is the key words, key numbers of the type of the random variable? Here the keyword is roughly normally
+distributed. How we know this is
+normal distribution, normal random
+variable problem. From the text, we are
+told that the number, that's our Dom variable, the number of
+column inches of classified advertisement is roughly normally
+distributed. This means 327 " and
+standard deviation 34. ". Right away we know our random variable has approximately normal
+distribution. It means to find
+the probability, the probabilities, we find the normal probabilities. We calculate normal
+probabilities using table. We state our variable. Just a few words,
+just a few words. Our variable stands for the number of
+column inches. Just literally a few
+words. We write it down. Okay, Our variable x stands for the
+number of column in meaning of this classified
+advertisement appearing on Mondays
+and a daily newspaper. According to the text
+hour random variable, the number of
+column inches has approximately
+normal distribution with 327 " and standard
+deviation 34 ". 327, standard
+deviation 34, so variance will
+be 34 squared. 327, Standardization 31. Now, when we have stated
+this information, the picture of the
+distribution of this normal random
+variable x N in bell shaped, in bell shaped symmetrical around its mean,
+which is 327. Now the first question, find the probability that the number of column is 320-340 column inches. 320-340 Using the
+probability notation, the first question
+we are looking for probability that our
+normal random variable falls between
+320 takes values 320-340 we put it
+in the picture. Let's say 320, let's
+say this is 340. We are looking
+for probability between the area
+under the co, between these two values gives us the probability. Now to find normal
+probabilities, we transform normal
+Renda variable into standard normal
+Renda variable. By using the formula
+transformation, we subtract from x mean of x and we divide by
+standardization of x. We do it, we write
+our question, we look for probability, We transform x into z. We transform value of x, values of x into
+values of z. By subtracting from
+320, we subtract 327, and we divide by
+standardization, 34, We do the same with
+value of x, 34340. From 340 we subtract 327, divide by
+standardization to four, then we use the
+calculator. We round to two
+decimal places. Again because of
+the many places we need to use table, we have probability
+that Z falls between negative
+0.21 negative point to one positive 0.3 Now instead of working with a normal
+random variable, you work with standard normal random variable. We calculate
+the probability that zs between negative 0.21 and positive 0.3 This is what we
+are looking for. Now to find the standard formal
+probabilities, we use the table. As you know,
+the table gives us probabilities
+only to the left. We are looking
+for probability between between. Whenever we need to find probability between,
+we rewrite. This is a difference
+of two probabilities, probability
+values less than 0.30 minus probability
+value less than a negative 0.21 And
+we use the table now first we find
+probability checks is less than 0.3 H. We go to the table positive page and find this probability. We look for probability to the left from 0.3 H, we find the intersection. First column gives us the first digit after
+the decimal point. The first gives us the second digit after
+the decimal point. The intersection gives us the probability to
+the left from 0.3 H. This probability
+is 0.64 80.64 80 minus probability is that chick is less
+than a negative 0.21 that will be
+the negative page. We find the probability
+less than a negative 0.21 We look for the intersection of
+the column point, negative point,
+negative 0.2 You find it, we need to
+make it get 0.2 okay? Get 0.2 The first
+column gives us, the first column gives us the first digit after
+the decimal point, and the first gives us the second digit
+after the decimal 0.1 We find the intersection
+of the correspond. The answer is 0.41 68.41 68. Now, from the area to the left from 0.38 all
+the way to the left from 4.48 we subtract
+area to the left from negative 0.21 and we
+have area between, that's the
+probability between negative 0.21 and
+positive the eh, the answer comes to
+0.23 12, 23, 12. This is the
+probability between. That's the answer to
+the first question. And the second question, find the probability
+that the number of column inches is more
+than 340 column inches. Using probability
+notation, we are looking
+for probability that our variable takes values greater
+than 300 for we are looking for
+probability that our Bach values
+greater than 340. So this is the
+corresponding picture. The mean is 327. Let me remind
+you, mean 327. Standardization 34, we're looking
+for probability to the right from 340, the probability is
+area under the, to the right from this Ari's what we
+are looking for. Again, we transform normal
+rendervariable into standard normal Rendi by using the formula
+transformation from x, subtract x by
+standardization of x. So we rewrite
+our question, probability x ekes
+val greater than 340. That probability that Chaka 40 minus mean 327, we divide by standard
+deviation 34. When we use the
+calculator, when we're around
+to Simon places, we have probability that checks Arius greater than 4.3 This is the
+corresponding picture we are looking
+for probability greater than 0.3 H z table gives us only probability
+to the left, we are looking for
+probability to the right. We use the complement
+total area, one minus probability to the left which
+we calculated. We have calculated
+probability is less than 0.3
+right there, 0.30 The probability to the left is 0.60
+48 respectively. Probability to the
+right will be one -0.60 481 -0.60 48. Probability to
+the right will be 0.35 0 point. This is the answer to
+the second question. We are done when you study for the material
+of the second exam, the part of
+random variables. Again, please
+practice with recognizing the type of the random variable from the text in the
+problem six. Problem seven, we recognize the
+binomial experiment, the key words, key
+number, number of trials. In the problem
+six, we have 15 trials right
+away on comes, we see the probability
+of success, we see the independence and we use binomial
+probability formula. The same problem seven
+we recognized by nomial experiment first key words, key numbers. We have 12 trials. We repeat experiment
+experiment 12 times, that's indicator
+12 trials 12. Then you see we have
+only two outcomes. The one we are interested in, we call it success, otherwise other we call failure probability of
+success independence. And used by nomial
+formula to calculate by no probabilities problem
+H distribution table for discrete
+random variable and expected value. Again, you asked to construct
+distribution table. We construct probability
+distribution either by using
+text information or by constructing
+probability three or by constructing sample space in
+sign probabilities. We went oder all these
+types of problem during our lectures
+order solution. When you construct probability
+distribution table, you find the
+expected value of discrete random
+variable by the form, a sum of products, each possible variable times corresponding
+probability. Please don't forget, always check on yourself. Make sure that every
+answer that you calculate makes
+perfect sense before you use it. The last random variable, normal random variable. Again, from the text
+you look for keyword, then you state your
+random variable. Write down to
+the notation, the probability
+notation to state every probability
+question and use the appropriate
+method to find this probability
+and normal and variables we use then able to 510 normal
+probabilities transform normal
+random variable z. Just enter normal
+random variable and use table. That's it. We are
+done with the review. Check your time,
+do your part and do well on
+the second exam.
