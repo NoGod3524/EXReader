@@ -56,6 +56,7 @@
     "canvas.c": "graphics",
     "case.c": "base",
     "cbz.c": "pdf",
+    "pptx.c": "pdf",
     "ppt.c": "pdf",
     "ppt_cfb.c": "pdf",
     "ppt_records.c": "pdf",

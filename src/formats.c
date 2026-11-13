@@ -5,6 +5,28 @@
 #include <ctype.h>
 #include <expat.h>
 #include <miniz.h>
+/* Content-based fixed reader dispatch. DOCX's existing extension/OPC path
+   below is deliberately independent of this PresentationML probe. */
+exr_status exr_zip_format(const void *data,size_t size,exr_format *format,exr_error *e) {
+  mz_zip_archive zip={0}; mz_zip_archive_file_stat st; int index;
+  char *types=NULL; exr_status status=EXR_OK;
+  const char *mime="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml";
+  *format=EXR_CUSTOM;
+  if(!mz_zip_reader_init_mem(&zip,data,size,0)) return exr_fail(e,EXR_FORMAT,"Invalid or truncated PPTX/ZIP container");
+  index=mz_zip_reader_locate_file(&zip,"[Content_Types].xml",NULL,MZ_ZIP_FLAG_CASE_SENSITIVE);
+  if(index<0) goto done;
+  if(!mz_zip_reader_file_stat(&zip,(mz_uint)index,&st)) { status=exr_fail(e,EXR_FORMAT,"Cannot inspect [Content_Types].xml");goto done; }
+  if(st.m_uncomp_size>EXR_MAX_INPUT) { status=exr_fail(e,EXR_LIMIT,"ZIP member exceeds 128 MiB: [Content_Types].xml");goto done; }
+  types=malloc((size_t)st.m_uncomp_size+1);
+  if(!types) { status=exr_fail(e,EXR_MEMORY,"Content types allocation failed");goto done; }
+  if(!mz_zip_reader_extract_to_mem(&zip,(mz_uint)index,types,(size_t)st.m_uncomp_size,0)) {
+    status=exr_fail(e,EXR_FORMAT,"Cannot read [Content_Types].xml");goto done;
+  }
+  types[(size_t)st.m_uncomp_size]=0;
+  if(strstr(types,mime)) *format=EXR_PPTX;
+done:
+  free(types);mz_zip_reader_end(&zip);return status;
+}
 uint32_t exr_windows1252(unsigned char c) {
   static const uint16_t map[32] = {0x20ac, 0x81,   0x201a, 0x192,  0x201e, 0x2026, 0x2020, 0x2021,
                                    0x2c6,  0x2030, 0x160,  0x2039, 0x152,  0x8d,   0x17d,  0x8f,

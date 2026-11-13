@@ -5,6 +5,9 @@
 #include "exr/pdf.h"
 #include "vector_internal.h"
 #define EXR_PDF_NONE UINT32_MAX
+/* Consumes data on success and failure, like the CBZ owned adapter. */
+exr_status exr_pptx_open_owned(unsigned char *data,size_t size,const char *title,
+  const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);
 #define EXR_PDF_MAX_VALUES 1048576u
 typedef enum {
   EXR_PDF_NULL,EXR_PDF_BOOL,EXR_PDF_INT,EXR_PDF_REAL,EXR_PDF_NAME,

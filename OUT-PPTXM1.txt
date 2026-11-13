@@ -1,0 +1,31 @@
+已完成 PPTX M1。[src/pptx.c](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/src/pptx.c) **416 行、15 个函数**。完整函数清单与结构见[验收记录](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/docs/PPTX-M1.md)。
+
+| 夹具 | 引擎页数 | python-pptx | 页尺寸 pt |
+|---|---:|---:|---|
+| 空演示文稿 | 0 | 0 | 无页面 |
+| 纯标题 | 1 | 1 | 720×540 |
+| 五种版式 | 5 | 5 | 720×540 |
+| 16:9 | 1 | 1 | 960×540 |
+| 4:3 | 1 | 1 | 720×540 |
+| 二十页 | 20 | 20 | 720×540 |
+
+六份均通过文件、内存两种入口；所有有效页渲染成功，并逐字节验证为白色位图。
+
+新增 **12 组**，均采用 `native-pptx-` 前缀：`empty`、`title`、`layouts`、`wide`、`standard`、`twenty`、`errors`、`defaults`、`missing`、`order`、`detection`、`limit`。
+
+验证结果：
+
+- PPTX 专项：**12/12 通过**。
+- 全量 ctest：**429/429 通过**，418.90 秒；仅排除指定两项。
+- `check_sdk_docs.py`：**exit 0**，482/482，DLL 导出一致。
+- 分层检查、共用 `ops/prepush-check.ps1`：**exit 0**。
+
+坏样本错误原文：
+
+| 状态 | 消息 |
+|---|---|
+| EXR_FORMAT | `Invalid or truncated PPTX/ZIP container` |
+| EXR_FORMAT | `PPTX part missing: ppt/presentation.xml` |
+| EXR_LIMIT | `ZIP member exceeds 128 MiB: ppt/slides/slide1.xml` |
+
+M2 可复用接口包括容器与页目录 `pptx_document.zip/slides`、XML 读取 `xml_read`、关系查询与 `exr_resolve_path`、`draw`/绘制 sink，以及现有固定页几何和渲染 API。逐页预算、关系字符串生命周期及 layout/master/theme 接入位置已写入验收记录。

@@ -52,7 +52,8 @@ typedef enum {
   EXR_MOBI,
   EXR_PDF,
   EXR_CBZ,
-  EXR_PPT /* PowerPoint 97-2003 OLE compound document; fixed pages. */
+  EXR_PPT /* PowerPoint 97-2003 OLE compound document; fixed pages. */,
+  EXR_PPTX /* PresentationML fixed pages; appended to preserve format ABI values. */
 } exr_format;
 typedef struct {
   exr_status code;

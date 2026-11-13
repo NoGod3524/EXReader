@@ -4,6 +4,7 @@
 *.pgm binary
 *.epub binary
 *.docx binary
+*.pptx binary
 *.mobi binary
 *.sqlite binary
 *.ttf binary
