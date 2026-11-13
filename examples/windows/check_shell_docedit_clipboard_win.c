@@ -45,9 +45,16 @@ int main(void) {
   assert(de_clip_append(&de_clip_text,&de_clip_size,utf8,7));de_clipboard_publish();
   size_t n=0;char *read=de_clipboard_read(&n);assert(read && n==7 && !strcmp(read,utf8));free(read);
   assert(de_clip_sequence==clipboard_sequence);puts("PASS Windows UTF-8/CJK/emoji -> UTF-16 -> UTF-8");
+  char *owned=NULL;const char *payload=de_clipboard_payload(&n,&owned);
+  assert(payload==de_clip_text && !owned && n==7);
   external(L"a\r\nb\rc\n",8);read=de_clipboard_read(&n);
   assert(read && !strcmp(read,"a\nb\nc\n"));free(read);
   assert(de_clip_sequence!=clipboard_sequence);puts("PASS external clipboard sequence and CRLF/CR normalization");
+  payload=de_clipboard_payload(&n,&owned);
+  assert(owned && payload==owned && !strcmp(payload,"a\nb\nc\n"));free(owned);
+  clipboard_busy=1;payload=de_clipboard_payload(&n,&owned);
+  assert(payload==de_clip_text && !owned && n==7);clipboard_busy=0;
+  puts("PASS internal copy preferred; readable external changes used; busy external falls back internally");
   clipboard_busy=1;assert(!de_clipboard_read(&n));clipboard_busy=0;
   external(L"\xd800",2);assert(!de_clipboard_read(&n));
   external(L"no terminator",3);assert(!de_clipboard_read(&n));

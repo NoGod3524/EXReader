@@ -148,6 +148,16 @@ static char *de_clipboard_read(size_t *size) {
   }
   CloseClipboard();return text;
 }
+/* An unavailable external clipboard must not discard a usable internal copy.
+   Observe external changes when readable; otherwise keep the internal payload. */
+static const char *de_clipboard_payload(size_t *n,char **external) {
+  *external=NULL;*n=de_clip_size;
+  if(!de_clip_text || de_clip_sequence!=GetClipboardSequenceNumber()) {
+    size_t size=0;*external=de_clipboard_read(&size);
+    if(*external) {*n=size;return *external;}
+  }
+  return de_clip_text;
+}
 #ifndef DE_CLIPBOARD_TRANSPORT_ONLY
 /* Keep multiline paste and selection replacement in one undo entry. */
 static int de_clipboard_paste_text(const char *text,size_t n) {
@@ -191,10 +201,7 @@ static int de_clipboard_key(WPARAM key) {
     } else set_status(L"无法复制或剪切此选区；原文已保留。");
     return 1;
   }
-  size_t n=de_clip_size;char *external=NULL;const char *text=de_clip_text;
-  if(!text || de_clip_sequence!=GetClipboardSequenceNumber()) {
-    external=de_clipboard_read(&n);text=external;
-  }
+  size_t n=0;char *external=NULL;const char *text=de_clipboard_payload(&n,&external);
   if(text && n)de_clipboard_paste_text(text,n);
   free(external);return 1;
 }
