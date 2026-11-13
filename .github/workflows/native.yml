@@ -370,6 +370,8 @@ jobs:
         shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
+      - name: Check simulator isolation and failure propagation
+        run: python3 tests/check_apple_host.py
       - name: Build iOS and iPadOS device and simulator libraries
         shell: bash .github/scripts/ci.sh {0}
         run: |
