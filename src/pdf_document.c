@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
+#include "ppt_internal.h"
 #include "font_internal.h"
 #include "pdf_crypto.h"
 typedef struct {
@@ -274,6 +275,12 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
   exr_fixed_open_options options; unsigned char *copy; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL;
+  /* 旧版 PPT 允许零字节输入（空演示文稿），所以在通用字节校验之前分流。 */
+  if(format==EXR_PPT) {
+    status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
+    if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
+    return exr_ppt_open_memory(data,size,&options,out,e);
+  }
   if(!data || !size || size>EXR_MAX_INPUT) return exr_fail(e,size>EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,"Invalid fixed document bytes");
   if(!exr_format_is_fixed(format)) return exr_fail(e,EXR_FORMAT,"No built-in fixed reader for this format");
   status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
@@ -340,3 +347,5 @@ exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,e
   }
   return open_data(data,size,title,&options,NULL,0,out,e);
 }
+
+
