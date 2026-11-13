@@ -275,7 +275,8 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
   exr_fixed_open_options options; unsigned char *copy; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL;
-  /* 旧版 PPT 允许零字节输入（空演示文稿），所以在通用字节校验之前分流。 */
+  /* Let the PPT reader classify empty/truncated bytes as EXR_FORMAT and apply
+     its own 256 MiB stream budget. A valid zero-slide PPT still has a CFB. */
   if(format==EXR_PPT) {
     status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
     if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
