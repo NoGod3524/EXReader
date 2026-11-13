@@ -212,6 +212,11 @@ endif()
 if(EXR_FULL_TESTS)
   enable_testing()
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  foreach(group empty title layouts wide standard twenty errors defaults missing order detection limit)
+    add_test(NAME native-pptx-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_skeleton.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
   foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
@@ -1288,6 +1293,20 @@ if(EXR_FULL_TESTS)
 endif()
 
 include(cmake/component_tests.cmake)
+if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  add_executable(exreader-ppt-probe tests/ppt_probe.c)
+  target_include_directories(exreader-ppt-probe PRIVATE src)
+  target_link_libraries(exreader-ppt-probe PRIVATE exr_pdf exr_core)
+  if(NOT MSVC)
+    target_compile_options(exreader-ppt-probe PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endif()
+  foreach(group cfb records slides size truncated wrongformat)
+    add_test(NAME native-ppt-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_ppt.py $<TARGET_FILE:exreader-ppt-probe>
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-legacy ${group})
+  endforeach()
+endif()
 if(EXR_BUILD_TESTS)
   add_executable(exreader-style-footnotes-test tests/test_style_footnotes.c)
   target_link_libraries(exreader-style-footnotes-test PRIVATE exreader)

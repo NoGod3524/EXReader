@@ -1841,7 +1841,7 @@ int main(void) {
 
 **参数** `input`：先零初始化并设置 struct_size；提供页面、draw、context，可选 text/metadata/annotations/draw_ex；`out`：接收独立拥有的固定页文档指针；用 exr_fixed_free 释放；`error`：可 NULL，接收 exr_status 和 UTF-8 错误说明
 
-**返回与失败** EXR_OK：创建固定页面 provider；缺少 draw/页数组、重复有效页 ID、无效几何或 struct_size 返回 EXR_ARGUMENT，分配失败 EXR_MEMORY。
+**返回与失败** EXR_OK：创建固定页面 provider；page_count 为 0 时允许 pages 为 NULL，创建空文档；缺少 draw、非零页数缺少页数组、重复有效页 ID、无效几何或 struct_size 返回 EXR_ARGUMENT，分配失败 EXR_MEMORY。
 
 **线程** 无共享可变状态；独立输入/输出可并发调用。
 
@@ -6165,9 +6165,9 @@ int main(int argc, char **argv) {
 
 **ABI** 稳定。声明：[pdf.h](../include/exr/pdf.h)。
 
-**参数** `format`：EXR_PDF 或 EXR_CBZ；`data`：输入文件/资源字节，至少 size 字节；`size`：输入字节长度；`options`：可 NULL；否则 struct_size，fallback_font、control、pdf_password/size；pdf_security 初始化 struct_size；`out`：接收文档，失败 NULL；`error`：可 NULL；接收状态码和诊断文本，不分配内存。
+**参数** `format`：EXR_PDF、EXR_CBZ、EXR_PPT（97–2003 二进制演示文稿）或 EXR_PPTX；`data`：输入文件/资源字节，至少 size 字节；`size`：输入字节长度；`options`：可 NULL；否则 struct_size，fallback_font、control、pdf_password/size；pdf_security 初始化 struct_size；`out`：接收文档，失败 NULL；`error`：可 NULL；接收状态码和诊断文本，不分配内存。
 
-**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。
+**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。PPTX M1 提供页序、pt 尺寸和白页绘制，支持 0 页；缺失或无效的幻灯片引用会跳过，EXR_OK 的 error.message 带跳过计数警告。
 
 **线程** 独立输入/输出可在不同线程调用；共享文档、来源、字体和回调上下文须串行，调用期间输入不得变更。
 
@@ -6181,11 +6181,13 @@ int main(int argc, char **argv) {
 
 **参数** `path`：UTF-8 文件路径；`options`：可 NULL；否则 struct_size，fallback_font、control、pdf_password/size；pdf_security 初始化 struct_size；`out`：接收文档，失败 NULL；`error`：可 NULL；接收状态码和诊断文本，不分配内存。
 
-**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。
+**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。PPTX M1 提供页序、pt 尺寸和白页绘制，支持 0 页；缺失或无效的幻灯片引用会跳过，EXR_OK 的 error.message 带跳过计数警告。
 
 **线程** 独立输入/输出可在不同线程调用；共享文档、来源、字体和回调上下文须串行，调用期间输入不得变更。
 
 **所有权** 成功 out 用 exr_fixed_free；文件读取/映射由文档管理。options/password 仅调用内借用；fallback_font 被保留到 fixed_free。
+
+Legacy PPT M1：`.ppt` 扩展名或 OLE2 签名进入内置 CFB/PowerPoint 记录解析；每张幻灯片提供固定页几何和空 draw，默认白底。零页演示文稿合法。DocumentAtom 尺寸单位为 1/576 英寸，换算 pt 除以 8；缺失尺寸默认 720×540 pt。总流大小上限 256 MiB、记录深度上限 64。页数优先采用最新 DocumentContainer 中实例 0 的 SlidePersistAtom 列表；与物理 SlideContainer 总数不一致时 EXR_OK，error.message 保留警告。标题来自可选 SummaryInformation；未取到为空。
 
 ### `exr_pdf_annotation_write_defaults`
 

@@ -1,0 +1,8 @@
+已修复并推送 `594984fe`，两项检查均成功：
+
+- [desktop (ubuntu-22.04)](https://github.com/NoGod3524/EXReader/actions/runs/43477460039/job/132064913875)
+- [native / desktop (ubuntu-22.04)](https://github.com/NoGod3524/EXReader/actions/runs/43477460098/job/132064915008)
+
+API 原始日志确认根因是 ASan 预加载规则遗漏 E5。仅修改 `register.cmake` 一行，将 `edit-e[34]` 改为 `edit-e[345]`。
+
+验证：本地 43/43、两条 CI 均 433/433；推前完整共用 `ops\prepush-check.ps1` 通过。未改断言、未跳检查、未动受保护文件，全程未使用 GUI。
