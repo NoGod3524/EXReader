@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.24)
 project(ImagePaintCheck LANGUAGES C CXX)
+enable_testing()
 find_package(EXReader CONFIG REQUIRED PATHS "${EXR_SDK}" NO_DEFAULT_PATH)
 add_executable(check_image_paint ../check_shell_image_paint.c ../shell_d2d.cpp)
 target_compile_features(check_image_paint PRIVATE c_std_11 cxx_std_17)
@@ -10,3 +11,4 @@ if(MSVC)
 else()
   target_compile_options(check_image_paint PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 endif()
+add_test(NAME image_paint COMMAND check_image_paint)

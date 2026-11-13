@@ -7,6 +7,8 @@ cmake -S examples/windows/image-paint-check -B build/l02-check -G Ninja -DEXR_SD
 cmake --build build/l02-check
 $env:PATH = "<installed-sdk>/bin;" + $env:PATH
 build/l02-check/check_image_paint.exe
+# Or run the registered acceptance test:
+ctest --test-dir build/l02-check -V --output-on-failure
 ```
 
 Include `shell_docedit_image_paint.inc` after `shell_d2d.h` and `exr/edit.h`.
@@ -31,3 +33,5 @@ The existing layout/input includes are outside L02's exclusive file scope.
 This slice exposes the integration functions above; it does not modify those
 includes. The console check runs the real insert, decode, D2D paint, and hit
 functions against a memory DC, including selection and deselection.
+It also checks aspect ratio, centering, DPI, scroll coordinates, viewport
+edges, toolbar clipping, transparent pixels, and invalid hit-test inputs.
