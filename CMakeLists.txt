@@ -240,6 +240,27 @@ if(EXR_FULL_TESTS)
   add_test(NAME native-docx-edit-insert-run COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_insert_run.py
     --library $<TARGET_FILE:exreader>)
+  add_test(NAME native-docx-edit-footnotes COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_footnotes.py
+    --library $<TARGET_FILE:exreader>)
+  if(WIN32)
+    enable_language(CXX)
+    add_executable(exreader-docedit-ui-test examples/windows/check_shell_docedit.c
+      examples/windows/shell_d2d.cpp examples/windows/shell_epub.cpp examples/windows/shell_speech.cpp)
+    target_compile_features(exreader-docedit-ui-test PRIVATE cxx_std_17)
+    target_compile_definitions(exreader-docedit-ui-test PRIVATE EXR_READER_WINDOWS_SHELL=1)
+    target_link_libraries(exreader-docedit-ui-test PRIVATE exreader miniz expat d2d1 dwrite
+      gdi32 comdlg32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32)
+    if(MSVC)
+      target_compile_options(exreader-docedit-ui-test PRIVATE /UNDEBUG /utf-8)
+    else()
+      target_compile_options(exreader-docedit-ui-test PRIVATE -UNDEBUG)
+      target_link_libraries(exreader-docedit-ui-test PRIVATE m)
+    endif()
+    add_test(NAME native-docx-footnotes-ui COMMAND exreader-docedit-ui-test
+      "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/rich.docx" "${CMAKE_CURRENT_BINARY_DIR}/docedit-ui")
+    set_tests_properties(native-docx-footnotes-ui PROPERTIES LABELS "headless" TIMEOUT 90)
+  endif()
   add_test(NAME native-docx-edit-e3 COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_e3.py
     --library $<TARGET_FILE:exreader>)

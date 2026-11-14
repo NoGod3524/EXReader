@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Toolbar and keyboard commands share these model transactions. */
 enum { DE_BOLD,DE_ITALIC,DE_SMALLER,DE_SIZE,DE_LARGER,DE_COLOR,
-  DE_LEFT,DE_CENTER,DE_RIGHT,DE_JUSTIFY,DE_TEXT_BUTTONS,
+  DE_LEFT,DE_CENTER,DE_RIGHT,DE_JUSTIFY,DE_INSERT_FOOTNOTE,DE_TEXT_BUTTONS,
   DE_ADD_ROW=DE_TEXT_BUTTONS,DE_REMOVE_ROW,DE_WIDER,DE_NARROWER,DE_REMOVE_TABLE,DE_BUTTONS };
 static const uint32_t de_colors[]={0x000000,0x808080,0xff0000,0x008000,0x0000ff,0xff8000,0x800080,0xffffff};
 static const wchar_t *de_color_names[]={L"黑",L"灰",L"红",L"绿",L"蓝",L"橙",L"紫",L"白"};
@@ -147,6 +147,7 @@ static int de_apply_run(const exr_edit_run_props *change) {
 }
 static int de_command(int command,uint32_t color) {
   if(!de.doc)return 0;
+  if(command==DE_INSERT_FOOTNOTE)return de_footnote_insert();
   if(command>=DE_ADD_ROW) {
     de_cell cell=de_cell_at(de.caret.view);if(!cell.table)return 0;
     const exr_edit_block *owner=exr_edit_find_block(de.doc,cell.table);
@@ -213,7 +214,7 @@ static RECT de_toolbar_box(int index) {
     int x=8+(index-DE_TEXT_BUTTONS)*76;
     RECT box={shell_px(x,shell_dpi),shell_px(48,shell_dpi),shell_px(x+74,shell_dpi),shell_px(84,shell_dpi)};return box;
   }
-  const int widths[]={34,34,56,48,56,64,40,52,40,52};
+  const int widths[]={34,34,56,48,56,64,40,52,40,52,88};
   int x=8;for(int i=0;i<index;i++)x+=widths[i]+2;
   RECT box={shell_px(x,shell_dpi),shell_px(4,shell_dpi),
     shell_px(x+widths[index],shell_dpi),shell_px(40,shell_dpi)};return box;
@@ -224,7 +225,7 @@ static RECT de_color_box(int index) {
   box.top=(LONG)de_toolbar_height();box.bottom=box.top+size;return box;
 }
 static HRESULT de_toolbar_paint(HDC dc) {
-  const wchar_t *labels[]={L"B",L"I",L"字号−",L"",L"字号+",L"颜色▾",L"左",L"居中",L"右",L"两端",
+  const wchar_t *labels[]={L"B",L"I",L"字号−",L"",L"字号+",L"颜色▾",L"左",L"居中",L"右",L"两端",L"插入脚注",
     L"+行",L"−行",L"列宽+",L"列宽−",L"删表"};
   exr_edit_run_props props=de_current_props();wchar_t size[32];
   swprintf(size,32,L"%g",props.size_half_points/2.0);labels[DE_SIZE]=size;
@@ -234,7 +235,7 @@ static HRESULT de_toolbar_paint(HDC dc) {
   int buttons=de.caret_in_table ? DE_BUTTONS:DE_TEXT_BUTTONS;
   for(int i=0;i<buttons && SUCCEEDED(hr);i++) {
     int selected=(i==DE_BOLD && props.bold) || (i==DE_ITALIC && props.italic) ||
-      (i>=DE_LEFT && i<DE_TEXT_BUTTONS && i-DE_LEFT==align) || (i==DE_COLOR && de.color_panel);
+      (i>=DE_LEFT && i<=DE_JUSTIFY && i-DE_LEFT==align) || (i==DE_COLOR && de.color_panel);
     shell_d2d_look look={SHELL_CONTROL_GHOST,selected ? SHELL_STATE_SELECTED:0,shell_colors->layer_page,0,0};
     RECT box=de_toolbar_box(i);hr=shell_d2d_control(host_shell,dc,&box,labels[i],shell_is_dark(),&look);
   }
