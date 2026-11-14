@@ -6,6 +6,82 @@ on:
 permissions:
   contents: read
 jobs:
+  android-build-only:
+    name: Android build-only (no device acceptance)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned Android build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y patchelf
+          sdkmanager 'ndk;27.0.12077973' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build SDK, native product and APK without emulator execution
+        run: python3 tests/reader_final_a/build_android.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-build-only-android-${{ github.sha }}
+          path: |
+            build/android-host/build.json
+            build/android-host/*.apk
+            build/android-host/artifacts/
+            build/android-sdk/CMakeCache.txt
+          if-no-files-found: error
+  apple-build-only:
+    name: ${{ matrix.target }} build-only (no device acceptance)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos
+            sdk: macosx
+            platform: macos
+          - target: iphone
+            sdk: iphoneos
+            platform: iphoneos
+          - target: ipad
+            sdk: iphoneos
+            platform: iphoneos
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build SDK, native product and application without launching it
+        run: |
+          set -euo pipefail
+          args=()
+          if [ '${{ matrix.sdk }}' != macosx ]; then
+            args+=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake -S . -B build/final-a/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${args[@]}"
+          cmake --build build/final-a/sdk --parallel 4
+          cmake --install build/final-a/sdk --prefix "$PWD/build/final-a/stage"
+          if [ '${{ matrix.sdk }}' = macosx ]; then product=macos; else product=iphoneos; fi
+          python3 tools/build_apple_product.py --sdk build/final-a/stage --target "$product" --build build/final-a/product
+          python3 tools/build_apple_host.py --sdk build/final-a/stage --platform '${{ matrix.platform }}' --output build/final-a/app
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-build-only-${{ matrix.target }}-${{ github.sha }}
+          path: |
+            build/final-a/app/
+            build/final-a/product/*.json
+            build/final-a/sdk/CMakeCache.txt
+          if-no-files-found: error
   clients:
     name: Installed catalog two-client integration (${{ matrix.os }})
     strategy:
