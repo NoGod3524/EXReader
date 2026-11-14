@@ -230,6 +230,14 @@ if(EXR_FULL_TESTS)
   endforeach()
   add_test(NAME native-pptx-fill-reproducible COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-fills/generate.py --check)
+  foreach(group hello sizes master inheritance master-types bold cjk wrap breaks alignment line-spacing
+      paragraph-spacing bullets autofit autofit-invalid level body run-properties missing-font invalid-utf8)
+    add_test(NAME native-pptx-text-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_text.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
+  add_test(NAME native-pptx-text-reproducible COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-text/generate.py --check)
   foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py

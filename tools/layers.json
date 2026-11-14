@@ -13,7 +13,8 @@
       "doc"
     ],
     "pdf": [
-      "formats"
+      "formats",
+      "layout"
     ],
     "layout": [
       "formats"
