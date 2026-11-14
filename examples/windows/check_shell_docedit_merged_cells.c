@@ -27,6 +27,10 @@ int main(void) {
   assert(grid[0].columns==2 && grid[0].rows==3);
   for(size_t r=0;r<3;r++)for(size_t c=0;c<2;c++)assert(de_merge_at(grid,count,r,c)==grid);
   assert(de_merge_at(grid,count,2,2)==grid+5 && !de_merge_at(grid,count,3,0));
+  size_t row=2,col=0;int merged=0;
+  assert(de_merge_resolve(&table,&row,&col,0,&merged) && !row && !col && merged);
+  assert(de_merge_resolve(&table,&row,&col,1,&merged) && !row && col==1 && !merged);
+  assert(de_merge_resolve(&table,&row,&col,-1,&merged) && !row && !col && merged);
   free(grid);puts("PASS gridSpan + vMerge: 2 columns x 3 rows, all covered positions resolve to one owner");
   cells[0]=cell("<w:tc><w:tcPr><w:hMerge w:val='restart'/></w:tcPr></w:tc>");
   cells[1]=cell("<w:tc><w:tcPr><w:hMerge/></w:tcPr></w:tc>");

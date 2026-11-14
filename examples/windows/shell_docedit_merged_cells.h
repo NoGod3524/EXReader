@@ -88,4 +88,20 @@ static const de_merged_cell *de_merge_at(const de_merged_cell *grid,size_t count
     column-grid[i].column<grid[i].columns)return grid+grid[i].owner;
   return NULL;
 }
+/* Panel coordinates are physical row/cell indices; grid coordinates are not. */
+static int de_merge_resolve(const exr_edit_table *t,size_t *row,size_t *cell,int direction,int *merged) {
+  de_merged_cell *grid=NULL;size_t count=0,at=SIZE_MAX;
+  if(!de_merge_grid(t,&grid,&count))return 0;
+  for(size_t i=0;i<count;i++)if(grid[i].row==*row && grid[i].cell==*cell) {at=grid[i].owner;break;}
+  if(at==SIZE_MAX) {free(grid);return 0;}
+  if(direction>0) {
+    for(size_t i=at+1;i<count;i++)if(grid[i].owner==i) {at=i;break;}
+  } else if(direction<0) {
+    for(size_t i=at;i>0;) {i--;if(grid[i].owner==i) {at=i;break;}}
+  }
+  *row=grid[at].row;*cell=grid[at].cell;
+  if(merged)*merged=grid[at].columns>1 || grid[at].rows>1 || grid[at].vertical || grid[at].horizontal;
+  free(grid);return 1;
+}
+#define DE_MERGE_STRUCTURE_MESSAGE L"合并单元格可修改整格文字；不能增删行或调整列宽。"
 #endif
