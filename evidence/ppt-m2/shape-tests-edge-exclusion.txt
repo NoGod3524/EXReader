@@ -1,0 +1,164 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 315
+      Start 315: native-ppt-shape-red
+
+315: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "red"
+315: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+315: Test timeout computed to be: 10000000
+315: red-rect.ppt red-center xy=[144, 126] COM_COLORREF=0x000000FF expected=[255, 0, 0] actual=[255, 0, 0] max_error=0
+315: red-rect.ppt scale=1 interior_pixels=13600 max_RGB_error=0
+315: red-rect.ppt scale=2 interior_pixels=54400 max_RGB_error=0
+315: native-ppt-shape-red: 2 checks passed
+ 1/12 Test #315: native-ppt-shape-red .............   Passed    0.60 sec
+test 316
+      Start 316: native-ppt-shape-blue
+
+316: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "blue"
+316: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+316: Test timeout computed to be: 10000000
+316: blue-circle.ppt blue-center xy=[172, 172] COM_COLORREF=0x00FF0000 expected=[0, 0, 255] actual=[0, 0, 255] max_error=0
+316: blue-circle.ppt ellipse-corner xy=[104, 104] expected=[255, 255, 255] actual=[255, 255, 255] max_error=0
+316: blue-circle.ppt scale=1 interior_pixels=14536 max_RGB_error=0
+316: blue-circle.ppt scale=2 interior_pixels=58128 max_RGB_error=0
+316: native-ppt-shape-blue: 2 checks passed
+ 2/12 Test #316: native-ppt-shape-blue ............   Passed    0.80 sec
+test 317
+      Start 317: native-ppt-shape-overlap
+
+317: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "overlap"
+317: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+317: Test timeout computed to be: 10000000
+317: overlap.ppt red-only xy=[100, 100] COM_COLORREF=0x000000FF expected=[255, 0, 0] actual=[255, 0, 0] max_error=0
+317: overlap.ppt overlap-green xy=[200, 160] COM_COLORREF=0x0000FF00 expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+317: overlap.ppt green-only xy=[300, 240] COM_COLORREF=0x0000FF00 expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+317: overlap.ppt scale=1 interior_pixels=45408 max_RGB_error=0
+317: overlap.ppt scale=2 interior_pixels=181632 max_RGB_error=0
+317: native-ppt-shape-overlap: 2 checks passed
+ 3/12 Test #317: native-ppt-shape-overlap .........   Passed    1.27 sec
+test 318
+      Start 318: native-ppt-shape-group
+
+318: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "group"
+318: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+318: Test timeout computed to be: 10000000
+318: group.ppt group-red-center xy=[270, 195] COM_COLORREF=0x000000FF expected=[255, 0, 0] actual=[255, 0, 0] max_error=0
+318: group.ppt group-blue-center xy=[472, 295] COM_COLORREF=0x00FF0000 expected=[0, 0, 255] actual=[0, 0, 255] max_error=0
+318: group.ppt scale=1 interior_pixels=28408 max_RGB_error=0
+318: group.ppt group-red scale=1 PowerPoint=[180.0, 135.0, 360.0, 255.0] rendered_native_px=[181.0, 136.0, 359.0, 254.0] max_position_error=1px
+318: group.ppt group-blue scale=1 PowerPoint=[405.0, 255.0, 540.0, 335.0] rendered_native_px=[406.0, 256.0, 539.0, 334.0] max_position_error=1px
+318: group.ppt scale=2 interior_pixels=113632 max_RGB_error=0
+318: group.ppt group-red scale=2 PowerPoint=[180.0, 135.0, 360.0, 255.0] rendered_native_px=[181.0, 136.0, 359.0, 254.0] max_position_error=1px
+318: group.ppt group-blue scale=2 PowerPoint=[405.0, 255.0, 540.0, 335.0] rendered_native_px=[406.0, 256.0, 539.0, 334.0] max_position_error=1px
+318: native-ppt-shape-group: 2 checks passed
+ 4/12 Test #318: native-ppt-shape-group ...........   Passed    2.80 sec
+test 319
+      Start 319: native-ppt-shape-standard
+
+319: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "standard"
+319: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+319: Test timeout computed to be: 10000000
+319: standard.ppt asymmetric-color xy=[162, 144] COM_COLORREF=0x00D35311 expected=[17, 83, 211] actual=[17, 83, 211] max_error=0
+319: standard.ppt green-line xy=[180, 300] expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+319: standard.ppt unfilled-center xy=[472, 126] expected=[255, 255, 255] actual=[255, 255, 255] max_error=0
+319: standard.ppt scale=1 interior_pixels=23392 max_RGB_error=0
+319: standard.ppt scale=2 interior_pixels=93568 max_RGB_error=0
+319: native-ppt-shape-standard: 2 checks passed
+ 5/12 Test #319: native-ppt-shape-standard ........   Passed    0.74 sec
+test 320
+      Start 320: native-ppt-shape-wide
+
+320: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "wide"
+320: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+320: Test timeout computed to be: 10000000
+320: wide.ppt asymmetric-color xy=[162, 144] COM_COLORREF=0x00D35311 expected=[17, 83, 211] actual=[17, 83, 211] max_error=0
+320: wide.ppt green-line xy=[180, 300] expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+320: wide.ppt unfilled-center xy=[472, 126] expected=[255, 255, 255] actual=[255, 255, 255] max_error=0
+320: wide.ppt scale=1 interior_pixels=18384 max_RGB_error=0
+320: wide.ppt scale=2 interior_pixels=73508 max_RGB_error=0
+320: native-ppt-shape-wide: 2 checks passed
+ 6/12 Test #320: native-ppt-shape-wide ............   Passed    0.86 sec
+test 321
+      Start 321: native-ppt-shape-colors
+
+321: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "colors"
+321: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+321: Test timeout computed to be: 10000000
+321: COLORREF 0x00332211 -> RGB [17,34,51]; ellipse corner remains white
+321: native-ppt-shape-colors: 1 checks passed
+ 7/12 Test #321: native-ppt-shape-colors ..........   Passed    0.35 sec
+test 322
+      Start 322: native-ppt-shape-anchors
+
+322: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "anchors"
+322: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+322: Test timeout computed to be: 10000000
+322: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0
+322: native-ppt-shape-anchors: 8 checks passed
+ 8/12 Test #322: native-ppt-shape-anchors .........   Passed    0.71 sec
+test 323
+      Start 323: native-ppt-shape-truncated
+
+323: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "truncated"
+323: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+323: Test timeout computed to be: 10000000
+323: status=0 message=PPT warning: malformed=1 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0
+323: status=0 message=PPT warning: malformed=1 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0
+323: status=0 message=PPT warning: malformed=1 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0
+323: status=0 message=PPT warning: malformed=1 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0
+323: status=0 message=PPT warning: malformed=1 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0
+323: truncated fixed entries and complex data: malformed shape skipped; following shape blue
+323: native-ppt-shape-truncated: 5 checks passed
+ 9/12 Test #323: native-ppt-shape-truncated .......   Passed    0.56 sec
+test 324
+      Start 324: native-ppt-shape-limits
+
+324: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "limits"
+324: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+324: Test timeout computed to be: 10000000
+324: status=6 message=PPT slide exceeds 5000 shapes
+324: status=6 message=PPT slide exceeds 5000 shapes
+324: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=1 zero-chExt=0 unsupported=0
+324: native-ppt-shape-limits: 4 checks passed
+10/12 Test #324: native-ppt-shape-limits ..........   Passed    0.50 sec
+test 325
+      Start 325: native-ppt-shape-transforms
+
+325: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "transforms"
+325: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+325: Test timeout computed to be: 10000000
+325: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=1 unsupported=0
+325: native-ppt-shape-transforms: 3 checks passed
+11/12 Test #325: native-ppt-shape-transforms ......   Passed    1.06 sec
+test 326
+      Start 326: native-ppt-shape-styles
+
+326: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/check_ppt_shapes.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/tests/fixtures/ppt-shapes" "styles"
+326: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m2/build/ppt-m2
+326: Test timeout computed to be: 10000000
+326: native-ppt-shape-styles: 8 checks passed
+12/12 Test #326: native-ppt-shape-styles ..........   Passed    0.92 sec
+
+The following tests passed:
+	native-ppt-shape-red
+	native-ppt-shape-blue
+	native-ppt-shape-overlap
+	native-ppt-shape-group
+	native-ppt-shape-standard
+	native-ppt-shape-wide
+	native-ppt-shape-colors
+	native-ppt-shape-anchors
+	native-ppt-shape-truncated
+	native-ppt-shape-limits
+	native-ppt-shape-transforms
+	native-ppt-shape-styles
+
+100% tests passed out of 12
+
+Total Test time (real) =  11.25 sec

@@ -33,9 +33,11 @@ typedef struct {
 } exr_fixed_open_options;
 EXR_API int exr_pdf_crypto_available(void);
 /* Built-in fixed-format readers (PDF, CBZ, legacy PPT and PPTX). Legacy PPT
-   uses the OLE compound-document reader; PPTX exposes slide order and point
-   geometry with blank drawing, including zero slides. A successful PPTX open
-   may carry skipped-slide warnings in error->message. Memory input is copied;
+   uses the OLE compound-document reader and paints solid rectangles, ellipses
+   and lines; recoverable drawing defects carry counts in error->message.
+   PPTX exposes slide order and point geometry with blank drawing, including
+   zero slides. A successful PPTX open may carry skipped-slide warnings.
+   Memory input is copied;
    file input uses UTF-8 paths. No system font lookup or eager page painting. */
 EXR_API exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
                                           const exr_fixed_open_options *options,

@@ -1335,6 +1335,17 @@ if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_ppt.py $<TARGET_FILE:exreader-ppt-probe>
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-legacy ${group})
   endforeach()
+  add_executable(exreader-ppt-shape-probe tests/ppt_shape_probe.c)
+  target_include_directories(exreader-ppt-shape-probe PRIVATE src)
+  target_link_libraries(exreader-ppt-shape-probe PRIVATE exr_pdf exr_core)
+  if(NOT MSVC)
+    target_compile_options(exreader-ppt-shape-probe PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endif()
+  foreach(group red blue overlap group standard wide colors anchors truncated limits transforms styles)
+    add_test(NAME native-ppt-shape-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_ppt_shapes.py $<TARGET_FILE:exreader-ppt-shape-probe>
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-shapes ${group})
+  endforeach()
 endif()
 if(EXR_BUILD_TESTS)
   add_executable(exreader-style-footnotes-test tests/test_style_footnotes.c)
