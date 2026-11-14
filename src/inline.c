@@ -431,6 +431,12 @@ exr_status exr_inline_shape(flow *f, size_t start, uint32_t before, uint32_t aft
     }
     free(shaped); free(positions); positions = NULL;
   }
+  for(j=0;j<result.glyph_count;j++) {
+    exr_glyph *g=&result.glyphs[j];
+    if(exr_doc_style(f->doc,f->styles,g->node)->tracking && !(g->flags&EXR_GLYPH_HIDDEN) &&
+       (j+1==result.glyph_count || !exr_inline_same(g,g+1)))
+      g->advance=fmaxf(0,g->advance+exr_doc_style(f->doc,f->styles,g->node)->tracking);
+  }
   status = combine_groups(f, result.glyphs, result.glyph_count);
   if (status != EXR_OK) goto done;
   if (result.glyph_count > EXR_MAX_ITEMS - start ||
