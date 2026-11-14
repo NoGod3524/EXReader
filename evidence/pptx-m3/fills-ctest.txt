@@ -1,0 +1,258 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 27
+      Start 27: native-pptx-fill-image
+
+27: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "image"
+27: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+27: Test timeout computed to be: 10000000
+27: PNG 120x80: interior RGB=(0, 255, 0), max channel error=0
+27: image ellipse: clipped white corner, green center
+27: absent stretch/tile: default stretch
+ 1/19 Test #27: native-pptx-fill-image ...............   Passed    0.42 sec
+test 28
+      Start 28: native-pptx-fill-stretch
+
+28: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "stretch"
+28: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+28: Test timeout computed to be: 10000000
+28: PNG 100x50 -> 400x50: five samples=[(41, (0, 255, 0)), (139, (0, 255, 0)), (239, (0, 255, 0)), (339, (0, 255, 0)), (438, (0, 255, 0))]
+28: stretch stripe landmarks and horizontal flip: pass
+ 2/19 Test #28: native-pptx-fill-stretch .............   Passed    0.28 sec
+test 29
+      Start 29: native-pptx-fill-tile
+
+29: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "tile"
+29: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+29: Test timeout computed to be: 10000000
+29: 40px tile at 96dpi, period=30pt: [(45, (255, 0, 0)), (60, (0, 0, 255)), (75, (255, 0, 0)), (90, (0, 0, 255)), (105, (255, 0, 0)), (120, (0, 0, 255)), (255, (255, 0, 0)), (270, (0, 0, 255))]
+29: open status=0 message='PPTX warning: unsupported tile (stretch)=1; '
+29: unsupported tile tx="12700": stretch fallback
+29: open status=0 message='PPTX warning: unsupported tile (stretch)=1; '
+29: unsupported tile sx="50000": stretch fallback
+29: open status=0 message='PPTX warning: unsupported tile (stretch)=1; '
+29: unsupported tile flip="x": stretch fallback
+29: open status=0 message='PPTX warning: unsupported tile (stretch)=1; '
+29: unsupported tile algn="ctr": stretch fallback
+ 3/19 Test #29: native-pptx-fill-tile ................   Passed    0.28 sec
+test 30
+      Start 30: native-pptx-fill-image-fallback
+
+30: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "image-fallback"
+30: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+30: Test timeout computed to be: 10000000
+30: open status=0 message='PPTX warning: missing/invalid image (gray)=1; '
+30: missing part: status=0, fill RGB=(204, 204, 204), warning present
+30: open status=0 message='PPTX warning: missing/invalid image (gray)=1; '
+30: decode failure: status=0, fill RGB=(204, 204, 204), warning present
+30: open status=0 message='PPTX warning: missing/invalid image (gray)=1; '
+30: missing relationship: status=0, fill RGB=(204, 204, 204), warning present
+30: open status=0 message='PPTX warning: missing/invalid image (gray)=1; '
+30: external target: status=0, fill RGB=(204, 204, 204), warning present
+30: open status=0 message='PPTX warning: missing/invalid image (gray)=1; '
+30: unsafe path: status=0, fill RGB=(204, 204, 204), warning present
+ 4/19 Test #30: native-pptx-fill-image-fallback ......   Passed    0.30 sec
+test 31
+      Start 31: native-pptx-fill-relative-path
+
+31: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "relative-path"
+31: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+31: Test timeout computed to be: 10000000
+31: part ppt/custom/slides/page.xml, target=../../../assets/green.png: RGB=(0, 255, 0)
+31: part ppt/custom/slides/page.xml, target=/assets/green.png: RGB=(0, 255, 0)
+ 5/19 Test #31: native-pptx-fill-relative-path .......   Passed    0.27 sec
+test 32
+      Start 32: native-pptx-fill-formats
+
+32: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "formats"
+32: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+32: Test timeout computed to be: 10000000
+32: BMP through shared decoder: RGB=(220, 30, 40)
+32: GIF through shared decoder: RGB=(220, 30, 40)
+32: JPEG through shared decoder: RGB=(64, 64, 64)
+32: JPEG quadrant orientation: red/green top, blue bottom-left
+ 6/19 Test #32: native-pptx-fill-formats .............   Passed    0.27 sec
+test 33
+      Start 33: native-pptx-fill-picture
+
+33: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "picture"
+33: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+33: Test timeout computed to be: 10000000
+33: p:pic/p:blipFill: RGB=(0, 255, 0)
+ 7/19 Test #33: native-pptx-fill-picture .............   Passed    0.32 sec
+test 34
+      Start 34: native-pptx-fill-fill-transforms
+
+34: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "fill-transforms"
+34: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+34: Test timeout computed to be: 10000000
+34: image rotate90: red top, blue bottom; width=50 height=400
+34: image nested group scale0.5 + offset100,80: point=(150, 120), RGB=(0, 255, 0)
+34: gradient nested group scale0.5 + offset100,80: point=(220, 120), RGB=(127, 0, 128)
+ 8/19 Test #34: native-pptx-fill-fill-transforms .....   Passed    0.35 sec
+test 35
+      Start 35: native-pptx-fill-sink
+
+35: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "sink"
+35: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+35: Test timeout computed to be: 10000000
+35: image sink: events=['save', 'clip', 'image', 'restore'], image dimensions/matrix/alpha=((100, 50), (800.0, 0.0, 0.0, 150.0, 91.0, 133.0), 1.0)
+35: save sink failure: propagated, events=['save']
+35: clip sink failure: propagated, events=['save', 'clip', 'restore']
+35: image sink failure: propagated, events=['save', 'clip', 'image', 'restore']
+35: restore sink failure: propagated, events=['save', 'clip', 'image', 'restore']
+35: tile cancellation after first image: status=9, events=['save', 'clip', 'image', 'restore']
+ 9/19 Test #35: native-pptx-fill-sink ................   Passed    0.32 sec
+test 36
+      Start 36: native-pptx-fill-gradient
+
+36: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "gradient"
+36: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+36: Test timeout computed to be: 10000000
+36: red -> blue angle=0, nine x=(40, 90, 140, 190, 240, 290, 340, 390, 439): RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (64, 0, 192), (32, 0, 224), (0, 0, 255)]; monotone=True
+10/19 Test #36: native-pptx-fill-gradient ............   Passed    0.27 sec
+test 37
+      Start 37: native-pptx-fill-gradient-angles
+
+37: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "gradient-angles"
+37: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+37: Test timeout computed to be: 10000000
+37: gradient angle=90: points=((240, 40), (240, 119)), RGB=[(254, 0, 2), (2, 0, 254)]
+37: gradient angle=180: points=((439, 80), (40, 80)), RGB=[(255, 0, 0), (0, 0, 255)]
+37: gradient angle=270: points=((240, 119), (240, 40)), RGB=[(254, 0, 2), (2, 0, 254)]
+37: gradient angle=45: points=((40, 40), (439, 119)), RGB=[(254, 0, 1), (1, 0, 254)]
+37: gradient rotated shape: top red, bottom blue
+11/19 Test #37: native-pptx-fill-gradient-angles .....   Passed    0.38 sec
+test 38
+      Start 38: native-pptx-fill-gradient-stops
+
+38: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "gradient-stops"
+38: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+38: Test timeout computed to be: 10000000
+38: nonuniform stops 0/25000/100000: [(40, (254, 2, 0)), (90, (126, 129, 0)), (140, (0, 255, 1)), (290, (0, 127, 128)), (439, (0, 1, 255))]
+38: gradient alpha=50% endpoints: (255, 127, 127), (127, 127, 255)
+12/19 Test #38: native-pptx-fill-gradient-stops ......   Passed    0.36 sec
+test 39
+      Start 39: native-pptx-fill-gradient-fallback
+
+39: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "gradient-fallback"
+39: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+39: Test timeout computed to be: 10000000
+39: open status=0 message='PPTX warning: gradient fallback/invalid=1; '
+39: gradient stops=1: solid RGB=(55, 162, 92), warning present
+39: open status=0 message='PPTX warning: gradient fallback/invalid=1; '
+39: gradient stops=0: solid RGB=(0, 0, 0), warning present
+13/19 Test #39: native-pptx-fill-gradient-fallback ...   Passed    0.34 sec
+test 40
+      Start 40: native-pptx-fill-theme
+
+40: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "theme"
+40: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+40: Test timeout computed to be: 10000000
+40: schemeClr dk1      -> #102030 -> RGB=(16, 32, 48)
+40: schemeClr lt1      -> #F1F2F3 -> RGB=(241, 242, 243)
+40: schemeClr dk2      -> #203040 -> RGB=(32, 48, 64)
+40: schemeClr lt2      -> #D1D2D3 -> RGB=(209, 210, 211)
+40: schemeClr accent1  -> #12A65B -> RGB=(18, 166, 91)
+40: schemeClr accent2  -> #C23A55 -> RGB=(194, 58, 85)
+40: schemeClr accent3  -> #3579BD -> RGB=(53, 121, 189)
+40: schemeClr accent4  -> #A05BCA -> RGB=(160, 91, 202)
+40: schemeClr accent5  -> #29ADC5 -> RGB=(41, 173, 197)
+40: schemeClr accent6  -> #E5A336 -> RGB=(229, 163, 54)
+40: schemeClr hlink    -> #2255DD -> RGB=(34, 85, 221)
+40: schemeClr folHlink -> #8844AA -> RGB=(136, 68, 170)
+40: schemeClr tx1      -> #102030 -> RGB=(16, 32, 48)
+40: schemeClr bg1      -> #F1F2F3 -> RGB=(241, 242, 243)
+40: schemeClr tx2      -> #203040 -> RGB=(32, 48, 64)
+40: schemeClr bg2      -> #D1D2D3 -> RGB=(209, 210, 211)
+40: theme sysClr lastClr: RGB=(16, 32, 48)
+14/19 Test #40: native-pptx-fill-theme ...............   Passed    0.34 sec
+test 41
+      Start 41: native-pptx-fill-theme-default
+
+41: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "theme-default"
+41: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+41: Test timeout computed to be: 10000000
+41: open status=0 message='PPTX warning: missing theme1.xml/clrScheme (default theme)=1; '
+41: theme1.xml missing: builtin accent1 RGB=(79, 129, 189), warning present
+15/19 Test #41: native-pptx-fill-theme-default .......   Passed    0.32 sec
+test 42
+      Start 42: native-pptx-fill-color-transforms
+
+42: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "color-transforms"
+42: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+42: Test timeout computed to be: 10000000
+42: HSL transforms [('lumMod', 50000), ('lumOff', 20000), ('tint', 25000), ('shade', 80000)]: RGB=(106, 239, 172), oracle=(106, 239, 172)
+42: HSL transforms [('shade', 80000), ('tint', 25000), ('lumOff', 20000), ('lumMod', 50000)]: RGB=(25, 230, 126), oracle=(25, 230, 126)
+42: tint=0: RGB=(255, 255, 255)
+42: tint=100000: RGB=(18, 166, 91)
+16/19 Test #42: native-pptx-fill-color-transforms ....   Passed    0.32 sec
+test 43
+      Start 43: native-pptx-fill-alpha
+
+43: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "alpha"
+43: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+43: Test timeout computed to be: 10000000
+43: alpha=50000 red over white: RGB=(255, 127, 127)
+43: alpha=50000 red over blue: RGB=(128, 0, 127)
+43: alpha=0: white background visible
+17/19 Test #43: native-pptx-fill-alpha ...............   Passed    0.44 sec
+test 44
+      Start 44: native-pptx-fill-alpha-invalid
+
+44: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_fills.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "alpha-invalid"
+44: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+44: Test timeout computed to be: 10000000
+44: open status=0 message='PPTX warning: invalid alpha (opaque)=1; '
+44: alpha=100001: RGB=(255, 0, 0), opaque fallback + warning
+44: open status=0 message='PPTX warning: invalid alpha (opaque)=1; '
+44: alpha=200000: RGB=(255, 0, 0), opaque fallback + warning
+44: open status=0 message='PPTX warning: invalid alpha (opaque)=1; '
+44: alpha=-1: RGB=(255, 0, 0), opaque fallback + warning
+44: open status=0 message='PPTX warning: invalid alpha (opaque)=1; '
+44: alpha=bad: RGB=(255, 0, 0), opaque fallback + warning
+18/19 Test #44: native-pptx-fill-alpha-invalid .......   Passed    0.29 sec
+test 45
+      Start 45: native-pptx-fill-reproducible
+
+45: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/fixtures/pptx-fills/generate.py" "--check"
+45: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+45: Test timeout computed to be: 10000000
+45: image: deterministic OPC 2555 bytes
+45: stretch: deterministic OPC 2511 bytes
+45: tile: deterministic OPC 2504 bytes
+45: gradient: deterministic OPC 2325 bytes
+45: theme: deterministic OPC 2521 bytes
+45: alpha: deterministic OPC 2297 bytes
+19/19 Test #45: native-pptx-fill-reproducible ........   Passed    0.20 sec
+
+The following tests passed:
+	native-pptx-fill-image
+	native-pptx-fill-stretch
+	native-pptx-fill-tile
+	native-pptx-fill-image-fallback
+	native-pptx-fill-relative-path
+	native-pptx-fill-formats
+	native-pptx-fill-picture
+	native-pptx-fill-fill-transforms
+	native-pptx-fill-sink
+	native-pptx-fill-gradient
+	native-pptx-fill-gradient-angles
+	native-pptx-fill-gradient-stops
+	native-pptx-fill-gradient-fallback
+	native-pptx-fill-theme
+	native-pptx-fill-theme-default
+	native-pptx-fill-color-transforms
+	native-pptx-fill-alpha
+	native-pptx-fill-alpha-invalid
+	native-pptx-fill-reproducible
+
+100% tests passed out of 19
+
+Total Test time (real) =   6.15 sec
