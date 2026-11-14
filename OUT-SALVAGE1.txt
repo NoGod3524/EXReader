@@ -1,0 +1,39 @@
+已完成，提交 `6de6dc0c`，PR **[#207](https://github.com/NoGod3524/EXReader/pull/207)**，base=`main`，无合并冲突。新工作树从 `origin/main@953a7644` 创建。
+
+| 项目 | 结论与关键改动 |
+|---|---|
+| A | 已移植：读取行时检查 200 上限，绘制复用 `row_cells[r]`；畸形 frame 无法绕过检查。 |
+| B | 已移植：复用 `has_cjk_font()` 分流，验证四种字形轮廓及文本框栅格一致性。 |
+| C | 已移植：`styles[kind][i ? i-1 : 0]` → `styles[kind][level]`，避免上一层属性泄漏。 |
+| D | 已移植：`text_cf_overlay(&paragraph, &cf[k].props)`；空行保留字体度量、去掉下划线。 |
+| E | 已移植：增加母版继承、空行间距及无墨迹断言，保留 M6 的 `extra_shapes`。 |
+
+逐项理由和 diff 片段见[验收报告](<workspace>/evidence/salvage-1/REPORT.md)，[完整 diff](<workspace>/evidence/salvage-1/intent.diff)。
+
+实际验收结果：
+
+```text
+BUILD exit=0 errors=0 warnings=0
+100% tests passed out of 581
+Total Test time (real) = 142.76 sec
+ctest exit=0
+prepush exit=0
+```
+
+[完整编译输出](<workspace>/evidence/salvage-1/build.txt) · [完整 CTest 输出](<workspace>/evidence/salvage-1/ctest.txt) · [prepush 输出](<workspace>/evidence/salvage-1/prepush.txt)
+
+新增及加强测试 **19/19 通过**，包括全部 15 个 `native-ppt-text-*` 组，共 83 次检查。实际输出节选：
+
+```text
+201 tc + missing xfrm: status=6 EXR_LIMIT
+table CJK: four distinct glyph masks, pixels=1181
+48pt empty paragraph/soft line 'A\r\rB': visible gap=224px, expected=224px
+MainMaster level1, prior-level size=36:
+matching Environment inheritance -> 48pt/alignment2, exact explicit-style raster match
+```
+
+[定向测试完整 verbose 输出](<workspace>/evidence/salvage-1/targeted-tests.txt)
+
+A–E 没有已在 main 而跳过的项目。唯一跳过的是旧文档中写死“79 次检查”的历史结果链接。
+
+全量首轮有一项因 cp1252 解码失败；设置 `PYTHONUTF8=1` 后完整重跑，581/581 全绿。`tests/check_reading_release.py` 未修改。
