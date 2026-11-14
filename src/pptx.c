@@ -1080,7 +1080,9 @@ static exr_status text_font(pptx_document *d,exr_document *model,exr_style *styl
     styles[i].family=family;
     if(strcmp(family,"sans-serif") && !exr_font_manager_has_family(d->font_manager,family)) {
       if(!text_warning(&d->font_fallbacks,family)) return exr_fail(e,EXR_LIMIT,"PPTX font warnings exceed budget");
-      family=exr_font_manager_has_family(d->font_manager,"Segoe UI") ? "Segoe UI" : "sans-serif";
+      /* Carlito preserves Calibri's advances when Office fonts are absent. */
+      if(exr_family_equal(family,"Calibri") && exr_font_manager_has_family(d->font_manager,"Carlito")) family="Carlito";
+      else family=exr_font_manager_has_family(d->font_manager,"Segoe UI") ? "Segoe UI" : "sans-serif";
       styles[i].family=family;
     }
     status=exr_font_manager_chain(d->font_manager,family,styles[i].flags&3,&chain,&chain_count,e);
@@ -1909,23 +1911,6 @@ static void warnings(const pptx_document *d,exr_error *e) {
   if(d->invalid_utf8) warning_append(message,"invalid UTF-8 skipped run(s)=%zu; ",d->invalid_utf8);
   if(d->text_scale_warning) warning_append(message,"invalid fontScale (100%%)=%zu; ",d->text_scale_warning);
   if(d->text_level_warning) warning_append(message,"level>8 (clamped)=%zu; ",d->text_level_warning);
-  if(d->font_fallbacks.size) {
-    warning_append(message,"font fallback=");
-    while(at<d->font_fallbacks.size) {
-      warning_append(message,"%s%s",at ? "," : "",d->font_fallbacks.data+at);
-      at+=strlen(d->font_fallbacks.data+at)+1;
-    }
-    warning_append(message,"; ");
-  }
-  at=0;
-  if(d->glyph_fallbacks.size) {
-    warning_append(message,"missing glyph: ");
-    while(at<d->glyph_fallbacks.size) {
-      warning_append(message,"%s; ",d->glyph_fallbacks.data+at);
-      at+=strlen(d->glyph_fallbacks.data+at)+1;
-    }
-  }
-  at=0;
   if(d->skipped) warning_append(message,"skipped %zu slide reference(s) with missing or invalid parts; ",d->skipped);
   if(d->missing) warning_append(message,"missing off/ext=%zu; ",d->missing);
   if(d->zero_extent) warning_append(message,"chExt=0 (1:1)=%zu; ",d->zero_extent);
@@ -1944,6 +1929,25 @@ static void warnings(const pptx_document *d,exr_error *e) {
       warning_append(message,"%s%s",at ? "," : "",d->fallbacks.data+at);
       at+=strlen(d->fallbacks.data+at)+1;
     }
+  }
+  /* Keep structural diagnostics ahead of the potentially long host font lists. */
+  at=0;
+  if(d->font_fallbacks.size) {
+    warning_append(message,"font fallback=");
+    while(at<d->font_fallbacks.size) {
+      warning_append(message,"%s%s",at ? "," : "",d->font_fallbacks.data+at);
+      at+=strlen(d->font_fallbacks.data+at)+1;
+    }
+    warning_append(message,"; ");
+  }
+  at=0;
+  while(at<d->glyph_fallbacks.size) {
+    const char *prefix=at ? "" : "missing glyph: ";
+    size_t length=strlen(d->glyph_fallbacks.data+at);
+    /* Stop at a complete record, never halfway through a family or codepoint. */
+    if(strlen(message)+strlen(prefix)+length+2>=sizeof(message)) break;
+    warning_append(message,"%s%s; ",prefix,d->glyph_fallbacks.data+at);
+    at+=length+1;
   }
   if(strlen(message)>14) exr_fail(e,EXR_OK,"%s",message);
 }
