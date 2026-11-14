@@ -1,0 +1,11 @@
+if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  return()
+endif()
+enable_testing()
+function(l08_perf_target)
+  add_executable(exreader-l08-perf "${CMAKE_SOURCE_DIR}/tests/test_l08_reflow_perf.c")
+  target_link_libraries(exreader-l08-perf PRIVATE exreader)
+  add_test(NAME native-l08-reflow-perf COMMAND exreader-l08-perf
+    "${CMAKE_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf")
+endfunction()
+cmake_language(DEFER CALL l08_perf_target)
