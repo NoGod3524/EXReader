@@ -239,7 +239,7 @@ if(EXR_FULL_TESTS)
   endforeach()
   add_test(NAME native-pptx-text-reproducible COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-text/generate.py --check)
-  foreach(group fills borders columns text merges anchor malformed margins overflow transforms limits sink)
+  foreach(group fills borders columns text merges anchor malformed margins overflow transforms limits sink cjk namespaces invalid-spans)
     add_test(NAME native-pptx-table-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_tables.py
       --library $<TARGET_FILE:exreader> ${group})
