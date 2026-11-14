@@ -6,13 +6,20 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import time
 import zipfile
 
 API = 'repos/NoGod3524/EXReader/'
 
 
 def api(path):
-    return subprocess.check_output(['gh', 'api', API + path])
+    for attempt in range(3):
+        try:
+            return subprocess.check_output(['gh', 'api', API + path], timeout=120)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            if attempt == 2:
+                raise
+            time.sleep(attempt + 1)
 
 
 def main():

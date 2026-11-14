@@ -14,6 +14,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install the same pinned Calibri substitute as native CI
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          from urllib.request import urlopen
+          source = 'https://raw.githubusercontent.com/google/fonts/605c9f29dd5770762bd7ee8ea8ac4ae7664b2b7b/ofl/carlito/'
+          directory = Path.home() / '.local/share/fonts'
+          directory.mkdir(parents=True, exist_ok=True)
+          for name, checksum in (
+              ('Carlito-Regular.ttf', 'f6418f708baede9789daef5d458c0f53d2a888af9820e8062934e504fedc6595'),
+              ('OFL.txt', '58402f82a7c332a700294988fe7554fbb0a63a8d27ccc1ee3bbc640311990a00'),
+          ):
+              with urlopen(source + name, timeout=60) as response:
+                  data = response.read()
+              assert sha256(data).hexdigest() == checksum, name
+              (directory / ('Carlito-OFL.txt' if name == 'OFL.txt' else name)).write_bytes(data)
+          PY
       - name: Build and install current SDK
         run: |
           set -euo pipefail
