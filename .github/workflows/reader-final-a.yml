@@ -6,6 +6,63 @@ on:
 permissions:
   contents: read
 jobs:
+  native-https:
+    name: Native HTTPS session and crash boundaries (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install native TLS fixture and transport dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build openssl
+      - name: Build installed native modules and original consumers from this source
+        run: |
+          set -euo pipefail
+          prefix="$PWD/build/final-a-https/stage"
+          if [ "$RUNNER_OS" = Windows ]; then prefix=$(cygpath -m "$prefix"); fi
+          for entry in 'store:apps/reader/store/native' 'dav:extras/webdav' 'revisions:apps/reader/revisions' 'sync:apps/reader/sync' 'session:apps/reader/session'; do
+            name=${entry%%:*}
+            source=${entry#*:}
+            cmake -S "$source" -B "build/final-a-https/$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix" -DREADER_PRODUCT_PREFIX="$prefix"
+            cmake --build "build/final-a-https/$name" --parallel 4
+            cmake --install "build/final-a-https/$name"
+          done
+          for entry in 'revision:reader_revisions' 'session:reader_session' 'resilience:reader_sync_resilience'; do
+            name=${entry%%:*}
+            source=${entry#*:}
+            cmake -S "tests/$source/consumer" -B "build/final-a-https/$name-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+            cmake --build "build/final-a-https/$name-consumer" --parallel 4
+          done
+      - name: Run unchanged 20 session checks and 21 real HTTPS fault boundaries
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python tests/reader_session/check_session.py --consumer "build/final-a-https/session-consumer/session-consumer$exe" --revision-consumer "build/final-a-https/revision-consumer/revision-consumer$exe" --output build/final-a-https/session-evidence
+          python tests/reader_sync_resilience/check_resilience.py --consumer "build/final-a-https/resilience-consumer/resilience-consumer$exe" --revision-consumer "build/final-a-https/revision-consumer/revision-consumer$exe" --original-report build/final-a-https/session-evidence/result.json --output build/final-a-https/resilience-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-native-https-${{ runner.os }}-${{ github.sha }}
+          path: |
+            build/final-a-https/session-evidence/
+            build/final-a-https/resilience-evidence/
+            build/final-a-https/*/CMakeCache.txt
+            !build/**/certificates/*.key
+          if-no-files-found: error
   android-build-only:
     name: Android build-only (no device acceptance)
     runs-on: ubuntu-22.04
