@@ -1,0 +1,16 @@
+控制台验收通过；宿主接入仍待范围授权，快捷键与滚动尚不能报完成。
+
+① `shell_docedit_find.inc` 共228行；新增验收代码58行、CMake25行、说明19行、接入补丁85行。未修改共享宿主文件。
+
+② 验收命令：
+
+```text
+ctest --test-dir build/l05-find --output-on-failure -V
+PASS find: 3 selected hits, forward/backward wrap
+PASS replace all: 3 replacements, one Ctrl+Z restores all, Ctrl+Y reapplies
+100% tests passed out of 1
+```
+
+跨 run、样式保留、失败回滚、中文/emoji检查也通过；prepush 门禁通过。
+
+③ 当前为区分大小写的正文段落字面匹配。按你“严禁越界”的规则，[4个共享文件的接入补丁](/C:/Users/Oscar/Documents/Codex/EXReader-fan-L05/examples/windows/find_acceptance/host-integration.patch)已准备并通过应用检查，等待允许应用。

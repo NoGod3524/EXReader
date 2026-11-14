@@ -1,0 +1,5 @@
+已交付可运行的 [EXReaderL07.exe](/C:/Users/Oscar/Documents/Codex/EXReader-fan-L07/build/l07-a11y/EXReaderL07.exe)。
+
+① 新增 8 个文件、867 行；未直接修改共享既有文件。  
+② headless 验收：`100% tests passed`；prepush 全部通过。逐步中文描述、命令和真实输出见 [验收记录](/C:/Users/Oscar/Documents/Codex/EXReader-fan-L07/OUT-L07.txt)。  
+③ 默认共享宿主尚未接入；交付采用独立宿主。真实读屏及原生焦点视觉效果未验证；受保护单元格、按文字段编辑等边界已记录。
