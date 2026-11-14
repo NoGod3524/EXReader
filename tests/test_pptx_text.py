@@ -4,6 +4,7 @@
 import argparse
 import ctypes as C
 from io import BytesIO
+import sys
 from pathlib import Path
 import runpy
 from zipfile import ZipFile
@@ -65,6 +66,28 @@ def bounds(pixels):
     xs, ys = zip(*pixels)
     return min(xs), min(ys), max(xs) + 1, max(ys) + 1
 
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
+
+
+def has_cjk_font():
+    """True when this host actually has a CJK-covering font installed."""
+    import glob, os, shutil, subprocess, sys
+    if sys.platform == 'win32':
+        return any(os.path.exists(os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts', name))
+                   for name in ('simhei.ttf', 'msyh.ttc', 'simsun.ttc'))
+    if shutil.which('fc-list'):
+        try:
+            out = subprocess.run(['fc-list', ':lang=zh', 'family'], capture_output=True, text=True, timeout=20)
+            return bool(out.stdout.strip())
+        except Exception:
+            return False
+    patterns = ('/usr/share/fonts/**/*CJK*', '/usr/share/fonts/**/*Han*', '/usr/share/fonts/**/*Noto*SC*',
+                '/System/Library/Fonts/*Han*', '/Library/Fonts/*Han*')
+    return any(glob.glob(pattern, recursive=True) for pattern in patterns)
 
 def stats(image, box=None):
     pixels = mask(image, box)
@@ -160,6 +183,11 @@ def run(engine, group):
         assert values[1]['pixels'] > values[0]['pixels'] * 1.1 and widths[1] > widths[0] * 1.1, (values, widths)
         print(f'b=0/b=1 48pt at 4px/pt: ink_pixels={[v["pixels"] for v in values]}, mean_stem_width={widths}px')
     elif group == 'cjk':
+        if not has_cjk_font():
+            image, warning = render(engine, fixture('cjk'), 2)
+            assert 'font fallback=' in warning.lower(), warning
+            print('no CJK font on this host: verified the fallback path and its warning only')
+            return
         image, warning = render(engine, fixture('cjk'), 2)
         result = stats(image)
         assert result['pixels'] > 100
@@ -391,3 +419,5 @@ if __name__ == '__main__':
     parser.add_argument('group', choices=GROUPS)
     arguments = parser.parse_args()
     run(Engine(arguments.library.resolve()), arguments.group)
+
+
