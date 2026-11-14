@@ -21,6 +21,7 @@ typedef struct {
 /* Border sides use CSS physical order: 0 top, 1 right, 2 bottom, 3 left. */
 typedef struct {
   float font_size, leading, indent, border_width[4];
+  float tracking; /* Additional advance per shaped cluster, in layout units. */
   const char *family;
   int family_owned;
   int leading_relative, align, display, before, after, border_style[4], writing_declared;

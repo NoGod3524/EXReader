@@ -1,0 +1,22 @@
+已完成。[完整报告与新增函数清单](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m4/OUT-PPTXM4.txt) · [原始验收输出](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m4/build/pptx-m4/text-acceptance.log) · [位图总览](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m4/build/pptx-m4/text-contact-sheet.png)
+
+`src/pptx.c`：非空行 **1088→1808（+720）**，物理行 **1133→1878**；新增 **22 个函数**。
+
+| 验收 | 真实结果 |
+|---|---|
+| ① Hello 居中 | 237 个字形像素；中心偏差 **0.5px** |
+| ② 12/24/48pt | 高度 **37/72/146px**，比例 **1:1.946:3.946** |
+| ③ 母版独设 28pt | 高 **85px**，与显式 28pt **逐像素一致** |
+| ④ 加粗 | 墨量 **18360→33480**；平均笔画宽 **15→31px** |
+| ⑤ 中文 | SimHei **3903px**；缺字回退 **2724px**，均为四个不同中文字形 |
+| ⑥ 200 字符换行 | **14 行**，行宽全部 **≤180px** |
+| ⑦ 自动编号 | “1.”、“2.”、“3.” 与独立文字对照的 **IoU 均为 1.0** |
+| ⑧ autofit 62500 | 高度 **146→91px（62.33%）**，与显式 30pt 完全一致 |
+| ⑨ 全量回归 | **514/514 通过，86.49 秒**；仅排除指定两项，M2/M3 **33/33** |
+| ⑩ 新增 CTest | `native-pptx-text-*` **21/21 通过** |
+
+字号、粗体及 autofit 对比采用 **4px/pt**。确定性 `--check`、分层检查和 **prepush 全部通过**。
+
+字体回退清单：不存在的 `M4 Missing Font` 回退 Segoe UI；Segoe UI 的中文缺字通过字体链恢复并警告；无字体覆盖的 `U+0378` 明确报告 `missing`。完整警告原文见报告。
+
+已知边界：自动编号仅支持阿拉伯数字加句点；主题字体别名、竖排、多栏和彩色位图字形尚未覆盖。autofit 按指定属性直接计算。
