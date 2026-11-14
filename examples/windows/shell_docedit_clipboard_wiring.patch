@@ -1,0 +1,17 @@
+diff --git a/examples/windows/shell_docedit_input.inc b/examples/windows/shell_docedit_input.inc
+--- a/examples/windows/shell_docedit_input.inc
++++ b/examples/windows/shell_docedit_input.inc
+@@ -252,6 +252,7 @@ static int de_edit(int operation,const char *text,size_t n) {
+   de_set_caret(caret);de_set_anchor(anchor);de.pending_props=pending;
+   set_status(L"无法编辑此位置（表格、图片、保留内容或内存不足）；此次修改已撤回。");return 0;
+ }
++#include "shell_docedit_clipboard.inc"
+ static int de_key(WPARAM key,int control,int shift) {
+   if(!de.doc)return 0;
+   de.high_surrogate=0;
+@@ -259,4 +260,5 @@ static int de_key(WPARAM key,int control,int shift) {
+   if(control) {
++    if(de_clipboard_key(key))return 1;
+     if(key=='B' || key=='I') {de_command(key=='B' ? DE_BOLD:DE_ITALIC,0);return 1;}
+     if(shift && (key==VK_OEM_PERIOD || key==VK_OEM_COMMA)) {
+       de_command(key==VK_OEM_PERIOD ? DE_LARGER:DE_SMALLER,0);return 1;
