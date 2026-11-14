@@ -1,0 +1,22 @@
+file=blue-circle.ppt
+PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0
+n=6 flags=1 fill=0000ffff stroke=000000ff width=1.5 first=(244,172)
+file=group.ppt
+PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0
+n=5 flags=1 fill=ff0000ff stroke=000000ff width=1.5 first=(180,135)
+n=5 flags=1 fill=0000ffff stroke=000000ff width=1.5 first=(405,255)
+file=overlap.ppt
+PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0
+n=5 flags=1 fill=ff0000ff stroke=000000ff width=1.5 first=(72,72)
+n=5 flags=1 fill=00ff00ff stroke=000000ff width=1.5 first=(162,126)
+file=red-rect.ppt
+PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0
+n=5 flags=1 fill=ff0000ff stroke=000000ff width=1.5 first=(72,72)
+file=standard.ppt
+PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0
+n=5 flags=1 fill=1153d3ff stroke=000000ff width=1.5 first=(72,72)
+n=2 flags=2 fill=000000ff stroke=00ff00ff width=6 first=(72,300)
+file=wide.ppt
+PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0
+n=6 flags=1 fill=1153d3ff stroke=000000ff width=1.5 first=(252,144)
+n=2 flags=2 fill=000000ff stroke=00ff00ff width=6 first=(72,300)

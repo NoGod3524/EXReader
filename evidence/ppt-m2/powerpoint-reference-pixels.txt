@@ -1,0 +1,17 @@
+command=python tests/fixtures/ppt-shapes/verify_reference.py
+red-rect.ppt red-center: pixel=(144,126) expected=[255, 0, 0] actual=[255, 0, 0] PASS
+blue-circle.ppt blue-center: pixel=(172,172) expected=[0, 0, 255] actual=[0, 0, 255] PASS
+blue-circle.ppt ellipse-corner: pixel=(104,104) expected=[255, 255, 255] actual=[255, 255, 255] PASS
+overlap.ppt red-only: pixel=(100,100) expected=[255, 0, 0] actual=[255, 0, 0] PASS
+overlap.ppt overlap-green: pixel=(200,160) expected=[0, 255, 0] actual=[0, 255, 0] PASS
+overlap.ppt green-only: pixel=(300,240) expected=[0, 255, 0] actual=[0, 255, 0] PASS
+group.ppt group-red-center: pixel=(270,195) expected=[255, 0, 0] actual=[255, 0, 0] PASS
+group.ppt group-blue-center: pixel=(472,295) expected=[0, 0, 255] actual=[0, 0, 255] PASS
+standard.ppt asymmetric-color: pixel=(162,144) expected=[17, 83, 211] actual=[17, 83, 211] PASS
+standard.ppt green-line: pixel=(180,300) expected=[0, 255, 0] actual=[0, 255, 0] PASS
+standard.ppt unfilled-center: pixel=(472,126) expected=[255, 255, 255] actual=[255, 255, 255] PASS
+wide.ppt asymmetric-color: pixel=(162,144) expected=[17, 83, 211] actual=[17, 83, 211] PASS
+wide.ppt green-line: pixel=(180,300) expected=[0, 255, 0] actual=[0, 255, 0] PASS
+wide.ppt unfilled-center: pixel=(472,126) expected=[255, 255, 255] actual=[255, 255, 255] PASS
+PowerPoint reference PNG samples: 14 passed across 6 fixtures
+exit_code=0

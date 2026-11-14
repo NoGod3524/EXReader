@@ -55,17 +55,55 @@ static char *summary_title(const unsigned char *p,size_t size) {
 invalid:
   free(text.data);return NULL;
 }
+static void release(void *context) {
+  exr_ppt_drawing *d=context;
+  if(d) { exr_ppt_drawing_free(d);free(d); }
+}
+static exr_path_point point(const exr_ppt_shape *s,double x,double y) {
+  exr_path_point p={s->bounds[0]+x*(s->bounds[2]-s->bounds[0]),
+                    s->bounds[1]+y*(s->bounds[3]-s->bounds[1])};
+  return p;
+}
 static exr_status draw(void *context,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
-  (void)context;(void)page;(void)matrix;(void)sink;
-  return exr_control_cancel(control,e);
+  exr_ppt_drawing *d=context;size_t i;exr_status status=exr_control_cancel(control,e);
+  if(status!=EXR_OK) return status;
+  if(page>=d->pages) return exr_fail(e,EXR_ARGUMENT,"Invalid PPT slide index");
+  for(i=d->slides[page].first;i<d->slides[page].first+d->slides[page].count;i++) {
+    const exr_ppt_shape *s=&d->shapes[i];exr_path_segment p[6]={0};size_t count=0;
+    status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;
+    p[0].verb=EXR_PATH_MOVE;
+    if(s->type==3) {
+      const double k=.5522847498307936/2;
+      p[0].points[0]=point(s,1,.5);
+      p[1].verb=p[2].verb=p[3].verb=p[4].verb=EXR_PATH_CUBIC;
+      p[1].points[0]=point(s,1,.5+k);p[1].points[1]=point(s,.5+k,1);p[1].points[2]=point(s,.5,1);
+      p[2].points[0]=point(s,.5-k,1);p[2].points[1]=point(s,0,.5+k);p[2].points[2]=point(s,0,.5);
+      p[3].points[0]=point(s,0,.5-k);p[3].points[1]=point(s,.5-k,0);p[3].points[2]=point(s,.5,0);
+      p[4].points[0]=point(s,.5+k,0);p[4].points[1]=point(s,1,.5-k);p[4].points[2]=point(s,1,.5);
+      p[5].verb=EXR_PATH_CLOSE;count=6;
+    } else {
+      p[0].points[0]=point(s,0,0);p[1].verb=EXR_PATH_LINE;
+      if(s->type==20 || s->type==32) { p[1].points[0]=point(s,1,1);count=2; }
+      else {
+        p[1].points[0]=point(s,1,0);p[2].verb=p[3].verb=EXR_PATH_LINE;
+        p[2].points[0]=point(s,1,1);p[3].points[0]=point(s,0,1);p[4].verb=EXR_PATH_CLOSE;count=5;
+      }
+    }
+    if(sink->path) { status=sink->path(sink->context,p,count,matrix,&s->style,e);if(status!=EXR_OK) return status; }
+  }
+  return EXR_OK;
 }
 exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
   exr_ppt_streams streams={0};exr_ppt_info info;exr_fixed_input input={0};
-  exr_fixed_page *pages=NULL;char *title=NULL;size_t i;exr_status s;
+  exr_fixed_page *pages=NULL;exr_ppt_drawing *drawing=NULL;char *title=NULL;size_t i;exr_status s;
   *out=NULL;
   s=exr_control_cancel(&options->control,e);if(s!=EXR_OK) return s;
   s=exr_ppt_cfb(data,size,&options->control,&streams,e);
   if(s==EXR_OK) s=exr_ppt_records(streams.document,streams.document_size,&options->control,&info,e);
+  if(s!=EXR_OK) goto done;
+  drawing=calloc(1,sizeof(*drawing));
+  if(!drawing) { s=exr_fail(e,EXR_MEMORY,"PPT drawing allocation failed");goto done; }
+  s=exr_ppt_read_drawing(streams.document,streams.document_size,&info,&options->control,drawing,e);
   if(s!=EXR_OK) goto done;
   title=summary_title(streams.summary,streams.summary_size);
   if(info.pages) {
@@ -74,14 +112,22 @@ exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open
   }
   for(i=0;i<info.pages;i++) {
     pages[i].geometry.bounds[2]=info.width;pages[i].geometry.bounds[3]=info.height;
-    pages[i].geometry.unit_scale=1;
+    pages[i].geometry.unit_scale=1;pages[i].geometry.y_down=1;
   }
   input.struct_size=sizeof(input);input.title=title;input.pages=pages;input.page_count=info.pages;input.draw=draw;
+  input.context=drawing;input.release=release;
   s=exr_control_poll(&options->control,EXR_STAGE_READ,info.pages,info.pages,e);
   if(s==EXR_OK) s=exr_fixed_create(&input,out,e);
-  if(s==EXR_OK && info.mismatch) exr_fail(e,EXR_OK,"PPT warning: SlidePersistAtom count %zu differs from Slide container count %zu; using SlidePersistAtom",info.pages,info.slide_containers);
+  if(s==EXR_OK) {
+    if(drawing->malformed || drawing->missing_anchor || drawing->depth || drawing->zero_extent || drawing->unsupported)
+      exr_fail(e,EXR_OK,"PPT warning: malformed=%zu missing-anchor=%zu depth=%zu zero-chExt=%zu unsupported=%zu%s",
+        drawing->malformed,drawing->missing_anchor,drawing->depth,drawing->zero_extent,drawing->unsupported,
+        info.mismatch ? "; SlidePersistAtom count differs from Slide container count; using SlidePersistAtom" : "");
+    else if(info.mismatch) exr_fail(e,EXR_OK,"PPT warning: SlidePersistAtom count %zu differs from Slide container count %zu; using SlidePersistAtom",info.pages,info.slide_containers);
+    drawing=NULL; /* The fixed provider now owns it. */
+  }
 done:
-  free(title);free(pages);exr_ppt_streams_free(&streams);return s;
+  release(drawing);free(title);free(pages);exr_ppt_streams_free(&streams);return s;
 }
 exr_status exr_ppt_open_file(const char *path,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
   exr_mapping mapping={0};exr_status s=exr_map_file(path,&mapping,e);
