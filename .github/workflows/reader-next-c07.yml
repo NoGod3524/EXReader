@@ -1,0 +1,293 @@
+name: C07 same-source Android and Apple bidirectional record protocol
+on:
+  push:
+    branches: [codex/reader-next-c07]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  fixtures:
+    name: fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scope, frozen trees and reused harness identity
+        run: |
+          python tests/reader_next_c07/guard.py fixtures
+          python -m py_compile tests/reader_next_c07/*.py
+      - name: Generate the four original formats once and freeze their bytes
+        run: |
+          python tests/reader_android_reading/fixtures.py build/android-reading/fixtures
+          python tests/reader_android_page_theme/fixtures.py build/android-page-theme/fixtures
+          python tests/reader_android_raw3/fixtures.py
+          python tests/reader_next_c07/common_fixtures.py package
+          cp build/c07/fixtures/guard.json build/c07/common-fixtures/guard.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: c07-fixtures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07/common-fixtures/
+          if-no-files-found: error
+
+  mac-send:
+    name: mac-send
+    needs: fixtures
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scope, frozen trees and reused harness identity
+        run: |
+          python tests/reader_next_c07/guard.py mac-send
+          python -m py_compile tests/reader_next_c07/*.py tools/apple_swift.py tools/build_apple_product.py
+      - name: Fetch the frozen common originals
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_next_c07/fetch.py c07-fixtures build/c07/common-fixtures
+      - name: Build the common-source SDK and raw host; run the actual macOS sender phases
+        run: python tests/reader_next_c07/mac_send.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c07-mac-sender-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07-mac/evidence/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: c07-mac-toolchain-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07-mac/toolchain.tar
+          if-no-files-found: error
+
+  android:
+    name: android
+    needs: [fixtures, mac-send]
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Scope, frozen trees and reused harness identity; generate the original harness plus the C07 phase
+        run: |
+          mkdir -p build/session-android/logs
+          git rev-parse HEAD > build/session-android/logs/source.txt
+          python tests/reader_next_c07/guard.py android
+          python -m py_compile tests/reader_next_c07/*.py tests/reader_android_raw3/*.py tests/reader_android_record_interop/*.py tests/reader_android_page_theme/*.py
+          python tests/reader_android_page_theme/candidate.py
+          python tests/reader_android_record_interop/candidate.py
+          python tests/reader_android_raw3/candidate.py
+          python tests/reader_next_c07/candidate.py
+          python -m py_compile build/android-page-theme/candidate/preferences_run_ui.py
+      - name: Install Android compiler and API34 emulator
+        run: |
+          sdk="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdk/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$sdk/cmdline-tools/latest/bin/sdkmanager" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0" "cmake;3.31.1" "cmake;3.22.1" "ndk;27.2.12479018" "ndk;27.0.12077973" "emulator" "system-images;android-34;default;x86_64"
+          python tests/webdav_android/fixture.py prepare --output build/webdav-android/fixture
+          for module in tests/reader_session_android/android/session tests/webdav_android/android/platform tests/webdav_android/android/backend; do
+            mkdir -p "$module/src/debug/res/raw"
+            cp build/webdav-android/fixture/public/ca.crt "$module/src/debug/res/raw/fixture_ca.crt"
+          done
+          mkdir -p tests/reader_session_android/android/session/src/debug/assets
+          cp tests/fixtures/sample.epub tests/reader_session_android/android/session/src/debug/assets/source.epub
+          python tests/reader_reading_state/make_fixtures.py build/session-android/reading-fixtures
+          cp -r build/session-android/reading-fixtures tests/reader_session_android/android/session/src/debug/assets/reading
+          cp tests/fixtures/fonts/primary.ttf tests/reader_session_android/android/session/src/debug/assets/reading/primary.ttf
+          python tests/reader_android_search/fixtures.py build/android-search/fixtures
+          python tests/reader_android_navigation/fixtures.py build/android-navigation/fixtures
+          python tests/reader_android_reading/fixtures.py build/android-reading/fixtures
+          python tests/reader_android_cbz_reading/fixtures.py build/android-cbz-reading/fixtures
+          python tests/reader_android_fixed_pan/fixtures.py build/android-fixed-pan/fixtures
+          python tests/reader_android_page_theme/fixtures.py build/android-page-theme/fixtures
+          python tests/reader_android_raw3/fixtures.py
+          mkdir -p tests/reader_host_session_android/debug/res/raw
+          cp build/webdav-android/fixture/public/ca.crt tests/reader_host_session_android/debug/res/raw/host_sync_fixture_ca.crt
+          python tests/reader_next_c07/fetch.py c07-fixtures build/c07/common-fixtures
+          python tests/reader_next_c07/common_fixtures.py install build/c07/common-fixtures build/android-raw3/fixtures
+      - name: Build and install the frozen public library SDK targeting API26
+        run: |
+          toolchain="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"
+          echo "SESSION_TOOLCHAIN=$toolchain" >> "$GITHUB_ENV"
+          cmake -S . -B build/session-android/sdk -G Ninja -DCMAKE_TOOLCHAIN_FILE="$toolchain" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/session-android/sdk-stage" -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_JNI=ON -DEXR_ENABLE_LIBRARY=ON -DEXR_ENABLE_AUDIO=ON -DEXR_ENABLE_PDF=ON -DEXR_ENABLE_PDF_EDIT=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_TEXT_INDEX=OFF -DEXR_BUILD_TEXT_INDEX=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_BUILD_SHARED_COMPAT=ON 2>&1 | tee build/session-android/logs/sdk-configure.log
+          cmake --build build/session-android/sdk --parallel 4 --target install 2>&1 | tee build/session-android/logs/sdk-build.log
+      - name: Install original sideload package and compile public SDK owner consumer
+        run: |
+          cmake -S extras/sideload -B build/session-android/sideload -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$PWD/build/session-android/sideload-stage" 2>&1 | tee build/session-android/logs/sideload-configure.log
+          cmake --build build/session-android/sideload --parallel 4 --target install 2>&1 | tee build/session-android/logs/sideload-build.log
+      - name: Install unchanged public Search package against the frozen SDK
+        run: |
+          cmake -S apps/reader/search -B build/android-search/search-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$PWD/build/android-search/search-stage" 2>&1 | tee build/session-android/logs/search-configure.log
+          cmake --build build/android-search/search-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/search-build.log
+      - name: Install fixed F2 Navigation against the frozen SDK
+        run: |
+          cmake -S apps/reader/navigation -B build/android-navigation/navigation-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DEXR_SDK_VERSION=3.41.0 -DCMAKE_INSTALL_PREFIX="$PWD/build/android-navigation/navigation-stage" 2>&1 | tee build/session-android/logs/navigation-configure.log
+          cmake --build build/android-navigation/navigation-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/navigation-build.log
+      - name: Install Android transport and product session packages with isolated SQLite
+        run: |
+          mkdir -p build/webdav-android/logs
+          for config in Debug Release; do
+            lower=$(echo "$config" | tr '[:upper:]' '[:lower:]')
+            if [ "$config" = Debug ]; then hooks=ON; else hooks=OFF; fi
+            cmake -S extras/webdav -B "build/webdav-android/native-$lower" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE="$config" -DEXR_WEBDAV_ANDROID_TESTING="$hooks" -DCMAKE_INSTALL_PREFIX="$PWD/build/webdav-android/stage-$lower" 2>&1 | tee "build/webdav-android/logs/$lower-configure.log"
+            cmake --build "build/webdav-android/native-$lower" --parallel 4 --target install 2>&1 | tee "build/webdav-android/logs/$lower-build.log"
+          done
+      - name: Install unchanged hardened F3 local settings package
+        run: |
+          cmake -S apps/reader/preferences -B build/android-preferences/preferences-build -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/android-preferences/preferences-stage" 2>&1 | tee build/session-android/logs/preferences-configure.log
+          cmake --build build/android-preferences/preferences-build --parallel 4 --target install 2>&1 | tee build/session-android/logs/preferences-build.log
+      - name: Prepare SDK owner assets and JNI library
+        run: |
+          python tools/reader_catalog_assets.py --output examples/android/app/src/main/assets/reader-catalog-v1.json
+          python -c "import sys; sys.path.insert(0,'tools'); from host_font import fetch; fetch('examples/android/app/src/main/assets')"
+          mkdir -p examples/android/app/src/main/jniLibs/x86_64
+          cp build/session-android/sdk-stage/lib/libexreader_jni.so examples/android/app/src/main/jniLibs/x86_64/libexreader_jni.so
+      - name: Build the isolated explicit raw3 family and Android host from the common source
+        run: |
+          mkdir -p build/android-raw3/apks build/android-raw3/logs
+          product="$PWD/build/android-raw3/product-stage"
+          for module in store/native revisions reading-state reading-commands annotation-view commands sync session; do
+            label=$(echo "$module" | tr / -)
+            cmake -S "apps/reader/$module" -B "build/android-raw3/product-$label" -G Ninja -DCMAKE_TOOLCHAIN_FILE="$SESSION_TOOLCHAIN" -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DEXR_SDK="$PWD/build/session-android/sdk-stage" -DEXR_SDK_VERSION=3.41.0 -DREADER_PRODUCT_PREFIX="$product" -DCMAKE_PREFIX_PATH="$product;$PWD/build/session-android/sdk-stage;$PWD/build/webdav-android/stage-release" -DCMAKE_INSTALL_PREFIX="$product" 2>&1 | tee "build/android-raw3/logs/product-$label-configure.log"
+            cmake --build "build/android-raw3/product-$label" --parallel 4 --target install 2>&1 | tee "build/android-raw3/logs/product-$label-build.log"
+          done
+          gradle -p examples/android --no-daemon --stacktrace -PexrSelectorBytes=true -PexrRecordInterop=true -PexrPageTheme=true -PexrHostImport=true -PexrSdk="$PWD/build/session-android/sdk-stage" -PexrProduct="$product" -PexrSync=true -PexrSearch=true -PexrReading=true -PexrPreferences=true -PexrNavigation=true -PexrPreferencesPrefix="$PWD/build/android-preferences/preferences-stage" -PexrNavigationPrefix="$PWD/build/android-navigation/navigation-stage" -PexrSearchPrefix="$PWD/build/android-search/search-stage" -PexrDav="$PWD/build/webdav-android/stage-release" -PexrSideload="$PWD/build/session-android/sideload-stage" -PexrTestRunner=org.exreader.host.Raw3InteropTest :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease 2>&1 | tee build/android-raw3/logs/host-build.log
+          cp examples/android/app/build/outputs/apk/debug/app-debug.apk build/android-raw3/apks/host-debug.apk
+          cp examples/android/app/build/outputs/apk/release/app-release-unsigned.apk build/android-raw3/apks/host-release.apk
+          cp examples/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk build/android-raw3/apks/raw3-test.apk
+          python tests/reader_android_raw3/audit.py
+      - name: Authenticate the same-run actual macOS sender ZIP and prepare Android peer inputs
+        run: python tests/reader_next_c07/peer.py
+      - name: Enable hosted runner emulator acceleration
+        run: sudo chmod 666 /dev/kvm
+      - name: Actual Android sender, HTTPS worker, Mac receive, NULL export and process boundaries
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r -t build/android-raw3/apks/host-debug.apk
+            adb install -r -t build/android-raw3/apks/raw3-test.apk
+            python tests/reader_android_raw3/run_ui.py --fixtures build/android-raw3/fixtures --fixture build/webdav-android/fixture --output build/android-raw3/ui --apple-peer build/c07/peer/bundle
+            python tests/reader_next_c07/android_null.py --fixtures build/android-raw3/fixtures --output build/c07/android-null
+      - name: Stage the actual Android sender packet
+        run: |
+          mkdir -p build/c07/android-sender
+          cp -r build/android-raw3/ui/bundle build/c07/android-sender/bundle
+          cp -r build/c07/android-null/null-bundle build/c07/android-sender/null-bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: c07-android-sender-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07/android-sender/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c07-android-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/android-raw3/ui/
+            build/android-raw3/native/
+            build/android-raw3/apks/
+            build/android-raw3/logs/
+            build/android-raw3/c07-harness.json
+            build/android-raw3/harness.json
+            build/c07/android/guard.json
+            build/c07/android-null/
+            build/c07/peer/attestation.json
+            build/c07/peer/bundle/
+            build/c07/peer/null-bundle/
+          if-no-files-found: error
+
+  mac-receive:
+    name: mac-receive
+    needs: [fixtures, mac-send, android]
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scope, frozen trees and reused harness identity
+        run: |
+          python tests/reader_next_c07/guard.py mac-receive
+          python -m py_compile tests/reader_next_c07/*.py
+      - name: Restore the exact sender executable, SDK and resources at the identical prefix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tests/reader_next_c07/fetch.py c07-fixtures build/c07/common-fixtures
+          python tests/reader_next_c07/fetch.py c07-mac-toolchain build/c07/toolchain
+          tar -xf build/c07/toolchain/toolchain.tar -C .
+      - name: Actual macOS receivers of the same-run actual Android sender
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/reader_next_c07/mac_receive.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c07-mac-receive-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07-mac-receive/evidence/
+          if-no-files-found: error
+
+  strict:
+    name: strict
+    if: always()
+    needs: [fixtures, mac-send, android, mac-receive]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download every original ZIP of this run attempt and authenticate both directions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tests/reader_next_c07/guard.py strict
+          python -m py_compile tests/reader_next_c07/*.py
+          python tests/reader_next_c07/strict.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: c07-strict-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/c07-strict/
+          if-no-files-found: error
