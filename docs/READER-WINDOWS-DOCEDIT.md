@@ -23,6 +23,19 @@ cmake --build build/tables-host --target check_shell_table
 ctest --test-dir build/tables-host -R windows-table-ui -V
 ```
 
+`插入脚注` inserts a superscript reference at the caret and adds its numbered
+text to the footnote area below the document. Click a footnote there to edit
+multiline text, save it, or delete the note. Delete can also remove a reference
+directly from the body; later notes renumber consecutively. Insertion, text
+changes and deletion support Ctrl+Z/Ctrl+Y. Ctrl+S saves the notes and references
+to DOCX, retaining their text and numbering when reopened.
+
+The engine and headless host footnote checks run with:
+
+```powershell
+ctest --test-dir build/l14 -R 'native-docx-(edit-footnotes|footnotes-ui)' --output-on-failure
+```
+
 The editor toolbar above the document has bold, italic, size down/current/up,
 eight text colors, and left/center/right/justified paragraph alignment.
 Bold, italic, and alignment buttons show the caret's current format. Sizes

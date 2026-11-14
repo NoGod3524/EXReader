@@ -1,0 +1,3 @@
+已完成脚注插入、页脚编辑/删除、连续编号、DOCX 保存重开，并补齐 `exr_edit_footnote_*` API。
+
+ctest **442/442 全绿**，含 headless 验收。[验收记录](C:/Users/Oscar/Documents/Codex/EXReader-fan-L14/OUT-L14.txt)

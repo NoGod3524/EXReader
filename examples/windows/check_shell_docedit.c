@@ -183,6 +183,37 @@ static void rich_acceptance(const char *directory) {
   puts("E2c fonts fallback list: EXReader Missing Font E2c -> current default (Segoe UI)");
   puts("M-E2c console acceptance PASS (no HWND / no SendInput)");
 }
+static void footnote_acceptance(const char *directory) {
+  char path[MAX_PATH];snprintf(path,sizeof(path),"%s/footnotes-edited.docx",directory);
+  rich_seed("leftRIGHT",path);de_pos middle={0,0,4};de_set_caret(middle);de_set_anchor(middle);
+  rich_click(DE_INSERT_FOOTNOTE);
+  exr_edit_footnote first={0},second={0};assert(exr_edit_footnote_count(de.doc)==1);
+  assert(exr_edit_footnote_at(de.doc,0,&first)==EXR_OK && first.number==1);
+  assert(de_footnote_update(first.id,"note1",5));
+  wchar_t *body=de_paragraph_text(de_block_at(de.doc,0));
+  assert(body && !wcscmp(body,L"left¹RIGHT"));free(body);
+  assert(de_measure(600,240) && de.footnote_row_count==2);
+  uint32_t *pixels=paint_memory(600,240);char bitmap[MAX_PATH];
+  snprintf(bitmap,sizeof(bitmap),"%s/footnotes-editor.bmp",directory);save_bitmap(bitmap,pixels,600,240);free(pixels);
+  rich_click(DE_INSERT_FOOTNOTE);assert(exr_edit_footnote_count(de.doc)==2);
+  assert(exr_edit_footnote_at(de.doc,1,&second)==EXR_OK && second.number==2);
+  assert(de_footnote_update(second.id,"note2",5));assert(de_save());
+  de_close();assert(de_open(path));assert(exr_edit_footnote_count(de.doc)==2);
+  assert(exr_edit_footnote_at(de.doc,0,&first)==EXR_OK && first.text_size==5 && !memcmp(first.text,"note1",5));
+  assert(de_footnote_remove(first.id));assert(exr_edit_footnote_count(de.doc)==1);
+  assert(exr_edit_footnote_at(de.doc,0,&second)==EXR_OK && second.number==1 && !strcmp(second.text,"note2"));
+  assert(de_history(0)==EXR_OK && exr_edit_footnote_count(de.doc)==2);
+  assert(de_history(1)==EXR_OK && exr_edit_footnote_count(de.doc)==1);
+  assert(de_save());de_close();assert(de_open(path));
+  assert(exr_edit_footnote_at(de.doc,0,&second)==EXR_OK && second.number==1 && !strcmp(second.text,"note2"));
+  reset_caret();body=de_paragraph_text(de_block_at(de.doc,de.caret.view));
+  assert(body && !wcscmp(body,L"left¹RIGHT"));free(body);
+  /* References are one atomic caret step and can be deleted from the body. */
+  de_pos before={de.caret.view,0,4};de_set_caret(before);de_set_anchor(before);
+  assert(de_key(VK_DELETE,0,0) && exr_edit_footnote_count(de.doc)==0);
+  assert(de_history(0)==EXR_OK && exr_edit_footnote_count(de.doc)==1);
+  puts("L14 PASS toolbar at cursor; superscript body; footer note1; save/reopen; delete/renumber=1; undo/redo; body Delete");
+}
 int main(int argc,char **argv) {
   assert(argc==3);setvbuf(stdout,NULL,_IONBF,0);
   SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
@@ -282,6 +313,7 @@ int main(int argc,char **argv) {
   template.opaque_size=strlen(template.opaque_xml);assert(!de_rebuild_safe(&template));
   puts("API boundary PASS rebuild preserves modeled properties; unmodeled paragraph templates protected (no engine changes)");
   rich_acceptance(argv[2]);
+  footnote_acceptance(argv[2]);
   de_close();shell_d2d_destroy(host_shell);host_shell=NULL;
   exr_font_free(g.font);exr_font_manager_free(g.font_manager);CoUninitialize();
   puts("M-E1 console acceptance PASS (no HWND / no SendInput)");return 0;
