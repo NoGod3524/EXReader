@@ -1,6 +1,6 @@
-当前分支已包含 M1 实现；本次完成重建复核，全部验收通过，仅更新了[验收记录](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/docs/PPTX-M1.md)。
+当前 HEAD `7fc3bf84` 已包含 M1。本次重建并完成全部验收，仅更新了[验收记录](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/docs/PPTX-M1.md)。
 
-① [src/pptx.c](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/src/pptx.c) **416 行、15 个函数**：
+① [src/pptx.c](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/src/pptx.c) **416 行、15 个函数**：
 
 - 生命周期：`release`
 - XML：`named`、`root`、`child`、`relationship_id`
@@ -9,7 +9,7 @@
 - 骨架：`dimension`、`read_presentation`
 - 固定版式：`draw`、`create_fixed`、`exr_pptx_open_owned`
 
-② 六份夹具均通过，生成脚本 `generate.py --check` exit 0：
+② 六份夹具全部通过，`generate.py --check` exit 0：
 
 | 夹具 | 引擎页数 | python-pptx | 页尺寸 pt |
 |---|---:|---:|---|
@@ -20,34 +20,52 @@
 | 4:3 | 1 | 1 | 720×540 |
 | 二十页 | 20 | 20 | 720×540 |
 
-文件、内存入口均通过；合计 **56 次有效页渲染成功**，逐字节验证为全白 RGBA。
+16:9 为 `12192000×6858000 EMU`；4:3 为 `9144000×6858000 EMU`。文件、内存入口合计 **56 次有效页渲染成功**，逐字节验证为全白 RGBA。
 
-③ 新增 **12 组**，名称均为 `native-pptx-` 加以下后缀：
+③ 新增测试共 **12 组**：
 
 ```text
-empty title layouts wide standard twenty
-errors defaults missing order detection limit
+native-pptx-empty
+native-pptx-title
+native-pptx-layouts
+native-pptx-wide
+native-pptx-standard
+native-pptx-twenty
+native-pptx-errors
+native-pptx-defaults
+native-pptx-missing
+native-pptx-order
+native-pptx-detection
+native-pptx-limit
 ```
 
-- PPTX 专项：**12/12 通过**，15.82 秒。
-- 全量 CTest：**437/437 通过**，200.00 秒，仅排除指定两项。
-- `check_sdk_docs.py`：**exit 0，485/485**。
+- 专项：**12/12 通过**，4.96 秒。
+- 全量：**437/437 通过**，186.93 秒，仅排除 `sdk-release`、`sdk-doc-coverage`。
+- `check_sdk_docs.py`：**exit 0，485/485**，导出一致。
 - 分层检查、共用 `ops/prepush-check.ps1`：**exit 0**。
 
 ④ 坏样本错误原文：
 
-| 样本 | 状态与消息 |
-|---|---|
-| 截断 PPTX | EXR_FORMAT：`Invalid or truncated PPTX/ZIP container` |
-| 缺主文档 | EXR_FORMAT：`PPTX part missing: ppt/presentation.xml` |
-| 成员超限 | EXR_LIMIT：`ZIP member exceeds 128 MiB: ppt/slides/slide1.xml` |
+| 样本 | 状态 | 消息 |
+|---|---|---|
+| 截断 PPTX | EXR_FORMAT | `Invalid or truncated PPTX/ZIP container` |
+| 缺主文档 | EXR_FORMAT | `PPTX part missing: ppt/presentation.xml` |
+| slide 成员超限 | EXR_LIMIT | `ZIP member exceeds 128 MiB: ppt/slides/slide1.xml` |
 
-缺页警告原文：
+尺寸缺失或为零时回退至 `720×540 pt`。缺页成功打开并保留其余页序，警告原文：
 
 ```text
 PPTX warning: skipped 1 slide reference(s) with missing or invalid parts
 ```
 
-⑤ M2 可复用 `pptx_document.zip/slides`、`xml_read`、关系查询、`exr_resolve_path`、`draw` 和绘制 sink。需要补充 `p:spTree` 解析及 slide/layout/master/theme 关系遍历；关系字符串生命周期、逐次绘制预算的注意事项已写入验收记录。
+⑤ M2 可复用接口：
 
-三份受保护文件均未修改；未新增头文件，全程未使用 GUI/SendInput。
+- `pptx_document.zip/slides`：容器与有序 part 路径。
+- `xml_read`、`exr_xml_memory_tree`：读取 slide XML。
+- 关系查询及 `exr_resolve_path`：扩展 slide/layout/master/theme 遍历。
+- `draw`、`exr_path_segment`、`exr_draw_style`、绘制 sink：接入形状输出。
+- `exr_fixed_create`、页面 geometry、`exr_fixed_render`：沿用现有管线。
+
+M2 需补 `p:spTree` 解析，并处理关系字符串生命周期及每次绘制的预算。
+
+三份受保护文件均未修改；无新增头文件；ASan 预载正则已登记；全程未使用 GUI/SendInput。

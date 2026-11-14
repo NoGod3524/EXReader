@@ -1,5 +1,35 @@
 # PPTX M1 验收记录
 
+## 2026-11-14：7fc3bf84 复核
+
+当前 HEAD `7fc3bf84` 已包含 PR #174 的 M1 实现。本次重新阅读容器、
+关系解析与固定版式入口，重建当前源码并完成全部验收；无需补改实现，
+仅更新本文件，保留以下历史记录。`src/pptx.c` 为 416 行、15 个函数，
+`EXR_PPTX=11`，追加于 `EXR_PPT=10` 之后。
+
+| 检查 | 当前 HEAD 实测结果 |
+| --- | --- |
+| `cmake --build build/pptx-m1 -j 4` | exit 0 |
+| `python tests/fixtures/pptx-skeleton/generate.py --check` | 六份夹具均字节复现，exit 0 |
+| `ctest --test-dir build/pptx-m1 -R '^native-pptx-' -V --output-on-failure` | 12/12，通过，4.96 秒，exit 0 |
+| `ctest --test-dir build/pptx-m1 -E '^(sdk-release\|sdk-doc-coverage)$' --output-on-failure -j 2 --output-junit current-results.xml` | 437/437，通过，186.93 秒，exit 0 |
+| `python tools/check_sdk_docs.py --binary build/pptx-m1/libexreader.dll --output build/pptx-m1/current-sdk-docs.json` | 485/485，100%；DLL 缺失/额外导出均为空，exit 0 |
+| `python tools/check_layers.py build/pptx-m1` | 132 个对象，1540 个符号引用；0 个逆向引用、0 个逆向 include，exit 0 |
+| 共用 `C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1 -Worktree <本工作树>` | 完整检查通过，exit 0；本工作树的 ops 目录没有该脚本 |
+
+六份夹具的引擎/python-pptx 页数为 `0/0、1/1、5/5、1/1、1/1、20/20`。
+16:9 为 960×540 pt（12192000×6858000 EMU），4:3 为 720×540 pt
+（9144000×6858000 EMU）。文件与内存入口共 56 次有效页渲染成功，
+逐字节验证为全白 RGBA。12 组名称、函数清单、坏样本错误原文、
+尺寸回退及缺页警告、M2 接口清单均与下方首次验收记录一致。
+
+本次日志均位于 `build/pptx-m1/`：`current-build.log`、`current-pptx.log`、
+`current-all.log`、`current-results.xml`、`current-sdk-docs.json`、`current-prepush.log`。
+`git diff 54436bfa HEAD -- src/docx.c tests/check_reading_release.py tools/version_literal_exceptions.json`
+为空；本次也未修改这三份文件。无新增头文件或公开函数，现有固定版式 API
+六标签文档已通过检查，PPTX ctypes 测试已登记到指定 ASan 预载正则；
+全程未使用 GUI/SendInput。
+
 ## 2026-11-13：当前 HEAD 复核
 
 复核源码：`21b321d4`，已包含合入的 PPTX M1 和后续 legacy PPT 支持。
