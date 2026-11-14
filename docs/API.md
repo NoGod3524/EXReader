@@ -2457,7 +2457,7 @@ int main(void) {
 
 **参数** doc 为模型，block_id 为要删除的块。
 
-**返回与失败** 返回 exr_status；当前表格只保留，不支持删除/编辑。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 返回 exr_status；支持顶层段落和图片，以及可编辑单元格中的段落。删除单元格最后一个段落或编辑受保护单元格返回 EXR_UNSUPPORTED；表格块使用 exr_edit_delete_table。保留同格其他段落，参与事务及 undo/redo。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
@@ -2611,7 +2611,7 @@ int main(void) {
 
 **参数** doc 为模型，after_id=0 表示开头；runs/count 为文字片段，props 可为 NULL，new_id 接收新块 ID。
 
-**返回与失败** 返回 exr_status；新 run 获得新 ID，节继承锚点（开头用首节），空 props 为继承属性集；失败清空输出 ID。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 返回 exr_status；新 run 获得新 ID，节继承锚点（开头用首节），空 props 为继承属性集；失败清空输出 ID。锚点可为可编辑单元格段落，新段落插入同格并保留其他段落。受保护单元格返回 EXR_UNSUPPORTED。参与事务及 undo/redo，失败锁存活动事务。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
@@ -2695,7 +2695,7 @@ int main(void) {
 
 **参数** doc、block_id 指定段落，props 指定属性及 present 位。
 
-**返回与失败** 返回 exr_status；present 区分未设置/继承和显式值。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 返回 exr_status；present 区分未设置/继承和显式值。支持顶层及可编辑单元格段落，保留同格其他段落；受保护单元格返回 EXR_UNSUPPORTED。参与事务及 undo/redo。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
@@ -2709,11 +2709,25 @@ int main(void) {
 
 **参数** doc、block_id、run_index 指定 run，props 提供属性及 present 位。
 
-**返回与失败** 返回 exr_status；显式 false bold/italic 可以覆盖继承。 当前 main 仅提供该模型头文件快照；默认构建没有这些符号的实现，须通过 EXR_EDIT_MODEL_SOURCE 接入匹配的 X1 源码后链接。
+**返回与失败** 返回 exr_status；显式 false bold/italic 可以覆盖继承。支持顶层及可编辑单元格段落，保留同格其他段落和 run；受保护单元格返回 EXR_UNSUPPORTED。参与事务及 undo/redo。
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
 **所有权** 属性由模型持有；修改后重新取得视图。
+
+### `exr_edit_insert_run`
+
+**签名** `exr_status exr_edit_insert_run(exr_edit_doc *doc,exr_edit_tx *tx, exr_edit_id paragraph,size_t run_index,const char *text,size_t text_size, const exr_edit_run_props *props);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为模型，tx 必须是该模型的活动事务；paragraph 是顶层或可编辑单元格段落 ID。run_index 为插入前的 run 索引，允许 run_count 表示追加，零 run 段落使用 0。text/text_size 为 UTF-8/XML 文字及字节数；text 不得为 NULL，text_size 不得为 0。props 可为 NULL，使用默认属性。
+
+**返回与失败** EXR_OK 插入一个具有新 ID 的 TEXT run；保留段落 ID、模板、已有 run ID 和同格其他段落。非法模型、事务、ID、索引、属性或文字返回 EXR_ARGUMENT；非段落或受保护单元格返回 EXR_UNSUPPORTED；分配失败为 EXR_MEMORY，容量或 ID 耗尽为 EXR_LIMIT。失败锁存事务状态，提交失败事务整体回滚；一次 commit 对应一次 undo。set_run_text 对零 run 段落仍返回 EXR_ARGUMENT。
+
+**线程** 调用方串行访问同一模型，读取、修改、事务、写出及释放不得并发。
+
+**所有权** 输入可别名模型借用视图，调用期间借用并深拷贝；新 run 由模型持有和释放。成功使段落视图失效，单元格修改使所属表格及全部子视图失效。tx 由 commit/rollback 消费，本调用不消费 tx。
 
 ### `exr_edit_set_run_text`
 

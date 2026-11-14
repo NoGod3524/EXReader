@@ -147,7 +147,8 @@ EXR_API const exr_edit_part *exr_edit_parts(const exr_edit_doc *doc,size_t *coun
 /* Retained allocation bytes, including history/capacity (excludes allocator overhead). */
 EXR_API size_t exr_edit_memory_bytes(const exr_edit_doc *doc);
 
-/* after_id 0 prepends. Runs receive fresh IDs; section inherits from anchor
+/* after_id 0 prepends. A cell paragraph anchor inserts into that same cell.
+   Runs receive fresh IDs; section inherits from anchor
    (first section at start). NULL props uses an empty/inheriting property set.
    Input buffers may alias borrowed views. Output ID is cleared on failure. */
 EXR_API exr_status exr_edit_insert_paragraph(exr_edit_doc *doc,exr_edit_id after_id,
@@ -171,6 +172,13 @@ EXR_API exr_status exr_edit_set_run_props(exr_edit_doc *doc,exr_edit_id block_id
    Participates in transactions/undo/redo. */
 EXR_API exr_status exr_edit_set_run_text(exr_edit_doc *doc,exr_edit_id block_id,
   size_t run_index,const char *text,size_t text_size);
+/* Insert a fresh TEXT run before run_index (run_count appends, including 0 on
+   an empty paragraph). Text must be non-NULL and nonempty. Requires the
+   document's active transaction. Preserves
+   paragraph templates, existing runs and sibling cell paragraphs. */
+EXR_API exr_status exr_edit_insert_run(exr_edit_doc *doc,exr_edit_tx *tx,
+  exr_edit_id paragraph,size_t run_index,const char *text,size_t text_size,
+  const exr_edit_run_props *props);
 EXR_API exr_status exr_edit_delete_block(exr_edit_doc *doc,exr_edit_id block_id);
 
 /* Zero-based physical row/cell indices. SIZE_MAX inserts before the first row.

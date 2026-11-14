@@ -1,0 +1,6 @@
+[1/6] Building CXX object CMakeFiles/check_shell_docedit.dir/shell_epub.cpp.obj
+[2/6] Building CXX object CMakeFiles/check_shell_table.dir/shell_epub.cpp.obj
+[3/6] Building CXX object CMakeFiles/EXReader.dir/shell_epub.cpp.obj
+[4/6] Linking CXX executable check_shell_table.exe
+[5/6] Linking CXX executable check_shell_docedit.exe
+[6/6] Linking CXX executable EXReader.exe

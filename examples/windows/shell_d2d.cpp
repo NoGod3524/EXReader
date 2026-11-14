@@ -550,12 +550,18 @@ extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int
     (float)(area->bottom-area->top)),D2D1_ANTIALIAS_MODE_ALIASED);
   for(size_t i=0;i<count && SUCCEEDED(hr);i++) {
     const auto &row=rows[i];float y=row.y-scroll;
+    const float origin=inset+row.x;
+    if(row.cell_border) {
+      s->dc_brush->SetColor(D2D1::ColorF(c.text,.65f));
+      s->dc_target->DrawRectangle(D2D1::RectF(row.cell_box[0],row.cell_box[1]-scroll,
+        row.cell_box[2],row.cell_box[3]-scroll),s->dc_brush,1.f);
+    }
     if(!row.height || y+row.height<0 || y>area->bottom-area->top) continue;
     auto view=static_cast<edit_layout *>(row.layout);auto layout=view->text;
     UINT32 needed=0;
-    layout->HitTestTextRange(row.start,row.length,inset,y,nullptr,0,&needed);
+    layout->HitTestTextRange(row.start,row.length,origin,y,nullptr,0,&needed);
     std::vector<DWRITE_HIT_TEST_METRICS> boxes(needed);
-    if(needed) layout->HitTestTextRange(row.start,row.length,inset,y,boxes.data(),needed,&needed);
+    if(needed) layout->HitTestTextRange(row.start,row.length,origin,y,boxes.data(),needed,&needed);
     s->dc_brush->SetColor(D2D1::ColorF(dark ? 0x82B5FF:0x3178D4,.35f));
     for(const auto &b:boxes) s->dc_target->FillRectangle(
       D2D1::RectF(b.left,b.top,b.left+b.width,b.top+b.height),s->dc_brush);
@@ -568,8 +574,8 @@ extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int
       if(n && SUCCEEDED(layout->GetLineMetrics(lines.data(),n,&n))) {
         UINT32 length=0;for(const auto &line:lines) length+=line.length;
         shell_d2d_edit_position(row.layout,length,end);
-        s->dc_target->FillRectangle(D2D1::RectF(inset+end[0],y+end[1],
-          inset+end[0]+6,y+end[1]+end[3]),s->dc_brush);
+        s->dc_target->FillRectangle(D2D1::RectF(origin+end[0],y+end[1],
+          origin+end[0]+6,y+end[1]+end[3]),s->dc_brush);
       }
     }
     s->dc_brush->SetColor(D2D1::ColorF(c.text));
@@ -580,10 +586,10 @@ extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int
       if(SUCCEEDED(hr)) {layout->SetDrawingEffect(brush,color.range);brush->Release();}
       else break;
     }
-    if(SUCCEEDED(hr))s->dc_target->DrawTextLayout(D2D1::Point2F(inset,y),layout,s->dc_brush);
+    if(SUCCEEDED(hr))s->dc_target->DrawTextLayout(D2D1::Point2F(origin,y),layout,s->dc_brush);
     for(const auto &color:view->colors)layout->SetDrawingEffect(nullptr,color.range);
-    if(row.show_caret) s->dc_target->FillRectangle(D2D1::RectF(inset+caret[0],y+caret[1],
-      inset+caret[0]+1,y+caret[1]+caret[3]),s->dc_brush);
+    if(row.show_caret) s->dc_target->FillRectangle(D2D1::RectF(origin+caret[0],y+caret[1],
+      origin+caret[0]+1,y+caret[1]+caret[3]),s->dc_brush);
   }
   s->dc_target->PopAxisAlignedClip();HRESULT end=s->dc_target->EndDraw();
   if(SUCCEEDED(hr))hr=end;

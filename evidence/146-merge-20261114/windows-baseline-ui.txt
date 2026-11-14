@@ -1,0 +1,21 @@
+1 PASS fixture=tests/fixtures/rich.docx blocks=30 text_pixels=5460 caret_pixels=22 bitmap=build/tables-host/146-baseline-ui/editor.bmp
+2 typed=ABC dirty=1 write/open ABC=1; backspace=3 write/open restored_original=1 PASS
+3 Enter block_count=30 -> 31 Ctrl+Z=30 PASS
+4 PASS UTF-8: runs 0:1,0:3,2:3,2:7 -> block 1; Shift selects CJK+emoji; selection_pixels=752; replace undo; Delete/Backspace join; redo
+5 PASS Ctrl+S -> exr_edit_docx_open text_equal=1 bytes=421 path=build/tables-host/146-baseline-ui/edited.docx
+6 PASS edit dirty=1 title=*; save dirty=0 title=no*; reopen dirty=0; failed save dirty=1; exit Cancel/Save/Discard
+extra PASS Home/End, Up/Down, PageUp/PageDown=viewport 120, Ctrl+A replace/undo, empty paragraph typing
+extra PASS DOCX enabled / TXT disabled; protected XML selection rolls back preceding text changes; dirty stays 0
+API boundary PASS rebuild preserves modeled properties; unmodeled paragraph templates protected (no engine changes)
+E2c 1 PASS select=5 Ctrl+B write/open present.BOLD=1 bold=1 (partial selection -> whole run)
+E2c 2 PASS Ctrl+B again write/open present.BOLD=1 bold=0 (explicit override)
+E2c 3 PASS Ctrl+Shift+. size_half_points=24->26 points=12->13 ink_height=14->16 px
+E2c 4 PASS toolbar palette red=FF0000 text_red_pixels=425 bitmap=build/tables-host/146-baseline-ui/rich-red.bmp
+E2c 5 PASS no selection Ctrl+B then AB: prefix.bold=0 AB.bold=1; write/open retained
+E2c 6 PASS Ctrl+L/E/R line_start_x=24.00/269.46/514.93 px; hit-test roundtrip; Ctrl+J=JUSTIFY
+E2c extra PASS middle insertion isolates both neighbors; undo/redo; move clears pending; toolbar B/I/size; multi-run selection
+E2c extra PASS docDefaults / paragraph basedOn / character style inheritance; explicit bold=0; protected pending insertion rolls back
+font fallback: EXReader Missing Font E2c -> default
+E2c fonts fallback list: EXReader Missing Font E2c -> current default (Segoe UI)
+M-E2c console acceptance PASS (no HWND / no SendInput)
+M-E1 console acceptance PASS (no HWND / no SendInput)

@@ -108,7 +108,7 @@ static LRESULT CALLBACK de_table_proc(HWND window,UINT message,WPARAM wp,LPARAM 
   return DefWindowProcW(window,message,wp,lp);
 }
 static void de_table_open(void) {
-  size_t count=exr_edit_block_count(de.doc),start=de.caret_block;
+  size_t count=exr_edit_block_count(de.doc),start=de.caret.block;
   exr_edit_id table=0;
   for(size_t i=0;i<count;i++) {
     const exr_edit_block *b=exr_edit_block_at(de.doc,(start+i)%count);
