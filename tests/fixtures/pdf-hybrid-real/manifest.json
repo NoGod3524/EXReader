@@ -1,0 +1,62 @@
+[
+  {
+    "file": "pptx-1.pdf",
+    "pages": 1,
+    "producer": "PowerPoint",
+    "hybrid": true,
+    "has_xrefstm": true,
+    "xrefstm": 29382,
+    "bytes": 30649,
+    "sha256": "6126d0dabe42f0b518c8e92410389189d68fde97ef87ecd76cbed49f585d5df5"
+  },
+  {
+    "file": "pptx-20.pdf",
+    "pages": 20,
+    "producer": "PowerPoint",
+    "hybrid": true,
+    "has_xrefstm": true,
+    "xrefstm": 54480,
+    "bytes": 60423,
+    "sha256": "2bfb94aa6905f27915e309b3c820fef3ba13492dddedfb93d97a10e8d7679729"
+  },
+  {
+    "file": "word-5.pdf",
+    "pages": 5,
+    "producer": "Word",
+    "hybrid": true,
+    "has_xrefstm": true,
+    "xrefstm": 28232,
+    "bytes": 33032,
+    "sha256": "5e7214f0700df85cdb96fbccdcb303461f0b43a08278893ba8fd098025e90aff"
+  },
+  {
+    "file": "excel-1.pdf",
+    "pages": 1,
+    "producer": "Excel",
+    "hybrid": true,
+    "has_xrefstm": true,
+    "xrefstm": 17761,
+    "bytes": 23638,
+    "sha256": "3621e313f1c823a01e8242f21f3d83e800f86a975299f4432f41287b65e499e0"
+  },
+  {
+    "file": "chinese.pdf",
+    "pages": 1,
+    "producer": "PowerPoint",
+    "hybrid": true,
+    "has_xrefstm": true,
+    "xrefstm": 23078,
+    "bytes": 24458,
+    "sha256": "857238af6f4c9bd422e0a1d30b4b1e3c1bdb6f2a30382227a972ed10cb3ec5d2"
+  },
+  {
+    "file": "image-only.pdf",
+    "pages": 1,
+    "producer": "PowerPoint",
+    "hybrid": true,
+    "has_xrefstm": true,
+    "xrefstm": 8153,
+    "bytes": 9250,
+    "sha256": "c400b3aa82018e7ba4dcce56817ed01d5d4ca0ab7bda74f3df06fa3e533ccb66"
+  }
+]

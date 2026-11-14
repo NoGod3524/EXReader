@@ -17,6 +17,7 @@ struct exr_pdf_file {
   uint32_t root,info,revision,raw_root,trailer_id; size_t startxref;
   unsigned resolving,loading_xref;
   uint32_t encrypt; unsigned encrypt_seen;
+  exr_pdf_xref_diagnostics xref_diagnostics;
   exr_pdf_crypt crypt;
   const exr_control *control;
   size_t *decode_budget;
@@ -331,7 +332,7 @@ static int array_integers(exr_pdf_file *f,uint32_t id,uint64_t *values,size_t ca
   }
   return 1;
 }
-static int stream_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info,int hybrid) {
+static int stream_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info,int hybrid,uint32_t classic_encrypt) {
   exr_pdf_file *f=p->file; parser start=*p; uint64_t object,generation,size,widths[3],range[2],fields[3];
   uint32_t dict,id,at; const unsigned char *data; size_t length,n,row=0,pos=0,i,k,ranges=0;
   unsigned char *seen=NULL; int ok=0;
@@ -345,6 +346,17 @@ static int stream_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info,
   for(i=0;i<3;i++) { if(widths[i]>8) goto bad; row+=(size_t)widths[i]; }
   if(!row) goto bad;
   id=exr_pdf_get(f,dict,"Encrypt");
+  if(hybrid && id!=EXR_PDF_NONE) {
+    const exr_pdf_value *a=exr_pdf_value_at(f,id),*b=exr_pdf_value_at(f,classic_encrypt);
+    /* The classic trailer is authoritative for hybrid trailer keys. Compare
+       identities before resolution: the supplemental stream can replace xrefs. */
+    if(!b || a->kind!=b->kind || (a->kind==EXR_PDF_REF ?
+       a->u.ref.object!=b->u.ref.object || a->u.ref.generation!=b->u.ref.generation :
+       a->kind!=EXR_PDF_NULL)) {
+      f->xref_diagnostics.encrypt_conflicts++;
+      fprintf(stderr,"PDF warning: hybrid /Encrypt conflict; using classic trailer /Encrypt\n");
+    }
+  }
   if(!hybrid && !f->encrypt_seen && id!=EXR_PDF_NONE) { f->encrypt=id; f->encrypt_seen=1; }
   if(exr_pdf_get(f,dict,"XRefStm")!=EXR_PDF_NONE) goto bad;
   *info=exr_pdf_get(f,dict,"Info");
@@ -473,7 +485,9 @@ static int classic_xref(parser *p,size_t *previous,uint32_t *root,uint32_t *info
     parser other; size_t ignored_previous; uint32_t ignored_root,ignored_info;
     if(!direct_integer(f,id,f->size-1,&size)) goto bad;
     other=(parser){f,f->data,f->size,(size_t)size};
-    if(!stream_xref(&other,&ignored_previous,&ignored_root,&ignored_info,1)) return 0;
+    if(!stream_xref(&other,&ignored_previous,&ignored_root,&ignored_info,1,exr_pdf_get(f,trailer,"Encrypt"))) return 0;
+    f->xref_diagnostics.hybrid_sections++;
+    f->xref_diagnostics.last_xrefstm=(size_t)size;
   }
   *info=exr_pdf_get(f,trailer,"Info");
   *root=exr_pdf_get(f,trailer,"Root");
@@ -492,6 +506,9 @@ void exr_pdf_close(exr_pdf_file *f) {
 }
 uint32_t exr_pdf_info(const exr_pdf_file *f) { return f ? f->info : EXR_PDF_NONE; }
 uint32_t exr_pdf_root(const exr_pdf_file *f) { return f ? f->root : EXR_PDF_NONE; }
+void exr_pdf_xref_report(const exr_pdf_file *f,exr_pdf_xref_diagnostics *out) {
+  if(out) *out=f ? f->xref_diagnostics : (exr_pdf_xref_diagnostics){0};
+}
 void exr_pdf_revision(const exr_pdf_file *f,exr_pdf_revision_info *out) {
   if(out) *out=f ? (exr_pdf_revision_info){f->startxref,f->declared_size,f->raw_root,f->info,f->trailer_id} :
                   (exr_pdf_revision_info){0,0,EXR_PDF_NONE,EXR_PDF_NONE,EXR_PDF_NONE};
@@ -688,7 +705,7 @@ static exr_status open_pdf(const void *data,size_t size,const void *password,siz
     visited[count++]=at; f->revision=(uint32_t)count;
     p=(parser){f,bytes,size,at};
     if(word(&p,"xref")) { if(!classic_xref(&p,&previous,&candidate,&info)) goto done; }
-    else if(!stream_xref(&p,&previous,&candidate,&info,0)) goto done;
+    else if(!stream_xref(&p,&previous,&candidate,&info,0,EXR_PDF_NONE)) goto done;
     if(root==EXR_PDF_NONE) root=candidate;
     if(f->info==EXR_PDF_NONE) f->info=info;
     at=previous;
