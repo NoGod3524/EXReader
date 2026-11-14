@@ -236,12 +236,14 @@ def main():
         elif group == "wrongformat":
             source = bytearray((args.fixtures / "slides-1.ppt").read_bytes())
             source[:3] = b"BAD"
-            run(source, FORMAT, message="signature")
             # Real committed docx, renamed to .ppt.
             docx = next(args.fixtures.parent.glob("*.docx"))
-            run(docx.read_bytes(), FORMAT, message="signature")
-            run(compound(document(), name="WordDocument"), FORMAT, message="不是 PowerPoint 97-2003 文档")
-            run(compound(b""), FORMAT, message="DocumentContainer")
+            for mode in ("file", "memory"):
+                run(source, FORMAT, mode=mode, message="signature")
+                run(docx.read_bytes(), FORMAT, mode=mode, message="signature")
+                run(compound(document(), name="WordDocument"), FORMAT, mode=mode,
+                    message="不是 PowerPoint 97-2003 文档")
+                run(compound(b""), FORMAT, mode=mode, message="DocumentContainer")
             # Signature sniffing also opens an extensionless presentation.
             extensionless = Path(temp) / "presentation"
             extensionless.write_bytes(compound(document(2)))
