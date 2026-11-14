@@ -15,6 +15,9 @@ vertical stems; four Chinese characters with SimHei; left/center/right 24pt
 alignment; three real paragraph bullet dots plus an independent literal dot;
 wrapping; 40pt exact line spacing with 12pt paragraph spacing; mixed character
 runs; and a theme text color saved by PowerPoint as an explicit COLORINDEX.
+Synthetic spacing cases preserve the font metrics of empty paragraphs and
+consecutive soft breaks, including leading empty lines and underline-free
+invisible spacers.
 
 The ASCII fixtures contain `TextBytesAtom`; PowerPoint writes the Chinese and
 literal bullet characters as `TextCharsAtom`. Binary negative tests construct
@@ -22,7 +25,10 @@ independent CFB/record data at runtime for Unicode decoding, Latin-1 fallback,
 invalid indices, all eight scheme slots, truncated styles, and inconsistent
 paragraph/character run counts. A separate synthetic master test verifies
 Environment `TextMasterStyleAtom` sizes and `MasterTextPropAtom` level selection
-against explicitly styled text. The outline test resolves `OutlineTextRefAtom`
+against explicitly styled text. Main-master cases also require missing
+properties to inherit the corresponding Environment level, preserving a 48pt
+right-aligned second level when the first level is absent or overrides 36pt.
+The outline test resolves `OutlineTextRefAtom`
 through `SlideListWithText` and compares its Latin/CJK output with inline text.
 
 The font array in these saved files is 0=Aptos, 1=Arial, 2=Aptos Display,
