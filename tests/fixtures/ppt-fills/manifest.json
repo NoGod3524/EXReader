@@ -1,0 +1,235 @@
+{
+  "generator": "PowerPoint COM SaveAs(format=1); reopened COM oracle",
+  "version": "16.0",
+  "fixtures": [
+    {
+      "case": "png",
+      "file": "png.ppt",
+      "sha256": "e6c6347e0e87fabe5772fbd9838a6470e1fdb8b58ad150cd0d315b6f773d13ea",
+      "reference_png": "png-powerpoint.png",
+      "bbox_pt": [
+        80.0,
+        80.0,
+        100.0,
+        50.0
+      ]
+    },
+    {
+      "case": "scale",
+      "file": "scale.ppt",
+      "sha256": "423ac6eff9343ad7be5e3f7c96a7d5ad26e6596f2da749e80a9d408a2b999ea2",
+      "reference_png": "scale-powerpoint.png",
+      "bbox_pt": [
+        80.0,
+        80.0,
+        400.0,
+        50.0
+      ]
+    },
+    {
+      "case": "gradient",
+      "file": "gradient.ppt",
+      "sha256": "38a4634453809c809ca5724f418b91df66d7bef16e6a9334b8c2d12e461a1d9b",
+      "reference_png": "gradient-powerpoint.png",
+      "bbox_pt": [
+        80.0,
+        80.0,
+        400.0,
+        100.0
+      ],
+      "stops": [
+        {
+          "rgb": [
+            255,
+            0,
+            0
+          ],
+          "position": 0.0
+        },
+        {
+          "rgb": [
+            0,
+            0,
+            255
+          ],
+          "position": 1.0
+        }
+      ],
+      "angle": 0.0
+    },
+    {
+      "case": "theme",
+      "file": "theme.ppt",
+      "sha256": "301e3a23dee07a7cd6d9b3592fee1b10bef3176290716f1e0ee548a20e8de016",
+      "reference_png": "theme-powerpoint.png",
+      "bbox_pt": [
+        80.0,
+        80.0,
+        200.0,
+        70.0
+      ],
+      "shapes": [
+        {
+          "name": "accent1",
+          "bbox_pt": [
+            80.0,
+            80.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            17,
+            83,
+            211
+          ],
+          "object_theme_color": 5,
+          "master_rgb": [
+            17,
+            83,
+            211
+          ]
+        },
+        {
+          "name": "accent2",
+          "bbox_pt": [
+            330.0,
+            80.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            19,
+            123,
+            41
+          ],
+          "object_theme_color": 6,
+          "master_rgb": [
+            19,
+            123,
+            41
+          ]
+        },
+        {
+          "name": "accent3",
+          "bbox_pt": [
+            80.0,
+            180.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            241,
+            97,
+            23
+          ],
+          "object_theme_color": 7,
+          "master_rgb": [
+            241,
+            97,
+            23
+          ]
+        },
+        {
+          "name": "accent4",
+          "bbox_pt": [
+            330.0,
+            180.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            91,
+            31,
+            201
+          ],
+          "object_theme_color": 8,
+          "master_rgb": [
+            91,
+            31,
+            201
+          ]
+        },
+        {
+          "name": "accent5",
+          "bbox_pt": [
+            80.0,
+            280.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            201,
+            41,
+            153
+          ],
+          "object_theme_color": 9,
+          "master_rgb": [
+            201,
+            41,
+            153
+          ]
+        },
+        {
+          "name": "accent6",
+          "bbox_pt": [
+            330.0,
+            280.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            7,
+            177,
+            221
+          ],
+          "object_theme_color": 10,
+          "master_rgb": [
+            7,
+            177,
+            221
+          ]
+        },
+        {
+          "name": "background",
+          "bbox_pt": [
+            80.0,
+            380.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            233,
+            241,
+            249
+          ],
+          "object_theme_color": 2,
+          "master_rgb": [
+            233,
+            241,
+            249
+          ]
+        },
+        {
+          "name": "text",
+          "bbox_pt": [
+            330.0,
+            380.0,
+            200.0,
+            70.0
+          ],
+          "rgb": [
+            12,
+            23,
+            34
+          ],
+          "object_theme_color": 1,
+          "master_rgb": [
+            12,
+            23,
+            34
+          ]
+        }
+      ]
+    }
+  ]
+}
