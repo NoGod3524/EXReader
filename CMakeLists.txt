@@ -217,6 +217,11 @@ if(EXR_FULL_TESTS)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_skeleton.py
       --library $<TARGET_FILE:exreader> ${group})
   endforeach()
+  foreach(group rect circle roundrect triangle group standard rotation zero-extent group-transforms flips colors-lines fallback missing limits)
+    add_test(NAME native-pptx-shape-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_shapes.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
   foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
