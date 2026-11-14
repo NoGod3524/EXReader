@@ -1,0 +1,11 @@
+{
+  "file": "title.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "title",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT"
+}

@@ -1,0 +1,104 @@
+bad-invalid-xml.pptx open status=5 code=5 warning='Invalid PPTX XML part: ppt/slides/slide1.xml'
+bad-invalid-xml.pptx bad=ok EXR_FORMAT status=5 message='Invalid PPTX XML part: ppt/slides/slide1.xml'
+bad-missing-part.pptx open status=5 code=5 warning='PPTX part missing: ppt/presentation.xml'
+bad-missing-part.pptx bad=ok EXR_FORMAT status=5 message='PPTX part missing: ppt/presentation.xml'
+bad-truncated.pptx open status=5 code=5 warning='Invalid or truncated PPTX/ZIP container'
+bad-truncated.pptx bad=ok EXR_FORMAT status=5 message='Invalid or truncated PPTX/ZIP container'
+bullets.pptx open status=0 code=0 warning=''
+bullets.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+bullets.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 34, 383, 333) expected=(48.0, 28.0, 912.0, 435.0) tolerance=4px
+chinese.pptx open status=0 code=0 warning='PPTX warning: font fallback=+mn-ea; missing glyph: Segoe UI U+7814 fallback; Segoe UI U+7A76 fallback; Segoe UI U+8FDB fallback; Segoe UI U+5C55 fallback; Segoe UI U+4E0E fallback; Segoe UI U+4E0B fallback; Segoe UI U+4E00 fallback; Segoe UI U+6B65 fal...'
+chinese.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+chinese.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 37, 913, 481) expected=(48.0, 28.0, 912.0, 480.0) tolerance=4px
+gradient-alpha.pptx open status=0 code=0 warning=''
+gradient-alpha.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+gradient-alpha.pptx#1 coverage=FAIL color=2/12 text=ok
+  bbox actual=(50, 34, 880, 479) expected=(48.0, 28.0, 912.0, 506.0) tolerance=4px
+  color (394,345) actual=(105, 122, 132) expected=(91, 113, 126) delta=14
+  color (521,390) actual=(112, 148, 173) expected=(75, 124, 158) delta=37
+  color (815,358) actual=(174, 199, 176) expected=(93, 146, 142) delta=81
+  color (48,459) actual=(255, 255, 255) expected=(212, 231, 242) delta=43
+  color (265,345) actual=(234, 183, 137) expected=(201, 162, 125) delta=33
+  color (448,390) actual=(112, 148, 173) expected=(78, 126, 159) delta=34
+  color (737,358) actual=(174, 199, 176) expected=(99, 150, 145) delta=75
+  color (912,459) actual=(255, 255, 255) expected=(94, 150, 186) delta=161
+  color (136,345) actual=(234, 183, 137) expected=(209, 168, 128) delta=25
+  color (485,390) actual=(112, 148, 173) expected=(77, 125, 159) delta=35
+image-text.pptx open status=0 code=0 warning=''
+image-text.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+image-text.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 810, 382) expected=(48.0, 28.0, 912.0, 400.0) tolerance=4px
+merged-table.pptx open status=0 code=0 warning=''
+merged-table.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+merged-table.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 433) expected=(48.0, 28.0, 912.0, 432.0) tolerance=4px
+nested-groups.pptx open status=0 code=0 warning=''
+nested-groups.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+nested-groups.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 807, 458) expected=(48.0, 28.0, 912.0, 482.0) tolerance=4px
+standard-4x3.pptx open status=0 code=0 warning=''
+standard-4x3.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+standard-4x3.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 34, 672, 434) expected=(48.0, 28.0, 672.0, 434.0) tolerance=4px
+theme-accents.pptx open status=0 code=0 warning=''
+theme-accents.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+theme-accents.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 34, 906, 438) expected=(48.0, 28.0, 912.0, 438.0) tolerance=4px
+title.pptx open status=0 code=0 warning=''
+title.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+title.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(96, 200, 440, 241) expected=(96.0, 190.0, 864.0, 290.0) tolerance=4px
+twenty.pptx open status=0 code=0 warning=''
+twenty.pptx slides engine=20 python-pptx=20 manifest=20 warnings=ok
+twenty.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#2 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#3 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#4 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#5 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#6 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#7 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#8 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#9 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#10 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#11 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#12 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#13 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#14 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#15 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#16 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#17 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#18 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#19 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#20 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx render samples=100 median=20.531ms max=47.197ms limit=200ms
+upstream-font-color.pptx open status=0 code=0 warning='PPTX warning: font fallback=+mn-lt; '
+upstream-font-color.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+upstream-font-color.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(236, 76, 499, 473) expected=(228.88055118110236, 65.7655905511811, 491.11944881889764, 474.23425196850394) tolerance=4px
+wide-16x9.pptx open status=0 code=0 warning=''
+wide-16x9.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+wide-16x9.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 34, 912, 434) expected=(48.0, 28.0, 912.0, 434.0) tolerance=4px
+MATRIX files=15 passed=3 failed=12

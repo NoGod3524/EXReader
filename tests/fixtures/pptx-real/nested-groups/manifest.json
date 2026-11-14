@@ -1,0 +1,16 @@
+{
+  "file": "nested-groups.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "grpSp",
+    "nested-grpSp",
+    "group-scale",
+    "roundRect",
+    "ellipse",
+    "triangle",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT"
+}

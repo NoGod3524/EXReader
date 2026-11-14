@@ -1,0 +1,27 @@
+{
+  "file": "upstream-font-color.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "theme-color",
+    "accent1",
+    "accent4",
+    "lumMod",
+    "lumOff",
+    "upstream-powerpoint-package"
+  ],
+  "source": "downloaded",
+  "license": "MIT",
+  "source_url": "https://raw.githubusercontent.com/scanny/python-pptx/278b47b1dedd5b46ee84c286e77cdfb0bf4594be/features/steps/test_files/font-color.pptx",
+  "upstream_path": "features/steps/test_files/font-color.pptx",
+  "source_page": "https://github.com/scanny/python-pptx/blob/278b47b1dedd5b46ee84c286e77cdfb0bf4594be/features/steps/test_files/font-color.pptx",
+  "license_url": "https://raw.githubusercontent.com/scanny/python-pptx/278b47b1dedd5b46ee84c286e77cdfb0bf4594be/LICENSE",
+  "upstream_commit": "278b47b1dedd5b46ee84c286e77cdfb0bf4594be",
+  "sha256": "2394d35832c69576e808f8f5196c263a6488eb55d10b7b864f11840843123b69",
+  "bytes": 25061,
+  "original_author": "Steve Canny",
+  "original_modified": "2013-11-10 22:07:41",
+  "provenance": "Unmodified upstream integration fixture; repository MIT license and source-distribution MANIFEST.in are retained alongside it.",
+  "original_application": "Microsoft Macintosh PowerPoint",
+  "original_app_version": "14.0000"
+}

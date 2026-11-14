@@ -1,0 +1,12 @@
+{
+  "file": "image-text.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "png",
+    "image-stretch",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT"
+}

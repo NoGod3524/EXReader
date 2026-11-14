@@ -1,0 +1,15 @@
+{
+  "file": "gradient-alpha.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "gradient-background",
+    "alpha",
+    "rect",
+    "ellipse",
+    "roundRect",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT"
+}

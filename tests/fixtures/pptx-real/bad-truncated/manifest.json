@@ -1,0 +1,11 @@
+{
+  "file": "bad-truncated.pptx",
+  "slides": 0,
+  "features": [
+    "truncated"
+  ],
+  "source": "generated",
+  "license": "MIT",
+  "expected_status": 5,
+  "expected_error": "EXR_FORMAT"
+}

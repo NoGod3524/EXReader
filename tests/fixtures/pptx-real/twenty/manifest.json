@@ -1,0 +1,26 @@
+{
+  "file": "twenty.pptx",
+  "slides": 20,
+  "features": [
+    "text",
+    "png",
+    "image-stretch",
+    "image-tile",
+    "shape-picture-fill",
+    "flipH",
+    "flipV",
+    "quarter-rotation",
+    "line",
+    "ellipse",
+    "circle",
+    "triangle",
+    "table",
+    "grpSp",
+    "nested-grpSp",
+    "20-slides",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT",
+  "benchmark": true
+}

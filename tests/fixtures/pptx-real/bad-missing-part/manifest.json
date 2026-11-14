@@ -1,0 +1,11 @@
+{
+  "file": "bad-missing-part.pptx",
+  "slides": 0,
+  "features": [
+    "missing-part"
+  ],
+  "source": "generated",
+  "license": "MIT",
+  "expected_status": 5,
+  "expected_error": "EXR_FORMAT"
+}
