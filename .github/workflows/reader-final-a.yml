@@ -82,6 +82,7 @@ jobs:
           gradle-version: '8.9'
       - name: Install pinned Android build dependencies
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y patchelf
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;27.0.12077973' 'platforms;android-35' 'build-tools;35.0.0'
@@ -122,9 +123,11 @@ jobs:
       - name: Build SDK, native product and application without launching it
         run: |
           set -euo pipefail
-          args=()
+          args=(-DCMAKE_OSX_SYSROOT='${{ matrix.sdk }}')
           if [ '${{ matrix.sdk }}' != macosx ]; then
-            args+=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+            args+=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          else
+            args+=(-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0)
           fi
           cmake -S . -B build/final-a/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${args[@]}"
           cmake --build build/final-a/sdk --parallel 4
