@@ -6313,7 +6313,7 @@ int main(int argc, char **argv) {
 
 **所有权** 成功 out 用 exr_fixed_free；文件读取/映射由文档管理。options/password 仅调用内借用；fallback_font 被保留到 fixed_free。
 
-Legacy PPT M1：`.ppt` 扩展名或 OLE2 签名进入内置 CFB/PowerPoint 记录解析；每张幻灯片提供固定页几何和空 draw，默认白底。零页演示文稿合法。DocumentAtom 尺寸单位为 1/576 英寸，换算 pt 除以 8；缺失尺寸默认 720×540 pt。总流大小上限 256 MiB、记录深度上限 64。页数优先采用最新 DocumentContainer 中实例 0 的 SlidePersistAtom 列表；与物理 SlideContainer 总数不一致时 EXR_OK，error.message 保留警告。标题来自可选 SummaryInformation；未取到为空。
+Legacy PPT M2：`.ppt` 扩展名或 OLE2 签名进入内置 CFB/PowerPoint 记录解析；固定页默认白底，绘制矩形、椭圆、直线的直接 RGB 纯色填充/轮廓与线宽，支持组坐标缩放、平移和翻转；显式无填充的闭合形状跳过。文本、图片、自定义几何、旋转、渐变和索引色尚不支持。零页演示文稿合法。DocumentAtom 尺寸单位为 1/576 英寸，换算 pt 除以 8；缺失尺寸默认 720×540 pt。总流大小上限 256 MiB、外层记录深度上限 64；绘图递归超过 16 层停止该分支并警告，每页超过 5000 个形状（含组，根结构组除外）返回 EXR_LIMIT。缺失绘图时为空白页，缺锚/属性表损坏时跳过形状，零子坐标跨度按 1:1；EXR_OK 的 error.message 汇总 malformed/missing-anchor/depth/zero-chExt/unsupported 计数。页数优先采用最新 DocumentContainer 中实例 0 的 SlidePersistAtom 列表；按持久对象目录映射到 Slide，缺少映射时回退到最终 Document 后的物理顺序。与物理 SlideContainer 总数不一致时保留警告。标题来自可选 SummaryInformation；未取到为空。
 
 ### `exr_pdf_annotation_write_defaults`
 
