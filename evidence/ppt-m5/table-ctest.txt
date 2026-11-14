@@ -1,0 +1,10 @@
+399/540 Test #403: native-ppt-table-fills .............................   Passed    1.56 sec
+401/540 Test #404: native-ppt-table-borders ...........................   Passed    1.52 sec
+403/540 Test #407: native-ppt-table-malformed .........................   Passed    1.42 sec
+404/540 Test #408: native-ppt-table-missing ...........................   Passed    0.81 sec
+405/540 Test #406: native-ppt-table-merge .............................   Passed    1.57 sec
+407/540 Test #409: native-ppt-table-indices ...........................   Passed    1.48 sec
+409/540 Test #410: native-ppt-table-limits ............................   Passed    1.66 sec
+411/540 Test #405: native-ppt-table-text ..............................   Passed    2.66 sec
+414/540 Test #411: native-ppt-table-cjk ...............................   Passed    1.23 sec
+419/540 Test #412: native-ppt-table-structure .........................   Passed    1.73 sec

@@ -1372,6 +1372,11 @@ if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_ppt_text.py $<TARGET_FILE:exreader-ppt-shape-probe>
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-text ${group})
   endforeach()
+  foreach(group fills borders text merge malformed missing indices limits cjk structure)
+    add_test(NAME native-ppt-table-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_ppt_tables.py $<TARGET_FILE:exreader-ppt-shape-probe>
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-tables ${group})
+  endforeach()
 endif()
 if(EXR_BUILD_TESTS)
   add_executable(exreader-style-footnotes-test tests/test_style_footnotes.c)

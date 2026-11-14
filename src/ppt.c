@@ -139,6 +139,8 @@ static void warning_append(char message[256],const char *format,...) {
 static void warnings(const exr_ppt_drawing *d,const exr_ppt_info *info,exr_error *e) {
   char message[256]="PPT warning: ";size_t at;
 #define COUNT(field,label) if(d->field) warning_append(message,label "=%zu ",d->field)
+  COUNT(table_malformed,"table-malformed");COUNT(table_missing,"table-missing");COUNT(table_merge,"table-merge");
+  COUNT(text_index,"text-index");
   COUNT(text_runs,"text-runs");COUNT(text_font_index,"font-index");COUNT(text_color_index,"color-index");
   COUNT(text_unicode,"surrogate/replacement");COUNT(text_bytes_fallback,"Latin-1");COUNT(text_malformed,"text-malformed");
   for(at=0;at<d->font_fallbacks.size;at+=strlen(d->font_fallbacks.data+at)+1)
