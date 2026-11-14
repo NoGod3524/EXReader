@@ -6293,7 +6293,7 @@ int main(int argc, char **argv) {
 
 **参数** `format`：EXR_PDF、EXR_CBZ、EXR_PPT（97–2003 二进制演示文稿）或 EXR_PPTX；`data`：输入文件/资源字节，至少 size 字节；`size`：输入字节长度；`options`：可 NULL；否则 struct_size，fallback_font、control、pdf_password/size；pdf_security 初始化 struct_size；`out`：接收文档，失败 NULL；`error`：可 NULL；接收状态码和诊断文本，不分配内存。
 
-**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。PPTX M1 提供页序、pt 尺寸和白页绘制，支持 0 页；缺失或无效的幻灯片引用会跳过，EXR_OK 的 error.message 带跳过计数警告。
+**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。PPTX 支持 0 页、页序与 pt 尺寸，以及基本形状、分组、纯色/图片/渐变填充、五层继承文本和表格单元格填充/边框/文本/横纵合并；表格按给定行高绘制，暂不应用 tableStyleId/firstRow/bandRow 样式，文本溢出或未应用样式会警告。缺失或无效的幻灯片引用会跳过，EXR_OK 的 error.message 带跳过计数警告。
 
 **线程** 独立输入/输出可在不同线程调用；共享文档、来源、字体和回调上下文须串行，调用期间输入不得变更。
 
@@ -6307,7 +6307,7 @@ int main(int argc, char **argv) {
 
 **参数** `path`：UTF-8 文件路径；`options`：可 NULL；否则 struct_size，fallback_font、control、pdf_password/size；pdf_security 初始化 struct_size；`out`：接收文档，失败 NULL；`error`：可 NULL；接收状态码和诊断文本，不分配内存。
 
-**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。PPTX M1 提供页序、pt 尺寸和白页绘制，支持 0 页；缺失或无效的幻灯片引用会跳过，EXR_OK 的 error.message 带跳过计数警告。
+**返回与失败** EXR_OK 创建惰性固定页文档；ARGUMENT/LIMIT 为参数或输入预算，FORMAT 为不支持格式/损坏，PASSWORD 为缺失或错误 PDF 口令，UNSUPPORTED 为不支持安全处理器/特性；另有 IO/MEMORY/CANCELLED。打开成功不保证每一页都能绘制。PPTX 支持 0 页、页序与 pt 尺寸，以及基本形状、分组、纯色/图片/渐变填充、五层继承文本和表格单元格填充/边框/文本/横纵合并；表格按给定行高绘制，暂不应用 tableStyleId/firstRow/bandRow 样式，文本溢出或未应用样式会警告。缺失或无效的幻灯片引用会跳过，EXR_OK 的 error.message 带跳过计数警告。
 
 **线程** 独立输入/输出可在不同线程调用；共享文档、来源、字体和回调上下文须串行，调用期间输入不得变更。
 

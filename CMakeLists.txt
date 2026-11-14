@@ -238,6 +238,13 @@ if(EXR_FULL_TESTS)
   endforeach()
   add_test(NAME native-pptx-text-reproducible COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-text/generate.py --check)
+  foreach(group fills borders columns text merges anchor malformed margins overflow transforms limits sink)
+    add_test(NAME native-pptx-table-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_tables.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
+  add_test(NAME native-pptx-table-reproducible COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-tables/generate.py --check)
   foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
