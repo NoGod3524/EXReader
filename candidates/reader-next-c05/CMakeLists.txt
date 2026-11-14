@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 3.24)
+project(EXReaderNextC05 LANGUAGES C)
+# Consumer entry for the installed SDK only. /utf-8 is the default, matching the SDK
+# and the original F5 consumer; C05_SOURCE_UTF8=OFF builds a recorded, non-gating
+# control that exposes how this compiler reads the UTF-8 literals in probe.c.
+option(C05_SOURCE_UTF8 "Pass /utf-8 to MSVC" ON)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  if(C05_SOURCE_UTF8)
+    add_compile_options(/utf-8)
+  endif()
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+endif()
+if(EXR_SDK)
+  list(PREPEND CMAKE_PREFIX_PATH "${EXR_SDK}")
+endif()
+find_package(EXReader CONFIG REQUIRED)
+add_executable(c05-fb2-probe probe.c)
+target_link_libraries(c05-fb2-probe PRIVATE EXReader::exreader)
+set_target_properties(c05-fb2-probe PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED ON)
+if(C05_SOURCE_UTF8)
+  target_compile_definitions(c05-fb2-probe PRIVATE C05_SOURCE_UTF8=1)
+else()
+  target_compile_definitions(c05-fb2-probe PRIVATE C05_SOURCE_UTF8=0)
+endif()
+if(WIN32)
+  target_link_libraries(c05-fb2-probe PRIVATE shell32)
+  add_custom_command(TARGET c05-fb2-probe POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "$<TARGET_FILE:EXReader::exreader>" "$<TARGET_FILE_DIR:c05-fb2-probe>")
+endif()
