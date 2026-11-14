@@ -1,0 +1,4 @@
+[0/2] Re-checking globbed directories...
+[1/4] Building C object CMakeFiles/exr_formats_objects.dir/src/docx_edit_io.c.obj
+[2/4] Linking C static library libexr_formats.a
+[3/4] Linking C shared library libexreader.dll

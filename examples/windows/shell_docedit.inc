@@ -30,6 +30,11 @@ typedef struct {
   int width,height,layout_dirty,blink,mouse_down,saved;
   unsigned dpi;
   wchar_t high_surrogate,title[512];
+  unsigned hf_mode,hf_variant; /* 0 body, 1 header, 2 footer; default/first/even. */
+  exr_edit_id hf_section;
+  size_t hf_caret,hf_anchor,hf_size[2]; /* UTF-8 byte offsets, independent of body. */
+  char *hf_text[2];
+  shell_d2d_edit_row hf_rows[2];
 } shell_docedit;
 static shell_docedit de;
 static int de_outline_width(int width);
@@ -101,6 +106,16 @@ static float de_toolbar_height(void);
 static HRESULT de_toolbar_paint(HDC dc);
 static int de_toolbar_click(float x,float y);
 static exr_edit_run_props de_current_props(void);
+static exr_edit_id de_hf_section(void);
+static RECT de_hf_box(unsigned footer);
+static int de_hf_enter(unsigned footer);
+static void de_hf_leave(void);
+static int de_hf_command(int command);
+static int de_hf_edit(int operation,const char *text,size_t n);
+static int de_hf_key(WPARAM key,int control,int shift);
+static int de_hf_mouse(HWND window,UINT message,LPARAM lparam);
+static int de_hf_measure(unsigned footer,float y);
+static HRESULT de_hf_labels(HDC dc);
 static int de_footnote_insert(void);
 static int de_footnote_click(float x,float y);
 
@@ -112,6 +127,8 @@ static de_pos de_anchor(void) {
 }
 static void de_set_caret(de_pos p) {
   int in_table=de_cell_at(p.block).table!=0;
+  const exr_edit_block *before=de_block_at(de.doc,de.caret.view),*after=de_block_at(de.doc,p.block);
+  if(before && after && before->section_id!=after->section_id)de.layout_dirty=1;
   if(de.caret_in_table!=in_table)de.layout_dirty=1;
   if(de.caret.view!=p.block || de.caret.run!=p.run || de.caret.byte!=p.byte)
     memset(&de.pending_props,0,sizeof(de.pending_props));
@@ -273,6 +290,7 @@ static void de_close(void) {
   if(g.page) {KillTimer(g.page,DE_TIMER);if(GetCapture()==g.page)ReleaseCapture();}
   de_drop_layout();free(de.styles);de.styles=NULL;de.style_count=0;de.styles_loaded=0;
   exr_edit_doc_free(de.doc);de.doc=NULL;de.color_panel=0;de.caret_in_table=0;
+  de.hf_mode=de.hf_variant=0;de.hf_section=0;
   memset(&de.pending_props,0,sizeof(de.pending_props));de_title();
   if(g.page)page_dirty(g.page,1);
 }

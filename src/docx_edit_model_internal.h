@@ -11,4 +11,10 @@ exr_status exr_edit_ready(exr_edit_doc *d);
 exr_status exr_edit_failure(exr_edit_doc *d,exr_status status);
 exr_status exr_edit_replace(exr_edit_doc *d,exr_edit_id id,const exr_edit_block *view);
 exr_status exr_edit_insert_block(exr_edit_doc *d,exr_edit_id after,const exr_edit_block *view,exr_edit_id *id);
+/* Atomic metadata journal; buffers may alias borrowed views. first=-1 retains. */
+exr_status exr_edit_package_update(exr_edit_doc *d,size_t section,
+  const exr_edit_section *value,const exr_edit_part *parts,size_t count,int first);
+int exr_edit_first_override(const exr_edit_doc *d,size_t section);
+int exr_edit_text_valid(const char *text,size_t size);
+int exr_edit_transaction_active(const exr_edit_doc *d);
 #endif

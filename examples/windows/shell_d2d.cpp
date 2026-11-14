@@ -552,7 +552,7 @@ extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int
     const auto &row=rows[i];float y=row.y-scroll;
     const float origin=inset+row.x;
     if(row.cell_border) {
-      s->dc_brush->SetColor(D2D1::ColorF(c.text,.65f));
+      s->dc_brush->SetColor(D2D1::ColorF(row.dimmed ? c.text_disabled:c.text,.65f));
       s->dc_target->DrawRectangle(D2D1::RectF(row.cell_box[0],row.cell_box[1]-scroll,
         row.cell_box[2],row.cell_box[3]-scroll),s->dc_brush,1.f);
     }
@@ -578,11 +578,11 @@ extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int
           origin+end[0]+6,y+end[1]+end[3]),s->dc_brush);
       }
     }
-    s->dc_brush->SetColor(D2D1::ColorF(c.text));
+    s->dc_brush->SetColor(D2D1::ColorF(row.dimmed ? c.text_disabled:c.text));
     // Effects belong to this DC target only; clear them before device recreation.
     for(const auto &color:view->colors) {
       ID2D1SolidColorBrush *brush=nullptr;
-      hr=s->dc_target->CreateSolidColorBrush(D2D1::ColorF(color.rgb),&brush);
+      hr=s->dc_target->CreateSolidColorBrush(D2D1::ColorF(row.dimmed ? c.text_disabled:color.rgb),&brush);
       if(SUCCEEDED(hr)) {layout->SetDrawingEffect(brush,color.range);brush->Release();}
       else break;
     }

@@ -1,0 +1,11 @@
+已完成，headless 实测输出：
+
+1. `header1.xml text=HDR`，保存重开通过。
+2. `footer1.xml text=FTR`，保存重开通过。
+3. `sectPr/titlePg 0->1->0`。
+4. Esc、双击正文退出通过，正文输入及保存重开正常；置灰对比度 `666->323`。
+5. 原生 `425/425`、编辑器 `2/2` 全绿，仅排除指定两项。
+
+prepush 全部通过；受保护文件未改，现有断言未放宽。
+
+[完整真实输出](/C:/Users/Oscar/Documents/Codex/EXReader-fan-L13/OUT-L13.txt)
