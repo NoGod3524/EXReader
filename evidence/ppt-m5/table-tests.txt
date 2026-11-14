@@ -1,0 +1,66 @@
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=1 fill_rgb=[(17, 34, 51), (68, 85, 102), (119, 136, 153), (170, 187, 204)] maximum_error=0
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=2 fill_rgb=[(17, 34, 51), (68, 85, 102), (119, 136, 153), (170, 187, 204)] maximum_error=0
+native-ppt-table-fills: 2 native opens/renders passed
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=1 border_pixels=(100,160) record_w=38100 width_pt=3.0 measured_px=(2,2) expected_px=3
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=2 border_pixels=(600,960) record_w=38100 width_pt=3.0 measured_px=(6,6) expected_px=6
+native-ppt-table-borders: 2 native opens/renders passed
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=1 cell=0 text=A glyph_pixels=61 bbox=(67, 89, 77, 99)
+scale=1 cell=3 text=B glyph_pixels=49 bbox=(248, 179, 254, 189)
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=2 cell=0 text=A glyph_pixels=203 bbox=(134, 179, 153, 198)
+scale=2 cell=3 text=B glyph_pixels=152 bbox=(496, 359, 508, 378)
+overflow_text_inside_pixels=1208 outside_cell_pixels=0
+native-ppt-table-text: 3 native opens/renders passed
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=1 merged_row_divider_pixels=0 unmerged_row_divider_pixels=140
+status=0 message=PPT warning: font fallback=Aptos; 
+scale=2 merged_row_divider_pixels=0 unmerged_row_divider_pixels=840
+status=0 message=PPT warning: table-merge=1 
+contradictory_overlap=first-start-wins covered_fill_pixels=0 stale_divider_pixels=0
+native-ppt-table-merge: 3 native opens/renders passed
+status=0 message=PPT warning: table-malformed=2 
+declared_rows=3 row_elements=2 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=1 row_elements=1 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=2 row_elements=1 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=0 row_elements=0 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=2 row_elements=2 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+row_property_declared_bytes=65535 available_bytes=14 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 malformed=1 
+truncated_final_cell status=0 readable_cells=3 missing_cell_rgb=(255,255,255)
+native-ppt-table-malformed: 7 native opens/renders passed
+status=0 message=PPT warning: table-missing=1 
+missing_table_records status=0 empty_frame_pixels>0 interior_rgb=(255,255,255)
+status=0 message=PPT warning: table-missing=1 
+missing_table_records status=0 empty_frame_pixels>0 interior_rgb=(255,255,255)
+status=0 message=PPT warning: table-malformed=1 table-missing=1 
+missing_row_metadata status=0 recovered_rectangle=2x2
+native-ppt-table-missing: 3 native opens/renders passed
+status=0 message=PPT warning: text-index=1 
+out_of_range_text_index=999 status=0 empty_cell_text_pixels=0
+valid_outline_index=0 inline_indexed_pixels_identical=true
+native-ppt-table-indices: 3 native opens/renders passed
+status=6 message=PPT table exceeds 200 rows
+status=6 message=PPT table exceeds 200x200 or cell storage budget
+row_limit=201 status=6; column_limit=201 status=6
+maximum_legal_grid=200x200 cells=40000 status=0 generic_shape_limit_bypassed=true
+native-ppt-table-limits: 3 native opens/renders passed
+host_cjk=True glyph_pixels=826 bbox=(70, 85, 162, 107)
+native-ppt-table-cjk: 1 native opens/renders passed
+plain: recType=F003 marker=F122/039F=1 rows=C3A0 rectangles=4 border_lines=6
+status=0 message=PPT warning: font fallback=Aptos; 
+plain: parsed_rows=2 parsed_columns=2 cells=4 merged=0 text=A/B anchor=60,80,240,170
+merge: recType=F003 marker=F122/039F=1 rows=C3A0 rectangles=3 border_lines=6
+status=0 message=PPT warning: font fallback=Aptos; 
+merge: parsed_rows=2 parsed_columns=2 cells=3 merged=1 text=A/B anchor=60,80,420,170
+fully_merged_rows=200 columns=1 cells=1 merged=1 status=0
+native-ppt-table-structure: 3 native opens/renders passed

@@ -1,0 +1,104 @@
+{
+  "generator": "PowerPoint COM SaveAs(format=1); reopened COM table oracle",
+  "version": "16.0",
+  "fixtures": [
+    {
+      "case": "plain",
+      "file": "plain.ppt",
+      "sha256": "c7e442e595bf42b415f28925bd658a67d851e4cc910e98352dd14a108dcd1127",
+      "reference_png": "plain-powerpoint.png",
+      "rows": 2,
+      "columns": 2,
+      "bbox_pt": [
+        60,
+        80,
+        360,
+        180
+      ],
+      "fill_rgb": [
+        [
+          17,
+          34,
+          51
+        ],
+        [
+          68,
+          85,
+          102
+        ],
+        [
+          119,
+          136,
+          153
+        ],
+        [
+          170,
+          187,
+          204
+        ]
+      ],
+      "border_rgb": [
+        160,
+        64,
+        32
+      ],
+      "border_width_pt": 3,
+      "text": [
+        "A",
+        "",
+        "",
+        "B"
+      ],
+      "horizontal_merge": false
+    },
+    {
+      "case": "merge",
+      "file": "merge.ppt",
+      "sha256": "238b3e3892accabd99674096efb68ddb5eb503fc635014e3c7ee9ef3f78ad844",
+      "reference_png": "merge-powerpoint.png",
+      "rows": 2,
+      "columns": 2,
+      "bbox_pt": [
+        60,
+        80,
+        360,
+        180
+      ],
+      "fill_rgb": [
+        [
+          17,
+          34,
+          51
+        ],
+        [
+          68,
+          85,
+          102
+        ],
+        [
+          119,
+          136,
+          153
+        ],
+        [
+          170,
+          187,
+          204
+        ]
+      ],
+      "border_rgb": [
+        160,
+        64,
+        32
+      ],
+      "border_width_pt": 3,
+      "text": [
+        "A",
+        "",
+        "",
+        "B"
+      ],
+      "horizontal_merge": true
+    }
+  ]
+}
