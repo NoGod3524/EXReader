@@ -20,6 +20,7 @@
 #define MAX_SHAPES 10000
 #define MAX_GROUP_DEPTH 16
 #define MAX_STOPS 256
+#define MAX_TABLE_DIMENSION 200
 #define IMAGE_REL "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
 #define IMAGE_STRICT "http://purl.oclc.org/ooxml/officeDocument/relationships/image"
 
@@ -38,6 +39,7 @@ typedef struct {
 } pptx_text_style;
 typedef struct { size_t faces[32],count; exr_font *font; } pptx_text_font;
 typedef struct { exr_layout *layout; } pptx_paragraph;
+typedef struct { double width; uint32_t rgba; unsigned present; } pptx_border;
 
 typedef struct {
   pptx_geometry geometry;
@@ -49,6 +51,8 @@ typedef struct {
   unsigned texture,tile; /* 1: embedded image, 2: linear gradient. */
   pptx_paragraph *paragraphs;
   size_t paragraph_count,paragraph_capacity;
+  pptx_border borders[4]; /* Left, right, top, bottom; table cells only. */
+  size_t table_cells; /* 0: shape, SIZE_MAX: cell, otherwise first cell's table size. */
 } pptx_shape;
 
 typedef struct {
@@ -82,6 +86,7 @@ typedef struct {
   pptx_text_font *text_fonts;
   size_t text_font_count,text_font_capacity,font_bytes,text_bytes;
   size_t text_scale_warning,text_level_warning;
+  size_t table_grid_warning,table_span_warning,table_row_warning,table_height_warning,table_style_warning;
   exr_buffer font_fallbacks,glyph_fallbacks;
 } pptx_document;
 
@@ -1332,8 +1337,9 @@ done:
 
 static exr_status text_body(pptx_document *d,pptx_slide *slide,pptx_shape *shape,const exr_document *xml,
                             size_t sp,const exr_control *control,exr_error *e) {
-  size_t body=child(xml,sp,"txBody"),props,list,p,ph,nv,i,j;
-  double inset[4]={3.6,7.2,3.6,7.2},scale=1,reduction=0,y=0,offset;
+  int cell=named(&xml->nodes[sp],A,AS,"tc");
+  size_t body=cell ? drawing_child(xml,sp,"txBody") : child(xml,sp,"txBody"),props,list,p,ph,nv,i,j;
+  double inset[4]={3.6,7.2,3.6,7.2},scale=1,reduction=0,y=0,offset,remaining;
   static const char *const attrs[]={"tIns","rIns","bIns","lIns"};
   const char *anchor=NULL,*v;
   int wrap=1,kind=2,numbers[9]={0};
@@ -1350,6 +1356,17 @@ static exr_status text_body(pptx_document *d,pptx_slide *slide,pptx_shape *shape
       if(v && (!integer(v,&n) || n<=0 || n>100000)) d->text_scale_warning++;
       else if(v) scale=n/100000.0;
       if(integer(exr_node_attribute(&xml->nodes[i],"lnSpcReduction"),&n) && n>=0 && n<=100000) reduction=n/100000.0;
+    }
+  }
+  if(cell) {
+    static const char *const margins[]={"marT","marR","marB","marL"};
+    size_t tcpr=drawing_child(xml,sp,"tcPr");
+    anchor=NULL;
+    for(i=0;i<4;i++) inset[i]=7.2;
+    if(tcpr!=SIZE_MAX) {
+      const exr_node *node=&xml->nodes[tcpr];
+      anchor=exr_node_attribute(node,"anchor");
+      for(i=0;i<4;i++) if(integer(exr_node_attribute(node,margins[i]),&n) && n>=0) inset[i]=n/12700.0;
     }
   }
   nv=child(xml,sp,"nvSpPr"); nv=nv==SIZE_MAX ? SIZE_MAX : child(xml,nv,"nvPr");
@@ -1379,11 +1396,125 @@ static exr_status text_body(pptx_document *d,pptx_slide *slide,pptx_shape *shape
     status=text_paragraph(d,shape,xml,p,&style,scale,reduction,shape->width-inset[1]-inset[3],inset[3],&y,wrap,control,e);
     if(status!=EXR_OK) return status;
   }
+  if(cell && y+inset[0]+inset[2]>shape->height+0.01) d->table_height_warning++;
   offset=inset[0];
-  if(anchor && !strcmp(anchor,"ctr")) offset+=(shape->height-inset[0]-inset[2]-y)/2;
-  else if(anchor && !strcmp(anchor,"b")) offset+=shape->height-inset[0]-inset[2]-y;
+  remaining=shape->height-inset[0]-inset[2]-y;
+  if(cell) remaining=fmax(0,remaining);
+  if(anchor && !strcmp(anchor,"ctr")) offset+=remaining/2;
+  else if(anchor && !strcmp(anchor,"b")) offset+=remaining;
   for(i=0;i<shape->paragraph_count;i++) for(j=0;j<shape->paragraphs[i].layout->glyph_count;j++)
     shape->paragraphs[i].layout->glyphs[j].baseline+=(float)offset;
+  return EXR_OK;
+}
+
+/* Takes ownership of the shape's allocations, including on failure. */
+static exr_status shape_append(pptx_document *d,pptx_slide *slide,pptx_shape *shape,exr_error *e) {
+  exr_status status=EXR_OK;
+  if(d->shape_bytes>EXR_MAX_INPUT-sizeof(*shape))
+    status=exr_fail(e,EXR_LIMIT,"PPTX shape storage exceeds 128 MiB");
+  else if(!exr_grow((void **)&slide->shapes,&slide->capacity,slide->count+1,sizeof(*shape)))
+    status=exr_fail(e,EXR_MEMORY,"PPTX shapes allocation failed");
+  if(status!=EXR_OK) { free(shape->stops); text_free(shape); return status; }
+  slide->shapes[slide->count++]=*shape;
+  d->shape_bytes+=sizeof(*shape);
+  return EXR_OK;
+}
+
+static size_t table_span(pptx_document *d,const exr_node *cell,const char *attr,size_t remaining) {
+  const char *value=exr_node_attribute(cell,attr);
+  size_t n=0;
+  if(!value) return 1;
+  for(;*value;value++) {
+    unsigned digit=(unsigned char)*value-'0';
+    if(digit>9) { d->table_span_warning++; return 1; }
+    /* Saturate before multiplying, even for arbitrarily long attributes. */
+    if(n<=remaining) n=n*10+digit;
+  }
+  if(!n) { d->table_span_warning++; return 1; }
+  if(n>remaining) { d->table_span_warning++; return remaining; }
+  return n;
+}
+
+static exr_status table_read(pptx_document *d,pptx_slide *slide,const exr_document *xml,size_t frame,
+                             const double parent[6],const exr_control *control,exr_error *e) {
+  size_t table=drawing_child(xml,frame,"graphic"),grid,props,i,r,c,rows=0,cols=0,start=slide->count;
+  size_t row_nodes[MAX_TABLE_DIMENSION];
+  double xs[MAX_TABLE_DIMENSION+1]={0},ys[MAX_TABLE_DIMENSION+1]={0},local[6],matrix[6],size[2];
+  table=drawing_child(xml,table,"graphicData"); table=drawing_child(xml,table,"tbl");
+  if(table==SIZE_MAX) { d->unsupported++; return EXR_OK; }
+  grid=drawing_child(xml,table,"tblGrid"); props=drawing_child(xml,table,"tblPr");
+  if(props!=SIZE_MAX && (drawing_child(xml,props,"tableStyleId")!=SIZE_MAX ||
+     flipped(&xml->nodes[props],"firstRow") || flipped(&xml->nodes[props],"bandRow"))) d->table_style_warning++;
+  if(grid!=SIZE_MAX) for(i=xml->nodes[grid].first_child;i!=SIZE_MAX;i=xml->nodes[i].next_sibling) {
+    double width=0;
+    if(!named(&xml->nodes[i],A,AS,"gridCol")) continue;
+    if(cols==MAX_TABLE_DIMENSION) return exr_fail(e,EXR_LIMIT,"PPTX table columns exceed 200");
+    if(!dimension(exr_node_attribute(&xml->nodes[i],"w"),&width)) d->table_grid_warning++;
+    xs[cols+1]=xs[cols]+width; cols++;
+  }
+  for(i=xml->nodes[table].first_child;i!=SIZE_MAX;i=xml->nodes[i].next_sibling) {
+    int64_t height=0;
+    if(!named(&xml->nodes[i],A,AS,"tr")) continue;
+    if(rows==MAX_TABLE_DIMENSION) return exr_fail(e,EXR_LIMIT,"PPTX table rows exceed 200");
+    row_nodes[rows]=i;
+    if(!integer(exr_node_attribute(&xml->nodes[i],"h"),&height) || height<0) {
+      height=0; d->table_grid_warning++;
+    }
+    ys[rows+1]=ys[rows]+height/12700.0; rows++;
+  }
+  if(xs[cols]>10000000 || ys[rows]>10000000)
+    return exr_fail(e,EXR_LIMIT,"PPTX table extent exceeds 1e7 points");
+  if(!transform(d,xml,child(xml,frame,"xfrm"),0,local,size)) return EXR_OK;
+  multiply(parent,local,matrix);
+  if(fabs(xs[cols]-size[0])>0.5/12700.0) d->table_grid_warning++;
+  for(r=0;r<rows;r++) {
+    size_t count=0;
+    for(i=xml->nodes[row_nodes[r]].first_child;i!=SIZE_MAX;i=xml->nodes[i].next_sibling)
+      if(named(&xml->nodes[i],A,AS,"tc") && ++count>MAX_TABLE_DIMENSION)
+        return exr_fail(e,EXR_LIMIT,"PPTX table row cells exceed 200");
+    if(!count) { d->table_row_warning++; continue; }
+    if(count!=cols) d->table_grid_warning++;
+    c=0;
+    for(i=xml->nodes[row_nodes[r]].first_child;i!=SIZE_MAX && c<cols;i=xml->nodes[i].next_sibling) {
+      static const char *const sides[]={"lnL","lnR","lnT","lnB"};
+      const exr_node *node=&xml->nodes[i];
+      pptx_shape cell={0};
+      double offset[6]={1,0,0,1,0,0};
+      size_t cs,rs,tcpr,fill,b;
+      exr_status status;
+      if(!named(node,A,AS,"tc")) continue;
+      status=exr_control_cancel(control,e);
+      if(status!=EXR_OK) return status;
+      cs=table_span(d,node,"gridSpan",cols-c); rs=table_span(d,node,"rowSpan",rows-r);
+      offset[4]=xs[c]; offset[5]=ys[r];
+      cell.width=xs[c+cs]-xs[c]; cell.height=ys[r+rs]-ys[r]; c++;
+      if(flipped(node,"hMerge") || flipped(node,"vMerge")) continue;
+      multiply(matrix,offset,cell.matrix);
+      cell.table_cells=SIZE_MAX;
+      cell.style=exr_draw_style_defaults(); cell.style.flags=0;
+      tcpr=drawing_child(xml,i,"tcPr");
+      fill=drawing_child(xml,tcpr,"solidFill");
+      if(fill!=SIZE_MAX && drawing_child(xml,tcpr,"noFill")==SIZE_MAX) {
+        cell.style.fill=color(d,xml,fill); cell.style.flags=EXR_DRAW_FILL;
+      }
+      for(b=0;b<4;b++) {
+        size_t line=drawing_child(xml,tcpr,sides[b]);
+        int64_t width;
+        fill=drawing_child(xml,line,"solidFill");
+        if(fill!=SIZE_MAX && drawing_child(xml,line,"noFill")==SIZE_MAX) {
+          pptx_border *border=&cell.borders[b];
+          border->present=1; border->rgba=color(d,xml,fill); border->width=cell.style.line.width;
+          if(integer(exr_node_attribute(&xml->nodes[line],"w"),&width) && width>=0) border->width=width/12700.0;
+        } else if(tcpr==SIZE_MAX && drawing_child(xml,i,"txBody")==SIZE_MAX)
+          cell.borders[b]=(pptx_border){1,0x000000ff,1};
+      }
+      status=text_body(d,slide,&cell,xml,i,control,e);
+      if(status!=EXR_OK) { text_free(&cell); return status; }
+      status=shape_append(d,slide,&cell,e);
+      if(status!=EXR_OK) return status;
+    }
+  }
+  if(slide->count>start) slide->shapes[start].table_cells=slide->count-start;
   return EXR_OK;
 }
 
@@ -1400,7 +1531,12 @@ static exr_status shape_tree(pptx_document *d,pptx_slide *slide,const exr_docume
     int group=named(node,P,PS,"grpSp"),pic=named(node,P,PS,"pic");
     exr_status status=exr_control_cancel(control,e);
     if(status!=EXR_OK) return status;
-    if((pic && child(xml,i,"spPr")==SIZE_MAX) || named(node,P,PS,"graphicFrame")) {
+    if(named(node,P,PS,"graphicFrame")) {
+      status=table_read(d,slide,xml,i,matrix,control,e);
+      if(status!=EXR_OK) return status;
+      continue;
+    }
+    if(pic && child(xml,i,"spPr")==SIZE_MAX) {
       d->unsupported++;
       continue;
     }
@@ -1448,18 +1584,8 @@ static exr_status shape_tree(pptx_document *d,pptx_slide *slide,const exr_docume
     status=text_body(d,slide,&shape,xml,i,control,e);
     if(status!=EXR_OK) { free(shape.stops); text_free(&shape); return status; }
     if(!shape.style.flags && !shape.paragraph_count) continue;
-    if(d->shape_bytes>EXR_MAX_INPUT-sizeof(shape)) {
-      free(shape.stops);
-      text_free(&shape);
-      return exr_fail(e,EXR_LIMIT,"PPTX shape storage exceeds 128 MiB");
-    }
-    if(!exr_grow((void **)&slide->shapes,&slide->capacity,slide->count+1,sizeof(shape))) {
-      free(shape.stops);
-      text_free(&shape);
-      return exr_fail(e,EXR_MEMORY,"PPTX shapes allocation failed");
-    }
-    slide->shapes[slide->count++]=shape;
-    d->shape_bytes+=sizeof(shape);
+    status=shape_append(d,slide,&shape,e);
+    if(status!=EXR_OK) return status;
   }
   return EXR_OK;
 }
@@ -1662,6 +1788,11 @@ static void warning_append(char message[256],const char *format,...) {
 static void warnings(const pptx_document *d,exr_error *e) {
   char message[256]="PPTX warning: ";
   size_t at=0;
+  if(d->table_grid_warning) warning_append(message,"table gridCol count/width mismatch or invalid dimensions=%zu; ",d->table_grid_warning);
+  if(d->table_span_warning) warning_append(message,"table span clipped/invalid=%zu; ",d->table_span_warning);
+  if(d->table_row_warning) warning_append(message,"table row missing tc=%zu; ",d->table_row_warning);
+  if(d->table_height_warning) warning_append(message,"table overflow (no auto row height)=%zu; ",d->table_height_warning);
+  if(d->table_style_warning) warning_append(message,"tableStyleId/firstRow/bandRow styling not applied=%zu; ",d->table_style_warning);
   if(d->invalid_utf8) warning_append(message,"invalid UTF-8 skipped run(s)=%zu; ",d->invalid_utf8);
   if(d->text_scale_warning) warning_append(message,"invalid fontScale (100%%)=%zu; ",d->text_scale_warning);
   if(d->text_level_warning) warning_append(message,"level>8 (clamped)=%zu; ",d->text_level_warning);
@@ -1745,6 +1876,39 @@ static exr_status text_draw(const pptx_shape *shape,const double matrix[6],const
   return EXR_OK;
 }
 
+static exr_status table_cell_draw(const pptx_shape *shape,const double matrix[6],const exr_draw_sink *sink,
+                                  const exr_control *control,exr_error *e) {
+  size_t b;
+  exr_status status=EXR_OK;
+  int saved=0;
+  if(!sink->path) return EXR_OK;
+  for(b=0;b<4;b++) if(shape->borders[b].present) {
+    double w=shape->width,h=shape->height;
+    exr_path_segment path[2]={{EXR_PATH_MOVE,{{0,0}}},{EXR_PATH_LINE,{{0,0}}}};
+    exr_draw_style style=exr_draw_style_defaults();
+    if(b==0) path[1].points[0]=(exr_path_point){0,h};
+    else if(b==1) { path[0].points[0]=(exr_path_point){w,0}; path[1].points[0]=(exr_path_point){w,h}; }
+    else if(b==2) path[1].points[0]=(exr_path_point){w,0};
+    else { path[0].points[0]=(exr_path_point){0,h}; path[1].points[0]=(exr_path_point){w,h}; }
+    style.flags=EXR_DRAW_STROKE; style.stroke=shape->borders[b].rgba; style.line.width=shape->borders[b].width;
+    status=sink->path(sink->context,path,2,matrix,&style,e);
+    if(status!=EXR_OK) return status;
+  }
+  if(!shape->paragraph_count) return EXR_OK;
+  if(sink->clip && sink->state) {
+    exr_path_segment path[10];
+    status=sink->state(sink->context,EXR_DRAW_SAVE,e); saved=status==EXR_OK;
+    if(status==EXR_OK) status=sink->clip(sink->context,path,shape_path(shape,path),matrix,EXR_FILL_NONZERO,0,e);
+  }
+  if(status==EXR_OK) status=text_draw(shape,matrix,sink,control,e);
+  if(saved) {
+    exr_error cleanup={0};
+    exr_status restored=sink->state(sink->context,EXR_DRAW_RESTORE,status==EXR_OK ? e : &cleanup);
+    if(status==EXR_OK) status=restored;
+  }
+  return status;
+}
+
 /* The fixed pipeline supplies the background, viewport and clipping. */
 static exr_status draw(void *context,size_t page,const double matrix[6],
                        const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
@@ -1761,6 +1925,25 @@ static exr_status draw(void *context,size_t page,const double matrix[6],
     exr_status status=exr_control_poll(control,EXR_STAGE_RENDER,i,d->slides[page].count,e);
     if(status!=EXR_OK) return status;
     multiply(matrix,shape->matrix,combined);
+    if(shape->table_cells) {
+      /* Fill the whole table first; later cell borders then win shared edges. */
+      if(shape->table_cells!=SIZE_MAX && sink->path) {
+        size_t j;
+        for(j=i;j<i+shape->table_cells;j++) {
+          const pptx_shape *cell=&d->slides[page].shapes[j];
+          double cell_matrix[6];
+          status=exr_control_cancel(control,e);
+          if(status!=EXR_OK) return status;
+          if(!cell->style.flags) continue;
+          multiply(matrix,cell->matrix,cell_matrix);
+          status=sink->path(sink->context,path,shape_path(cell,path),cell_matrix,&cell->style,e);
+          if(status!=EXR_OK) return status;
+        }
+      }
+      status=table_cell_draw(shape,combined,sink,control,e);
+      if(status!=EXR_OK) return status;
+      continue;
+    }
     if(shape->texture) {
       status=texture_draw(d,shape,combined,sink,control,e);
       if(status!=EXR_OK) return status;
