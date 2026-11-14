@@ -1,0 +1,21 @@
+已完成，详见 [完整交付说明](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m5/OUT-PPTM5.txt)。
+
+非空行：`ppt_records.c` **781→942**，新增 `table_edge`、`table_index`、`table_frame`、`table_border`、`read_table`；`ppt_text.c` **365→380**，提取 `text_draw` 并增加单元格裁剪。
+
+| 验收 | 真实输出 |
+|---|---|
+| ① 四格填充 | RGB `(17,34,51)`、`(68,85,102)`、`(119,136,153)`、`(170,187,204)`；误差 **0** |
+| ② 边框 | **38100 EMU＝3pt**；1×/2× 纯色核心宽 **2/6px**，符合 ±1px；边框像素均 >0 |
+| ③ 文本 | A/B 字形像素 **61/49**；bbox **(67,89,77,99)**、**(248,179,254,189)**，均在各自格内 |
+| ④ 合并 | 合并行竖分隔线像素 **0**；冲突覆盖格按首格处理 |
+| ⑤ 坏样本 | **7/7 status=0＋警告**，保留可读单元格 |
+| ⑥ 回归 | **540/540 通过**，仅排除指定两项 |
+| ⑦ 新测试 | **10 组、30 次原生检查通过** |
+
+当前仓库实际 M2–M4 是 **35 组，35/35 通过**，与提示中的 47 组不同。`200×200`、40,000 格通过；201 行／列均返回 `EXR_LIMIT`。
+
+实测表格是 **F003 形状组**，由属性 **PID 039F** 标记；`C3A0` 保存行信息，单元格和边框分别是矩形与线条。`0F9F` 是文本头。详见[二进制实测记录](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m5/evidence/ppt-m5/record-structure.txt)及 [Microsoft 规范](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-odraw/376e9c97-16df-45f2-bd6b-a67ba657ef4c)。
+
+已知边界：完全隐藏的列数无法恢复；不可见行界按最低行高比例推算；嵌套组、旋转组和复杂虚线尚未支持。
+
+**prepush 全通过**；三个禁止修改的文件均未改动，未新增第三方依赖。[验收原始输出](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m5/evidence/ppt-m5/table-tests.txt) · [完整 ctest](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m5/evidence/ppt-m5/ctest-all.txt)

@@ -1,0 +1,438 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===========================================================================
+-- 
+-- CMake version in use ......... 4.4.2
+-- 
+-- Configuration
+--   Generator .................. Ninja
+--   Build type ................. Release
+--   Prefix ..................... C:/Program Files (x86)/EXReader
+--   Shared libraries ........... OFF
+--   Character type ............. char (UTF-8)
+--   Library name postfix ....... 
+-- 
+--   Build documentation ........ OFF
+--   Build examples ............. OFF
+--   Build fuzzers .............. OFF
+--   Build tests ................ OFF
+--   Build tools (xmlwf) ........ OFF
+--   Build pkg-config file ...... ON
+--   Install files .............. OFF
+-- 
+--   Features
+--     // Advanced options, changes not advised
+--     Context bytes ............ 1024
+--     DTD support .............. ON
+--     General entities ......... ON
+--     Large size ............... OFF
+--     Namespace support ........ ON
+-- 
+--   Entropy sources
+--     rand_s ................... ON
+-- 
+-- ===========================================================================
+CMake Warning (deprecated) at C:/Users/Oscar/Documents/Codex/exr-build-cf112/_deps/miniz-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+CMake Warning (deprecated) at C:/Users/Oscar/Documents/Codex/exr-build-cf112/_deps/libwebp-src/CMakeLists.txt:12 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Found OpenGL: opengl32
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Failed
+-- Performing Test WEBP_HAVE_FLAG_SSE41
+-- Performing Test WEBP_HAVE_FLAG_SSE41 - Success
+-- Performing Test WEBP_HAVE_FLAG_SSE2
+-- Performing Test WEBP_HAVE_FLAG_SSE2 - Success
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS32
+-- Performing Test WEBP_HAVE_FLAG_MIPS32 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2
+-- Performing Test WEBP_HAVE_FLAG_MIPS_DSP_R2 - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_NEON
+-- Performing Test WEBP_HAVE_FLAG_NEON - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test WEBP_HAVE_FLAG_MSA
+-- Performing Test WEBP_HAVE_FLAG_MSA - Failed
+-- Performing Test HAS_COMPILE_FLAG
+-- Performing Test HAS_COMPILE_FLAG - Failed
+CMake Warning (deprecated) at C:/Users/Oscar/Documents/Codex/exr-build-cf112/_deps/libtiff-src/CMakeLists.txt:27 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+CMake Warning (deprecated) at C:/Users/Oscar/Documents/Codex/exr-build-cf112/_deps/libtiff-src/CMakeLists.txt:30 (cmake_policy):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+-- Building tiff version 4.7.0
+-- Could NOT find Deflate (missing: Deflate_LIBRARY Deflate_INCLUDE_DIR) 
+-- Could NOT find JPEG (missing: JPEG_LIBRARY JPEG_INCLUDE_DIR) 
+-- Could NOT find JBIG (missing: JBIG_LIBRARY JBIG_INCLUDE_DIR) 
+-- Could NOT find LERC (missing: LERC_LIBRARY LERC_INCLUDE_DIR) 
+-- Could NOT find liblzma (missing: LIBLZMA_LIBRARY LIBLZMA_INCLUDE_DIR LIBLZMA_HAS_AUTO_DECODER LIBLZMA_HAS_EASY_ENCODER LIBLZMA_HAS_LZMA_PRESET) 
+-- Could NOT find ZSTD (missing: ZSTD_LIBRARY ZSTD_INCLUDE_DIR) 
+-- Could NOT find WebP (missing: WebP_LIBRARY WebP_INCLUDE_DIR) 
+-- Found OpenGL: opengl32  found components: OpenGL
+-- Could NOT find GLUT (missing: GLUT_glut_LIBRARY GLUT_INCLUDE_DIR) 
+-- Include resource version information for LibTIFF
+-- 
+-- Libtiff is now configured for Windows-10.0.26200
+-- 
+--   Libtiff build version:       4.7.0
+--   Libtiff library version:     6.1.0
+--   Libtiff release date:        20240911
+-- 
+--   Installation directory:             C:/Program Files (x86)/EXReader
+--   Documentation directory:            share/doc/tiff
+--   C compiler:                         C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe
+--   C++ compiler:                       C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/g++.exe
+--   Build shared libraries:             OFF
+--   Build tools:                        OFF
+--   Build tests:                        OFF
+--   Build contrib:                      OFF
+--   Build docs:                         OFF
+--   Build deprecated features:          OFF
+--   Enable linker symbol versioning:    TRUE
+--   Support Microsoft Document Imaging: ON
+--   Use win32 IO:                       ON
+-- 
+--  Support for internal codecs:
+--   CCITT Group 3 & 4 algorithms:       ON
+--   Macintosh PackBits algorithm:       ON
+--   LZW algorithm:                      ON
+--   ThunderScan 4-bit RLE algorithm:    ON
+--   NeXT 2-bit RLE algorithm:           ON
+--   LogLuv high dynamic range encoding: ON
+-- 
+--  Support for external codecs:
+--   ZLIB support:                       Requested:ON Availability:TRUE Support:TRUE
+--   libdeflate support:                 Requested:OFF Availability:FALSE Support:FALSE
+--   Pixar log-format algorithm:         Requested:ON Availability:TRUE Support:TRUE
+--   JPEG support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   Old JPEG support:                   Requested:OFF Availability:FALSE Support:FALSE (Depends on JPEG Support)
+--   JPEG 8/12 bit dual mode:            Requested:OFF Availability:FALSE Support:FALSE
+--   ISO JBIG support:                   Requested:OFF Availability:FALSE Support:FALSE
+--   LERC support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   LZMA2 support:                      Requested:OFF Availability:FALSE Support:FALSE
+--   ZSTD support:                       Requested:OFF Availability:FALSE Support:FALSE
+--   WEBP support:                       Requested:OFF Availability:FALSE Support:FALSE
+-- 
+--   C++ support:                        ON (requested) TRUE (availability)
+-- 
+--   OpenGL support:                     Requested:OFF Availability:FALSE Support:FALSE
+-- 
+--- aom_configure: Detected CPU: generic
+-- libavif: Enabling warnings for GCC
+-- libavif: Codec enabled: aom (decode only)
+-- Configuring done (11.9s)
+-- Generating done (1.6s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/exr-build-pptm5
+[0/4] Re-checking globbed directories...
+[1/276] Building C object CMakeFiles/exr_header_audio.dir/generated/header_audio.c.obj
+[2/276] Updating version info if necessary.
+[3/276] Building C object CMakeFiles/exr_header_base.dir/generated/header_base.c.obj
+[4/276] Building C object CMakeFiles/exr_header_core.dir/generated/header_core.c.obj
+[5/276] Building C object CMakeFiles/exr_header_document.dir/generated/header_document.c.obj
+[6/276] Building C object CMakeFiles/exr_header_dictionary.dir/generated/header_dictionary.c.obj
+[7/276] Building C object CMakeFiles/exr_header_edit.dir/generated/header_edit.c.obj
+[8/276] Building C object CMakeFiles/exr_header_font_manager.dir/generated/header_font_manager.c.obj
+[9/276] Building C object CMakeFiles/exr_header_graphics.dir/generated/header_graphics.c.obj
+[10/276] Building C object CMakeFiles/exr_header_layout.dir/generated/header_layout.c.obj
+[11/276] Building C object CMakeFiles/exr_header_formats.dir/generated/header_formats.c.obj
+[12/276] Building C object _deps/libaom-build/CMakeFiles/aom_version.dir/gen_src/aom_version_no_op.c.obj
+[13/276] Building C object CMakeFiles/exr_header_opds.dir/generated/header_opds.c.obj
+[14/276] Building C object CMakeFiles/exr_header_library.dir/generated/header_library.c.obj
+[15/276] Building C object CMakeFiles/exr_header_pdf.dir/generated/header_pdf.c.obj
+[16/276] Building C object CMakeFiles/exr_header_pdf_edit.dir/generated/header_pdf_edit.c.obj
+[17/276] Building C object CMakeFiles/exr_header_reflow.dir/generated/header_reflow.c.obj
+[18/276] Building C object CMakeFiles/exr_header_render.dir/generated/header_render.c.obj
+[19/276] Building C object CMakeFiles/exr_header_text.dir/generated/header_text.c.obj
+[20/276] Building C object CMakeFiles/exr_header_textindex.dir/generated/header_textindex.c.obj
+[21/276] Building C object CMakeFiles/exr_header_version.dir/generated/header_version.c.obj
+[22/276] Linking C static library _deps\libaom-build\libaom_version.a
+[23/276] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/aom_scale/aom_scale_rtcd.c.obj
+[24/276] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/av1/common/av1_rtcd.c.obj
+[25/276] Building C object _deps/libaom-build/CMakeFiles/aom_rtcd.dir/aom_dsp/aom_dsp_rtcd.c.obj
+[26/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_hmask.c.obj
+[27/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_vmask.c.obj
+[28/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/aom_convolve.c.obj
+[29/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/blend_a64_mask.c.obj
+[30/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp.dir/gen_src/aom_av1_no_op.c.obj
+[31/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp.dir/gen_src/aom_dsp_no_op.c.obj
+[32/276] Building C object _deps/libaom-build/CMakeFiles/aom_scale.dir/aom_scale/generic/yv12extend.c.obj
+[33/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/alloccommon.c.obj
+[34/276] Building C object CMakeFiles/exr_pdf_objects.dir/src/ppt_records.c.obj
+[35/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_txfm.c.obj
+[36/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_inv_txfm2d.c.obj
+[37/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/blockd.c.obj
+[38/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/loopfilter.c.obj
+[39/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/av1_loopfilter.c.obj
+[40/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/debugmodes.c.obj
+[41/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cdef_block.c.obj
+[42/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cdef.c.obj
+[43/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropy.c.obj
+[44/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropymode.c.obj
+[45/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/entropymv.c.obj
+[46/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/idct.c.obj
+[47/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/pred_common.c.obj
+[48/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/quant_common.c.obj
+[49/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/reconinter.c.obj
+[50/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/convolve.c.obj
+[51/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/mvref_common.c.obj
+[52/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/resize.c.obj
+[53/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/scan.c.obj
+[54/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/reconintra.c.obj
+[55/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/restoration.c.obj
+[56/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/scale.c.obj
+[57/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/tile_common.c.obj
+[58/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/thread_common.c.obj
+[59/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/txb_common.c.obj
+[60/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/warped_motion.c.obj
+[61/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/av1_dx_iface.c.obj
+[62/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/detokenize.c.obj
+[63/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodetxb.c.obj
+[64/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decoder.c.obj
+[65/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/obu.c.obj
+[66/276] Building C object _deps/libaom-build/CMakeFiles/aom_pc.dir/gen_src/aom_pc_no_op.c.obj
+[67/276] Building C object CMakeFiles/exreader-ppt-shape-probe.dir/tests/ppt_shape_probe.c.obj
+[68/276] Linking C static library _deps\libaom-build\libaom_pc.a
+[69/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_common.dir/av1/common/cfl.c.obj
+[70/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodemv.c.obj
+[71/276] Building C object _deps/libaom-build/CMakeFiles/aom_av1_decoder.dir/av1/decoder/decodeframe.c.obj
+[72/276] Building C object _deps/libaom-build/CMakeFiles/aom_dsp_common.dir/aom_dsp/intrapred.c.obj
+[73/276] Linking C static library _deps\libaom-build\libaom.a
+[74/276] Linking C static library libexr_pdf.a
+[75/276] Linking C executable exreader-chapter-index-test.exe
+[76/276] Linking C executable exreader-chapter-window-test.exe
+[77/276] Linking C executable exreader-chapter-source-test.exe
+[78/276] Linking C executable exreader-lcp-test.exe
+[79/276] Linking C executable exreader-book-codec-probe.exe
+[80/276] Linking C executable exreader-style-budget-test.exe
+[81/276] Linking C executable exreader-core-component-test.exe
+[82/276] Linking C executable exreader-library-stream-test.exe
+[83/276] Linking C executable exreader-anchor-boundary-test.exe
+[84/276] Linking C executable exreader-pdf-form-corpus-test.exe
+[85/276] Linking C executable exreader-pdf-jpx-test.exe
+[86/276] Linking C shared library libexreader.dll
+[87/276] Linking C executable exreader-pdf-form-test.exe
+[88/276] Linking C executable exreader-text-index-test.exe
+[89/276] Linking C executable exreader-library-source-test.exe
+[90/276] Linking C executable exr-info.exe
+[91/276] Linking C executable exreader-library-component-test.exe
+[92/276] Linking C executable exreader-pdf_edit-component-test.exe
+[93/276] Linking C executable bench_batch.exe
+[94/276] Linking C executable exreader-library-epub-storage-test.exe
+[95/276] Linking C executable exreader-render.exe
+[96/276] Linking C executable exreader-ppt-probe.exe
+[97/276] Linking C executable exreader-benchmark.exe
+[98/276] Linking C executable exreader-wp12a-media-probe.exe
+[99/276] Linking C executable exreader-render-color-font.exe
+[100/276] Linking C executable exreader-wp6-chapter-probe.exe
+[101/276] Linking C executable exreader-hyphen-measure.exe
+[102/276] Linking C executable exreader-check-document.exe
+[103/276] Linking C executable exreader-convert.exe
+[104/276] Linking C executable exreader-docx-edit-test.exe
+[105/276] Linking C executable exreader-pdf-shading-mesh-test.exe
+[106/276] Linking CXX executable exreader-docedit-ui-test.exe
+[107/276] Linking C executable exreader-table-dashed-test.exe
+[108/276] Linking C executable exreader-render-audit-test.exe
+[109/276] Linking C executable exreader-pdf-shading-mesh7-test.exe
+[110/276] Linking C executable exreader-pdf-ccitt-test.exe
+[111/276] Linking C executable exreader-hyphen-test.exe
+[112/276] Linking C executable exreader-hyphen-replacements-test.exe
+[113/276] Linking C executable exreader-hyphen-layout-test.exe
+[114/276] Linking C executable exreader-hyphen-builtin-test.exe
+[115/276] Linking C executable exreader-float-test.exe
+[116/276] Linking C executable exreader-table-border-test.exe
+[117/276] Linking C executable exreader-table-fragments-test.exe
+[118/276] Linking C executable exreader-table-header-test.exe
+[119/276] Linking C executable exreader-border-edges-test.exe
+[120/276] Linking C executable exreader-table-alignment-test.exe
+[121/276] Linking C executable exreader-table-intrinsic-test.exe
+[122/276] Linking C executable exreader-table-columns-test.exe
+[123/276] Linking C executable exreader-pdf-crypto-test.exe
+[124/276] Linking C executable exreader-table-spacing-test.exe
+[125/276] Linking C executable exreader-cbz-test.exe
+[126/276] Linking C executable exreader-image-formats-test.exe
+[127/276] Linking C executable exreader-cbz-formats-test.exe
+[128/276] Linking C executable exreader-m4b-metadata-test.exe
+[129/276] Linking C executable exreader-indic-test.exe
+[130/276] Linking C executable exreader-pdf-intent-test.exe
+[131/276] Linking C executable exreader-ruby-test.exe
+[132/276] Linking C executable exreader-pdf-color-test.exe
+[133/276] Linking C executable exreader-wp7-test.exe
+[134/276] Linking C executable exreader-pdf-matte-test.exe
+[135/276] Linking C executable exreader-pdf-groupcs-test.exe
+[136/276] Linking C executable exreader-native-inks-test.exe
+[137/276] Linking C executable exreader-nested-groups-test.exe
+[138/276] Linking C executable exreader-mask-functions-test.exe
+[139/276] Linking C executable exreader-mask-scope-test.exe
+[140/276] Linking C executable exreader-alpha-source-test.exe
+[141/276] Linking C executable exreader-paint-source-test.exe
+[142/276] Linking C executable exreader-zero-opacity-test.exe
+[143/276] Linking C executable exreader-pdf-shading-test.exe
+[144/276] Linking C executable exreader-font-color-v1-test.exe
+[145/276] Linking C executable exreader-font-svg-test.exe
+[146/276] Linking C executable exreader-font-color-test.exe
+[147/276] Linking C executable exreader-ot-variation-test.exe
+[148/276] Linking C executable exreader-orthogonal-test.exe
+[149/276] Linking C executable exreader-variable-test.exe
+[150/276] Linking C executable exreader-pdf-inline-test.exe
+[151/276] Linking C executable exreader-epub-metadata-write-test.exe
+[152/276] Linking C executable exreader-stretch-test.exe
+[153/276] Linking C executable exreader-vertical-test.exe
+[154/276] Linking C executable exreader-m4b-test.exe
+[155/276] Linking C executable exreader-combine-upright-test.exe
+[156/276] Linking C executable exreader-pdf-type3-test.exe
+[157/276] Linking C executable exreader-aac-test.exe
+[158/276] Linking C executable exreader-pdf-markup-test.exe
+[159/276] Linking C executable exreader-pcm-test.exe
+[160/276] Linking C executable exreader-flac-test.exe
+[161/276] Linking C executable exreader-audio-output-test.exe
+[162/276] Linking C executable exreader-mp3-test.exe
+[163/276] Linking C executable exreader-pdf-appearance-test.exe
+[164/276] Linking C executable exreader-pdf-metadata-write-test.exe
+[165/276] Linking C executable exreader-pdf-write-test.exe
+[166/276] Linking C executable exreader-page-annotations-test.exe
+[167/276] Linking C executable exreader-metadata-test.exe
+[168/276] Linking C executable exreader-annotation-test.exe
+[169/276] Linking C executable exreader-progress-library-test.exe
+[170/276] Linking C executable exreader-reanchor-library-test.exe
+[171/276] Linking C executable exreader-text-source-test.exe
+[172/276] Linking C executable exreader-abi-test.exe
+[173/276] Linking C executable exreader-test.exe
+[174/276] Linking C executable exreader-chapter-layout-test.exe
+[175/276] Linking C executable exreader-flow-test.exe
+[176/276] Linking C executable exreader-chapter-layout-probe.exe
+[177/276] Linking C executable exreader-construct-test.exe
+[178/276] Linking C executable exreader-cfi-text-test.exe
+[179/276] Linking C executable exreader-cfi-test.exe
+[180/276] Linking C executable exreader-cfi-compat-test.exe
+[181/276] Linking C executable exreader-fixed-layout-test.exe
+[182/276] Linking C executable exreader-document-search-test.exe
+[183/276] Linking C executable exreader-anchor-test.exe
+[184/276] Linking C executable exreader-content-ranges-test.exe
+[185/276] Linking C executable exreader-anchor-library-test.exe
+[186/276] Linking C executable exreader-publication-index-test.exe
+[187/276] Linking C executable exreader-note-limit-test.exe
+[188/276] Linking C executable exreader-export-xml-test.exe
+[189/276] Linking C executable exreader-html-raw-test.exe
+[190/276] Linking C executable exreader-rtf-fallback-test.exe
+[191/276] Linking C executable exreader-lazy-test.exe
+[192/276] Linking C executable exreader-source-test.exe
+[193/276] Linking C executable exreader-wave-example.exe
+[194/276] Linking C executable exreader-audio-library-test.exe
+[195/276] Linking C executable exreader-pcm-example.exe
+[196/276] Linking C executable exreader-wave-test.exe
+[197/276] Linking C executable exreader-audio-player-test.exe
+[198/276] Linking C executable exreader-audio-test.exe
+[199/276] Linking C executable exreader-fixed-text-test.exe
+[200/276] Linking C executable exreader-fixed-library-test.exe
+[201/276] Linking C executable exreader-pdf-hybrid-test.exe
+[202/276] Linking C executable exreader-fixed-example.exe
+[203/276] Linking C executable exreader-fixed-pdf-test.exe
+[204/276] Linking C executable exreader-fixed-test.exe
+[205/276] Linking C executable exreader-font-path-test.exe
+[206/276] Linking C executable exreader-blend-test.exe
+[207/276] Linking C executable exreader-canvas-test.exe
+[208/276] Linking C executable exreader-canvas-cmyk-test.exe
+[209/276] Linking C executable exreader-viewport-test.exe
+[210/276] Linking C executable exreader-positioned-test.exe
+[211/276] Linking C executable exreader-library-unique-test.exe
+[212/276] Linking C executable exreader-cover-import-test.exe
+[213/276] Linking C executable exreader-kf8-test.exe
+[214/276] Linking C executable exreader-decoration-test.exe
+[215/276] Linking C executable exreader-mobi-test.exe
+[216/276] Linking C executable exreader-rtf-number-test.exe
+[217/276] Linking C executable exreader-rtf-note-test.exe
+[218/276] Linking C executable exreader-rtf-list-test.exe
+[219/276] Linking C executable exreader-rtf-table-test.exe
+[220/276] Linking C executable exreader-rtf-test.exe
+[221/276] Linking C executable exreader-fb2-test.exe
+[222/276] Linking C executable exreader-docx-test.exe
+[223/276] Linking C executable exreader-export-html-test.exe
+[224/276] Linking C executable exreader-export-epub-test.exe
+[225/276] Linking C executable exreader-convert-test.exe
+[226/276] Linking C executable exreader-locate-report-test.exe
+[227/276] Linking C executable exreader-sevenz-test.exe
+[228/276] Linking C executable exreader-navigation-test.exe
+[229/276] Linking C executable exreader-toc-page-test.exe
+[230/276] Linking C executable exreader-opds-test.exe
+[231/276] Linking C executable exreader-toc-test.exe
+[232/276] Linking C executable exreader-bidi-test.exe
+[233/276] Linking C executable exreader-rtl-verify-test.exe
+[234/276] Linking C executable exreader-complex-layout-test.exe
+[235/276] Linking C executable exreader-text-test.exe
+[236/276] Linking C executable exreader-shaping-test.exe
+[237/276] Linking C executable exreader-line-boundary-test.exe
+[238/276] Linking C executable exreader-font-test.exe
+[239/276] Linking C executable exreader-book-font-test.exe
+[240/276] Linking C executable exreader-budget-test.exe
+[241/276] Linking C executable exreader-chapter-bounds-test.exe
+[242/276] Linking C executable exreader-pager-test.exe
+[243/276] Linking C executable exreader-reflow-test.exe
+[244/276] Linking C executable exreader-chapter-reader-test.exe
+[245/276] Linking C executable exreader-page-cache-test.exe
+[246/276] Linking C executable exreader-checkpoints-test.exe
+[247/276] Linking C executable exreader-control-test.exe
+[248/276] Linking C executable exreader-style-footnotes-test.exe
+[249/276] Linking C executable exreader-font-manager-test.exe
+[250/276] Linking C executable exreader-ssml-test.exe
+[251/276] Linking C executable exreader-dictionary-probe.exe
+[252/276] Linking C executable exreader-ppt-shape-probe.exe
+[253/276] Linking C executable exreader-font-manager-probe.exe
+[254/276] Linking C executable exreader-xml-input-test.exe
+[255/276] Linking C executable exreader-epub-strict-test.exe
+[256/276] Linking C executable exreader-media-epub-test.exe
+[257/276] Linking C executable exreader-batch-test.exe
+[258/276] Linking C executable exreader-pdf-deepening-test.exe
+[259/276] Linking C executable exreader-doc-document.exe
+[260/276] Linking C executable exreader-doc-base.exe
+[261/276] Linking C executable exreader-doc-formats.exe
+[262/276] Linking C executable exreader-doc-render.exe
+[263/276] Linking C executable exreader-doc-pagination.exe
+[264/276] Linking C executable exreader-doc-search.exe
+[265/276] Linking C executable exreader-doc-font.exe
+[266/276] Linking C executable exreader-doc-annotation.exe
+[267/276] Linking C executable exreader-doc-toc.exe
+[268/276] Linking C executable exreader-doc-library.exe
+[269/276] Linking C executable exreader-doc-graphics.exe
+[270/276] Linking C executable exreader-doc-dictionary.exe
+[271/276] Linking C executable exreader-doc-textindex.exe
+[272/276] Linking C executable exreader-doc-pdf.exe
+[273/276] Linking C executable exreader-doc-audio.exe

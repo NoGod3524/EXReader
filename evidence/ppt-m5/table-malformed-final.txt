@@ -1,0 +1,15 @@
+status=0 message=PPT warning: table-malformed=2 
+declared_rows=3 row_elements=2 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=1 row_elements=1 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=2 row_elements=1 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=0 row_elements=0 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+declared_rows=2 row_elements=2 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 
+row_property_declared_bytes=65535 available_bytes=14 recovered_rectangle=2x2 status=0
+status=0 message=PPT warning: table-malformed=1 malformed=1 
+truncated_final_cell status=0 readable_cells=3 missing_cell_rgb=(255,255,255)
+native-ppt-table-malformed: 7 native opens/renders passed

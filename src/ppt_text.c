@@ -328,7 +328,7 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
   out[4]=a[0]*b[4]+a[2]*b[5]+a[4];out[5]=a[1]*b[4]+a[3]*b[5]+a[5];
 }
 
-exr_status exr_ppt_text_draw(const exr_ppt_shape *shape,const double matrix[6],const exr_draw_sink *sink,
+static exr_status text_draw(const exr_ppt_shape *shape,const double matrix[6],const exr_draw_sink *sink,
                             const exr_control *control,exr_error *e) {
   size_t i,j;double position[6]={1,0,0,1,0,0},placed[6];
   if(!shape->text || !sink->path) return EXR_OK;
@@ -362,6 +362,22 @@ exr_status exr_ppt_text_draw(const exr_ppt_shape *shape,const double matrix[6],c
     }
   }
   return EXR_OK;
+}
+
+exr_status exr_ppt_text_draw(const exr_ppt_shape *shape,const double matrix[6],const exr_draw_sink *sink,
+                            const exr_control *control,exr_error *e) {
+  double x0=fmin(shape->bounds[0],shape->bounds[2]),x1=fmax(shape->bounds[0],shape->bounds[2]);
+  double y0=fmin(shape->bounds[1],shape->bounds[3]),y1=fmax(shape->bounds[1],shape->bounds[3]);
+  exr_path_segment box[5]={{EXR_PATH_MOVE,{{x0,y0}}},{EXR_PATH_LINE,{{x1,y0}}},
+    {EXR_PATH_LINE,{{x1,y1}}},{EXR_PATH_LINE,{{x0,y1}}},{EXR_PATH_CLOSE,{{0,0}}}};
+  exr_status status,restore;
+  if(!shape->clip_text || !shape->text || !sink->state || !sink->clip)
+    return text_draw(shape,matrix,sink,control,e);
+  status=sink->state(sink->context,EXR_DRAW_SAVE,e);if(status!=EXR_OK) return status;
+  status=sink->clip(sink->context,box,5,matrix,EXR_FILL_NONZERO,0,e);
+  if(status==EXR_OK) status=text_draw(shape,matrix,sink,control,e);
+  restore=sink->state(sink->context,EXR_DRAW_RESTORE,status==EXR_OK ? e : NULL);
+  return status==EXR_OK ? restore : status;
 }
 
 void exr_ppt_text_free(exr_ppt_drawing *d) {

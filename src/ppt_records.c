@@ -100,6 +100,7 @@ typedef struct {
   unsigned color_mask;
   text_props environment[9][5],master_text[9][5];
   size_t outline_begin,outline_end;
+  int in_table;
 } drawing_reader;
 typedef struct {
   unsigned type,flags,fill_type,fill_flags,line_flags,rotation;
@@ -110,6 +111,9 @@ typedef struct {
   art_record textbox;
   double inset[4];
   int wrap,anchor_text,placeholder;
+  unsigned table,table_rows;
+  int table_bad;
+  art_record table_heights;
 } art_shape;
 static double i32(const unsigned char *p) {
   uint32_t n=u32(p);
@@ -196,8 +200,17 @@ static int properties(drawing_reader *r,const art_record *a,art_shape *s) {
   for(i=0;i<a->instance;i++,at+=6) {
     unsigned op=u16(r->data+at),pid=op&0x3fff;uint32_t value=u32(r->data+at+2);
     if(op&0x8000) {
-      if(value>a->end-complex) return 0;
-      if(pid==0x0197) {
+      if(value>a->end-complex) {
+        if(pid!=0x03a0) return 0;
+        s->table_bad=1;value=(uint32_t)(a->end-complex);
+      }
+      if(pid==0x03a0) {
+        const unsigned char *p=r->data+complex;
+        s->table_heights=(art_record){complex,complex+value,0,0,0};
+        s->table_rows=value>=2 ? u16(p) : 0;
+        if(value<6 || u16(p+2)<s->table_rows || u16(p+4)!=4 || value!=6+4*s->table_rows)
+          s->table_bad=1;
+      } else if(pid==0x0197) {
         const unsigned char *p=r->data+complex;unsigned count=value>=6 ? u16(p) : 0;
         size_t j;uint32_t low=UINT32_MAX,high=0;
         s->has_stops=0;s->bad_stops=1;
@@ -231,6 +244,7 @@ static int properties(drawing_reader *r,const art_record *a,art_shape *s) {
         if(value>0x0132f540) return 0;
         s->width=value/12700.0;break;
       case 0x01ff:s->line_flags=merge_flags(s->line_flags,value);break;
+      case 0x039f:s->table=value&1;break;
       default:break;
     }
   }
@@ -268,7 +282,10 @@ static exr_status read_shape(drawing_reader *r,const art_record *container,art_s
       size_t entry=a.payload;art_record client;
       while(art_next(r,&entry,a.end,&client)) if(client.type==0x0bc3) s->placeholder=1;
     } else if(a.type==0xf00b || a.type==0xf121 || a.type==0xf122) {
-      if(!properties(r,&a,s)) goto malformed;
+      if(!properties(r,&a,s)) {
+        if(s->table) s->table_bad=1;
+        else goto malformed;
+      }
     }
   }
   return EXR_OK;
@@ -464,6 +481,7 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
       if(n++==ref) { begin=a.payload-8;end=r->outline_end; }
       else if(begin) { end=a.payload-8;break; }
     }
+    if(!begin) r->drawing->text_index++;
     break;
   }
   at=begin;
@@ -481,7 +499,11 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
   if(ruler.end) text_ruler(r,&ruler,levels);
   atom=chars.end ? chars : bytes;units=atom.end-atom.payload;
   if(chars.end) { if(units&1) r->drawing->text_unicode++;units/=2; }
-  else r->drawing->text_bytes_fallback++;
+  else {
+    /* ASCII TextBytesAtom is the normal PowerPoint table encoding. */
+    for(i=0;r->in_table && i<units && r->data[atom.payload+i]<128;i++) { }
+    if(!r->in_table || i<units) r->drawing->text_bytes_fallback++;
+  }
   if(units>EXR_MAX_TEXT/8) return exr_fail(e,EXR_LIMIT,"PPT textbox exceeds text budget");
   map=calloc(units+2,sizeof(*map));text=calloc(1,sizeof(*text));
   if(!map || !text) goto memory;
@@ -588,6 +610,7 @@ static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transfor
   if(!s->has_anchor) { d->missing_anchor++;return EXR_OK; }
   if(!s->has_fsp || (s->type!=1 && s->type!=3 && s->type!=75 && !line && !s->textbox.end) || s->rotation) { d->unsupported++;return EXR_OK; }
   shape.type=s->type;shape.style=exr_draw_style_defaults();shape.style.flags=0;
+  shape.clip_text=r->in_table;
   if(!line && (s->type==75 || (s->fill_type==3 && !((s->fill_flags&0x100000) && !(s->fill_flags&0x10))))) {
     uint32_t pib=s->type==75 || !s->has_fill_blip ? s->pib : s->fill_blip;
     int skip=0;exr_status status=image_fill(r,pib,&shape,&skip,e);
@@ -635,6 +658,135 @@ static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transfor
   }
   d->shapes[d->count++]=shape;return EXR_OK;
 }
+/* MS-ODRAW tableProperties (039F) marks a Spgr, not ClientData. Cells are
+   ordinary rectangles/textboxes; borders are independent line shapes. A merge
+   is a spanning rectangle with no covered cell shapes. Keep that representation
+   and send its geometry/text through the same M2/M4 emit/layout paths. */
+typedef struct { art_shape shape; unsigned row,col,rows,cols; int skip; } table_cell;
+static int table_edge(double edges[201],unsigned *count,double value) {
+  unsigned i=0;
+  while(i<*count && edges[i]<value) i++;
+  if(i<*count && edges[i]==value) return 1;
+  if(*count==201) return 0;
+  memmove(edges+i+1,edges+i,(*count-i)*sizeof(*edges));edges[i]=value;(*count)++;return 1;
+}
+static unsigned table_index(const double *edges,unsigned count,double value) {
+  unsigned i=0;while(i+1<count && edges[i]<value) i++;return i;
+}
+static exr_status table_frame(drawing_reader *r,const art_shape *group,const transform *t,exr_error *e) {
+  art_shape frame=*group;size_t first=r->drawing->count;exr_status status;
+  r->drawing->table_missing++;
+  frame.type=1;frame.flags&=~1u;frame.has_fsp=1;frame.textbox.end=0;
+  frame.line_flags=0x80008;
+  /* emit_shape preserves M2's noFill omission; retain only this outline. */
+  frame.fill_type=0;frame.fill=0xffffff;frame.fill_flags=0x100010;
+  status=emit_shape(r,&frame,t,e);
+  if(r->drawing->count>first) r->drawing->shapes[first].style.flags&=~EXR_DRAW_FILL;
+  return status;
+}
+static exr_status table_border(drawing_reader *r,const art_shape *line,const transform *t,
+  const double *xs,unsigned nx,const double *ys,unsigned ny,const unsigned *owners,exr_error *e) {
+  unsigned axis,n,edge,i;const double *grid;double low,high;
+  if(line->anchor[0]==line->anchor[2]) { axis=0;grid=ys;n=ny;edge=table_index(xs,nx,line->anchor[0]); }
+  else if(line->anchor[1]==line->anchor[3]) { axis=1;grid=xs;n=nx;edge=table_index(ys,ny,line->anchor[1]); }
+  else return emit_shape(r,line,t,e);
+  if(!edge || edge>=(axis ? ny : nx)-1 || (axis ? ys : xs)[edge]!=line->anchor[axis])
+    return emit_shape(r,line,t,e);
+  low=fmin(line->anchor[1-axis],line->anchor[3-axis]);high=fmax(line->anchor[1-axis],line->anchor[3-axis]);
+  for(i=0;i+1<n;i++) {
+    size_t a=axis ? (edge-1)*(nx-1)+i : i*(nx-1)+edge-1;
+    size_t b=axis ? edge*(nx-1)+i : a+1;
+    art_shape part=*line;exr_status status;
+    if(owners[a] && owners[a]==owners[b]) continue;
+    part.anchor[1-axis]=fmax(low,grid[i]);part.anchor[3-axis]=fmin(high,grid[i+1]);
+    if(part.anchor[1-axis]>=part.anchor[3-axis]) continue;
+    status=emit_shape(r,&part,t,e);if(status!=EXR_OK) return status;
+  }
+  return EXR_OK;
+}
+static exr_status read_table(drawing_reader *r,size_t at,size_t end,const art_shape *group,
+  const transform *parent,const transform *t,exr_error *e) {
+  table_cell *cells=NULL;size_t count=0,capacity=0,i,j,k,rectangles=0;
+  unsigned nx=0,ny=0,*owners=NULL;double xs[201],ys[201];art_record a;
+  exr_ppt_drawing *d=r->drawing;exr_ppt_table table={0};exr_status status=EXR_OK;
+  int previous=r->in_table,bad=group->table_bad;r->in_table=1;
+  if(group->table_rows>200) { status=exr_fail(e,EXR_LIMIT,"PPT table exceeds 200 rows");goto done; }
+  if(group->table_heights.end-group->table_heights.payload>=6) {
+    size_t available=(group->table_heights.end-group->table_heights.payload-6)/4;
+    for(i=0;i<group->table_rows && i<available;i++)
+      if(i32(r->data+group->table_heights.payload+6+4*i)<=0) bad=1;
+  }
+  if(bad) d->table_malformed++;
+  if(!table_edge(xs,&nx,group->children[0]) || !table_edge(xs,&nx,group->children[2]) ||
+     !table_edge(ys,&ny,group->children[1]) || !table_edge(ys,&ny,group->children[3])) goto limit;
+  while(art_next(r,&at,end,&a)) {
+    art_shape s;
+    status=exr_control_cancel(r->control,e);if(status!=EXR_OK) goto done;
+    if(a.type!=0xf004 || a.ver!=15) { d->table_malformed++;continue; }
+    status=read_shape(r,&a,&s,e);if(status!=EXR_OK) goto done;
+    if(!s.valid || (s.flags&8)) continue;
+    if(!s.has_anchor || !s.has_fsp || (s.type!=1 && s.type!=20 && s.type!=32)) { d->table_malformed++;continue; }
+    if(count>=EXR_MAX_INPUT/(2*sizeof(*cells))) goto limit;
+    if(!exr_grow((void **)&cells,&capacity,count+1,sizeof(*cells))) {
+      status=exr_fail(e,EXR_MEMORY,"PPT table cell allocation failed");goto done;
+    }
+    cells[count++]=(table_cell){s,0,0,0,0,0};
+    if(s.type!=1) continue;
+    if(s.anchor[0]<group->children[0] || s.anchor[1]<group->children[1] ||
+       s.anchor[2]>group->children[2] || s.anchor[3]>group->children[3] ||
+       s.anchor[0]>=s.anchor[2] || s.anchor[1]>=s.anchor[3]) {
+      cells[count-1].skip=1;d->table_malformed++;continue;
+    }
+    if(++rectangles>40000 || !table_edge(xs,&nx,s.anchor[0]) || !table_edge(xs,&nx,s.anchor[2]) ||
+       !table_edge(ys,&ny,s.anchor[1]) || !table_edge(ys,&ny,s.anchor[3])) goto limit;
+  }
+  if(!rectangles || nx<2 || ny<2) { status=table_frame(r,group,parent,e);goto done; }
+  if(!group->table_heights.end) d->table_missing++;
+  /* ponytail: invisible row boundaries use minimum-height ratios. Exact hidden
+     boundaries need extra preserved metadata (e.g. metroBlob); visible cell
+     anchors always take precedence. */
+  if(ny==2 && group->table_rows>1 && !bad) {
+    double sum=0,pos=ys[0],height=ys[1]-ys[0];unsigned row;
+    for(row=0;row<group->table_rows;row++) sum+=u32(r->data+group->table_heights.payload+6+4*row);
+    if(sum>0) for(row=0;row+1<group->table_rows;row++) {
+      pos+=height*u32(r->data+group->table_heights.payload+6+4*row)/sum;
+      if(!table_edge(ys,&ny,pos)) goto limit;
+    }
+  }
+  if(ny-1!=group->table_rows) d->table_malformed++;
+  owners=calloc((nx-1)*(ny-1),sizeof(*owners));
+  if(!owners) { status=exr_fail(e,EXR_MEMORY,"PPT table grid allocation failed");goto done; }
+  table.first=d->count;table.rows=ny-1;table.columns=nx-1;
+  for(i=0;i<count;i++) {
+    table_cell *c=&cells[i];art_shape *s=&c->shape;int conflict=0;
+    status=exr_control_cancel(r->control,e);if(status!=EXR_OK) goto done;
+    if(c->skip || s->type!=1) continue;
+    c->col=table_index(xs,nx,s->anchor[0]);c->row=table_index(ys,ny,s->anchor[1]);
+    c->cols=table_index(xs,nx,s->anchor[2])-c->col;c->rows=table_index(ys,ny,s->anchor[3])-c->row;
+    for(j=c->row;j<c->row+c->rows && !conflict;j++) for(k=c->col;k<c->col+c->cols;k++)
+      if(owners[j*(nx-1)+k]) { conflict=1;break; }
+    if(conflict) { c->skip=1;d->table_merge++;continue; }
+    for(j=c->row;j<c->row+c->rows;j++) for(k=c->col;k<c->col+c->cols;k++) owners[j*(nx-1)+k]=(unsigned)i+1;
+    table.cells++;if(c->cols>1 || c->rows>1) table.merged++;
+  }
+  for(i=0;i<(nx-1)*(ny-1);i++) if(!owners[i]) { d->table_malformed++;break; }
+  /* Draw all cells before all borders so a later fill never erases a border. */
+  for(i=0;i<count;i++) if(!cells[i].skip && cells[i].shape.type==1) {
+    status=exr_control_cancel(r->control,e);if(status!=EXR_OK) goto done;
+    status=emit_shape(r,&cells[i].shape,t,e);if(status!=EXR_OK) goto done;
+  }
+  for(i=0;i<count;i++) if(!cells[i].skip && cells[i].shape.type!=1) {
+    status=exr_control_cancel(r->control,e);if(status!=EXR_OK) goto done;
+    status=table_border(r,&cells[i].shape,t,xs,nx,ys,ny,owners,e);if(status!=EXR_OK) goto done;
+  }
+  table.count=d->count-table.first;
+  if(!exr_grow((void **)&d->tables,&d->table_capacity,d->table_count+1,sizeof(table))) {
+    status=exr_fail(e,EXR_MEMORY,"PPT table directory allocation failed");goto done;
+  }
+  d->tables[d->table_count++]=table;goto done;
+limit:status=exr_fail(e,EXR_LIMIT,"PPT table exceeds 200x200 or cell storage budget");
+done:r->in_table=previous;free(cells);free(owners);return status;
+}
 static exr_status art_walk(drawing_reader *r,size_t at,size_t end,unsigned depth,int in_group,transform t,exr_error *e) {
   art_record a;int group_header=1;
   if(depth>16) { r->drawing->depth++;return EXR_OK; }
@@ -648,6 +800,7 @@ static exr_status art_walk(drawing_reader *r,size_t at,size_t end,unsigned depth
       else if(++r->shapes>5000)
         return exr_fail(e,EXR_LIMIT,"PPT slide exceeds 5000 shapes");
       if(group_header && in_group) {
+        transform parent=t;
         group_header=0;
         if(!s.valid || (s.flags&8)) return EXR_OK;
         if(!s.has_fsp || !(s.flags&1)) { r->drawing->malformed++;return EXR_OK; }
@@ -655,7 +808,13 @@ static exr_status art_walk(drawing_reader *r,size_t at,size_t end,unsigned depth
         /* The root patriarch has no anchor and introduces no transform. */
         if(!s.has_anchor && (s.flags&4)) continue;
         if(!s.has_anchor) { r->drawing->missing_anchor++;return EXR_OK; }
-        if(!s.has_children) { r->drawing->malformed++;return EXR_OK; }
+        if(!s.has_children) {
+          if(s.table) {
+            if(s.table_rows>200) return exr_fail(e,EXR_LIMIT,"PPT table exceeds 200 rows");
+            return table_frame(r,&s,&t,e);
+          }
+          r->drawing->malformed++;return EXR_OK;
+        }
         {
           double dx=s.children[2]-s.children[0],dy=s.children[3]-s.children[1];
           double sx=dx ? (s.anchor[2]-s.anchor[0])/dx : 1;
@@ -667,6 +826,7 @@ static exr_status art_walk(drawing_reader *r,size_t at,size_t end,unsigned depth
           t.ty+=t.sy*((s.flags&0x80 ? s.anchor[3] : s.anchor[1])-s.children[1]*sy);
           t.sx*=sx;t.sy*=sy;
         }
+        if(s.table) return read_table(r,at,end,&s,&parent,&t,e);
       } else {
         group_header=0;
         status=emit_shape(r,&s,&t,e);if(status!=EXR_OK) return status;
@@ -685,6 +845,7 @@ void exr_ppt_drawing_free(exr_ppt_drawing *d) {
   exr_ppt_text_free(d);
   for(i=0;i<d->font_count;i++) free(d->fonts[i]);
   free(d->fonts);
+  free(d->tables);
   free(d->blips);
   free(d->shapes);free(d->slides);memset(d,0,sizeof(*d));
 }
