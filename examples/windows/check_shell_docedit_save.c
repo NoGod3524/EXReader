@@ -38,8 +38,15 @@ int main(int argc,char **argv) {
   assert(exr_edit_set_run_text(de.doc,id,0,"unsaved",7)==EXR_OK);de.dirty=1;
   assert(!de_save() && de.dirty==1 && de_save_error==ERROR_ACCESS_DENIED);
   assert(wcsstr(g.status_text,L"5") && wcsstr(g.status_text,L"修改仍保留"));
+  wchar_t reason[512];
+  assert(FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
+    NULL,ERROR_ACCESS_DENIED,0,reason,512,NULL));
+  assert(wcsstr(g.status_text,reason));
   assert(!strcmp(de.path,saved));
   file_text_equal(saved,expected);free(expected);
+  assert(!de_save_as(saved) && de.dirty==1 && de_save_error==ERROR_ACCESS_DENIED);
+  assert(!strcmp(book->path,saved));
+  puts("PASS read-only Save As: dirty=1 reason_shown=1 recent_path_unchanged=1");
   assert(SetFileAttributesW(wide,FILE_ATTRIBUTE_NORMAL));free(wide);
   printf("PASS read-only save: dirty=%d error=%lu reason_shown=1 path_unchanged=1\n",de.dirty,(unsigned long)de_save_error);
   char missing[MAX_PATH];snprintf(missing,sizeof(missing),"%s/missing/no.docx",argv[2]);
@@ -47,6 +54,7 @@ int main(int argc,char **argv) {
   assert(!strcmp(saved,de.path) && !strcmp(book->path,saved));
   puts("PASS failed Save As: dirty=1 active_path_unchanged=1 recent_path_unchanged=1");
   assert(de_key('S',1,1) && de.dirty==1); /* Headless dialog path: requires injection. */
+  assert(wcsstr(g.status_text,L"另存为需要目标路径"));
   assert(!de_save_as("") && de.dirty==1);
   assert(de_save());
   exr_edit_doc_free(de.doc);de.doc=NULL;shelf_destroy();
