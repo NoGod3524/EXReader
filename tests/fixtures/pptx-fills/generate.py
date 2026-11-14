@@ -6,7 +6,7 @@ from io import BytesIO
 import json
 from pathlib import Path
 import struct
-from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
+from zipfile import ZipFile, ZipInfo, ZIP_STORED
 import zlib
 
 HERE = Path(__file__).resolve().parent
@@ -24,7 +24,7 @@ def png(width, height, pixel):
         return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', zlib.crc32(tag + data))
     raw = b''.join(b'\0' + b''.join(bytes(pixel(x, y)) for x in range(width)) for y in range(height))
     return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) +
-            chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b''))
+            chunk(b'IDAT', zlib.compress(raw, 0)) + chunk(b'IEND', b''))
 
 
 def shape(fill, box=(40, 40, 400, 80), number=1):
@@ -65,7 +65,7 @@ def package(shapes, media=None):
     with ZipFile(out, 'w') as archive:
         for name, data in sorted(parts.items()):
             info = ZipInfo(name, (2020, 1, 1, 0, 0, 0))
-            info.compress_type, info.create_system, info.external_attr = ZIP_DEFLATED, 3, 0o600 << 16
+            info.compress_type, info.create_system, info.external_attr = ZIP_STORED, 3, 0o600 << 16
             archive.writestr(info, data)
     return out.getvalue()
 
@@ -102,3 +102,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     generate(parser.parse_args().check)
+
