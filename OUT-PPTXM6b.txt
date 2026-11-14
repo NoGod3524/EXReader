@@ -1,0 +1,11 @@
+已全绿：
+
+- 矩阵 exit 0：31/31 页 coverage、text 通过，颜色全部 **12/12**。
+- 四种背景、母版继承和渐变角度测试通过。
+- CTest **551/551**；原 M2–M5 **67/67**；prepush 通过。
+- 20 页中位数：**20.531 → 17.887ms**；最大值 **40.318ms**。
+- 372 个采样坐标与预期 RGB 未变；`check_reading_release.py` 未改。
+
+另补主题字体解析解决上游文本溢出，保留严格 ±4px 判据；矩形栅格优化消除了整页背景的额外开销。
+
+[完整报告：分类代码、背景像素、31 行矩阵及 12 点 RGB](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6b/REPORT.md) · [原始矩阵输出](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6b/matrix.txt)

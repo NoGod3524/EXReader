@@ -1,0 +1,1 @@
+PASS: 31 pages, 372 reference sample positions and expected RGB values exactly match HEAD 6c57460d.

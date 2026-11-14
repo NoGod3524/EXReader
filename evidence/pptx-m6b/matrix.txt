@@ -1,0 +1,63 @@
+bad-invalid-xml.pptx open status=5 code=5 warning='Invalid PPTX XML part: ppt/slides/slide1.xml'
+bad-invalid-xml.pptx bad=ok EXR_FORMAT status=5 message='Invalid PPTX XML part: ppt/slides/slide1.xml'
+bad-missing-part.pptx open status=5 code=5 warning='PPTX part missing: ppt/presentation.xml'
+bad-missing-part.pptx bad=ok EXR_FORMAT status=5 message='PPTX part missing: ppt/presentation.xml'
+bad-truncated.pptx open status=5 code=5 warning='Invalid or truncated PPTX/ZIP container'
+bad-truncated.pptx bad=ok EXR_FORMAT status=5 message='Invalid or truncated PPTX/ZIP container'
+bullets.pptx open status=0 code=0 warning=''
+bullets.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+bullets.pptx#1 coverage=ok color=12/12 text=ok
+chinese.pptx open status=0 code=0 warning='PPTX warning: font fallback=+mn-ea; missing glyph: Segoe UI U+7814 fallback; Segoe UI U+7A76 fallback; Segoe UI U+8FDB fallback; Segoe UI U+5C55 fallback; Segoe UI U+4E0E fallback; Segoe UI U+4E0B fallback; Segoe UI U+4E00 fallback; Segoe UI U+6B65 fal...'
+chinese.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+chinese.pptx#1 coverage=ok color=12/12 text=ok
+gradient-alpha.pptx open status=0 code=0 warning=''
+gradient-alpha.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+gradient-alpha.pptx#1 coverage=ok color=12/12 text=ok
+image-text.pptx open status=0 code=0 warning=''
+image-text.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+image-text.pptx#1 coverage=ok color=12/12 text=ok
+merged-table.pptx open status=0 code=0 warning=''
+merged-table.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+merged-table.pptx#1 coverage=ok color=12/12 text=ok
+nested-groups.pptx open status=0 code=0 warning=''
+nested-groups.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+nested-groups.pptx#1 coverage=ok color=12/12 text=ok
+standard-4x3.pptx open status=0 code=0 warning=''
+standard-4x3.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+standard-4x3.pptx#1 coverage=ok color=12/12 text=ok
+theme-accents.pptx open status=0 code=0 warning=''
+theme-accents.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+theme-accents.pptx#1 coverage=ok color=12/12 text=ok
+title.pptx open status=0 code=0 warning=''
+title.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+title.pptx#1 coverage=ok color=12/12 text=ok
+twenty.pptx open status=0 code=0 warning=''
+twenty.pptx slides engine=20 python-pptx=20 manifest=20 warnings=ok
+twenty.pptx#1 coverage=ok color=12/12 text=ok
+twenty.pptx#2 coverage=ok color=12/12 text=ok
+twenty.pptx#3 coverage=ok color=12/12 text=ok
+twenty.pptx#4 coverage=ok color=12/12 text=ok
+twenty.pptx#5 coverage=ok color=12/12 text=ok
+twenty.pptx#6 coverage=ok color=12/12 text=ok
+twenty.pptx#7 coverage=ok color=12/12 text=ok
+twenty.pptx#8 coverage=ok color=12/12 text=ok
+twenty.pptx#9 coverage=ok color=12/12 text=ok
+twenty.pptx#10 coverage=ok color=12/12 text=ok
+twenty.pptx#11 coverage=ok color=12/12 text=ok
+twenty.pptx#12 coverage=ok color=12/12 text=ok
+twenty.pptx#13 coverage=ok color=12/12 text=ok
+twenty.pptx#14 coverage=ok color=12/12 text=ok
+twenty.pptx#15 coverage=ok color=12/12 text=ok
+twenty.pptx#16 coverage=ok color=12/12 text=ok
+twenty.pptx#17 coverage=ok color=12/12 text=ok
+twenty.pptx#18 coverage=ok color=12/12 text=ok
+twenty.pptx#19 coverage=ok color=12/12 text=ok
+twenty.pptx#20 coverage=ok color=12/12 text=ok
+twenty.pptx render samples=100 median=17.887ms max=40.318ms median-limit=30.75ms ratio=0.873 max-limit=200ms
+upstream-font-color.pptx open status=0 code=0 warning=''
+upstream-font-color.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+upstream-font-color.pptx#1 coverage=ok color=12/12 text=ok
+wide-16x9.pptx open status=0 code=0 warning=''
+wide-16x9.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+wide-16x9.pptx#1 coverage=ok color=12/12 text=ok
+MATRIX files=15 passed=15 failed=0

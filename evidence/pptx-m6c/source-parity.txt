@@ -1,0 +1,3 @@
+Reference snapshot: 31 pages; 0 differing fields (regions/frames/text_boxes/exclusions/samples)
+Original paragraph text retained: 31/31 pages
+Generated valid OPC packages: 11/11; XML/content types/relationship targets/theme/master/blank layout/ZIP_STORED/hash/bytes all valid

@@ -1,0 +1,44 @@
+twenty.pptx open status=0 code=0 warning=''
+twenty.pptx slides engine=20 python-pptx=20 manifest=20 warnings=ok
+twenty.pptx#1 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#2 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#3 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#4 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#5 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#6 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#7 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#8 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#9 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#10 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#11 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#12 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#13 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#14 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#15 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#16 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#17 coverage=FAIL color=12/12 text=ok
+  bbox actual=(48, 35, 900, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#18 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 752, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#19 coverage=FAIL color=12/12 text=ok
+  bbox actual=(47, 35, 913, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx#20 coverage=FAIL color=12/12 text=ok
+  bbox actual=(49, 35, 807, 492) expected=(48.0, 28.0, 912.0, 512.0) tolerance=4px
+twenty.pptx render samples=100 median=18.871ms max=33.005ms limit=200ms
+MATRIX files=1 passed=0 failed=1

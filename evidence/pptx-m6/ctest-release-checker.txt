@@ -1,0 +1,7 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6
+    Start 134: sdk-release-checker
+1/1 Test #134: sdk-release-checker ..............   Passed    0.81 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.83 sec

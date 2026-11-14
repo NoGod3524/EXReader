@@ -1,0 +1,4 @@
+AST import check: all 3 files have no lxml/PIL/pptx imports
+TOTAL files=15 valid=12 malformed=3 slides=31; all sizes and SHA256 verified
+check_reading_release.py unchanged SHA256=6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b
+CI workflow diff: empty

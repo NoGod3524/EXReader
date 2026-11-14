@@ -1,0 +1,12 @@
+open warning='PPTX warning: font fallback=M4 Missing Font; '
+nonexistent font rendered via fallback: {'bbox': (103, 113, 180, 141), 'width': 77, 'height': 28, 'pixels': 842}, warning='PPTX warning: font fallback=M4 Missing Font; '
+theme +mj-lt -> majorFont/latin=sans-serif: exact explicit-family raster, no warning
+theme +mj-ea -> majorFont/ea=sans-serif: exact explicit-family raster, no warning
+theme +mj-cs -> majorFont/cs=sans-serif: exact explicit-family raster, no warning
+theme +mn-lt -> minorFont/latin=sans-serif: exact explicit-family raster, no warning
+theme +mn-ea -> minorFont/ea=sans-serif: exact explicit-family raster, no warning
+theme +mn-cs -> minorFont/cs=sans-serif: exact explicit-family raster, no warning
+theme ea script selection: exact explicit-family raster and diagnostics
+theme cs script selection: exact explicit-family raster and diagnostics
+open warning='PPTX warning: font fallback=M6b Missing Theme Font; '
+uninstalled resolved theme typeface retains the ordinary font-fallback warning

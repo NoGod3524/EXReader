@@ -46,6 +46,48 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   if((!(cmyk ? cmyk_alpha>0 : (color&255)) && (!state || !(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) || high<=0 || low>=bitmap->height || low>=high || right_bound<=0 || left_bound>=bitmap->width || left_bound>=right_bound) return exr_fail(error,EXR_OK,"");
   top=(int)fmax(0,floor(low)); bottom=(int)fmin(bitmap->height,ceil(high));
   left=(int)fmax(0,floor(left_bound)); right=(int)fmin(bitmap->width,ceil(right_bound)); row_width=(uint32_t)(right-left);
+  /* Integer-aligned opaque rectangles have full coverage at every pixel.
+     Keep custom sinks on the ordinary path API; only raster work is reduced. */
+  if(count==4 && !cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 &&
+     low==floor(low) && high==floor(high) && left_bound==floor(left_bound) && right_bound==floor(right_bound)) {
+    unsigned sides=0;
+    for(i=0;i<4;i++) {
+      const exr_vector_edge *edge=&edges[i],*next=&edges[(i+1)%4];
+      unsigned side=0;
+      if(edge->x1!=next->x0 || edge->y1!=next->y0) break;
+      if(edge->x0==edge->x1 && ((edge->y0==low && edge->y1==high) || (edge->y0==high && edge->y1==low)))
+        side=edge->x0==left_bound ? 1u : edge->x0==right_bound ? 2u : 0u;
+      else if(edge->y0==edge->y1 && ((edge->x0==left_bound && edge->x1==right_bound) ||
+                                    (edge->x0==right_bound && edge->x1==left_bound)))
+        side=edge->y0==low ? 4u : edge->y0==high ? 8u : 0u;
+      if(!side || (sides&side)) break;
+      sides|=side;
+    }
+    if(i==4 && sides==15) {
+      const unsigned char rgba[4]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
+      const unsigned char gray=(unsigned char)((rgba[0]*77+rgba[1]*150+rgba[2]*29+128)>>8);
+      for(y=top;y<bottom;y++) {
+        unsigned x;
+        unsigned char *pixel=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*bitmap->channels;
+        const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride+(size_t)left : NULL;
+        status=exr_control_cancel(control,error); if(status!=EXR_OK) return status;
+        /* Charge the same work as the four-sample scanline path. */
+        if(!exr_vector_work(work,(size_t)row_width*5+32)) goto limit;
+        if(bitmap->channels==1) {
+          if(!mask) memset(pixel,gray,row_width);
+          else for(x=0;x<row_width;x++) {
+            if(mask[x]==255) pixel[x]=gray;
+            else if(mask[x]) exr_pixel(bitmap,left+(int)x,y,color,mask[x]);
+          }
+        } else for(x=0;x<row_width;x++,pixel+=4) {
+          unsigned alpha=mask ? mask[x] : 255;
+          if(alpha==255) memcpy(pixel,rgba,4);
+          else if(alpha) exr_pixel(bitmap,left+(int)x,y,color,alpha);
+        }
+      }
+      return exr_fail(error,EXR_OK,"");
+    }
+  }
   crossings=malloc(count*sizeof(*crossings)); coverage=calloc(row_width,sizeof(*coverage));
   if(!crossings || !coverage) { status=exr_fail(error,EXR_MEMORY,"Vector scanline allocation failed"); goto done; }
   for(y=top;y<bottom;y++) {

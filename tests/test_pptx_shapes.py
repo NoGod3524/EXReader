@@ -188,7 +188,7 @@ def check_draw_contract(engine):
         points = [(m[0] * segments[i].points[0].x + m[2] * segments[i].points[0].y + m[4],
                    m[1] * segments[i].points[0].x + m[3] * segments[i].points[0].y + m[5])
                   for i in range(count) if segments[i].verb != 4]
-        records.append((points, C.cast(style, C.POINTER(C.c_uint32))[0]))
+        records.append((points, C.cast(style, C.POINTER(C.c_uint32))[0], m))
         if failure:
             error.contents.code, error.contents.message = failure, b'shape sink failure'
         return failure
@@ -201,8 +201,12 @@ def check_draw_contract(engine):
     draw.restype = C.c_int
     with opened(engine, fixture('group')) as doc:
         assert draw(doc, 0, caller, C.byref(sink), None, C.byref(error)) == 0
-        assert len(records) == 2
-        for (points, rgba), box, expected_color in zip(records, ((371, 337, 288, 216), (803, 661, 432, 270)),
+        assert len(records) == 3
+        # group.pptx inherits master bgRef=1001, bg1=white. The full 960x540
+        # background must precede both shapes and receive the caller matrix.
+        assert records[0] == ([(11, 13), (1931, 13), (1931, 1633), (11, 1633)],
+                              0xFFFFFFFF, tuple(caller)), records[0]
+        for (points, rgba, _), box, expected_color in zip(records[1:], ((371, 337, 288, 216), (803, 661, 432, 270)),
                                                        (0xFF0000FF, 0x0066FFFF)):
             x, y, w, h = box
             assert points == [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
@@ -217,7 +221,7 @@ def check_draw_contract(engine):
         control = Control(cancelled)
         assert draw(doc, 0, caller, C.byref(sink), C.byref(control), C.byref(error)) == 9
         assert len(records) == 1 and error.code == 9
-    print('draw sink: caller matrix composed; sink failure propagated; cancellation between shapes honored')
+    print('draw sink: inherited white background first, full-slide caller matrix; both shape contracts unchanged; sink failure/cancellation propagated')
 
 
 def run(engine, group):

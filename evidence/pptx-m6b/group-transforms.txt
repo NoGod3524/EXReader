@@ -1,0 +1,10 @@
+group-transforms: exit=0
+group flipH: bbox=(468, 108, 612, 180) expected_xywh=(468, 108, 144, 72) error=0px
+group flipH: bbox=(180, 216, 396, 306) expected_xywh=(180, 216, 216, 90) error=0px
+group flipV: bbox=(180, 234, 324, 306) expected_xywh=(180, 234, 144, 72) error=0px
+group flipV: bbox=(396, 108, 612, 198) expected_xywh=(396, 108, 216, 90) error=0px
+group rotation90: bbox=(423, 99, 495, 243) expected_xywh=(423, 99, 72, 144) error=0px
+group rotation90: bbox=(297, 315, 387, 531) expected_xywh=(297, 315, 90, 216) error=0px
+nested groups: bbox=(126, 78, 198, 114) expected_xywh=(126, 78, 72, 36) error=0px
+nested groups: bbox=(234, 132, 342, 177) expected_xywh=(234, 132, 108, 45) error=0px
+draw sink: inherited white background first, full-slide caller matrix; both shape contracts unchanged; sink failure/cancellation propagated

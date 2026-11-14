@@ -1,0 +1,54 @@
+{
+  "base_commit": "6c57460d",
+  "files": 15,
+  "valid_files": 12,
+  "bad_files": 3,
+  "pages": 31,
+  "coverage_passed": 31,
+  "color_12_of_12_pages": 31,
+  "text_passed": 31,
+  "coverage_shape_counts": {
+    "text": 84,
+    "filled": 114,
+    "outline": 5
+  },
+  "ctest": {
+    "executed": 551,
+    "passed": 551,
+    "excluded": [
+      "sdk-release",
+      "sdk-doc-coverage"
+    ],
+    "m2_m5_passed": 67,
+    "m2_m5_groups": {
+      "shape": 14,
+      "fill": 19,
+      "text": 21,
+      "table": 13
+    },
+    "includes_sdk_release_checker": true
+  },
+  "performance": {
+    "repeats": 5,
+    "samples": 100,
+    "median_ms": 17.8868,
+    "max_ms": 40.3181,
+    "limit_ms": 200,
+    "baseline_median_ms": 20.5,
+    "median_limit_ms": 30.75,
+    "median_ratio": 0.8725268292682927,
+    "ok": true
+  },
+  "first_m6_performance": {
+    "median_ms": 20.531,
+    "max_ms": 47.197
+  },
+  "median_ratio_to_first": 0.8712093906775121,
+  "library": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-pptx-m6\\build\\pptx-m6\\libexreader.dll",
+  "library_sha256": "2e176f40c7741d1f26af8d46a5c8b227314e67e2d2b4ab5f423fb93530f8e145",
+  "protected_sha256": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b",
+  "sample_invariance": "372 of 372 positions and expected RGB unchanged",
+  "prepush_script": "C:\\Users\\Oscar\\OneDrive\\Desktop\\deepseekHarness\\ops\\prepush-check.ps1",
+  "prepush_exit": 0,
+  "bitmap_directory": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-pptx-m6\\build\\pptx-m6\\pptx-real-m6b-results"
+}
