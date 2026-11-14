@@ -9,7 +9,7 @@ static exr_edit_id de_hf_section(void) {
 static RECT de_hf_box(unsigned footer) {
   shell_d2d_edit_row *row=&de.hf_rows[footer];
   RECT box={(LONG)de.inset,(LONG)(row->y-de.scroll_y-shell_px(20,shell_dpi)),
-    (LONG)(de.width-de.inset),(LONG)(row->y+row->height-de.scroll_y)};
+    (LONG)(de.width-shell_px(24,shell_dpi)),(LONG)(row->y+row->height-de.scroll_y)};
   return box;
 }
 static int de_hf_measure(unsigned footer,float y) {
@@ -27,7 +27,7 @@ static int de_hf_measure(unsigned footer,float y) {
   if(!text)return 0;
   shell_d2d_edit_row *row=&de.hf_rows[footer];
   HRESULT hr=shell_d2d_edit_layout(host_shell,text,g.font_family[0] ? g.font_family:L"Segoe UI",
-    16.f*shell_dpi/96.f,de.width-2*de.inset,&row->layout,&row->height);
+    16.f*shell_dpi/96.f,de.width-de.inset-shell_px(24,shell_dpi),&row->layout,&row->height);
   free(text);if(FAILED(hr))return 0;
   row->y=y+shell_px(20,shell_dpi);
   if(row->height<shell_px(28,shell_dpi))row->height=(float)shell_px(28,shell_dpi);

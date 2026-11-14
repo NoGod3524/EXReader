@@ -1,0 +1,17 @@
+L10 已通过隔离宿主验收，**工作树 UI 尚未接入，未提交或推送**。
+
+① 新增实现／测试／补丁共 388 行，报告 71 行；本路原有文件增加 20 行；修改引擎 `src/docx_edit.c`。
+
+② 三种真实 DOCX 验收退出码均为 0：
+```text
+L10 merged host acceptance PASS (memory DC; no windows / no SendInput)
+```
+指定 prepush 输出：
+```text
+全部通过 —— 可以推
+```
+完整命令、真实输出见 [验收报告](C:/Users/Oscar/Documents/Codex/EXReader-fan-L10/OUT-L10-v3.txt)。
+
+③ 边界：点击整格后按 F6 编辑；混合格式、图片、嵌套表格仍只读。未增加创建合并／拆分命令。
+
+请确认允许应用到 `shell_docedit_paint.inc` 和 `shell_docedit_table_history.inc`。需要确认源于你规定的“只改自己的新文件 + 明确列出的既有文件”；[接入补丁](C:/Users/Oscar/Documents/Codex/EXReader-fan-L10/examples/windows/l10-merged-integration.patch)已完成并在隔离副本验收。

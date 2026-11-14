@@ -149,6 +149,41 @@ int main(void) {
     if (!s) break;
   }
   CHECK(fail_at<128);
+  /* Note commands must retain both body fragments and note text on every OOM;
+     an explicit transaction also rolls back an earlier successful command. */
+  for (op=0;op<3;op++) for (transaction=0;transaction<2;transaction++) {
+    for (fail_at=0;fail_at<128;fail_at++) {
+      exr_edit_doc *d=NULL; exr_edit_tx *t=NULL; exr_edit_id id=0,inserted;
+      exr_edit_footnote note; const exr_edit_block *p; exr_status s;
+      CHECK(make(&d)==EXR_OK);
+      if (op) CHECK(exr_edit_footnote_insert(d,20,0,3,"note1",5,&id)==EXR_OK);
+      if (transaction) { t=exr_edit_begin(d); CHECK(t && command(d,0)==EXR_OK); }
+      remaining=fail_at;
+      s=op==0 ? exr_edit_footnote_insert(d,20,0,3,"note1",5,&inserted) :
+        op==1 ? exr_edit_footnote_set_text(d,id,"updated",7) : exr_edit_footnote_delete(d,id);
+      remaining=SIZE_MAX;
+      if (t) CHECK(exr_edit_commit(t)==s);
+      if (s) { CHECK(s==EXR_MEMORY); covered++; }
+      else {
+        CHECK(exr_edit_footnote_count(d)==(op!=2));
+        if (op!=2) CHECK(exr_edit_footnote_at(d,0,&note)==EXR_OK &&
+          !strcmp(note.text,op==1 ? "updated":"note1"));
+        CHECK(exr_edit_undo(d)==EXR_OK);
+      }
+      CHECK(exr_edit_footnote_count(d)==(op!=0));
+      if (!op) unchanged(d);
+      else {
+        p=exr_edit_block_at(d,0);
+        CHECK(exr_edit_block_count(d)==2 && p->run_count==4 &&
+          !strcmp(p->runs[0].text,"abc") && !strcmp(p->runs[2].text,"def"));
+        CHECK(exr_edit_footnote_at(d,0,&note)==EXR_OK && note.id==id &&
+          note.number==1 && !strcmp(note.text,"note1"));
+      }
+      exr_edit_doc_free(d); CHECK(!live);
+      if (!s) break;
+    }
+    CHECK(fail_at<128);
+  }
   printf("docx-edit-allocation: %zu injected failures, all atomic/rolled back, zero live allocations\n",covered);
   return 0;
 }

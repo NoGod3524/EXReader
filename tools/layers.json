@@ -75,6 +75,7 @@
     "docx_reflow.c": "layout",
     "docx_edit.c": "doc",
     "docx_edit_io.c": "formats",
+    "docx_edit_footnote_io.c": "formats",
     "docx_edit_table.c": "formats",
     "docx_edit_image.c": "formats",
     "epub_write.c": "formats",
