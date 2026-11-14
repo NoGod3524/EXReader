@@ -1,5 +1,29 @@
 # PPTX M1 验收记录
 
+## 2026-11-14：cf45cdc8 本轮验收
+
+当前源码已包含完整 M1；本轮核对实现后无需补改代码，仅补充实测结果。
+`src/pptx.c` 仍为 416 行、15 个函数，函数清单、六份夹具页数表、
+坏样本错误原文及 M2 接口清单见下方首次验收记录。
+
+| 检查 | 本轮结果 |
+| --- | --- |
+| `cmake --build build/pptx-m1 -j 4` | exit 0 |
+| `python tests/fixtures/pptx-skeleton/generate.py --check` | 六份夹具字节复现，exit 0 |
+| PPTX 专项 CTest | 12/12，通过，5.60 秒，exit 0 |
+| 全量 CTest，仅排除 `sdk-release`、`sdk-doc-coverage` | 437/437，通过，248.35 秒，exit 0 |
+| `check_sdk_docs.py --binary build/pptx-m1/libexreader.dll` | 485/485，100%；缺失/额外导出均为空，exit 0 |
+| `check_layers.py build/pptx-m1` | 132 个对象，1540 个符号引用；0 个逆向引用、0 个逆向 include，exit 0 |
+| 共用 `deepseekHarness/ops/prepush-check.ps1 -Worktree <本工作树>` | 完整检查通过，exit 0 |
+
+基础夹具的文件与内存入口共 56 次有效页渲染全部成功，位图逐字节全白。
+尺寸回退、缺页计数警告和 ZIP 成员超限均通过专项验证。
+三份受保护文件相对 `54436bfa` 的差异为空；无新增头文件或公开函数，
+PPTX ctypes 测试已登记到指定 ASan 预载正则，全程使用命令行。
+
+本轮日志位于 `build/pptx-m1/`：`verify-build.log`、`verify-pptx.log`、
+`verify-all.log`、`verify-results.xml`、`verify-sdk-docs.json`、`verify-prepush.log`。
+
 ## 2026-11-14：7fc3bf84 复核
 
 当前 HEAD `7fc3bf84` 已包含 PR #174 的 M1 实现。本次重新阅读容器、

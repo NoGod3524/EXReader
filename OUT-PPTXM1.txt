@@ -1,6 +1,6 @@
-当前 HEAD `7fc3bf84` 已包含 M1。本次重建并完成全部验收，仅更新了[验收记录](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/docs/PPTX-M1.md)。
+当前 HEAD `cf45cdc8` 已具备完整 M1。本轮重新验收全部通过，仅更新了[验收记录](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/docs/PPTX-M1.md)。
 
-① [src/pptx.c](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/src/pptx.c) **416 行、15 个函数**：
+① [src/pptx.c](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/src/pptx.c) **416 行、15 个函数**：
 
 - 生命周期：`release`
 - XML：`named`、`root`、`child`、`relationship_id`
@@ -9,9 +9,9 @@
 - 骨架：`dimension`、`read_presentation`
 - 固定版式：`draw`、`create_fixed`、`exr_pptx_open_owned`
 
-② 六份夹具全部通过，`generate.py --check` exit 0：
+② 六份夹具均成功打开，生成脚本 `--check` exit 0：
 
-| 夹具 | 引擎页数 | python-pptx | 页尺寸 pt |
+| 夹具 | 引擎 pages | python-pptx | 页尺寸 pt |
 |---|---:|---:|---|
 | 空演示文稿 | 0 | 0 | 无页面 |
 | 纯标题 | 1 | 1 | 720×540 |
@@ -20,9 +20,9 @@
 | 4:3 | 1 | 1 | 720×540 |
 | 二十页 | 20 | 20 | 720×540 |
 
-16:9 为 `12192000×6858000 EMU`；4:3 为 `9144000×6858000 EMU`。文件、内存入口合计 **56 次有效页渲染成功**，逐字节验证为全白 RGBA。
+16:9 为 `12192000×6858000 EMU`；4:3 为 `9144000×6858000 EMU`。文件与内存入口合计 **56 次有效页渲染全部成功，逐字节验证全白**。
 
-③ 新增测试共 **12 组**：
+③ M1 新增 **12 组 CTest**，全部通过：
 
 ```text
 native-pptx-empty
@@ -39,12 +39,12 @@ native-pptx-detection
 native-pptx-limit
 ```
 
-- 专项：**12/12 通过**，4.96 秒。
-- 全量：**437/437 通过**，186.93 秒，仅排除 `sdk-release`、`sdk-doc-coverage`。
-- `check_sdk_docs.py`：**exit 0，485/485**，导出一致。
-- 分层检查、共用 `ops/prepush-check.ps1`：**exit 0**。
+- 专项：**12/12**，5.60 秒。
+- 全量：**437/437**，248.35 秒，仅排除指定两组。
+- `check_sdk_docs.py`：**exit 0，485/485**。
+- 分层检查、完整 `ops/prepush-check.ps1`：**exit 0**。
 
-④ 坏样本错误原文：
+④ 错误消息原文：
 
 | 样本 | 状态 | 消息 |
 |---|---|---|
@@ -52,20 +52,22 @@ native-pptx-limit
 | 缺主文档 | EXR_FORMAT | `PPTX part missing: ppt/presentation.xml` |
 | slide 成员超限 | EXR_LIMIT | `ZIP member exceeds 128 MiB: ppt/slides/slide1.xml` |
 
-尺寸缺失或为零时回退至 `720×540 pt`。缺页成功打开并保留其余页序，警告原文：
+缺页时跳过并成功打开，警告为：
 
 ```text
 PPTX warning: skipped 1 slide reference(s) with missing or invalid parts
 ```
 
-⑤ M2 可复用接口：
+尺寸缺失或为零时回退至 **720×540 pt**。
 
-- `pptx_document.zip/slides`：容器与有序 part 路径。
-- `xml_read`、`exr_xml_memory_tree`：读取 slide XML。
-- 关系查询及 `exr_resolve_path`：扩展 slide/layout/master/theme 遍历。
-- `draw`、`exr_path_segment`、`exr_draw_style`、绘制 sink：接入形状输出。
-- `exr_fixed_create`、页面 geometry、`exr_fixed_render`：沿用现有管线。
+⑤ M2 可复用接口及扩展点：
 
-M2 需补 `p:spTree` 解析，并处理关系字符串生命周期及每次绘制的预算。
+- `pptx_document.zip/slides`：ZIP 与有序 part 路径。
+- `xml_read`、`exr_xml_memory_tree`：读取 `p:cSld/p:spTree`。
+- 关系查询、`exr_resolve_path`：扩展 slide/layout/master/theme 遍历。
+- `draw`、`exr_path_segment`、`exr_draw_style`、绘制 sink：输出形状。
+- 固定页 geometry、`exr_fixed_create/render`：沿用渲染管线。
 
-三份受保护文件均未修改；无新增头文件；ASan 预载正则已登记；全程未使用 GUI/SendInput。
+M2 需处理关系字符串的借用生命周期，并为重复绘制设置单次操作预算。
+
+三份受保护文件未修改；无新增头文件；ASan 预载正则已登记；全程未使用 GUI/SendInput。
