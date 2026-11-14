@@ -45,7 +45,7 @@
 +  const de_merge_view *cell=de_merge_hit(x,y);
 +  if(cell) {
 +    de_merge_selected_block=cell->block;de_merge_selected_row=cell->row;de_merge_selected_cell=cell->cell;
-+    set_status(L"已选择整格；按 F6 编辑整格文字。");return de_start(cell->block);
++    set_status(L"已选择整格；按 F6 查看单元格文字。");return de_start(cell->block);
 +  }
 +  de_merge_selected_block=SIZE_MAX;
    y+=de.scroll_y;
@@ -83,7 +83,7 @@
      editable ? L"":L" · 只读");
 -  SetWindowTextW(de_tp.label,label);return 1;
 +  if(merged)swprintf(label,240,L"行 %zu · 列 %zu · 合并单元格（整体一格）%ls",
-+    de_tp.row+1,de_tp.col+1,editable ? L" · 可编辑整格文字":L" · 含受保护内容，只读");
++    de_tp.row+1,de_tp.col+1,L" · 只读");
 +  SetWindowTextW(de_tp.label,label);
 +  for(int id=DE_TADD;id<=DE_TWIDE;id++)EnableWindow(GetDlgItem(de_tp.window,id),!merged);
 +  if(merged)set_status(DE_MERGE_STRUCTURE_MESSAGE);

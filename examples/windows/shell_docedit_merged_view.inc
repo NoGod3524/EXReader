@@ -55,7 +55,7 @@ static int de_merge_measure(size_t block,float top,float available,float *height
     const de_merged_cell *m=grid+i;de_merge_view *v=de_mv+de_mv_count++;
     memset(v,0,sizeof(*v));v->block=block;v->row=m->row;v->cell=m->cell;
     v->column=m->column;v->columns=m->columns;v->rows=m->rows;
-    v->text=de_merge_text(t->rows[m->row].cells+m->cell);
+    v->text=de_merge_text(de_merge_cell_view(t,m->row,m->cell));
     if(!v->text) {ok=0;break;}
     v->box.left=(LONG)x[m->column];v->box.right=(LONG)x[m->column+m->columns];
     RECT text={0,0,v->box.right-v->box.left-2*pad,0};if(text.right<1)text.right=1;
