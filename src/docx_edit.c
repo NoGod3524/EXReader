@@ -624,7 +624,7 @@ static exr_status cell_paragraph_splice(exr_edit_doc *d,const block_location *lo
     memmove(blocks+at,blocks+at+1,(cell->block_count-at-1)*sizeof(*blocks));
     cell->block_count--;
   }
-  cell->changed=CELL_REPLACED;
+  cell->changed=(cell->changed&~CELL_PATCHED)|CELL_REPLACED;
   change=(edit_change){loc->index,d->blocks[loc->index],owner};
   s=modify(d,&change,1);block_unref(d,owner);
   if (s && out) *out=0;
@@ -727,7 +727,8 @@ exr_status exr_edit_split_paragraph(exr_edit_doc *d,exr_edit_id id,size_t at,siz
       memcpy(blocks,cell->blocks,p*sizeof(*blocks));
       blocks[p]=left->view; blocks[p+1]=right->view;
       memcpy(blocks+p+2,cell->blocks+p+1,(cell->block_count-p-1)*sizeof(*blocks));
-      cells[col].blocks=blocks; cells[col].block_count++; cells[col].changed=CELL_REPLACED;
+      cells[col].blocks=blocks; cells[col].block_count++;
+      cells[col].changed=(cells[col].changed&~CELL_PATCHED)|CELL_REPLACED;
       rows[row].cells=cells; t.rows=rows; table.table=&t;
       s=exr_edit_replace(d,table.id,&table);
     }
