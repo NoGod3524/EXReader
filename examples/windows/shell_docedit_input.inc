@@ -269,7 +269,10 @@ static int de_leave_table(void) {
 static int de_key_modifiers(WPARAM key,int control,int shift,int alt) {
   if(!de.doc)return 0;
   de.high_surrogate=0;
-  if(control && shift && key=='O' && deo.tree) {SetFocus(deo.tree);return 1;}
+  if(control && shift && key=='O' && deo.tree) {
+    if(de.hf_mode)de_hf_leave();
+    SetFocus(deo.tree);return 1;
+  }
   if(de.hf_mode)return de_hf_key(key,control,shift);
   if(control && alt && key==VK_RETURN && de.caret_in_table) {de_leave_table();return 1;}
   if(key==VK_F6) {de_table_open();return 1;}

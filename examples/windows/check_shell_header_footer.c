@@ -75,6 +75,69 @@ static unsigned hf_body_contrast(uint32_t *pixels,RECT box) {
 static void hf_save_reopen(const char *path) {
   assert(de_key('S',1,0) && !de.dirty);de_close();assert(de_open(path));assert(de_measure(800,600));
 }
+static void hf_lane_union_acceptance(void) {
+  de_close();memset(&de,0,sizeof(de));
+  exr_edit_run runs[2]={{0}};exr_edit_block blocks[2]={{0}};
+  runs[0].text="Heading";runs[0].text_size=7;runs[1].text="Body";runs[1].text_size=4;
+  for(size_t i=0;i<2;i++) {blocks[i].runs=&runs[i];blocks[i].run_count=1;}
+  const char *heading="<w:p><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr></w:p>";
+  blocks[0].opaque_xml=heading;blocks[0].opaque_size=strlen(heading);
+  /* Retained paragraph templates require their original OPC main part. */
+  const char *main="<w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body>"
+    "<w:p><w:pPr><w:pStyle w:val=\"Heading1\"/></w:pPr></w:p>"
+    "<w:p><w:r><w:t>Body</w:t></w:r></w:p><w:sectPr/></w:body></w:document>";
+  const char *rels="<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
+    "<Relationship Id=\"main\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" "
+    "Target=\"word/document.xml\"/></Relationships>";
+  const char *types="<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+    "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
+    "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+    "<Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/></Types>";
+  const char *names[]={"word/document.xml","_rels/.rels","[Content_Types].xml"},*values[]={main,rels,types};
+  exr_edit_part parts[3]={{0}};
+  for(size_t i=0;i<3;i++) {parts[i].name=names[i];parts[i].data=values[i];parts[i].size=strlen(values[i]);}
+  assert(exr_edit_doc_create(NULL,0,blocks,2,parts,3,NULL,&de.doc)==EXR_OK);
+  exr_edit_id heading_id=de_block_at(de.doc,0)->id,note_id=0;
+  assert(exr_edit_footnote_insert(de.doc,de_block_at(de.doc,1)->id,0,4,"Note",4,&note_id)==EXR_OK);
+  assert(exr_edit_set_header_footer_text(de.doc,hf_section(),0,0,"Header",6)==EXR_OK);
+  assert(exr_edit_set_header_footer_text(de.doc,hf_section(),1,0,"Footer",6)==EXR_OK);
+  assert(!g.page && !g.window);
+  g.page=CreateWindowW(L"STATIC",L"Three lane acceptance",WS_POPUP,
+    0,0,800,600,NULL,NULL,GetModuleHandleW(NULL),NULL);assert(g.page);
+  de_set_caret(de_start(1));de_set_anchor(de_caret_pos());de.layout_dirty=1;
+  assert(de_measure(800,600) && deo.count==1 && de.footnote_row_count==2);
+  float margin=(float)shell_px(24,shell_dpi);assert(de.inset==margin+240);
+  shell_d2d_edit_row *header=&de.hf_rows[0],*body=&de.rows[1],
+    *note=&de.rows[de.row_count+de.footnote_row_count-1],*footer=&de.hf_rows[1];
+  assert(header->y+header->height<=de.rows[0].y);
+  assert(body->y+body->height<note->y && note->y+note->height<footer->y);
+  assert(header->y>=de_toolbar_height() && footer->y+footer->height<=600);
+  de.blink=0;uint32_t *pixels=paint_memory(800,600);
+  shell_d2d_edit_row *rows[]={header,body,note,footer};
+  for(size_t i=0;i<sizeof(rows)/sizeof(*rows);i++) {
+    RECT box={(LONG)de.inset,(LONG)(rows[i]->y-de.scroll_y),800-(LONG)margin,
+      (LONG)(rows[i]->y+rows[i]->height-de.scroll_y)};
+    assert(hf_body_contrast(pixels,box)>0);
+  }
+  free(pixels);
+  rich_click(DE_HEADER);assert(de.hf_mode==1);
+  assert(de_key(VK_ESCAPE,0,0) && !de.hf_mode);
+  assert(de_key('O',1,1) && GetFocus()==deo.tree);
+  assert(TreeView_SelectItem(deo.tree,NULL));
+  assert(TreeView_SelectItem(deo.tree,deo.items[0].node));
+  assert(de_block_at(de.doc,de.caret.view)->id==heading_id && !de_selected());
+  de_set_caret(de_start(1));de_set_anchor(de_caret_pos());
+  rich_click(DE_HEADER);assert(de.hf_mode==1);
+  assert(!de_command(DE_INSERT_FOOTNOTE,0) && de.hf_mode==1 && exr_edit_footnote_count(de.doc)==1);
+  assert(de_key('O',1,1) && !de.hf_mode && GetFocus()==deo.tree);
+  rich_click(DE_HEADER);assert(de.hf_mode==1);
+  assert(TreeView_SelectItem(deo.tree,NULL) && de.hf_mode==1);
+  assert(TreeView_SelectItem(deo.tree,deo.items[0].node));
+  assert(!de.hf_mode && de_block_at(de.doc,de.caret.view)->id==heading_id && !de_selected());
+  hf_expect(0,0,"Header");hf_expect(1,0,"Footer");assert(exr_edit_footnote_count(de.doc)==1);
+  de_close();DestroyWindow(g.page);g.page=NULL;
+  puts("L13/L14/L15 PASS outline/body/footnote/header/footer layout and pixels; header Esc/shortcut/tree return to body; note insertion blocked in header");
+}
 
 int main(int argc,char **argv) {
   assert(argc==2);setvbuf(stdout,NULL,_IONBF,0);
@@ -187,15 +250,16 @@ int main(int argc,char **argv) {
     assert(de.hf_mode==i+1);
   }
   rich_click(DE_HEADER);SetFocus(g.page);
-  assert(de_key('O',1,1) && GetFocus()==deo.tree && de.hf_mode==1);
-  rich_click(DE_INSERT_FOOTNOTE);assert(exr_edit_footnote_count(de.doc)==1);
-  assert(de_key(VK_ESCAPE,0,0));de.mouse_down=0;
+  rich_click(DE_INSERT_FOOTNOTE);assert(exr_edit_footnote_count(de.doc)==1 && de.hf_mode==1);
+  assert(de_key('O',1,1) && GetFocus()==deo.tree && !de.hf_mode);
+  assert(de.doc && !de.hf_mode);de.mouse_down=0;
   shell_d2d_edit_row *note_row=&de.rows[de.row_count+1];
   assert(de_message(NULL,WM_LBUTTONDOWN,0,
     MAKELPARAM((int)(800-margin-1),(int)(note_row->y+note_row->height*.5f-de.scroll_y))));
   assert(!de.hf_mode && !de.mouse_down);
   de_outline_close();DestroyWindow(g.page);g.page=NULL;
   puts("merge PASS outline/header/body/footnote/footer paint together; right-edge margin editing, header outline shortcut and footnote isolation");
+  hf_lane_union_acceptance();
   de_close();shell_d2d_destroy(host_shell);host_shell=NULL;
   exr_font_free(g.font);exr_font_manager_free(g.font_manager);CoUninitialize();
   puts("L13 real-editor headless acceptance PASS (no SendInput)");return 0;
