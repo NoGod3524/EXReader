@@ -44,7 +44,8 @@ jobs:
         shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
-      - name: Install metric-compatible Calibri substitute
+      - &pptx-fonts
+        name: Install metric-compatible Calibri substitute
         if: runner.os != 'Windows'
         run: |
           python3 - <<'PY'
@@ -285,6 +286,7 @@ jobs:
         shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
+      - *pptx-fonts
       - run: cmake -S . -B build/asan -DCMAKE_BUILD_TYPE=Debug -DEXR_SANITIZE=ON -DEXR_ENABLE_AAC=OFF
       - run: cmake --build build/asan --parallel 4
       - run: ctest --test-dir build/asan --output-on-failure
