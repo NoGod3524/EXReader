@@ -1,0 +1,157 @@
+{
+  "status": "passed",
+  "ctest_groups": 15,
+  "native_open_render_checks": 63,
+  "checks_by_group": {
+    "hello": 2,
+    "sizes": 3,
+    "bold": 2,
+    "cjk": 1,
+    "alignment": 3,
+    "bullets": 2,
+    "malformed": 11,
+    "unicode": 4,
+    "bytes": 2,
+    "indices": 22,
+    "wrap": 1,
+    "spacing": 1,
+    "runs": 1,
+    "master": 4,
+    "outline": 4
+  },
+  "hello": {
+    "scale": 1,
+    "bbox": [
+      224,
+      54,
+      257,
+      68
+    ],
+    "glyph_pixels": 221,
+    "shape_center_x": 240,
+    "glyph_center_x": 240.5,
+    "center_error_px": 0.5
+  },
+  "sizes": {
+    "point_sizes": [
+      12,
+      24,
+      48
+    ],
+    "pixels_per_point": 4,
+    "glyph_heights_px": [
+      36,
+      70,
+      141
+    ],
+    "height_ratios": [
+      1,
+      1.9444444444444444,
+      3.9166666666666665
+    ]
+  },
+  "bold": {
+    "point_size": 48,
+    "pixels_per_point": 4,
+    "mean_stem_width_regular_bold_px": [
+      15,
+      22
+    ],
+    "ink_pixels_regular_bold": [
+      16560,
+      26496
+    ]
+  },
+  "cjk": {
+    "host_has_cjk_font": true,
+    "font_index": 3,
+    "font": "SimHei",
+    "pixels_per_point": 2,
+    "bbox": [
+      106,
+      104,
+      322,
+      156
+    ],
+    "glyph_pixels": 3903,
+    "distinct_silhouettes": 4,
+    "cell_pixels": [
+      798,
+      838,
+      1269,
+      998
+    ]
+  },
+  "alignment": {
+    "left_edges_l_ctr_r_px": [
+      51,
+      219,
+      387
+    ]
+  },
+  "bullets": {
+    "kind": "U+2022",
+    "independent_literal_reference_IoU": [
+      1,
+      1,
+      1
+    ]
+  },
+  "fonts": {
+    "0": "Aptos",
+    "1": "Arial",
+    "2": "Aptos Display",
+    "3": "SimHei"
+  },
+  "scheme_colors": {
+    "0": [
+      255,
+      255,
+      255
+    ],
+    "1": [
+      12,
+      23,
+      34
+    ],
+    "2": [
+      232,
+      232,
+      232
+    ],
+    "3": [
+      14,
+      40,
+      65
+    ],
+    "4": [
+      21,
+      96,
+      130
+    ],
+    "5": [
+      233,
+      113,
+      50
+    ],
+    "6": [
+      70,
+      120,
+      134
+    ],
+    "7": [
+      150,
+      96,
+      125
+    ]
+  },
+  "line_spacing": {
+    "exact_line_pt": 40,
+    "paragraph_after_pt": 12,
+    "visible_line_gaps_px": [
+      52,
+      52
+    ]
+  },
+  "evidence": "text-tests.txt"
+}
