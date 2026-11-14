@@ -1,0 +1,37 @@
+Start testing: Nov 14 01:09 Eastern Standard Time
+----------------------------------------------------------
+1/1 Testing: windows-table-ui
+1/1 Test: windows-table-ui
+Command: "C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables-host/check_shell_table.exe" "C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables-host/table-evidence" "C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/examples/windows/../../tests/fixtures/rich.docx"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables-host
+"windows-table-ui" start time: Nov 14 01:09 Eastern Standard Time
+Output:
+----------------------------------------------------------
+extra PASS existing rich.docx (Content/main.xml) -> Tab cell=(0,0); border_pixels=58; merged-cell edit rolls back
+1 PASS generated 2x2 fixture -> Tab cell=(0,0); border_pixels=58 caret_pixels=22 caret=(30.0,144.4) inside cell; hit-test PASS
+2 PASS typed AB -> Ctrl+S -> reopened cell(0,0)=AB
+extra PASS Tab (0,0)->(0,1)->(1,0)->(1,1); Shift+Tab reverses; Right enters cell
+3 PASS Enter paragraphs=1->2 run_count=0; typed X -> [AB|X]; sibling cell=keep
+4 PASS one Ctrl+Z -> [AB|empty], Enter retained, inserted run removed
+extra PASS repeated Enter -> [AB|X|YZ], all paragraph IDs retained; one undo removes YZ + first run, next undo removes Enter
+5 PASS toolbar +row ABOVE 2->3; -row 3->2; each undo/redo is one transaction; text retained
+6 PASS toolbar column +5%/-5% twips=2400->2520->2394 pixels=160.0->168.0->159.6
+7 PASS toolbar delete confirmation No unchanged / Yes deletes; block_count 3->2; border layouts=0; toolbar hidden
+8 PASS Ctrl+S -> reopen: rows=2 columns=2 widths=[2514,2400] all cell paragraphs/text equal [AB|X], keep
+extra PASS Delete/Backspace join within cell + undo; cross-cell deletion rolls back without text loss
+extra PASS Left/Right cross cells; Up/Down stay in column across unequal cell heights and cell paragraphs
+extra PASS wrapped cell Up/Down moves between visual lines before crossing cells
+extra PASS cell UTF-8 CJK/surrogate input, Backspace/Delete scalar boundaries, five undos restore keep
+extra PASS Ctrl+Alt+Enter inserts empty paragraph immediately below table; typing and insertion undo separately
+extra PASS missing engine widths -> available 552px equally split 276.0/276.0px
+extra PASS only-table deletion leaves editable paragraph; typing undo then one deletion undo restores table + caret
+M-E2a table UI headless acceptance PASS (no HWND / no SendInput)
+<end of output>
+Test time =   0.81 sec
+----------------------------------------------------------
+Test Passed.
+"windows-table-ui" end time: Nov 14 01:09 Eastern Standard Time
+"windows-table-ui" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 14 01:09 Eastern Standard Time

@@ -116,6 +116,8 @@ void shell_d2d_edit_position(void *layout, unsigned at, float box[4]);
 typedef struct shell_d2d_edit_row {
   void *layout;
   float y, height;
+  float x,cell_box[4]; /* Relative x; absolute cell rectangle in document pixels. */
+  int cell_border;
   unsigned start, length, caret;
   int show_caret, selected_break;
 } shell_d2d_edit_row;

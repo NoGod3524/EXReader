@@ -1,0 +1,19 @@
+43/439 Testing: native-docx-edit-insert-run
+43/439 Test: native-docx-edit-insert-run
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/tests/test_docx_edit_insert_run.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables/libexreader.dll"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables
+"native-docx-edit-insert-run" start time: Nov 14 01:09 Eastern Standard Time
+Output:
+----------------------------------------------------------
+PASS top-level: first run / invalid offset / NULL text / zero length / unchanged model / undo-redo
+PASS cell: first run / invalid offset / NULL text / zero length / unchanged model / undo-redo
+PASS insert_run: zero-run / sibling text / atomic undo-redo / aliased input / fresh IDs / failed transaction rollback / invalid UTF-8 / cell paragraph insert-delete / DOCX reopen
+PASS protected cell: EXR_UNSUPPORTED; transaction rolled back
+PASS imported [LEFT|empty|right]: insert X preserves both neighbors, IDs, pStyle, previous patch and DOCX reopen; undo restores empty
+<end of output>
+Test time =   0.35 sec
+----------------------------------------------------------
+Test Passed.
+"native-docx-edit-insert-run" end time: Nov 14 01:09 Eastern Standard Time
+"native-docx-edit-insert-run" time elapsed: 00:00:00
+----------------------------------------------------------

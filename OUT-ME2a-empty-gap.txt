@@ -1,0 +1,83 @@
+# M-E2a：空单元格段落输入仍缺 API
+
+基线：48a23dc3（已合入 #139 / M-E4）。按“真缺 API 就停下来报缺口”停止 UI 实现。
+
+M-E4 已解决非空 run 的格内段落定位和改字；没有解决零 run 段落插字。
+常规操作“格末 Enter → 输入 X”即可触发，无需合并格或特殊 DOCX。
+
+## 新增文件
+
+- evidence/me2a-empty-paragraph-gap.c：69 行，公开 API 的无窗口复现。
+- 本文件：命令、真实输出、七项验收状态和所需 API 语义。
+- 未修改现有 UI、src/** 或 tests/check_reading_release.py。
+- 保留原有空文件 OUT-ME2a-2.txt。
+
+## 复现命令
+
+复用本机 M-E4 构建产物。其工作树为 b7f5d702，以下比对无输出，
+确认与当前基线的引擎源码和头文件一致；本次没有完成新的全量构建。
+
+```powershell
+git diff b7f5d702 HEAD -- src include
+New-Item -ItemType Directory -Force build/me2a-empty-gap | Out-Null
+gcc -std=c11 -Wall -Wextra -Werror -I include evidence/me2a-empty-paragraph-gap.c -L ../EXReader-e4-20261112/build/e4 -lexreader -o build/me2a-empty-gap/repro.exe
+Copy-Item -LiteralPath ../EXReader-e4-20261112/build/e4/libexreader.dll -Destination build/me2a-empty-gap/libexreader.dll
+& build/me2a-empty-gap/repro.exe
+```
+
+DLL SHA256：072F26555F22841DE85F945D24C8620C92B55A08C9C169E9B78E864F59F8CC87。
+编译无诊断，退出码 0；复现程序退出码 0（断言预期缺口，不表示 UI 通过）。
+真实输出：
+
+```text
+DOCX write/read: 1x1 table text=AB
+E4 fixed: find_block(second)=found; set_run_text=B2; paragraphs=2 text=A|B2
+Enter at end: paragraphs=3 text=A|B2|empty; empty.run_count=0
+set_run_text(empty,0,X): EXR_ARGUMENT (1)
+insert_paragraph(after empty cell paragraph): EXR_ARGUMENT (1)
+set_cell_text fallback: paragraphs=1 text=X; A and B2 lost
+Rollback: all 3 paragraphs and IDs retained; DOCX bytes unchanged
+M-E2a BLOCKED: need insertion into a zero-run cell paragraph, preserving siblings/templates/history
+```
+
+## 七项 UI 验收状态
+
+| 项目 | 状态 |
+| --- | --- |
+| ① 打开表格、Tab 入格、边框像素 | 未执行；API 缺口触发硬约束停止 |
+| ② 输入 X1、写回、重开 | 未执行；复现仅验证公共引擎 API，不算 UI 验收 |
+| ③ Tab 三次行列序列 | 未执行 |
+| ④ 增删行及单笔 undo | 未执行 |
+| ⑤ 当前列宽 ±5% 像素变化 | 未执行 |
+| ⑥ 删表、block_count -1 | 未执行 |
+| ⑦ ctest 排除 sdk-release/sdk-doc-coverage | 未执行；不引用其他里程碑的历史绿灯 |
+
+## 需要引擎提供的语义
+
+允许按单元格段落 ID 向零 run 段落插入 TEXT run，保留段落 ID、模板、
+属性以及同格其他段落；参与事务、rollback、undo/redo，写回重开后可继续编辑。
+可扩展现有 API 或新增段落内插 run API；不要以整格替换实现。
+
+已有 set_run_text 只能修改现存 TEXT run；insert_paragraph 的锚点只接受
+顶层块；set_cell_text 会替换整格为一段。这三个公开入口都不能直接完成上述语义。
+复现检查了失败回滚及整格替换回滚，DOCX 字节和原段落 ID 均保持不变。
+无 UI 实现，因此合并格导航、绘制、工具条行为尚未验证。
+
+## 预推送检查
+
+仓库内无 ops/prepush-check.ps1；使用本机已有的同名检查脚本：
+
+```powershell
+pwsh -NoProfile -File C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1 -Worktree C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112
+git diff --check
+```
+
+```text
+ok    无冲突标记残留
+ok    code/docs 结构扫描
+ok    check_sdk_docs.py
+
+全部通过 —— 可以推
+```
+
+两条命令退出码均为 0。无 GUI 自动化、无 HWND、无 SendInput。未提交或推送。

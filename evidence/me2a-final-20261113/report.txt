@@ -1,0 +1,73 @@
+M-E2a 表格 UI：本轮验收（2026-11-13）
+
+工作分支：codex/word-editor-tables-20261112
+本轮起点：10180fa2（实测 git HEAD；已有表格 UI 和 insert_run 引擎提交）。
+沿用现有实现，不重置工作树；本轮补齐精确 AB 场景、连续 Enter 和唯一表格删除回归，修复 headless 驱动的 SDK DLL 复制，并校正文档中的插行方向与列宽百分比语义。
+
+可用功能：方向键/Tab 入格、格内光标与边框、Tab/Shift+Tab 跨格、格内输入与 Enter、原子撤销、工具条增删行/列宽/删表、Ctrl+S 保存重开。
+零 run 段落通过 exr_edit_insert_run 在输入事务内插入首个 run；不覆盖整格。既有公共 API 的六标签文档和 ctypes ASan 预载登记均在本分支中。
+
+构建（全部 exit 0）：
+cmake --build build/tables -j 4
+cmake --install build/tables
+cmake --build build/tables-host --target check_shell_table check_shell_docedit EXReader -j 4
+
+①—⑧（exit 0）：
+ctest --test-dir build/tables-host -R '^windows-table-ui$' -V
+真实输出摘录（完整原文 ui.txt）：
+1 PASS generated 2x2 fixture -> Tab cell=(0,0); border_pixels=58 caret_pixels=22 caret=(30.0,144.4) inside cell; hit-test PASS
+2 PASS typed AB -> Ctrl+S -> reopened cell(0,0)=AB
+3 PASS Enter paragraphs=1->2 run_count=0; typed X -> [AB|X]; sibling cell=keep
+4 PASS one Ctrl+Z -> [AB|empty], Enter retained, inserted run removed
+5 PASS toolbar +row ABOVE 2->3; -row 3->2; each undo/redo is one transaction; text retained
+6 PASS toolbar column +5%/-5% twips=2400->2520->2394 pixels=160.0->168.0->159.6
+7 PASS toolbar delete confirmation No unchanged / Yes deletes; block_count 3->2; border layouts=0; toolbar hidden
+8 PASS Ctrl+S -> reopen: rows=2 columns=2 widths=[2514,2400] all cell paragraphs/text equal [AB|X], keep
+
+额外回归（同一 headless 驱动）：
+extra PASS existing rich.docx (Content/main.xml) -> Tab cell=(0,0); border_pixels=58; merged-cell edit rolls back
+extra PASS Tab (0,0)->(0,1)->(1,0)->(1,1); Shift+Tab reverses; Right enters cell
+extra PASS repeated Enter -> [AB|X|YZ], all paragraph IDs retained; one undo removes YZ + first run, next undo removes Enter
+extra PASS Delete/Backspace join within cell + undo; cross-cell deletion rolls back without text loss
+extra PASS Left/Right cross cells; Up/Down stay in column across unequal cell heights and cell paragraphs
+extra PASS wrapped cell Up/Down moves between visual lines before crossing cells
+extra PASS cell UTF-8 CJK/surrogate input, Backspace/Delete scalar boundaries, five undos restore keep
+extra PASS Ctrl+Alt+Enter inserts empty paragraph immediately below table; typing and insertion undo separately
+extra PASS missing engine widths -> available 552px equally split 276.0/276.0px
+extra PASS only-table deletion leaves editable paragraph; typing undo then one deletion undo restores table + caret
+
+⑨（exit 0）：
+ctest --test-dir build/tables -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure -j 6
+真实输出（完整原文 ctest.txt）：
+100% tests passed out of 438
+
+Total Test time (real) =  89.14 sec
+
+⑩（exit 0）：
+python -X utf8 tools/check_sdk_docs.py
+真实输出摘录（完整 JSON sdk-docs.json）：
+  "errors": [],
+  "passed": true
+额外 DLL 导出核对（exit 0）：
+python -X utf8 tools/check_sdk_docs.py --binary build/tables/libexreader.dll --output evidence/me2a-final-20261113/sdk-docs-binary.json
+
+原有 M-E1/M-E2c（exit 0，完整原文 baseline-ui.txt）：
+build/tables-host/check_shell_docedit.exe tests/fixtures/rich.docx build/tables-host/baseline-evidence
+M-E2c console acceptance PASS (no HWND / no SendInput)
+M-E1 console acceptance PASS (no HWND / no SendInput)
+
+引擎专项回归（exit 0，完整原文 insert-run.txt）：
+python -X utf8 tests/test_docx_edit_insert_run.py --library build/tables/libexreader.dll
+包含零 run、同格邻段、原子 undo/redo、别名输入、失败事务回滚、UTF-8 校验、格内插删段落、模板保留、DOCX 往返。
+
+运行库一致性：引擎构建、已安装 SDK、headless 驱动目录中的 DLL SHA256 完全相同，见 runtime-hashes.txt。
+BE7EDC4A3C4272585845E3FD44B97DC026DF4F657B047E2E95F3DFC228ED5157
+
+产物：table-ui.png、table-edited.png 为本轮内存 DC 绘图；table-edited.docx 为本轮 Ctrl+S 保存文件。
+可运行宿主：build/tables-host/EXReader.exe。
+
+预推送门禁使用本机已有脚本（仓库内没有该文件）：
+pwsh -NoProfile -File C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1 -Worktree C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112
+真实输出见 prepush.txt。
+
+边界：受保护的合并/嵌套/底纹/opaque 单元格沿用引擎保护；普通多段落单元格可编辑。列宽按当前值 ±5% 取整，2400 -> 2520 -> 2394 twips。删除唯一表格会在同一事务补一个空段落供继续输入。

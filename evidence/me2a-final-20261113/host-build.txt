@@ -1,0 +1,7 @@
+[0/1] Re-running CMake...
+-- Configuring done (0.3s)
+-- Generating done (0.2s)
+-- Build files have been written to: C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables-host
+[1/4] Linking CXX executable check_shell_docedit.exe
+[2/4] Building C object CMakeFiles/check_shell_table.dir/check_shell_table.c.obj
+[3/4] Linking CXX executable check_shell_table.exe

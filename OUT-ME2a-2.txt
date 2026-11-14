@@ -1,0 +1,21 @@
+**仍有真实 API 缺口，已按硬约束停止 UI 实现。**
+
+格末按 Enter 会产生零 run 段落，随后无法插字。headless 真实输出：
+
+```text
+Enter at end: paragraphs=3 text=A|B2|empty; empty.run_count=0
+set_run_text(empty,0,X): EXR_ARGUMENT (1)
+insert_paragraph(after empty cell paragraph): EXR_ARGUMENT (1)
+set_cell_text fallback: paragraphs=1 text=X; A and B2 lost
+```
+
+需要补齐：**向零 run 单元格段落插字，同时保留同格其他段落、属性及事务历史。**
+
+新增交付：
+
+| 文件 | 行数 |
+|---|---:|
+| [复现程序](/C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/evidence/me2a-empty-paragraph-gap.c) | 69 |
+| [完整命令、输出及七项验收状态](/C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/OUT-ME2a-empty-gap.txt) | 83 |
+
+七项 UI 验收均未执行。预推送检查（含文档门禁）和 `git diff --check` 通过。未修改 `src/**` 或受保护脚本；无 GUI 自动化，未提交或推送。

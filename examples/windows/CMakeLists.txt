@@ -69,6 +69,21 @@ if(EXR_READER_WINDOWS_SHELL)
   endif()
   # Console acceptance: exercises the real editor and D2D into a memory DC, no HWND.
   add_executable(check_shell_docedit EXCLUDE_FROM_ALL check_shell_docedit.c shell_d2d.cpp shell_epub.cpp shell_speech.cpp)
+  add_executable(check_shell_table EXCLUDE_FROM_ALL check_shell_table.c shell_d2d.cpp shell_epub.cpp shell_speech.cpp)
+  target_compile_features(check_shell_table PRIVATE cxx_std_17)
+  target_compile_definitions(check_shell_table PRIVATE EXR_READER_WINDOWS_SHELL=1)
+  target_link_libraries(check_shell_table PRIVATE EXReader::exreader comdlg32 gdi32 uiautomationcore shell32 user32
+    winhttp crypt32 d2d1 dwrite advapi32 ole32 uuid EXReader::vendor_miniz EXReader::vendor_expat)
+  if(MSVC)
+    target_compile_options(check_shell_table PRIVATE /UNDEBUG)
+  else()
+    target_compile_options(check_shell_table PRIVATE -UNDEBUG)
+    target_link_options(check_shell_table PRIVATE -static)
+    target_link_libraries(check_shell_table PRIVATE m)
+  endif()
+  enable_testing()
+  add_test(NAME windows-table-ui COMMAND check_shell_table "${CMAKE_CURRENT_BINARY_DIR}/table-evidence"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/fixtures/rich.docx")
   target_compile_features(check_shell_docedit PRIVATE cxx_std_17)
   target_compile_definitions(check_shell_docedit PRIVATE EXR_READER_WINDOWS_SHELL=1)
   target_link_libraries(check_shell_docedit PRIVATE EXReader::exreader comdlg32 gdi32 uiautomationcore shell32 user32
@@ -94,7 +109,11 @@ get_target_property(exr_type EXReader::exreader TYPE)
 if(exr_type STREQUAL "SHARED_LIBRARY")
   find_file(EXR_RUNTIME NAMES exreader.dll libexreader.dll
             PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
-  add_custom_command(TARGET EXReader POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:EXReader>"
-    VERBATIM)
+  # The console drivers must load the same SDK as the app, including when only
+  # a driver is built after an engine API change.
+  foreach(host EXReader check_shell_docedit check_shell_table)
+    add_custom_command(TARGET ${host} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:${host}>"
+      VERBATIM)
+  endforeach()
 endif()

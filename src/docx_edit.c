@@ -567,6 +567,31 @@ const exr_edit_part *exr_edit_parts(const exr_edit_doc *d,size_t *count) {
   return d ? d->parts : NULL;
 }
 size_t exr_edit_memory_bytes(const exr_edit_doc *d) { return d ? d->bytes : 0; }
+/* Journal a cell splice through its owning table; all inputs may be borrowed. */
+static exr_status cell_splice(exr_edit_doc *d,const block_location *loc,size_t at,
+  size_t remove,const exr_edit_block *insert) {
+  exr_edit_block table=d->blocks[loc->index]->view;
+  exr_edit_table t=*table.table; exr_edit_row *rows=NULL;
+  exr_edit_cell *cells=NULL; exr_edit_block *blocks=NULL;
+  size_t count=loc->cell->block_count-remove+(insert!=NULL); exr_status s=EXR_MEMORY;
+  if (!count) return command_failure(d,EXR_UNSUPPORTED);
+  if (count>SIZE_MAX/sizeof(*blocks)) return command_failure(d,EXR_LIMIT);
+  rows=copy_bytes(d,t.rows,t.row_count*sizeof(*rows),0);
+  cells=copy_bytes(d,t.rows[loc->row].cells,t.rows[loc->row].cell_count*sizeof(*cells),0);
+  blocks=allocate(d,count*sizeof(*blocks));
+  if (rows && cells && blocks) {
+    memcpy(blocks,loc->cell->blocks,at*sizeof(*blocks));
+    if (insert) blocks[at]=*insert;
+    memcpy(blocks+at+(insert!=NULL),loc->cell->blocks+at+remove,
+      (loc->cell->block_count-at-remove)*sizeof(*blocks));
+    cells[loc->col].blocks=blocks; cells[loc->col].block_count=count;
+    cells[loc->col].changed=(cells[loc->col].changed&~CELL_PATCHED)|CELL_REPLACED;
+    rows[loc->row].cells=cells; t.rows=rows; table.table=&t;
+    s=exr_edit_replace(d,table.id,&table);
+  }
+  release(d,blocks); release(d,cells); release(d,rows);
+  return s ? command_failure(d,s):EXR_OK;
+}
 /* Cell paragraph insertion/deletion journals the owning table, just like split. */
 static exr_status cell_paragraph_splice(exr_edit_doc *d,const block_location *loc,
     const exr_edit_block *insert,exr_edit_id *out) {
@@ -722,6 +747,22 @@ static exr_status set_props(exr_edit_doc *d,exr_edit_id id,size_t run,
   if (s) return s;
   if ((!para && !rp) || (para && !para_props_valid(para)) || (rp && !run_props_valid(rp)))
     return command_failure(d,EXR_ARGUMENT);
+  block_location loc; const exr_edit_block *v=locate_block(d,id,&loc);
+  if (v && loc.cell) {
+    exr_edit_block changed=*v; exr_edit_run *runs=NULL;
+    if (v->kind!=EXR_EDIT_PARAGRAPH || !exr_edit_cell_can_split(loc.cell))
+      return command_failure(d,EXR_UNSUPPORTED);
+    if (rp && run>=v->run_count) return command_failure(d,EXR_ARGUMENT);
+    if (rp && v->runs[run].kind!=EXR_EDIT_TEXT) return command_failure(d,EXR_UNSUPPORTED);
+    if (para) changed.props=*para;
+    if (rp) {
+      runs=copy_bytes(d,v->runs,v->run_count*sizeof(*runs),0);
+      if (!runs) return command_failure(d,EXR_MEMORY);
+      runs[run].props=*rp; changed.runs=runs;
+    }
+    s=cell_splice(d,&loc,loc.block,1,&changed);
+    release(d,runs); return s;
+  }
   index=find_index(d,id);
   if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
   if (d->blocks[index]->view.kind!=EXR_EDIT_PARAGRAPH) return command_failure(d,EXR_UNSUPPORTED);
@@ -766,6 +807,30 @@ exr_status exr_edit_set_run_text(exr_edit_doc *d,exr_edit_id id,size_t run,const
   release(d,r->text); r->text=copy; r->text_size=size;
   change.index=loc.index; change.before=d->blocks[loc.index]; change.after=b;
   s=modify(d,&change,1); block_unref(d,b); return s;
+}
+exr_status exr_edit_insert_run(exr_edit_doc *d,exr_edit_tx *tx,exr_edit_id id,
+  size_t at,const char *text,size_t size,const exr_edit_run_props *props) {
+  block_location loc; const exr_edit_block *v; exr_edit_block changed;
+  exr_edit_run *runs; exr_status s=exr_edit_tx_ready(d,tx);
+  if (s) return s;
+  v=locate_block(d,id,&loc);
+  if (!v || !text || !size || size==SIZE_MAX || !utf8(text,size) || (props && !run_props_valid(props)))
+    return command_failure(d,EXR_ARGUMENT);
+  if (at>v->run_count) return command_failure(d,EXR_ARGUMENT);
+  if (v->kind!=EXR_EDIT_PARAGRAPH || (loc.cell && !exr_edit_cell_can_split(loc.cell)))
+    return command_failure(d,EXR_UNSUPPORTED);
+  if (v->run_count>=SIZE_MAX/sizeof(*runs)) return command_failure(d,EXR_LIMIT);
+  runs=allocate(d,(v->run_count+1)*sizeof(*runs));
+  if (!runs) return command_failure(d,EXR_MEMORY);
+  if (at) memcpy(runs,v->runs,at*sizeof(*runs));
+  runs[at].text=text; runs[at].text_size=size;
+  if (props) runs[at].props=*props;
+  runs[at].id=fresh_id(d);
+  if (v->run_count>at) memcpy(runs+at+1,v->runs+at,(v->run_count-at)*sizeof(*runs));
+  changed=*v; changed.runs=runs; changed.run_count++;
+  s=!runs[at].id ? command_failure(d,EXR_LIMIT):loc.cell ?
+    cell_splice(d,&loc,loc.block,1,&changed):exr_edit_replace(d,id,&changed);
+  release(d,runs); return s;
 }
 static exr_edit_run *mutable_anchor(exr_edit_block *b,exr_edit_id paragraph,size_t run) {
   size_t i,j,k;
