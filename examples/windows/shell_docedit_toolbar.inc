@@ -25,6 +25,11 @@ typedef struct {
   size_t style;
   char reference[128];
 } de_style_parse;
+static unsigned de_heading_name(const char *name) {
+  if(_strnicmp(name,"heading",7))return 0;
+  name+=7;if(*name==' ')name++;
+  return name[0]>='1' && name[0]<='6' && !name[1] ? (unsigned)(name[0]-'0'):0;
+}
 static void de_style_start(void *context,const char *name,const char **attrs) {
   de_style_parse *parse=context;name=de_local(name);parse->depth++;
   if((!strcmp(name,"pStyle") || !strcmp(name,"rStyle")) && parse->depth==3)
@@ -37,8 +42,14 @@ static void de_style_start(void *context,const char *name,const char **attrs) {
     de.styles=styles;parse->style=de.style_count++;
     de_style *style=&styles[parse->style];memset(style,0,sizeof(*style));
     snprintf(style->id,sizeof(style->id),"%s",de_attribute(attrs,"styleId"));
+    style->paragraph=!strcmp(de_attribute(attrs,"type"),"paragraph");
+    if(style->paragraph)style->heading=de_heading_name(style->id);
     if(!strcmp(de_attribute(attrs,"type"),"paragraph") && !strcmp(de_attribute(attrs,"default"),"1"))
       snprintf(de.default_style,sizeof(de.default_style),"%s",style->id);
+  }
+  if(!strcmp(name,"name") && parse->style<de.style_count && de.styles[parse->style].paragraph) {
+    unsigned heading=de_heading_name(de_attribute(attrs,"val"));
+    if(heading)de.styles[parse->style].heading=heading;
   }
   if(!strcmp(name,"basedOn") && parse->style<de.style_count)
     snprintf(de.styles[parse->style].base,128,"%s",de_attribute(attrs,"val"));
@@ -100,6 +111,20 @@ static void de_inherit_style(exr_edit_run_props *props,const char *id) {
     id=de.styles[i].base; /* Bound cycles without recursive stack growth. */
   }
   de_merge_props(props,&chain);
+}
+static unsigned de_heading_level(const exr_edit_block *block) {
+  if(!block || block->kind!=EXR_EDIT_PARAGRAPH)return 0;
+  de_load_styles();char reference[128]={0};
+  de_parse_style_xml(block->opaque_xml,block->opaque_size,reference);
+  const char *id=*reference ? reference:de.default_style;
+  for(size_t depth=0;*id && depth<=de.style_count;depth++) {
+    size_t i=0;while(i<de.style_count && strcmp(de.styles[i].id,id))i++;
+    if(i==de.style_count)return de_heading_name(id);
+    if(!de.styles[i].paragraph)return 0;
+    if(de.styles[i].heading)return de.styles[i].heading;
+    id=de.styles[i].base;
+  }
+  return 0;
 }
 static exr_edit_run_props de_resolve_props(const exr_edit_block *block,const exr_edit_run *run) {
   de_load_styles();exr_edit_run_props props={0};props.size_half_points=24;

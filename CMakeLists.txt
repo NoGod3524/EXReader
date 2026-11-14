@@ -250,7 +250,7 @@ if(EXR_FULL_TESTS)
     target_compile_features(exreader-docedit-ui-test PRIVATE cxx_std_17)
     target_compile_definitions(exreader-docedit-ui-test PRIVATE EXR_READER_WINDOWS_SHELL=1)
     target_link_libraries(exreader-docedit-ui-test PRIVATE exreader miniz expat d2d1 dwrite
-      gdi32 comdlg32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32)
+      gdi32 comdlg32 comctl32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32)
     if(MSVC)
       target_compile_options(exreader-docedit-ui-test PRIVATE /UNDEBUG /utf-8)
     else()

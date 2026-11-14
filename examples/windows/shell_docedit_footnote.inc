@@ -94,7 +94,7 @@ static int de_footnote_insert(void) {
   de_footnote_changed();de_footnote_open(id);return 1;
 }
 static int de_footnote_click(float x,float y) {
-  if(x<de.inset || x>de.width-de.inset || y<de_toolbar_height())return 0;
+  if(x<de.inset || x>de.width-shell_px(24,shell_dpi) || y<de_toolbar_height())return 0;
   y+=de.scroll_y;
   for(size_t i=1;i<de.footnote_row_count;i++) {
     const shell_d2d_edit_row *row=&de.rows[de.row_count+i];
