@@ -1,0 +1,36 @@
+L01 模型层已完成，当前源码重新构建并验收通过。本轮修复了 CTest 注册位置。
+
+① 切片文件：
+
+- `shell_docedit_image.inc`：66 行
+- `check_shell_docedit_image.c`：80 行
+- `image_model_tests.cmake`：19 行
+
+未修改范围外既有文件或引擎。
+
+② 验收命令：
+
+```powershell
+cmake --build build/l01-verify --target exreader-docedit-image-model-test -j 4
+ctest --test-dir build/l01-verify -R '^windows-docedit-image-model$' -V
+```
+
+真实输出：
+
+```text
+png: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
+bmp: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
+gif: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
+invalid path/image/selection and inactive document: unchanged PASS (errors=5)
+100% tests passed out of 1
+```
+
+规定门禁已执行：
+
+```powershell
+pwsh -File C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\prepush-check.ps1 -Worktree .
+```
+
+输出：`全部通过 —— 可以推`。
+
+③ 已知边界：主编辑器接线仍需其他切片添加并维护 `de.selected_block`、包含本文件；图片上限 64 MiB，尺寸按 96 DPI 换算。

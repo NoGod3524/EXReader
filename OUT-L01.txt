@@ -1,6 +1,6 @@
-已提交 `48967adf`，分支 `codex/fan-l01-image-model`。模型层验收通过，尚未接入主编辑器。
+L01 已在提交 `48967adf` 中，本轮复验通过，无新增源码改动。
 
-① 新增文件：
+① 切片文件：
 
 - `shell_docedit_image.inc`：66 行。
 - `check_shell_docedit_image.c`：80 行。
@@ -8,11 +8,13 @@
 
 既有文件未修改。
 
-② 验收命令与真实输出（链接 `exr-build-pptx` 缓存 SDK）：
+② 重新编译后执行：
 
 ```powershell
-& "$env:TEMP/check_shell_docedit_image.exe" .
+.\build\check_shell_docedit_image.exe .
 ```
+
+真实输出：
 
 ```text
 png: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
@@ -21,10 +23,16 @@ gif: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
 invalid path/image/selection and inactive document: unchanged PASS (errors=5)
 ```
 
-规定的 `prepush-check.ps1 -Worktree .` 已执行，输出“全部通过 —— 可以推”。
+规定门禁命令：
+
+```powershell
+pwsh -File C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\prepush-check.ps1 -Worktree .
+```
+
+输出：`全部通过 —— 可以推`。
 
 ③ 已知边界：
 
-- 按独占范围未改主文件；汇总接入需添加 `de.selected_block`、初始化/清空为 `SIZE_MAX`，并包含新切片。
-- 文件上限 64 MiB，尺寸按 96 DPI 换算。
-- 当前树全量构建未完成；上述验收使用缓存 SDK。
+- 主编辑器尚未接线：需添加并维护 `de.selected_block`、包含新切片；相关文件超出本路范围。
+- 本次验收链接缓存 SDK，当前树 SDK 构建未完成。
+- 图片文件上限 64 MiB，尺寸按 96 DPI 换算。

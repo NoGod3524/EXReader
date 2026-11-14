@@ -1,9 +1,11 @@
 # Opt in with -DCMAKE_PROJECT_EXReader_INCLUDE=<absolute path to this file>.
+if(WIN32)
+  enable_testing()
+endif()
 function(exr_image_model_tests)
   if(NOT WIN32)
     return()
   endif()
-  enable_testing()
   add_executable(exreader-docedit-image-model-test
     "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_shell_docedit_image.c")
   target_link_libraries(exreader-docedit-image-model-test PRIVATE exreader)
