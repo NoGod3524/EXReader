@@ -1,0 +1,98 @@
+PPT-M5: measured OfficeArt table structure
+
+Source: PowerPoint 16.0 COM AddTable(2,2,60,80,360,180), SaveAs(format=1).
+Fixtures: tests/fixtures/ppt-tables/plain.ppt and merge.ppt.
+All offsets below address the extracted PowerPoint Document stream, not CFB
+file offsets. The fixtures contain a 720x540 pt slide.
+
+SHA-256
+plain.ppt c7e442e595bf42b415f28925bd658a67d851e4cc910e98352dd14a108dcd1127
+merge.ppt 238b3e3892accabd99674096efb68ddb5eb503fc635014e3c7ee9ef3f78ad844
+
+Measured hierarchy (plain.ppt)
+SlideContainer 03EE -> DrawingContainer 040C -> DgContainer F002
+  root SpgrContainer F003 @000364D0
+    table SpgrContainer F003 @00036508, recVer=F, recInstance=000
+      group SpContainer F004 @00036510
+        FSPGR F009 @00036518: signed int32 (480,640,3360,2080)
+        FSP F00A @00036530: recVer=2, recInstance=000,
+          shapeId=13314, flags=00000201 (group + anchor)
+        FOPT F00B @00036540: ordinary group properties
+        TertiaryFOPT F122 @00036570: recVer=3, recInstance=003
+          039F = 00000001: TABLEFLAGS.fIsTable
+          C3A0 = 0000000E: 14-byte complex tableRowProperties
+          complex bytes: 0200 0200 0400 D0020000 D0020000
+            IMsoArray nElems=2, nElemsAlloc=2, cbElem=4;
+            minimum heights = 720,720 master units = 90,90 pt
+          third property is the opaque metroBlob (03A9); not parsed
+        ClientAnchor F010 @00036C7A: recVer=0, recInstance=000,
+          recLen=8, signed int16 (top640,left480,right3360,bottom2080)
+          => x=60,y=80,width=360,height=180 pt (master units / 8)
+      four cell SpContainers F004
+        FSP F00A: recVer=2, recInstance=001 (rectangle), flags=00000A02
+        ChildAnchor F00F: recLen=16, signed int32 (x0,y0,x1,y1)
+        ClientTextbox F00D: normal M4 TextHeaderAtom + text + style
+      six border SpContainers F004
+        FSP F00A: recVer=2, recInstance=014 hex (20 decimal, line)
+        FOPT: 01C0=002040A0 (RGB 160,64,32),
+              01CB=000094D4 (38100 EMU / 12700 = 3 pt),
+              01FF=00180018
+        ChildAnchor F00F: line endpoints in group coordinates
+
+Plain cell anchors and fills
+F004 offset  F00F offset  x0,y0,x1,y1             fillColor 0181
+00036C8A     000370B9     480,640,1920,1360        00332211
+00037138     00037566     1920,640,3360,1360       00665544
+000375DC     00037A0C     480,1360,1920,2080       00998877
+00037A80     00037EB1     1920,1360,3360,2080      00CCBBAA
+COLORREF byte order yields RGB (17,34,51), (68,85,102), (119,136,153),
+(170,187,204), respectively.
+Top-left TextHeaderAtom 0F9F @000370D9 has textType=4; TextBytesAtom
+0FA8 @000370E5 contains ASCII A. Bottom-right TextBytesAtom @00037EDD
+contains B. These fixtures use the valid byte-text form; UTF-16 TextCharsAtom
+0FA0 and OutlineTextRefAtom 0F9E also follow the existing M4 parser path.
+The plain internal vertical border anchor @0003835E is
+(1920,640,1920,2080), spanning both rows.
+
+Measured horizontal merge (merge.ppt)
+The group remains at 00036508; F122 remains at 00036570 with 039F=1 and
+the same 14-byte C3A0 array. ClientAnchor moves to 00036C95, values unchanged.
+The upper-left cell F004 @00036CA5 / F00F @000370D4 expands to
+(480,640,3360,1360). The covered upper-right cell shape is absent.
+Only three cell rectangles remain. The internal vertical border F00F
+@00037ED5 becomes (1920,1360,1920,2080), covering the lower row only.
+There are still six border line shapes. No separate merge-start/covered-cell
+flags are stored in this representation; spans and coverage follow geometry.
+
+Record identification and limits of inference
+- No table-specific ClientData instance, TableRow or TableCell records occur
+  in the measured table group. Its shapes do not require F011 ClientData.
+- 0F9F is TextHeaderAtom, not a Table record. F122.recInstance=3 counts
+  property entries; 039F bit 0 identifies this group as a table.
+- Columns are inferred from cell anchor boundaries. If every row merges
+  horizontally across the same hidden columns, their original count cannot
+  be recovered from these OfficeArt records alone.
+- Row heights are minima; wrapped text can make actual rows taller. Actual
+  visible cell boundaries take precedence. The implementation interpolates
+  from valid minima only when all internal row boundaries are invisible.
+  Partial invisible row boundaries can leave row counts approximate and warn.
+- Rendering uses normal M2 shapes/borders and M4 text. The implementation
+  bounds the recovered grid at 200 rows by 200 columns, keeps the first
+  rectangle on conflicting coverage, and suppresses internal borders in
+  covered spans. It does not invent alternate record types or merge flags.
+
+Microsoft primary references
+MS-ODRAW 2.3.4.36 tableProperties (PID 039F)
+https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-odraw/376e9c97-16df-45f2-bd6b-a67ba657ef4c
+MS-ODRAW 2.2.59 TABLEFLAGS (bit0 table, bit1 placeholder, bit2 RTL)
+https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-odraw/346608a3-bca2-4607-b98b-5f3c77f607d2
+MS-ODRAW 2.3.4.37 tableRowProperties (PID 03A0; fBid ignored)
+https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-odraw/45891407-a4b1-4f26-93a8-ded15531c62c
+MS-ODRAW 2.3.4.38 tableRowProperties_complex (signed minimum heights)
+https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-odraw/102f9c99-18f9-4bb0-acf5-a12f8c23ec23
+MS-ODRAW 2.2.51 IMsoArray
+https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-odraw/f68b7770-f7fb-4b1a-bafa-d46054ee0435
+MS-PPT 2.7.3 OfficeArtClientData (F011; recInstance MUST be 000)
+https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/ac3b454d-b5ea-4da8-a57c-32fc08ed332a
+MS-PPT 2.13.24 RecordType (0F9F=TextHeaderAtom, 0FA0/0FA8=text atoms)
+https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/38fb1fa5-0a62-477a-8b14-178df22de812

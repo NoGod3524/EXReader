@@ -46,6 +46,7 @@ typedef struct {
   uint32_t gradient[2];
   int has_gradient;
   exr_ppt_text *text;
+  int clip_text;
 } exr_ppt_shape;
 
 typedef struct {
@@ -55,6 +56,7 @@ typedef struct {
   exr_bitmap bitmap;
 } exr_ppt_blip;
 typedef struct { size_t first,count; } exr_ppt_slide;
+typedef struct { size_t first,count; unsigned rows,columns,cells,merged; } exr_ppt_table;
 typedef struct {
   exr_ppt_shape *shapes;
   exr_ppt_slide *slides;
@@ -69,6 +71,8 @@ typedef struct {
   exr_font_manager *font_manager;
   exr_ppt_text_font *text_fonts;
   size_t text_font_count,text_font_capacity,font_bytes,text_bytes;
+  exr_ppt_table *tables;
+  size_t table_count,table_capacity,table_malformed,table_missing,table_merge,text_index;
   exr_buffer font_fallbacks,glyph_fallbacks;
 } exr_ppt_drawing;
 exr_status exr_ppt_text_layout(exr_ppt_drawing *drawing,const exr_control *control,exr_error *e);

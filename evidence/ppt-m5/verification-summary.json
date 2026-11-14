@@ -1,0 +1,14 @@
+{
+  "full_tests": 540,
+  "full_passed": 540,
+  "excluded": [
+    "sdk-release",
+    "sdk-doc-coverage"
+  ],
+  "full_real_seconds": 104.19,
+  "ppt_m2_m4_tests": 35,
+  "ppt_m2_m4_passed": 35,
+  "ppt_table_tests": 10,
+  "ppt_table_passed": 10,
+  "prepush": "passed"
+}

@@ -1,6 +1,29 @@
 /* SPDX-License-Identifier: MIT */
 #include "ppt_internal.h"
 
+/* Optional M5 inspection uses the same bounded binary reader before layout. */
+static exr_status audit_tables(const void *data,size_t size,exr_error *error) {
+  exr_ppt_streams streams={0};exr_ppt_info info={0};exr_ppt_drawing drawing={0};size_t i,j;
+  exr_status status=exr_ppt_cfb(data,size,NULL,&streams,error);
+  if(status==EXR_OK) status=exr_ppt_records(streams.document,streams.document_size,NULL,&info,error);
+  if(status==EXR_OK) status=exr_ppt_read_drawing(&streams,&info,NULL,&drawing,error);
+  if(status==EXR_OK) {
+    printf("table_count=%zu\n",drawing.table_count);
+    for(i=0;i<drawing.table_count;i++) {
+      const exr_ppt_table *table=&drawing.tables[i];
+      printf("table_%zu_rows=%u\ntable_%zu_columns=%u\ntable_%zu_cells=%u\ntable_%zu_merged=%u\n",
+        i,table->rows,i,table->columns,i,table->cells,i,table->merged);
+      for(j=table->first;j<table->first+table->count && j-table->first<16;j++) if(drawing.shapes[j].type==1) {
+        const exr_ppt_shape *shape=&drawing.shapes[j];
+        printf("table_%zu_shape_%zu_text=%s\ntable_%zu_shape_%zu_bounds=%.8g,%.8g,%.8g,%.8g\n",
+          i,j-table->first,shape->text ? shape->text->value : "",i,j-table->first,
+          shape->bounds[0],shape->bounds[1],shape->bounds[2],shape->bounds[3]);
+      }
+    }
+  }
+  exr_ppt_drawing_free(&drawing);exr_ppt_streams_free(&streams);return status;
+}
+
 static exr_status audit_path(void *context,const exr_path_segment *segments,size_t count,
   const double matrix[6],const exr_draw_style *style,exr_error *error) {
   size_t *index=context;
@@ -19,13 +42,14 @@ int main(int argc,char **argv) {
   unsigned char *bytes=NULL;FILE *file=NULL;long length;int failed=0;
   if(argc!=5 && argc!=6) return 2;
   scale=strtod(argv[4],NULL);options.struct_size=sizeof(options);
-  if(argc==6 && !strcmp(argv[5],"memory")) {
+  if(argc==6 && (!strcmp(argv[5],"memory") || !strcmp(argv[5],"tables"))) {
     file=fopen(argv[1],"rb");if(!file) return 2;
     if(fseek(file,0,SEEK_END) || (length=ftell(file))<0 || fseek(file,0,SEEK_SET)) { fclose(file);return 2; }
     bytes=malloc(length ? (size_t)length : 1);
     if(!bytes || fread(bytes,1,(size_t)length,file)!=(size_t)length) { fclose(file);free(bytes);return 2; }
     fclose(file);file=NULL;
-    status=exr_fixed_open_memory(EXR_PPT,bytes,(size_t)length,&options,&doc,&error);
+    status=!strcmp(argv[5],"tables") ? audit_tables(bytes,(size_t)length,&error) : EXR_OK;
+    if(status==EXR_OK) status=exr_fixed_open_memory(EXR_PPT,bytes,(size_t)length,&options,&doc,&error);
   } else status=exr_fixed_open(argv[1],&options,&doc,&error);
   if(status==EXR_OK) {
     size_t page=(size_t)strtoul(argv[3],NULL,10);
