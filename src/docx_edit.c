@@ -638,9 +638,7 @@ exr_status exr_edit_insert_paragraph(exr_edit_doc *d,exr_edit_id after,const exr
 }
 int exr_edit_cell_can_split(const exr_edit_cell *cell) {
   size_t i,j;
-  if (cell->unsupported&~(EXR_EDIT_CELL_OPAQUE|EXR_EDIT_CELL_MERGED)) return 0;
-  /* Paragraph edits retain tcPr, including gridSpan/hMerge/vMerge. Row
-     structure remains guarded separately by the table commands. */
+  if (cell->unsupported&~EXR_EDIT_CELL_OPAQUE) return 0;
   /* The decoder also marks plain multi-paragraph cells OPAQUE for legacy
      whole-cell replacement. They can still be split without losing content. */
   for (i=0;i<cell->block_count;i++) {

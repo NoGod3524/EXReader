@@ -64,10 +64,24 @@ int main(int argc,char **argv) {
       assert(!wcscmp(g.status_text,DE_MERGE_STRUCTURE_MESSAGE));
     }
     puts("PASS navigation skips continuation cells; +row/delete/width rejected with exact visible status text");
+    const exr_edit_cell *cell=de_merge_cell_view(b->table,0,0);
+    assert(cell && (cell->unsupported&EXR_EDIT_CELL_MERGED));
+    assert(!exr_edit_table_cell_paragraph(de.doc,id,0,0,0));
+    const exr_edit_block *original=exr_edit_table_cell_block_at(de.doc,id,0,0,0);
+    assert(original && exr_edit_find_block(de.doc,original->id)==original);
+    exr_edit_id paragraph_id=original->id,inserted=0;
+    assert(exr_edit_set_run_text(de.doc,paragraph_id,0,"x",1)==EXR_UNSUPPORTED);
+    assert(exr_edit_split_paragraph(de.doc,paragraph_id,0,0)==EXR_UNSUPPORTED);
+    assert(exr_edit_insert_paragraph(de.doc,paragraph_id,NULL,0,NULL,&inserted)==EXR_UNSUPPORTED && !inserted);
+    assert(exr_edit_delete_block(de.doc,paragraph_id)==EXR_UNSUPPORTED);
+    assert(de_table_text(de.doc,id,0,0,"x",1)==EXR_UNSUPPORTED);
+    assert(exr_edit_table_cell_block_at(de.doc,id,0,0,0)==original);
+    /* Edit the next plain cell to exercise history/writeback beside the merge. */
+    assert(de_merge_resolve(b->table,&row,&col,1,&merged) && !merged);
     const char *text="\xe5\x90\x88\xe5\xb9\xb6 edited\nsecond line\n";
-    assert(de_table_text(de.doc,id,0,0,text,strlen(text))==EXR_OK);
+    assert(de_table_text(de.doc,id,row,col,text,strlen(text))==EXR_OK);
     b=exr_edit_find_block(de.doc,id);
-    assert(b->table->rows[0].cells[0].block_count==3);
+    assert(b->table->rows[row].cells[col].block_count==3);
     assert(exr_edit_undo(de.doc)==EXR_OK);assert(exr_edit_redo(de.doc)==EXR_OK);
     if(v.rows>1)assert(exr_edit_table_insert_row(de.doc,id,0)==EXR_UNSUPPORTED);
     void *bytes=NULL;size_t size=0;exr_error error={0};
@@ -77,17 +91,17 @@ int main(int argc,char **argv) {
     exr_edit_doc *read=NULL;assert(exr_edit_docx_open(output,NULL,&read,&error)==EXR_OK);
     const exr_edit_table *t=exr_edit_find_block(read,id) ? exr_edit_find_block(read,id)->table:NULL;
     if(!t)for(size_t i=0;i<exr_edit_block_count(read);i++)if(exr_edit_block_at(read,i)->table) {t=exr_edit_block_at(read,i)->table;break;}
-    assert(t && t->rows[0].cells[0].block_count==3);
+    assert(t && t->rows[row].cells[col].block_count==3);
     de_merged_cell *grid=NULL;size_t count=0;assert(de_merge_grid(t,&grid,&count));
     assert(grid[0].columns==v.columns && grid[0].rows==v.rows);free(grid);
-    const exr_edit_block *paragraph=t->rows[0].cells[0].blocks;
+    const exr_edit_block *paragraph=t->rows[row].cells[col].blocks;
     assert(paragraph->run_count && paragraph->runs[0].text_size==13);
     assert(!memcmp(paragraph->runs[0].text,text,13));
     exr_edit_doc_free(read);de.layout_dirty=1;assert(de_measure(640,480));
     de.scroll_y=20;const de_merge_view *hit=de_merge_hit((float)v.box.left+2,(float)v.box.bottom-22);
     assert(hit && !hit->row && !hit->cell);de.scroll_y=0;
     shell_dpi=144;de.layout_dirty=1;assert(de_measure(640,480));shell_dpi=96;
-    puts("PASS whole-cell UTF-8/multiline typing, undo/redo, write/reopen retains merges; scroll and DPI rebuild");
+    puts("PASS merged content readable; paragraph edits rejected; neighboring UTF-8/multiline edit, undo/redo, write/reopen retains merges; scroll and DPI rebuild");
     de_close();
   }
   shell_d2d_destroy(host_shell);host_shell=NULL;CoUninitialize();

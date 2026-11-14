@@ -23,6 +23,9 @@ int main(void) {
   cells[3]=cells[1];cells[4]=cells[2];cells[5]=cells[1];
   for(size_t r=0;r<3;r++) {rows[r].cells=cells+2*r;rows[r].cell_count=2;}
   table.rows=rows;table.row_count=3;table.column_count=3;
+  assert(de_merge_cell_view(&table,0,0)==cells);
+  assert(!de_merge_cell_view(NULL,0,0) && !de_merge_cell_view(&table,3,0));
+  assert(!de_merge_cell_view(&table,0,2));
   assert(de_merge_grid(&table,&grid,&count) && count==6);
   assert(grid[0].columns==2 && grid[0].rows==3);
   for(size_t r=0;r<3;r++)for(size_t c=0;c<2;c++)assert(de_merge_at(grid,count,r,c)==grid);

@@ -7,6 +7,13 @@ typedef struct {
   size_t row,cell,column,columns,rows,owner;
   unsigned vertical,horizontal;
 } de_merged_cell;
+
+/* Read-only physical cell query for display, including protected content.
+   A returned view does not grant paragraph editing permission. */
+static const exr_edit_cell *de_merge_cell_view(const exr_edit_table *table,size_t row,size_t cell) {
+  if(!table || row>=table->row_count || cell>=table->rows[row].cell_count)return NULL;
+  return table->rows[row].cells+cell;
+}
 typedef struct { int depth,properties; size_t span; unsigned vertical,horizontal; } de_merge_parse;
 static const char *de_merge_local(const char *name) {
   const char *colon=strrchr(name,':');return colon ? colon+1:name;
@@ -103,5 +110,5 @@ static int de_merge_resolve(const exr_edit_table *t,size_t *row,size_t *cell,int
   if(merged)*merged=grid[at].columns>1 || grid[at].rows>1 || grid[at].vertical || grid[at].horizontal;
   free(grid);return 1;
 }
-#define DE_MERGE_STRUCTURE_MESSAGE L"合并单元格可修改整格文字；不能增删行或调整列宽。"
+#define DE_MERGE_STRUCTURE_MESSAGE L"合并单元格只读；不能修改文字、增删行或调整列宽。"
 #endif

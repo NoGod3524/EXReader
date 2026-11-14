@@ -49,6 +49,7 @@ if args.library_build:
     libraries += [args.library_build.resolve() / 'libexr_library.a']
     libraries += sorted(args.library_build.resolve().glob('*sqlite*.a'))
     libraries += sorted((args.library_build.resolve() / '_deps').rglob('*sqlite*.a'))
+libraries = [p for p in libraries if not p.name.endswith('.dll.a')]
 if not libraries:
     raise SystemExit(f'No static SDK libraries under {sdk}')
 flags = ['-O0', '-UNDEBUG', '-DEXR_STATIC', '-DEXR_READER_WINDOWS_SHELL=1',
