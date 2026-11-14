@@ -1,0 +1,92 @@
+name: D-FINAL-C model and mobile build evidence
+on:
+  push:
+    branches: [codex/dfinal-c-evidence]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  models:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and install current SDK
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/dfinal-c-actions
+          git rev-parse HEAD | tee evidence/dfinal-c-actions/source.txt
+          cmake -S . -B build/dfinal-sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF -DCMAKE_INSTALL_PREFIX="$PWD/build/dfinal-stage" 2>&1 | tee evidence/dfinal-c-actions/configure.txt
+          cmake --build build/dfinal-sdk --parallel 4 2>&1 | tee evidence/dfinal-c-actions/build.txt
+          cmake --install build/dfinal-sdk 2>&1 | tee evidence/dfinal-c-actions/install.txt
+      - name: Old library upgrade and SDK annotation regressions
+        run: |
+          set -euo pipefail
+          ctest --test-dir build/dfinal-sdk -V -R '^(native-library-epub-storage|native-annotation)$' --no-tests=error 2>&1 | tee evidence/dfinal-c-actions/regressions.txt
+      - name: Installed raw3 model export import preview confirmation and rejection
+        run: |
+          set -euo pipefail
+          python tools/run_dfinal_c_models.py --sdk build/dfinal-stage --build build/dfinal-models 2>&1 | tee evidence/dfinal-c-actions/models.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dfinal-c-models-${{ github.sha }}
+          path: |
+            evidence/dfinal-c-actions/
+            build/dfinal-models/consumer/results/
+            build/dfinal-models/model-tests.xml
+          if-no-files-found: error
+  mobile:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: android-arm64-v8a
+          - os: macos-15
+            target: iphoneos-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and install mobile SDK (build evidence only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/mobile-evidence
+          git rev-parse HEAD | tee build/mobile-evidence/source.txt
+          if [ '${{ matrix.target }}' = android-arm64-v8a ]; then
+            ndk=$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)
+            test -f "$ndk/build/cmake/android.toolchain.cmake"
+            cat "$ndk/source.properties" | tee build/mobile-evidence/toolchain.txt
+            flags=(-DCMAKE_TOOLCHAIN_FILE="$ndk/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-26)
+          else
+            xcodebuild -version | tee build/mobile-evidence/toolchain.txt
+            flags=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          fi
+          cmake --preset reading-library -B build/mobile -DCMAKE_INSTALL_PREFIX="$PWD/build/mobile-stage" "${flags[@]}" 2>&1 | tee build/mobile-evidence/configure.txt
+          cmake --build build/mobile --parallel 4 2>&1 | tee build/mobile-evidence/build.txt
+          cmake --install build/mobile 2>&1 | tee build/mobile-evidence/install.txt
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          stage = Path('build/mobile-stage')
+          files = {str(p.relative_to(stage)): hashlib.sha256(p.read_bytes()).hexdigest()
+                   for p in sorted(stage.rglob('*')) if p.is_file()}
+          assert files and any(p.endswith('.a') for p in files)
+          Path('build/mobile-evidence/manifest.json').write_text(json.dumps({
+              'source': os.environ['GITHUB_SHA'], 'run': os.environ['GITHUB_RUN_ID'],
+              'target': '${{ matrix.target }}', 'tier': 'sdk-build-only',
+              'host_deployed': False, 'physical_device_verified': False, 'files': files}, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dfinal-c-${{ matrix.target }}-${{ github.sha }}
+          path: |
+            build/mobile-evidence/
+            build/mobile-stage/
+          if-no-files-found: error
