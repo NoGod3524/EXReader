@@ -127,7 +127,9 @@ exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,ex
   if(channels==1) {
     unsigned r=config->background>>24,g=(config->background>>16)&255,b=(config->background>>8)&255;
     memset(c->bitmap.pixels,(int)((r*77+g*150+b*29+128)>>8),bytes);
-  } else for(i=0;i<bytes;i+=4) for(k=0;k<4;k++) c->bitmap.pixels[i+k]=(unsigned char)(config->background>>(24-8*k));
+  } else if(config->background==(config->background&255u)*0x01010101u)
+    memset(c->bitmap.pixels,(int)(config->background&255u),bytes);
+  else for(i=0;i<bytes;i+=4) for(k=0;k<4;k++) c->bitmap.pixels[i+k]=(unsigned char)(config->background>>(24-8*k));
   *out=c; return exr_fail(e,EXR_OK,"");
 }
 void exr_canvas_union_abort(exr_canvas *c) { if(c) { unref(c,c->group); c->group=NULL; } }
