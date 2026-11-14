@@ -1,0 +1,491 @@
+{
+  "generator": "PowerPoint COM SaveAs(format=1), reopened COM coordinates/colors",
+  "version": "16.0",
+  "reference_scale": "1 pixel per point",
+  "fixtures": [
+    {
+      "file": "red-rect.ppt",
+      "pages": 1,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "873ca9ececa2098a37225a5543823264090a25e7b7dff5af99faf96a12c1bab1",
+      "reference_png": "red-rect-powerpoint.png",
+      "shapes": [
+        {
+          "name": "red",
+          "kind": "rect",
+          "bbox_pt": [
+            72.0,
+            72.0,
+            144.0,
+            108.0
+          ],
+          "rgb": [
+            255,
+            0,
+            0
+          ],
+          "colorref": "0x000000FF",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": null
+        }
+      ],
+      "groups": [],
+      "samples": [
+        {
+          "name": "red-center",
+          "xy_pt": [
+            144,
+            126
+          ],
+          "rgb": [
+            255,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "file": "blue-circle.ppt",
+      "pages": 1,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "a38e26c852fed8ed2d889c860fbc5828b6ca490d5202c4b20e9d29da811466c7",
+      "reference_png": "blue-circle-powerpoint.png",
+      "shapes": [
+        {
+          "name": "blue",
+          "kind": "ellipse",
+          "bbox_pt": [
+            100.0,
+            100.0,
+            144.0,
+            144.0
+          ],
+          "rgb": [
+            0,
+            0,
+            255
+          ],
+          "colorref": "0x00FF0000",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": null
+        }
+      ],
+      "groups": [],
+      "samples": [
+        {
+          "name": "blue-center",
+          "xy_pt": [
+            172,
+            172
+          ],
+          "rgb": [
+            0,
+            0,
+            255
+          ]
+        },
+        {
+          "name": "ellipse-corner",
+          "xy_pt": [
+            104,
+            104
+          ],
+          "rgb": [
+            255,
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "file": "overlap.ppt",
+      "pages": 1,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "2cde017b298c0947a2a7acd419e184eb240f3d9eaa629c7ab100dcdb3d55e7c4",
+      "reference_png": "overlap-powerpoint.png",
+      "shapes": [
+        {
+          "name": "red-back",
+          "kind": "rect",
+          "bbox_pt": [
+            72.0,
+            72.0,
+            180.0,
+            144.0
+          ],
+          "rgb": [
+            255,
+            0,
+            0
+          ],
+          "colorref": "0x000000FF",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": null
+        },
+        {
+          "name": "green-front",
+          "kind": "rect",
+          "bbox_pt": [
+            162.0,
+            126.0,
+            180.0,
+            144.0
+          ],
+          "rgb": [
+            0,
+            255,
+            0
+          ],
+          "colorref": "0x0000FF00",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": null
+        }
+      ],
+      "groups": [],
+      "samples": [
+        {
+          "name": "red-only",
+          "xy_pt": [
+            100,
+            100
+          ],
+          "rgb": [
+            255,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "overlap-green",
+          "xy_pt": [
+            200,
+            160
+          ],
+          "rgb": [
+            0,
+            255,
+            0
+          ]
+        },
+        {
+          "name": "green-only",
+          "xy_pt": [
+            300,
+            240
+          ],
+          "rgb": [
+            0,
+            255,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "file": "group.ppt",
+      "pages": 1,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "92e6177ad1bc1381174288bbbc24d039609a5ed92918ce5918a60fa9c5a38f93",
+      "reference_png": "group-powerpoint.png",
+      "shapes": [
+        {
+          "name": "group-red",
+          "kind": "rect",
+          "bbox_pt": [
+            180.0,
+            135.0,
+            180.0,
+            120.0
+          ],
+          "rgb": [
+            255,
+            0,
+            0
+          ],
+          "colorref": "0x000000FF",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": "scaled-group"
+        },
+        {
+          "name": "group-blue",
+          "kind": "rect",
+          "bbox_pt": [
+            405.0,
+            255.0,
+            135.0,
+            80.0
+          ],
+          "rgb": [
+            0,
+            0,
+            255
+          ],
+          "colorref": "0x00FF0000",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": "scaled-group"
+        }
+      ],
+      "groups": [
+        {
+          "name": "scaled-group",
+          "bbox_pt": [
+            180.0,
+            135.0,
+            360.0,
+            200.0
+          ]
+        }
+      ],
+      "samples": [
+        {
+          "name": "group-red-center",
+          "xy_pt": [
+            270.0,
+            195.0
+          ],
+          "rgb": [
+            255,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "group-blue-center",
+          "xy_pt": [
+            472.5,
+            295.0
+          ],
+          "rgb": [
+            0,
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "file": "standard.ppt",
+      "pages": 1,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "316c65c1991ed6011d08852dffc0e1cd942c15a7244c9510a77adb68f778b239",
+      "reference_png": "standard-powerpoint.png",
+      "shapes": [
+        {
+          "name": "asymmetric-color",
+          "kind": "rect",
+          "bbox_pt": [
+            72.0,
+            72.0,
+            180.0,
+            144.0
+          ],
+          "rgb": [
+            17,
+            83,
+            211
+          ],
+          "colorref": "0x00D35311",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": null
+        },
+        {
+          "name": "green-line",
+          "kind": "line",
+          "bbox_pt": [
+            72.0,
+            300.0,
+            216.0,
+            0.0
+          ],
+          "rgb": null,
+          "colorref": null,
+          "line_rgb": [
+            0,
+            255,
+            0
+          ],
+          "line_width_pt": 6.0,
+          "group": null
+        },
+        {
+          "name": "unfilled",
+          "kind": "rect",
+          "bbox_pt": [
+            400.0,
+            72.0,
+            144.0,
+            108.0
+          ],
+          "rgb": null,
+          "colorref": null,
+          "line_rgb": [
+            255,
+            0,
+            0
+          ],
+          "line_width_pt": 4.0,
+          "group": null
+        }
+      ],
+      "groups": [],
+      "samples": [
+        {
+          "name": "asymmetric-color",
+          "xy_pt": [
+            162,
+            144
+          ],
+          "rgb": [
+            17,
+            83,
+            211
+          ]
+        },
+        {
+          "name": "green-line",
+          "xy_pt": [
+            180,
+            300
+          ],
+          "rgb": [
+            0,
+            255,
+            0
+          ]
+        },
+        {
+          "name": "unfilled-center",
+          "xy_pt": [
+            472,
+            126
+          ],
+          "rgb": [
+            255,
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "file": "wide.ppt",
+      "pages": 1,
+      "width_pt": 960.0,
+      "height_pt": 540.0,
+      "sha256": "1a7d86d18f9fc9363e289b9df6a407091bb6f900b68edae73c0a231b0136591a",
+      "reference_png": "wide-powerpoint.png",
+      "shapes": [
+        {
+          "name": "asymmetric-color",
+          "kind": "ellipse",
+          "bbox_pt": [
+            72.0,
+            72.0,
+            180.0,
+            144.0
+          ],
+          "rgb": [
+            17,
+            83,
+            211
+          ],
+          "colorref": "0x00D35311",
+          "line_rgb": null,
+          "line_width_pt": 0,
+          "group": null
+        },
+        {
+          "name": "green-line",
+          "kind": "line",
+          "bbox_pt": [
+            72.0,
+            300.0,
+            216.0,
+            0.0
+          ],
+          "rgb": null,
+          "colorref": null,
+          "line_rgb": [
+            0,
+            255,
+            0
+          ],
+          "line_width_pt": 6.0,
+          "group": null
+        },
+        {
+          "name": "unfilled",
+          "kind": "rect",
+          "bbox_pt": [
+            400.0,
+            72.0,
+            144.0,
+            108.0
+          ],
+          "rgb": null,
+          "colorref": null,
+          "line_rgb": [
+            255,
+            0,
+            0
+          ],
+          "line_width_pt": 4.0,
+          "group": null
+        }
+      ],
+      "groups": [],
+      "samples": [
+        {
+          "name": "asymmetric-color",
+          "xy_pt": [
+            162,
+            144
+          ],
+          "rgb": [
+            17,
+            83,
+            211
+          ]
+        },
+        {
+          "name": "green-line",
+          "xy_pt": [
+            180,
+            300
+          ],
+          "rgb": [
+            0,
+            255,
+            0
+          ]
+        },
+        {
+          "name": "unfilled-center",
+          "xy_pt": [
+            472,
+            126
+          ],
+          "rgb": [
+            255,
+            255,
+            255
+          ]
+        }
+      ]
+    }
+  ]
+}
