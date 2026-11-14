@@ -73,7 +73,7 @@ class Engine:
                 if mode == 'file':
                     status = self.lib.exr_fixed_open(str(path).encode(), None, C.byref(doc), C.byref(error))
                 else:
-                    # EXR_PPTX 在 EXR_PPT 合入后是 9（EXR_PPT=8）；不要写死到别处
+                    # Public ABI: EXR_PPT=10, followed by EXR_PPTX=11.
                     EXR_PPTX = 11
                     status = self.lib.exr_fixed_open_memory(EXR_PPTX, data, len(data), None, C.byref(doc), C.byref(error))
                 text = error.message.decode()
