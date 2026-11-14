@@ -1,0 +1,29 @@
+我先停在这里:有另一个写入者在同一个工作树里做同一个任务,继续做下去会和它互相覆盖。
+
+**发生了什么**
+- 开工时 `tools/sanitize/` 里只有一个 `build.bat`。几分钟内这个目录变了:`build.bat` 被换成 Python 包装,新增了 `build.py`、`CMakeLists.txt`、`control.c`、`driver.c`,16:13:21 又出现了 `run.py`。这些都不是我写的。
+- 我刚好在这期间改过一次 `build.bat`(给链接参数加 profile 运行时),这个改动已被它覆盖或丢失。
+- `ListAgents` 显示没有其他 Claude 会话在运行,所以写入者更可能是机器上的另一个 Codex/ChatGPT 进程。
+- 如果我继续,可能出现三种后果:互相覆盖文件、同时在 `codex/sanitize-audit-20261107` 上提交推送、各开一个重复的 draft PR。
+
+**已确认的环境**
+- 本机 WinLibs 的 MinGW gcc 16.2 没有 ASan/UBSan。
+- 没有 WSL 和 Docker,`clang`、`cl` 也不在 PATH 里。
+- 已有可用工具链 `C:\Users\Oscar\Documents\Codex\sanitize-toolchain-20261107\llvm`:clang 23.1.5(`x86_64-pc-windows-msvc`),带 ASan 动态运行时、UBSan standalone、profile 运行时以及 `llvm-cov`、`llvm-profdata`、`llvm-symbolizer`。
+- 我用 `t.c` 烟测过:UBSan 报了有符号整数溢出,ASan 报了 heap-buffer-overflow,两个运行时都能正常报告。运行时 DLL 要放进 PATH。
+- 可复用的素材:
+  - `tools/check_document.c` 本身就能对 EPUB 逐章分页并渲染每一页,对 PDF/CBZ 逐页渲染。
+  - `tools/compat/malformed_corpus.py` 能生成变体,但它调用外部 CLI,每个变体一个进程。
+  - `tests/fuzz_parse.c` 和 `tests/fuzz_pipeline.c` 是现成的种子驱动。
+  - 19 本书的路径和 sha256 在 `tools/regress/corpus.json` 里。
+
+**目前没做完的**
+还没跑任何一组输入,没有命中数据,没有覆盖率,没有提交,没有 PR。
+
+**需要你定**
+1. 如果另一个写入者是你有意启动的,请让它继续,我不再动 `tools/sanitize/`。
+2. 如果不是,请先停掉它。我再从当前 `tools/sanitize/` 的内容接着做,先读它的 `run.py`、`driver.c`,不重写。
+3. 如果要两边并行,我需要一个独立的 worktree 和分支,比如 `codex/sanitize-audit-20261107-claude`,避免互相覆盖。
+
+你回复后我就继续。
+
