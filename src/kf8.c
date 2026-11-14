@@ -478,11 +478,22 @@ limit:
 failed:
   free(css.data); return 0;
 }
+/* sscanf("%lf %lf %lf %lf %c")==4 and sscanf("%lf%c")==1 without the locale. */
+static int view_box(const char *s,double *x,double *y,double *w,double *h) {
+  double *out[4]; size_t i; char *end;
+  out[0]=x; out[1]=y; out[2]=w; out[3]=h;
+  for(i=0;i<4;i++) { *out[i]=exr_strtod(s,&end); if(end==s) return 0; s=end; }
+  while(isspace((unsigned char)*s)) s++;
+  return !*s;
+}
+static int exact_number(const char *s,double *out) {
+  char *end; *out=exr_strtod(s,&end); return end!=s && !*end;
+}
 /* Kindle cover flows often wrap one bitmap in SVG. The shared image renderer
    cannot resolve a nested SVG's book-relative bitmap, so unwrap that exact
    full-viewBox case into an ordinary image resource reference. */
 static int svg_cover(assets *a,const exr_document *xml,size_t root,size_t resource_index) {
-  size_t i,image=SIZE_MAX,replaced=0; int external=0; double x,y,w,h,iw,ih; char tail;
+  size_t i,image=SIZE_MAX,replaced=0; int external=0; double x,y,w,h,iw,ih;
   const char *box=exr_node_attribute(&xml->nodes[root],"viewBox"),*href,*value;
   for(i=0;i<xml->node_count;i++) {
     const char *tag=xml->nodes[i].name,*name=tag ? strrchr(tag,'|') : NULL;
@@ -493,7 +504,7 @@ static int svg_cover(assets *a,const exr_document *xml,size_t root,size_t resour
     if(value && !strncmp(value,"embed",5)) external=1;
   }
   if(!external) return 1;
-  if(!box || sscanf(box,"%lf %lf %lf %lf %c",&x,&y,&w,&h,&tail)!=4 || x!=0 || y!=0 || w<=0 || h<=0) goto unsupported;
+  if(!box || !view_box(box,&x,&y,&w,&h) || x!=0 || y!=0 || w<=0 || h<=0) goto unsupported;
   for(i=0;i<xml->nodes[root].attribute_count;i++) {
     const char *key=xml->nodes[root].attributes[i].name;
     if(strcmp(key,"viewBox") && strcmp(key,"width") && strcmp(key,"height") &&
@@ -515,8 +526,8 @@ static int svg_cover(assets *a,const exr_document *xml,size_t root,size_t resour
   }
   value=exr_node_attribute(&xml->nodes[image],"x"); if(value && strcmp(value,"0")) goto unsupported;
   value=exr_node_attribute(&xml->nodes[image],"y"); if(value && strcmp(value,"0")) goto unsupported;
-  value=exr_node_attribute(&xml->nodes[image],"width"); if(!value || sscanf(value,"%lf%c",&iw,&tail)!=1 || iw!=w) goto unsupported;
-  value=exr_node_attribute(&xml->nodes[image],"height"); if(!value || sscanf(value,"%lf%c",&ih,&tail)!=1 || ih!=h) goto unsupported;
+  value=exr_node_attribute(&xml->nodes[image],"width"); if(!value || !exact_number(value,&iw) || iw!=w) goto unsupported;
+  value=exr_node_attribute(&xml->nodes[image],"height"); if(!value || !exact_number(value,&ih) || ih!=h) goto unsupported;
   href=exr_node_attribute(&xml->nodes[image],"http://www.w3.org/1999/xlink|href");
   if(!href) href=exr_node_attribute(&xml->nodes[image],"href");
   if(!href || strncmp(href,"embed",5)) goto unsupported;
