@@ -131,6 +131,8 @@ catalog v1 没有 `acceptance` 字段。以下逐字引用实际 `title`，与 s
 
 最终 Actions 原 ZIP `actions-final.zip`：artifact `14135782556`，69762 bytes，SHA-256 `687928e7d4489953130e6f7acc21fc662b8886a777dd488420e876bf633472a8`。下载后逐字节核对该散列，再展开日志；job/源码/产物绑定见 `actions-final-identity.json`。修正途中 run `43649167487` 的成功 ZIP/日志另存 `actions-fixed.zip`、`actions-fixed/`，不覆盖首轮失败。
 
+本 lane 证据目录使用 `.gitattributes` 的 `-text -whitespace` 保留原始 Windows 换行和测试输出尾空格；源码仍使用原有格式检查。
+
 本机首次旧配置的串行运行保存在 `ctest-local-initial-cancelled.txt`，在已发现配置错误后停止，不能作为完整结果。最终配置使用 CTest `--parallel 4`；窗口选择/渲染测试仍保留 RUN_SERIAL。最终真实书籍采样在全量 CTest 完成后执行；宿主其他后台活动未控制，因此不授予产品预算验收。首轮并发负载下的原书数据保留在 `render-realbooks-initial.*`。
 
 新增/加强的测试名与行为：
