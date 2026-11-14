@@ -25,6 +25,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check parser and fail-closed behavior offline
+        run: python3 -X utf8 tools/f07_authoritative_symbols_20261103.py --self-test
+
       - name: Record tool identity before reading any payload
         run: |
           ls -1 /usr/lib/llvm-*/bin/llvm-nm /usr/lib/llvm-*/bin/llvm-readobj 2>/dev/null || true
