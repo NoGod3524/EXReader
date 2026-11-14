@@ -36,7 +36,7 @@ jobs:
           $wrapper = Join-Path $env:RUNNER_TEMP 'final-b-vcvars.bat'
           Set-Content $wrapper ('@call "' + $bat + '" >nul' + "`r`n@set")
           & cmd.exe /c $wrapper | ForEach-Object {
-            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+            if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
       - name: Configure full test profile
         run: |
