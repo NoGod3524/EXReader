@@ -1,0 +1,110 @@
+name: D-FINAL-A same-source evidence
+on:
+  push:
+    branches: [codex/dfinal-a-evidence]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  clients:
+    name: Installed catalog two-client integration (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Build and install product catalog and revisions from this checkout
+        run: |
+          set -euo pipefail
+          prefix="$PWD/build/final-a/stage"
+          if [ "$RUNNER_OS" = Windows ]; then prefix=$(cygpath -m "$prefix"); fi
+          cmake -S apps/reader/store/native -B build/final-a/store -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/final-a/store --parallel 4
+          cmake --install build/final-a/store
+          cmake -S apps/reader/revisions -B build/final-a/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/final-a/revisions --parallel 4
+          cmake --install build/final-a/revisions
+          cmake -S tests/reader_final_a -B build/final-a/clients -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/final-a/clients --parallel 4
+      - name: Run all local integration scenarios and catalog tests
+        run: |
+          set -euo pipefail
+          ctest --test-dir build/final-a/clients -V | tee build/final-a/clients-ctest.log
+          ctest --test-dir build/final-a/store -V | tee build/final-a/store-ctest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-clients-${{ runner.os }}-${{ github.sha }}
+          path: |
+            build/final-a/*-ctest.log
+            build/final-a/*/Testing/
+            build/final-a/*/CMakeCache.txt
+            build/final-a/clients/final-a-consumer*
+          if-no-files-found: error
+  hosts:
+    name: Supported host baseline (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install GTK UI test dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev xvfb xdotool openbox fonts-dejavu-core
+      - run: python -m pip install Pillow
+      - name: Build installed SDK from the same source
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/final-a/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF -DCMAKE_INSTALL_PREFIX="$PWD/build/final-a/sdk-stage"
+          cmake --build build/final-a/sdk --parallel 4
+          cmake --install build/final-a/sdk
+      - name: Full SDK CTest except requested release and documentation coverage exclusions
+        run: ctest --test-dir build/final-a/sdk --output-on-failure --parallel 2 -E '^sdk-(release|doc-coverage)$'
+      - name: Package and check Windows baseline
+        if: runner.os == 'Windows'
+        run: |
+          set -euo pipefail
+          cmake -S examples/windows -B build/final-a/windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/final-a/sdk-stage" -DEXR_READER_TEST_DRIVERS=ON
+          cmake --build build/final-a/windows --parallel 4
+          python tools/build_windows_host.py --sdk build/final-a/sdk-stage --binary build/final-a/windows/EXReader.exe --output build/final-a/windows-package
+          python tools/check_windows_host.py --package build/final-a/windows-package/EXReader-Windows --output build/final-a/windows-ui --sdk build/final-a/sdk-stage --manifest build/final-a/windows-package/build.json --selftest-report build/final-a/windows-package/report.json --consumer-binary build/final-a/windows/EXReader.exe
+      - name: Package and check GTK baseline
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          python tools/build_linux_host.py --sdk build/final-a/sdk-stage --output build/final-a/gtk-package
+          xvfb-run -a -s '-screen 0 1440x2400x24' bash -euc 'openbox >/tmp/final-a-openbox.log 2>&1 & python tools/check_linux_host.py --payload build/final-a/gtk-package/EXReader-Linux --output build/final-a/gtk-ui'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-host-${{ runner.os }}-${{ github.sha }}
+          path: |
+            build/final-a/*-package/
+            build/final-a/*-ui/
+            build/final-a/sdk/Testing/
+            build/final-a/sdk/CMakeCache.txt
+          if-no-files-found: error
