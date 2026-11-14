@@ -48,7 +48,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   left=(int)fmax(0,floor(left_bound)); right=(int)fmin(bitmap->width,ceil(right_bound)); row_width=(uint32_t)(right-left);
   /* Integer-aligned opaque rectangles have full coverage at every pixel.
      Keep custom sinks on the ordinary path API; only raster work is reduced. */
-  if(count==4 && bitmap->channels==4 && !cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 &&
+  if(count==4 && !cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 &&
      low==floor(low) && high==floor(high) && left_bound==floor(left_bound) && right_bound==floor(right_bound)) {
     unsigned sides=0;
     for(i=0;i<4;i++) {
@@ -65,14 +65,21 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
     }
     if(i==4 && sides==15) {
       const unsigned char rgba[4]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
+      const unsigned char gray=(unsigned char)((rgba[0]*77+rgba[1]*150+rgba[2]*29+128)>>8);
       for(y=top;y<bottom;y++) {
         unsigned x;
-        unsigned char *pixel=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*4;
+        unsigned char *pixel=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*bitmap->channels;
         const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride+(size_t)left : NULL;
         status=exr_control_cancel(control,error); if(status!=EXR_OK) return status;
         /* Charge the same work as the four-sample scanline path. */
         if(!exr_vector_work(work,(size_t)row_width*5+32)) goto limit;
-        for(x=0;x<row_width;x++,pixel+=4) {
+        if(bitmap->channels==1) {
+          if(!mask) memset(pixel,gray,row_width);
+          else for(x=0;x<row_width;x++) {
+            if(mask[x]==255) pixel[x]=gray;
+            else if(mask[x]) exr_pixel(bitmap,left+(int)x,y,color,mask[x]);
+          }
+        } else for(x=0;x<row_width;x++,pixel+=4) {
           unsigned alpha=mask ? mask[x] : 255;
           if(alpha==255) memcpy(pixel,rgba,4);
           else if(alpha) exr_pixel(bitmap,left+(int)x,y,color,alpha);

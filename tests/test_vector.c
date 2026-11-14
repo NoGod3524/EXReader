@@ -166,7 +166,7 @@ static void rectangle_fill_equivalence(void) {
   const uint32_t colors[]={0x123456ff,0xffffffff,0x000000ff,0xed5b27ff,0x49a2ef80};
   exr_vector_edge shapes[8][4],split[5],clip_edges[4];
   exr_bitmap clips[2]={bitmap(1,0),bitmap(1,0)};
-  size_t shape,color,background,mask,work=0;
+  size_t shape,color,background,mask,channels,work=0;
   rectangle(shapes[0],0,0,8,8,0); rectangle(shapes[1],1,2,6,7,0);
   rectangle(shapes[2],1,2,6,7,1); rectangle(shapes[3],-2,-1,5,6,0);
   rectangle(shapes[4],3,1,3,6,0); rectangle(shapes[5],1.25,1.25,6.75,6.75,0);
@@ -186,11 +186,13 @@ static void rectangle_fill_equivalence(void) {
     split[0]=(exr_vector_edge){first.x0,first.y0,mx,my};
     split[1]=(exr_vector_edge){mx,my,first.x1,first.y1};
     memcpy(split+2,shapes[shape]+1,3*sizeof(*split));
-    for(background=0;background<3;background++) for(color=0;color<5;color++) for(mask=0;mask<3;mask++) {
-      exr_bitmap actual=bitmap(4,background==1 ? 255 : 0),reference=bitmap(4,background==1 ? 255 : 0);
+    for(channels=1;channels<=4;channels+=3) for(background=0;background<3;background++) for(color=0;color<5;color++) for(mask=0;mask<3;mask++) {
+      exr_bitmap actual=bitmap((unsigned)channels,background==1 ? 255 : 0),reference=bitmap((unsigned)channels,background==1 ? 255 : 0);
       const exr_bitmap *clip=mask ? &clips[mask-1] : NULL;
       if(background==2) {
-        size_t i; for(i=0;i<64;i++) {
+        size_t i;
+        if(channels==1) { memset(actual.pixels,128,64); memset(reference.pixels,128,64); }
+        else for(i=0;i<64;i++) {
           unsigned char rgba[4]={73,162,239,128};
           memcpy(actual.pixels+i*4,rgba,4); memcpy(reference.pixels+i*4,rgba,4);
         }
@@ -204,10 +206,11 @@ static void rectangle_fill_equivalence(void) {
       free(actual.pixels); free(reference.pixels);
     }
   }
-  { exr_bitmap image=bitmap(4,255); exr_control control={0}; unsigned calls=0;
+  for(channels=1;channels<=4;channels+=3) {
+    exr_bitmap image=bitmap((unsigned)channels,255); exr_control control={0}; unsigned calls=0;
     control.cancelled=cancel; control.context=&calls; work=0;
     CHECK(exr_vector_fill(&image,shapes[0],4,EXR_VECTOR_NONZERO,0x123456ff,NULL,&work,&control,&error)==EXR_CANCELLED);
-    CHECK(pixel(&image,0,0,0)==0x12 && pixel(&image,0,1,0)==255);
+    CHECK(pixel(&image,0,0,0)==(channels==1 ? 46 : 0x12) && pixel(&image,0,1,0)==255);
     work=(size_t)256*1024*1024-4;
     CHECK(exr_vector_fill(&image,shapes[0],4,EXR_VECTOR_NONZERO,0x123456ff,NULL,&work,NULL,&error)==EXR_LIMIT);
     free(image.pixels);
