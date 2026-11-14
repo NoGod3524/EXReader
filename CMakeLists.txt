@@ -230,7 +230,7 @@ if(EXR_FULL_TESTS)
   endforeach()
   add_test(NAME native-pptx-fill-reproducible COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-fills/generate.py --check)
-  foreach(group hello sizes master inheritance master-types bold cjk wrap breaks alignment line-spacing
+  foreach(group hello sizes master inheritance master-types bold cjk wrap breaks breaks-empty alignment line-spacing
       paragraph-spacing bullets autofit autofit-invalid level body run-properties missing-font invalid-utf8)
     add_test(NAME native-pptx-text-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_text.py
