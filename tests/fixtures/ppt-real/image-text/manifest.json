@@ -1,0 +1,178 @@
+{
+  "file": "image-text.ppt",
+  "slides": 1,
+  "features": [
+    "text",
+    "png",
+    "image-stretch",
+    "16:9"
+  ],
+  "source": "powerpoint-com",
+  "generated_by": "generate.py",
+  "license": "MIT",
+  "powerpoint_version": "16.0",
+  "powerpoint_reported_slides": 1,
+  "bytes": 415744,
+  "sha256": "7ca56a25138bb647084686c6514ef023e69ece36697bb3090af0facabe289030",
+  "assets": [
+    {
+      "file": "powerpoint.png",
+      "bytes": 292530,
+      "sha256": "0dd32b23dbbb2d2c39447332047195d33afdaa39ae162bd264b8d654c26e60a6"
+    },
+    {
+      "file": "source.png",
+      "bytes": 115438,
+      "sha256": "69ddd8f9c976265d68b5aa91255b1c5ac260ee98ab902b8de57860d7ff46acc7"
+    }
+  ],
+  "oracle": {
+    "width": 720,
+    "height": 405,
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "slides": [
+      {
+        "regions": [
+          {
+            "name": "Title",
+            "bounds": [
+              42,
+              28,
+              678,
+              88
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          },
+          {
+            "name": "Original illustration",
+            "bounds": [
+              42,
+              120,
+              312,
+              300
+            ],
+            "geometry": "rect",
+            "fill": [
+              36,
+              90,
+              129
+            ],
+            "text": false,
+            "stroke": 0,
+            "image": true
+          },
+          {
+            "name": "Notes",
+            "bounds": [
+              360,
+              126,
+              678,
+              306
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          }
+        ],
+        "samples": [
+          [
+            70,
+            140,
+            36,
+            90,
+            129
+          ],
+          [
+            280,
+            140,
+            217,
+            123,
+            40
+          ],
+          [
+            70,
+            275,
+            76,
+            130,
+            80
+          ],
+          [
+            280,
+            275,
+            38,
+            156,
+            168
+          ],
+          [
+            12,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            200,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            200,
+            255,
+            255,
+            255
+          ]
+        ],
+        "text_content": [
+          "A landscape in context",
+          "Observation notes\nCompare the ridge\nand the lowlands."
+        ]
+      }
+    ]
+  }
+}

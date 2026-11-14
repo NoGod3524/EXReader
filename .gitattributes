@@ -5,6 +5,7 @@
 *.epub binary
 *.docx binary
 *.pptx binary
+*.ppt binary
 *.mobi binary
 *.sqlite binary
 *.ttf binary

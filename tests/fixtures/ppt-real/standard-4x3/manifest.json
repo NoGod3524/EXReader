@@ -1,0 +1,217 @@
+{
+  "file": "standard-4x3.ppt",
+  "slides": 1,
+  "features": [
+    "text",
+    "rect",
+    "ellipse",
+    "line",
+    "outline-only",
+    "4:3"
+  ],
+  "source": "powerpoint-com",
+  "generated_by": "generate.py",
+  "license": "MIT",
+  "powerpoint_version": "16.0",
+  "powerpoint_reported_slides": 1,
+  "bytes": 306688,
+  "sha256": "9c01d4aefb241e707837e014f8ccf3d096c7b7cc69c7de2fea67f5216c67554e",
+  "assets": [
+    {
+      "file": "powerpoint.png",
+      "bytes": 389827,
+      "sha256": "cc4adf1c435503625dee9a75e258cab4d82eb8e3736497d722f8de4b790e0cbf"
+    }
+  ],
+  "oracle": {
+    "width": 720,
+    "height": 540,
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "slides": [
+      {
+        "regions": [
+          {
+            "name": "Title",
+            "bounds": [
+              42,
+              28,
+              678,
+              88
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          },
+          {
+            "name": "Body",
+            "bounds": [
+              42,
+              104,
+              678,
+              164
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          },
+          {
+            "name": "Blue rectangle",
+            "bounds": [
+              60,
+              210,
+              310,
+              400
+            ],
+            "geometry": "rect",
+            "fill": [
+              36,
+              90,
+              129
+            ],
+            "text": false,
+            "stroke": 0
+          },
+          {
+            "name": "Orange ellipse",
+            "bounds": [
+              400,
+              210,
+              650,
+              400
+            ],
+            "geometry": "ellipse",
+            "fill": [
+              217,
+              123,
+              40
+            ],
+            "text": false,
+            "stroke": 0
+          },
+          {
+            "name": "Border-only line",
+            "bounds": [
+              60,
+              425,
+              650,
+              425
+            ],
+            "geometry": "line",
+            "fill": null,
+            "text": false,
+            "stroke": 3
+          },
+          {
+            "name": "Border-only rectangle",
+            "bounds": [
+              60,
+              450,
+              650,
+              500
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": false,
+            "stroke": 3
+          }
+        ],
+        "samples": [
+          [
+            70,
+            220,
+            36,
+            90,
+            129
+          ],
+          [
+            180,
+            300,
+            36,
+            90,
+            129
+          ],
+          [
+            300,
+            390,
+            36,
+            90,
+            129
+          ],
+          [
+            525,
+            225,
+            217,
+            123,
+            40
+          ],
+          [
+            525,
+            300,
+            217,
+            123,
+            40
+          ],
+          [
+            525,
+            385,
+            217,
+            123,
+            40
+          ],
+          [
+            12,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            390,
+            255,
+            255,
+            255
+          ]
+        ],
+        "text_content": [
+          "Space for ideas",
+          "Review, discuss, decide"
+        ]
+      }
+    ]
+  }
+}

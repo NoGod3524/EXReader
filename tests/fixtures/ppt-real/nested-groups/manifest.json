@@ -1,0 +1,224 @@
+{
+  "file": "nested-groups.ppt",
+  "slides": 1,
+  "features": [
+    "text",
+    "grpSp",
+    "nested-grpSp",
+    "group-scale",
+    "rect",
+    "ellipse",
+    "triangle",
+    "16:9"
+  ],
+  "source": "powerpoint-com",
+  "generated_by": "generate.py",
+  "license": "MIT",
+  "powerpoint_version": "16.0",
+  "powerpoint_reported_slides": 1,
+  "bytes": 310272,
+  "sha256": "2b620119acc2425cded71502dcd7ea42e978b23a7f11313c6c9c26d88e5254bd",
+  "assets": [
+    {
+      "file": "powerpoint.png",
+      "bytes": 292623,
+      "sha256": "b8322c3152e54d1ff7d18851c5586262f54e000bc4a2648b60bf7bde0ea8c2dd"
+    }
+  ],
+  "oracle": {
+    "width": 720,
+    "height": 405,
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "slides": [
+      {
+        "regions": [
+          {
+            "name": "Title",
+            "bounds": [
+              42,
+              28,
+              678,
+              88
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          },
+          {
+            "name": "Grouped rectangle",
+            "bounds": [
+              80,
+              142,
+              300,
+              312
+            ],
+            "geometry": "rect",
+            "fill": [
+              36,
+              90,
+              129
+            ],
+            "text": false,
+            "stroke": 0
+          },
+          {
+            "name": "Grouped label",
+            "bounds": [
+              96.0013351,
+              175,
+              286.01732635498047,
+              240
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          },
+          {
+            "name": "Nested ellipse",
+            "bounds": [
+              360,
+              153,
+              495,
+              288
+            ],
+            "geometry": "ellipse",
+            "fill": [
+              76,
+              130,
+              80
+            ],
+            "text": false,
+            "stroke": 0
+          },
+          {
+            "name": "Nested triangle",
+            "bounds": [
+              538.25,
+              153,
+              673.25,
+              288
+            ],
+            "geometry": "triangle",
+            "fill": [
+              217,
+              123,
+              40
+            ],
+            "text": false,
+            "stroke": 0
+          },
+          {
+            "name": "Caption",
+            "bounds": [
+              60,
+              335,
+              660,
+              379
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          }
+        ],
+        "samples": [
+          [
+            90,
+            150,
+            36,
+            90,
+            129
+          ],
+          [
+            290,
+            300,
+            36,
+            90,
+            129
+          ],
+          [
+            422,
+            215,
+            76,
+            130,
+            80
+          ],
+          [
+            422,
+            170,
+            76,
+            130,
+            80
+          ],
+          [
+            606,
+            180,
+            217,
+            123,
+            40
+          ],
+          [
+            587,
+            258,
+            217,
+            123,
+            40
+          ],
+          [
+            12,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            390,
+            255,
+            255,
+            255
+          ]
+        ],
+        "text_content": [
+          "A programme has connected parts",
+          "Planning",
+          "Nested groups retain their own coordinates."
+        ]
+      }
+    ]
+  }
+}
