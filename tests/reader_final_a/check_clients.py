@@ -102,11 +102,23 @@ def organization(c):
     assert c.sql(c.b, 'SELECT ordinal FROM reader_book_series') == [(5,)]
     passed('offline_nested_shelves_tags_series_memberships_converge_after_reopen')
     for old in [*reversed(collections), *values[5:], book]:
+        kind = old['entity_kind']
+        if kind == 'membership':
+            table = {'shelf': 'reader_book_shelves', 'tag': 'reader_book_tags',
+                     'series': 'reader_book_series'}[old['payload']['collection_kind']]
+        else:
+            table, key_column = {'shelf': ('reader_shelves', 'shelf_id'), 'tag': ('reader_tags', 'tag_id'),
+                                 'series': ('reader_series', 'series_id'), 'book': ('reader_books', 'book_key')}[kind]
+        before = c.sql(c.a, f'SELECT * FROM {table} ORDER BY 1,2')
         deleted = c.rev(old['entity_kind'], old['entity_key'], parents=[old['id']], operation='delete')
         c.local(c.a, deleted)
         c.relay(c.a, c.b)
         c.project(c.b, deleted)
         c.equal_metadata()
+        if kind == 'membership':
+            assert len(before) == 1 and c.sql(c.a, f'SELECT * FROM {table}') == []
+        else:
+            assert c.sql(c.a, f"SELECT deleted FROM {table} WHERE {key_column}='{old['entity_key']}'") == [(1,)]
         implicit = c.rev(old['entity_kind'], old['entity_key'], old['payload'], [deleted['id']])
         c.local(c.a, implicit, expected=10)
         restored = c.rev(old['entity_kind'], old['entity_key'], old['payload'], [deleted['id']], 'restore')
@@ -114,6 +126,7 @@ def organization(c):
         c.relay(c.a, c.b)
         c.project(c.b, restored)
         c.equal_metadata()
+        assert c.sql(c.a, f'SELECT * FROM {table} ORDER BY 1,2') == before
         passed(f"{old['entity_kind']}_{old['entity_key'].split(':')[0]}_delete_blocks_put_explicit_restore_converges")
     for db in (c.a, c.b):
         assert c.sql(db, 'PRAGMA integrity_check') == [('ok',)]
