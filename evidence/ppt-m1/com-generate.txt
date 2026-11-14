@@ -1,0 +1,34 @@
+{
+  "generator": "PowerPoint COM SaveAs(format=1)",
+  "version": "16.0",
+  "fixtures": [
+    {
+      "file": "slides-1.ppt",
+      "pages": 1,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "a8357a87d95cb18f07d26ff160d02d886c6cf1975349b534473a723b7ee6bb8e"
+    },
+    {
+      "file": "slides-5.ppt",
+      "pages": 5,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "fa520a2cae59a786a32aec9e6c8bbe80516f29b4b1a99ae5bdde3bb3cf2cb5a0"
+    },
+    {
+      "file": "slides-20.ppt",
+      "pages": 20,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "99dcd7d9e570dafa29ec45170b15ada7409cf01e83f8710caadea3c57a0215bd"
+    },
+    {
+      "file": "slides-0.ppt",
+      "pages": 0,
+      "width_pt": 720.0,
+      "height_pt": 540.0,
+      "sha256": "2730351ae8434989ba700159657cbcedb0dc51f4832add1fdf8c28e70ee62e54"
+    }
+  ]
+}
