@@ -1,0 +1,15 @@
+{
+  "file": "bad-truncated.ppt",
+  "slides": 0,
+  "features": [
+    "truncated-cfb"
+  ],
+  "source": "powerpoint-com",
+  "generated_by": "generate.py",
+  "license": "MIT",
+  "derived_from": "title/title.ppt",
+  "expected_status": 5,
+  "expected_error": "EXR_FORMAT",
+  "bytes": 151296,
+  "sha256": "447d35b23c2816a43c5ee44094134b6fae74f798eba6b73b46eb5d70fa811f8f"
+}

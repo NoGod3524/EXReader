@@ -85,8 +85,8 @@ static exr_status draw_fill(const exr_ppt_drawing *d,const exr_ppt_shape *s,cons
   m[0]=matrix[0]*w;m[1]=matrix[1]*w;m[2]=matrix[2]*h;m[3]=matrix[3]*h;
   m[4]=matrix[0]*s->bounds[0]+matrix[2]*s->bounds[1]+matrix[4];
   m[5]=matrix[1]*s->bounds[0]+matrix[3]*s->bounds[1]+matrix[5];
-  if(s->type==3) {
-    if(!sink->state || !sink->clip) return exr_fail(e,EXR_UNSUPPORTED,"PPT image ellipse requires clipping callbacks");
+  if(s->type==3 || s->type==5) {
+    if(!sink->state || !sink->clip) return exr_fail(e,EXR_UNSUPPORTED,"PPT shaped image fill requires clipping callbacks");
     status=sink->state(sink->context,EXR_DRAW_SAVE,e);if(status!=EXR_OK) return status;
     status=sink->clip(sink->context,path,count,matrix,EXR_FILL_NONZERO,0,e);
     if(status==EXR_OK) status=sink->image(sink->context,&image,m,1,e);
@@ -114,6 +114,10 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
       p[3].points[0]=point(s,0,.5-k);p[3].points[1]=point(s,.5-k,0);p[3].points[2]=point(s,.5,0);
       p[4].points[0]=point(s,.5+k,0);p[4].points[1]=point(s,1,.5-k);p[4].points[2]=point(s,1,.5);
       p[5].verb=EXR_PATH_CLOSE;count=6;
+    } else if(s->type==5) {
+      p[0].points[0]=point(s,.5,0);p[1].verb=p[2].verb=EXR_PATH_LINE;
+      p[1].points[0]=point(s,1,1);p[2].points[0]=point(s,0,1);
+      p[3].verb=EXR_PATH_CLOSE;count=4;
     } else {
       p[0].points[0]=point(s,0,0);p[1].verb=EXR_PATH_LINE;
       if(s->type==20 || s->type==32) { p[1].points[0]=point(s,1,1);count=2; }
@@ -132,9 +136,11 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
   return EXR_OK;
 }
 static void warning_append(char message[256],const char *format,...) {
-  size_t used=strlen(message);va_list args;
+  size_t used=strlen(message);int written;va_list args;
   if(used>=255) return;
-  va_start(args,format);vsnprintf(message+used,256-used,format,args);va_end(args);
+  va_start(args,format);written=vsnprintf(message+used,256-used,format,args);va_end(args);
+  /* Keep complete fields, including UTF-8 families and glyph codepoints. */
+  if(written<0 || (size_t)written>=256-used) message[used]='\0';
 }
 static void warnings(const exr_ppt_drawing *d,const exr_ppt_info *info,exr_error *e) {
   char message[256]="PPT warning: ";size_t at;
@@ -143,16 +149,17 @@ static void warnings(const exr_ppt_drawing *d,const exr_ppt_info *info,exr_error
   COUNT(text_index,"text-index");
   COUNT(text_runs,"text-runs");COUNT(text_font_index,"font-index");COUNT(text_color_index,"color-index");
   COUNT(text_unicode,"surrogate/replacement");COUNT(text_bytes_fallback,"Latin-1");COUNT(text_malformed,"text-malformed");
-  for(at=0;at<d->font_fallbacks.size;at+=strlen(d->font_fallbacks.data+at)+1)
-    warning_append(message,"font fallback=%s; ",d->font_fallbacks.data+at);
-  for(at=0;at<d->glyph_fallbacks.size;at+=strlen(d->glyph_fallbacks.data+at)+1)
-    warning_append(message,"glyph %s; ",d->glyph_fallbacks.data+at);
   COUNT(malformed,"malformed");COUNT(missing_anchor,"missing-anchor");COUNT(depth,"depth");
   COUNT(zero_extent,"zero-chExt");COUNT(unsupported,"unsupported");COUNT(bad_pib,"pib");
   COUNT(unknown_blip,"blip-unsupported");COUNT(image_decode,"image-decode");
   COUNT(gradient_horizontal,"gradient-horizontal");COUNT(gradient_missing,"gradient-missing");COUNT(scheme,"scheme");
 #undef COUNT
   if(info->mismatch) warning_append(message,"SlidePersistAtom count %zu differs from Slide container count %zu; using SlidePersistAtom",info->pages,info->slide_containers);
+  /* Host-dependent font lists must not crowd out structural diagnostics. */
+  for(at=0;at<d->font_fallbacks.size;at+=strlen(d->font_fallbacks.data+at)+1)
+    warning_append(message,"font fallback=%s; ",d->font_fallbacks.data+at);
+  for(at=0;at<d->glyph_fallbacks.size;at+=strlen(d->glyph_fallbacks.data+at)+1)
+    warning_append(message,"glyph %s; ",d->glyph_fallbacks.data+at);
   if(strlen(message)>13) exr_fail(e,EXR_OK,"%s",message);
 }
 exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {

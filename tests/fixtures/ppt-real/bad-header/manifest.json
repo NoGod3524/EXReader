@@ -1,0 +1,15 @@
+{
+  "file": "bad-header.ppt",
+  "slides": 0,
+  "features": [
+    "corrupt-cfb-header"
+  ],
+  "source": "powerpoint-com",
+  "generated_by": "generate.py",
+  "license": "MIT",
+  "derived_from": "title/title.ppt",
+  "expected_status": 5,
+  "expected_error": "EXR_FORMAT",
+  "bytes": 302592,
+  "sha256": "1e461b38479bb55ce771d57cdd0ca0ed24c2c204ce652be451f378ee50898bad"
+}
