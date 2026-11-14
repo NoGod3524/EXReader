@@ -8,11 +8,20 @@ typedef struct edit_block {
   exr_edit_block view;
 } edit_block;
 typedef struct { size_t index; edit_block *before,*after; } edit_change;
+typedef struct { size_t refs; exr_edit_part part; } edit_part_version;
+typedef struct {
+  size_t refs,count;
+  exr_edit_section *sections;
+  signed char *first;
+  exr_edit_part *parts;
+  edit_part_version **versions;
+} edit_package;
 struct exr_edit_tx {
   exr_edit_doc *doc;
   edit_change *changes;
   size_t count,capacity;
   exr_status failed;
+  edit_package *package_before,*package_after;
 };
 struct exr_edit_doc {
   exr_edit_section *sections; size_t section_count;
@@ -21,6 +30,7 @@ struct exr_edit_doc {
   exr_edit_tx *active,**history;
   size_t history_count,cursor,depth,bytes;
   exr_edit_id next_id;
+  edit_package *package;
 };
 typedef union {
   size_t size;
@@ -51,6 +61,19 @@ static void *copy_bytes(exr_edit_doc *d,const void *p,size_t n,int terminate) {
   q=allocate(d,n+(size_t)terminate);
   if (q && n) memcpy(q,p,n);
   return q;
+}
+static edit_package *package_ref(edit_package *p) { if (p) p->refs++; return p; }
+static void package_unref(exr_edit_doc *d,edit_package *p) {
+  size_t i;
+  if (!p || --p->refs) return;
+  for (i=0;i<p->count;i++) if (p->versions && p->versions[i] && !--p->versions[i]->refs) {
+    edit_part_version *v=p->versions[i];
+    release(d,v->part.name); release(d,v->part.data); release(d,v);
+  }
+  release(d,p->sections); release(d,p->first); release(d,p->parts); release(d,p->versions); release(d,p);
+}
+static void package_apply(exr_edit_doc *d,edit_package *p) {
+  package_ref(p); package_unref(d,d->package); d->package=p;
 }
 static int reserve(exr_edit_doc *d,void **array,size_t *capacity,size_t count,size_t item) {
   size_t cap; void *p;
@@ -309,6 +332,7 @@ static void tx_free(exr_edit_tx *t) {
   for (i=0;i<t->count;i++) {
     block_unref(d,t->changes[i].before); block_unref(d,t->changes[i].after);
   }
+  package_unref(d,t->package_before); package_unref(d,t->package_after);
   release(d,t->changes); release(d,t);
 }
 static exr_status command_failure(exr_edit_doc *d,exr_status status) {
@@ -389,7 +413,7 @@ exr_edit_tx *exr_edit_begin(exr_edit_doc *d) {
   exr_edit_tx *t;
   if (!d || d->active) return NULL;
   t=allocate(d,sizeof(*t));
-  if (t) { t->doc=d; d->active=t; }
+  if (t) { t->doc=d; t->package_before=package_ref(d->package); d->active=t; }
   return t;
 }
 exr_status exr_edit_rollback(exr_edit_tx *t) {
@@ -397,6 +421,7 @@ exr_status exr_edit_rollback(exr_edit_tx *t) {
   if (!t || t->doc->active!=t) return EXR_ARGUMENT;
   d=t->doc;
   for (i=t->count;i;i--) apply(d,t->changes+i-1,0);
+  package_apply(d,t->package_before);
   d->active=NULL; tx_free(t); return EXR_OK;
 }
 exr_status exr_edit_commit(exr_edit_tx *t) {
@@ -404,8 +429,9 @@ exr_status exr_edit_commit(exr_edit_tx *t) {
   if (!t || t->doc->active!=t) return EXR_ARGUMENT;
   d=t->doc; status=t->failed;
   if (status) { exr_edit_rollback(t); return status; }
+  t->package_after=package_ref(d->package);
   d->active=NULL;
-  if (!t->count) { tx_free(t); return EXR_OK; }
+  if (!t->count && t->package_before==t->package_after) { tx_free(t); return EXR_OK; }
   while (d->history_count>d->cursor) tx_free(d->history[--d->history_count]);
   if (!d->depth) { tx_free(t); return EXR_OK; }
   if (d->history_count==d->depth) {
@@ -420,6 +446,7 @@ exr_status exr_edit_undo(exr_edit_doc *d) {
   if (!d || d->active || !d->cursor) return EXR_ARGUMENT;
   t=d->history[--d->cursor];
   for (i=t->count;i;i--) apply(d,t->changes+i-1,0);
+  package_apply(d,t->package_before);
   return EXR_OK;
 }
 exr_status exr_edit_redo(exr_edit_doc *d) {
@@ -427,6 +454,7 @@ exr_status exr_edit_redo(exr_edit_doc *d) {
   if (!d || d->active || d->cursor==d->history_count) return EXR_ARGUMENT;
   t=d->history[d->cursor++];
   for (i=0;i<t->count;i++) apply(d,t->changes+i,1);
+  package_apply(d,t->package_after);
   return EXR_OK;
 }
 static int compare_ids(const void *a,const void *b) {
@@ -546,6 +574,7 @@ void exr_edit_doc_free(exr_edit_doc *d) {
   if (!d) return;
   if (d->active) exr_edit_rollback(d->active);
   for (i=0;i<d->history_count;i++) tx_free(d->history[i]);
+  package_unref(d,d->package);
   for (i=0;i<d->count;i++) block_unref(d,d->blocks[i]);
   for (i=0;i<d->part_count;i++) { release(d,d->parts[i].name); release(d,d->parts[i].data); }
   release(d,d->history); release(d,d->blocks); release(d,d->sections); release(d,d->parts); free(d);
@@ -560,11 +589,66 @@ const exr_edit_block *exr_edit_find_block(const exr_edit_doc *d,exr_edit_id id) 
 }
 const exr_edit_section *exr_edit_sections(const exr_edit_doc *d,size_t *count) {
   if (count) *count=d ? d->section_count : 0;
-  return d ? d->sections : NULL;
+  return d ? d->package ? d->package->sections : d->sections : NULL;
 }
 const exr_edit_part *exr_edit_parts(const exr_edit_doc *d,size_t *count) {
-  if (count) *count=d ? d->part_count : 0;
-  return d ? d->parts : NULL;
+  if (count) *count=d ? d->package ? d->package->count : d->part_count : 0;
+  return d ? d->package ? d->package->parts : d->parts : NULL;
+}
+int exr_edit_first_override(const exr_edit_doc *d,size_t section) {
+  return d && d->package && section<d->section_count ? d->package->first[section] : -1;
+}
+int exr_edit_text_valid(const char *text,size_t size) { return utf8(text,size); }
+int exr_edit_transaction_active(const exr_edit_doc *d) { return d && d->active!=NULL; }
+exr_status exr_edit_package_update(exr_edit_doc *d,size_t section,
+    const exr_edit_section *value,const exr_edit_part *parts,size_t count,int first) {
+  edit_package *p=NULL; const exr_edit_part *old; const exr_edit_section *sections;
+  size_t n,i,j; exr_status s=ready(d); int automatic; exr_edit_tx *t;
+  if (s) return s;
+  if (section>=d->section_count || (count && !parts) || first < -1 || first>1)
+    return command_failure(d,EXR_ARGUMENT);
+  old=exr_edit_parts(d,&n); sections=exr_edit_sections(d,NULL);
+  if (count>SIZE_MAX-n || n+count>SIZE_MAX/sizeof(*parts)) return command_failure(d,EXR_LIMIT);
+  p=allocate(d,sizeof(*p)); if (!p) return command_failure(d,EXR_MEMORY);
+  p->refs=1;
+  p->sections=copy_bytes(d,sections,d->section_count*sizeof(*sections),0);
+  p->first=allocate(d,d->section_count);
+  p->parts=allocate(d,(n+count)*sizeof(*parts));
+  p->versions=allocate(d,(n+count)*sizeof(*p->versions));
+  if (!p->sections || !p->first || ((n+count) && (!p->parts || !p->versions))) { s=EXR_MEMORY; goto done; }
+  if (d->package) memcpy(p->first,d->package->first,d->section_count);
+  else memset(p->first,-1,d->section_count);
+  if (first>=0) p->first[section]=(signed char)first;
+  if (value) p->sections[section]=*value;
+  if (n) memcpy(p->parts,old,n*sizeof(*old));
+  p->count=n;
+  if (d->package) for (i=0;i<n;i++) if (d->package->versions[i]) {
+    p->versions[i]=d->package->versions[i]; p->versions[i]->refs++;
+  }
+  for (i=0;i<count;i++) {
+    edit_part_version *v;
+    if (!parts[i].name || !*parts[i].name || (parts[i].size && !parts[i].data)) { s=EXR_ARGUMENT; goto done; }
+    for (j=0;j<p->count && strcmp(p->parts[j].name,parts[i].name);j++) {}
+    v=allocate(d,sizeof(*v)); if (!v) { s=EXR_MEMORY; goto done; }
+    v->refs=1; v->part=parts[i];
+    v->part.id=j<p->count ? p->parts[j].id : fresh_id(d);
+    v->part.name=copy_bytes(d,parts[i].name,strlen(parts[i].name),1);
+    v->part.data=copy_bytes(d,parts[i].data,parts[i].size,1);
+    if (!v->part.name || !v->part.data || !v->part.id) {
+      release(d,v->part.name); release(d,v->part.data); release(d,v); s=EXR_MEMORY; goto done;
+    }
+    if (p->versions[j] && !--p->versions[j]->refs) {
+      edit_part_version *previous=p->versions[j];
+      release(d,previous->part.name); release(d,previous->part.data); release(d,previous);
+    }
+    p->versions[j]=v; p->parts[j]=v->part;
+    if (j==p->count) p->count++;
+  }
+  automatic=!d->active; t=d->active ? d->active : exr_edit_begin(d);
+  if (!t) { s=EXR_MEMORY; goto done; }
+  package_apply(d,p); s=automatic ? exr_edit_commit(t) : EXR_OK;
+done:
+  package_unref(d,p); return s ? command_failure(d,s) : EXR_OK;
 }
 size_t exr_edit_memory_bytes(const exr_edit_doc *d) { return d ? d->bytes : 0; }
 /* Journal a cell splice through its owning table; all inputs may be borrowed. */

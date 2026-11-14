@@ -120,6 +120,7 @@ typedef struct shell_d2d_edit_row {
   int cell_border;
   unsigned start, length, caret;
   int show_caret, selected_break;
+  int dimmed; /* Inactive document story, including directly coloured text. */
 } shell_d2d_edit_row;
 HRESULT shell_d2d_edit_paint(shell_d2d *, HDC, const RECT *, int dark,
                             const shell_d2d_edit_row *, size_t count, float inset, float scroll, float top);
