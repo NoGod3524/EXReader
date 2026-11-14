@@ -940,8 +940,8 @@ stream expansion, cache capacity and parsing/decompression work.
 
 `native-pdf-objects` uses deterministic original fixtures for values, generations, revision
 inheritance/deletion, stream lengths/cache reuse, checksum/tail errors, unsupported parameters,
-expansion limits and every truncated prefix. All 37 suites pass. Public PDF document opening
-is still unconnected: this milestone supplies internal object parsing, not page rendering.
+expansion limits and every truncated prefix. All 37 suites pass. At S039 public PDF document
+opening was unconnected; current hybrid page coverage is recorded under PDF-HYBRID-M1 below.
 The 0.38 commit 12f12cf passed all six platform and sanitizer CI jobs.
 
 
@@ -957,7 +957,8 @@ and tables, including free tombstones and transitions between compressed/uncompr
 Original fixtures cover compressed catalogs, stream lengths stored in object streams, shared
 index reuse, wide fields, optional fields, split ranges, hybrid precedence, both incremental
 container transitions and invalid widths/ranges/generations/headers/indexes/object bodies.
-Public PDF page reading remains unconnected. The 0.39 commit 3301cf3 passed all six CI jobs.
+At S040 public PDF page reading was unconnected; see PDF-HYBRID-M1 for current coverage.
+The 0.39 commit 3301cf3 passed all six CI jobs.
 
 
 ## S041 PDF filter pipelines and predictors
@@ -971,8 +972,9 @@ capacities and the previous filter's temporary buffer; output and decompression 
 Original fixtures check odd hex nibbles, ASCII85 z/partial tuples, literal/repeated runs,
 empty streams, chained encodings, exact packed TIFF samples, all PNG row filters and PNG
 prediction inside normal/hybrid cross-reference streams. Invalid terminators, tails, tuples,
-row lengths, tags, parameter shapes/counts and unsupported values fail atomically. Public PDF
-page reading remains unconnected. The 0.40 commit 2ac097a passed all six CI jobs.
+row lengths, tags, parameter shapes/counts and unsupported values fail atomically. At S041 public
+PDF page reading was unconnected; see PDF-HYBRID-M1 for current coverage.
+The 0.40 commit 2ac097a passed all six CI jobs.
 
 
 ## S042 native PDF LZW
@@ -4804,3 +4806,44 @@ pdf 39,784/3,484, cbz 40,235/857 (attempts/parsed). Campaign record hash
 `exreader-fuzz.exe` hash `f8e2ca03226275c61bbc181d9b405cbf0d8c59253d21c9a5a8a9d63fbed2a86d`,
 `libexreader.dll` hash `fdd37959ae957d047ba041ee066d07249b819ccd23961a7e6174cfa3ee2e85a9`.
 CI run [39363962576](https://github.com/NoGod3524/EXReader/actions/runs/39363962576) passed 7/7 on head `ff97fd1`: the `fuzz` job ran `exreader-fuzz-test` under ASan/UBSan on Linux (POSIX `ftruncate` path) and the 200k campaign; the failure-artifact path now includes `last.bin.format` but was not exercised by this green run.
+
+
+## PDF-HYBRID-M1: public hybrid page rendering
+
+Hybrid PDF page reading and rasterization are connected: **hybrid PDF 现已接入页面渲染**.
+The public API is `exr_fixed_open(path)` / `exr_fixed_pages` / `exr_fixed_render`;
+`exr_pdf_open` is the private byte parser. On base `6adcf2b5`, the fixed-document
+adapter already routes ordinary and hybrid PDFs through the same parser.
+This milestone adds end-to-end acceptance and parser diagnostics.
+
+Six unmodified Microsoft 365 COM exports in `tests/fixtures/pdf-hybrid-real/`
+cover PowerPoint 1/20 pages, Word 5 pages with tables and pictures, Excel 1 page,
+Chinese Microsoft YaHei content and an image-only presentation. Each manifest
+pins the COM page count, producer, byte length, SHA-256 and actual `/XRefStm`
+offset. `tools/generate_pdf_hybrid_office.ps1` creates the original content;
+`python tests/make_pdf_hybrid_fixtures.py --office` refuses admission of exports
+without an xref stream. Ordinary CI consumes committed PDFs and needs no Office.
+
+Fourteen new `native-pdf-hybrid-real-*` / `native-pdf-hybrid-edge-*` tests check
+hashes, successful parser evidence, public page counts and every rendered page.
+Nonwhite pixels count RGB channels below 250 with nonzero alpha at scale 0.5;
+white backgrounds alone cannot pass. No failed page is skipped. Unexpected
+stderr fails; only font fallback/missing glyph messages and the explicitly
+asserted encryption-conflict diagnostic are allowed. The standard-library edge
+generator covers mixed incremental revisions, free-table replacement, compressed
+page objects, a real RC4 R2 encrypted stream with conflicting trailer dictionaries,
+and a two-xref linearized layout. Three malformed cases require `EXR_FORMAT`
+from both the private parser and public opener: truncated supplemental stream,
+`/W [1 9 2]`, and `/Index` beyond `/Size`.
+
+The classic trailer remains authoritative for hybrid trailer keys. Conflicting
+supplemental `/Encrypt` identities now produce an explicit warning and a retained
+parser diagnostic counter; the encrypted test proves which dictionary decrypts
+page content. Identical reference identities do not warn.
+
+Per-file evidence, per-page pixel counts, full-suite output and the prepush gate
+are in [the measured report](../evidence/pdf-hybrid-m1/REPORT.md).
+Linearization is accepted by sequential traversal; hint-based range fetching is
+not implemented or certified here. This corpus does not cover every Office build,
+all combinations of security revisions and hybrid updates, or external-file
+references. Existing parser budgets and unsupported-codec errors still apply.

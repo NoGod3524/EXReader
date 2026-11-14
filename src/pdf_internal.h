@@ -46,6 +46,9 @@ uint32_t exr_pdf_root(const exr_pdf_file *file);
    Missing Info/ID are EXR_PDF_NONE. size is the latest declared /Size. */
 typedef struct { size_t startxref,size; uint32_t root,info,id; } exr_pdf_revision_info;
 void exr_pdf_revision(const exr_pdf_file *file,exr_pdf_revision_info *out);
+/* Parser evidence, retained across operation_end; no global logging state. */
+typedef struct { size_t hybrid_sections,last_xrefstm,encrypt_conflicts; } exr_pdf_xref_diagnostics;
+void exr_pdf_xref_report(const exr_pdf_file *file,exr_pdf_xref_diagnostics *out);
 exr_status exr_pdf_object_identity(const exr_pdf_file *file,uint32_t value,
   uint32_t *object,uint32_t *generation,exr_error *error);
 /* Appends a complete value without resolving references or copying streams.

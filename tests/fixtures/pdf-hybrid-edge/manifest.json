@@ -1,0 +1,66 @@
+[
+  {
+    "file": "incremental.pdf",
+    "pages": 1,
+    "encrypt_conflicts": 0,
+    "security": "plain",
+    "bytes": 1146,
+    "sha256": "3c268780387813f4a2133e889172bebe43d110835483332d127c305c01589e22"
+  },
+  {
+    "file": "free-entry.pdf",
+    "pages": 1,
+    "encrypt_conflicts": 0,
+    "security": "plain",
+    "bytes": 726,
+    "sha256": "8d7461a2f40f83a7fe0bd9da3d80a32281252baa66c78dd368d91818174531fd"
+  },
+  {
+    "file": "objstm.pdf",
+    "pages": 1,
+    "encrypt_conflicts": 0,
+    "security": "plain",
+    "bytes": 792,
+    "sha256": "a42165244be1a9232e46488f93def10bcec5d79f09678350c0f0679f33d3a69a"
+  },
+  {
+    "file": "encrypted-conflict.pdf",
+    "pages": 1,
+    "encrypt_conflicts": 1,
+    "security": "encrypted",
+    "bytes": 1088,
+    "sha256": "d079002eee0ac5ae771b0a9609f3c3c697a787ebd0dbac6a971c02152b2b96fe"
+  },
+  {
+    "file": "linearized.pdf",
+    "pages": 1,
+    "encrypt_conflicts": 0,
+    "security": "plain",
+    "bytes": 1062,
+    "sha256": "a5b893f009a412a543896c28f5e9b6d0ceeb5668b1bf871cf2b30115f77c16da"
+  },
+  {
+    "file": "bad-truncated.pdf",
+    "pages": -1,
+    "encrypt_conflicts": 0,
+    "security": "plain",
+    "bytes": 724,
+    "sha256": "5239a719ae57bce305ae790ecb7a130a6b39f60e93233ffee683edee04073fee"
+  },
+  {
+    "file": "bad-width.pdf",
+    "pages": -1,
+    "encrypt_conflicts": 0,
+    "security": "plain",
+    "bytes": 726,
+    "sha256": "56e3209aed9f6a8763f11bb94da72826750e8b80e1a6bcaf9f7ef4398c813554"
+  },
+  {
+    "file": "bad-index.pdf",
+    "pages": -1,
+    "encrypt_conflicts": 0,
+    "security": "plain",
+    "bytes": 727,
+    "sha256": "71c69c50032c6af3a5e5b628fbf4870b8c95229cbc6103743ff4b19dab547239"
+  }
+]
