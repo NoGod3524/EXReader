@@ -86,6 +86,7 @@ jobs:
         if: always()
         with:
           name: dfinal-c-${{ matrix.target }}-${{ github.sha }}
+          include-hidden-files: true
           path: |
             build/mobile-evidence/
             build/mobile-stage/
