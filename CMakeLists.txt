@@ -222,6 +222,14 @@ if(EXR_FULL_TESTS)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_shapes.py
       --library $<TARGET_FILE:exreader> ${group})
   endforeach()
+  foreach(group image stretch tile image-fallback relative-path formats picture fill-transforms sink gradient gradient-angles gradient-stops
+      gradient-fallback theme theme-default color-transforms alpha alpha-invalid)
+    add_test(NAME native-pptx-fill-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_fills.py
+      --library $<TARGET_FILE:exreader> ${group})
+  endforeach()
+  add_test(NAME native-pptx-fill-reproducible COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-fills/generate.py --check)
   foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py
