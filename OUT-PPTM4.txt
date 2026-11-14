@@ -1,0 +1,32 @@
+已完成。完整交付与新增函数名单见 [OUT-PPTM4.txt](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/OUT-PPTM4.txt)。
+
+`src/ppt_records.c` 按起点的非空行口径 **461→781，净增320行**；物理行 **463→783**。新增15个解析函数及 `ppt_text.c`，复用 `exr_flow_unit`、字体管理器和字形轮廓绘制。三个受限文件均未修改。
+
+| 验收 | 真实输出 |
+|---|---|
+| ① Hello 居中 | 中心偏差 **0.5px**；字形像素 **221** |
+| ② 12/24/48pt | 4倍渲染高度 **36/70/141px**；比例 **1/1.944/3.917** |
+| ③ 常规/加粗 | 平均竖笔画宽 **15/22px** |
+| ④ 中文 | 本机 SimHei：**3903像素、4种不同轮廓** |
+| ⑤ 左/中/右对齐 | bbox 左边界 **51/219/387px** |
+| ⑥ 三段圆点 | mask IoU **1.0/1.0/1.0** |
+| ⑦ 坏 run | **status=0＋警告**；超长截断、短尾补齐，与完整样式参考像素一致 |
+| ⑧ 回归 | **509/509通过**，仅排除指定两项；M2/M3 **20/20通过** |
+| ⑨ 新测试 | **15组、63次原生打开与渲染检查，全部通过** |
+
+实测索引映射如下；8个颜色槽均与直接 RGB 渲染逐字节一致。
+
+| 索引 | 字体表 | 颜色表 RGB |
+|---:|---|---|
+| 0 | Aptos | 255,255,255 |
+| 1 | Arial | 12,23,34 |
+| 2 | Aptos Display | 232,232,232 |
+| 3 | SimHei | 14,40,65 |
+| 4 | — | 21,96,130 |
+| 5 | — | 233,113,50 |
+| 6 | — | 70,120,134 |
+| 7 | — | 150,96,125 |
+
+已知边界：自动编号扩展、竖排、旋转、autofit、复杂 tabs、组内字体缩放及搜索/选择索引尚未接入。损坏 PF 无法定位 CF 边界时保留正文并回退继承样式。
+
+[文本实测日志](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/evidence/ppt-m4/text-tests.txt) · [完整 ctest 输出](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/evidence/ppt-m4/ctest-all.txt) · [prepush 全通过](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/evidence/ppt-m4/prepush.txt)

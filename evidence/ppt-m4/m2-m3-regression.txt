@@ -1,0 +1,45 @@
+Test project C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+      Start 351: native-ppt-shape-group
+      Start 365: native-ppt-fill-blips
+      Start 359: native-ppt-shape-styles
+      Start 352: native-ppt-shape-standard
+ 1/20 Test #352: native-ppt-shape-standard ...........   Passed    0.80 sec
+      Start 353: native-ppt-shape-wide
+ 2/20 Test #365: native-ppt-fill-blips ...............   Passed    0.97 sec
+      Start 350: native-ppt-shape-overlap
+ 3/20 Test #359: native-ppt-shape-styles .............   Passed    1.04 sec
+      Start 364: native-ppt-fill-fallback
+ 4/20 Test #353: native-ppt-shape-wide ...............   Passed    0.70 sec
+      Start 358: native-ppt-shape-transforms
+ 5/20 Test #364: native-ppt-fill-fallback ............   Passed    0.55 sec
+      Start 355: native-ppt-shape-anchors
+ 6/20 Test #350: native-ppt-shape-overlap ............   Passed    1.10 sec
+      Start 348: native-ppt-shape-red
+ 7/20 Test #355: native-ppt-shape-anchors ............   Passed    0.58 sec
+      Start 356: native-ppt-shape-truncated
+ 8/20 Test #351: native-ppt-shape-group ..............   Passed    2.33 sec
+      Start 366: native-ppt-fill-gradient-fallback
+ 9/20 Test #358: native-ppt-shape-transforms .........   Passed    0.82 sec
+      Start 349: native-ppt-shape-blue
+10/20 Test #356: native-ppt-shape-truncated ..........   Passed    0.43 sec
+      Start 367: native-ppt-fill-scheme
+11/20 Test #348: native-ppt-shape-red ................   Passed    0.62 sec
+      Start 362: native-ppt-fill-gradient
+12/20 Test #366: native-ppt-fill-gradient-fallback ...   Passed    0.55 sec
+      Start 357: native-ppt-shape-limits
+13/20 Test #349: native-ppt-shape-blue ...............   Passed    0.56 sec
+      Start 361: native-ppt-fill-scale
+14/20 Test #362: native-ppt-fill-gradient ............   Passed    0.38 sec
+      Start 363: native-ppt-fill-theme
+15/20 Test #367: native-ppt-fill-scheme ..............   Passed    0.49 sec
+      Start 354: native-ppt-shape-colors
+16/20 Test #357: native-ppt-shape-limits .............   Passed    0.39 sec
+      Start 360: native-ppt-fill-png
+17/20 Test #361: native-ppt-fill-scale ...............   Passed    0.42 sec
+18/20 Test #354: native-ppt-shape-colors .............   Passed    0.28 sec
+19/20 Test #363: native-ppt-fill-theme ...............   Passed    0.40 sec
+20/20 Test #360: native-ppt-fill-png .................   Passed    0.33 sec
+
+100% tests passed out of 20
+
+Total Test time (real) =   3.62 sec

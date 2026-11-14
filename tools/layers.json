@@ -61,6 +61,7 @@
     "ppt.c": "pdf",
     "ppt_cfb.c": "pdf",
     "ppt_records.c": "pdf",
+    "ppt_text.c": "pdf",
     "cfi.c": "doc",
     "cfi_syntax.c": "doc",
     "cfi_offset.c": "doc",
@@ -252,3 +253,4 @@
     "src/chapter_internal.h": "doc"
   }
 }
+
