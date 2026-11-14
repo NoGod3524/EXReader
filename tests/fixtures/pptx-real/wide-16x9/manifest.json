@@ -1,0 +1,12 @@
+{
+  "file": "wide-16x9.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "rect",
+    "ellipse",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT"
+}

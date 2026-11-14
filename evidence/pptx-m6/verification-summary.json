@@ -1,0 +1,78 @@
+{
+  "registered": 548,
+  "excluded": [
+    "sdk-release",
+    "sdk-doc-coverage"
+  ],
+  "executed": 545,
+  "passed": 544,
+  "failed": {
+    "native-pptx-real-matrix": "***Failed"
+  },
+  "existing": {
+    "count": 542,
+    "passed": 542
+  },
+  "new": {
+    "native-pptx-real-reproducible": "Passed",
+    "native-pptx-real-oracle": "Passed",
+    "native-pptx-real-matrix": "***Failed"
+  },
+  "m2_m5": {
+    "shape": {
+      "count": 14,
+      "passed": 14
+    },
+    "fill": {
+      "count": 19,
+      "passed": 19
+    },
+    "text": {
+      "count": 21,
+      "passed": 21
+    },
+    "table": {
+      "count": 13,
+      "passed": 13
+    }
+  },
+  "seconds": 106.84,
+  "ctest_exit": 8,
+  "protected_sha256": {
+    "src/docx.c": "5075fe15828c99da5c45bd0bc7aa00bcad617bd7ff45c16edf6a4e82995f5259",
+    "src/ppt.c": "4dc1066c25b11d7316e2bc856cdf42b5f2ec9fa76b3e3a2aaf29c98ec8e2c93e",
+    "src/pptx.c": "1f70e89b66896ac8548c8328b512e7c4ee614cd7218cd4879597e0eb0a73c92f",
+    "src/ppt_cfb.c": "e176850a8d5cabb8c67d1a0b17d5c8d6127f79730f22e8bb127756402375faeb",
+    "src/ppt_records.c": "6eb9a047f1f17b01610eae705131fc7802bf1ae156aecba4e3e8a832d0b342c6",
+    "src/ppt_text.c": "994e2b63f9cdf5baa33629b685b963066f00a156237a35d5a63a0f3c31faea22",
+    "tests/check_reading_release.py": "6eb22a304686b2160d1f283a709936bfdfd65c3b0f5e10bb060f457c4faffb2b"
+  },
+  "ctest_command": "ctest --test-dir build/pptx-m6 --output-on-failure -j 4 -E 'sdk-release|sdk-doc-coverage'",
+  "excluded_by_command": [
+    "sdk-release",
+    "sdk-release-checker",
+    "sdk-doc-coverage"
+  ],
+  "supplemental": {
+    "command": "ctest --test-dir build/pptx-m6 --output-on-failure -R '^sdk-release-checker$'",
+    "test": "sdk-release-checker",
+    "passed": true,
+    "exit": 0,
+    "seconds": 0.83,
+    "log": "evidence/pptx-m6/ctest-release-checker.txt"
+  },
+  "combined": {
+    "covered": 546,
+    "passed": 545,
+    "failed": 1,
+    "existing": {
+      "count": 543,
+      "passed": 543
+    },
+    "unexecuted": [
+      "sdk-release",
+      "sdk-doc-coverage"
+    ]
+  },
+  "reproduction_command": "ctest --test-dir build/pptx-m6 --output-on-failure -j 4 -E '^(sdk-release|sdk-doc-coverage)$'"
+}

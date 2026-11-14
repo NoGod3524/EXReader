@@ -1,0 +1,12 @@
+{
+  "file": "standard-4x3.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "rect",
+    "ellipse",
+    "4:3"
+  ],
+  "source": "generated",
+  "license": "MIT"
+}

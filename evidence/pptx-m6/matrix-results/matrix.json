@@ -1,0 +1,7248 @@
+{
+  "python": "3.14.7",
+  "platform": "win32",
+  "library": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-pptx-m6\\build\\pptx-m6\\libexreader.dll",
+  "library_sha256": "e85d431ea61b32ce4a95921283d26f5859ed6799b185a3e0b55e1b9cac34081e",
+  "coverage_tolerance_px": 4,
+  "color_tolerance_per_channel": 4,
+  "color_pass_minimum": 10,
+  "files": 15,
+  "passed": 3,
+  "results": [
+    {
+      "file": "bad-invalid-xml.pptx",
+      "sha256": "ff670bee1ea29d28565258e18e263bdc25f18f094adfb9bd27111d686ffc60b1",
+      "status": 5,
+      "code": 5,
+      "warning": "Invalid PPTX XML part: ppt/slides/slide1.xml",
+      "pages": [],
+      "ok": true,
+      "error_name": "EXR_FORMAT"
+    },
+    {
+      "file": "bad-missing-part.pptx",
+      "sha256": "cb9feb678110c324cc77eda8e8a57563ab1bbb05399ec94e83e0c62fb6a33784",
+      "status": 5,
+      "code": 5,
+      "warning": "PPTX part missing: ppt/presentation.xml",
+      "pages": [],
+      "ok": true,
+      "error_name": "EXR_FORMAT"
+    },
+    {
+      "file": "bad-truncated.pptx",
+      "sha256": "7fb8dfba7534f05994f6553da51409a68010d4a4a8b55dde1f115db4b478371c",
+      "status": 5,
+      "code": 5,
+      "warning": "Invalid or truncated PPTX/ZIP container",
+      "pages": [],
+      "ok": true,
+      "error_name": "EXR_FORMAT"
+    },
+    {
+      "file": "bullets.pptx",
+      "sha256": "7253afcc0302122ca2ee88c468e7e65f80d3a43666f9584f642045574e5812a5",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            435.0
+          ],
+          "actual_bbox": [
+            49,
+            34,
+            383,
+            333
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 48,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 912,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 48,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 912,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 48,
+              "y": 135,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 912,
+              "y": 135,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 13111,
+          "color_scope": "background-only",
+          "render_ms": 13.4309,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "chinese.pptx",
+      "sha256": "732c5598e4ce4bc52809925f6a6a3d79d5053c358d570335394b5005b767e09b",
+      "status": 0,
+      "code": 0,
+      "warning": "PPTX warning: font fallback=+mn-ea; missing glyph: Segoe UI U+7814 fallback; Segoe UI U+7A76 fallback; Segoe UI U+8FDB fallback; Segoe UI U+5C55 fallback; Segoe UI U+4E0E fallback; Segoe UI U+4E0B fallback; Segoe UI U+4E00 fallback; Segoe UI U+6B65 fal...",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            480.0
+          ],
+          "actual_bbox": [
+            47,
+            37,
+            913,
+            481
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 264,
+              "y": 286,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 286,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 286,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 376,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 376,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 376,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 466,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 466,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 466,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 177,
+              "y": 286,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 465,
+              "y": 286,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 11222,
+          "color_scope": "fills-and-background",
+          "render_ms": 85.1362,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "gradient-alpha.pptx",
+      "sha256": "714be45bad0c298a757dea4458869c7a2f1ccadf76d63fa2603682c842e3ecda",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            506.0
+          ],
+          "actual_bbox": [
+            50,
+            34,
+            880,
+            479
+          ],
+          "colors": 2,
+          "samples": [
+            {
+              "x": 394,
+              "y": 345,
+              "actual": [
+                105,
+                122,
+                132
+              ],
+              "expected": [
+                91,
+                113,
+                126
+              ],
+              "delta": 14,
+              "ok": false
+            },
+            {
+              "x": 521,
+              "y": 390,
+              "actual": [
+                112,
+                148,
+                173
+              ],
+              "expected": [
+                75,
+                124,
+                158
+              ],
+              "delta": 37,
+              "ok": false
+            },
+            {
+              "x": 815,
+              "y": 358,
+              "actual": [
+                174,
+                199,
+                176
+              ],
+              "expected": [
+                93,
+                146,
+                142
+              ],
+              "delta": 81,
+              "ok": false
+            },
+            {
+              "x": 454,
+              "y": 415,
+              "actual": [
+                38,
+                140,
+                158
+              ],
+              "expected": [
+                38,
+                140,
+                158
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 48,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                212,
+                231,
+                242
+              ],
+              "delta": 43,
+              "ok": false
+            },
+            {
+              "x": 265,
+              "y": 345,
+              "actual": [
+                234,
+                183,
+                137
+              ],
+              "expected": [
+                201,
+                162,
+                125
+              ],
+              "delta": 33,
+              "ok": false
+            },
+            {
+              "x": 448,
+              "y": 390,
+              "actual": [
+                112,
+                148,
+                173
+              ],
+              "expected": [
+                78,
+                126,
+                159
+              ],
+              "delta": 34,
+              "ok": false
+            },
+            {
+              "x": 737,
+              "y": 358,
+              "actual": [
+                174,
+                199,
+                176
+              ],
+              "expected": [
+                99,
+                150,
+                145
+              ],
+              "delta": 75,
+              "ok": false
+            },
+            {
+              "x": 301,
+              "y": 415,
+              "actual": [
+                37,
+                120,
+                147
+              ],
+              "expected": [
+                37,
+                120,
+                147
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 912,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                94,
+                150,
+                186
+              ],
+              "delta": 161,
+              "ok": false
+            },
+            {
+              "x": 136,
+              "y": 345,
+              "actual": [
+                234,
+                183,
+                137
+              ],
+              "expected": [
+                209,
+                168,
+                128
+              ],
+              "delta": 25,
+              "ok": false
+            },
+            {
+              "x": 485,
+              "y": 390,
+              "actual": [
+                112,
+                148,
+                173
+              ],
+              "expected": [
+                77,
+                125,
+                159
+              ],
+              "delta": 35,
+              "ok": false
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 6936,
+          "color_scope": "fills-and-background",
+          "render_ms": 20.1974,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "image-text.pptx",
+      "sha256": "0a7511d1add6fefd56cc76725f5c33f040471a12b6f4418cba668a34a09ed4d6",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            400.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            810,
+            382
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 318,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 210,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 102,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 372,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 156,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9990,
+          "color_scope": "fills-and-background",
+          "render_ms": 25.4757,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "merged-table.pptx",
+      "sha256": "8043879bbbe649815c8e729128b01d351e26f3f57e27aa73a2a57721b769e4a5",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            432.0
+          ],
+          "actual_bbox": [
+            47,
+            35,
+            913,
+            433
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 480,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 402,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 307,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 753,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 177,
+              "y": 402,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 465,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 8639,
+          "color_scope": "fills-and-background",
+          "render_ms": 25.8252,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "nested-groups.pptx",
+      "sha256": "eba0c3f27e32d42cb047153e930a0c1cda5de464c32b241bd49289f7096babab",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            482.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            807,
+            458
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 316,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 560,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 764,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 48,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 226,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 513,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 714,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 912,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 135,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 536,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 664,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 297,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9672,
+          "color_scope": "fills-and-background",
+          "render_ms": 14.9358,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "standard-4x3.pptx",
+      "sha256": "c2cafcefa41e809a6645f31702d4c94d6357966fe89236254b5592357c88ea46",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            672.0,
+            434.0
+          ],
+          "actual_bbox": [
+            48,
+            34,
+            672,
+            434
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 270,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 598,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 540,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 181,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 509,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 324,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 92,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 553,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 108,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 225,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 464,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 4266,
+          "color_scope": "fills-and-background",
+          "render_ms": 11.6231,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            720.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "theme-accents.pptx",
+      "sha256": "66be6b3ebec042419aa22914df18aec0c3142d8fd5ee95d69a9d2e6378dfc471",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            438.0
+          ],
+          "actual_bbox": [
+            48,
+            34,
+            906,
+            438
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 250,
+              "y": 249,
+              "actual": [
+                79,
+                129,
+                189
+              ],
+              "expected": [
+                79,
+                129,
+                189
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 544,
+              "y": 249,
+              "actual": [
+                192,
+                80,
+                77
+              ],
+              "expected": [
+                192,
+                80,
+                77
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 838,
+              "y": 249,
+              "actual": [
+                155,
+                187,
+                89
+              ],
+              "expected": [
+                155,
+                187,
+                89
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 250,
+              "y": 417,
+              "actual": [
+                128,
+                100,
+                162
+              ],
+              "expected": [
+                128,
+                100,
+                162
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 544,
+              "y": 417,
+              "actual": [
+                75,
+                172,
+                198
+              ],
+              "expected": [
+                75,
+                172,
+                198
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 838,
+              "y": 417,
+              "actual": [
+                247,
+                150,
+                70
+              ],
+              "expected": [
+                247,
+                150,
+                70
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 169,
+              "y": 249,
+              "actual": [
+                79,
+                129,
+                189
+              ],
+              "expected": [
+                79,
+                129,
+                189
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 463,
+              "y": 249,
+              "actual": [
+                192,
+                80,
+                77
+              ],
+              "expected": [
+                192,
+                80,
+                77
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 757,
+              "y": 249,
+              "actual": [
+                155,
+                187,
+                89
+              ],
+              "expected": [
+                155,
+                187,
+                89
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 169,
+              "y": 417,
+              "actual": [
+                128,
+                100,
+                162
+              ],
+              "expected": [
+                128,
+                100,
+                162
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 463,
+              "y": 417,
+              "actual": [
+                75,
+                172,
+                198
+              ],
+              "expected": [
+                75,
+                172,
+                198
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9770,
+          "color_scope": "fills-and-background",
+          "render_ms": 19.9346,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "title.pptx",
+      "sha256": "3c57364544ee1db8bab22017291ec56ae21059fb3804b4a276c7a9e2c5e28070",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            96.0,
+            190.0,
+            864.0,
+            290.0
+          ],
+          "actual_bbox": [
+            96,
+            200,
+            440,
+            241
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 48,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 912,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 5229,
+          "color_scope": "background-only",
+          "render_ms": 11.9257,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "twenty.pptx",
+      "sha256": "268cd5aee19aa53d451b1e95c2a9d2d71977897e7efaac79fec18d1458ee2c78",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            900,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 810,
+              "y": 365,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 639,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 803,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 780,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 702,
+              "y": 365,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 613,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 777,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 698,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 594,
+              "y": 365,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 626,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9988,
+          "color_scope": "fills-and-background",
+          "render_ms": 15.622,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            15.622,
+            15.4535,
+            15.777,
+            15.5541,
+            15.2524
+          ]
+        },
+        {
+          "slide": 2,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            752,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 318,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 210,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 102,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 372,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 156,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10596,
+          "color_scope": "fills-and-background",
+          "render_ms": 25.9079,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            25.9079,
+            25.4962,
+            25.3305,
+            25.7494,
+            25.7119
+          ]
+        },
+        {
+          "slide": 3,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            47,
+            35,
+            913,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 264,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 177,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 465,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9721,
+          "color_scope": "fills-and-background",
+          "render_ms": 26.0507,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            26.0507,
+            26.4252,
+            26.2427,
+            25.9707,
+            25.6704
+          ]
+        },
+        {
+          "slide": 4,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            49,
+            35,
+            807,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 316,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 560,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 764,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 226,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 513,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 714,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 135,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 536,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 664,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 6040,
+          "color_scope": "fills-and-background",
+          "render_ms": 14.5078,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            14.5078,
+            14.3267,
+            14.1621,
+            13.8554,
+            14.0918
+          ]
+        },
+        {
+          "slide": 5,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            900,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 810,
+              "y": 365,
+              "actual": [
+                38,
+                156,
+                168
+              ],
+              "expected": [
+                38,
+                156,
+                168
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 639,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 803,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 780,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 702,
+              "y": 365,
+              "actual": [
+                38,
+                156,
+                168
+              ],
+              "expected": [
+                38,
+                156,
+                168
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 613,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 777,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 698,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 594,
+              "y": 365,
+              "actual": [
+                38,
+                156,
+                168
+              ],
+              "expected": [
+                38,
+                156,
+                168
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 626,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10091,
+          "color_scope": "fills-and-background",
+          "render_ms": 15.6804,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            15.6804,
+            16.5542,
+            15.417,
+            15.2531,
+            15.2749
+          ]
+        },
+        {
+          "slide": 6,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            752,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 318,
+              "y": 346,
+              "actual": [
+                49,
+                88,
+                109
+              ],
+              "expected": [
+                49,
+                88,
+                109
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 210,
+              "y": 346,
+              "actual": [
+                144,
+                197,
+                223
+              ],
+              "expected": [
+                144,
+                197,
+                223
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 102,
+              "y": 346,
+              "actual": [
+                70,
+                115,
+                136
+              ],
+              "expected": [
+                70,
+                115,
+                136
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 346,
+              "actual": [
+                70,
+                115,
+                136
+              ],
+              "expected": [
+                70,
+                115,
+                136
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 372,
+              "y": 346,
+              "actual": [
+                49,
+                88,
+                109
+              ],
+              "expected": [
+                49,
+                88,
+                109
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 156,
+              "y": 346,
+              "actual": [
+                49,
+                88,
+                109
+              ],
+              "expected": [
+                49,
+                88,
+                109
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10641,
+          "color_scope": "fills-and-background",
+          "render_ms": 21.6881,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            21.6881,
+            30.5693,
+            23.5688,
+            21.8725,
+            22.2038
+          ]
+        },
+        {
+          "slide": 7,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            47,
+            35,
+            913,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 264,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 177,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 465,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9658,
+          "color_scope": "fills-and-background",
+          "render_ms": 25.5616,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            25.5616,
+            26.9292,
+            25.278,
+            25.7571,
+            25.2297
+          ]
+        },
+        {
+          "slide": 8,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            49,
+            35,
+            807,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 316,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 560,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 764,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 226,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 513,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 714,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 135,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 536,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 664,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 6102,
+          "color_scope": "fills-and-background",
+          "render_ms": 14.907,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            14.907,
+            15.4379,
+            14.2124,
+            14.0905,
+            14.0282
+          ]
+        },
+        {
+          "slide": 9,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            900,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 810,
+              "y": 365,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 639,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 803,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 780,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 702,
+              "y": 365,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 613,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 777,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 698,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 594,
+              "y": 365,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 626,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10117,
+          "color_scope": "fills-and-background",
+          "render_ms": 15.9475,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            15.9475,
+            15.6604,
+            15.2813,
+            15.573,
+            15.6536
+          ]
+        },
+        {
+          "slide": 10,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            752,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 318,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 210,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 102,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 372,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 156,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10569,
+          "color_scope": "fills-and-background",
+          "render_ms": 25.3827,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            25.3827,
+            25.786,
+            25.8715,
+            25.4301,
+            25.2503
+          ]
+        },
+        {
+          "slide": 11,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            47,
+            35,
+            913,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 264,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 177,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 465,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9581,
+          "color_scope": "fills-and-background",
+          "render_ms": 25.8296,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            25.8296,
+            25.5385,
+            32.1394,
+            25.7908,
+            26.0888
+          ]
+        },
+        {
+          "slide": 12,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            49,
+            35,
+            807,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 316,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 560,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 764,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 226,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 513,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 714,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 135,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 536,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 664,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 5999,
+          "color_scope": "fills-and-background",
+          "render_ms": 14.0706,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            14.0706,
+            14.1641,
+            14.405,
+            14.3708,
+            14.1404
+          ]
+        },
+        {
+          "slide": 13,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            900,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 810,
+              "y": 365,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 639,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 803,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 780,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 702,
+              "y": 365,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 613,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 777,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 698,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 594,
+              "y": 365,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 626,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10020,
+          "color_scope": "fills-and-background",
+          "render_ms": 15.446,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            15.446,
+            15.2916,
+            15.1143,
+            15.3128,
+            15.4395
+          ]
+        },
+        {
+          "slide": 14,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            752,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 138,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 246,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 354,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 192,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 84,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 300,
+              "y": 346,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10529,
+          "color_scope": "fills-and-background",
+          "render_ms": 25.7277,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            25.7277,
+            25.3984,
+            25.1493,
+            25.5382,
+            27.2127
+          ]
+        },
+        {
+          "slide": 15,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            47,
+            35,
+            913,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 264,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 177,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 465,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9684,
+          "color_scope": "fills-and-background",
+          "render_ms": 26.7701,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            26.7701,
+            25.8523,
+            25.6473,
+            25.9749,
+            25.7104
+          ]
+        },
+        {
+          "slide": 16,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            49,
+            35,
+            807,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 316,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 560,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 764,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 226,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 513,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 714,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 135,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 536,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 664,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 6044,
+          "color_scope": "fills-and-background",
+          "render_ms": 14.479,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            14.479,
+            15.2118,
+            14.3696,
+            14.6138,
+            14.4142
+          ]
+        },
+        {
+          "slide": 17,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            48,
+            35,
+            900,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 810,
+              "y": 365,
+              "actual": [
+                38,
+                156,
+                168
+              ],
+              "expected": [
+                38,
+                156,
+                168
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 639,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 803,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 780,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 702,
+              "y": 365,
+              "actual": [
+                38,
+                156,
+                168
+              ],
+              "expected": [
+                38,
+                156,
+                168
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 613,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 777,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 698,
+              "y": 356,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 594,
+              "y": 365,
+              "actual": [
+                38,
+                156,
+                168
+              ],
+              "expected": [
+                38,
+                156,
+                168
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 626,
+              "y": 266,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9957,
+          "color_scope": "fills-and-background",
+          "render_ms": 16.2472,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            16.2472,
+            15.5318,
+            15.5848,
+            17.2611,
+            18.1717
+          ]
+        },
+        {
+          "slide": 18,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            49,
+            35,
+            752,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 318,
+              "y": 327,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 318,
+              "y": 237,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 318,
+              "y": 147,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 318,
+              "y": 282,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 318,
+              "y": 372,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 864,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 318,
+              "y": 192,
+              "actual": [
+                105,
+                149,
+                79
+              ],
+              "expected": [
+                105,
+                149,
+                79
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 288,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 10591,
+          "color_scope": "fills-and-background",
+          "render_ms": 22.4536,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            22.4536,
+            23.2994,
+            21.8027,
+            22.4124,
+            26.0001
+          ]
+        },
+        {
+          "slide": 19,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            47,
+            35,
+            913,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 264,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 317,
+              "actual": [
+                238,
+                244,
+                247
+              ],
+              "expected": [
+                238,
+                244,
+                247
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 264,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 552,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 840,
+              "y": 417,
+              "actual": [
+                228,
+                238,
+                227
+              ],
+              "expected": [
+                228,
+                238,
+                227
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 177,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 465,
+              "y": 217,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 9710,
+          "color_scope": "fills-and-background",
+          "render_ms": 26.6805,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            26.6805,
+            47.1968,
+            39.8521,
+            29.343,
+            26.5995
+          ]
+        },
+        {
+          "slide": 20,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            512.0
+          ],
+          "actual_bbox": [
+            49,
+            35,
+            807,
+            492
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 316,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 560,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 764,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 226,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 513,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 714,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 135,
+              "y": 318,
+              "actual": [
+                218,
+                231,
+                239
+              ],
+              "expected": [
+                218,
+                231,
+                239
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 536,
+              "y": 290,
+              "actual": [
+                76,
+                130,
+                80
+              ],
+              "expected": [
+                76,
+                130,
+                80
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 664,
+              "y": 303,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 6110,
+          "color_scope": "fills-and-background",
+          "render_ms": 14.3299,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ],
+          "render_samples_ms": [
+            14.3299,
+            14.4635,
+            14.2638,
+            14.7299,
+            19.3745
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 20,
+      "engine_slides": 20,
+      "performance": {
+        "repeats": 5,
+        "samples": 100,
+        "median_ms": 20.5313,
+        "max_ms": 47.1968,
+        "limit_ms": 200,
+        "ok": true
+      }
+    },
+    {
+      "file": "upstream-font-color.pptx",
+      "sha256": "2394d35832c69576e808f8f5196c263a6488eb55d10b7b864f11840843123b69",
+      "status": 0,
+      "code": 0,
+      "warning": "PPTX warning: font fallback=+mn-lt; ",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            228.88055118110236,
+            65.7655905511811,
+            491.11944881889764,
+            474.23425196850394
+          ],
+          "actual_bbox": [
+            236,
+            76,
+            499,
+            473
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 540,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 108,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 648,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 216,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 36,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 684,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 540,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 324,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 108,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 648,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 216,
+              "y": 297,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 5582,
+          "color_scope": "background-only",
+          "render_ms": 9.3975,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            720.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    },
+    {
+      "file": "wide-16x9.pptx",
+      "sha256": "591e59ee42280df596bc10dcdf7765336c857b78b0112ccc8ede71e214c659d3",
+      "status": 0,
+      "code": 0,
+      "warning": "",
+      "pages": [
+        {
+          "slide": 1,
+          "ok": false,
+          "coverage": false,
+          "expected_bbox": [
+            48.0,
+            28.0,
+            912.0,
+            434.0
+          ],
+          "actual_bbox": [
+            48,
+            34,
+            912,
+            434
+          ],
+          "colors": 12,
+          "samples": [
+            {
+              "x": 360,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 808,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 720,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 235,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 683,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 432,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 110,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 745,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 144,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 297,
+              "y": 401,
+              "actual": [
+                36,
+                90,
+                129
+              ],
+              "expected": [
+                36,
+                90,
+                129
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 620,
+              "y": 401,
+              "actual": [
+                217,
+                123,
+                40
+              ],
+              "expected": [
+                217,
+                123,
+                40
+              ],
+              "delta": 0,
+              "ok": true
+            },
+            {
+              "x": 576,
+              "y": 459,
+              "actual": [
+                255,
+                255,
+                255
+              ],
+              "expected": [
+                255,
+                255,
+                255
+              ],
+              "delta": 0,
+              "ok": true
+            }
+          ],
+          "text": true,
+          "has_text": true,
+          "glyph_pixels": 4266,
+          "color_scope": "fills-and-background",
+          "render_ms": 16.5376,
+          "geometry_bounds": [
+            0.0,
+            0.0,
+            960.0,
+            540.0
+          ]
+        }
+      ],
+      "ok": false,
+      "python_slides": 1,
+      "engine_slides": 1
+    }
+  ]
+}

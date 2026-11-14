@@ -1,0 +1,12 @@
+{
+  "file": "bullets.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "bullets",
+    "levels-0-1-2",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT"
+}
