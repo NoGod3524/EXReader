@@ -12,6 +12,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
 jobs:
   windows:
     runs-on: windows-2022
@@ -39,7 +42,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
+          cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=ON "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
           exit $LASTEXITCODE
       - name: Compile
         run: |

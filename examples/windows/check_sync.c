@@ -19,8 +19,11 @@ int main(int argc,char **argv) {
     ExitProcess(77);
   }
   if(argc==2 && !strcmp(argv[1],"--privacy")) {test_privacy();return 0;}
+  /* shelf_load refreshes covers under the same lock as the native host. */
+  InitializeCriticalSection(&g.library_lock);
   test_sync();
   assert(!g.window && !g.page);
+  DeleteCriticalSection(&g.library_lock);
   puts("PASS sync: 15 scenarios; HWNDs created=0");
   return 0;
 }
