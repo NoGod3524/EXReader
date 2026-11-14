@@ -25,10 +25,7 @@ def main():
     font = fetch(ROOT / 'build/host-font-cache')
     for name in ('Reader.otf', 'OFL.txt'):
         shutil.copyfile(font / name, assets / name)
-    version = builder.header_version(stage / 'include/exr/base.h', 'EXR_VERSION')
-    builder.run(['gradle', '-p', builder.ANDROID, '--no-daemon', '--stacktrace',
-                 ':app:assembleDebug', ':uitest:assembleDebug', ':uitest:assembleDebugAndroidTest',
-                 '-PexrSdk=' + str(stage), '-PexrSdkVersion=' + version])
+    builder.gradle_build(stage, 'gradle')
     artifacts = builder.collect_artifacts(output)
     builder.inspect_apk(Path(artifacts['app-debug.apk']['path']))
     report = dict(source_sha=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
