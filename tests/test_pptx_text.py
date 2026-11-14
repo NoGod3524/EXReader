@@ -15,7 +15,7 @@ from test_pptx_shapes import Raster
 HERE = Path(__file__).resolve().parent / 'fixtures/pptx-text'
 GEN = runpy.run_path(str(HERE / 'generate.py'))
 run_text, paragraph, shape, package = (GEN[name] for name in ('run', 'paragraph', 'shape', 'package'))
-GROUPS = ('hello', 'sizes', 'master', 'inheritance', 'master-types', 'bold', 'cjk', 'wrap', 'breaks',
+GROUPS = ('hello', 'sizes', 'master', 'inheritance', 'master-types', 'bold', 'cjk', 'wrap', 'breaks', 'breaks-empty',
           'alignment', 'line-spacing', 'paragraph-spacing', 'bullets', 'autofit', 'autofit-invalid',
           'level', 'body', 'run-properties', 'missing-font', 'invalid-utf8')
 
@@ -159,6 +159,16 @@ def run(engine, group):
             reference, _ = render(engine, text_data(attributes=f'sz="{size * 100}"'), 2)
             assert actual.data == reference.data, source
             print(f'{source}: resolved {size}pt, height={stats(actual)["height"]}px (2px/pt), exact reference match')
+        default = ('<a:lvl1pPr><a:defRPr><a:solidFill><a:schemeClr val="accent1"/>'
+                   '</a:solidFill></a:defRPr></a:lvl1pPr>')
+        themed = replace(package(default=default), b'</a:clrScheme>',
+                         b'<a:accent1><a:srgbClr val="00AA33"/></a:accent1></a:clrScheme>',
+                         part='ppt/theme/theme1.xml')
+        actual, _ = render(engine, themed, 2)
+        reference, _ = render(engine, text_data(attributes='sz="1800"',
+            properties='<a:solidFill><a:srgbClr val="00AA33"/></a:solidFill>'), 2)
+        assert actual.data == reference.data
+        print(f'defaultTextStyle schemeClr accent1: #00AA33, {stats(actual)["pixels"]} glyph pixels, exact explicit RGB match')
     elif group == 'master-types':
         styles = ''.join(f'<p:{tag}><a:lvl1pPr><a:defRPr sz="{size * 100}"/></a:lvl1pPr></p:{tag}>'
                          for tag, size in (('titleStyle', 36), ('bodyStyle', 28), ('otherStyle', 20)))
@@ -236,6 +246,34 @@ def run(engine, group):
         lines = bands(image)
         assert len(lines) == 2, lines
         print(f'a:br: glyph row bands={lines}')
+    elif group == 'breaks-empty':
+        # Fixed spacing makes every empty forced line observable in the raster.
+        properties = '<a:lnSpc><a:spcPts val="4000"/></a:lnSpc>'
+        word = run_text('Hello', 'sz="1800"')
+        plain, _ = render(engine, text_data(attributes='sz="1800"'))
+        top = stats(plain)['bbox'][1]
+        positions = []
+        for count in (1, 2, 3):
+            leading = paragraph('<a:br/>' * count + word, properties=properties)
+            image, _ = render(engine, package(shape(leading)))
+            assert len(bands(image)) == 1
+            assert stats(image)['bbox'][1] - top == count * 40
+            # Empty runs between breaks must not consume or erase empty lines.
+            middle = ('<a:br/>' + run_text('')) * count
+            image, _ = render(engine, package(shape(paragraph(word + middle + word, properties=properties))))
+            lines = bands(image)
+            assert len(lines) == 2 and lines[1][0] - lines[0][0] == count * 40, lines
+            # A following paragraph reveals the height of trailing blank lines.
+            trailing = paragraph(word + '<a:br/>' * count, properties=properties) + paragraph(word)
+            image, _ = render(engine, package(shape(trailing)))
+            lines = bands(image)
+            assert len(lines) == 2 and lines[1][0] - lines[0][0] == (count + 1) * 40, lines
+            positions.append((count, count * 40, (count + 1) * 40))
+        # Synthetic blank-line content must not draw inherited underlines.
+        image, _ = render(engine, package(shape(paragraph(
+            word + '<a:br/><a:br/>' + word, properties=properties + '<a:defRPr u="sng"/>'))))
+        assert not mask(image, (0, top + 40, image.width, top + 55))
+        print(f'empty a:br lines preserved: (breaks, leading/middle shift, next paragraph shift)={positions}px; blank lines have no underline ink')
     elif group == 'alignment':
         boxes = {}
         for align in ('l', 'ctr', 'r'):

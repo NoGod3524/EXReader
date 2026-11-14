@@ -1160,8 +1160,9 @@ static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_do
   exr_document *model=calloc(1,sizeof(*model));
   exr_style *styles=NULL;
   pptx_text_span *spans=NULL;
-  size_t capacity=0,i,j,k,bullet_end=3;
-  pptx_text_style bullet_style=*base;
+  size_t capacity=0,i,j,k,bullet_end=3,breaks=0;
+  pptx_text_style bullet_style=*base,blank_style=*base;
+  int empty_line=1;
   char number[24];
   const char *bullet=NULL;
   size_t bullet_length=0;
@@ -1195,13 +1196,20 @@ static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_do
   } else if(base->number) {
     bullet_length=(size_t)snprintf(number,sizeof(number),"%d.",base->start); bullet=number;
   }
+  blank_style.flags&=~EXR_GLYPH_UNDERLINE; blank_style.tracking=0;
   if(bullet) status=text_add(model,&spans,&capacity,bullet,bullet_length,&bullet_style,e);
   bullet_end=model->node_count;
   for(i=xml->nodes[para].first_child;status==EXR_OK && i!=SIZE_MAX;i=xml->nodes[i].next_sibling) {
     pptx_text_style style=*base;
     if(named(&xml->nodes[i],A,AS,"br")) {
-      size_t node=exr_model_node(model,2,0,EXR_NODE_BREAK,"br",NULL,0);
+      size_t node;
+      /* Flow emits lines for inline content. A nonbreaking space reserves an
+         empty DrawingML line using the same font metrics, without visible ink. */
+      if(empty_line) status=text_add(model,&spans,&capacity,"\xc2\xa0",2,&blank_style,e);
+      if(status!=EXR_OK) break;
+      node=exr_model_node(model,2,0,EXR_NODE_BREAK,"br",NULL,0);
       if(node==SIZE_MAX) status=exr_fail(e,EXR_LIMIT,"PPTX break model allocation failed");
+      empty_line=1; breaks++;
       continue;
     }
     if(!named(&xml->nodes[i],A,AS,"r") && !named(&xml->nodes[i],A,AS,"fld")) continue;
@@ -1213,7 +1221,10 @@ static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_do
       if(t && !exr_append(&plain,t,strlen(t))) { status=exr_fail(e,EXR_LIMIT,"PPTX run exceeds text budget"); break; }
     }
     if(status==EXR_OK) status=text_add(model,&spans,&capacity,plain.data,plain.size,&style,e);
+    if(plain.size) empty_line=0;
   }
+  if(status==EXR_OK && empty_line && breaks)
+    status=text_add(model,&spans,&capacity,"\xc2\xa0",2,&blank_style,e);
   if(status!=EXR_OK) goto done;
   status=text_model_finish(model,e);
   if(status!=EXR_OK) goto done;
@@ -1865,8 +1876,8 @@ exr_status exr_pptx_open_owned(unsigned char *data,size_t size,const char *title
     goto done;
   }
   status=read_presentation(d,presentation,rels,rel_count,&options->control,e);
-  if(status==EXR_OK) text_defaults(d,presentation);
   if(status==EXR_OK) status=read_theme(d,&options->control,e);
+  if(status==EXR_OK) text_defaults(d,presentation);
   if(status==EXR_OK) status=read_shapes(d,&options->control,e);
   if(status==EXR_OK) status=create_fixed(d,title,options,out,e);
 done:
