@@ -1,0 +1,502 @@
+{
+  "generator": "PowerPoint COM SaveAs(format=1); reopened COM text oracle",
+  "version": "16.0",
+  "fixtures": [
+    {
+      "case": "hello",
+      "file": "hello.ppt",
+      "sha256": "5dc4245f400d1300c744279e8c7f8acb4d68894014119eb5b2413339d54774b1",
+      "reference_png": "hello-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 18.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 2,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "size12",
+      "file": "size12.ppt",
+      "sha256": "78a394d89c397915a368e9f4a9ff697d3137b105302a6dc2b87a14354141928a",
+      "reference_png": "size12-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 12.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "size24",
+      "file": "size24.ppt",
+      "sha256": "9a97e443dc238eb51f6020a300799b749d64a2b5a7d521428123f669524a956a",
+      "reference_png": "size24-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 24.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "size48",
+      "file": "size48.ppt",
+      "sha256": "9bef484061037be17a4197307e36ea13941ec22726c9ef37e0bed7c4f39067e9",
+      "reference_png": "size48-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 48.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "regular",
+      "file": "regular.ppt",
+      "sha256": "a206b4fc430df020b7013985c6a0a9ab8e5877c4ff1dde6e0f5f5e2e7d9de539",
+      "reference_png": "regular-powerpoint.png",
+      "text": "IIIIIIII",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 48.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "bold",
+      "file": "bold.ppt",
+      "sha256": "1eb45841c54cab2b1c5382b2e3f42b3b5c3f070f39763e644e56b8b56c28cb0b",
+      "reference_png": "bold-powerpoint.png",
+      "text": "IIIIIIII",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 48.0,
+      "bold": -1,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "cjk",
+      "file": "cjk.ppt",
+      "sha256": "e39f88746a5e63bc563b3d8e86c8b1756fb2d55f1e5e2444781baf076ca782e6",
+      "reference_png": "cjk-powerpoint.png",
+      "text": "中文测试",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 28.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "align-l",
+      "file": "align-l.ppt",
+      "sha256": "14410f42859ae35df91e9fa6327122cef4485478f541b5f9e2669fc2b6d8df10",
+      "reference_png": "align-l-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 24.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "align-ctr",
+      "file": "align-ctr.ppt",
+      "sha256": "c7a3bd772526416ceedd367848574ff91509e8581ff2b945749abbfb75d30089",
+      "reference_png": "align-ctr-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 24.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 2,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "align-r",
+      "file": "align-r.ppt",
+      "sha256": "c289b056c411fa29fe97357ead66a603a2303cbf4887314f112ad41e654b17eb",
+      "reference_png": "align-r-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 24.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 3,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "bullets",
+      "file": "bullets.ppt",
+      "sha256": "35aca7562e3ed28abb9015e4e6fc334158e774f7a7ca18e5b6e14c8246d63ee9",
+      "reference_png": "bullets-powerpoint.png",
+      "text": "Item\rItem\rItem",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 24.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": -1
+    },
+    {
+      "case": "dot",
+      "file": "dot.ppt",
+      "sha256": "ccf2a37e6c194e505e310ababe54e39c3865e606f0c33abc6149d5ae6bab49a6",
+      "reference_png": "dot-powerpoint.png",
+      "text": "•",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 24.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "wrap",
+      "file": "wrap.ppt",
+      "sha256": "15b22b10fb6f5c1057d320d6ab2406d80c2a761e0f64298f04aedecbb9bd884c",
+      "reference_png": "wrap-powerpoint.png",
+      "text": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        200.0,
+        440.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 18.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "spacing",
+      "file": "spacing.ppt",
+      "sha256": "7121206a8f840e2f3988419c14805d4e700a526c3ed63496c8c38d05a75ef529",
+      "reference_png": "spacing-powerpoint.png",
+      "text": "Hello\rHello\rHello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 18.0,
+      "bold": 0,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "runs",
+      "file": "runs.ppt",
+      "sha256": "46c05631001c366b94e96351550585969367d84e870abace38793f40d4506087",
+      "reference_png": "runs-powerpoint.png",
+      "text": "RedGreenBlue",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 18.0,
+      "bold": -2,
+      "rgb": [
+        0,
+        0,
+        0
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    },
+    {
+      "case": "scheme",
+      "file": "scheme.ppt",
+      "sha256": "e32f25605b9ec81e4ee0991494edb8393288d3e0f1756adc1193922e0aa5744f",
+      "reference_png": "scheme-powerpoint.png",
+      "text": "Hello",
+      "bbox_pt": [
+        40.0,
+        40.0,
+        400.0,
+        300.0
+      ],
+      "margins_pt": [
+        10.0,
+        10.0,
+        10.0,
+        10.0
+      ],
+      "font": "Arial",
+      "font_far_east": "SimHei",
+      "size_pt": 18.0,
+      "bold": 0,
+      "rgb": [
+        12,
+        23,
+        34
+      ],
+      "alignment": 1,
+      "bullet_character": 8226,
+      "bullet_visible": 0
+    }
+  ]
+}
