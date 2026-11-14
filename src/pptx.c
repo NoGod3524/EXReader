@@ -1469,7 +1469,7 @@ static size_t table_span(pptx_document *d,const exr_node *cell,const char *attr,
 static exr_status table_read(pptx_document *d,pptx_slide *slide,const exr_document *xml,size_t frame,
                              const double parent[6],const exr_control *control,exr_error *e) {
   size_t table=drawing_child(xml,frame,"graphic"),grid,props,i,r,c,rows=0,cols=0,start=slide->count;
-  size_t row_nodes[MAX_TABLE_DIMENSION];
+  size_t row_nodes[MAX_TABLE_DIMENSION],row_cells[MAX_TABLE_DIMENSION];
   double xs[MAX_TABLE_DIMENSION+1]={0},ys[MAX_TABLE_DIMENSION+1]={0},local[6],matrix[6],size[2];
   table=drawing_child(xml,table,"graphicData"); table=drawing_child(xml,table,"tbl");
   if(table==SIZE_MAX) { d->unsupported++; return EXR_OK; }
@@ -1485,9 +1485,15 @@ static exr_status table_read(pptx_document *d,pptx_slide *slide,const exr_docume
   }
   for(i=xml->nodes[table].first_child;i!=SIZE_MAX;i=xml->nodes[i].next_sibling) {
     int64_t height=0;
+    size_t j,count=0;
     if(!named(&xml->nodes[i],A,AS,"tr")) continue;
     if(rows==MAX_TABLE_DIMENSION) return exr_fail(e,EXR_LIMIT,"PPTX table rows exceed 200");
+    /* Enforce the cell limit even when a malformed frame cannot be drawn. */
+    for(j=xml->nodes[i].first_child;j!=SIZE_MAX;j=xml->nodes[j].next_sibling)
+      if(named(&xml->nodes[j],A,AS,"tc") && ++count>MAX_TABLE_DIMENSION)
+        return exr_fail(e,EXR_LIMIT,"PPTX table row cells exceed 200");
     row_nodes[rows]=i;
+    row_cells[rows]=count;
     if(!integer(exr_node_attribute(&xml->nodes[i],"h"),&height) || height<0) {
       height=0; d->table_grid_warning++;
     }
@@ -1499,10 +1505,7 @@ static exr_status table_read(pptx_document *d,pptx_slide *slide,const exr_docume
   multiply(parent,local,matrix);
   if(fabs(xs[cols]-size[0])>0.5/12700.0) d->table_grid_warning++;
   for(r=0;r<rows;r++) {
-    size_t count=0;
-    for(i=xml->nodes[row_nodes[r]].first_child;i!=SIZE_MAX;i=xml->nodes[i].next_sibling)
-      if(named(&xml->nodes[i],A,AS,"tc") && ++count>MAX_TABLE_DIMENSION)
-        return exr_fail(e,EXR_LIMIT,"PPTX table row cells exceed 200");
+    size_t count=row_cells[r];
     if(!count) { d->table_row_warning++; continue; }
     if(count!=cols) d->table_grid_warning++;
     c=0;

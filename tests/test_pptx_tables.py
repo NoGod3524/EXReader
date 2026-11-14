@@ -6,6 +6,7 @@ import ctypes as C
 from io import BytesIO
 from pathlib import Path
 import runpy
+import re
 import sys
 from zipfile import ZipFile
 
@@ -13,7 +14,7 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 from test_pptx_skeleton import Engine, Error
 from test_pptx_shapes import Raster, opened
-from test_pptx_text import bands, bounds, mask
+from test_pptx_text import bands, bounds, has_cjk_font, mask
 
 HERE = Path(__file__).resolve().parent / 'fixtures/pptx-tables'
 GEN = runpy.run_path(str(HERE / 'generate.py'))
@@ -21,19 +22,24 @@ cell, table, package, borders = (GEN[name] for name in ('cell', 'table', 'packag
 COLORS = [tuple(bytes.fromhex(rgb)) for rgb in GEN['COLORS']]
 PURPLE = tuple(bytes.fromhex(GEN['BORDER']))
 GROUPS = ('fills', 'borders', 'columns', 'text', 'merges', 'anchor', 'malformed',
-          'margins', 'overflow', 'transforms', 'limits', 'sink')
+          'margins', 'overflow', 'transforms', 'limits', 'sink', 'cjk', 'namespaces', 'invalid-spans')
 
 
 def fixture(name):
     return (HERE / f'{name}.pptx').read_bytes()
 
 
-def render(engine, data, warning='', scale=1):
+def render(engine, data, warning='', scale=1, fonts_only=False, allow_missing=False):
     document, error = C.c_void_p(), Error()
     status = engine.lib.exr_fixed_open_memory(11, data, len(data), None, C.byref(document), C.byref(error))
     message = error.message.decode('utf-8')
     assert status == error.code == 0, (status, message)
     assert warning.lower() in message.lower(), (warning, message)
+    if fonts_only and message:
+        # The engine labels per-codepoint fallback diagnostics 'missing glyph'.
+        outcome = '(?:fallback|missing)' if allow_missing else 'fallback'
+        assert re.fullmatch(r'PPTX warning: (?:font fallback=[^;]+; )?'
+                            r'(?:missing glyph: )?(?:[^;]+ U\+[0-9A-F]+ ' + outcome + r'; )*', message), message
     try:
         image = Raster(engine, document, scale)
     finally:
@@ -296,15 +302,93 @@ def run(engine, group):
         assert image.pixel(140, 120) == COLORS[0] and image.pixel(250, 120) == COLORS[1]
         assert image.pixel(119, 120) == image.pixel(320, 120) == (255, 255, 255)
         print('nested graphicFrame scale=0.5, offset=(100,80): table x=[120,320), fill landmarks=(140,120)/(250,120) pass')
+    elif group == 'cjk':
+        text = GEN['TEXT']
+        cjk = has_cjk_font()
+        paragraphs = text['paragraph'](text['run']('中文测试', 'sz="2800"',
+            '<a:latin typeface="Segoe UI"/><a:ea typeface="SimHei"/>'))
+        data = package(table([[cell('', paragraphs=paragraphs)]], columns=(320,), heights=[240]))
+        image = render(engine, data, '' if cjk else 'font fallback=', fonts_only=True, allow_missing=not cjk)
+        reference = render(engine, package(text['shape'](paragraphs, box=(40, 40, 320, 240),
+            body='anchor="t" lIns="91440" rIns="91440" tIns="91440" bIns="91440"')), fonts_only=True, allow_missing=not cjk)
+        assert image.data == reference.data
+        glyphs = mask(image)
+        assert glyphs
+        inside(bounds(glyphs), (40, 40, 360, 280))
+        if cjk:
+            # Compare four independent silhouettes, excluding repeated fallback boxes.
+            silhouettes = []
+            for index in range(4):
+                part = mask(image, (47 + index * 28, 40, 75 + index * 28, 280))
+                left, top, _, _ = bounds(part)
+                silhouettes.append(frozenset((x - left, y - top) for x, y in part))
+            assert len(set(silhouettes)) == 4
+            print(f'table CJK: four distinct glyph masks, pixels={len(glyphs)}, bbox={bounds(glyphs)}; exact M4 text-shape raster match')
+        else:
+            print(f'no CJK font on this host: table fallback warning verified, pixels={len(glyphs)}; exact M4 fallback raster match')
+    elif group == 'namespaces':
+        data = package(table([[cell('A', fill=GEN['COLORS'][0], lines=borders(), attrs='gridSpan="2"'),
+                               cell('SHOULD NOT DRAW', attrs='hMerge="true"')],
+                              [cell('B', lines=borders()), cell('C', lines=borders())]]))
+        reference = render(engine, data, fonts_only=True)
+        for label, replacements in (
+            ('arbitrary prefix', ((b'xmlns:a=', b'xmlns:d='), (b'<a:', b'<d:'), (b'</a:', b'</d:'),
+                                  (b'xmlns:p=', b'xmlns:pres='), (b'<p:', b'<pres:'), (b'</p:', b'</pres:'))),
+            ('strict namespace', ((GEN['A'].encode(), b'http://purl.oclc.org/ooxml/drawingml/main'),
+                                  (GEN['P'].encode(), b'http://purl.oclc.org/ooxml/presentationml/main'))),
+        ):
+            with ZipFile(BytesIO(data)) as source:
+                parts = {name: source.read(name) for name in source.namelist()}
+            for name, content in parts.items():
+                for old, new in replacements:
+                    content = content.replace(old, new)
+                parts[name] = content
+            image = render(engine, GEN['archive'](parts), fonts_only=True)
+            assert image.data == reference.data, label
+            print(f'table {label}: fill, border, merged placeholder and text pixels exactly match transitional reference')
+    elif group == 'invalid-spans':
+        for attribute in ('gridSpan', 'rowSpan'):
+            for value in ('', '0', '-1', 'bad', '+2', '9' * 256):
+                rows = [[cell(fill=GEN['COLORS'][0], lines=borders(), attrs=f'{attribute}="{value}"'), cell()],
+                        [cell(), cell()]]
+                image = render(engine, package(table(rows)), 'span')
+                rows[0][0] = cell(fill=GEN['COLORS'][0], lines=borders(),
+                    attrs=f'{attribute}="{2 if value.isdigit() and value[0] == "9" else 1}"')
+                reference = render(engine, package(table(rows)))
+                assert image.data == reference.data, (attribute, value)
+                print(f'{attribute}={value[:12]!r}{"... (256 digits)" if len(value) > 12 else ""}: status=0, span warning, exact {"clipped-to-boundary" if len(value) > 12 else "unit-span"} reference match')
     elif group == 'limits':
-        for label, xml in [('201 columns', table([[cell()] * 201], columns=[1] * 201)),
-                           ('201 rows', table([[cell()]] * 201, columns=[1], heights=[1] * 201)),
-                           ('201 tc', table([[cell()] * 201], columns=[1, 1]))]:
+        large = table([[cell()] * 201])
+        xfrm = large[large.index('<p:xfrm'):large.index('</p:xfrm>') + len('</p:xfrm>')]
+        off = xfrm[xfrm.index('<a:off'):xfrm.index('/>') + 2]
+        ext = xfrm[xfrm.index('<a:ext'):xfrm.index('/>', xfrm.index('<a:ext')) + 2]
+        geometries = [('missing xfrm', xfrm, ''), ('missing off', off, ''), ('missing ext', ext, ''),
+                      ('negative cx', ext, ext.replace('cx="4064000"', 'cx="-1"')),
+                      ('malformed cx', ext, ext.replace('cx="4064000"', 'cx="bad"')),
+                      ('zero cx', ext, ext.replace('cx="4064000"', 'cx="0"'))]
+        cases = [('201 columns', table([[cell()] * 201], columns=[1] * 201)),
+                 ('201 rows', table([[cell()]] * 201, columns=[1], heights=[1] * 201)),
+                 ('201 tc', large)]
+        cases += [(f'201 tc + {label}', large.replace(old, new)) for label, old, new in geometries]
+        for label, xml in cases:
             data = package(xml)
             document, error = C.c_void_p(), Error()
             status = engine.lib.exr_fixed_open_memory(11, data, len(data), None, C.byref(document), C.byref(error))
-            assert status == error.code == 6 and not document.value, (label, status, error.message)
+            try:
+                assert status == error.code == 6 and not document.value, (label, status, error.message)
+            finally:
+                if document.value:
+                    engine.lib.exr_fixed_free(document)
             print(f'{label}: status={status} EXR_LIMIT message={error.message.decode()!r}')
+        small = table([[cell(fill=GEN['COLORS'][0]), cell(fill=GEN['COLORS'][1])]])
+        for label, old, new in geometries:
+            image = render(engine, package(small.replace(old, new)), 'gridCol' if label == 'zero cx' else 'missing off/ext')
+            if label == 'zero cx':
+                assert image.pixel(100, 100) == COLORS[0] and image.pixel(280, 100) == COLORS[1]
+                print('2 tc + zero cx: status=0, width warning, gridCol geometry retained')
+            else:
+                assert not mask(image), label
+                print(f'2 tc + {label}: status=0, geometry warning, table skipped')
         image = render(engine, package(table([[cell(fill=GEN['COLORS'][0])] * 200] * 200,
                                             columns=[1] * 200, heights=[1] * 200)))
         assert image.pixel(100, 100) == COLORS[0]

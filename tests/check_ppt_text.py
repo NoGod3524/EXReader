@@ -88,15 +88,18 @@ def cf(count, *, size=18, font=0, color=0xFE000000, bold=False):
 
 def text_ppt(text='Hello', *, style=None, bytes_text=False, fonts=('Arial',), color=0xFE000000,
              font=0, alignment=0, raw_text=None, size=18, scheme=None,
-             environment_styles=b'', master_runs=None, outline=None, extra_shapes=b''):
+             environment_styles=b'', master_runs=None, outline=None,
+             master_styles=b'', placeholder=False, extra_shapes=b''):
     raw = raw_text if raw_text is not None else text.encode('latin-1' if bytes_text else 'utf-16le')
     count = len(raw) if bytes_text else len(raw) // 2
-    body = record(0xF9F, struct.pack('<I', 4)) + record(0xFA8 if bytes_text else 0xFA0, raw)
+    body = record(0xF9F, struct.pack('<I', 1 if placeholder else 4)) + record(0xFA8 if bytes_text else 0xFA0, raw)
     if style is not False:
         body += record(0xFA1, style if style is not None else pf(count + 1, alignment=alignment) + cf(count + 1, size=size, font=font, color=color))
     if master_runs is not None:
         body += record(0xFA2, master_runs)
     textbox = record(0xF00D, body if outline is None else record(0xF9E, struct.pack('<I', outline)), 15)
+    if placeholder:
+        textbox += record(0xF011, record(0xBC3, struct.pack('<iBBH', 0, 0x0E, 0, 0)), 15)
     margins = prop_table([(0x81, 127000), (0x82, 127000), (0x83, 127000), (0x84, 127000)])
     drawing = shape(box=(40, 40, 400, 300), fill=False, extra=margins + textbox)
     entities = b''.join(record(0xFB7, (name + '\0').encode('utf-16le').ljust(64, b'\0') + bytes(4) if name is not None else b'bad', instance=i)
@@ -110,7 +113,8 @@ def text_ppt(text='Hello', *, style=None, bytes_text=False, fonts=('Arial',), co
     slide = slide_record(drawing + extra_shapes)
     if scheme is not None:
         slide = record(0x3EE, slide[8:] + record(0x7F0, struct.pack('<8I', *scheme), instance=1), 15)
-    return compound(header + slide)
+    master = record(0x3F8, master_styles, 15) if master_styles else b''
+    return compound(header + master + slide)
 
 
 def main():
@@ -125,7 +129,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='exr-ppt-text-') as temp:
         source, output = Path(temp) / 'input.ppt', Path(temp) / 'output.ppm'
 
-        def render(case=None, data=None, scale=1, warning=None, memory=False):
+        def render(case=None, data=None, scale=1, warning=None, memory=False, fonts_only=False):
             nonlocal checks
             if case:
                 entry = fixtures[case]
@@ -143,6 +147,8 @@ def main():
             assert values['status'] == '0', result.stdout
             if warning:
                 assert 'warning' in values['message'].lower() and warning.lower() in values['message'].lower(), result.stdout
+            if fonts_only and values['message']:
+                assert re.fullmatch(r'PPT warning: (?:font fallback=[^;]+; )+', values['message']), result.stdout
             image = Pixels(output)
             checks += 1
             if values['message']:
@@ -311,6 +317,30 @@ def main():
             gaps = [rows[i + 1][0] - rows[i][0] for i in range(2)]
             assert all(abs(gap - 52) <= 2 for gap in gaps), (rows, gaps)
             print(f'COM exact lineSpacing=40pt + spaceAfter=12pt: visible-line gaps={gaps}px')
+            reference, _ = render(data=text_ppt('A\rB', size=48), scale=2, fonts_only=True)
+            rows = bands(reference)
+            assert len(rows) == 2, rows
+            advance = rows[1][0] - rows[0][0]
+            for text in ('A\r\rB', 'A\v\vB'):
+                image, _ = render(data=text_ppt(text, size=48), scale=2, fonts_only=True)
+                rows = bands(image)
+                assert len(rows) == 2, rows
+                gap = rows[1][0] - rows[0][0]
+                assert abs(gap - 2 * advance) <= 2, (repr(text), rows, advance)
+                print(f'48pt empty paragraph/soft line {text!r}: visible gap={gap}px, expected={2 * advance}px')
+            reference, _ = render(data=text_ppt('A', size=48), scale=2, fonts_only=True)
+            top = bounds(mask(reference))[1]
+            for text in ('\rA', '\vA'):
+                image, _ = render(data=text_ppt(text, size=48), scale=2, fonts_only=True)
+                offset = bounds(mask(image))[1] - top
+                assert abs(offset - advance) <= 2, (repr(text), offset, advance)
+                print(f'48pt leading empty paragraph/soft line {text!r}: top offset={offset}px, expected={advance}px')
+            for text in ('\r', '\v'):
+                count = len(text) + 1
+                underline = struct.pack('<IIHHHI', count, 0x70004, 4, 0, 48, 0xFE000000)
+                image, _ = render(data=text_ppt(text, style=pf(count) + underline), scale=2, fonts_only=True)
+                assert not mask(image), repr(text)
+                print(f'48pt underlined empty paragraph/soft lines {text!r}: ink_pixels=0')
         elif name == 'runs':
             image, _ = render('runs', scale=2)
             colors = ((255, 0, 0), (0, 170, 0), (0, 0, 255))
@@ -327,6 +357,21 @@ def main():
                 explicit, _ = render(data=text_ppt(size=size), scale=2)
                 assert actual.data == explicit.data, (level, stats(actual), stats(explicit))
                 print(f'Environment Other MasterTextProp level{level} -> {size}pt: exact explicit-style raster match')
+            # A missing MainMaster property inherits its matching Environment
+            # level, including when the preceding master level overrides it.
+            environment = record(0xFA3, struct.pack('<H', 2) + b''.join(
+                pf(0, alignment=align)[6:] + cf(0, size=size)[4:]
+                for size, align in ((12, 0), (48, 2))), instance=4)
+            for first_size in (None, 36):
+                first_cf = struct.pack('<I', 0) if first_size is None else struct.pack('<IH', 0x20000, first_size)
+                master = record(0xFA3, struct.pack('<H', 2) + struct.pack('<I', 0) + first_cf + bytes(8), instance=1)
+                for level, size, align in ((0, first_size or 12, 0), (1, 48, 2)):
+                    actual, _ = render(data=text_ppt(style=False, environment_styles=environment,
+                        master_styles=master, placeholder=True, master_runs=struct.pack('<IH', 6, level)), scale=2, fonts_only=True)
+                    explicit, _ = render(data=text_ppt(size=size, alignment=align), scale=2, fonts_only=True)
+                    assert actual.data == explicit.data, (first_size, level, stats(actual), stats(explicit))
+                    print(f'MainMaster level{level}, prior-level size={first_size}: matching Environment inheritance '
+                          f'-> {size}pt/alignment{align}, exact explicit-style raster match')
         elif name == 'outline':
             for text, size in (('Hello', 24), ('中文测试', 28)):
                 actual, _ = render(data=text_ppt(text, size=size, outline=0), scale=2)
