@@ -1,0 +1,24 @@
+twenty.pptx open status=0 code=0 warning=''
+twenty.pptx slides engine=20 python-pptx=20 manifest=20 warnings=ok
+twenty.pptx#1 coverage=ok color=12/12 text=ok
+twenty.pptx#2 coverage=ok color=12/12 text=ok
+twenty.pptx#3 coverage=ok color=12/12 text=ok
+twenty.pptx#4 coverage=ok color=12/12 text=ok
+twenty.pptx#5 coverage=ok color=12/12 text=ok
+twenty.pptx#6 coverage=ok color=12/12 text=ok
+twenty.pptx#7 coverage=ok color=12/12 text=ok
+twenty.pptx#8 coverage=ok color=12/12 text=ok
+twenty.pptx#9 coverage=ok color=12/12 text=ok
+twenty.pptx#10 coverage=ok color=12/12 text=ok
+twenty.pptx#11 coverage=ok color=12/12 text=ok
+twenty.pptx#12 coverage=ok color=12/12 text=ok
+twenty.pptx#13 coverage=ok color=12/12 text=ok
+twenty.pptx#14 coverage=ok color=12/12 text=ok
+twenty.pptx#15 coverage=ok color=12/12 text=ok
+twenty.pptx#16 coverage=ok color=12/12 text=ok
+twenty.pptx#17 coverage=ok color=12/12 text=ok
+twenty.pptx#18 coverage=ok color=12/12 text=ok
+twenty.pptx#19 coverage=ok color=12/12 text=ok
+twenty.pptx#20 coverage=ok color=12/12 text=ok
+twenty.pptx render samples=100 median=19.303ms max=32.368ms median-limit=30.75ms ratio=0.942 max-limit=200ms
+MATRIX files=1 passed=1 failed=0

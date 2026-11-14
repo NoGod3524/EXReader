@@ -40,8 +40,16 @@ def repack(data, changes):
 
 
 def render(engine, data, warning=''):
-    with opened(engine, data, warning=warning) as doc:
+    doc, error = C.c_void_p(), Error()
+    status = engine.lib.exr_fixed_open_memory(11, data, len(data), None, C.byref(doc), C.byref(error))
+    message = error.message.decode('utf-8')
+    assert status == error.code == 0 and doc.value, (status, error.code, message)
+    # These fill fixtures contain no text, so every unrequested warning fails.
+    assert warning.lower() in message.lower() if warning else not message, message
+    try:
         return Raster(engine, doc)
+    finally:
+        engine.lib.exr_fixed_free(doc)
 
 
 def slide_replace(data, old, new):
@@ -380,6 +388,88 @@ def run(engine, group):
             image = render(engine, slide_replace(fixture('alpha'), b'val="50000"', f'val="{value}"'.encode()), 'alpha')
             assert image.pixel(100, 80) == (255, 0, 0)
             print(f'alpha={value}: RGB={image.pixel(100, 80)}, opaque fallback + warning')
+    elif group == 'background-solid':
+        image = render(engine, fixture(group))
+        points = ((0, 0), (719, 0), (0, 539), (719, 539), (360, 270))
+        samples = [(point, image.pixel(*point)) for point in points]
+        assert all(rgb == (18, 52, 86) for _, rgb in samples), samples
+        assert image.pixel(100, 80) == (0, 255, 0)
+        print(f'p:bg solid #123456: {samples}; foreground (100,80)={image.pixel(100, 80)}')
+    elif group == 'background-gradient':
+        data = fixture(group)
+        image = render(engine, data)
+        xs = (0, 180, 360, 540, 719)
+        samples = [(x, image.pixel(x, 270)) for x in xs]
+        for x, actual in samples:
+            t = (x + .5) / 720
+            near(actual, (round(255 * (1 - t)), 0, round(255 * t)))
+        print(f'p:bg gradient red -> blue angle=0: y=270, {samples}')
+        for angle in (0, 45, 90, 180, 270):
+            background = render(engine, slide_replace(data, b'ang="0"', f'ang="{angle * 60000}"'.encode()))
+            shape = GENERATE['shape'](GENERATE['gradient'](angle=angle * 60000), (0, 0, 720, 540))
+            reference = render(engine, GENERATE['package'](shape))
+            assert background.data == reference.data, f'background/shape gradient angle={angle}'
+            print(f'p:bg gradient angle={angle}: exact full-slide shape raster match')
+    elif group == 'background-image':
+        image = render(engine, fixture(group))
+        points = ((0, 0), (180, 270), (539, 270), (719, 539))
+        samples = [(point, image.pixel(*point)) for point in points]
+        assert [rgb for _, rgb in samples] == [(255, 0, 0), (255, 0, 0), (0, 0, 255), (0, 0, 255)], samples
+        print(f'p:bg blipFill 100x50 stretched to 720x540: {samples}')
+    elif group == 'background-theme':
+        image = render(engine, fixture(group))
+        points = ((0, 0), (360, 270), (719, 539))
+        samples = [(point, image.pixel(*point)) for point in points]
+        assert all(rgb == (194, 58, 85) for _, rgb in samples), samples
+        print(f'p:bgRef idx=1002 -> second bgFillStyleLst phClr -> accent2 #C23A55: {samples}')
+        changed_ref = slide_replace(fixture(group), b'val="accent2"', b'val="accent3"')
+        changed_image = render(engine, changed_ref)
+        assert changed_image.pixel(360, 270) == (53, 121, 189)
+        print(f'p:bgRef schemeClr accent3: RGB={changed_image.pixel(360, 270)}')
+        first = render(engine, slide_replace(fixture(group), b'idx="1002"', b'idx="1001"'))
+        assert first.pixel(360, 270) == (255, 0, 0)
+        print(f'p:bgRef idx=1001 -> first bgFillStyleLst entry: RGB={first.pixel(360, 270)}')
+        gradient = render(engine, slide_replace(fixture(group), b'idx="1002"', b'idx="1003"'))
+        direct = GENERATE['background'](GENERATE['gradient'](((0, THEME['accent2']), (100000, '0000FF'))))
+        assert gradient.data == render(engine, GENERATE['package']('', background=direct)).data
+        print(f'p:bgRef idx=1003 -> gradient phClr=accent2: RGB(360,270)={gradient.pixel(360, 270)}, exact direct-gradient match')
+        for index in (0, 1000):
+            render(engine, slide_replace(fixture(group), b'idx="1002"', f'idx="{index}"'.encode())).blank()
+            print(f'p:bgRef idx={index}: no background, all pixels white and no warning')
+    elif group == 'background-inheritance':
+        data = fixture('background-master')
+        image = render(engine, data)
+        points = ((0, 0), (360, 270), (719, 539))
+        samples = [(point, image.pixel(*point)) for point in points]
+        assert all(rgb == (91, 36, 109) for _, rgb in samples), samples
+        print(f'absent slide p:bg -> master #5B246D: {samples}')
+        white = GENERATE['background']('<a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>')
+        overridden = slide_replace(data, b'<p:cSld>', f'<p:cSld>{white}'.encode())
+        render(engine, overridden).blank()
+        print('explicit white slide p:bg overrides master background: all pixels white')
+        layout = 'ppt/slideLayouts/slideLayout1.xml'
+        with ZipFile(BytesIO(data)) as source:
+            layout_xml = source.read(layout)
+        layout_fill = GENERATE['background']('<a:solidFill><a:srgbClr val="00FFFF"/></a:solidFill>')
+        layout_xml = layout_xml.replace(b'<p:cSld>', f'<p:cSld xmlns:a="{A}">{layout_fill}'.encode())
+        image = render(engine, repack(data, {layout: layout_xml}))
+        assert image.pixel(360, 270) == (0, 255, 255)
+        render(engine, repack(overridden, {layout: layout_xml})).blank()
+        print('layout cyan background overrides master; explicit slide white overrides layout')
+        master = 'ppt/slideMasters/slideMaster1.xml'
+        master_rels = 'ppt/slideMasters/_rels/slideMaster1.xml.rels'
+        with ZipFile(BytesIO(data)) as source:
+            xml, rels = source.read(master), source.read(master_rels)
+        fill = GENERATE['background']('<a:blipFill><a:blip r:embed="masterImage"/><a:stretch><a:fillRect/></a:stretch></a:blipFill>')
+        begin, end = xml.index(b'<p:bg>'), xml.index(b'</p:bg>') + len(b'</p:bg>')
+        inherited = repack(data, {master: xml[:begin] + fill.encode() + xml[end:],
+                                 master_rels: rels.replace(b'Id="img1"', b'Id="masterImage"'),
+                                 MEDIA: GENERATE['png'](8, 8, lambda x, y: (37, 158, 213))})
+        image = render(engine, inherited)
+        assert all(image.pixel(*point) == (37, 158, 213) for point in points)
+        print(f'master blipFill resolves relationship on master part: RGB={image.pixel(360, 270)}')
+        render(engine, GENERATE['package']('')).blank()
+        print('absent slide and master p:bg: all pixels white')
     else:
         raise AssertionError(group)
 

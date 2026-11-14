@@ -381,6 +381,39 @@ def run(engine, group):
         reference, _ = render(engine, text_data(attributes='sz="1800"'), 2)
         assert image.data == reference.data
         print(f'nonexistent font rendered via fallback: {stats(image)}, warning={warning!r}')
+        # Each target slot is the generic installed family; the other five
+        # slots deliberately name absent fonts so a wrong lookup cannot pass.
+        def themed(data, selected_group, selected_script, family='sans-serif'):
+            scheme = '<a:fontScheme name="M6b">'
+            for role in ('majorFont', 'minorFont'):
+                scheme += f'<a:{role}>'
+                for script in ('latin', 'ea', 'cs'):
+                    name = family if (role, script) == (selected_group, selected_script) else f'M6b Missing {role} {script}'
+                    scheme += f'<a:{script} typeface="{name}"/>'
+                scheme += f'</a:{role}>'
+            scheme += '</a:fontScheme>'
+            return replace(data, b'</a:clrScheme>', b'</a:clrScheme>'+scheme.encode(), 'ppt/theme/theme1.xml')
+        explicit, explicit_warning = render(engine, text_data(properties='<a:latin typeface="sans-serif"/>'), 2)
+        assert not explicit_warning, explicit_warning
+        for prefix, role in (('mj', 'majorFont'), ('mn', 'minorFont')):
+            for suffix, script in (('lt', 'latin'), ('ea', 'ea'), ('cs', 'cs')):
+                symbol = f'+{prefix}-{suffix}'
+                data = themed(text_data(properties=f'<a:latin typeface="{symbol}"/>'), role, script)
+                actual, warning = render(engine, data, 2)
+                assert actual.data == explicit.data and not warning, (symbol, warning)
+                print(f'theme {symbol} -> {role}/{script}=sans-serif: exact explicit-family raster, no warning')
+        for text, script, suffix in (('中文', 'ea', 'ea'), ('אב', 'cs', 'cs')):
+            data = themed(text_data(text, properties=f'<a:{script} typeface="+mn-{suffix}"/>'), 'minorFont', script)
+            actual, warning = render(engine, data, 2)
+            expected, expected_warning = render(engine, text_data(text, properties=f'<a:{script} typeface="sans-serif"/>'), 2)
+            assert actual.data == expected.data and warning == expected_warning, (script, warning, expected_warning)
+            assert 'font fallback=+' not in warning, warning
+            print(f'theme {script} script selection: exact explicit-family raster and diagnostics')
+        data = themed(text_data(properties='<a:latin typeface="+mn-lt"/>'), 'minorFont', 'latin', 'M6b Missing Theme Font')
+        actual, warning = render(engine, data, 2, 'M6b Missing Theme Font')
+        assert actual.data == render(engine, text_data(), 2)[0].data
+        assert '+mn-lt' not in warning, warning
+        print('uninstalled resolved theme typeface retains the ordinary font-fallback warning')
     elif group == 'invalid-utf8':
         image, _ = render(engine, fixture('invalid-utf8'), 2, 'UTF-8')
         expected, _ = render(engine, text_data('Good'), 2)

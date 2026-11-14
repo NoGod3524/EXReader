@@ -1,0 +1,3777 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="551"
+	failures="4"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="146"
+	timestamp="2026-11-14T11:25:02"
+	>
+	<testcase name="native-pptx-empty" classname="native-pptx-empty" time="0.352927" status="run">
+		<properties/>
+		<system-out>file: status=0 message=''
+memory: status=0 message=''
+empty: engine=0 python-pptx=0
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-title" classname="native-pptx-title" time="0.314702" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=2; '
+memory: status=0 message='PPTX warning: missing off/ext=2; '
+title: engine=1 python-pptx=1
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-layouts" classname="native-pptx-layouts" time="0.556276" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+layouts: engine=5 python-pptx=5
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-wide" classname="native-pptx-wide" time="0.450886" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=2; '
+memory: status=0 message='PPTX warning: missing off/ext=2; '
+wide: engine=1 python-pptx=1
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-standard" classname="native-pptx-standard" time="0.339309" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=2; '
+memory: status=0 message='PPTX warning: missing off/ext=2; '
+standard: engine=1 python-pptx=1
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-twenty" classname="native-pptx-twenty" time="1.47606" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=40; '
+memory: status=0 message='PPTX warning: missing off/ext=40; '
+twenty: engine=20 python-pptx=20
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-errors" classname="native-pptx-errors" time="0.376502" status="run">
+		<properties/>
+		<system-out>file: status=5 message='Invalid or truncated PPTX/ZIP container'
+memory: status=5 message='Invalid or truncated PPTX/ZIP container'
+file: status=5 message='PPTX part missing: ppt/presentation.xml'
+memory: status=5 message='PPTX part missing: ppt/presentation.xml'
+file: status=5 message='Invalid PPTX XML part: ppt/presentation.xml'
+memory: status=5 message='Invalid PPTX XML part: ppt/presentation.xml'
+file: status=5 message='PPTX presentation content type missing in [Content_Types].xml'
+memory: status=5 message='PPTX presentation content type missing in [Content_Types].xml'
+file: status=5 message='Duplicate PPTX relationship ID: rId2'
+memory: status=5 message='Duplicate PPTX relationship ID: rId2'
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-defaults" classname="native-pptx-defaults" time="1.5566" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-missing" classname="native-pptx-missing" time="0.64725" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: skipped 1 slide reference(s) with missing or invalid parts; missing off/ext=12; '
+memory: status=0 message='PPTX warning: skipped 1 slide reference(s) with missing or invalid parts; missing off/ext=12; '
+file: status=0 message='PPTX warning: skipped 5 slide reference(s) with missing or invalid parts; '
+memory: status=0 message='PPTX warning: skipped 5 slide reference(s) with missing or invalid parts; '
+file: status=0 message='PPTX warning: skipped 2 slide reference(s) with missing or invalid parts; missing off/ext=10; '
+memory: status=0 message='PPTX warning: skipped 2 slide reference(s) with missing or invalid parts; missing off/ext=10; '
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-order" classname="native-pptx-order" time="1.58437" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+file: status=0 message='PPTX warning: skipped 1 slide reference(s) with missing or invalid parts; missing off/ext=12; '
+memory: status=0 message='PPTX warning: skipped 1 slide reference(s) with missing or invalid parts; missing off/ext=12; '
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-detection" classname="native-pptx-detection" time="1.13426" status="run">
+		<properties/>
+		<system-out>file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+file: status=0 message='PPTX warning: missing off/ext=14; '
+memory: status=0 message='PPTX warning: missing off/ext=14; '
+file: status=5 message='PPTX presentation content type missing in [Content_Types].xml'
+memory: status=5 message='PPTX presentation content type missing in [Content_Types].xml'
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-limit" classname="native-pptx-limit" time="0.362771" status="run">
+		<properties/>
+		<system-out>file: status=6 message='ZIP member exceeds 128 MiB: [Content_Types].xml'
+memory: status=6 message='ZIP member exceeds 128 MiB: [Content_Types].xml'
+file: status=6 message='ZIP member exceeds 128 MiB: ppt/slides/slide1.xml'
+memory: status=6 message='ZIP member exceeds 128 MiB: ppt/slides/slide1.xml'
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-rect" classname="native-pptx-shape-rect" time="0.608158" status="run">
+		<properties/>
+		<system-out>RGB=FF0000 checked_pixels=8704 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 144.0, 72.0] render_bbox=(72, 72, 216, 144) position_error=0.0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-circle" classname="native-pptx-shape-circle" time="0.677477" status="run">
+		<properties/>
+		<system-out>RGB=00CC44 checked_pixels=11772 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 144.0, 144.0] render_bbox=(72, 72, 216, 216) position_error=0.0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-roundrect" classname="native-pptx-shape-roundrect" time="0.507009" status="run">
+		<properties/>
+		<system-out>RGB=3366CC checked_pixels=10520 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 180.0, 90.0] render_bbox=(72, 72, 252, 162) position_error=0.0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-triangle" classname="native-pptx-shape-triangle" time="0.524561" status="run">
+		<properties/>
+		<system-out>RGB=FF9900 checked_pixels=5766 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 144.0, 108.0] render_bbox=(72, 72, 216, 180) position_error=0.0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-group" classname="native-pptx-shape-group" time="0.541249" status="run">
+		<properties/>
+		<system-out>RGB=FF0000 checked_pixels=8704 max_channel_delta=0 python-pptx_xywh=[180.0, 108.0, 144.0, 72.0] render_bbox=(180, 108, 324, 180) position_error=0.0px
+RGB=0066FF checked_pixels=17056 max_channel_delta=0 python-pptx_xywh=[396.0, 216.0, 216.0, 90.0] render_bbox=(396, 216, 612, 306) position_error=0.0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-standard" classname="native-pptx-shape-standard" time="0.467624" status="run">
+		<properties/>
+		<system-out>RGB=CC33AA checked_pixels=14104 max_channel_delta=0 python-pptx_xywh=[72.0, 108.0, 180.0, 90.0] render_bbox=(72, 108, 252, 198) position_error=0.0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-rotation" classname="native-pptx-shape-rotation" time="2.46248" status="run">
+		<properties/>
+		<system-out>rotation=90 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+rotation=180 bbox=(72, 72, 216, 144) expected_xywh=(72, 72, 144, 72) error=0px
+rotation=270 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+rotation=450 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+rotation=-90 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+open status=0 message='PPTX warning: ignored rotation=1; '
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-zero-extent" classname="native-pptx-shape-zero-extent" time="1.14351" status="run">
+		<properties/>
+		<system-out>open status=0 message='PPTX warning: chExt=0 (1:1)=1; '
+chExt cx=0: bbox=(180, 108, 252, 180) expected_xywh=(180, 108, 72, 72) error=0px
+chExt cx=0: bbox=(288, 216, 396, 306) expected_xywh=(288, 216, 108, 90) error=0px
+open status=0 message='PPTX warning: chExt=0 (1:1)=1; '
+chExt cy=0: bbox=(180, 108, 324, 156) expected_xywh=(180, 108, 144, 48) error=0px
+chExt cy=0: bbox=(396, 180, 612, 240) expected_xywh=(396, 180, 216, 60) error=0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-group-transforms" classname="native-pptx-shape-group-transforms" time="2.25865" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>group flipH: bbox=(468, 108, 612, 180) expected_xywh=(468, 108, 144, 72) error=0px
+group flipH: bbox=(180, 216, 396, 306) expected_xywh=(180, 216, 216, 90) error=0px
+group flipV: bbox=(180, 234, 324, 306) expected_xywh=(180, 234, 144, 72) error=0px
+group flipV: bbox=(396, 108, 612, 198) expected_xywh=(396, 108, 216, 90) error=0px
+group rotation90: bbox=(423, 99, 495, 243) expected_xywh=(423, 99, 72, 144) error=0px
+group rotation90: bbox=(297, 315, 387, 531) expected_xywh=(297, 315, 90, 216) error=0px
+nested groups: bbox=(126, 78, 198, 114) expected_xywh=(126, 78, 72, 36) error=0px
+nested groups: bbox=(234, 132, 342, 177) expected_xywh=(234, 132, 108, 45) error=0px
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_pptx_shapes.py", line 428, in &lt;module&gt;
+    run(Engine(args.library.resolve()), args.group)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_pptx_shapes.py", line 286, in run
+    check_draw_contract(engine)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_pptx_shapes.py", line 204, in check_draw_contract
+    assert len(records) == 2
+           ^^^^^^^^^^^^^^^^^
+AssertionError
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-flips" classname="native-pptx-shape-flips" time="2.39801" status="run">
+		<properties/>
+		<system-out>triangle flipH=False flipV=False: orientation pixels pass
+triangle flipH=False flipV=True: orientation pixels pass
+triangle flipH=True flipV=False: orientation pixels pass
+triangle flipH=True flipV=True: orientation pixels pass
+triangle flipH then rotate90: bbox=(90, 54, 198, 198) error=0px; orientation pixels pass
+line flipH=False: diagonal pixels pass
+line flipH=True: diagonal pixels pass
+zero-height connector: bbox=(72, 69, 216, 75) error=0px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-colors-lines" classname="native-pptx-shape-colors-lines" time="2.61016" status="run">
+		<properties/>
+		<system-out>schemeClr accent1: RGB=(79, 129, 189)
+schemeClr dk1: RGB=(0, 0, 0)
+schemeClr lt1: RGB=(255, 255, 255)
+schemeClr accent6: RGB=(247, 150, 70)
+open status=0 message='PPTX warning: invalid color=1; '
+open status=0 message='PPTX warning: invalid color=1; '
+open status=0 message='PPTX warning: invalid color=1; '
+open status=0 message='PPTX warning: invalid color=1; '
+6pt blue border: bbox=(69, 69, 219, 147), interior RGB=(255, 0, 0)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-fallback" classname="native-pptx-shape-fallback" time="1.07621" status="run">
+		<properties/>
+		<system-out>open status=0 message='PPTX warning: rect fallback=pentagon,hexagon'
+open status=0 message='PPTX warning: rect fallback=pentagon,hexagon'
+fallback prstGeom values: pentagon, hexagon -&gt; rectangles
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-missing" classname="native-pptx-shape-missing" time="0.625932" status="run">
+		<properties/>
+		<system-out>open status=0 message='PPTX warning: missing off/ext=1; '
+open status=0 message='PPTX warning: missing off/ext=1; '
+open status=0 message='PPTX warning: skipped pic/graphicFrame=2; '
+missing off/ext: skipped; absent spTree: blank
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-shape-limits" classname="native-pptx-shape-limits" time="1.51344" status="run">
+		<properties/>
+		<system-out>open status=6 message='PPTX shapes exceed 10000 on slide 1'
+open status=0 message='PPTX warning: depth&gt;16=1; '
+10001 shapes: EXR_LIMIT; group depth 16: rendered; depth 17: warning + blank
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-image" classname="native-pptx-fill-image" time="0.414496" status="run">
+		<properties/>
+		<system-out>PNG 120x80: interior RGB=(0, 255, 0), max channel error=0
+image ellipse: clipped white corner, green center
+absent stretch/tile: default stretch
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-stretch" classname="native-pptx-fill-stretch" time="0.502479" status="run">
+		<properties/>
+		<system-out>PNG 100x50 -&gt; 400x50: five samples=[(41, (0, 255, 0)), (139, (0, 255, 0)), (239, (0, 255, 0)), (339, (0, 255, 0)), (438, (0, 255, 0))]
+stretch stripe landmarks and horizontal flip: pass
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-tile" classname="native-pptx-fill-tile" time="0.493626" status="run">
+		<properties/>
+		<system-out>40px tile at 96dpi, period=30pt: [(45, (255, 0, 0)), (60, (0, 0, 255)), (75, (255, 0, 0)), (90, (0, 0, 255)), (105, (255, 0, 0)), (120, (0, 0, 255)), (255, (255, 0, 0)), (270, (0, 0, 255))]
+unsupported tile tx="12700": stretch fallback
+unsupported tile sx="50000": stretch fallback
+unsupported tile flip="x": stretch fallback
+unsupported tile algn="ctr": stretch fallback
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-image-fallback" classname="native-pptx-fill-image-fallback" time="0.538127" status="run">
+		<properties/>
+		<system-out>missing part: status=0, fill RGB=(204, 204, 204), warning present
+decode failure: status=0, fill RGB=(204, 204, 204), warning present
+missing relationship: status=0, fill RGB=(204, 204, 204), warning present
+external target: status=0, fill RGB=(204, 204, 204), warning present
+unsafe path: status=0, fill RGB=(204, 204, 204), warning present
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-relative-path" classname="native-pptx-fill-relative-path" time="0.380674" status="run">
+		<properties/>
+		<system-out>part ppt/custom/slides/page.xml, target=../../../assets/green.png: RGB=(0, 255, 0)
+part ppt/custom/slides/page.xml, target=/assets/green.png: RGB=(0, 255, 0)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-formats" classname="native-pptx-fill-formats" time="0.525455" status="run">
+		<properties/>
+		<system-out>BMP through shared decoder: RGB=(220, 30, 40)
+GIF through shared decoder: RGB=(220, 30, 40)
+JPEG through shared decoder: RGB=(64, 64, 64)
+JPEG quadrant orientation: red/green top, blue bottom-left
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-picture" classname="native-pptx-fill-picture" time="0.46688" status="run">
+		<properties/>
+		<system-out>p:pic/p:blipFill: RGB=(0, 255, 0)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-fill-transforms" classname="native-pptx-fill-fill-transforms" time="0.467862" status="run">
+		<properties/>
+		<system-out>image rotate90: red top, blue bottom; width=50 height=400
+image nested group scale0.5 + offset100,80: point=(150, 120), RGB=(0, 255, 0)
+gradient nested group scale0.5 + offset100,80: point=(220, 120), RGB=(127, 0, 128)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-sink" classname="native-pptx-fill-sink" time="0.509081" status="run">
+		<properties/>
+		<system-out>image sink: events=['save', 'clip', 'image', 'restore'], image dimensions/matrix/alpha=((100, 50), (800.0, 0.0, 0.0, 150.0, 91.0, 133.0), 1.0)
+save sink failure: propagated, events=['save']
+clip sink failure: propagated, events=['save', 'clip', 'restore']
+image sink failure: propagated, events=['save', 'clip', 'image', 'restore']
+restore sink failure: propagated, events=['save', 'clip', 'image', 'restore']
+tile cancellation after first image: status=9, events=['save', 'clip', 'image', 'restore']
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-gradient" classname="native-pptx-fill-gradient" time="0.322802" status="run">
+		<properties/>
+		<system-out>red -&gt; blue angle=0, nine x=(40, 90, 140, 190, 240, 290, 340, 390, 439): RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (64, 0, 192), (32, 0, 224), (0, 0, 255)]; monotone=True
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-gradient-angles" classname="native-pptx-fill-gradient-angles" time="0.399053" status="run">
+		<properties/>
+		<system-out>gradient angle=90: points=((240, 40), (240, 119)), RGB=[(254, 0, 2), (2, 0, 254)]
+gradient angle=180: points=((439, 80), (40, 80)), RGB=[(255, 0, 0), (0, 0, 255)]
+gradient angle=270: points=((240, 119), (240, 40)), RGB=[(254, 0, 2), (2, 0, 254)]
+gradient angle=45: points=((40, 40), (439, 119)), RGB=[(254, 0, 1), (1, 0, 254)]
+gradient rotated shape: top red, bottom blue
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-gradient-stops" classname="native-pptx-fill-gradient-stops" time="0.342971" status="run">
+		<properties/>
+		<system-out>nonuniform stops 0/25000/100000: [(40, (254, 2, 0)), (90, (126, 129, 0)), (140, (0, 255, 1)), (290, (0, 127, 128)), (439, (0, 1, 255))]
+gradient alpha=50% endpoints: (255, 127, 127), (127, 127, 255)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-gradient-fallback" classname="native-pptx-fill-gradient-fallback" time="0.417303" status="run">
+		<properties/>
+		<system-out>gradient stops=1: solid RGB=(55, 162, 92), warning present
+gradient stops=0: solid RGB=(0, 0, 0), warning present
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-theme" classname="native-pptx-fill-theme" time="0.340484" status="run">
+		<properties/>
+		<system-out>schemeClr dk1      -&gt; #102030 -&gt; RGB=(16, 32, 48)
+schemeClr lt1      -&gt; #F1F2F3 -&gt; RGB=(241, 242, 243)
+schemeClr dk2      -&gt; #203040 -&gt; RGB=(32, 48, 64)
+schemeClr lt2      -&gt; #D1D2D3 -&gt; RGB=(209, 210, 211)
+schemeClr accent1  -&gt; #12A65B -&gt; RGB=(18, 166, 91)
+schemeClr accent2  -&gt; #C23A55 -&gt; RGB=(194, 58, 85)
+schemeClr accent3  -&gt; #3579BD -&gt; RGB=(53, 121, 189)
+schemeClr accent4  -&gt; #A05BCA -&gt; RGB=(160, 91, 202)
+schemeClr accent5  -&gt; #29ADC5 -&gt; RGB=(41, 173, 197)
+schemeClr accent6  -&gt; #E5A336 -&gt; RGB=(229, 163, 54)
+schemeClr hlink    -&gt; #2255DD -&gt; RGB=(34, 85, 221)
+schemeClr folHlink -&gt; #8844AA -&gt; RGB=(136, 68, 170)
+schemeClr tx1      -&gt; #102030 -&gt; RGB=(16, 32, 48)
+schemeClr bg1      -&gt; #F1F2F3 -&gt; RGB=(241, 242, 243)
+schemeClr tx2      -&gt; #203040 -&gt; RGB=(32, 48, 64)
+schemeClr bg2      -&gt; #D1D2D3 -&gt; RGB=(209, 210, 211)
+theme sysClr lastClr: RGB=(16, 32, 48)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-theme-default" classname="native-pptx-fill-theme-default" time="0.362279" status="run">
+		<properties/>
+		<system-out>theme1.xml missing: builtin accent1 RGB=(79, 129, 189), warning present
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-color-transforms" classname="native-pptx-fill-color-transforms" time="0.487151" status="run">
+		<properties/>
+		<system-out>HSL transforms [('lumMod', 50000), ('lumOff', 20000), ('tint', 25000), ('shade', 80000)]: RGB=(106, 239, 172), oracle=(106, 239, 172)
+HSL transforms [('shade', 80000), ('tint', 25000), ('lumOff', 20000), ('lumMod', 50000)]: RGB=(25, 230, 126), oracle=(25, 230, 126)
+tint=0: RGB=(255, 255, 255)
+tint=100000: RGB=(18, 166, 91)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-alpha" classname="native-pptx-fill-alpha" time="0.408585" status="run">
+		<properties/>
+		<system-out>alpha=50000 red over white: RGB=(255, 127, 127)
+alpha=50000 red over blue: RGB=(128, 0, 127)
+alpha=0: white background visible
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-alpha-invalid" classname="native-pptx-fill-alpha-invalid" time="0.317988" status="run">
+		<properties/>
+		<system-out>alpha=100001: RGB=(255, 0, 0), opaque fallback + warning
+alpha=200000: RGB=(255, 0, 0), opaque fallback + warning
+alpha=-1: RGB=(255, 0, 0), opaque fallback + warning
+alpha=bad: RGB=(255, 0, 0), opaque fallback + warning
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-background-solid" classname="native-pptx-fill-background-solid" time="0.305551" status="run">
+		<properties/>
+		<system-out>p:bg solid #123456: [((0, 0), (18, 52, 86)), ((719, 0), (18, 52, 86)), ((0, 539), (18, 52, 86)), ((719, 539), (18, 52, 86)), ((360, 270), (18, 52, 86))]; foreground (100,80)=(0, 255, 0)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-background-gradient" classname="native-pptx-fill-background-gradient" time="1.0431" status="run">
+		<properties/>
+		<system-out>p:bg gradient red -&gt; blue angle=0: y=270, [(0, (255, 0, 0)), (180, (191, 0, 64)), (360, (127, 0, 128)), (540, (64, 0, 191)), (719, (0, 0, 255))]
+p:bg gradient angle=0: exact full-slide shape raster match
+p:bg gradient angle=45: exact full-slide shape raster match
+p:bg gradient angle=90: exact full-slide shape raster match
+p:bg gradient angle=180: exact full-slide shape raster match
+p:bg gradient angle=270: exact full-slide shape raster match
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-background-image" classname="native-pptx-fill-background-image" time="0.367025" status="run">
+		<properties/>
+		<system-out>p:bg blipFill 100x50 stretched to 720x540: [((0, 0), (255, 0, 0)), ((180, 270), (255, 0, 0)), ((539, 270), (0, 0, 255)), ((719, 539), (0, 0, 255))]
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-background-theme" classname="native-pptx-fill-background-theme" time="0.617261" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>p:bgRef idx=1002 -&gt; second bgFillStyleLst phClr -&gt; accent2 #C23A55: [((0, 0), (194, 58, 85)), ((360, 270), (194, 58, 85)), ((719, 539), (194, 58, 85))]
+p:bgRef schemeClr accent3: RGB=(53, 121, 189)
+p:bgRef idx=1001 -&gt; first bgFillStyleLst entry: RGB=(255, 0, 0)
+p:bgRef idx=1003 -&gt; gradient phClr=accent2: RGB(360,270)=(97, 29, 170), exact direct-gradient match
+p:bgRef idx=0: no background, all pixels white and no warning
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_pptx_fills.py", line 482, in &lt;module&gt;
+    run(Engine(args.library.resolve()), args.group)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_pptx_fills.py", line 437, in run
+    render(engine, slide_replace(fixture(group), b'idx="1002"', f'idx="{index}"'.encode())).blank()
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_pptx_fills.py", line 48, in render
+    assert warning.lower() in message.lower() if warning else not message, message
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PPTX warning: invalid color=1; 
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-background-inheritance" classname="native-pptx-fill-background-inheritance" time="0.448057" status="run">
+		<properties/>
+		<system-out>absent slide p:bg -&gt; master #5B246D: [((0, 0), (91, 36, 109)), ((360, 270), (91, 36, 109)), ((719, 539), (91, 36, 109))]
+explicit white slide p:bg overrides master background: all pixels white
+layout cyan background overrides master; explicit slide white overrides layout
+master blipFill resolves relationship on master part: RGB=(37, 158, 213)
+absent slide and master p:bg: all pixels white
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-fill-reproducible" classname="native-pptx-fill-reproducible" time="0.412372" status="run">
+		<properties/>
+		<system-out>image: deterministic OPC 33161 bytes
+stretch: deterministic OPC 19330 bytes
+tile: deterministic OPC 9093 bytes
+gradient: deterministic OPC 4180 bytes
+theme: deterministic OPC 8676 bytes
+alpha: deterministic OPC 4097 bytes
+background-solid: deterministic OPC 4146 bytes
+background-gradient: deterministic OPC 3957 bytes
+background-image: deterministic OPC 19108 bytes
+background-theme: deterministic OPC 4168 bytes
+background-master: deterministic OPC 5925 bytes
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-hello" classname="native-pptx-text-hello" time="0.599921" status="run">
+		<properties/>
+		<system-out>Hello 18pt black: {'bbox': (221, 56, 260, 71), 'width': 39, 'height': 15, 'pixels': 237}, shape_center=240, glyph_center=240.5, delta=0.5px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-sizes" classname="native-pptx-text-sizes" time="2.34222" status="run">
+		<properties/>
+		<system-out>12/24/48pt at 4px/pt: heights=[37, 72, 146]px, normalized=[1.0, 1.945945945945946, 3.945945945945946], stats=[{'bbox': (204, 216, 310, 253), 'width': 106, 'height': 37, 'pixels': 1377}, {'bbox': (208, 233, 420, 305), 'width': 212, 'height': 72, 'pixels': 4956}, {'bbox': (217, 265, 636, 411), 'width': 419, 'height': 146, 'pixels': 18506}]
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-master" classname="native-pptx-text-master" time="1.4442" status="run">
+		<properties/>
+		<system-out>ONLY slideMaster bodyStyle sz=2800; rPr/pPr/lstStyle/default have no sz: {'bbox': (210, 241, 457, 326), 'width': 247, 'height': 85, 'pixels': 6595}, equals explicit28pt pixel-for-pixel
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-inheritance" classname="native-pptx-text-inheritance" time="3.50422" status="run">
+		<properties/>
+		<system-out>five layers merged per attribute: run absent; pPr bold=1; lstStyle green; master28pt+italic overrides default12pt; default underline+1pt tracking; exact flattened raster match
+builtin: resolved 18pt, height=28px (2px/pt), exact reference match
+defaultTextStyle: resolved 20pt, height=31px (2px/pt), exact reference match
+lstStyle: resolved 24pt, height=37px (2px/pt), exact reference match
+pPr/defRPr: resolved 26pt, height=40px (2px/pt), exact reference match
+rPr: resolved 30pt, height=46px (2px/pt), exact reference match
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-master-types" classname="native-pptx-text-master-types" time="2.99058" status="run">
+		<properties/>
+		<system-out>placeholder='title': master 36pt, height=55px
+placeholder='ctrTitle': master 36pt, height=55px
+placeholder='body': master 28pt, height=43px
+placeholder='': master 20pt, height=31px
+relationship-resolved relocated master: 28pt exact reference match
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-bold" classname="native-pptx-text-bold" time="1.66004" status="run">
+		<properties/>
+		<system-out>b=0/b=1 48pt at 4px/pt: ink_pixels=[18360, 33480], mean_stem_width=[15.0, 31.0]px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-cjk" classname="native-pptx-text-cjk" time="1.73095" status="run">
+		<properties/>
+		<system-out>open warning='PPTX warning: missing glyph: Segoe UI U+4E2D fallback; Segoe UI U+6587 fallback; Segoe UI U+6D4B fallback; Segoe UI U+8BD5 fallback; '
+open warning='PPTX warning: missing glyph: Segoe UI U+0378 missing; '
+SimHei ea 中文测试: {'bbox': (106, 104, 322, 156), 'width': 216, 'height': 52, 'pixels': 3903}, four distinct glyph masks; ea inherited independently of run latin exact match; fallback fixture warning='PPTX warning: missing glyph: Segoe UI U+0378 missing; '; missing mask pixels=552
+Chinese requested ea=Segoe UI (no CJK): recovered four distinct glyphs, {'bbox': (106, 119, 322, 171), 'width': 216, 'height': 52, 'pixels': 2724}, warning='PPTX warning: missing glyph: Segoe UI U+4E2D fallback; Segoe UI U+6587 fallback; Segoe UI U+6D4B fallback; Segoe UI U+8BD5 fallback; '
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-wrap" classname="native-pptx-text-wrap" time="1.51553" status="run">
+		<properties/>
+		<system-out>200 characters: lines=14, line_widths=[132, 132, 132, 132, 132, 132, 132, 132, 132, 132, 132, 132, 132, 40]px &lt;= inner_width=180px, ink_pixels=9640
+narrow 80pt text width, spc=0/300 line counts+widths=[(7, [72, 72, 72, 72, 72, 72, 48]), (8, [72, 72, 72, 72, 72, 72, 72, 72])]; tracking participates in wrap
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-breaks" classname="native-pptx-text-breaks" time="0.67182" status="run">
+		<properties/>
+		<system-out>a:br: glyph row bands=[(56, 71), (81, 96)]
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-alignment" classname="native-pptx-text-alignment" time="1.42202" status="run">
+		<properties/>
+		<system-out>l/ctr/r glyph bboxes={'l': (52, 58, 105, 77), 'ctr': (214, 58, 267, 77), 'r': (376, 58, 429, 77)}; just line widths=[181, 180, 61]px, inner_width=180px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-line-spacing" classname="native-pptx-text-line-spacing" time="1.52888" status="run">
+		<properties/>
+		<system-out>baseline-to-baseline pixel gaps: {'pct100': 25, 'pct200': 50, 'pts40': 40}
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-paragraph-spacing" classname="native-pptx-text-paragraph-spacing" time="2.32974" status="run">
+		<properties/>
+		<system-out>spcAft=12pt paragraph start gaps=[25, 37]px; spcBef=10pt top shift=10px
+empty paragraph preserves spcBef=10pt + spcAft=12pt: visible-line gaps=[43, 65]px, delta=22px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-bullets" classname="native-pptx-text-bullets" time="6.55773" status="run">
+		<properties/>
+		<system-out>buAutoNum prefixes vs independently rendered literal digits (label, ink_pixels, mask_IoU)=[('1.', 787, 1.0), ('2.', 1178, 1.0), ('3.', 1200, 1.0)]; buChar dot present
+buAutoNum without marL/indent: prefix literal mask IoU and visible marker/body gap=[('1.', 1.0, 36), ('2.', 1.0, 36), ('3.', 1.0, 36)]; no overlap
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-autofit" classname="native-pptx-text-autofit" time="2.08285" status="run">
+		<properties/>
+		<system-out>fontScale=62500: height 146-&gt;91px, ratio=0.623288; exact explicit30pt match
+lnSpcReduction=0/25000: 40pt line gaps=[40, 30]px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-autofit-invalid" classname="native-pptx-text-autofit-invalid" time="1.83877" status="run">
+		<properties/>
+		<system-out>open warning='PPTX warning: invalid fontScale (100%)=1; '
+invalid fontScale=0: 100% fallback, height=72px
+open warning='PPTX warning: invalid fontScale (100%)=1; '
+invalid fontScale=100001: 100% fallback, height=72px
+open warning='PPTX warning: invalid fontScale (100%)=1; '
+invalid fontScale=-1: 100% fallback, height=72px
+open warning='PPTX warning: invalid fontScale (100%)=1; '
+invalid fontScale=bad: 100% fallback, height=72px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-level" classname="native-pptx-text-level" time="1.41458" status="run">
+		<properties/>
+		<system-out>lvl=8: resolved lvl=8 / 28pt, height=43px
+open warning='PPTX warning: level&gt;8 (clamped)=1; '
+lvl=9: resolved lvl=8 / 28pt, height=43px
+open warning='PPTX warning: level&gt;8 (clamped)=1; '
+lvl=99: resolved lvl=8 / 28pt, height=43px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-body" classname="native-pptx-text-body" time="1.80896" status="run">
+		<properties/>
+		<system-out>bodyPr insets/anchors bboxes={'t': (62, 68, 115, 87), 'ctr': (62, 146, 115, 165), 'b': (62, 225, 115, 244)}; wrap=none overflow allowed, {'bbox': (44, 56, 718, 93), 'width': 674, 'height': 37, 'pixels': 7597}
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-run-properties" classname="native-pptx-text-run-properties" time="2.14599" status="run">
+		<properties/>
+		<system-out>italic mask differs; underline ink=1712-&gt;2362; spc=200 widths=124-&gt;140px; solidFill red verified
+a:t internal whitespace preserved: A B/A  B glyph widths=[70, 84]px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-missing-font" classname="native-pptx-text-missing-font" time="1.22551" status="run">
+		<properties/>
+		<system-out>open warning='PPTX warning: font fallback=M4 Missing Font; '
+nonexistent font rendered via fallback: {'bbox': (103, 113, 180, 141), 'width': 77, 'height': 28, 'pixels': 842}, warning='PPTX warning: font fallback=M4 Missing Font; '
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-invalid-utf8" classname="native-pptx-text-invalid-utf8" time="2.57956" status="run">
+		<properties/>
+		<system-out>open warning='PPTX warning: invalid UTF-8 skipped run(s)=1; '
+invalid a:t run skipped; sibling Good retained: {'bbox': (102, 116, 213, 153), 'width': 111, 'height': 37, 'pixels': 1423}, exact valid-only reference match
+open warning='PPTX warning: invalid UTF-8 skipped run(s)=1; '
+UTF-8 recovery arbitrary prefix: valid sibling raster retained
+open warning='PPTX warning: invalid UTF-8 skipped run(s)=1; '
+UTF-8 recovery strict namespace: valid sibling raster retained
+open warning='PPTX warning: invalid UTF-8 skipped run(s)=1; '
+UTF-8 recovery CDATA: valid sibling raster retained
+UTF-8 recovery boundary attribute: FORMAT, document=null
+UTF-8 recovery boundary foreign namespace t: FORMAT, document=null
+UTF-8 recovery boundary mismatched XML after skipped run: FORMAT, document=null
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-text-reproducible" classname="native-pptx-text-reproducible" time="0.28786" status="run">
+		<properties/>
+		<system-out>hello: deterministic OPC ZIP_STORED 3202 bytes
+size12: deterministic OPC ZIP_STORED 3192 bytes
+size24: deterministic OPC ZIP_STORED 3192 bytes
+size48: deterministic OPC ZIP_STORED 3192 bytes
+master28: deterministic OPC ZIP_STORED 5249 bytes
+regular: deterministic OPC ZIP_STORED 3201 bytes
+bold: deterministic OPC ZIP_STORED 3201 bytes
+cjk: deterministic OPC ZIP_STORED 3254 bytes
+cjk-fallback: deterministic OPC ZIP_STORED 3256 bytes
+missing-glyph: deterministic OPC ZIP_STORED 3219 bytes
+missing-font: deterministic OPC ZIP_STORED 3229 bytes
+wrap: deterministic OPC ZIP_STORED 3387 bytes
+numbered: deterministic OPC ZIP_STORED 3539 bytes
+autofit: deterministic OPC ZIP_STORED 3245 bytes
+breaks: deterministic OPC ZIP_STORED 3252 bytes
+invalid-utf8: deterministic OPC ZIP_STORED 3239 bytes
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-fills" classname="native-pptx-table-fills" time="0.359322" status="run">
+		<properties/>
+		<system-out>cell=(40, 40, 200, 160) fill RGB=(232, 64, 50) expected=(232, 64, 50) max_channel_delta=0
+cell=(200, 40, 360, 160) fill RGB=(56, 183, 91) expected=(56, 183, 91) max_channel_delta=0
+cell=(40, 160, 200, 280) fill RGB=(50, 103, 217) expected=(50, 103, 217) max_channel_delta=0
+cell=(200, 160, 360, 280) fill RGB=(232, 182, 46) expected=(232, 182, 46) max_channel_delta=0
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-borders" classname="native-pptx-table-borders" time="0.677884" status="run">
+		<properties/>
+		<system-out>border RGB=(145, 40, 196) exact_pixels=6656; @w=50800 EMU =&gt; 4px measured=4px; boundary_samples=[(194, (232, 64, 50)), (195, (232, 64, 50)), (196, (232, 64, 50)), (197, (232, 64, 50)), (198, (145, 40, 196)), (199, (145, 40, 196)), (200, (145, 40, 196)), (201, (145, 40, 196)), (202, (56, 183, 91)), (203, (56, 183, 91)), (204, (56, 183, 91)), (205, (56, 183, 91))]
+border at scale=2: measured=8px expected=8px
+independent L/R/T/B and later-cell shared-edge color: pass; shared RGB=(255, 136, 0)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-columns" classname="native-pptx-table-columns" time="0.39069" status="run">
+		<properties/>
+		<system-out>gridCol @w=(1270000,3810000) EMU: colored widths=[100, 300]px ratio=3.000000
+open status=0 warning='PPTX warning: table gridCol count/width mismatch or invalid dimensions=1; '
+frame cx=200pt, grid sum=400pt: grid geometry ends at x=440px, warning present
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-text" classname="native-pptx-table-text" time="0.799289" status="run">
+		<properties/>
+		<system-out>text='A' glyph_pixels=120 bbox=(47, 56, 63, 74) cell=(40, 40, 200, 160)
+text='B' glyph_pixels=137 bbox=(209, 176, 220, 194) cell=(200, 160, 360, 280)
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-merges" classname="native-pptx-table-merges" time="1.56747" status="run">
+		<properties/>
+		<system-out>gridSpan=2 + hMerge placeholder: divider x=200 y=45..154 border_pixels=0; ignored red fill pixels=0; txBody vs empty placeholder pixel-identical=True
+rowSpan=2 + vMerge placeholder: divider y=160 x=45..194 border_pixels=0; ignored red fill pixels=0; txBody vs empty placeholder pixel-identical=True
+simultaneous gridSpan=2 rowSpan=2: both interior separators absent
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-anchor" classname="native-pptx-table-anchor" time="0.847524" status="run">
+		<properties/>
+		<system-out>anchor=t bbox=(47, 55, 124, 74), anchor=b bbox=(207, 248, 284, 266), vertical_delta=193px &gt; row_height/2=120px
+anchor=ctr bbox=(47, 151, 124, 170), top coordinate halfway between t/b within 1px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-malformed" classname="native-pptx-table-malformed" time="1.54928" status="run">
+		<properties/>
+		<system-out>open status=0 warning='PPTX warning: table gridCol count/width mismatch or invalid dimensions=1; '
+2 gridCol / 3 tc: status=0, first two fills correct, third fill pixels=0, warning present
+open status=0 warning='PPTX warning: table row missing tc=1; '
+row without tc: blank at y=100, following row retained at y=220, warning present
+open status=0 warning='PPTX warning: table span clipped/invalid=2; '
+gridSpan=20 rowSpan=20 clamped to 2x1 grid: rightmost interior RGB correct, warning present
+neither tcPr nor txBody: empty frame dark_pixels=1992
+ln without solidFill and ln/noFill: border pixels=0
+open status=0 warning='PPTX warning: table gridCol count/width mismatch or invalid dimensions=1; '
+2 gridCol / 1 tc: smaller count=1 drawn, second slot blank
+open status=0 warning='PPTX warning: tableStyleId/firstRow/bandRow styling not applied=1; '
+tableStyleId/firstRow/bandRow parsed: direct fills retained, unapplied style warning present
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-margins" classname="native-pptx-table-margins" time="2.86162" status="run">
+		<properties/>
+		<system-out>default margins=91440 EMU (7.2pt): bbox=(47, 56, 63, 74); custom L=37.2pt T=27.2pt bbox=(77, 76, 93, 94); delta=(30,20)px
+table tcPr defaults override bodyPr anchor/inset values: identical pixels
+marR default vs 160pt: (line_count,bbox)=[(3, (47, 54, 317, 118)), (6, (47, 54, 179, 193))]; right inset constrains wrapping
+marB default vs 37.2pt at anchor=b: bbox=[(47, 249, 63, 266), (47, 219, 63, 236)], vertical_delta=-30px
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-overflow" classname="native-pptx-table-overflow" time="0.705504" status="run">
+		<properties/>
+		<system-out>open status=0 warning='PPTX warning: table overflow (no auto row height)=1; '
+30pt minimum row with overflowing text: fill ends at y=70px, row not grown, auto-height warning present; dark glyph pixels outside cell=0
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-transforms" classname="native-pptx-table-transforms" time="0.385813" status="run">
+		<properties/>
+		<system-out>nested graphicFrame scale=0.5, offset=(100,80): table x=[120,320), fill landmarks=(140,120)/(250,120) pass
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-limits" classname="native-pptx-table-limits" time="0.577602" status="run">
+		<properties/>
+		<system-out>201 columns: status=6 EXR_LIMIT message='PPTX table columns exceed 200'
+201 rows: status=6 EXR_LIMIT message='PPTX table rows exceed 200'
+201 tc: status=6 EXR_LIMIT message='PPTX table row cells exceed 200'
+exact 200x200 table: status=0, 40000 cells within limit, interior fill correct
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-sink" classname="native-pptx-table-sink" time="0.867671" status="run">
+		<properties/>
+		<system-out>table sink success: events=['fill', 'border', 'border', 'border', 'border', 'save', 'clip', 'text', 'text', 'restore'], clip count/matrix/rule/accumulate=(5, (2.0, 0.0, 0.0, 3.0, 91.0, 133.0), 0, 0)
+fill callback failure: status=3 propagated, events=['fill']
+border callback failure: status=3 propagated, events=['fill', 'border']
+save callback failure: status=3 propagated, events=['fill', 'border', 'border', 'border', 'border', 'save']
+clip callback failure: status=3 propagated, events=['fill', 'border', 'border', 'border', 'border', 'save', 'clip', 'restore']
+text callback failure: status=3 propagated, events=['fill', 'border', 'border', 'border', 'border', 'save', 'clip', 'text', 'restore']
+restore callback failure: status=3 propagated, events=['fill', 'border', 'border', 'border', 'border', 'save', 'clip', 'text', 'text', 'restore']
+text + restore failure: original text error retained, restore attempted
+cancel after first text path: status=9, events=['fill', 'border', 'border', 'border', 'border', 'save', '...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-table-reproducible" classname="native-pptx-table-reproducible" time="0.19938" status="run">
+		<properties/>
+		<system-out>fills: deterministic OPC ZIP_STORED 4742 bytes
+columns: deterministic OPC ZIP_STORED 3317 bytes
+text: deterministic OPC ZIP_STORED 3648 bytes
+merged: deterministic OPC ZIP_STORED 5129 bytes
+rowspan: deterministic OPC ZIP_STORED 5126 bytes
+anchor: deterministic OPC ZIP_STORED 3589 bytes
+malformed: deterministic OPC ZIP_STORED 3401 bytes
+empty-row: deterministic OPC ZIP_STORED 3342 bytes
+clipped: deterministic OPC ZIP_STORED 3609 bytes
+empty-cell: deterministic OPC ZIP_STORED 3177 bytes
+no-border: deterministic OPC ZIP_STORED 3387 bytes
+overflow: deterministic OPC ZIP_STORED 4503 bytes
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-real-matrix" classname="native-pptx-real-matrix" time="14.3705" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>bad-invalid-xml.pptx open status=5 code=5 warning='Invalid PPTX XML part: ppt/slides/slide1.xml'
+bad-invalid-xml.pptx bad=ok EXR_FORMAT status=5 message='Invalid PPTX XML part: ppt/slides/slide1.xml'
+bad-missing-part.pptx open status=5 code=5 warning='PPTX part missing: ppt/presentation.xml'
+bad-missing-part.pptx bad=ok EXR_FORMAT status=5 message='PPTX part missing: ppt/presentation.xml'
+bad-truncated.pptx open status=5 code=5 warning='Invalid or truncated PPTX/ZIP container'
+bad-truncated.pptx bad=ok EXR_FORMAT status=5 message='Invalid or truncated PPTX/ZIP container'
+bullets.pptx open status=0 code=0 warning=''
+bullets.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+bullets.pptx#1 coverage=ok color=12/12 text=ok
+chinese.pptx open status=0 code=0 warning='PPTX warning: font fallback=+mn-ea; missing glyph: Segoe UI U+7814 fallback; Segoe UI U+7A76 fallback; Segoe UI U+8FDB fallback; Segoe UI U+5C55 fallback; Segoe UI U+4E0E fallback; Segoe UI U+4E0B fallback; Segoe UI U+4E00 fallback; Segoe UI U+6B65 fal...'
+chinese.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+chinese.pptx#1 coverage=ok color=12/12 text=ok
+gradient-alpha.pptx open status=0 code=0 warning=''
+gradient-alpha.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+gradient-alpha.pptx#1 coverage=ok color=12/12 text=ok
+image-text.pptx open status=0 code=0 warning=''
+image-text.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+image-text.pptx#1 coverage=ok color=12/12 text=ok
+merged-table.pptx open status=0 code=0 warning=''
+merged-table.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+merged-table.pptx#1 coverage=ok color=12/12 text=ok
+nested-groups.pptx open status=0 code=0 warning=''
+nested-groups.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+nested-groups.pptx#1 coverage=ok color=12/12 text=ok
+standard-4x3.pptx open status=0 code=0 warning=''
+standard-4x3.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+standard-4x3.pptx#1 coverage=ok color=12/12 text=ok
+theme-accents.pptx open status=0 code=0 warning=''
+theme-accents.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+theme-accents.pptx#1 coverage=ok color=12/12 text=ok
+title.pptx open status=0 code=0 warning=''
+title.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+title.pptx#1 coverage=ok color=12/12 text=ok
+twenty.pptx open status=0 code=0 warning=''
+twenty.pptx slides engine=20 python-pptx=20 manifest=20 warnings=ok
+twenty.pptx#1 coverage=ok color=12/12 text=ok
+twenty.pptx#2 coverage=ok color=12/12 text=ok
+twenty.pptx#3 coverage=ok color=12/12 text=ok
+twenty.pptx#4 coverage=ok color=12/12 text=ok
+twenty.pptx#5 coverage=ok color=12/12 text=ok
+twenty.pptx#6 coverage=ok color=12/12 text=ok
+twenty.pptx#7 coverage=ok color=12/12 text=ok
+twenty.pptx#8 coverage=ok color=12/12 text=ok
+twenty.pptx#9 coverage=ok color=12/12 text=ok
+twenty.pptx#10 coverage=ok color=12/12 text=ok
+twenty.pptx#11 coverage=ok color=12/12 text=ok
+twenty.pptx#12 coverage=ok color=12/12 text=ok
+twenty.pptx#13 coverage=ok color=12/12 text=ok
+twenty.pptx#14 coverage=ok color=12/12 text=ok
+twenty.pptx#15 coverage=ok color=12/12 text=ok
+twenty.pptx#16 coverage=ok color=12/12 text=ok
+twenty.pptx#17 coverage=ok color=12/12 text=ok
+twenty.pptx#18 coverage=ok color=12/12 text=ok
+twenty.pptx#19 coverage=ok color=12/12 text=ok
+twenty.pptx#20 coverage=ok color=12/12 text=ok
+twenty.pptx render samples=100 median=33.939ms max=56.198ms median-limit=30.75ms ratio=1.656 max-limit=200ms
+upstream-font-color.pptx open status=0 code=0 warning='PPTX warning: font fallback=+mn-lt; '
+upstream-font-color.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+upstream-font-color.pptx#1 coverage=FAIL color=12/12 text=ok
+  text 'TextBox 4': bbox actual=(236, 360, 499, 375) expected=(228, 350, 492, 380) glyph_pixels=1469 tolerance=4px
+  text 'TextBox 5': bbox actual=(236, 455, 499, 473) expected=(229, 445, 491, 475) glyph_pixels=1583 tolerance=4px
+wide-16x9.pptx open status=0 code=0 warning=''
+wide-16x9.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+wide-16x9.pptx#1 coverage=ok color=12/12 text=ok
+MATRIX files=15 passed=13 failed=2
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-real-reproducible" classname="native-pptx-real-reproducible" time="1.6004" status="run">
+		<properties/>
+		<system-out>title: slides=1 source=generated ZIP_STORED bytes=100962
+bullets: slides=1 source=generated ZIP_STORED bytes=102954
+image-text: slides=1 source=generated ZIP_STORED bytes=218305
+merged-table: slides=1 source=generated ZIP_STORED bytes=108140
+gradient-alpha: slides=1 source=generated ZIP_STORED bytes=104783
+theme-accents: slides=1 source=generated ZIP_STORED bytes=108887
+chinese: slides=1 source=generated ZIP_STORED bytes=109003
+standard-4x3: slides=1 source=generated ZIP_STORED bytes=102942
+wide-16x9: slides=1 source=generated ZIP_STORED bytes=102945
+nested-groups: slides=1 source=generated ZIP_STORED bytes=104868
+twenty: slides=20 source=generated ZIP_STORED bytes=347718
+bad-truncated: slides=0 source=generated ZIP_STORED bytes=50481
+bad-missing-part: slides=0 source=generated ZIP_STORED bytes=97593
+bad-invalid-xml: slides=0 source=generated ZIP_STORED bytes=99951
+manifest.json: 15 files, 31 valid slides
+</system-out>
+	</testcase>
+	<testcase name="native-pptx-real-oracle" classname="native-pptx-real-oracle" time="1.64961" status="run">
+		<properties/>
+		<system-out>warning gate: font-only accepted; mixed/nonfont warnings rejected
+control: coverage=ok color=12/12 text=ok
+all-white injection: FAIL detected
+16px translation injection: coverage failure detected
+wrong-color injection: color=6/12; coordinates/RGB retained
+lost-text injection: text failure detected despite intact colored rectangle
+textless package: geometry/fills preserved; reference samples independent
+background-only package: slide count/background preserved; foreground removed
+transparent textbox: inset glyph ink passes without covering the full frame
+text overflow injection: glyphs outside the frame are retained and rejected
+one-of-two textboxes lost: per-shape presence failure detected
+unfilled outline: local non-background ink required; missing border rejected
+colored backdrop: background cannot impersonate missing shape ink
+independent paint oracle: half-alpha compositing and cropped image colors verified
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-roundtrip" classname="native-docx-edit-io-roundtrip" time="0.348609" status="run">
+		<properties/>
+		<system-out>roundtrip PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-parts" classname="native-docx-edit-io-parts" time="0.411865" status="run">
+		<properties/>
+		<system-out>parts PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-unknown" classname="native-docx-edit-io-unknown" time="0.331578" status="run">
+		<properties/>
+		<system-out>unknown PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-sections" classname="native-docx-edit-io-sections" time="0.39353" status="run">
+		<properties/>
+		<system-out>sections PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-properties" classname="native-docx-edit-io-properties" time="0.39161" status="run">
+		<properties/>
+		<system-out>properties PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-edits" classname="native-docx-edit-io-edits" time="0.390691" status="run">
+		<properties/>
+		<system-out>edits PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-split" classname="native-docx-edit-io-split" time="0.514203" status="run">
+		<properties/>
+		<system-out>split PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-namespaces" classname="native-docx-edit-io-namespaces" time="0.355921" status="run">
+		<properties/>
+		<system-out>namespaces PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-section-scope" classname="native-docx-edit-io-section-scope" time="0.677031" status="run">
+		<properties/>
+		<system-out>section-scope PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-section-edits" classname="native-docx-edit-io-section-edits" time="0.568719" status="run">
+		<properties/>
+		<system-out>section-edits PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-section-boundaries" classname="native-docx-edit-io-section-boundaries" time="0.405216" status="run">
+		<properties/>
+		<system-out>section-boundaries PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-new" classname="native-docx-edit-io-new" time="0.449026" status="run">
+		<properties/>
+		<system-out>new PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-io-errors" classname="native-docx-edit-io-errors" time="0.464288" status="run">
+		<properties/>
+		<system-out>errors PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-table-roundtrip" classname="native-docx-edit-x6-table-roundtrip" time="0.924115" status="run">
+		<properties/>
+		<system-out>table-roundtrip PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-table-properties" classname="native-docx-edit-x6-table-properties" time="0.421412" status="run">
+		<properties/>
+		<system-out>table-properties PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-table-preserve" classname="native-docx-edit-x6-table-preserve" time="0.630459" status="run">
+		<properties/>
+		<system-out>table-preserve PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-table-rows" classname="native-docx-edit-x6-table-rows" time="0.673234" status="run">
+		<properties/>
+		<system-out>table-rows PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-table-new" classname="native-docx-edit-x6-table-new" time="0.346925" status="run">
+		<properties/>
+		<system-out>table-new PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-history" classname="native-docx-edit-x6-history" time="0.400506" status="run">
+		<properties/>
+		<system-out>history PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-image-small" classname="native-docx-edit-x6-image-small" time="2.68146" status="run">
+		<properties/>
+		<system-out>image-small PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-image-large" classname="native-docx-edit-x6-image-large" time="0.412361" status="run">
+		<properties/>
+		<system-out>image-large PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-image-delete" classname="native-docx-edit-x6-image-delete" time="0.524227" status="run">
+		<properties/>
+		<system-out>image-delete PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-image-shared" classname="native-docx-edit-x6-image-shared" time="0.392343" status="run">
+		<properties/>
+		<system-out>image-shared PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-image-cell" classname="native-docx-edit-x6-image-cell" time="0.568724" status="run">
+		<properties/>
+		<system-out>image-cell PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-table-delete" classname="native-docx-edit-x6-table-delete" time="0.514856" status="run">
+		<properties/>
+		<system-out>table-delete PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-errors" classname="native-docx-edit-x6-errors" time="0.382104" status="run">
+		<properties/>
+		<system-out>errors PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-x6-image-package" classname="native-docx-edit-x6-image-package" time="0.472531" status="run">
+		<properties/>
+		<system-out>image-package PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-editor-e2e" classname="native-docx-editor-e2e" time="1.03113" status="run">
+		<properties/>
+		<system-out>{
+  "status": "PASS",
+  "x5_fixtures": [
+    {
+      "id": "plain",
+      "status": "PASS",
+      "structure": {
+        "paragraphs": 3,
+        "characters": 126,
+        "tables": 0,
+        "images": 0,
+        "footnotes": 0,
+        "section_margins": [
+          {
+            "top": "1440",
+            "right": "1440",
+            "bottom": "1440",
+            "left": "1440"
+          }
+        ],
+        "text_sha256": "43e69a5df4f74376c4460589e836d6bc5f067d18a00cbb12efe326351e08669a",
+        "image_sha256": []
+      }
+    },
+    {
+      "id": "heading",
+      "status": "PASS",
+      "structure": {
+        "paragraphs": 3,
+        "characters": 132,
+        "tables": 0,
+        "images": 0,
+        "footnotes": 0,
+        "section_margins": [
+          {
+            "top": "1440",
+            "right": "1440",
+            "bottom": "1440",
+            "left": "1440"
+          }
+        ],
+        "text_sha256": "ac171579e4109a6350e082f11ec90034a55b1c9863e0d262d3e9ed1c851e6304",
+        "image_sha256":...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-docx-header-footer" classname="native-docx-header-footer" time="0.441297" status="run">
+		<properties/>
+		<system-out>HDR/FTR PASS: saved ZIP header1.xml=HDR footer1.xml=FTR; reopen and second write equal
+flags PASS: sectPr/titlePg and settings/evenAndOddHeaders 0-&gt;1-&gt;0, undo/redo
+variants/history PASS: independent default/first/even header/footer; UTF-8/XML escaping; atomic rollback
+multiline PASS: leading/trailing/empty lines use four real w:p paragraphs; shrink back to one; save/reopen
+invalid input PASS: kind/variant/XML scalar/flags rejected; saved model unchanged
+rich existing header PASS: word/header9.xml, bold, tabs, bookmark, simple/complex PAGE fields, hyperlink, extension and table retained; undo/reopen
+existing settings PASS: insert/replace/remove evenAndOddHeaders in schema order; zoom/defaultTabStop/compat/docVars/extension retained
+Strict namespaces PASS: new header/footer/settings use Strict W namespace, relationship Types/IDs use Strict R; save/reopen
+L13 engine header/footer acceptance PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-e5" classname="native-docx-edit-e5" time="0.407926" status="fail">
+		<failure message="Failed"/>
+		<properties/>
+		<system-out>Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_docx_edit_images_e5.py", line 237, in &lt;module&gt;
+    main(parser.parse_args().library.resolve())
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\test_docx_edit_images_e5.py", line 66, in main
+    registration = (Path(__file__).parent / 'fixtures/docx-real/codex/register.cmake').read_text()
+  File "C:\Python314\Lib\pathlib\__init__.py", line 788, in read_text
+    return f.read()
+           ~~~~~~^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 23, in decode
+    return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeDecodeError: 'charmap' codec can't decode byte 0x8f in position 2558: character maps to &lt;undefined&gt;
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-e4" classname="native-docx-edit-e4" time="0.424017" status="run">
+		<properties/>
+		<system-out>1 PASS 2x2 Enter: paragraphs=2 text=A|B; cell count/at enumerates both; top-level unchanged
+2 PASS find_block(second id) != NULL text=B
+3 PASS set_run_text(second, B2)=EXR_OK paragraphs=2 text=A|B2; sibling/run IDs retained
+4 PASS undo once: paragraphs=2 text=A|B
+5 PASS redo + file write/read: paragraphs=2 text=A|B2; reopened paragraph remains editable
+6 PASS top-level find_block/set_run_text/undo: ordinary -&gt; ordinary2 -&gt; ordinary; count=1 IDs stable
+extra PASS imported multi-paragraph cells; alias/UTF-8/clear; failed tx/rollback; strict namespace; merged/shaded/nested/opaque protected
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-insert-run" classname="native-docx-edit-insert-run" time="0.432812" status="run">
+		<properties/>
+		<system-out>PASS top-level: first run / invalid offset / NULL text / zero length / unchanged model / undo-redo
+PASS cell: first run / invalid offset / NULL text / zero length / unchanged model / undo-redo
+PASS insert_run: zero-run / sibling text / atomic undo-redo / aliased input / fresh IDs / failed transaction rollback / invalid UTF-8 / cell paragraph insert-delete / DOCX reopen
+PASS protected cell: EXR_UNSUPPORTED; transaction rolled back
+PASS imported [LEFT|empty|right]: insert X preserves both neighbors, IDs, pStyle, previous patch and DOCX reopen; undo restores empty
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-footnotes" classname="native-docx-edit-footnotes" time="0.410419" status="run">
+		<properties/>
+		<system-out>PASS insert/edit/reopen/delete/renumber/history (strict=False, prefix=w)
+PASS insert/edit/reopen/delete/renumber/history (strict=False, prefix=q)
+PASS insert/edit/reopen/delete/renumber/history (strict=True, prefix=w)
+PASS table-cell refs, UTF-8 validation, grouped undo/redo and cell renumbering
+PASS empty paragraph, aliased input, insert before reference, clear text and block undo
+</system-out>
+	</testcase>
+	<testcase name="native-docx-footnotes-ui" classname="native-docx-footnotes-ui" time="2.76721" status="run">
+		<properties>
+			<property name="cmake_labels" value="headless"/>
+		</properties>
+		<system-out>1 PASS fixture=C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/tests/fixtures/rich.docx blocks=30 text_pixels=5631 caret_pixels=22 bitmap=C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6/docedit-ui/editor.bmp
+2 typed=ABC dirty=1 write/open ABC=1; backspace=3 write/open restored_original=1 PASS
+3 Enter block_count=30 -&gt; 31 Ctrl+Z=30 PASS
+4 PASS UTF-8: runs 0:1,0:3,2:3,2:7 -&gt; block 1; Shift selects CJK+emoji; selection_pixels=752; replace undo; Delete/Backspace join; redo
+5 PASS Ctrl+S -&gt; exr_edit_docx_open text_equal=1 bytes=421 path=C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6/docedit-ui/edited.docx
+6 PASS edit dirty=1 title=*; save dirty=0 title=no*; reopen dirty=0; failed save dirty=1; exit Cancel/Save/Discard
+extra PASS Home/End, Up/Down, PageUp/PageDown=viewport 120, Ctrl+A replace/undo, empty paragraph typing
+extra PASS DOCX enabled / TXT disabled; protected XML selection rolls back preceding text changes; dirty stays 0
+API boundary PASS rebuild preserves modeled properties;...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-e3" classname="native-docx-edit-e3" time="0.597228" status="run">
+		<properties/>
+		<system-out>1 PASS 2x2 DOCX cell(0,0) split=EXR_OK cell.blocks=1-&gt;2
+2 PASS cell_paragraph[0,1]=[A,0]; both belong to cell(0,0); index=2 NULL
+3 PASS set_column_width(0,3000) gridCol=[3000,2400] tblW=5400
+4 PASS set_column_width(1,2600) gridCol=[3000,2600] tblW=5600
+5 PASS undo gridCol=[3000,2400] tblW=5400
+6 PASS file write/read gridCol[0]=3000 gridCol[1]=2400 tblW=5400; memory/XML/reopened equal
+7 PASS column=99 EXR_ARGUMENT(1); model unchanged; failed commit rolled back
+extra PASS split undo/redo; rollback; empty/multiple paragraphs; strict/alternate namespace; invalid tx/width; overflow; legacy table width
+</system-out>
+	</testcase>
+	<testcase name="native-docx-realworld-matrix" classname="native-docx-realworld-matrix" time="6.90433" status="run">
+		<properties/>
+		<system-out>Matrix A: 30/30 fixtures 18/18 (540/540 cells); Matrix B: 30/30 fixtures 18/18 (540/540 cells); Extra edit losses (B - A): 0 cells across 0 fixtures.
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-argon-reproducible" classname="native-docx-real-argon-reproducible" time="0.478317" status="run">
+		<properties/>
+		<system-out>Verified 30 DOCX fixtures in C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\tests\fixtures\docx-real\argon (max size 14835 bytes &lt; 60000).
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-insert" classname="native-docx-edit-insert" time="0.145377" status="run">
+		<properties/>
+		<system-out>docx-edit-insert: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-split" classname="native-docx-edit-split" time="0.0355772" status="run">
+		<properties/>
+		<system-out>docx-edit-split: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-para-props" classname="native-docx-edit-para-props" time="0.0305948" status="run">
+		<properties/>
+		<system-out>docx-edit-para-props: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-run-props" classname="native-docx-edit-run-props" time="0.0310743" status="run">
+		<properties/>
+		<system-out>docx-edit-run-props: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-delete" classname="native-docx-edit-delete" time="0.0435026" status="run">
+		<properties/>
+		<system-out>docx-edit-delete: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-transaction" classname="native-docx-edit-transaction" time="0.0515279" status="run">
+		<properties/>
+		<system-out>transaction: 20 inserts -&gt; 1 undo = 0 blocks -&gt; 1 redo = 20 blocks
+docx-edit-transaction: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-rollback" classname="native-docx-edit-rollback" time="0.0498098" status="run">
+		<properties/>
+		<system-out>rollback: command 10 failed; 9 inserts reverted; 4 blocks + all runs/sections/parts identical
+docx-edit-rollback: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-history" classname="native-docx-edit-history" time="0.0457733" status="run">
+		<properties/>
+		<system-out>history: 120 edits, exactly 100 undo/redo; 20 blocks remain at oldest state
+docx-edit-history: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-preservation" classname="native-docx-edit-preservation" time="0.0257538" status="run">
+		<properties/>
+		<system-out>docx-edit-preservation: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-boundaries" classname="native-docx-edit-boundaries" time="0.0571239" status="run">
+		<properties/>
+		<system-out>docx-edit-boundaries: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-mixed" classname="native-docx-edit-mixed" time="0.043014" status="run">
+		<properties/>
+		<system-out>docx-edit-mixed: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-benchmark" classname="native-docx-edit-benchmark" time="0.0590003" status="run">
+		<properties/>
+		<system-out>{"logical_pages":100,"base_paragraphs":2000,"page_breaks":99,"text_bytes_per_paragraph":120,"insertions":200,"history_depth":100,"p50_us":2.600005,"p95_us":3.299996,"model_bytes_before":961968,"model_bytes_after":1078168,"model_delta_bytes":116200,"rss_before":5537792,"rss_after":5750784,"rss_delta_bytes":212992}
+docx-edit-benchmark: passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-edit-allocation" classname="native-docx-edit-allocation" time="0.0693778" status="run">
+		<properties/>
+		<system-out>docx-edit-allocation: 202 injected failures, all atomic/rolled back, zero live allocations
+</system-out>
+	</testcase>
+	<testcase name="sdk-release-checker" classname="sdk-release-checker" time="1.33651" status="run">
+		<properties/>
+		<system-out>PASS release gate: directory/ZIP/tar.gz, LF/CRLF header; rejects tampering, missing header, version mismatch, 81 lines, 388 exports, wrong CPU, traversal
+</system-out>
+	</testcase>
+	<testcase name="native-lcp-normal" classname="native-lcp-normal" time="0.300707" status="run">
+		<properties/>
+		<system-out>{"pages":4,"resources_equal":5,"resource_bytes_equal":3504}
+{"pages":4,"resources_equal":5,"resource_bytes_equal":3504}
+76 LCP normal checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-lcp-credentials" classname="native-lcp-credentials" time="0.0604463" status="run">
+		<properties/>
+		<system-out>20 LCP credentials checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-lcp-expired" classname="native-lcp-expired" time="0.116167" status="run">
+		<properties/>
+		<system-out>16 LCP expired checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-lcp-unsupported" classname="native-lcp-unsupported" time="0.14403" status="run">
+		<properties/>
+		<system-out>25 LCP unsupported checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-lcp-malformed" classname="native-lcp-malformed" time="0.0658348" status="run">
+		<properties/>
+		<system-out>44 LCP malformed checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-lcp-lifetime" classname="native-lcp-lifetime" time="0.0463546" status="run">
+		<properties/>
+		<system-out>1900 LCP lifetime checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-render-audit" classname="native-render-audit" time="0.648618" status="run">
+		<properties/>
+		<system-out>368 renderer audit checks; 0 failures
+</system-out>
+	</testcase>
+	<testcase name="native-table-dashed" classname="native-table-dashed" time="0.222952" status="run">
+		<properties/>
+		<system-out>27 native table border-style checks passed (solid 103, dashed 63, dotted 36)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-shading-mesh" classname="native-pdf-shading-mesh" time="0.17115" status="run">
+		<properties/>
+		<system-out>8 native PDF mesh shading checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-shading-mesh7" classname="native-pdf-shading-mesh7" time="1.10756" status="run">
+		<properties/>
+		<system-out>40 native PDF type 6/7 mesh shading checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-ccitt" classname="native-pdf-ccitt" time="0.163562" status="run">
+		<properties/>
+		<system-out>527 native PDF CCITT checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-normalize" classname="native-normalize" time="0.22777" status="run">
+		<properties/>
+		<system-out>20034 Unicode 17 NFC conformance cases passed
+1094978 unlisted Unicode scalar NFC invariants passed
+3404736 canonical normalization checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen" classname="native-hyphen" time="0.681269" status="run">
+		<properties/>
+		<system-out>333040 hyphenation dictionary checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-replacements" classname="native-hyphen-replacements" time="0.137703" status="run">
+		<properties/>
+		<system-out>1851 discretionary hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-case" classname="native-case" time="0.0568036" status="run">
+		<properties/>
+		<system-out>33785 Unicode case checks passed (3037 default mappings)
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-layout" classname="native-hyphen-layout" time="34.6781" status="run">
+		<properties/>
+		<system-out>2544009 automatic hyphen layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-builtin-rules" classname="native-hyphen-builtin-rules" time="0.114647" status="run">
+		<properties/>
+		<system-out>41 built-in hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-builtin-switches" classname="native-hyphen-builtin-switches" time="0.0447208" status="run">
+		<properties/>
+		<system-out>100 built-in hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-builtin-joiners" classname="native-hyphen-builtin-joiners" time="0.0572424" status="run">
+		<properties/>
+		<system-out>11 built-in hyphenation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-float" classname="native-float" time="7.48535" status="run">
+		<properties/>
+		<system-out>691110 float checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-fragments" classname="native-table-fragments" time="1.25964" status="run">
+		<properties/>
+		<system-out>fragment case 0
+fragment case 1
+fragment case 2
+fragment case 3
+fragment case 4
+fragment case 5
+fragment case 6
+fragment case 7
+fragment case 8
+fragment case 9
+fragment case 10
+fragment case 11
+fragment case 12
+fragment case 13
+fragment case 14
+fragment case 15
+fragment case 16
+fragment case 17
+fragment case 18
+fragment case 19
+fragment case 20
+fragment case 21
+fragment case 22
+fragment case 23
+large fixed first-page polls 2152
+case 0 pages 41 pixels 45549fe6a0ba6c79
+case 1 pages 41 pixels 0c7944600e504fd3
+case 2 pages 41 pixels da1bf69039de50d9
+case 3 pages 41 pixels 81c3f35d40795259
+case 4 pages 41 pixels 7a71f204c2c66f59
+case 5 pages 41 pixels 282a4300dd6ad4e9
+case 6 pages 23 pixels e906688d7989ea41
+case 7 pages 23 pixels e88846aa807428e9
+case 8 pages 41 pixels 46893a23317837d6
+case 9 pages 41 pixels 1e9e47c6862e1461
+case 10 pages 30 pixels d67f52026ab1f5b2
+case 11 pages 80 pixels 3a703d302fefe0fd
+case 12 pages 60 pixels e98b9f19bfe02afd
+case 13 pages 60 pixels c9e91b866afea495
+case 14 pages 82 pixels f2f7...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-table-border" classname="native-table-border" time="0.673508" status="run">
+		<properties/>
+		<system-out>12497 table border checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-border-edges" classname="native-border-edges" time="0.115674" status="run">
+		<properties/>
+		<system-out>356 independent border checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-header" classname="native-table-header" time="0.222696" status="run">
+		<properties/>
+		<system-out>139 repeated header checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-alignment" classname="native-table-alignment" time="0.18345" status="run">
+		<properties/>
+		<system-out>311 table alignment checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-intrinsic" classname="native-table-intrinsic" time="0.541001" status="run">
+		<properties/>
+		<system-out>12840 intrinsic table checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-columns" classname="native-table-columns" time="0.221825" status="run">
+		<properties/>
+		<system-out>565 table column checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-table-spacing" classname="native-table-spacing" time="0.27903" status="run">
+		<properties/>
+		<system-out>grid:  / 
+grid: border-spacing:7px / 
+grid: border-spacing:7px 11px / 
+grid: border-spacing:0 / 
+grid: border-spacing:7px 11px;border-spacing:-1px / 
+grid: border-spacing:7px 11px;border-spacing:3px 4px 5px / 
+grid: border-spacing:7px 11px;border-spacing:10% / 
+grid: border-spacing:7px 11px;border-spacing:auto / 
+grid: border-spacing:7px 11px;border-collapse:collapse / 
+grid:  / border-spacing:7px 11px
+grid: border-spacing:inherit / border-spacing:7px 11px
+grid: border-spacing:initial / border-spacing:7px 11px
+grid: border-spacing:unset / border-spacing:7px 11px
+grid: font-size:14px;border-spacing:.5em / 
+pages: header=0 tall=0 vertical=0
+pages: header=1 tall=0 vertical=0
+pages: header=0 tall=1 vertical=0
+pages: header=0 tall=0 vertical=1
+3174 table spacing checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-crypto" classname="native-pdf-crypto" time="0.290668" status="run">
+		<properties/>
+		<system-out>941 PDF authentication checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-index" classname="native-chapter-index" time="1.32437" status="run">
+		<properties/>
+		<system-out>50 MiB streamed: 102404 nodes, sampled-accounted=3489737 bytes, retained=3416516 bytes, generator=32768 bytes
+100 MiB streamed: 204804 nodes, sampled-accounted=6766537 bytes, retained=6693316 bytes, generator=32768 bytes
+27366 chapter index checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-window" classname="native-chapter-window" time="2.5485" status="run">
+		<properties/>
+		<system-out>50 MiB replayed: tail-window=1166 bytes, fixed-generator=32768 bytes
+100 MiB replayed: tail-window=1166 bytes, fixed-generator=32768 bytes
+62924 chapter window checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-style-budget" classname="native-style-budget" time="0.426789" status="run">
+		<properties/>
+		<system-out>153 bounded style checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-source" classname="native-chapter-source" time="0.221911" status="run">
+		<properties/>
+		<system-out>180 chapter source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cbz" classname="native-cbz" time="0.278945" status="run">
+		<properties/>
+		<system-out>63110 native CBZ checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-image-formats" classname="native-image-formats" time="0.178603" status="run">
+		<properties/>
+		<system-out>TIFFFetchDirectory: Warning, Requested memory size for TIFF directory of 132 is greater than filesize 108. Memory not allocated, TIFF directory not read.
+TIFFReadDirectory: Failed to read directory at offset 34.
+1575 image-format checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cbz-formats" classname="native-cbz-formats" time="0.199595" status="run">
+		<properties/>
+		<system-out>4506 CBZ format checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-stream" classname="native-library-stream" time="5.35357" status="run">
+		<properties/>
+		<system-out>84 streaming library checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-m4b-metadata" classname="native-m4b-metadata" time="0.202149" status="run">
+		<properties/>
+		<system-out>9559 ISO-BMFF metadata, chapters, ownership and large-source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-indic" classname="native-indic" time="0.156855" status="run">
+		<properties/>
+		<system-out>1478 native Indic oracle, source, cancellation and pagination checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-wp7" classname="native-wp7" time="0.228082" status="run">
+		<properties/>
+		<system-out>EXReader WP7 scripts: 18750 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ruby" classname="native-ruby" time="0.346838" status="run">
+		<properties/>
+		<system-out>9524 ruby layout, source, hit, pagination and checkpoint checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-color" classname="native-pdf-color" time="0.332752" status="run">
+		<properties/>
+		<system-out>2553 native PDF source colour-space checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-intent" classname="native-pdf-intent" time="0.317728" status="run">
+		<properties/>
+		<system-out>52 native PDF rendering-intent checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-matte" classname="native-pdf-matte" time="0.189066" status="run">
+		<properties/>
+		<system-out>30 native PDF image matte checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-groupcs" classname="native-pdf-groupcs" time="0.774993" status="run">
+		<properties/>
+		<system-out>643 native PDF group colour-space checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-inks" classname="native-inks" time="23.924" status="run">
+		<properties/>
+		<system-out>929 native ink checks; max reference difference 0; legacy round-trip difference 10
+</system-out>
+	</testcase>
+	<testcase name="native-nested-groups" classname="native-nested-groups" time="6.60436" status="run">
+		<properties/>
+		<system-out>24 nested crop scenarios match whole buffers; minimum working allocation reduction 97%
+6194 nested group checks, maximum Decimal probe difference 1/255
+</system-out>
+	</testcase>
+	<testcase name="native-paint-source" classname="native-paint-source" time="1.31965" status="run">
+		<properties/>
+		<system-out>{"scenario":"full-canvas","status":6,"calls":22364160,"charged_work":268369920,"cpu_ms":916.000000,"pixel_hash":"9f970139dd772383"}
+{"scenario":"tiny-clip-with-hole","status":0,"calls":48,"charged_work":9437776,"cpu_ms":9.000000,"pixel_hash":"861f4780274ac3cb"}
+283 procedural paint checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-zero-opacity" classname="native-zero-opacity" time="1.674" status="run">
+		<properties/>
+		<system-out>2500 zero-opacity checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-alpha-source" classname="native-alpha-source" time="0.313408" status="run">
+		<properties/>
+		<system-out>1834 alpha source checks; maximum Decimal difference 0/255
+</system-out>
+	</testcase>
+	<testcase name="native-mask-functions" classname="native-mask-functions" time="0.163117" status="run">
+		<properties/>
+		<system-out>821 mask function checks; maximum analytic difference 0/255
+</system-out>
+	</testcase>
+	<testcase name="native-mask-scope" classname="native-mask-scope" time="0.913648" status="run">
+		<properties/>
+		<system-out>317 mask scope checks; maximum analytic probe difference 1/255
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-shading" classname="native-pdf-shading" time="1.9362" status="run">
+		<properties/>
+		<system-out>41933 native PDF shading checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-calculator" classname="native-pdf-calculator" time="0.158763" status="run">
+		<properties/>
+		<system-out>263 PDF calculator checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-color" classname="native-font-color" time="0.453732" status="run">
+		<properties/>
+		<system-out>80703 color-font palette, layers and raster checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-color-v1" classname="native-font-color-v1" time="0.263599" status="run">
+		<properties/>
+		<system-out>259 COLR v1 paint, gradient, transform, composite, limit and identity checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-svg" classname="native-font-svg" time="0.354286" status="run">
+		<properties/>
+		<system-out>908 SVG font element, transform, rejection, limit and identity checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ot-variation" classname="native-ot-variation" time="0.0949428" status="run">
+		<properties/>
+		<system-out>OpenType variation checks: 196
+</system-out>
+	</testcase>
+	<testcase name="native-orthogonal" classname="native-orthogonal" time="0.177891" status="run">
+		<properties/>
+		<system-out>12475 orthogonal geometry, pagination, checkpoint and positioned checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-variable" classname="native-variable" time="0.11093" status="run">
+		<properties/>
+		<system-out>112 variable font axes, shaping, outlines and inheritance checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-inline" classname="native-pdf-inline" time="0.944989" status="run">
+		<properties/>
+		<system-out>394 native PDF inline image checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-stretch" classname="native-stretch" time="0.440073" status="run">
+		<properties/>
+		<system-out>rate=0.50 frames=192034 pitch=440.000Hz
+rate=0.75 frames=128023 pitch=440.091Hz
+rate=1.00 frames=96017 pitch=440.000Hz
+rate=1.50 frames=64011 pitch=439.998Hz
+rate=2.00 frames=48009 pitch=440.000Hz
+rate=1.333333333 frames=72013 pitch=219.938Hz
+4949472 pitch-preserving time-stretch checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-m4b" classname="native-m4b" time="0.0788632" status="run">
+		<properties/>
+		<system-out>M4B disabled configuration passed (4 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-epub-metadata-write" classname="native-epub-metadata-write" time="0.195688" status="run">
+		<properties/>
+		<system-out>362 EPUB original metadata/cover writing checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-vertical" classname="native-vertical" time="0.196481" status="run">
+		<properties/>
+		<system-out>6 prefixed/canonical equivalence cases and 3 cascade cases passed
+1781 vertical layout, orientation, shaping and pager checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-combine-upright-geometry" classname="native-combine-upright-geometry" time="0.113963" status="run">
+		<properties/>
+		<system-out>38 text-combine-upright geometry checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-combine-upright-modes" classname="native-combine-upright-modes" time="0.0366431" status="run">
+		<properties/>
+		<system-out>14 mode and rejection cases passed
+58 text-combine-upright modes checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-combine-upright-wrap" classname="native-combine-upright-wrap" time="0.0389699" status="run">
+		<properties/>
+		<system-out>13 text-combine-upright wrap checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-type3" classname="native-pdf-type3" time="0.225271" status="run">
+		<properties/>
+		<system-out>PDF Type3 painting passed (2935 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-aac" classname="native-aac" time="0.156952" status="run">
+		<properties/>
+		<system-out>AAC disabled configuration passed (4 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-markup" classname="native-pdf-markup" time="0.164538" status="run">
+		<properties/>
+		<system-out>PDF line markup passed (8819 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-flac" classname="native-flac" time="0.096498" status="run">
+		<properties/>
+		<system-out>5659 native FLAC checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pcm" classname="native-pcm" time="0.107905" status="run">
+		<properties/>
+		<system-out>PCM providers passed (129 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-audio-output" classname="native-audio-output" time="0.0959709" status="run">
+		<properties/>
+		<system-out>Native audio output passed (17 checks; waveOut)
+</system-out>
+	</testcase>
+	<testcase name="native-mp3" classname="native-mp3" time="0.358887" status="run">
+		<properties/>
+		<system-out>65536 MP3 integration checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-metadata-write" classname="native-pdf-metadata-write" time="0.189904" status="run">
+		<properties/>
+		<system-out>PDF metadata writing passed (1896 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-write" classname="native-pdf-write" time="0.071643" status="run">
+		<properties/>
+		<system-out>PDF annotation writing passed (492 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-form" classname="native-pdf-form" time="0.455671" status="run">
+		<properties/>
+		<system-out>AcroForm: 9394 checks; 36 fields, 39 widgets, 2 pages
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-appearance" classname="native-pdf-appearance" time="0.116739" status="run">
+		<properties/>
+		<system-out>1629 PDF appearance checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-page-annotations" classname="native-page-annotations" time="0.178802" status="run">
+		<properties/>
+		<system-out>Page annotation snapshots passed
+</system-out>
+	</testcase>
+	<testcase name="native-metadata" classname="native-metadata" time="0.193286" status="run">
+		<properties/>
+		<system-out>865 metadata checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-annotation" classname="native-annotation" time="0.174734" status="run">
+		<properties/>
+		<system-out>473 annotation exchange checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-reanchor-library" classname="native-reanchor-library" time="0.394422" status="run">
+		<properties/>
+		<system-out>135 library relocation checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-progress-library" classname="native-progress-library" time="0.328757" status="run">
+		<properties/>
+		<system-out>131 stable progress checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-text-source" classname="native-text-source" time="0.142554" status="run">
+		<properties/>
+		<system-out>139 streaming text source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-text-index" classname="native-text-index" time="0.493922" status="run">
+		<properties/>
+		<system-out>295 text index checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-abi" classname="native-abi" time="0.20414" status="run">
+		<properties/>
+		<system-out>9 ABI compatibility checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-core" classname="native-core" time="0.282458" status="run">
+		<properties/>
+		<system-out>EXReader C 3.42.0: 70073 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-layout-chapter" classname="native-chapter-layout-chapter" time="0.180029" status="run">
+		<properties/>
+		<system-out>54 chapter layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-layout-title" classname="native-chapter-layout-title" time="0.0319236" status="run">
+		<properties/>
+		<system-out>308 chapter layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-layout-indent" classname="native-chapter-layout-indent" time="0.115398" status="run">
+		<properties/>
+		<system-out>41 chapter layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-flow" classname="native-flow" time="0.151978" status="run">
+		<properties/>
+		<system-out>EXReader flow: 5347 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-construct" classname="native-construct" time="0.161879" status="run">
+		<properties/>
+		<system-out>653 document construction checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-text" classname="native-cfi-text" time="0.210376" status="run">
+		<properties/>
+		<system-out>67 CFI text assertion checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi" classname="native-cfi" time="0.145927" status="run">
+		<properties/>
+		<system-out>834 chapter CFI checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-layout-rendition" classname="native-fixed-layout-rendition" time="0.163662" status="run">
+		<properties/>
+		<system-out>105 fixed-layout rendition checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-layout-viewport" classname="native-fixed-layout-viewport" time="0.0497507" status="run">
+		<properties/>
+		<system-out>80 fixed-layout viewport checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-layout-absolute" classname="native-fixed-layout-absolute" time="0.0444404" status="run">
+		<properties/>
+		<system-out>31 fixed-layout absolute checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-layout-mixed" classname="native-fixed-layout-mixed" time="0.113418" status="run">
+		<properties/>
+		<system-out>69 fixed-layout mixed checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-parse" classname="native-cfi-compat-parse" time="0.162816" status="run">
+		<properties/>
+		<system-out>valid vectors: 25/25
+1363 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-invalid" classname="native-cfi-compat-invalid" time="0.0568057" status="run">
+		<properties/>
+		<system-out>invalid vectors: 38/38
+106 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-mapping" classname="native-cfi-compat-mapping" time="0.0513197" status="run">
+		<properties/>
+		<system-out>projection boundaries: 58/58 (raw UTF-16/normalized UTF-8)
+349 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-roundtrip" classname="native-cfi-compat-roundtrip" time="0.220541" status="run">
+		<properties/>
+		<system-out>sample 0: 0:23 -&gt; 0:71 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/3:2,/12/1:6)
+sample 1: 0:32 -&gt; 0:65 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:4,/12/1:2)
+sample 2: 0:3 -&gt; 0:63 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/1:5,/12/1:0)
+sample 3: 0:58 -&gt; 0:65 epubcfi(/6/2[ref^=a]!/4[body^=a],/8/1:16,/12/1:2)
+sample 4: 0:38 -&gt; 0:43 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:8,/8/1:1)
+sample 5: 0:38 -&gt; 0:43 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:8,/8/1:1)
+sample 6: 0:9 -&gt; 0:53 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/1:12,/8/1:11)
+sample 7: 0:25 -&gt; 0:50 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/3:4,/8/1:8)
+sample 8: 0:43 -&gt; 0:44 epubcfi(/6/2[ref^=a]!/4[body^=a]/8/1,:1,:2)
+sample 9: 0:32 -&gt; 0:61 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:4,/8/1:19)
+sample 10: 0:57 -&gt; 0:64 epubcfi(/6/2[ref^=a]!/4[body^=a],/8/1:15,/12/1:1)
+sample 11: 0:0 -&gt; 0:34 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/1:2,/4/3:6)
+sample 12: 0:29 -&gt; 0:60 epubcfi(/6/2[ref^=a]!/4[body^=a],/4/3:0,/8/1:18)
+sample 13: 0:21 -&gt; 0:60 epubcfi(/6/2[ref^=a]!/4[body^=a],/2[p]/2/1:4,/8/1:18)
+s...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-cross" classname="native-cfi-compat-cross" time="0.0769334" status="run">
+		<properties/>
+		<system-out>sample 0: 0:71 -&gt; 1:29 epubcfi(/6,/2[ref^=a]!/4[body^=a]/12/1:6,/4!/4/2/1:24)
+sample 1: 0:32 -&gt; 1:12 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:4,/4!/4/2/1:12)
+sample 2: 0:3 -&gt; 1:8 epubcfi(/6,/2[ref^=a]!/4[body^=a]/2[p]/1:5,/4!/4/2/1:8)
+sample 3: 0:58 -&gt; 1:6 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:16,/4!/4/2/1:6)
+sample 4: 0:38 -&gt; 1:37 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:8,/4!/4/4/1:7)
+sample 5: 0:38 -&gt; 1:2 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:8,/4!/4/2/1:2)
+sample 6: 0:9 -&gt; 1:25 epubcfi(/6,/2[ref^=a]!/4[body^=a]/2[p]/1:12,/4!/4/2/1:20)
+sample 7: 0:50 -&gt; 1:4 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:8,/4!/4/2/1:4)
+sample 8: 0:44 -&gt; 1:12 epubcfi(/6,/2[ref^=a]!/4[body^=a]/8/1:2,/4!/4/2/1:12)
+sample 9: 0:32 -&gt; 1:8 epubcfi(/6,/2[ref^=a]!/4[body^=a]/4/3:4,/4!/4/2/1:8)
+cross-part ranges: 10/10 = 100%; anchor fields and both endpoints equal; 4 boundary cases
+281 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cfi-compat-contracts" classname="native-cfi-compat-contracts" time="0.0225907" status="run">
+		<properties/>
+		<system-out>32 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-anchor" classname="native-anchor" time="0.265262" status="run">
+		<properties/>
+		<system-out>295 text anchor checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-publication-index-equivalence" classname="native-publication-index-equivalence" time="0.0584907" status="run">
+		<properties/>
+		<system-out>20 queries x 4 flags: complete positions equal
+publication index equivalence passed
+</system-out>
+	</testcase>
+	<testcase name="native-publication-index-boundaries" classname="native-publication-index-boundaries" time="6.17905" status="run">
+		<properties/>
+		<system-out>publication index boundaries passed
+</system-out>
+	</testcase>
+	<testcase name="native-publication-index-accents" classname="native-publication-index-accents" time="0.544509" status="run">
+		<properties/>
+		<system-out>publication index accents passed
+</system-out>
+	</testcase>
+	<testcase name="native-publication-index-incremental" classname="native-publication-index-incremental" time="0.505819" status="run">
+		<properties/>
+		<system-out>publication index incremental passed
+</system-out>
+	</testcase>
+	<testcase name="native-publication-index-persistence" classname="native-publication-index-persistence" time="0.172928" status="run">
+		<properties/>
+		<system-out>publication index persistence passed
+</system-out>
+	</testcase>
+	<testcase name="native-publication-index-errors" classname="native-publication-index-errors" time="0.0247885" status="run">
+		<properties/>
+		<system-out>publication index errors passed
+</system-out>
+	</testcase>
+	<testcase name="native-publication-index-anchors" classname="native-publication-index-anchors" time="0.0610858" status="run">
+		<properties/>
+		<system-out>publication index anchors passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-basic" classname="native-document-search-basic" time="0.031017" status="run">
+		<properties/>
+		<system-out>search basic passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-unicode" classname="native-document-search-unicode" time="0.115808" status="run">
+		<properties/>
+		<system-out>search unicode passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-flags" classname="native-document-search-flags" time="0.175687" status="run">
+		<properties/>
+		<system-out>search flags passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-errors" classname="native-document-search-errors" time="0.0728479" status="run">
+		<properties/>
+		<system-out>search errors passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-bounded" classname="native-document-search-bounded" time="1.97591" status="run">
+		<properties/>
+		<system-out>search bounded passed
+</system-out>
+	</testcase>
+	<testcase name="native-document-search-mapping" classname="native-document-search-mapping" time="0.0486976" status="run">
+		<properties/>
+		<system-out>jump/anchor/glyph mapping 20/20 (10 vertical)
+search mapping passed
+</system-out>
+	</testcase>
+	<testcase name="native-content-mapping" classname="native-content-mapping" time="0.208833" status="run">
+		<properties/>
+		<system-out>same-layout: 200/200 = 100.00% (seed 0x41ce2026; 20 cross-part)
+</system-out>
+	</testcase>
+	<testcase name="native-content-relocation" classname="native-content-relocation" time="0.0577737" status="run">
+		<properties/>
+		<system-out>relocation: insertion, part reorder, ambiguity, deletion, cancellation, identity passed
+</system-out>
+	</testcase>
+	<testcase name="native-content-expansion" classname="native-content-expansion" time="0.0540866" status="run">
+		<properties/>
+		<system-out>expansion: grapheme/emoji, word/CJK, sentence, paragraph, exclusive end and cross-part passed
+</system-out>
+	</testcase>
+	<testcase name="native-content-hits" classname="native-content-hits" time="0.0438885" status="run">
+		<properties/>
+		<system-out>hit-test: 50/50 = 100.00%
+</system-out>
+	</testcase>
+	<testcase name="native-content-reflow" classname="native-content-reflow" time="0.489158" status="run">
+		<properties/>
+		<system-out>stage 0: 1280x800 17px font1: 9 pages
+stage 1: 1280x800 18px font1: 9 pages
+stage 2: 1280x800 24px font1: 11 pages
+stage 3: 1280x800 17px font1: 9 pages
+stage 4: 1280x800 17px font2: 15 pages
+stage 5: 1280x800 17px font1: 9 pages
+stage 6: 1552x928 17px font1: 8 pages
+stage 7: 1280x800 17px font1: 9 pages
+size-17-18-24-17: 100/100 = 100.00%; page movements=97; mismatches=0
+font-roundtrip: 100/100 = 100.00%; page movements=88; mismatches=0
+window-roundtrip: 100/100 = 100.00%; page movements=50; mismatches=0
+</system-out>
+	</testcase>
+	<testcase name="native-anchor-library" classname="native-anchor-library" time="0.47802" status="run">
+		<properties/>
+		<system-out>EXReader stable annotation library: 282 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-note-limit" classname="native-note-limit" time="2.17933" status="run">
+		<properties/>
+		<system-out>74 annotation text limit checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-export-xml" classname="native-export-xml" time="0.161275" status="run">
+		<properties/>
+		<system-out>export XML: 2004 checks
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-fallback" classname="native-rtf-fallback" time="0.127195" status="run">
+		<properties/>
+		<system-out>RTF fallback: 116 checks
+</system-out>
+	</testcase>
+	<testcase name="native-html-raw" classname="native-html-raw" time="0.129897" status="run">
+		<properties/>
+		<system-out>HTML raw text: 120 checks
+</system-out>
+	</testcase>
+	<testcase name="native-lazy" classname="native-lazy" time="0.238856" status="run">
+		<properties/>
+		<system-out>EXReader lazy loading: 39215 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-source" classname="native-source" time="0.159637" status="run">
+		<properties/>
+		<system-out>Seekable sources: 463 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-objects" classname="native-pdf-objects" time="0.283262" status="run">
+		<properties/>
+		<system-out>23430 native PDF object checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-pages" classname="native-pdf-pages" time="0.324919" status="run">
+		<properties/>
+		<system-out>181 native PDF page tree checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-cmap" classname="native-pdf-cmap" time="0.128582" status="run">
+		<properties/>
+		<system-out>182 native PDF ToUnicode checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-font" classname="native-pdf-font" time="0.0946754" status="run">
+		<properties/>
+		<system-out>324 native PDF font checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-text" classname="native-pdf-text" time="0.232556" status="run">
+		<properties/>
+		<system-out>399 native PDF text geometry checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-vector" classname="native-vector" time="0.0986146" status="run">
+		<properties/>
+		<system-out>2431 native vector fill checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-graphics" classname="native-pdf-graphics" time="0.128098" status="run">
+		<properties/>
+		<system-out>211 native PDF graphics checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-outline" classname="native-pdf-outline" time="0.127539" status="run">
+		<properties/>
+		<system-out>188 native PDF outline checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-raster" classname="native-pdf-raster" time="0.47025" status="run">
+		<properties/>
+		<system-out>262446 native PDF raster checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-image" classname="native-pdf-image" time="0.628189" status="run">
+		<properties/>
+		<system-out>3852 native PDF image checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-library" classname="native-audio-library" time="0.46307" status="run">
+		<properties/>
+		<system-out>90 audio persistence checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-wave-example" classname="native-wave-example" time="0.186978" status="run">
+		<properties/>
+		<system-out>rate=16000 channels=1 frames=3200 decoded=3200 peak=0.500000
+</system-out>
+	</testcase>
+	<testcase name="native-pcm-example" classname="native-pcm-example" time="0.210554" status="run">
+		<properties/>
+		<system-out>rate=16000 channels=1 decoded=3200 peak=0.500000
+</system-out>
+	</testcase>
+	<testcase name="native-wave" classname="native-wave" time="0.131956" status="run">
+		<properties/>
+		<system-out>8076 native WAVE checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-player" classname="native-audio-player" time="0.0533809" status="run">
+		<properties/>
+		<system-out>116 audio backend control checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio" classname="native-audio" time="0.185404" status="run">
+		<properties/>
+		<system-out>58 audio timeline checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-library" classname="native-fixed-library" time="0.357698" status="run">
+		<properties/>
+		<system-out>96 fixed library checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-text" classname="native-fixed-text" time="0.126373" status="run">
+		<properties/>
+		<system-out>129 generic fixed text checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-pdf" classname="native-fixed-pdf" time="0.15051" status="run">
+		<properties/>
+		<system-out>111 public fixed PDF checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-hybrid-deck" classname="native-pdf-hybrid-deck" time="19.3748" status="run">
+		<properties/>
+		<system-out>pages=15 rendered=15 failures=0 first_paint_ms=1051.0
+ok
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-hybrid-merge" classname="native-pdf-hybrid-merge" time="0.130966" status="run">
+		<properties/>
+		<system-out>ok
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-hybrid-chain" classname="native-pdf-hybrid-chain" time="0.0582358" status="run">
+		<properties/>
+		<system-out>ok
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-hybrid-bad-offset" classname="native-pdf-hybrid-bad-offset" time="0.233769" status="run">
+		<properties/>
+		<system-out>ok
+</system-out>
+	</testcase>
+	<testcase name="native-fixed-example" classname="native-fixed-example" time="0.205433" status="run">
+		<properties/>
+		<system-out>text_bytes=1 regions=1
+pages=5 rendered=0 bitmap=12x12
+</system-out>
+	</testcase>
+	<testcase name="native-fixed" classname="native-fixed" time="0.207259" status="run">
+		<properties/>
+		<system-out>35 native generic fixed document checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-path" classname="native-font-path" time="0.0878455" status="run">
+		<properties/>
+		<system-out>161 native public font path checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-blend" classname="native-blend" time="0.757552" status="run">
+		<properties/>
+		<system-out>flat alpha0 maximum premultiplied difference 2
+flat alpha1 maximum premultiplied difference 2
+primitives alpha0 maximum premultiplied difference 2
+primitives alpha1 maximum premultiplied difference 1
+state alpha0 maximum premultiplied difference 0
+state alpha1 maximum premultiplied difference 0
+groups alpha0 maximum premultiplied difference 2
+groups alpha1 maximum premultiplied difference 2
+compound alpha0 maximum premultiplied difference 2
+compound alpha1 maximum premultiplied difference 2
+ap-groups alpha0 maximum premultiplied difference 1
+ap-groups alpha1 maximum premultiplied difference 1
+nonisolated alpha0 maximum premultiplied difference 1
+nonisolated alpha1 maximum premultiplied difference 1
+ap-nonisolated alpha0 maximum premultiplied difference 1
+ap-nonisolated alpha1 maximum premultiplied difference 1
+knockout alpha0 maximum premultiplied difference 0
+knockout alpha1 maximum premultiplied difference 0
+knockout-nonisolated alpha0 maximum premultiplied difference 0
+knockout-nonisolated alpha1 maximum p...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-canvas" classname="native-canvas" time="0.402221" status="run">
+		<properties/>
+		<system-out>4484 native canvas checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-canvas-cmyk" classname="native-canvas-cmyk" time="1.75971" status="run">
+		<properties/>
+		<system-out>2696 native canvas CMYK group checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-viewport" classname="native-viewport" time="0.0566766" status="run">
+		<properties/>
+		<system-out>43 native viewport checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-positioned" classname="native-positioned" time="0.108991" status="run">
+		<properties/>
+		<system-out>18083 positioned layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-unique" classname="native-library-unique" time="0.527635" status="run">
+		<properties/>
+		<system-out>101 exact duplicate import checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-cover-import" classname="native-cover-import" time="0.219057" status="run">
+		<properties/>
+		<system-out>97 library cover import checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-kf8" classname="native-kf8" time="0.389437" status="run">
+		<properties/>
+		<system-out>1729 KF8 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-mobi" classname="native-mobi" time="0.279667" status="run">
+		<properties/>
+		<system-out>51 MOBI codec checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-decoration" classname="native-decoration" time="0.174818" status="run">
+		<properties/>
+		<system-out>690 text-decoration checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-number" classname="native-rtf-number" time="0.18974" status="run">
+		<properties/>
+		<system-out>131 RTF numbering checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-list" classname="native-rtf-list" time="0.25972" status="run">
+		<properties/>
+		<system-out>39 RTF list checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-note" classname="native-rtf-note" time="0.149694" status="run">
+		<properties/>
+		<system-out>119 RTF note checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf-table" classname="native-rtf-table" time="0.194001" status="run">
+		<properties/>
+		<system-out>140 RTF table checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtf" classname="native-rtf" time="0.168731" status="run">
+		<properties/>
+		<system-out>138 rich RTF checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx" classname="native-docx" time="0.191009" status="run">
+		<properties/>
+		<system-out>263 rich DOCX checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-fb2" classname="native-fb2" time="0.228894" status="run">
+		<properties/>
+		<system-out>71 rich FB2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-export-html" classname="native-export-html" time="0.330813" status="run">
+		<properties/>
+		<system-out>165 structured HTML checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-export-epub" classname="native-export-epub" time="0.222607" status="run">
+		<properties/>
+		<system-out>323 structured EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-sevenz-codecs" classname="native-sevenz-codecs" time="0.142042" status="run">
+		<properties/>
+		<system-out>7Z codecs: 158305 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-sevenz-safety" classname="native-sevenz-safety" time="0.127952" status="run">
+		<properties/>
+		<system-out>7Z safety: 630 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-sevenz-source" classname="native-sevenz-source" time="0.0288555" status="run">
+		<properties/>
+		<system-out>7Z source: 14403 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-locate-report-entries" classname="native-locate-report-entries" time="0.0925773" status="run">
+		<properties/>
+		<system-out>locate report entries: 38 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-locate-report-reset" classname="native-locate-report-reset" time="0.197753" status="run">
+		<properties/>
+		<system-out>locate report reset: 18 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-navigation" classname="native-navigation" time="0.224792" status="run">
+		<properties/>
+		<system-out>Navigation: 145 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-opds" classname="native-opds" time="0.111866" status="run">
+		<properties/>
+		<system-out>opds ok
+</system-out>
+	</testcase>
+	<testcase name="native-toc-page" classname="native-toc-page" time="0.249092" status="run">
+		<properties/>
+		<system-out>toc pages passed (22029 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-toc-nav" classname="native-toc-nav" time="0.157464" status="run">
+		<properties/>
+		<system-out>TOC nav: 30 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-toc-ncx" classname="native-toc-ncx" time="0.30294" status="run">
+		<properties/>
+		<system-out>TOC ncx: 45 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-toc-recovery" classname="native-toc-recovery" time="0.210236" status="run">
+		<properties/>
+		<system-out>TOC recovery: 81 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-toc-fragment" classname="native-toc-fragment" time="0.0419508" status="run">
+		<properties/>
+		<system-out>TOC fragment: 78 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-text" classname="native-text" time="0.142678" status="run">
+		<properties/>
+		<system-out>766 Unicode grapheme conformance cases passed
+19338 Unicode line conformance cases passed; 1388 breaks suppressed inside graphemes
+644977 text boundary and cluster layout checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-bidi" classname="native-bidi" time="1.47177" status="run">
+		<properties/>
+		<system-out>861948 Unicode 17 bidi conformance cases, 24401500 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtl-paragraph" classname="native-rtl-paragraph" time="0.110571" status="run">
+		<properties/>
+		<system-out>script 0: lines=19 first=(20.000,256.000) last=(218.000,82.000)
+script 1: lines=16 first=(20.000,256.000) last=(47.000,253.000)
+RTL paragraph: 54 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtl-numbers" classname="native-rtl-numbers" time="0.0876592" status="run">
+		<properties/>
+		<system-out>RTL numbers: 39 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtl-punctuation" classname="native-rtl-punctuation" time="0.0305934" status="run">
+		<properties/>
+		<system-out>RTL punctuation: 36 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtl-mixed" classname="native-rtl-mixed" time="0.0752833" status="run">
+		<properties/>
+		<system-out>RTL mixed: 56 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-rtl-progression" classname="native-rtl-progression" time="0.285582" status="run">
+		<properties/>
+		<system-out>RTL progression: 40 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-shaping" classname="native-shaping" time="0.195588" status="run">
+		<properties/>
+		<system-out>EXReader shaping: 297033 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-complex-layout" classname="native-complex-layout" time="0.19509" status="run">
+		<properties/>
+		<system-out>37354 complex layout integration checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-line-boundary" classname="native-line-boundary" time="22.6248" status="run">
+		<properties/>
+		<system-out>EXReader line boundaries: 54650 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font" classname="native-font" time="0.148789" status="run">
+		<properties/>
+		<system-out>258 font fallback checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-font" classname="native-book-font" time="0.108673" status="run">
+		<properties/>
+		<system-out>Book fonts: 136 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-budget" classname="native-budget" time="0.159869" status="run">
+		<properties/>
+		<system-out>121 cache byte budget checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-bounds" classname="native-chapter-bounds" time="0.408645" status="run">
+		<properties/>
+		<system-out>27 chapter bound checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-reader" classname="native-chapter-reader" time="13.4776" status="run">
+		<properties/>
+		<system-out>9480 chapter reader equivalence and recovery checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-chapter-oversized-unit" classname="native-chapter-oversized-unit" time="0.174363" status="run">
+		<properties/>
+		<system-out>90 oversized inline unit checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-reflow-basic" classname="native-reflow-basic" time="0.142251" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-reflow-insertions" classname="native-reflow-insertions" time="0.370468" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-reflow-convergence" classname="native-reflow-convergence" time="0.0530921" status="run">
+		<properties/>
+		<system-out>anchor: page 8 offset 8 -&gt; page 9 offset 8, block 1080 byte 8
+</system-out>
+	</testcase>
+	<testcase name="native-reflow-history" classname="native-reflow-history" time="0.0873361" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-reflow-anchors" classname="native-reflow-anchors" time="0.0735853" status="run">
+		<properties/>
+		<system-out>anchor split: page 5 offset 12 -&gt; page 5 offset 13, byte 12 -&gt; 6
+</system-out>
+	</testcase>
+	<testcase name="native-reflow-failures" classname="native-reflow-failures" time="0.0648731" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-reflow-formatting" classname="native-reflow-formatting" time="0.0695554" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-reflow-unicode" classname="native-reflow-unicode" time="0.0680181" status="run">
+		<properties/>
+		<system-out>anchor UTF8: page 1 offset 4 -&gt; page 1 offset 30, block 100031 byte 4
+</system-out>
+	</testcase>
+	<testcase name="native-reflow-long" classname="native-reflow-long" time="5.49421" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-reflow-revision" classname="native-reflow-revision" time="0.0461906" status="run">
+		<properties/>
+		<system-out>anchor replacement: page 0 offset 16 -&gt; page 0 offset 23, text target
+</system-out>
+	</testcase>
+	<testcase name="native-reflow-empty" classname="native-reflow-empty" time="0.0347539" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-reflow-disjoint" classname="native-reflow-disjoint" time="0.0507735" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="native-pager" classname="native-pager" time="0.408503" status="run">
+		<properties/>
+		<system-out>EXReader pager: 238772 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-page-cache" classname="native-page-cache" time="0.973884" status="run">
+		<properties/>
+		<system-out>5187 page cache checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-checkpoints" classname="native-checkpoints" time="0.140166" status="run">
+		<properties/>
+		<system-out>Checkpoints: 3922 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-control" classname="native-control" time="0.136273" status="run">
+		<properties/>
+		<system-out>Operation control: 4097 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-convert-corpus" classname="native-convert-corpus" time="1.92148" status="run">
+		<properties/>
+		<system-out>generated 101 files in C:\Users\Oscar\Documents\Codex\EXReader-pptx-m6\build\pptx-m6\convert-corpus
+</system-out>
+	</testcase>
+	<testcase name="native-convert" classname="native-convert" time="0.454607" status="run">
+		<properties/>
+		<system-out>convert matrix: 520 checks, 520 passed, 0 failed; 20 render checks (20 passed)
+</system-out>
+	</testcase>
+	<testcase name="native-convert-cli" classname="native-convert-cli" time="10.5692" status="run">
+		<properties/>
+		<system-out>PASS capabilities
+PASS single-txt-to-epub
+PASS single-html-to-fb2
+PASS single-epub-to-docx
+PASS single-rtf-to-txt
+PASS single-docx-to-html
+PASS single-fb2-to-rtf
+PASS single-epub-to-html
+PASS default-output-name
+PASS xhtml-alias
+PASS explicit-format
+PASS arbitrary-output-extension
+PASS uppercase-extension
+PASS preserve-epub-0
+PASS preserve-epub-1
+PASS preserve-epub-html-bundle
+PASS preserve-xhtml-to-epub
+PASS preserve-xhtml-to-html
+PASS preserve-unsupported
+PASS preserve-missing-resource
+PASS batch-success
+PASS batch-mixed
+PASS batch-duplicate-output
+PASS bad-manifest
+PASS duplicate-manifest-id
+PASS source-equals-target
+PASS source-target-case-alias
+PASS source-target-hardlink
+PASS existing-target
+PASS explicit-overwrite
+PASS source-target-junction
+PASS write-failure
+PASS publish-failure
+PASS unicode-space-path
+PASS report-write-failure
+PASS input-limit
+PASS cancel-batch
+37 scenarios, 37 passed, 0 failed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-write" classname="native-docx-write" time="0.664128" status="run">
+		<properties/>
+		<system-out>DOCX package, fields, formatting, escaping and reference pagination passed
+</system-out>
+	</testcase>
+	<testcase name="native-convert-benchmark" classname="native-convert-benchmark" time="17.3711" status="run">
+		<properties/>
+		<system-out>small=10 one_mib_peak=27709440 batch_peak=29904896 outputs_batch=5385705
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-group-reference" classname="native-pdf-group-reference" time="0.375561" status="run">
+		<properties/>
+		<system-out>208 independent blend samples match PDFium within 2 and 160 group probes reproduce exactly
+</system-out>
+	</testcase>
+	<testcase name="native-case-reference" classname="native-case-reference" time="0.929601" status="run">
+		<properties/>
+		<system-out>8074 contextual case comparisons passed; independent ICU 78.3, Unicode 17.0; includes all Unicode 17 default mapping scalars
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-compound-oracle" classname="native-hyphen-compound-oracle" time="3.15618" status="run">
+		<properties/>
+		<system-out>{"reference": "independent literal overlay", "seed": 180327, "queries": 10075, "unchanged_real_dictionaries": [], "strict_minimum_reference_differences": 0, "library_sha256": "9b5bc24fce152b9390f7239c53d8d961af490d00228e9c4dc9282a18b7072a18", "reference_sha256": null, "preprocessor_sha256": null, "reference_input": "not used"}
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-replacement-oracle" classname="native-hyphen-replacement-oracle" time="0.954989" status="run">
+		<properties/>
+		<system-out>{"reference": "independent literal overlay", "seed": 180328, "generated_queries": 5000, "generated_replacement_opportunities": 8479, "library_sha256": "9b5bc24fce152b9390f7239c53d8d961af490d00228e9c4dc9282a18b7072a18"}
+</system-out>
+	</testcase>
+	<testcase name="native-hyphen-conditional-oracle" classname="native-hyphen-conditional-oracle" time="2.4512" status="run">
+		<properties/>
+		<system-out>{"seed": 180329, "generated_queries": 4801, "unicode_queries": 1200, "opportunities": 16929, "external_queries": 0, "external_scope": "ASCII anchored conditional left stems; cut&gt;0 and restored stem shorter than parent; documented substring preprocessing", "library_sha256": "9b5bc24fce152b9390f7239c53d8d961af490d00228e9c4dc9282a18b7072a18"}
+</system-out>
+	</testcase>
+	<testcase name="native-benchmark" classname="native-benchmark" time="3.60693" status="run">
+		<properties/>
+		<system-out>Benchmark eager/paged JSON, bounded continuation, render samples, runner and invalid arguments verified
+</system-out>
+	</testcase>
+	<testcase name="native-document-probe" classname="native-document-probe" time="16.344" status="run">
+		<properties/>
+		<system-out>Complete-document probe and corpus evidence checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-corpus-triage" classname="native-corpus-triage" time="12.137" status="run">
+		<properties/>
+		<system-out>Corpus classification checks passed; independent PDF reference checked
+</system-out>
+	</testcase>
+	<testcase name="native-png" classname="native-png" time="0.213608" status="run">
+		<properties/>
+		<system-out>PNG verified: 720 x 1040, 1 channels, CRCs and native pixels
+</system-out>
+	</testcase>
+	<testcase name="native-color-png" classname="native-color-png" time="0.429991" status="run">
+		<properties/>
+		<system-out>PNG verified: 720 x 1040, 4 channels, CRCs and native pixels
+PNG verified: 720 x 1040, 4 channels, CRCs and native pixels
+BMP verified: 720 x 1040, BGR color pixels
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-jpx" classname="native-pdf-jpx" time="0.218828" status="run">
+		<properties/>
+		<system-out>JPX packed samples: JP2/J2K 1/2/4/8/16-bit Gray/RGB; malformed, truncated, dimensions, budget, cancellation, signed and subsampling passed
+</system-out>
+	</testcase>
+	<testcase name="native-core-component" classname="native-core-component" time="0.333143" status="run">
+		<properties/>
+		<system-out>Independent core component passed
+</system-out>
+	</testcase>
+	<testcase name="native-anchor-boundary" classname="native-anchor-boundary" time="0.321402" status="run">
+		<properties/>
+		<system-out>21 boundary anchor checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-source" classname="native-library-source" time="1.63026" status="run">
+		<properties/>
+		<system-out>23859 public library source checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-epub-storage" classname="native-library-epub-storage" time="1.20765" status="run">
+		<properties/>
+		<system-out>2305 independent EPUB storage checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-audio-component" classname="native-audio-component" time="0.181152" status="run">
+		<properties/>
+		<system-out>58 audio timeline checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-library-component" classname="native-library-component" time="0.32121" status="run">
+		<properties/>
+		<system-out>Independent library component passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf_edit-component" classname="native-pdf_edit-component" time="0.396619" status="run">
+		<properties/>
+		<system-out>PDF annotation writing passed (492 checks)
+</system-out>
+	</testcase>
+	<testcase name="native-textindex-component" classname="native-textindex-component" time="0.218289" status="run">
+		<properties/>
+		<system-out>Independent text index component passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-cfb" classname="native-ppt-cfb" time="1.23761" status="run">
+		<properties/>
+		<system-out>file: EXR_FORMAT: CFB unsupported header geometry at offset 26
+file: EXR_LIMIT: CFB total stream size exceeds 256 MiB
+file: EXR_LIMIT: CFB total stream size exceeds 256 MiB
+file: EXR_FORMAT: CFB truncated/cyclic mini stream at offset 0
+file: EXR_FORMAT: CFB overlapping or cyclic chain at offset 1536
+file: EXR_FORMAT: CFB invalid/cyclic directory tree at offset 128
+file: EXR_FORMAT: CFB invalid DIFAT termination/count at offset 68
+native-ppt-cfb: 13 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-records" classname="native-ppt-records" time="0.653194" status="run">
+		<properties/>
+		<system-out>records: EXR_OK: warning: count mismatch
+file: EXR_OK: PPT warning: SlidePersistAtom count 2 differs from Slide container count 3; using SlidePersistAtom
+records: EXR_OK: warning: count mismatch
+records: EXR_OK: warning: count mismatch
+records: EXR_LIMIT: PPT record recursion depth exceeds 64 at offset 520
+records: EXR_FORMAT: PPT short SlidePersistAtom at offset 16
+native-ppt-records: 11 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-slides" classname="native-ppt-slides" time="2.03045" status="run">
+		<properties/>
+		<system-out>slides-1.ppt: engine=1 PowerPoint=1 white=OK
+slides-5.ppt: engine=5 PowerPoint=5 white=OK
+slides-20.ppt: engine=20 PowerPoint=20 white=OK
+slides-0.ppt: engine=0 PowerPoint=0 white=OK
+file: EXR_LIMIT: PPT exceeds 10000 slides
+cancel: EXR_CANCELLED: Operation cancelled
+native-ppt-slides: 11 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-size" classname="native-ppt-size" time="0.818088" status="run">
+		<properties/>
+		<system-out>file: EXR_OK: PPT warning: SlidePersistAtom count 1 differs from Slide container count 0; using SlidePersistAtom
+native-ppt-size: 9 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-truncated" classname="native-ppt-truncated" time="0.773514" status="run">
+		<properties/>
+		<system-out>file: EXR_FORMAT: CFB truncated/invalid sector at offset 299008
+records: EXR_FORMAT: PPT record length exceeds stream/container at offset 164
+records: EXR_FORMAT: PPT truncated record header at offset 204
+memory: EXR_FORMAT: CFB invalid signature at offset 0
+file: EXR_FORMAT: CFB invalid signature at offset 0
+memory: EXR_FORMAT: CFB invalid signature at offset 0
+file: EXR_FORMAT: CFB invalid signature at offset 0
+memory: EXR_FORMAT: CFB truncated header at offset 8
+file: EXR_FORMAT: CFB truncated header at offset 8
+memory: EXR_FORMAT: CFB truncated header at offset 64
+file: EXR_FORMAT: CFB truncated header at offset 64
+memory: EXR_FORMAT: CFB truncated header at offset 511
+file: EXR_FORMAT: CFB truncated header at offset 511
+file: EXR_FORMAT: PPT record length exceeds stream/container at offset 164
+native-ppt-truncated: 14 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-wrongformat" classname="native-ppt-wrongformat" time="0.471099" status="run">
+		<properties/>
+		<system-out>file: EXR_FORMAT: CFB invalid signature at offset 0
+file: EXR_FORMAT: CFB invalid signature at offset 0
+file: EXR_FORMAT: 不是 PowerPoint 97-2003 文档: missing PowerPoint Document stream
+file: EXR_FORMAT: PPT missing DocumentContainer at offset 0
+memory: EXR_FORMAT: CFB invalid signature at offset 0
+memory: EXR_FORMAT: CFB invalid signature at offset 0
+memory: EXR_FORMAT: 不是 PowerPoint 97-2003 文档: missing PowerPoint Document stream
+memory: EXR_FORMAT: PPT missing DocumentContainer at offset 0
+native-ppt-wrongformat: 9 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-red" classname="native-ppt-shape-red" time="0.783807" status="run">
+		<properties/>
+		<system-out>red-rect.ppt red-center xy=[144, 126] COM_COLORREF=0x000000FF expected=[255, 0, 0] actual=[255, 0, 0] max_error=0
+red-rect.ppt scale=1 interior_pixels=14560 max_RGB_error=0
+red-rect.ppt scale=2 interior_pixels=60208 max_RGB_error=0
+native-ppt-shape-red: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-blue" classname="native-ppt-shape-blue" time="0.932212" status="run">
+		<properties/>
+		<system-out>blue-circle.ppt blue-center xy=[172, 172] COM_COLORREF=0x00FF0000 expected=[0, 0, 255] actual=[0, 0, 255] max_error=0
+blue-circle.ppt ellipse-corner xy=[104, 104] expected=[255, 255, 255] actual=[255, 255, 255] max_error=0
+blue-circle.ppt scale=1 interior_pixels=15380 max_RGB_error=0
+blue-circle.ppt scale=2 interior_pixels=63344 max_RGB_error=0
+native-ppt-shape-blue: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-overlap" classname="native-ppt-shape-overlap" time="1.53708" status="run">
+		<properties/>
+		<system-out>overlap.ppt red-only xy=[100, 100] COM_COLORREF=0x000000FF expected=[255, 0, 0] actual=[255, 0, 0] max_error=0
+overlap.ppt overlap-green xy=[200, 160] COM_COLORREF=0x0000FF00 expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+overlap.ppt green-only xy=[300, 240] COM_COLORREF=0x0000FF00 expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+overlap.ppt scale=1 interior_pixels=48576 max_RGB_error=0
+overlap.ppt scale=2 interior_pixels=200784 max_RGB_error=0
+native-ppt-shape-overlap: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-group" classname="native-ppt-shape-group" time="3.17303" status="run">
+		<properties/>
+		<system-out>group.ppt group-red-center xy=[270, 195] COM_COLORREF=0x000000FF expected=[255, 0, 0] actual=[255, 0, 0] max_error=0
+group.ppt group-blue-center xy=[472, 295] COM_COLORREF=0x00FF0000 expected=[0, 0, 255] actual=[0, 0, 255] max_error=0
+group.ppt scale=1 interior_pixels=30372 max_RGB_error=0
+group.ppt group-red scale=1 PowerPoint=[180.0, 135.0, 360.0, 255.0] rendered=[180, 135, 360, 255] max_position_error=0px
+group.ppt group-blue scale=1 PowerPoint=[405.0, 255.0, 540.0, 335.0] rendered=[405, 255, 540, 335] max_position_error=0px
+group.ppt scale=2 interior_pixels=125512 max_RGB_error=0
+group.ppt group-red scale=2 PowerPoint=[360.0, 270.0, 720.0, 510.0] rendered=[360, 270, 720, 510] max_position_error=0px
+group.ppt group-blue scale=2 PowerPoint=[810.0, 510.0, 1080.0, 670.0] rendered=[810, 510, 1080, 670] max_position_error=0px
+native-ppt-shape-group: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-standard" classname="native-ppt-shape-standard" time="0.981677" status="run">
+		<properties/>
+		<system-out>standard.ppt asymmetric-color xy=[162, 144] COM_COLORREF=0x00D35311 expected=[17, 83, 211] actual=[17, 83, 211] max_error=0
+standard.ppt green-line xy=[180, 300] expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+standard.ppt unfilled-center xy=[472, 126] expected=[255, 255, 255] actual=[255, 255, 255] max_error=0
+standard.ppt scale=1 interior_pixels=24640 max_RGB_error=0
+standard.ppt scale=2 interior_pixels=101104 max_RGB_error=0
+native-ppt-shape-standard: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-wide" classname="native-ppt-shape-wide" time="0.865799" status="run">
+		<properties/>
+		<system-out>wide.ppt asymmetric-color xy=[162, 144] COM_COLORREF=0x00D35311 expected=[17, 83, 211] actual=[17, 83, 211] max_error=0
+wide.ppt green-line xy=[180, 300] expected=[0, 255, 0] actual=[0, 255, 0] max_error=0
+wide.ppt unfilled-center xy=[472, 126] expected=[255, 255, 255] actual=[255, 255, 255] max_error=0
+wide.ppt scale=1 interior_pixels=19352 max_RGB_error=0
+wide.ppt scale=2 interior_pixels=79412 max_RGB_error=0
+native-ppt-shape-wide: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-colors" classname="native-ppt-shape-colors" time="0.601534" status="run">
+		<properties/>
+		<system-out>COLORREF 0x00332211 -&gt; RGB [17,34,51]; ellipse corner remains white
+native-ppt-shape-colors: 1 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-anchors" classname="native-ppt-shape-anchors" time="0.822403" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: missing-anchor=1 
+native-ppt-shape-anchors: 8 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-truncated" classname="native-ppt-shape-truncated" time="0.536864" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: malformed=1 
+status=0 message=PPT warning: malformed=1 
+status=0 message=PPT warning: malformed=1 
+status=0 message=PPT warning: malformed=1 
+status=0 message=PPT warning: malformed=1 
+truncated fixed entries and complex data: malformed shape skipped; following shape blue
+native-ppt-shape-truncated: 5 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-limits" classname="native-ppt-shape-limits" time="0.832652" status="run">
+		<properties/>
+		<system-out>status=6 message=PPT slide exceeds 5000 shapes
+status=6 message=PPT slide exceeds 5000 shapes
+status=0 message=PPT warning: depth=1 
+native-ppt-shape-limits: 4 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-transforms" classname="native-ppt-shape-transforms" time="1.0054" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: zero-chExt=1 
+native-ppt-shape-transforms: 3 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-shape-styles" classname="native-ppt-shape-styles" time="1.19116" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: gradient-missing=1 
+native-ppt-shape-styles: 12 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-png" classname="native-ppt-fill-png" time="0.427455" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: missing-anchor=1 
+COM png scale=1: RGB=[(0, 255, 0)]; maximum error=0
+status=0 message=PPT warning: missing-anchor=1 
+COM png scale=2: RGB=[(0, 255, 0)]; maximum error=0
+native-ppt-fill-png: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-scale" classname="native-ppt-fill-scale" time="0.490647" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: missing-anchor=1 
+COM scale scale=1: RGB=[(0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]; maximum error=0
+status=0 message=PPT warning: missing-anchor=1 
+COM scale scale=2: RGB=[(0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]; maximum error=0
+native-ppt-fill-scale: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-gradient" classname="native-ppt-fill-gradient" time="0.420965" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: missing-anchor=1 gradient-horizontal=1 
+COM red-&gt;blue scale=1: x=[81, 130, 180, 230, 280, 330, 380, 430, 478]; RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (63, 0, 192), (31, 0, 224), (0, 0, 255)]; monotonic=PASS
+status=0 message=PPT warning: missing-anchor=1 gradient-horizontal=1 
+COM red-&gt;blue scale=2: x=[81, 130, 180, 230, 280, 330, 380, 430, 478]; RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (63, 0, 192), (31, 0, 224), (1, 0, 254)]; monotonic=PASS
+native-ppt-fill-gradient: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-theme" classname="native-ppt-fill-theme" time="0.471203" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: missing-anchor=1 
+COM accent1: pixel=(17, 83, 211) master=(17, 83, 211)
+COM accent2: pixel=(19, 123, 41) master=(19, 123, 41)
+COM accent3: pixel=(241, 97, 23) master=(241, 97, 23)
+COM accent4: pixel=(91, 31, 201) master=(91, 31, 201)
+COM accent5: pixel=(201, 41, 153) master=(201, 41, 153)
+COM accent6: pixel=(7, 177, 221) master=(7, 177, 221)
+COM background: pixel=(233, 241, 249) master=(233, 241, 249)
+COM text: pixel=(12, 23, 34) master=(12, 23, 34)
+MainMaster COLOR_SCHEME[4]=(17, 83, 211): exact=PASS
+status=0 message=PPT warning: missing-anchor=1 
+COM accent1: pixel=(17, 83, 211) master=(17, 83, 211)
+COM accent2: pixel=(19, 123, 41) master=(19, 123, 41)
+COM accent3: pixel=(241, 97, 23) master=(241, 97, 23)
+COM accent4: pixel=(91, 31, 201) master=(91, 31, 201)
+COM accent5: pixel=(201, 41, 153) master=(201, 41, 153)
+COM accent6: pixel=(7, 177, 221) master=(7, 177, 221)
+COM background: pixel=(233, 241, 249) master=(233, 241, 249)
+COM text: pixel=(12, 23, 34) master=(12, 23, 34)
+Mai...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-fallback" classname="native-ppt-fill-fallback" time="0.789523" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: pib=1 
+invalid pib=0: pixel=(204, 204, 204); process survived
+status=0 message=PPT warning: pib=1 
+invalid pib=1: pixel=(204, 204, 204); process survived
+status=0 message=PPT warning: pib=1 
+invalid pib=4294967295: pixel=(204, 204, 204); process survived
+status=0 message=PPT warning: blip-unsupported=1 
+unknown blip: shape skipped; process survived
+status=0 message=PPT warning: image-decode=1 
+broken PNG: gray fallback; process survived
+status=0 message=PPT warning: malformed=1 image-decode=1 
+truncated BSE: gray fallback; following blue shape=PASS
+status=0 message=PPT warning: image-decode=1 
+invalid delayed offset: gray fallback; following blue shape=PASS
+native-ppt-fill-fallback: 7 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-blips" classname="native-ppt-fill-blips" time="1.36789" status="run">
+		<properties/>
+		<system-out>status=0 message=
+inline blip 0xF01E uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF01E uid_count=2: green=PASS
+status=0 message=
+inline blip 0xF02B uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF02B uid_count=2: green=PASS
+status=0 message=
+inline blip 0xF01D uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF01D uid_count=2: green=PASS
+status=0 message=
+inline blip 0xF02A uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF02A uid_count=2: green=PASS
+status=0 message=PPT warning: blip-unsupported=1 
+unsupported BSE retains its index; following pib2 green=PASS
+status=0 message=
+striped picture: group scale(4,2), horizontal flip gives blue-left/red-right=PASS
+status=0 message=
+picture pib precedence and rectangle/ellipse fillBlip: green=PASS; ellipse clip and explicit noFill=PASS
+native-ppt-fill-blips: 11 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-gradient-fallback" classname="native-ppt-fill-gradient-fallback" time="0.73963" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: gradient-missing=1 
+missing gradient endpoint: solid red=PASS
+status=0 message=PPT warning: gradient-horizontal=1 
+fillShadeColors endpoints RGB=[(0, 255, 0), (128, 255, 0), (255, 255, 0)]
+status=0 message=PPT warning: gradient-missing=1 
+status=0 message=PPT warning: gradient-missing=1 
+status=0 message=PPT warning: gradient-missing=1 
+status=0 message=PPT warning: gradient-missing=1 
+empty/single/out-of-range/duplicate gradient stops: solid red=PASS
+status=0 message=PPT warning: gradient-horizontal=1 
+ellipse gradient: white corner, clipped horizontal red-&gt;blue fill=PASS
+native-ppt-fill-gradient-fallback: 7 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-fill-scheme" classname="native-ppt-fill-scheme" time="0.862588" status="run">
+		<properties/>
+		<system-out>status=0 message=
+legacy COLOR_SCHEME indices0..7 RGB=[(11, 21, 31), (41, 51, 61), (71, 81, 91), (101, 111, 121), (131, 141, 151), (161, 171, 181), (191, 201, 211), (221, 231, 241)]; exact=PASS
+status=0 message=
+status=0 message=
+status=0 message=
+status=0 message=
+two masters: persist/masterId resolution and slide COLOR_SCHEME override=PASS
+status=0 message=
+missing persist/masterId: nearest preceding physical master selected=PASS
+native-ppt-fill-scheme: 6 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-hello" classname="native-ppt-text-hello" time="1.07485" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM Hello 18pt black: scale=1 {'bbox': (224, 54, 257, 68), 'height': 14, 'pixels': 221} shape_center=240 glyph_center=240.5 delta=0.5px
+status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM Hello 18pt black: scale=2 {'bbox': (449, 108, 513, 135), 'height': 27, 'pixels': 778} shape_center=480 glyph_center=481.0 delta=1.0px
+native-ppt-text-hello: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-sizes" classname="native-ppt-text-sizes" time="3.63012" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM 12/24/48pt at 4px/pt: heights=[36, 70, 141]px ratios=[1.0, 1.9444444444444444, 3.9166666666666665]
+native-ppt-text-sizes: 3 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-bold" classname="native-ppt-text-bold" time="2.0919" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM b=0/b=1 48pt: mean_stem_width=[15.0, 22.0]px ink_pixels=[16560, 26496]
+native-ppt-text-bold: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-cjk" classname="native-ppt-text-cjk" time="0.934426" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: missing-anchor=1 
+COM SimHei index 中文测试: {'bbox': (106, 104, 322, 156), 'height': 52, 'pixels': 3903}; 4 distinct CJK silhouettes, cell_pixels=[798, 838, 1269, 998]
+native-ppt-text-cjk: 1 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-alignment" classname="native-ppt-text-alignment" time="1.44705" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM l/ctr/r bbox_left=[51, 219, 387]px bboxes=[(51, 55, 94, 74), (219, 55, 262, 74), (387, 55, 430, 74)]
+native-ppt-text-alignment: 3 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-bullets" classname="native-ppt-text-bullets" time="2.23634" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+status=0 message=PPT warning: missing-anchor=1 
+COM three bullet dots vs independent literal dot: mask_IoU=[1.0, 1.0, 1.0] rows=[(223, 293), (339, 409), (455, 525)]
+native-ppt-text-bullets: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-malformed" classname="native-ppt-text-malformed" time="3.13904" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: text-runs=1 
+PF count=1000, text_length=5: status=0 ink_pixels=517 warning=PPT warning: text-runs=1 
+status=0 message=PPT warning: text-runs=3 text-malformed=1 
+PF count=0, text_length=5: status=0 ink_pixels=252 warning=PPT warning: text-runs=3 text-malformed=1 
+status=0 message=PPT warning: text-runs=2 
+status=0 message=PPT warning: text-runs=1 
+PF count1000 clipped to target6 while retaining red/bold/24pt CF properties: exact complete-reference raster match
+CF sum=3 vs target=6: missing tail inherits final red/bold/24pt run, exact complete-reference raster match
+status=0 message=PPT warning: text-runs=3 text-malformed=1 
+status=0 message=PPT warning: text-runs=2 text-malformed=1 
+status=0 message=PPT warning: text-runs=2 text-malformed=1 
+short PF/CF properties recover with visible text; no crash
+PF reserved bit9 / CF reserved bit3 independently set: no phantom field consumed, exact clean-reference rasters
+native-ppt-text-malformed: 11 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-unicode" classname="native-ppt-text-unicode" time="2.26085" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: glyph Arial U+FFFD fallback; 
+status=0 message=PPT warning: surrogate/replacement=1 glyph Arial U+FFFD fallback; 
+isolated high surrogate -&gt; U+FFFD: exact clean-reference raster match
+status=0 message=PPT warning: surrogate/replacement=1 glyph Arial U+FFFD fallback; 
+status=0 message=PPT warning: glyph Arial U+1F600 fallback; 
+isolated low surrogate -&gt; U+FFFD; valid surrogate pair accepted
+native-ppt-text-unicode: 4 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-bytes" classname="native-ppt-text-bytes" time="0.878598" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 
+TextBytesAtom Latin-1 é vs TextCharsAtom Unicode: exact raster match + warning
+native-ppt-text-bytes: 2 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-indices" classname="native-ppt-text-indices" time="9.60811" status="run">
+		<properties/>
+		<system-out>COM FontEntityAtom array table={0: 'Aptos', 1: 'Arial', 2: 'Aptos Display', 3: 'SimHei'}; slide CF latin=1, EA=3, ANSI=1
+COM ColorSchemeAtom slots={0: (255, 255, 255), 1: (12, 23, 34), 2: (232, 232, 232), 3: (14, 40, 65), 4: (21, 96, 130), 5: (233, 113, 50), 6: (70, 120, 134), 7: (150, 96, 125)}; text direct COLORINDEX=0xFE22170C -&gt; RGB(12,23,34)
+status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COLORINDEX high byte 0 -&gt; scheme[0] RGB(255, 255, 255): exact direct-color raster match
+COLORINDEX high byte 1 -&gt; scheme[1] RGB(12, 23, 34): exact direct-color raster match
+COLORINDEX high byte 2 -&gt; scheme[2] RGB(232, 232, 232): exact direct-color raster match
+COLORINDEX high byte 3 -&gt; scheme[3] RGB(14, 40, 65): exact direct-color raster match
+COLORINDEX high byte 4 -&gt; scheme[4] RGB(21, 96, 130): exact direct-color raster match
+COLORINDEX high byte 5 -&gt; scheme[5] RGB(233, 113, 50): exact direct-color raster match
+COLORINDEX high byte 6 -&gt; scheme[6] RGB(70, 120, 134): exact direct-color raster match
+COLORINDEX ...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-wrap" classname="native-ppt-text-wrap" time="0.643014" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM wrap: lines=8 widths=[176, 176, 176, 176, 176, 176, 176, 176]px &lt;= inner_width=180pt
+native-ppt-text-wrap: 1 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-spacing" classname="native-ppt-text-spacing" time="0.62197" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM exact lineSpacing=40pt + spaceAfter=12pt: visible-line gaps=[52, 52]px
+native-ppt-text-spacing: 1 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-runs" classname="native-ppt-text-runs" time="0.841399" status="run">
+		<properties/>
+		<system-out>status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+COM CF mixed runs Red/Green/Blue: RGB=((255, 0, 0), (0, 170, 0), (0, 0, 255)), bboxes=[(103, 121, 152, 146), (156, 120, 236, 146), (241, 112, 314, 146)]
+native-ppt-text-runs: 1 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-master" classname="native-ppt-text-master" time="2.02456" status="run">
+		<properties/>
+		<system-out>Environment Other MasterTextProp level0 -&gt; 28pt: exact explicit-style raster match
+Environment Other MasterTextProp level1 -&gt; 24pt: exact explicit-style raster match
+native-ppt-text-master: 4 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ppt-text-outline" classname="native-ppt-text-outline" time="2.09832" status="run">
+		<properties/>
+		<system-out>OutlineTextRef index0 -&gt; SlideListWithText 'Hello'/24pt: exact inline-text raster match
+status=0 message=PPT warning: glyph Arial U+4E2D fallback; glyph Arial U+6587 fallback; glyph Arial U+6D4B fallback; glyph Arial U+8BD5 fallback; 
+status=0 message=PPT warning: glyph Arial U+4E2D fallback; glyph Arial U+6587 fallback; glyph Arial U+6D4B fallback; glyph Arial U+8BD5 fallback; 
+OutlineTextRef index0 -&gt; SlideListWithText '中文测试'/28pt: exact inline-text raster match
+native-ppt-text-outline: 4 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-styles" classname="native-style-footnotes-styles" time="0.233" status="run">
+		<properties/>
+		<system-out>runtime style layouts=18/18; independent physical edges=4/4
+checks=66
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-footnotes" classname="native-style-footnotes-footnotes" time="0.0723209" status="run">
+		<properties/>
+		<system-out>chapter notes=10 references=10
+end notes=10 references=10
+none notes=0 references=0
+vertical notes=10 references=10
+checks=236
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-anchors" classname="native-style-footnotes-anchors" time="0.089388" status="run">
+		<properties/>
+		<system-out>#74 content anchors 18-&gt;24-&gt;18=9/9
+checks=40
+</system-out>
+	</testcase>
+	<testcase name="native-style-footnotes-toc" classname="native-style-footnotes-toc" time="0.0472644" status="run">
+		<properties/>
+		<system-out>default content=1184x720 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+font12 content=1184x720 toc_pages=3 entries=70 body_pages=3 glyphs_inside=yes
+font32 content=1184x720 toc_pages=7 entries=70 body_pages=8 glyphs_inside=yes
+margins0 content=1280x800 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+margins120 content=1040x560 toc_pages=5 entries=70 body_pages=6 glyphs_inside=yes
+left120 content=1160x720 toc_pages=4 entries=70 body_pages=4 glyphs_inside=yes
+font32-margins120-line2.2-letter.06 content=1040x560 toc_pages=13 entries=70 body_pages=15 glyphs_inside=yes
+checks=40109
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-structure" classname="native-ssml-structure" time="0.196318" status="run">
+		<properties/>
+		<system-out>SSML structure: 47 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-chunks" classname="native-ssml-chunks" time="0.0512745" status="run">
+		<properties/>
+		<system-out>SSML chunks: 185 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-omissions" classname="native-ssml-omissions" time="0.023817" status="run">
+		<properties/>
+		<system-out>SSML omissions: 62 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-contracts" classname="native-ssml-contracts" time="0.0580988" status="run">
+		<properties/>
+		<system-out>SSML contracts: 24 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-ssml-parts" classname="native-ssml-parts" time="0.0587448" status="run">
+		<properties/>
+		<system-out>SSML parts: 30 checks passed
+</system-out>
+	</testcase>
+	<testcase name="release-artifacts" classname="release-artifacts" time="4.00021" status="run">
+		<properties/>
+		<system-out>{"passed": 24, "checks": ["nested-path-and-spaces", "tampered-file", "unlisted-file", "missing-file", "empty-manifest", "malformed-hash", "duplicate-entry", "parent-traversal", "absolute-path", "windows-drive", "backslash-path", "case-alias", "self-checksum", "refuse-stale-signature", "gpg-dry-run", "minisign-dry-run", "authenticode-dry-run", "sha256-dry-run", "auto-dry-run", "refuse-implicit-signing-key", "candidate-automatically-includes-checksums", "package-ignores-mtime-input-fingerprint-detects-content", "dependency-builds-source-directory-is-fingerprinted", "only-root-progress-logs-excluded-from-build-inputs"]}
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-stardict" classname="native-dictionary-stardict" time="0.978598" status="run">
+		<properties/>
+		<system-out>stardict: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-dictzip" classname="native-dictionary-dictzip" time="0.364322" status="run">
+		<properties/>
+		<system-out>dictzip: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-contracts" classname="native-dictionary-contracts" time="1.05878" status="run">
+		<properties/>
+		<system-out>contracts: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-dictionary-dictd" classname="native-dictionary-dictd" time="0.295082" status="run">
+		<properties/>
+		<system-out>dictd: PASS
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-discovery" classname="native-font-manager-discovery" time="0.26395" status="run">
+		<properties/>
+		<system-out>font-manager discovery: 54 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-selection" classname="native-font-manager-selection" time="0.60167" status="run">
+		<properties/>
+		<system-out>font-manager selection: 129 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-cache" classname="native-font-manager-cache" time="0.330402" status="run">
+		<properties/>
+		<system-out>font-manager cache: 142 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-font-manager-integration" classname="native-font-manager-integration" time="0.541409" status="run">
+		<properties/>
+		<system-out>font-manager integration: 107 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-xml-input" classname="native-xml-input" time="0.270284" status="run">
+		<properties/>
+		<system-out>91435 XML input checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-epub-strict-mimetype" classname="native-epub-strict-mimetype" time="0.22675" status="run">
+		<properties/>
+		<system-out>strict/tolerant EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-epub-strict-directory" classname="native-epub-strict-directory" time="0.0305098" status="run">
+		<properties/>
+		<system-out>strict/tolerant EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-epub-strict-container" classname="native-epub-strict-container" time="0.118963" status="run">
+		<properties/>
+		<system-out>strict/tolerant EPUB checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-media-epub-elements" classname="native-media-epub-elements" time="0.134436" status="run">
+		<properties/>
+		<system-out>elements: 4 media elements, labels visible in part text
+ok
+</system-out>
+	</testcase>
+	<testcase name="native-media-epub-overlay" classname="native-media-epub-overlay" time="0.0686041" status="run">
+		<properties/>
+		<system-out>overlay: par p1  text[0,4)="One."  &lt;-&gt;  OPS/audio/a.wav 0-1500 ms
+overlay: par p2  text[5,9)="Two."  &lt;-&gt;  OPS/audio/a.wav 1500-3000 ms
+overlay: par p3  text[10,16)="Three."  &lt;-&gt;  OPS/audio/gone.wav 1000-2000 ms  (audio missing)
+ok
+</system-out>
+	</testcase>
+	<testcase name="native-media-epub-degrade" classname="native-media-epub-degrade" time="0.0935216" status="run">
+		<properties/>
+		<system-out>degrade: state=1  "[Audio unavailable: audio/gone.mp3 is missing from this book]"
+degrade: state=2  "[Embedded media not supported: movie.swf (application/x-shockwave-flash)]"
+degrade: state=2  "[Video not supported: clip.flv (video/x-flv)]"
+degrade: state=3  "[Video is online: http://example.com/v.mp4 - not loaded]"
+degrade: state=4  "[Audio: no source given]"
+degrade: state=2  "[Video not supported: old.wmv (video/x-ms-wmv)]"
+ok
+</system-out>
+	</testcase>
+	<testcase name="native-media-epub-plain" classname="native-media-epub-plain" time="0.107008" status="run">
+		<properties/>
+		<system-out>ok
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-search" classname="native-pdf-deepening-search" time="0.572196" status="run">
+		<properties/>
+		<system-out>word alpha: [0,5), page 0 byte 0
+word beta: [6,10), page 0 byte 6
+word gamma: [11,16), page 0 byte 11
+word delta: [17,22), page 0 byte 17
+word epsilon: [23,30), page 0 byte 23
+word zeta: [30,34), page 1 byte 0
+word theta: [39,44), page 1 byte 9
+word iota: [45,49), page 1 byte 15
+word kappa: [50,55), page 1 byte 20
+word boundary: [55,63), page 2 byte 0
+cross-page: [23,34), (0,23)..(1,4)
+search: 43 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-coordinates" classname="native-pdf-deepening-coordinates" time="0.254529" status="run">
+		<properties/>
+		<system-out>point 23.60,92: U+0061 [0,1)
+point 30.80,92: U+006C [1,2)
+point 38.00,92: U+0070 [2,3)
+point 45.20,92: U+0068 [3,4)
+point 52.40,92: U+0061 [4,5)
+point 59.60,92: U+0020 [5,6)
+point 66.80,92: U+0062 [6,7)
+point 74.00,92: U+0065 [7,8)
+point 81.20,92: U+0074 [8,9)
+point 88.40,92: U+0061 [9,10)
+point 95.60,92: U+0020 [10,11)
+point 102.80,92: U+0067 [11,12)
+point 110.00,92: U+0061 [12,13)
+point 117.20,92: U+006D [13,14)
+point 124.40,92: U+006D [14,15)
+point 131.60,92: U+0061 [15,16)
+point 138.80,92: U+0020 [16,17)
+point 146.00,92: U+0064 [17,18)
+point 153.20,92: U+0065 [18,19)
+point 160.40,92: U+006C [19,20)
+coordinates: 85 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-scan" classname="native-pdf-deepening-scan" time="0.284126" status="run">
+		<properties/>
+		<system-out>scan: 64 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-contracts" classname="native-pdf-deepening-contracts" time="0.278972" status="run">
+		<properties/>
+		<system-out>contracts: 26 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-deepening-encryption" classname="native-pdf-deepening-encryption" time="0.293392" status="run">
+		<properties/>
+		<system-out>encryption: 17 checks passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-codec" classname="native-book-codec" time="1.27962" status="run">
+		<properties/>
+		<system-out>codec: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-mobi" classname="native-book-mobi" time="0.378405" status="run">
+		<properties/>
+		<system-out>mobi: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-kf8" classname="native-book-kf8" time="0.428512" status="run">
+		<properties/>
+		<system-out>kf8: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-fb2" classname="native-book-fb2" time="0.560877" status="run">
+		<properties/>
+		<system-out>fb2: passed
+</system-out>
+	</testcase>
+	<testcase name="native-book-errors" classname="native-book-errors" time="0.424005" status="run">
+		<properties/>
+		<system-out>errors: passed
+</system-out>
+	</testcase>
+	<testcase name="native-batch" classname="native-batch" time="0.135564" status="run">
+		<properties/>
+		<system-out>batch cache counters, warmup cancellation and pixel equivalence passed
+</system-out>
+	</testcase>
+	<testcase name="native-bench-batch-statistics" classname="native-bench-batch-statistics" time="0.200503" status="run">
+		<properties/>
+		<system-out>bench_batch self-test passed
+</system-out>
+	</testcase>
+	<testcase name="native-build-manifest" classname="native-build-manifest" time="2.01273" status="run">
+		<properties/>
+		<system-out>manifest macos: 1 exports; SHA256 025f325d5443f35add042067d5b0c5c5de6c2aabfed8d08315b50cb90af9518d
+PASS manifest: actual versions, disabled dependency, quoted definitions, artifact identity, stale source rejection
+</system-out>
+	</testcase>
+	<testcase name="native-vertical-expand-boundaries" classname="native-vertical-expand-boundaries" time="1.06615" status="run">
+		<properties/>
+		<system-out>PASS vertical-expand boundaries
+</system-out>
+	</testcase>
+	<testcase name="native-vertical-expand-ruby" classname="native-vertical-expand-ruby" time="0.38651" status="run">
+		<properties/>
+		<system-out>PASS vertical-expand ruby
+</system-out>
+	</testcase>
+	<testcase name="native-vertical-expand-images" classname="native-vertical-expand-images" time="0.359425" status="run">
+		<properties/>
+		<system-out>PASS vertical-expand images
+</system-out>
+	</testcase>
+	<testcase name="simplified-observer" classname="simplified-observer" time="0.297174" status="run">
+		<properties/>
+		<system-out>simplified observer: corruption, ASCII metrics, terminal runs and break reasons passed
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-reproducible" classname="native-docx-real-reproducible" time="0.782882" status="run">
+		<properties/>
+		<system-out>30 original fixtures: deterministic bytes verified
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-01-table-horizontal-noop" classname="native-docx-real-01-table-horizontal-noop" time="0.472675" status="run">
+		<properties/>
+		<system-out>01-table-horizontal noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-01-table-horizontal-edited" classname="native-docx-real-01-table-horizontal-edited" time="0.721423" status="run">
+		<properties/>
+		<system-out>01-table-horizontal edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-02-table-vertical-noop" classname="native-docx-real-02-table-vertical-noop" time="0.512809" status="run">
+		<properties/>
+		<system-out>02-table-vertical noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-02-table-vertical-edited" classname="native-docx-real-02-table-vertical-edited" time="0.563529" status="run">
+		<properties/>
+		<system-out>02-table-vertical edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-03-table-nested-noop" classname="native-docx-real-03-table-nested-noop" time="0.471246" status="run">
+		<properties/>
+		<system-out>03-table-nested noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-03-table-nested-edited" classname="native-docx-real-03-table-nested-edited" time="0.633308" status="run">
+		<properties/>
+		<system-out>03-table-nested edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-04-table-repeat-header-noop" classname="native-docx-real-04-table-repeat-header-noop" time="1.05727" status="run">
+		<properties/>
+		<system-out>04-table-repeat-header noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-04-table-repeat-header-edited" classname="native-docx-real-04-table-repeat-header-edited" time="0.930331" status="run">
+		<properties/>
+		<system-out>04-table-repeat-header edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-05-table-multi-paragraph-noop" classname="native-docx-real-05-table-multi-paragraph-noop" time="0.491981" status="run">
+		<properties/>
+		<system-out>05-table-multi-paragraph noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-05-table-multi-paragraph-edited" classname="native-docx-real-05-table-multi-paragraph-edited" time="0.463347" status="run">
+		<properties/>
+		<system-out>05-table-multi-paragraph edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-06-field-page-noop" classname="native-docx-real-06-field-page-noop" time="0.486473" status="run">
+		<properties/>
+		<system-out>06-field-page noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-06-field-page-edited" classname="native-docx-real-06-field-page-edited" time="0.490697" status="run">
+		<properties/>
+		<system-out>06-field-page edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-07-field-numpages-noop" classname="native-docx-real-07-field-numpages-noop" time="0.488385" status="run">
+		<properties/>
+		<system-out>07-field-numpages noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-07-field-numpages-edited" classname="native-docx-real-07-field-numpages-edited" time="0.438831" status="run">
+		<properties/>
+		<system-out>07-field-numpages edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-08-field-date-noop" classname="native-docx-real-08-field-date-noop" time="0.46844" status="run">
+		<properties/>
+		<system-out>08-field-date noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-08-field-date-edited" classname="native-docx-real-08-field-date-edited" time="0.513469" status="run">
+		<properties/>
+		<system-out>08-field-date edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-09-field-ref-noop" classname="native-docx-real-09-field-ref-noop" time="0.492139" status="run">
+		<properties/>
+		<system-out>09-field-ref noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-09-field-ref-edited" classname="native-docx-real-09-field-ref-edited" time="0.507925" status="run">
+		<properties/>
+		<system-out>09-field-ref edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-10-field-toc-noop" classname="native-docx-real-10-field-toc-noop" time="0.480148" status="run">
+		<properties/>
+		<system-out>10-field-toc noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-10-field-toc-edited" classname="native-docx-real-10-field-toc-edited" time="0.511273" status="run">
+		<properties/>
+		<system-out>10-field-toc edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-11-list-multilevel-noop" classname="native-docx-real-11-list-multilevel-noop" time="0.478651" status="run">
+		<properties/>
+		<system-out>11-list-multilevel noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-11-list-multilevel-edited" classname="native-docx-real-11-list-multilevel-edited" time="0.476024" status="run">
+		<properties/>
+		<system-out>11-list-multilevel edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-12-list-restart-noop" classname="native-docx-real-12-list-restart-noop" time="0.568666" status="run">
+		<properties/>
+		<system-out>12-list-restart noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-12-list-restart-edited" classname="native-docx-real-12-list-restart-edited" time="0.467569" status="run">
+		<properties/>
+		<system-out>12-list-restart edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-13-list-style-bound-noop" classname="native-docx-real-13-list-style-bound-noop" time="0.494712" status="run">
+		<properties/>
+		<system-out>13-list-style-bound noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-13-list-style-bound-edited" classname="native-docx-real-13-list-style-bound-edited" time="0.516627" status="run">
+		<properties/>
+		<system-out>13-list-style-bound edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-14-style-inheritance-noop" classname="native-docx-real-14-style-inheritance-noop" time="0.489983" status="run">
+		<properties/>
+		<system-out>14-style-inheritance noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-14-style-inheritance-edited" classname="native-docx-real-14-style-inheritance-edited" time="0.530292" status="run">
+		<properties/>
+		<system-out>14-style-inheritance edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-15-style-direct-override-noop" classname="native-docx-real-15-style-direct-override-noop" time="0.496354" status="run">
+		<properties/>
+		<system-out>15-style-direct-override noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-15-style-direct-override-edited" classname="native-docx-real-15-style-direct-override-edited" time="0.49417" status="run">
+		<properties/>
+		<system-out>15-style-direct-override edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-16-style-theme-fonts-noop" classname="native-docx-real-16-style-theme-fonts-noop" time="0.491959" status="run">
+		<properties/>
+		<system-out>16-style-theme-fonts noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-16-style-theme-fonts-edited" classname="native-docx-real-16-style-theme-fonts-edited" time="0.499719" status="run">
+		<properties/>
+		<system-out>16-style-theme-fonts edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-17-section-margins-noop" classname="native-docx-real-17-section-margins-noop" time="0.539981" status="run">
+		<properties/>
+		<system-out>17-section-margins noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-17-section-margins-edited" classname="native-docx-real-17-section-margins-edited" time="0.821171" status="run">
+		<properties/>
+		<system-out>17-section-margins edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-18-section-landscape-noop" classname="native-docx-real-18-section-landscape-noop" time="0.497868" status="run">
+		<properties/>
+		<system-out>18-section-landscape noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-18-section-landscape-edited" classname="native-docx-real-18-section-landscape-edited" time="0.505321" status="run">
+		<properties/>
+		<system-out>18-section-landscape edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-19-section-columns-noop" classname="native-docx-real-19-section-columns-noop" time="0.463124" status="run">
+		<properties/>
+		<system-out>19-section-columns noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-19-section-columns-edited" classname="native-docx-real-19-section-columns-edited" time="0.475727" status="run">
+		<properties/>
+		<system-out>19-section-columns edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-20-footnote-restart-noop" classname="native-docx-real-20-footnote-restart-noop" time="0.457954" status="run">
+		<properties/>
+		<system-out>20-footnote-restart noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-20-footnote-restart-edited" classname="native-docx-real-20-footnote-restart-edited" time="0.465642" status="run">
+		<properties/>
+		<system-out>20-footnote-restart edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-21-footnote-table-noop" classname="native-docx-real-21-footnote-table-noop" time="0.463706" status="run">
+		<properties/>
+		<system-out>21-footnote-table noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-21-footnote-table-edited" classname="native-docx-real-21-footnote-table-edited" time="0.48637" status="run">
+		<properties/>
+		<system-out>21-footnote-table edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-22-image-inline-noop" classname="native-docx-real-22-image-inline-noop" time="0.455102" status="run">
+		<properties/>
+		<system-out>22-image-inline noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-22-image-inline-edited" classname="native-docx-real-22-image-inline-edited" time="0.458809" status="run">
+		<properties/>
+		<system-out>22-image-inline edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-23-image-floating-noop" classname="native-docx-real-23-image-floating-noop" time="0.512682" status="run">
+		<properties/>
+		<system-out>23-image-floating noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-23-image-floating-edited" classname="native-docx-real-23-image-floating-edited" time="0.480715" status="run">
+		<properties/>
+		<system-out>23-image-floating edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-24-shape-group-noop" classname="native-docx-real-24-shape-group-noop" time="0.652642" status="run">
+		<properties/>
+		<system-out>24-shape-group noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-24-shape-group-edited" classname="native-docx-real-24-shape-group-edited" time="0.522542" status="run">
+		<properties/>
+		<system-out>24-shape-group edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-25-textbox-noop" classname="native-docx-real-25-textbox-noop" time="0.501626" status="run">
+		<properties/>
+		<system-out>25-textbox noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-25-textbox-edited" classname="native-docx-real-25-textbox-edited" time="0.512013" status="run">
+		<properties/>
+		<system-out>25-textbox edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-26-comment-anchors-noop" classname="native-docx-real-26-comment-anchors-noop" time="0.470639" status="run">
+		<properties/>
+		<system-out>26-comment-anchors noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-26-comment-anchors-edited" classname="native-docx-real-26-comment-anchors-edited" time="0.470714" status="run">
+		<properties/>
+		<system-out>26-comment-anchors edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-27-bookmarks-noop" classname="native-docx-real-27-bookmarks-noop" time="0.590233" status="run">
+		<properties/>
+		<system-out>27-bookmarks noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-27-bookmarks-edited" classname="native-docx-real-27-bookmarks-edited" time="0.502009" status="run">
+		<properties/>
+		<system-out>27-bookmarks edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-28-hidden-text-noop" classname="native-docx-real-28-hidden-text-noop" time="0.487216" status="run">
+		<properties/>
+		<system-out>28-hidden-text noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-28-hidden-text-edited" classname="native-docx-real-28-hidden-text-edited" time="0.65417" status="run">
+		<properties/>
+		<system-out>28-hidden-text edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-29-header-table-noop" classname="native-docx-real-29-header-table-noop" time="0.484289" status="run">
+		<properties/>
+		<system-out>29-header-table noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-29-header-table-edited" classname="native-docx-real-29-header-table-edited" time="0.795164" status="run">
+		<properties/>
+		<system-out>29-header-table edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-30-chinese-field-code-noop" classname="native-docx-real-30-chinese-field-code-noop" time="0.528595" status="run">
+		<properties/>
+		<system-out>30-chinese-field-code noop PASS 18/18  
+{"noop": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-30-chinese-field-code-edited" classname="native-docx-real-30-chinese-field-code-edited" time="0.450511" status="run">
+		<properties/>
+		<system-out>30-chinese-field-code edited PASS 18/18  
+{"edited": {"passed": 18, "total": 18, "payload_exact": 1, "failed_documents": 0}}
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-text-command" classname="native-docx-real-text-command" time="0.437113" status="run">
+		<properties/>
+		<system-out>text-command PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-paragraph-markers" classname="native-docx-real-paragraph-markers" time="0.410789" status="run">
+		<properties/>
+		<system-out>paragraph-markers PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-section-tail" classname="native-docx-real-section-tail" time="0.444268" status="run">
+		<properties/>
+		<system-out>section-tail PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-text-history" classname="native-docx-real-text-history" time="0.395484" status="run">
+		<properties/>
+		<system-out>text-history PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-text-alias" classname="native-docx-real-text-alias" time="0.496367" status="run">
+		<properties/>
+		<system-out>text-alias PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-text-validation" classname="native-docx-real-text-validation" time="0.665" status="run">
+		<properties/>
+		<system-out>text-validation PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-text-transaction" classname="native-docx-real-text-transaction" time="0.552807" status="run">
+		<properties/>
+		<system-out>text-transaction PASS
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-oracle-mutations" classname="native-docx-real-oracle-mutations" time="1.1136" status="run">
+		<properties/>
+		<system-out>18/18 metrics reject mutation; equal-count text/style/geometry/anchor changes detected
+</system-out>
+	</testcase>
+	<testcase name="native-docx-real-text-allocation" classname="native-docx-real-text-allocation" time="0.218322" status="run">
+		<properties/>
+		<system-out>text allocation rollback: 11 failure points, zero live allocations
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-base" classname="sdk-doc-base" time="0.131688" status="run">
+		<properties/>
+		<system-out>SDK 3.42.0, ABI 1: 816 x 1056 pixels
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-document" classname="sdk-doc-document" time="0.143829" status="run">
+		<properties/>
+		<system-out>Hello reader.
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-formats" classname="sdk-doc-formats" time="0.126361" status="run">
+		<properties/>
+		<system-out>format=2
+OPDS entries=1 title=Catalog
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-search" classname="sdk-doc-search" time="0.215938" status="run">
+		<properties/>
+		<system-out>UTF-8 byte range [10, 14)
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-annotation" classname="sdk-doc-annotation" time="0.146695" status="run">
+		<properties/>
+		<system-out>restored [0, 19), JSON bytes=327
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-library" classname="sdk-doc-library" time="0.142674" status="run">
+		<properties/>
+		<system-out>stored books=1
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-graphics" classname="sdk-doc-graphics" time="0.145325" status="run">
+		<properties/>
+		<system-out>canvas transferred: 32 x 32
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-textindex" classname="sdk-doc-textindex" time="0.153685" status="run">
+		<properties/>
+		<system-out>chapter-1 [2, 12)
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-audio" classname="sdk-doc-audio" time="0.221043" status="run">
+		<properties/>
+		<system-out>track=0 offset=500 ms
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-pagination" classname="sdk-doc-pagination" time="0.163496" status="run">
+		<properties/>
+		<system-out>cached=1, scanned=50 UTF-8 bytes
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-render" classname="sdk-doc-render" time="0.172703" status="run">
+		<properties/>
+		<system-out>RGBA 720 x 1040, stride=2880 bytes
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-font" classname="sdk-doc-font" time="0.202666" status="run">
+		<properties/>
+		<system-out>fallback faces=10
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-toc" classname="sdk-doc-toc" time="0.246847" status="run">
+		<properties/>
+		<system-out>level=1 part=0 First &amp; title
+level=2 part=0 Child
+level=1 part=18446744073709551615 Group
+level=2 part=0 Missing
+</system-out>
+	</testcase>
+	<testcase name="sdk-doc-pdf" classname="sdk-doc-pdf" time="0.0780628" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+	<testcase name="sdk-doc-dictionary" classname="sdk-doc-dictionary" time="0.374316" status="run">
+		<properties/>
+		<system-out>word01: n. definition 1
+  second line, 中文
+</system-out>
+	</testcase>
+</testsuite>

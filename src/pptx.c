@@ -60,6 +60,7 @@ typedef struct {
   size_t index; /* Original zero-based position in sldIdLst, before skipping. */
   pptx_shape *shapes;
   size_t count,capacity;
+  pptx_shape background;
   pptx_text_style text_styles[3][9];
 } pptx_slide;
 
@@ -77,6 +78,8 @@ typedef struct {
   size_t theme_warning,alpha,image_warning,gradient_warning,tile_warning,paint_bytes;
   size_t invalid_utf8;
   uint32_t theme[12];
+  uint32_t placeholder;
+  exr_document *theme_xml;
   pptx_image *images;
   size_t image_count,image_capacity;
   exr_buffer fallbacks; /* Unique, NUL-separated preset names; owns XML copies. */
@@ -103,6 +106,7 @@ static void release(void *context) {
   mz_zip_reader_end(&d->zip);
   for(i=0;i<d->count;i++) {
     free(d->slides[i].part_path);
+    free(d->slides[i].background.stops);
     for(j=0;j<d->slides[i].count;j++) {
       free(d->slides[i].shapes[j].stops);
       text_free(&d->slides[i].shapes[j]);
@@ -114,6 +118,7 @@ static void release(void *context) {
     exr_bitmap_free(&d->images[i].bitmap);
   }
   free(d->images);
+  exr_document_free(d->theme_xml);
   free(d->fallbacks.data);
   for(i=0;i<d->text_font_count;i++) exr_font_free(d->text_fonts[i].font);
   free(d->text_fonts);
@@ -624,6 +629,7 @@ static exr_status read_theme(pptx_document *d,const exr_control *control,exr_err
   size_t parent,i;
   exr_status status;
   memcpy(d->theme,defaults,sizeof(defaults));
+  d->placeholder=0x000000ff;
   status=xml_read(d,"ppt/theme/theme1.xml","theme",1,control,&xml,e);
   if(status!=EXR_OK) return status;
   if(!xml) { d->theme_warning++;return EXR_OK; }
@@ -649,7 +655,7 @@ static exr_status read_theme(pptx_document *d,const exr_control *control,exr_err
     if(hex_rgb(value,&rgb)) d->theme[slot]=rgb;
     else d->color++;
   }
-  exr_document_free(xml);
+  d->theme_xml=xml;
   return EXR_OK;
 }
 
@@ -694,7 +700,9 @@ static uint32_t color(pptx_document *d,const exr_document *xml,size_t fill) {
     value=node==SIZE_MAX ? NULL : exr_node_attribute(&xml->nodes[node],"val");
     slot=theme_slot(value);
     if(slot>=0) { rgb=d->theme[slot];valid=1; }
-    else if(value && !strcmp(value,"phClr")) valid=1;
+    else if(value && !strcmp(value,"phClr")) {
+      rgb=d->placeholder>>8; alpha=d->placeholder&255; valid=1;
+    }
     else if(node==SIZE_MAX) {
       node=drawing_child(xml,fill,"sysClr");
       if(node!=SIZE_MAX) valid=hex_rgb(exr_node_attribute(&xml->nodes[node],"lastClr"),&rgb);
@@ -773,7 +781,7 @@ static exr_status image_read(pptx_document *d,const char *path,size_t *out,
   return exr_control_cancel(control,e);
 }
 
-static exr_status image_fill(pptx_document *d,pptx_shape *shape,const pptx_slide *slide,
+static exr_status image_fill(pptx_document *d,pptx_shape *shape,const char *part,
                              const exr_document *xml,size_t fill,const pptx_relationship *rels,
                              size_t rel_count,const exr_control *control,exr_error *e) {
   size_t blip=drawing_child(xml,fill,"blip"),tile=drawing_child(xml,fill,"tile"),i;
@@ -786,7 +794,7 @@ static exr_status image_fill(pptx_document *d,pptx_shape *shape,const pptx_slide
   shape->style.fill=0xccccccff;
   shape->style.flags|=EXR_DRAW_FILL;
   if(!r || r->external || (strcmp(r->type,IMAGE_REL) && strcmp(r->type,IMAGE_STRICT)) ||
-     !exr_resolve_path(r->target[0]=='/' ? "" : slide->part_path,
+     !exr_resolve_path(r->target[0]=='/' ? "" : part,
                        r->target[0]=='/' ? r->target+1 : r->target,path)) {
     d->image_warning++;
     return EXR_OK;
@@ -1001,13 +1009,13 @@ static exr_status text_related(pptx_document *d,const char *part,const char *kin
 }
 
 static exr_status text_master(pptx_document *d,pptx_slide *slide,const exr_control *control,
-                              exr_document **master,exr_error *e) {
-  char layout[2048],path[2048];
+                              exr_document **master,char layout[2048],char path[2048],exr_error *e) {
   static const char *const tags[]={"titleStyle","bodyStyle","otherStyle"};
   size_t list=SIZE_MAX;
   int i,j;
   exr_status status=text_related(d,slide->part_path,"slideLayout",control,layout,e);
   *master=NULL;
+  path[0]=0;
   if(status==EXR_OK && *layout) {
     status=text_related(d,layout,"slideMaster",control,path,e);
     if(status==EXR_OK && *path) status=xml_read(d,path,"sldMaster",1,control,master,e);
@@ -1026,6 +1034,25 @@ static int text_script(uint32_t cp) {
   if((cp>=0x2e80 && cp<=0x9fff) || (cp>=0xac00 && cp<=0xd7af) ||
      (cp>=0xf900 && cp<=0xfaff) || (cp>=0xff00 && cp<=0xffef) || cp>=0x20000) return 1;
   return cp>=0x590 && cp<=0x8ff ? 2 : 0;
+}
+
+static const char *text_theme_family(const pptx_document *d,const char *family) {
+  const char *group,*script,*typeface;
+  size_t at;
+  if(!d->theme_xml || !family || family[0]!='+') return family;
+  if(!strncmp(family,"+mj-",4)) group="majorFont";
+  else if(!strncmp(family,"+mn-",4)) group="minorFont";
+  else return family;
+  if(!strcmp(family+4,"lt")) script="latin";
+  else if(!strcmp(family+4,"ea")) script="ea";
+  else if(!strcmp(family+4,"cs")) script="cs";
+  else return family;
+  at=drawing_child(d->theme_xml,root(d->theme_xml),"themeElements");
+  at=drawing_child(d->theme_xml,at,"fontScheme");
+  at=drawing_child(d->theme_xml,at,group);
+  at=drawing_child(d->theme_xml,at,script);
+  typeface=at==SIZE_MAX ? NULL : exr_node_attribute(&d->theme_xml->nodes[at],"typeface");
+  return typeface && *typeface ? typeface : family;
 }
 
 /* Pick each requested script/style before constructing one bounded engine font
@@ -1049,6 +1076,8 @@ static exr_status text_font(pptx_document *d,exr_document *model,exr_style *styl
     exr_font_chain_link *chain=NULL;
     size_t chain_count=0;
     if(node->kind!=EXR_NODE_TEXT) continue;
+    family=text_theme_family(d,family);
+    styles[i].family=family;
     if(strcmp(family,"sans-serif") && !exr_font_manager_has_family(d->font_manager,family)) {
       if(!text_warning(&d->font_fallbacks,family)) return exr_fail(e,EXR_LIMIT,"PPTX font warnings exceed budget");
       family=exr_font_manager_has_family(d->font_manager,"Segoe UI") ? "Segoe UI" : "sans-serif";
@@ -1563,7 +1592,7 @@ static exr_status shape_tree(pptx_document *d,pptx_slide *slide,const exr_docume
     shape.style.flags=0;
     if(shape.geometry!=LINE && drawing_child(xml,properties,"noFill")==SIZE_MAX) {
       fill=pic ? child(xml,i,"blipFill") : drawing_child(xml,properties,"blipFill");
-      if(fill!=SIZE_MAX) status=image_fill(d,&shape,slide,xml,fill,rels,rel_count,control,e);
+      if(fill!=SIZE_MAX) status=image_fill(d,&shape,slide->part_path,xml,fill,rels,rel_count,control,e);
       else if((fill=drawing_child(xml,properties,"gradFill"))!=SIZE_MAX)
         status=gradient_fill(d,&shape,xml,fill,e);
       else if((fill=drawing_child(xml,properties,"solidFill"))!=SIZE_MAX) {
@@ -1590,6 +1619,89 @@ static exr_status shape_tree(pptx_document *d,pptx_slide *slide,const exr_docume
   return EXR_OK;
 }
 
+static exr_status background_fill(pptx_document *d,pptx_shape *shape,const exr_document *xml,
+                                  size_t fill,const char *part,const exr_control *control,exr_error *e) {
+  exr_document *relationships=NULL;
+  pptx_relationship *rels=NULL;
+  size_t count=0;
+  exr_status status;
+  if(fill==SIZE_MAX || named(&xml->nodes[fill],A,AS,"noFill")) return EXR_OK;
+  if(named(&xml->nodes[fill],A,AS,"solidFill")) {
+    shape->style.fill=color(d,xml,fill); shape->style.flags=EXR_DRAW_FILL;
+    return EXR_OK;
+  }
+  if(named(&xml->nodes[fill],A,AS,"gradFill")) return gradient_fill(d,shape,xml,fill,e);
+  if(named(&xml->nodes[fill],A,AS,"blipFill")) {
+    const char *slash=strrchr(part,'/');
+    char path[2048];
+    int length=snprintf(path,sizeof(path),"%.*s_rels/%s.rels",slash ? (int)(slash-part+1) : 0,
+                        part,slash ? slash+1 : part);
+    if(length<0 || length>=(int)sizeof(path)) return exr_fail(e,EXR_LIMIT,"PPTX background relationship path too long");
+    status=xml_read(d,path,"Relationships",1,control,&relationships,e);
+    if(status==EXR_OK) status=read_relationships(relationships,&rels,&count,e);
+    if(status==EXR_OK) status=image_fill(d,shape,part,xml,fill,rels,count,control,e);
+    free(rels); exr_document_free(relationships);
+    return status;
+  }
+  d->color++;
+  return EXR_OK;
+}
+
+/* The nearest explicit background wins; image relationships belong to the
+   selected slide/layout/master (or to the theme for a style reference). */
+static exr_status read_background(pptx_document *d,pptx_slide *slide,const exr_document *xml,
+                                  const exr_document *master,const char *layout_path,const char *master_path,
+                                  const exr_control *control,exr_error *e) {
+  exr_document *layout=NULL;
+  const char *part=slide->part_path;
+  size_t common=child(xml,root(xml),"cSld"),bg=common==SIZE_MAX ? SIZE_MAX : child(xml,common,"bg");
+  size_t props,fill;
+  pptx_shape *shape=&slide->background;
+  exr_status status=EXR_OK;
+  if(bg==SIZE_MAX && *layout_path) {
+    status=xml_read(d,layout_path,"sldLayout",1,control,&layout,e);
+    if(status!=EXR_OK) return status;
+    if(layout) {
+      common=child(layout,root(layout),"cSld");
+      bg=common==SIZE_MAX ? SIZE_MAX : child(layout,common,"bg");
+      if(bg!=SIZE_MAX) { xml=layout; part=layout_path; }
+    }
+  }
+  if(bg==SIZE_MAX && master) {
+    common=child(master,root(master),"cSld");
+    bg=common==SIZE_MAX ? SIZE_MAX : child(master,common,"bg");
+    if(bg!=SIZE_MAX) { xml=master; part=master_path; }
+  }
+  if(bg==SIZE_MAX) { exr_document_free(layout); return EXR_OK; }
+  shape->width=d->width; shape->height=d->height;
+  shape->matrix[0]=shape->matrix[3]=1;
+  shape->style=exr_draw_style_defaults(); shape->style.flags=0;
+  props=child(xml,bg,"bgPr");
+  if(props!=SIZE_MAX) {
+    fill=xml->nodes[props].first_child;
+    status=background_fill(d,shape,xml,fill,part,control,e);
+  } else {
+    int64_t index;
+    size_t ref=child(xml,bg,"bgRef"),list;
+    uint32_t previous=d->placeholder;
+    if(ref==SIZE_MAX || !integer(exr_node_attribute(&xml->nodes[ref],"idx"),&index) || index<0) d->color++;
+    else if(index && index!=1000) {
+      d->placeholder=color(d,xml,ref);
+      list=d->theme_xml ? drawing_child(d->theme_xml,root(d->theme_xml),"themeElements") : SIZE_MAX;
+      list=drawing_child(d->theme_xml,list,"fmtScheme");
+      list=drawing_child(d->theme_xml,list,index>=1001 ? "bgFillStyleLst" : "fillStyleLst");
+      index-=index>=1001 ? 1001 : 1;
+      fill=list==SIZE_MAX ? SIZE_MAX : d->theme_xml->nodes[list].first_child;
+      while(fill!=SIZE_MAX && index--) fill=d->theme_xml->nodes[fill].next_sibling;
+      if(fill==SIZE_MAX) d->color++;
+      else status=background_fill(d,shape,d->theme_xml,fill,"ppt/theme/theme1.xml",control,e);
+    }
+    d->placeholder=previous;
+  }
+  exr_document_free(layout);
+  return status;
+}
+
 static exr_status read_shapes(pptx_document *d,const exr_control *control,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0};
   size_t page;
@@ -1597,7 +1709,7 @@ static exr_status read_shapes(pptx_document *d,const exr_control *control,exr_er
     exr_document *xml=NULL,*relationships=NULL,*master=NULL;
     pptx_relationship *rels=NULL;
     const char *part=d->slides[page].part_path,*slash=strrchr(part,'/');
-    char rel_path[2048];
+    char rel_path[2048],layout_path[2048],master_path[2048];
     size_t parent,tree,i,count=0,visited=0,rel_count=0;
     int length=snprintf(rel_path,sizeof(rel_path),"%.*s_rels/%s.rels",
                         slash ? (int)(slash-part+1) : 0,part,slash ? slash+1 : part);
@@ -1639,7 +1751,8 @@ static exr_status read_shapes(pptx_document *d,const exr_control *control,exr_er
       if(i==tree) break;
       i=xml->nodes[i].next_sibling;
     }
-    if(status==EXR_OK && tree!=SIZE_MAX) status=text_master(d,&d->slides[page],control,&master,e);
+    if(status==EXR_OK) status=text_master(d,&d->slides[page],control,&master,layout_path,master_path,e);
+    if(status==EXR_OK) status=read_background(d,&d->slides[page],xml,master,layout_path,master_path,control,e);
     if(status==EXR_OK && tree!=SIZE_MAX)
       status=shape_tree(d,&d->slides[page],xml,tree,identity,0,rels,rel_count,control,e);
     free(rels);
@@ -1909,14 +2022,25 @@ static exr_status table_cell_draw(const pptx_shape *shape,const double matrix[6]
   return status;
 }
 
-/* The fixed pipeline supplies the background, viewport and clipping. */
+/* The fixed pipeline supplies the white fallback, viewport and clipping. */
 static exr_status draw(void *context,size_t page,const double matrix[6],
                        const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
   pptx_document *d=context;
+  const pptx_shape *background;
+  exr_status status;
   size_t i;
   if(page>=d->count) {
     return exr_fail(e,EXR_ARGUMENT,"Invalid PPTX slide index");
   }
+  background=&d->slides[page].background;
+  status=exr_control_cancel(control,e);
+  if(status!=EXR_OK) return status;
+  if(background->texture) status=texture_draw(d,background,matrix,sink,control,e);
+  else if(background->style.flags && sink->path) {
+    exr_path_segment path[10];
+    status=sink->path(sink->context,path,shape_path(background,path),matrix,&background->style,e);
+  }
+  if(status!=EXR_OK) return status;
   for(i=0;i<d->slides[page].count;i++) {
     exr_path_segment path[10];
     double combined[6];

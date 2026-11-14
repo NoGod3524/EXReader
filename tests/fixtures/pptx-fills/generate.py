@@ -40,7 +40,7 @@ def gradient(stops=((0, 'FF0000'), (100000, '0000FF')), angle=0):
     return f'<a:gradFill><a:gsLst>{items}</a:gsLst><a:lin ang="{angle}" scaled="0"/></a:gradFill>'
 
 
-def package(shapes, media=None):
+def package(shapes, media=None, background='', master_background='', theme_background=''):
     theme = ''.join(f'<a:{name}><a:srgbClr val="{rgb}"/></a:{name}>' for name, rgb in THEME.items())
     parts = {
         '[Content_Types].xml': '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
@@ -53,12 +53,22 @@ def package(shapes, media=None):
         '_rels/.rels': f'<Relationships xmlns="{REL}"><Relationship Id="rId1" Type="{R}/officeDocument" Target="ppt/presentation.xml"/></Relationships>',
         'ppt/presentation.xml': f'<p:presentation xmlns:p="{P}" xmlns:r="{R}"><p:sldIdLst><p:sldId id="256" r:id="rId1"/></p:sldIdLst><p:sldSz cx="9144000" cy="6858000"/></p:presentation>',
         'ppt/_rels/presentation.xml.rels': f'<Relationships xmlns="{REL}"><Relationship Id="rId1" Type="{R}/slide" Target="slides/slide1.xml"/><Relationship Id="rId2" Type="{R}/theme" Target="theme/theme1.xml"/></Relationships>',
-        'ppt/slides/slide1.xml': f'<p:sld xmlns:p="{P}" xmlns:a="{A}" xmlns:r="{R}"><p:cSld><p:spTree>'
+        'ppt/slides/slide1.xml': f'<p:sld xmlns:p="{P}" xmlns:a="{A}" xmlns:r="{R}"><p:cSld>{background}<p:spTree>'
             '<p:nvGrpSpPr><p:cNvPr id="0" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>'
             f'{shapes}</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>',
         'ppt/slides/_rels/slide1.xml.rels': f'<Relationships xmlns="{REL}"><Relationship Id="img1" Type="{R}/image" Target="../media/image1.png"/></Relationships>',
-        'ppt/theme/theme1.xml': f'<a:theme xmlns:a="{A}" name="M3"><a:themeElements><a:clrScheme name="M3">{theme}</a:clrScheme></a:themeElements></a:theme>',
+        'ppt/theme/theme1.xml': f'<a:theme xmlns:a="{A}" name="M3"><a:themeElements><a:clrScheme name="M3">{theme}</a:clrScheme>{theme_background}</a:themeElements></a:theme>',
     }
+    if master_background:
+        parts['[Content_Types].xml'] = parts['[Content_Types].xml'].replace('</Types>',
+            '<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>'
+            '<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/></Types>')
+        parts['ppt/slides/_rels/slide1.xml.rels'] = parts['ppt/slides/_rels/slide1.xml.rels'].replace(
+            '</Relationships>', f'<Relationship Id="layout1" Type="{R}/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>')
+        parts['ppt/slideLayouts/slideLayout1.xml'] = f'<p:sldLayout xmlns:p="{P}"><p:cSld><p:spTree/></p:cSld></p:sldLayout>'
+        parts['ppt/slideLayouts/_rels/slideLayout1.xml.rels'] = f'<Relationships xmlns="{REL}"><Relationship Id="master1" Type="{R}/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>'
+        parts['ppt/slideMasters/slideMaster1.xml'] = f'<p:sldMaster xmlns:p="{P}" xmlns:a="{A}" xmlns:r="{R}"><p:cSld>{master_background}<p:spTree/></p:cSld></p:sldMaster>'
+        parts['ppt/slideMasters/_rels/slideMaster1.xml.rels'] = f'<Relationships xmlns="{REL}"><Relationship Id="img1" Type="{R}/image" Target="../media/image1.png"/><Relationship Id="theme1" Type="{R}/theme" Target="../theme/theme1.xml"/></Relationships>'
     if media is not None:
         parts['ppt/media/image1.png'] = media
     out = BytesIO()
@@ -68,6 +78,10 @@ def package(shapes, media=None):
             info.compress_type, info.create_system, info.external_attr = ZIP_STORED, 3, 0o600 << 16
             archive.writestr(info, data)
     return out.getvalue()
+
+
+def background(fill):
+    return f'<p:bg><p:bgPr>{fill}</p:bgPr></p:bg>'
 
 
 def generate(check=False):
@@ -83,6 +97,19 @@ def generate(check=False):
                                       (20 + i % 4 * 150, 20 + i // 4 * 100, 120, 70), i + 1)
                                  for i, name in enumerate(schemes))),
         'alpha': package(shape('<a:solidFill><a:srgbClr val="FF0000"><a:alpha val="50000"/></a:srgbClr></a:solidFill>')),
+        'background-solid': package(shape('<a:solidFill><a:srgbClr val="00FF00"/></a:solidFill>', (40, 40, 120, 80)),
+                                    background=background('<a:solidFill><a:srgbClr val="123456"/></a:solidFill>')),
+        'background-gradient': package('', background=background(gradient())),
+        'background-image': package('', png(100, 50, lambda x, y: (255, 0, 0) if x < 50 else (0, 0, 255)),
+                                    background=background(stretch)),
+        'background-theme': package('', background='<p:bg><p:bgRef idx="1002"><a:schemeClr val="accent2"/></p:bgRef></p:bg>',
+                                    theme_background='<a:fmtScheme name="M6b"><a:bgFillStyleLst>'
+                                    '<a:solidFill><a:srgbClr val="FF0000"/></a:solidFill>'
+                                    '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
+                                    '<a:gradFill><a:gsLst><a:gs pos="0"><a:schemeClr val="phClr"/></a:gs>'
+                                    '<a:gs pos="100000"><a:srgbClr val="0000FF"/></a:gs></a:gsLst><a:lin ang="0"/></a:gradFill>'
+                                    '</a:bgFillStyleLst></a:fmtScheme>'),
+        'background-master': package('', master_background=background('<a:solidFill><a:srgbClr val="5B246D"/></a:solidFill>')),
     }
     for name, data in cases.items():
         path = HERE / (name + '.pptx')
