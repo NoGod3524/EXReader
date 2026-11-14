@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 /* Toolbar and keyboard commands share these model transactions. */
 enum { DE_BOLD,DE_ITALIC,DE_SMALLER,DE_SIZE,DE_LARGER,DE_COLOR,
-  DE_LEFT,DE_CENTER,DE_RIGHT,DE_JUSTIFY,DE_TEXT_BUTTONS,
+  DE_LEFT,DE_CENTER,DE_RIGHT,DE_JUSTIFY,DE_INSERT_FOOTNOTE,DE_TEXT_BUTTONS,
   DE_ADD_ROW=DE_TEXT_BUTTONS,DE_REMOVE_ROW,DE_WIDER,DE_NARROWER,DE_REMOVE_TABLE,DE_BUTTONS,
   DE_HEADER=DE_BUTTONS,DE_FOOTER,DE_DIFFERENT_FIRST,DE_DIFFERENT_EVEN,DE_VARIANT,DE_ALL_BUTTONS };
 static const uint32_t de_colors[]={0x000000,0x808080,0xff0000,0x008000,0x0000ff,0xff8000,0x800080,0xffffff};
@@ -26,6 +26,11 @@ typedef struct {
   size_t style;
   char reference[128];
 } de_style_parse;
+static unsigned de_heading_name(const char *name) {
+  if(_strnicmp(name,"heading",7))return 0;
+  name+=7;if(*name==' ')name++;
+  return name[0]>='1' && name[0]<='6' && !name[1] ? (unsigned)(name[0]-'0'):0;
+}
 static void de_style_start(void *context,const char *name,const char **attrs) {
   de_style_parse *parse=context;name=de_local(name);parse->depth++;
   if((!strcmp(name,"pStyle") || !strcmp(name,"rStyle")) && parse->depth==3)
@@ -38,8 +43,14 @@ static void de_style_start(void *context,const char *name,const char **attrs) {
     de.styles=styles;parse->style=de.style_count++;
     de_style *style=&styles[parse->style];memset(style,0,sizeof(*style));
     snprintf(style->id,sizeof(style->id),"%s",de_attribute(attrs,"styleId"));
+    style->paragraph=!strcmp(de_attribute(attrs,"type"),"paragraph");
+    if(style->paragraph)style->heading=de_heading_name(style->id);
     if(!strcmp(de_attribute(attrs,"type"),"paragraph") && !strcmp(de_attribute(attrs,"default"),"1"))
       snprintf(de.default_style,sizeof(de.default_style),"%s",style->id);
+  }
+  if(!strcmp(name,"name") && parse->style<de.style_count && de.styles[parse->style].paragraph) {
+    unsigned heading=de_heading_name(de_attribute(attrs,"val"));
+    if(heading)de.styles[parse->style].heading=heading;
   }
   if(!strcmp(name,"basedOn") && parse->style<de.style_count)
     snprintf(de.styles[parse->style].base,128,"%s",de_attribute(attrs,"val"));
@@ -102,6 +113,20 @@ static void de_inherit_style(exr_edit_run_props *props,const char *id) {
   }
   de_merge_props(props,&chain);
 }
+static unsigned de_heading_level(const exr_edit_block *block) {
+  if(!block || block->kind!=EXR_EDIT_PARAGRAPH)return 0;
+  de_load_styles();char reference[128]={0};
+  de_parse_style_xml(block->opaque_xml,block->opaque_size,reference);
+  const char *id=*reference ? reference:de.default_style;
+  for(size_t depth=0;*id && depth<=de.style_count;depth++) {
+    size_t i=0;while(i<de.style_count && strcmp(de.styles[i].id,id))i++;
+    if(i==de.style_count)return de_heading_name(id);
+    if(!de.styles[i].paragraph)return 0;
+    if(de.styles[i].heading)return de.styles[i].heading;
+    id=de.styles[i].base;
+  }
+  return 0;
+}
 static exr_edit_run_props de_resolve_props(const exr_edit_block *block,const exr_edit_run *run) {
   de_load_styles();exr_edit_run_props props={0};props.size_half_points=24;
   de_merge_props(&props,&de.default_props);
@@ -150,6 +175,7 @@ static int de_command(int command,uint32_t color) {
   if(!de.doc)return 0;
   if(command>=DE_HEADER)return de_hf_command(command);
   if(de.hf_mode)return 0;
+  if(command==DE_INSERT_FOOTNOTE)return de_footnote_insert();
   if(command>=DE_ADD_ROW) {
     de_cell cell=de_cell_at(de.caret.view);if(!cell.table)return 0;
     const exr_edit_block *owner=exr_edit_find_block(de.doc,cell.table);
@@ -220,7 +246,7 @@ static RECT de_toolbar_box(int index) {
     int x=8+(index-DE_TEXT_BUTTONS)*76;
     RECT box={shell_px(x,shell_dpi),shell_px(92,shell_dpi),shell_px(x+74,shell_dpi),shell_px(128,shell_dpi)};return box;
   }
-  const int widths[]={34,34,56,48,56,64,40,52,40,52};
+  const int widths[]={34,34,56,48,56,64,40,52,40,52,88};
   int x=8;for(int i=0;i<index;i++)x+=widths[i]+2;
   RECT box={shell_px(x,shell_dpi),shell_px(4,shell_dpi),
     shell_px(x+widths[index],shell_dpi),shell_px(40,shell_dpi)};return box;
@@ -231,7 +257,7 @@ static RECT de_color_box(int index) {
   box.top=(LONG)de_toolbar_height();box.bottom=box.top+size;return box;
 }
 static HRESULT de_toolbar_paint(HDC dc) {
-  const wchar_t *labels[]={L"B",L"I",L"字号−",L"",L"字号+",L"颜色▾",L"左",L"居中",L"右",L"两端",
+  const wchar_t *labels[]={L"B",L"I",L"字号−",L"",L"字号+",L"颜色▾",L"左",L"居中",L"右",L"两端",L"插入脚注",
     L"+行",L"−行",L"列宽+",L"列宽−",L"删表"};
   exr_edit_run_props props=de_current_props();wchar_t size[32];
   swprintf(size,32,L"%g",props.size_half_points/2.0);labels[DE_SIZE]=size;
@@ -241,7 +267,7 @@ static HRESULT de_toolbar_paint(HDC dc) {
   int buttons=de.caret_in_table && !de.hf_mode ? DE_BUTTONS:DE_TEXT_BUTTONS;
   for(int i=0;i<buttons && SUCCEEDED(hr);i++) {
     int selected=(i==DE_BOLD && props.bold) || (i==DE_ITALIC && props.italic) ||
-      (i>=DE_LEFT && i<DE_TEXT_BUTTONS && i-DE_LEFT==align) || (i==DE_COLOR && de.color_panel);
+      (i>=DE_LEFT && i<=DE_JUSTIFY && i-DE_LEFT==align) || (i==DE_COLOR && de.color_panel);
     shell_d2d_look look={SHELL_CONTROL_GHOST,de.hf_mode ? SHELL_STATE_DISABLED:selected ? SHELL_STATE_SELECTED:0,shell_colors->layer_page,0,0};
     RECT box=de_toolbar_box(i);hr=shell_d2d_control(host_shell,dc,&box,labels[i],shell_is_dark(),&look);
   }

@@ -50,7 +50,7 @@ typedef struct {
   char header_refs[3][128],footer_refs[3][128]; /* relationship IDs: default, first, even */
 } exr_edit_section;
 
-typedef enum { EXR_EDIT_TEXT,EXR_EDIT_OPAQUE_RUN } exr_edit_run_kind;
+typedef enum { EXR_EDIT_TEXT,EXR_EDIT_OPAQUE_RUN,EXR_EDIT_FOOTNOTE } exr_edit_run_kind;
 typedef struct {
   exr_edit_id id;
   exr_edit_run_kind kind;
@@ -60,6 +60,13 @@ typedef struct {
      template, backed by the retained DOCX main part when using the IO bridge. */
   const void *opaque_xml; size_t opaque_size;
 } exr_edit_run;
+/* FOOTNOTE runs are atomic body references. Their text is the note content,
+   not body text; display their document-order number from footnote_at(). */
+typedef struct {
+  exr_edit_id id,paragraph_id;
+  size_t run_index,number; /* number starts at 1 and follows reference order. */
+  const char *text; size_t text_size;
+} exr_edit_footnote;
 typedef enum { EXR_EDIT_PARAGRAPH,EXR_EDIT_TABLE,EXR_EDIT_PAGE_BREAK,
   EXR_EDIT_OPAQUE_BLOCK,EXR_EDIT_IMAGE } exr_edit_block_kind;
 typedef enum { EXR_EDIT_BORDER_NONE,EXR_EDIT_BORDER_SINGLE,EXR_EDIT_BORDER_DOUBLE } exr_edit_borders;
@@ -195,6 +202,20 @@ EXR_API exr_status exr_edit_insert_run(exr_edit_doc *doc,exr_edit_tx *tx,
   exr_edit_id paragraph,size_t run_index,const char *text,size_t text_size,
   const exr_edit_run_props *props);
 EXR_API exr_status exr_edit_delete_block(exr_edit_doc *doc,exr_edit_id block_id);
+
+/* Borrowed note views expire when the owning paragraph/table changes. Enumerate
+   body references, including table cells, in document order. Invalid at() calls
+   clear out and return EXR_ARGUMENT. Deletion automatically renumbers later notes. */
+EXR_API size_t exr_edit_footnote_count(const exr_edit_doc *doc);
+EXR_API exr_status exr_edit_footnote_at(const exr_edit_doc *doc,size_t index,exr_edit_footnote *out);
+/* Insert before run_index, or split a TEXT run at a UTF-8 byte boundary.
+   (run_count,0) appends. Opaque/reference runs allow offset 0 only. Empty note
+   content is valid. Copies aliased input and participates in transactions/undo. */
+EXR_API exr_status exr_edit_footnote_insert(exr_edit_doc *doc,exr_edit_id paragraph_id,
+  size_t run_index,size_t byte_offset,const char *text,size_t text_size,exr_edit_id *new_id);
+EXR_API exr_status exr_edit_footnote_set_text(exr_edit_doc *doc,exr_edit_id id,
+  const char *text,size_t text_size);
+EXR_API exr_status exr_edit_footnote_delete(exr_edit_doc *doc,exr_edit_id id);
 
 /* Zero-based physical row/cell indices. SIZE_MAX inserts before the first row.
    Protected cells (merges, nested tables, shading or opaque content) cannot be
