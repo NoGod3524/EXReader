@@ -1,0 +1,44 @@
+L15 · 大纲视图与导航窗格
+
+功能
+编辑 DOCX 时左侧显示 Heading 1..6，按标题层级缩进；点击后定位到该段并滚动至光标可见。输入、撤销/重做及拆段会同步更新大纲。下拉框按 1..6 级折叠/展开，更新时保留折叠状态；无标题显示「无标题」。Ctrl+Shift+O 进入大纲，Enter/Escape 返回正文。
+
+源码入口
+- examples/windows/shell_docedit_outline.inc：原生 TreeView、级别选择、稳定段落 ID 跳转与状态更新。
+- examples/windows/shell_docedit_toolbar.inc：段落样式 ID、Heading 名称和 basedOn 继承识别，排除字符样式并限制循环。
+- examples/windows/shell_docedit_paint.inc、shell_docedit_input.inc、shell_docedit.inc：刷新、正文横向留白、键盘入口与关闭清理。
+- examples/windows/check_shell_docedit_outline.c：真实 reader.c 宿主的隐藏窗口验收。
+- tests/outline_l15.cmake：SDK 源码构建中加入 L15、编辑器及表格 headless 测试；examples/windows/CMakeLists.txt 同时支持安装 SDK 的宿主构建。
+
+可执行入口
+正式构建目标：build/l15/EXReaderL15.exe。打开 DOCX 后点「编辑」显示大纲。
+正式 headless 目标：build/l15/check_shell_docedit_outline.exe。
+
+构建复现（PowerShell，在本工作树根目录）
+以下参数对应 build/l15/CMakeCache.txt；MinGW GCC/G++、CMake 与 Ninja 已在 PATH。本机依赖源码缓存位于 C:/Users/Oscar/Documents/Codex/exr-build-cf112/_deps。
+
+$taskDeps = 'C:/Users/Oscar/Documents/Codex/exr-build-cf112/_deps'
+$taskDepArgs = @('MINIZ','EXPAT','FREETYPE','SQLITE','STB','ZLIB','OPENJPEG') | ForEach-Object { "-DFETCHCONTENT_SOURCE_DIR_$($_)=$taskDeps/$($_.ToLower())-src" }
+$taskOutline = (Resolve-Path tests/outline_l15.cmake).Path
+cmake -S . -B build/l15 -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PROJECT_INCLUDE=$taskOutline" -DEXR_BUILD_TESTS=ON -DEXR_BUILD_TOOLS=OFF -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_LIBRARY=ON -DEXR_ENABLE_PDF=ON -DEXR_ENABLE_PDF_EDIT=ON -DEXR_ENABLE_PDF_JPX=ON -DEXR_ENABLE_PDF_CRYPTO=OFF -DEXR_ENABLE_LCP=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF @taskDepArgs
+cmake --build build/l15 --parallel 4
+ctest --test-dir build/l15 --output-on-failure
+ctest --test-dir build/l15 -R windows-docedit-outline-headless -V
+
+临时 smoke（已通过，不代替正式全量构建）
+build/l15-host-smoke/check_shell_docedit_outline.exe：exit 0。
+此程序单独编译当前验收 C 文件、当前 shell_d2d.cpp 和当前 src/docx_edit.c；复用 L07 已编静态 SDK 的其余库，以及 SHA256 与当前源码相同的 EPUB/speech 对象。L07 源码和库未修改。
+原始输出：
+PASS five Heading 1/2/3/4/6 entries, hierarchy, skipped level, multi-run Unicode; body/H7 excluded
+PASS native tree selection -> caret block=12, scroll=179.7, caret visible
+PASS typed heading updates within 0 ms
+PASS outline follows editor undo/redo
+PASS collapse/expand at levels 1/3/6, level retained during typing
+PASS split/undo refresh and stable heading ID after block indices shift
+PASS custom Heading style names/basedOn; inheritance cycles, character styles and run styles excluded
+PASS no headings displays the native empty entry: 无标题
+L15 outline headless acceptance PASS
+上述临时运行之后，验收源码另补了级别下拉框 CBN_SELCHANGE 和 Ctrl+Shift+O、Enter/Escape 消息检查；这些新增检查随正式构建验证。
+
+正式构建与 ctest 结果
+待 root 填写本工作树全新源码构建结果、测试数量、原始输出及任何失败项。

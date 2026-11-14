@@ -27,7 +27,7 @@ foreach(target check_shell_docedit_a11y EXReaderL07)
   target_sources(${target} PRIVATE "${L07_ROOT}/examples/windows/shell_docedit_a11y_model.c")
   target_compile_definitions(${target} PRIVATE EXR_READER_WINDOWS_SHELL=1)
   target_compile_features(${target} PRIVATE c_std_11 cxx_std_17)
-  target_link_libraries(${target} PRIVATE exreader miniz expat comdlg32 gdi32 uiautomationcore
+  target_link_libraries(${target} PRIVATE exreader miniz expat comdlg32 comctl32 gdi32 uiautomationcore
     shell32 user32 winhttp crypt32 d2d1 dwrite advapi32 ole32 oleaut32 uuid)
   if(MSVC)
     target_compile_options(${target} PRIVATE /UNDEBUG /utf-8)
