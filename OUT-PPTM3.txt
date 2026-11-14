@@ -1,0 +1,38 @@
+已完成。[完整交付记录](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/OUT-PPTM3.txt)。
+
+[ppt_records.c](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/src/ppt_records.c:122)：**322 → 463 行，净增 141 行**。新增 `read_bstore`、`read_resources`、`read_scheme`、`image_fill`；绘制端新增 `draw_fill`。
+
+| 验收 | 真实结果 |
+|---|---|
+| ① COM 纯绿 PNG | 1×/2× 均 `(0,255,0)`，误差 **0** |
+| ② 100×50 拉伸至 400×50 | 两种倍率下，5 点全部绿色，误差 **0** |
+| ③ 红→蓝渐变 | 9 点严格单调，`gradient-horizontal=1` |
+| ④ accent1 | 像素与 MainMaster 均为 `(17,83,211)` |
+| ⑤ 越界 pib | `status=0`，像素 `(204,204,204)`，警告 `pib=1` |
+| ⑥ 全套 CTest | **474/474**；仅排除指定两项；M2 **12/12** |
+| ⑦ 新增测试 | **8/8** 个 `native-ppt-fill-*`，共 **39** 次检查 |
+
+渐变 1× 的九点 RGB：
+
+```text
+(255,0,0), (223,0,32), (191,0,64),
+(159,0,96), (127,0,128), (95,0,160),
+(63,0,192), (31,0,224), (0,0,255)
+```
+
+母版实际使用八槽 [`ColorSchemeAtom`](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/e2f5fbf3-d790-487e-b96b-5ccdee0f0aa8)。本次 COM 夹具映射如下，八项像素均与母版 RGB 完全一致：
+
+| 颜色 | 保存来源 | RGB |
+|---|---|---|
+| accent1 | scheme[4] | 17,83,211 |
+| accent2 | scheme[5] | 19,123,41 |
+| accent3 | RGB 回退 | 241,97,23 |
+| accent4 | RGB 回退 | 91,31,201 |
+| accent5 | RGB 回退 | 201,41,153 |
+| accent6 | RGB 回退 | 7,177,221 |
+| 背景 | scheme[0] | 233,241,249 |
+| 文字 | scheme[1] | 12,23,34 |
+
+已知边界：渐变统一为两端色水平插值；图片裁剪、平铺、效果和旋转尚未支持；完整 RoundTrip 主题重算及标题母版继承链尚未实现。
+
+**prepush exit 0**。三个禁止修改的文件均未改动，未新增库依赖。最终全套测试使用 `PYTHONUTF8=1`。[CTest 原始输出](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/evidence/ppt-m3/ctest.txt) · [像素及警告详细输出](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/evidence/ppt-m3/ctest-fills.txt)

@@ -64,12 +64,44 @@ static exr_path_point point(const exr_ppt_shape *s,double x,double y) {
                     s->bounds[1]+y*(s->bounds[3]-s->bounds[1])};
   return p;
 }
+static exr_status draw_fill(const exr_ppt_drawing *d,const exr_ppt_shape *s,const double matrix[6],
+  const exr_path_segment *path,size_t count,const exr_draw_sink *sink,exr_error *e) {
+  unsigned char pixels[256*4];exr_image_layer image={0};double m[6];size_t x,k;exr_status status;
+  double w=s->bounds[2]-s->bounds[0],h=s->bounds[3]-s->bounds[1];
+  if(!sink->image || !w || !h) return EXR_OK;
+  if(s->blip) image.bitmap=d->blips[s->blip-1].bitmap;
+  else {
+    /* ponytail: 256 texels retain 8-bit endpoint precision; arbitrary angles
+       and intermediate stops need a procedural paint source in M4. */
+    for(x=0;x<256;x++) for(k=0;k<4;k++) {
+      unsigned a=(s->gradient[0]>>(24-8*k))&255,b=(s->gradient[1]>>(24-8*k))&255;
+      pixels[4*x+k]=(unsigned char)((a*(255-x)+b*x+127)/255);
+    }
+    image.bitmap.width=256;image.bitmap.height=1;image.bitmap.channels=4;
+    image.bitmap.stride=sizeof(pixels);image.bitmap.pixels=pixels;
+  }
+  image.interpolate=1;
+  m[0]=matrix[0]*w;m[1]=matrix[1]*w;m[2]=matrix[2]*h;m[3]=matrix[3]*h;
+  m[4]=matrix[0]*s->bounds[0]+matrix[2]*s->bounds[1]+matrix[4];
+  m[5]=matrix[1]*s->bounds[0]+matrix[3]*s->bounds[1]+matrix[5];
+  if(s->type==3) {
+    if(!sink->state || !sink->clip) return exr_fail(e,EXR_UNSUPPORTED,"PPT image ellipse requires clipping callbacks");
+    status=sink->state(sink->context,EXR_DRAW_SAVE,e);if(status!=EXR_OK) return status;
+    status=sink->clip(sink->context,path,count,matrix,EXR_FILL_NONZERO,0,e);
+    if(status==EXR_OK) status=sink->image(sink->context,&image,m,1,e);
+    { exr_status restore=sink->state(sink->context,EXR_DRAW_RESTORE,status==EXR_OK ? e : NULL);if(status==EXR_OK) status=restore; }
+    return status;
+  }
+  return sink->image(sink->context,&image,m,1,e);
+}
 static exr_status draw(void *context,size_t page,const double matrix[6],const exr_draw_sink *sink,const exr_control *control,exr_error *e) {
   exr_ppt_drawing *d=context;size_t i;exr_status status=exr_control_cancel(control,e);
+  const double identity[6]={1,0,0,1,0,0};if(!matrix) matrix=identity;
   if(status!=EXR_OK) return status;
   if(page>=d->pages) return exr_fail(e,EXR_ARGUMENT,"Invalid PPT slide index");
   for(i=d->slides[page].first;i<d->slides[page].first+d->slides[page].count;i++) {
     const exr_ppt_shape *s=&d->shapes[i];exr_path_segment p[6]={0};size_t count=0;
+    exr_draw_style style=s->style;
     status=exr_control_cancel(control,e);if(status!=EXR_OK) return status;
     p[0].verb=EXR_PATH_MOVE;
     if(s->type==3) {
@@ -89,7 +121,11 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
         p[2].points[0]=point(s,1,1);p[3].points[0]=point(s,0,1);p[4].verb=EXR_PATH_CLOSE;count=5;
       }
     }
-    if(sink->path) { status=sink->path(sink->context,p,count,matrix,&s->style,e);if(status!=EXR_OK) return status; }
+    if(s->blip || s->has_gradient) {
+      status=draw_fill(d,s,matrix,p,count,sink,e);if(status!=EXR_OK) return status;
+      style.flags&=~EXR_DRAW_FILL;
+    }
+    if(sink->path && style.flags) { status=sink->path(sink->context,p,count,matrix,&style,e);if(status!=EXR_OK) return status; }
   }
   return EXR_OK;
 }
@@ -103,7 +139,7 @@ exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open
   if(s!=EXR_OK) goto done;
   drawing=calloc(1,sizeof(*drawing));
   if(!drawing) { s=exr_fail(e,EXR_MEMORY,"PPT drawing allocation failed");goto done; }
-  s=exr_ppt_read_drawing(streams.document,streams.document_size,&info,&options->control,drawing,e);
+  s=exr_ppt_read_drawing(&streams,&info,&options->control,drawing,e);
   if(s!=EXR_OK) goto done;
   title=summary_title(streams.summary,streams.summary_size);
   if(info.pages) {
@@ -119,9 +155,11 @@ exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open
   s=exr_control_poll(&options->control,EXR_STAGE_READ,info.pages,info.pages,e);
   if(s==EXR_OK) s=exr_fixed_create(&input,out,e);
   if(s==EXR_OK) {
-    if(drawing->malformed || drawing->missing_anchor || drawing->depth || drawing->zero_extent || drawing->unsupported)
-      exr_fail(e,EXR_OK,"PPT warning: malformed=%zu missing-anchor=%zu depth=%zu zero-chExt=%zu unsupported=%zu%s",
+    if(drawing->malformed || drawing->missing_anchor || drawing->depth || drawing->zero_extent || drawing->unsupported ||
+       drawing->bad_pib || drawing->unknown_blip || drawing->image_decode || drawing->gradient_horizontal || drawing->gradient_missing || drawing->scheme)
+      exr_fail(e,EXR_OK,"PPT warning: malformed=%zu missing-anchor=%zu depth=%zu zero-chExt=%zu unsupported=%zu pib=%zu blip-unsupported=%zu image-decode=%zu gradient-horizontal=%zu gradient-missing=%zu scheme=%zu%s",
         drawing->malformed,drawing->missing_anchor,drawing->depth,drawing->zero_extent,drawing->unsupported,
+        drawing->bad_pib,drawing->unknown_blip,drawing->image_decode,drawing->gradient_horizontal,drawing->gradient_missing,drawing->scheme,
         info.mismatch ? "; SlidePersistAtom count differs from Slide container count; using SlidePersistAtom" : "");
     else if(info.mismatch) exr_fail(e,EXR_OK,"PPT warning: SlidePersistAtom count %zu differs from Slide container count %zu; using SlidePersistAtom",info.pages,info.slide_containers);
     drawing=NULL; /* The fixed provider now owns it. */

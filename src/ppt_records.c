@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "ppt_internal.h"
+#include "graphics_internal.h"
 
 /* MS-PPT 2.13.24: 0x0FD9 is HeadersFooters, 0x0FF5 is UserEditAtom.
    Atoms normally have recVer=0; only recVer=F universally denotes a container. */
@@ -86,14 +87,18 @@ typedef struct {
   const unsigned char *data;
   const exr_control *control;
   exr_ppt_drawing *drawing;
+  const exr_ppt_streams *streams;
   size_t shapes,records;
   int patriarch;
+  uint32_t colors[8];
+  unsigned color_mask;
 } drawing_reader;
 typedef struct {
   unsigned type,flags,fill_type,fill_flags,line_flags,rotation;
-  uint32_t fill,line;
+  uint32_t fill,back,line,pib,fill_blip,stops[2];
   double width,anchor[4],children[4];
   int has_anchor,has_children,has_fsp,valid;
+  int has_fill_blip,has_fill,has_back,has_stops,bad_stops;
 } art_shape;
 static double i32(const unsigned char *p) {
   uint32_t n=u32(p);
@@ -113,8 +118,62 @@ static int art_next(drawing_reader *r,size_t *at,size_t end,art_record *a) {
   a->type=u16(r->data+*at+2);a->payload=*at+8;a->end=a->payload+length;
   *at=a->end;return 1;
 }
-/* Complex lengths are validated even for properties M2 does not consume.
-   Only literal RGB COLORREFs are painted; indexed colours need M3 styles. */
+/* Keep every BSE slot, including unsupported records, so pib stays one-based. */
+static exr_status read_bstore(drawing_reader *r,const art_record *store,exr_error *e) {
+  size_t at=store->payload;art_record a;exr_ppt_drawing *d=r->drawing;
+  while(art_next(r,&at,store->end,&a)) {
+    const unsigned char *bytes=r->data;size_t offset,end=a.end,skip;unsigned instance;exr_ppt_blip *b;
+    exr_status status=exr_control_cancel(r->control,e);if(status!=EXR_OK) return status;
+    if(a.type!=0xf007) { d->malformed++;continue; }
+    if(d->blip_count>=65535) return exr_fail(e,EXR_LIMIT,"PPT exceeds 65535 blips");
+    if(!exr_grow((void **)&d->blips,&d->blip_capacity,d->blip_count+1,sizeof(*d->blips)))
+      return exr_fail(e,EXR_MEMORY,"PPT blip directory allocation failed");
+    b=&d->blips[d->blip_count++];memset(b,0,sizeof(*b));b->state=2;
+    if(a.end-a.payload<36) { d->malformed++;continue; }
+    offset=a.payload+36+bytes[a.payload+33];
+    if(offset>end) { d->malformed++;continue; }
+    if(offset==end) {
+      offset=u32(bytes+a.payload+28);bytes=r->streams->pictures;end=r->streams->pictures_size;
+      if(!bytes || offset>end) continue;
+    }
+    if(end-offset<8 || u32(bytes+offset+4)>end-offset-8) { d->malformed++;continue; }
+    b->type=u16(bytes+offset+2);instance=u16(bytes+offset)>>4;
+    if(b->type==0xf01d || b->type==0xf02a) {
+      if(instance!=0x46a && instance!=0x46b && instance!=0x6e2 && instance!=0x6e3) continue;
+      skip=(instance==0x46b || instance==0x6e3) ? 33 : 17;
+    } else if(b->type==0xf01e || b->type==0xf02b) {
+      if(instance!=0x6e0 && instance!=0x6e1) continue;
+      skip=instance==0x6e1 ? 33 : 17;
+    } else { b->state=3;continue; }
+    b->size=u32(bytes+offset+4);
+    if(b->size<skip) continue;
+    b->encoded=bytes+offset+8+skip;b->size-=skip;b->state=0;
+  }
+  return EXR_OK;
+}
+static exr_status read_resources(drawing_reader *r,size_t at,size_t end,unsigned depth,exr_error *e) {
+  art_record a;
+  if(depth>16) { r->drawing->depth++;return EXR_OK; }
+  while(art_next(r,&at,end,&a)) {
+    exr_status status=exr_control_cancel(r->control,e);if(status!=EXR_OK) return status;
+    if(a.type==0xf001 && a.ver==15) status=read_bstore(r,&a,e);
+    else if(a.ver==15 && (a.type==0x040b || a.type==0xf000))
+      status=read_resources(r,a.payload,a.end,depth+1,e);
+    if(status!=EXR_OK) return status;
+  }
+  return EXR_OK;
+}
+/* MS-PPT SlideSchemeColorSchemeAtom is 8 COLORREFs, recInstance=1.
+   Read actual slots: newer PowerPoint may map modern accents differently. */
+static void read_scheme(drawing_reader *r,const art_record *container) {
+  size_t at=container->payload,i;art_record a;
+  while(art_next(r,&at,container->end,&a)) if(a.type==0x07f0 && a.instance==1) {
+    if(a.end-a.payload!=32) { r->drawing->malformed++;continue; }
+    for(i=0;i<8;i++) r->colors[i]=u32(r->data+a.payload+4*i);
+    r->color_mask=255;
+  }
+}
+/* Complex lengths are validated even for properties we do not consume. */
 static unsigned merge_flags(unsigned previous,uint32_t value) {
   unsigned used=value>>16;
   return (previous&~used)|(value&used)|(value&0xffff0000u);
@@ -127,12 +186,29 @@ static int properties(drawing_reader *r,const art_record *a,art_shape *s) {
     unsigned op=u16(r->data+at),pid=op&0x3fff;uint32_t value=u32(r->data+at+2);
     if(op&0x8000) {
       if(value>a->end-complex) return 0;
+      if(pid==0x0197) {
+        const unsigned char *p=r->data+complex;unsigned count=value>=6 ? u16(p) : 0;
+        size_t j;uint32_t low=UINT32_MAX,high=0;
+        s->has_stops=0;s->bad_stops=1;
+        if(count>=2 && u16(p+2)>=count && u16(p+4)==8 && count<=(value-6)/8 && value==6+8*count) {
+          for(j=0;j<count;j++) {
+            uint32_t pos=u32(p+10+8*j),color=u32(p+6+8*j);
+            if(pos>65536) break;
+            if(pos<low) { low=pos;s->stops[0]=color; }
+            if(pos>=high) { high=pos;s->stops[1]=color; }
+          }
+          if(j==count && low<high) { s->has_stops=1;s->bad_stops=0; }
+        }
+      }
       complex+=value;continue;
     }
     switch(pid) {
       case 0x0004:s->rotation=value;break;
+      case 0x0104:s->pib=value;break;
+      case 0x0186:s->fill_blip=value;s->has_fill_blip=1;break;
       case 0x0180:s->fill_type=value;break;
-      case 0x0181:s->fill=value;break;
+      case 0x0181:s->fill=value;s->has_fill=1;break;
+      case 0x0183:s->back=value;s->has_back=1;break;
       case 0x01bf:s->fill_flags=merge_flags(s->fill_flags,value);break;
       case 0x01c0:s->line=value;break;
       case 0x01cb:
@@ -178,32 +254,70 @@ static exr_status read_shape(drawing_reader *r,const art_record *container,art_s
 malformed:
   r->drawing->malformed++;s->valid=0;return EXR_OK;
 }
-static int colorref(uint32_t value,uint32_t *out) {
+static int colorref(drawing_reader *r,uint32_t value,uint32_t *out) {
+  if((value&0xffffff00u)==0x08000000u) {
+    unsigned index=value&255;
+    if(index>=8 || !(r->color_mask&(1u<<index))) { r->drawing->scheme++;return 0; }
+    value=r->colors[index];
+  }
   if((value&0xff000000u)==0xff000000u || (value&0xf9000000u)) return 0;
   *out=((value&255)<<24)|((value&0xff00)<<8)|((value>>16&255)<<8)|255;
   return 1;
+}
+static exr_status image_fill(drawing_reader *r,uint32_t pib,exr_ppt_shape *shape,int *skip,exr_error *e) {
+  exr_ppt_drawing *d=r->drawing;exr_ppt_blip *b;exr_status status;uint32_t w,h;
+  shape->style.fill=0xccccccff;shape->style.flags|=EXR_DRAW_FILL;
+  if(!pib || pib>d->blip_count) { d->bad_pib++;return EXR_OK; }
+  b=&d->blips[pib-1];
+  if(b->state==3) { d->unknown_blip++;*skip=1;return EXR_OK; }
+  if(!b->state) {
+    b->state=2;
+    status=exr_image_dimensions(b->encoded,b->size,&w,&h,NULL);
+    if(status==EXR_OK && (size_t)w*h<=((size_t)128*1024*1024-d->image_bytes)/4) {
+      status=exr_image_decode_control(b->encoded,b->size,r->control,&b->bitmap,e);
+      if(status==EXR_CANCELLED) return status;
+      if(status==EXR_OK) { b->state=1;d->image_bytes+=b->bitmap.stride*b->bitmap.height; }
+      else exr_bitmap_free(&b->bitmap);
+    }
+    status=exr_control_cancel(r->control,e);if(status!=EXR_OK) return status;
+  }
+  if(b->state==1) { shape->blip=pib;shape->style.flags&=~EXR_DRAW_FILL; }
+  else d->image_decode++;
+  return EXR_OK;
 }
 static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transform *t,exr_error *e) {
   exr_ppt_drawing *d=r->drawing;exr_ppt_shape shape={0};size_t i;int line=s->type==20 || s->type==32;
   if(!s->valid || (s->flags&8)) return EXR_OK;
   if(!s->has_anchor) { d->missing_anchor++;return EXR_OK; }
-  if(!s->has_fsp || (s->type!=1 && s->type!=3 && !line) || s->rotation) { d->unsupported++;return EXR_OK; }
+  if(!s->has_fsp || (s->type!=1 && s->type!=3 && s->type!=75 && !line) || s->rotation) { d->unsupported++;return EXR_OK; }
   shape.type=s->type;shape.style=exr_draw_style_defaults();shape.style.flags=0;
-  if(!line && !((s->fill_flags&0x100000) && !(s->fill_flags&0x10))) {
+  if(!line && (s->type==75 || (s->fill_type==3 && !((s->fill_flags&0x100000) && !(s->fill_flags&0x10))))) {
+    uint32_t pib=s->type==75 || !s->has_fill_blip ? s->pib : s->fill_blip;
+    int skip=0;exr_status status=image_fill(r,pib,&shape,&skip,e);
+    if(status!=EXR_OK || skip) return status;
+  } else if(!line && !((s->fill_flags&0x100000) && !(s->fill_flags&0x10))) {
     /* An explicitly unfilled shape is omitted, including its outline (M2). */
-    if(!s->fill_type && colorref(s->fill,&shape.style.fill)) shape.style.flags|=EXR_DRAW_FILL;
+    if(!s->fill_type && colorref(r,s->fill,&shape.style.fill)) shape.style.flags|=EXR_DRAW_FILL;
+    else if(s->fill_type>=4 && s->fill_type<=8) {
+      int first=colorref(r,s->has_stops ? s->stops[0] : s->fill,&shape.style.fill);
+      if(first) shape.style.flags|=EXR_DRAW_FILL;
+      if(first && !s->bad_stops && (s->has_stops || (s->has_fill && s->has_back)) &&
+         colorref(r,s->has_stops ? s->stops[1] : s->back,&shape.gradient[1])) {
+        shape.gradient[0]=shape.style.fill;shape.has_gradient=1;d->gradient_horizontal++;
+      } else { d->gradient_missing++;if(!first) { shape.style.fill=0xccccccff;shape.style.flags|=EXR_DRAW_FILL; } }
+    }
     else d->unsupported++;
   } else if(!line) return EXR_OK;
   if(!((s->line_flags&0x80000) && !(s->line_flags&8))) {
-    if(colorref(s->line,&shape.style.stroke)) shape.style.flags|=EXR_DRAW_STROKE;
+    if(colorref(r,s->line,&shape.style.stroke)) shape.style.flags|=EXR_DRAW_STROKE;
     else d->unsupported++;
   }
-  if(!shape.style.flags) return EXR_OK;
+  if(!shape.style.flags && !shape.blip) return EXR_OK;
   for(i=0;i<4;i++) {
     shape.bounds[i]=s->anchor[i]*(i&1 ? t->sy : t->sx)+(i&1 ? t->ty : t->tx);
     if(!isfinite(shape.bounds[i]) || fabs(shape.bounds[i])>1e7) { d->malformed++;return EXR_OK; }
   }
-  if(line) {
+  if(line || shape.blip || shape.has_gradient) {
     if(s->flags&0x40) { double v=shape.bounds[0];shape.bounds[0]=shape.bounds[2];shape.bounds[2]=v; }
     if(s->flags&0x80) { double v=shape.bounds[1];shape.bounds[1]=shape.bounds[3];shape.bounds[3]=v; }
   }
@@ -262,23 +376,27 @@ static exr_status art_walk(drawing_reader *r,size_t at,size_t end,unsigned depth
   return EXR_OK;
 }
 void exr_ppt_drawing_free(exr_ppt_drawing *d) {
+  size_t i;for(i=0;i<d->blip_count;i++) exr_bitmap_free(&d->blips[i].bitmap);
+  free(d->blips);
   free(d->shapes);free(d->slides);memset(d,0,sizeof(*d));
 }
-exr_status exr_ppt_read_drawing(const void *data,size_t size,const exr_ppt_info *info,const exr_control *control,exr_ppt_drawing *out,exr_error *e) {
-  drawing_reader r={0};art_record a;size_t at=0,doc=0,doc_end=0,n=0,i;
+exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_info *info,const exr_control *control,exr_ppt_drawing *out,exr_error *e) {
+  size_t size=streams->document_size;
+  drawing_reader r={0};art_record a;size_t at=0,doc=0,doc_end=0,master=0,n=0,i;
   size_t *physical=NULL;uint32_t *refs=NULL,*persist=NULL;exr_status status=EXR_OK;
-  memset(out,0,sizeof(*out));r.data=data;r.control=control;r.drawing=out;out->pages=info->pages;
+  memset(out,0,sizeof(*out));r.data=streams->document;r.streams=streams;r.control=control;r.drawing=out;out->pages=info->pages;
   if(!out->pages) return EXR_OK;
-  out->slides=calloc(out->pages,sizeof(*out->slides));physical=calloc(out->pages,sizeof(*physical));refs=calloc(out->pages,sizeof(*refs));
+  out->slides=calloc(out->pages,sizeof(*out->slides));physical=calloc(out->pages*2,sizeof(*physical));refs=calloc(out->pages,sizeof(*refs));
   if(!out->slides || !physical || !refs) { status=exr_fail(e,EXR_MEMORY,"PPT drawing directory allocation failed");goto done; }
   /* Scan the already validated top-level record stream. Persist directories
      overwrite older mappings, and the final Document supplies slide order. */
   while(art_next(&r,&at,size,&a)) {
     status=exr_control_cancel(control,e);if(status!=EXR_OK) goto done;
     if(a.type==RT_DOCUMENT) {
-      doc=a.payload;doc_end=a.end;n=0;memset(physical,0,out->pages*sizeof(*physical));
+      doc=a.payload;doc_end=a.end;n=0;master=0;memset(physical,0,out->pages*2*sizeof(*physical));
     }
-    else if(a.type==RT_SLIDE && n<out->pages) physical[n++]=a.payload-8;
+    else if(a.type==RT_SLIDE && n<out->pages) { physical[n]=a.payload-8;physical[out->pages+n++]=master; }
+    else if(a.type==0x03f8) master=a.payload-8;
     else if(a.type==0x1772 || a.type==0x1771) {
       size_t entry=a.payload;
       if(!persist) persist=calloc(1u<<20,sizeof(*persist));
@@ -292,6 +410,7 @@ exr_status exr_ppt_read_drawing(const void *data,size_t size,const exr_ppt_info 
       }
     }
   }
+  status=read_resources(&r,doc,doc_end,0,e);if(status!=EXR_OK) goto done;
   at=doc;n=0;
   while(art_next(&r,&at,doc_end,&a)) if(a.type==RT_SLIDE_LIST && a.instance==0) {
     size_t entry=a.payload;art_record ref;
@@ -299,7 +418,8 @@ exr_status exr_ppt_read_drawing(const void *data,size_t size,const exr_ppt_info 
       refs[n++]=u32(r.data+ref.payload);
   }
   for(i=0;i<out->pages;i++) {
-    size_t offset=physical[i],cursor;art_record slide,child;
+    size_t offset=physical[i],cursor,master_offset=physical[out->pages+i];art_record slide,child;unsigned flags=0;
+    uint32_t master_id=0;
     out->slides[i].first=out->count;r.shapes=0;r.patriarch=0;
     if(persist && refs[i] && refs[i]<(1u<<20)) {
       uint32_t mapped=persist[refs[i]];
@@ -309,6 +429,26 @@ exr_status exr_ppt_read_drawing(const void *data,size_t size,const exr_ppt_info 
     cursor=offset;
     if(!art_next(&r,&cursor,size,&slide) || slide.type!=RT_SLIDE) continue;
     cursor=slide.payload;
+    while(art_next(&r,&cursor,slide.end,&child)) if(child.type==RT_SLIDE_ATOM && child.end-child.payload>=24) {
+      master_id=u32(r.data+child.payload+12);flags=u16(r.data+child.payload+20);
+    }
+    /* MasterPersistAtom uses the same layout as SlidePersistAtom; the list's
+       instance=1 selects masters, and masterId matches SlideAtom.masterIdRef. */
+    cursor=doc;
+    while(master_id && persist && art_next(&r,&cursor,doc_end,&child)) if(child.type==RT_SLIDE_LIST && child.instance==1) {
+      size_t entry=child.payload;art_record ref;
+      while(art_next(&r,&entry,child.end,&ref)) if(ref.type==RT_SLIDE_PERSIST && ref.end-ref.payload>=20 && u32(r.data+ref.payload+12)==master_id) {
+        uint32_t id=u32(r.data+ref.payload);
+        if(id<(1u<<20) && persist[id]) master_offset=persist[id];
+      }
+    }
+    r.color_mask=0;
+    if(master_offset && master_offset<size) {
+      art_record m;size_t entry=master_offset;
+      if(art_next(&r,&entry,size,&m) && m.type==0x03f8) read_scheme(&r,&m);
+    }
+    if(!(flags&2)) read_scheme(&r,&slide);
+    cursor=slide.payload;
     while(art_next(&r,&cursor,slide.end,&child)) if(child.type==0x040c) {
       transform t={.125,.125,0,0};
       status=art_walk(&r,child.payload,child.end,0,0,t,e);if(status!=EXR_OK) goto done;
@@ -316,6 +456,7 @@ exr_status exr_ppt_read_drawing(const void *data,size_t size,const exr_ppt_info 
     out->slides[i].count=out->count-out->slides[i].first;
   }
 done:
+  for(i=0;i<out->blip_count;i++) out->blips[i].encoded=NULL;
   free(physical);free(refs);free(persist);
   if(status!=EXR_OK) exr_ppt_drawing_free(out);
   return status;

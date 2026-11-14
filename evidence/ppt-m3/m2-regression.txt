@@ -1,0 +1,29 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+      Start 329: native-ppt-shape-red
+      Start 330: native-ppt-shape-blue
+ 1/12 Test #329: native-ppt-shape-red .............   Passed    1.37 sec
+      Start 331: native-ppt-shape-overlap
+ 2/12 Test #330: native-ppt-shape-blue ............   Passed    1.49 sec
+      Start 332: native-ppt-shape-group
+ 3/12 Test #331: native-ppt-shape-overlap .........   Passed    3.32 sec
+      Start 333: native-ppt-shape-standard
+ 4/12 Test #333: native-ppt-shape-standard ........   Passed    1.97 sec
+      Start 334: native-ppt-shape-wide
+ 5/12 Test #332: native-ppt-shape-group ...........   Passed    6.24 sec
+      Start 335: native-ppt-shape-colors
+ 6/12 Test #335: native-ppt-shape-colors ..........   Passed    0.90 sec
+      Start 336: native-ppt-shape-anchors
+ 7/12 Test #334: native-ppt-shape-wide ............   Passed    2.25 sec
+      Start 337: native-ppt-shape-truncated
+ 8/12 Test #336: native-ppt-shape-anchors .........   Passed    1.95 sec
+      Start 338: native-ppt-shape-limits
+ 9/12 Test #337: native-ppt-shape-truncated .......   Passed    2.41 sec
+      Start 339: native-ppt-shape-transforms
+10/12 Test #338: native-ppt-shape-limits ..........   Passed    2.19 sec
+      Start 340: native-ppt-shape-styles
+11/12 Test #339: native-ppt-shape-transforms ......   Passed    2.73 sec
+12/12 Test #340: native-ppt-shape-styles ..........   Passed    4.01 sec
+
+100% tests passed out of 12
+
+Total Test time (real) =  17.00 sec
