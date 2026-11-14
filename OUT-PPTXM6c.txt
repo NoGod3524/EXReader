@@ -1,0 +1,35 @@
+已提交并推送到 [PR #204](https://github.com/NoGod3524/EXReader/pull/204)：`30d730f5`。三个脚本均改为标准库，CTest 固定使用 `python -S`。远端 CI 已触发，正在排队。
+
+逐项验收：
+
+1. **依赖检查**：三个文件的 import grep 输出为空；`python -S` 下导入 lxml、PIL 均报 `ModuleNotFoundError`。[真实输出](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/dependencies.txt)
+2. **重生成检查**：`manifest.json: 15 files, 31 valid slides`，`generate --check exit=0`。[完整输出](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/generate-check.txt)
+3. **三组 CTest**：matrix、reproducible、oracle 全部 Passed，`100% tests passed out of 3`。[完整输出](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/ctest-real.txt)
+4. **31 页矩阵**：
+
+   ```text
+   files=15 passed=15 failed=0; coverage=31/31 color=12/12 text=31/31
+   ```
+
+   [逐页输出](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/matrix-summary.txt)
+
+5. **回归与推前检查**：[全量 551/551](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/ctest-all.txt)（排除指定两项）；[M2–M5 67/67](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/ctest-m2-m5.txt)；[prepush exit=0](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/prepush.txt)。CI workflow、`check_reading_release.py` 均未改。
+6. **语料仍为 15 份：12 有效 + 3 坏件**。每份哈希和大小均已核验：[完整清单](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/evidence/pptx-m6c/corpus.tsv)。
+
+| 文件（`.pptx`） | bytes |
+|---|---:|
+| title | 10051 |
+| bullets | 12093 |
+| image-text | 127374 |
+| merged-table | 17282 |
+| gradient-alpha | 12492 |
+| theme-accents | 15978 |
+| chinese | 18160 |
+| standard-4x3 | 11352 |
+| wide-16x9 | 11355 |
+| nested-groups | 12959 |
+| twenty | 243415 |
+| upstream-font-color | 25061 |
+| bad-truncated | 5025 |
+| bad-missing-part | 9475 |
+| bad-invalid-xml | 9117 |
