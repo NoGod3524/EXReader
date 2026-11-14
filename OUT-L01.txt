@@ -1,0 +1,38 @@
+L01 已在提交 `48967adf` 中，本轮复验通过，无新增源码改动。
+
+① 切片文件：
+
+- `shell_docedit_image.inc`：66 行。
+- `check_shell_docedit_image.c`：80 行。
+- `image_model_tests.cmake`：17 行。
+
+既有文件未修改。
+
+② 重新编译后执行：
+
+```powershell
+.\build\check_shell_docedit_image.exe .
+```
+
+真实输出：
+
+```text
+png: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
+bmp: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
+gif: insert 2->3; delete 3->2; undo delete +1; undo insert -1; redo both PASS
+invalid path/image/selection and inactive document: unchanged PASS (errors=5)
+```
+
+规定门禁命令：
+
+```powershell
+pwsh -File C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\prepush-check.ps1 -Worktree .
+```
+
+输出：`全部通过 —— 可以推`。
+
+③ 已知边界：
+
+- 主编辑器尚未接线：需添加并维护 `de.selected_block`、包含新切片；相关文件超出本路范围。
+- 本次验收链接缓存 SDK，当前树 SDK 构建未完成。
+- 图片文件上限 64 MiB，尺寸按 96 DPI 换算。
