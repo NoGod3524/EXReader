@@ -1,0 +1,126 @@
+[
+  {
+    "file": "rect.pptx",
+    "size_pt": [
+      960.0,
+      540.0
+    ],
+    "shapes": [
+      {
+        "geometry": "rect",
+        "rgb": "FF0000",
+        "bounds_pt": [
+          72.0,
+          72.0,
+          144.0,
+          72.0
+        ]
+      }
+    ]
+  },
+  {
+    "file": "circle.pptx",
+    "size_pt": [
+      960.0,
+      540.0
+    ],
+    "shapes": [
+      {
+        "geometry": "ellipse",
+        "rgb": "00CC44",
+        "bounds_pt": [
+          72.0,
+          72.0,
+          144.0,
+          144.0
+        ]
+      }
+    ]
+  },
+  {
+    "file": "roundrect.pptx",
+    "size_pt": [
+      960.0,
+      540.0
+    ],
+    "shapes": [
+      {
+        "geometry": "roundRect",
+        "rgb": "3366CC",
+        "bounds_pt": [
+          72.0,
+          72.0,
+          180.0,
+          90.0
+        ]
+      }
+    ]
+  },
+  {
+    "file": "triangle.pptx",
+    "size_pt": [
+      960.0,
+      540.0
+    ],
+    "shapes": [
+      {
+        "geometry": "triangle",
+        "rgb": "FF9900",
+        "bounds_pt": [
+          72.0,
+          72.0,
+          144.0,
+          108.0
+        ]
+      }
+    ]
+  },
+  {
+    "file": "group.pptx",
+    "size_pt": [
+      960.0,
+      540.0
+    ],
+    "shapes": [
+      {
+        "geometry": "rect",
+        "rgb": "FF0000",
+        "bounds_pt": [
+          180.0,
+          108.0,
+          144.0,
+          72.0
+        ]
+      },
+      {
+        "geometry": "rect",
+        "rgb": "0066FF",
+        "bounds_pt": [
+          396.0,
+          216.0,
+          216.0,
+          90.0
+        ]
+      }
+    ]
+  },
+  {
+    "file": "standard.pptx",
+    "size_pt": [
+      720.0,
+      540.0
+    ],
+    "shapes": [
+      {
+        "geometry": "rect",
+        "rgb": "CC33AA",
+        "bounds_pt": [
+          72.0,
+          108.0,
+          180.0,
+          90.0
+        ]
+      }
+    ]
+  }
+]
