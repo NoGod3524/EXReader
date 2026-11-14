@@ -209,7 +209,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev xvfb xdotool x11-utils openbox fonts-dejavu-core fonts-crosextra-carlito
+          sudo apt-get install -y libgtk-3-dev xvfb xdotool xclip x11-utils imagemagick openbox fonts-dejavu-core fonts-crosextra-carlito
       - run: python -m pip install Pillow
       - name: Build installed SDK from the same source
         run: |
