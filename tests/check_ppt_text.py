@@ -88,7 +88,7 @@ def cf(count, *, size=18, font=0, color=0xFE000000, bold=False):
 
 def text_ppt(text='Hello', *, style=None, bytes_text=False, fonts=('Arial',), color=0xFE000000,
              font=0, alignment=0, raw_text=None, size=18, scheme=None,
-             environment_styles=b'', master_runs=None, outline=None):
+             environment_styles=b'', master_runs=None, outline=None, extra_shapes=b''):
     raw = raw_text if raw_text is not None else text.encode('latin-1' if bytes_text else 'utf-16le')
     count = len(raw) if bytes_text else len(raw) // 2
     body = record(0xF9F, struct.pack('<I', 4)) + record(0xFA8 if bytes_text else 0xFA0, raw)
@@ -107,7 +107,7 @@ def text_ppt(text='Hello', *, style=None, bytes_text=False, fonts=('Arial',), co
         persist = record(0x3F3, struct.pack('<IIIII', 1, 0, 0, 256, 0))
         core = record(0x3E9, struct.pack('<II', 5760, 4320) + bytes(32)) + record(0xFF0, persist + body, 15)
     header = record(0x3E8, core + environment, 15)
-    slide = slide_record(drawing)
+    slide = slide_record(drawing + extra_shapes)
     if scheme is not None:
         slide = record(0x3EE, slide[8:] + record(0x7F0, struct.pack('<8I', *scheme), instance=1), 15)
     return compound(header + slide)
@@ -242,6 +242,14 @@ def main():
             valid, message = render(data=text_ppt('A\U0001f600B'))
             assert 'surrogate' not in message.lower() and mask(valid)
             print('isolated low surrogate -> U+FFFD; valid surrogate pair accepted')
+            # Noncharacters force a long missing-glyph list on every host.
+            missing = ''.join(chr(cp) for cp in range(0xFDD0, 0xFDF0)) + 'A'
+            _, message = render(data=text_ppt(missing), warning='glyph', memory=True)
+            assert len(message.encode('utf-8')) < 256 and message.endswith('; '), message
+            fields = message.removeprefix('PPT warning: ').split('; ')[:-1]
+            assert all(re.fullmatch(r'font fallback=.+|glyph .+ U\+[0-9A-F]{4,6} (missing|fallback)', field)
+                       for field in fields), message
+            print('long missing-glyph list: only complete UTF-8 warning fields retained')
         elif name == 'bytes':
             ascii, message = render(data=text_ppt('Hello', bytes_text=True))
             unicode, _ = render(data=text_ppt('Hello'))
@@ -281,6 +289,15 @@ def main():
             image, _ = render(data=text_ppt(color=0x08000000), warning='color')
             assert mask(image, rgb=(0, 0, 0))
             print('fontIndex=65535 -> default font; colorIndex=8 -> black; both status=0 + warning')
+            fonts = tuple(f'EXR missing 字体 {i:02}' for i in range(16))
+            style = pf(17) + b''.join(cf(2 if i == 15 else 1, font=i) for i in range(16))
+            _, message = render(data=text_ppt('A' * 16, fonts=fonts, style=style,
+                                             extra_shapes=shape(anchor=False)), warning='missing-anchor')
+            assert message.startswith('PPT warning: missing-anchor=1 '), message
+            assert len(message.encode('utf-8')) < 256 and message.endswith('; '), message
+            fields = message.removeprefix('PPT warning: missing-anchor=1 ').split('; ')[:-1]
+            assert fields and all(field in {f'font fallback={font}' for font in fonts} for field in fields), message
+            print('long UTF-8 font list: complete fields retained after structural diagnostics')
         elif name == 'wrap':
             image, _ = render('wrap')
             rows = bands(image)

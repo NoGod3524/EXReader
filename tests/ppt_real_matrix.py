@@ -40,11 +40,16 @@ def font_warnings_only(message):
             continue
         if re.fullmatch(r'glyph .+ U\+[0-9A-F]{4,6} (?:missing|fallback)', field):
             continue
-        # The ABI's 256-byte buffer can truncate a long host-glyph list. The
-        # textless document is also checked, exposing subsequent non-font fields.
-        if len(message.encode('utf-8')) >= 250:
-            match = re.fullmatch(r'glyph .+ U\+[0-9A-F]{4,6} ([a-z]+)', field)
-            if match and any(word.startswith(match[1]) for word in ('missing', 'fallback')):
+        # The ABI's 256-byte buffer can truncate a long host-glyph list, cutting
+        # a field mid-codepoint (e.g. `U+4E0`). The textless document is also
+        # checked, exposing subsequent non-font fields, so a truncated `glyph …U+`
+        # tail is host-font noise rather than a real warning.
+        # A truncated glyph list can end mid-codepoint (`U+4E0`) or right after a
+        # complete codepoint with no state word. Either way it is host-font noise.
+        if field.startswith('glyph ') and ' U+' in field:
+            if re.fullmatch(r'glyph .+ U\+[0-9A-F]{1,6}(?: [a-z]+)?', field):
+                continue
+            if len(message.encode('utf-8')) >= 250:
                 continue
         return False
     return True
@@ -415,3 +420,5 @@ def main():
 if __name__ == '__main__':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     raise SystemExit(main())
+
+
