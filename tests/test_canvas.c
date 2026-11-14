@@ -20,6 +20,21 @@ static exr_canvas *create(size_t budget) {
   exr_canvas_config config={0}; exr_canvas *c=NULL; config.width=config.height=8; config.background=0xffffffff; config.mask_budget=budget;
   OK(exr_canvas_create(&config,&c,&error)); CHECK(c && exr_canvas_bitmap(c)->channels==4); return c;
 }
+static void backgrounds(void) {
+  const uint32_t colors[]={0xffffffff,0,0x7f7f7f7f,0x12345678},channels[]={0,1,4};
+  size_t color,channel,i;
+  for(color=0;color<sizeof(colors)/sizeof(*colors);color++) for(channel=0;channel<sizeof(channels)/sizeof(*channels);channel++) {
+    exr_canvas_config config={0}; exr_canvas *c=NULL; const exr_bitmap *b; unsigned char rgba[4]; unsigned k;
+    config.width=3; config.height=2; config.background=colors[color]; config.channels=channels[channel];
+    for(k=0;k<4;k++) rgba[k]=(unsigned char)(config.background>>(24-8*k));
+    OK(exr_canvas_create(&config,&c,&error)); b=exr_canvas_bitmap(c);
+    CHECK(b && b->width==3 && b->height==2 && b->channels==(config.channels ? config.channels : 4));
+    CHECK(b->stride==b->width*b->channels);
+    for(i=0;i<(size_t)b->stride*b->height;i++)
+      CHECK(b->pixels[i]==(b->channels==1 ? (rgba[0]*77+rgba[1]*150+rgba[2]*29+128)>>8 : rgba[i%4]));
+    exr_canvas_free(c);
+  }
+}
 static void clip_and_ownership(void) {
   exr_canvas *c=create(64); exr_path_segment rect[5]; exr_draw_style style=exr_draw_style_defaults(); exr_bitmap image; size_t before,clipped,i;
   before=exr_canvas_memory_size(c); OK(exr_canvas_save(c,&error)); rectangle(rect,1,1,3,3); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
@@ -99,4 +114,4 @@ static void group_churn(void) {
   }
   exr_canvas_free(c);
 }
-int main(void) { clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }
+int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }
