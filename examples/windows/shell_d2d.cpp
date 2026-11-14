@@ -598,6 +598,46 @@ extern "C" HRESULT shell_d2d_edit_paint(shell_d2d *s,HDC dc,const RECT *area,int
 }
 
 
+extern "C" HRESULT shell_d2d_edit_image(shell_d2d *s,HDC dc,const RECT *area,int dark,
+  const unsigned char *rgba,unsigned width,unsigned height,unsigned stride,
+  float x,float y,float display_width,float display_height,float top,int selected) {
+  if(!s || !dc || !area || !rgba || !width || !height || width>UINT32_MAX/4 ||
+      stride<width*4 || height>SIZE_MAX/stride || width>SIZE_MAX/4/height ||
+      !std::isfinite(x) || !std::isfinite(y) || !std::isfinite(display_width) ||
+      !std::isfinite(display_height) || !std::isfinite(top) || display_width<=0 || display_height<=0)
+    return E_INVALIDARG;
+  HRESULT hr=bind_dc(s,dc,area);if(FAILED(hr))return hr;
+  std::vector<unsigned char> bgra;
+  try {bgra.resize((size_t)width*height*4);} catch(...) {return E_OUTOFMEMORY;}
+  for(unsigned row=0;row<height;row++)for(unsigned col=0;col<width;col++) {
+    const auto *p=rgba+(size_t)row*stride+col*4;
+    auto *q=bgra.data()+((size_t)row*width+col)*4;
+    q[0]=(unsigned char)((p[2]*p[3]+127)/255);
+    q[1]=(unsigned char)((p[1]*p[3]+127)/255);
+    q[2]=(unsigned char)((p[0]*p[3]+127)/255);q[3]=p[3];
+  }
+  ID2D1Bitmap *bitmap=nullptr;
+  auto properties=D2D1::BitmapProperties(D2D1::PixelFormat(
+    DXGI_FORMAT_B8G8R8A8_UNORM,D2D1_ALPHA_MODE_PREMULTIPLIED));
+  hr=s->dc_target->CreateBitmap(D2D1::SizeU(width,height),bgra.data(),width*4,properties,&bitmap);
+  if(FAILED(hr))return hr;
+  s->dc_target->BeginDraw();
+  s->dc_target->PushAxisAlignedClip(D2D1::RectF(0,top,(float)(area->right-area->left),
+    (float)(area->bottom-area->top)),D2D1_ANTIALIAS_MODE_ALIASED);
+  s->dc_target->DrawBitmap(bitmap,D2D1::RectF(x,y,x+display_width,y+display_height));
+  if(selected) {
+    s->dc_brush->SetColor(D2D1::ColorF(theme_of(dark).accent));
+    auto old=s->dc_target->GetAntialiasMode();
+    s->dc_target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+    s->dc_target->DrawRectangle(D2D1::RectF(std::floor(x)+.5f,std::floor(y)+.5f,
+      std::ceil(x+display_width)-.5f,std::ceil(y+display_height)-.5f),s->dc_brush,1.f);
+    s->dc_target->SetAntialiasMode(old);
+  }
+  s->dc_target->PopAxisAlignedClip();hr=s->dc_target->EndDraw();bitmap->Release();
+  if(hr==D2DERR_RECREATE_TARGET) {drop_dc_target(s);return S_FALSE;}
+  return hr;
+}
+
 /* One floating surface for every popup (settings, notes, footnotes, dictionary):
    the caller's pixels beneath, shadow-lg, a radius-14 surface with a line
    border, then the caller's static text. Label boxes are DIPs from the visible

@@ -173,7 +173,8 @@ EXR_API exr_status exr_edit_set_run_props(exr_edit_doc *doc,exr_edit_id block_id
 EXR_API exr_status exr_edit_set_run_text(exr_edit_doc *doc,exr_edit_id block_id,
   size_t run_index,const char *text,size_t text_size);
 /* Insert a fresh TEXT run before run_index (run_count appends, including 0 on
-   an empty paragraph). Requires the document's active transaction. Preserves
+   an empty paragraph). Text must be non-NULL and nonempty. Requires the
+   document's active transaction. Preserves
    paragraph templates, existing runs and sibling cell paragraphs. */
 EXR_API exr_status exr_edit_insert_run(exr_edit_doc *doc,exr_edit_tx *tx,
   exr_edit_id paragraph,size_t run_index,const char *text,size_t text_size,

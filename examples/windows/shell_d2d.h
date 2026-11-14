@@ -123,6 +123,11 @@ typedef struct shell_d2d_edit_row {
 } shell_d2d_edit_row;
 HRESULT shell_d2d_edit_paint(shell_d2d *, HDC, const RECT *, int dark,
                             const shell_d2d_edit_row *, size_t count, float inset, float scroll, float top);
+/* Overlay straight RGBA pixels without clearing the text underneath. Units
+   are physical pixels; clip to the editor body below top. */
+HRESULT shell_d2d_edit_image(shell_d2d *, HDC, const RECT *, int dark,
+  const unsigned char *rgba, unsigned width, unsigned height, unsigned stride,
+  float x, float y, float display_width, float display_height, float top, int selected);
 
 #ifdef __cplusplus
 }
