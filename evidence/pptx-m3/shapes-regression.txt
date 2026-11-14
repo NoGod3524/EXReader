@@ -1,0 +1,265 @@
+13/486 Testing: native-pptx-shape-rect
+13/486 Test: native-pptx-shape-rect
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "rect"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-rect" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+RGB=FF0000 checked_pixels=8704 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 144.0, 72.0] render_bbox=(72, 72, 216, 144) position_error=0.0px
+<end of output>
+Test time =   0.36 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-rect" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-rect" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/486 Testing: native-pptx-shape-circle
+14/486 Test: native-pptx-shape-circle
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "circle"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-circle" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+RGB=00CC44 checked_pixels=11772 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 144.0, 144.0] render_bbox=(72, 72, 216, 216) position_error=0.0px
+<end of output>
+Test time =   0.40 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-circle" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-circle" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/486 Testing: native-pptx-shape-roundrect
+15/486 Test: native-pptx-shape-roundrect
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "roundrect"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-roundrect" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+RGB=3366CC checked_pixels=10520 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 180.0, 90.0] render_bbox=(72, 72, 252, 162) position_error=0.0px
+<end of output>
+Test time =   0.41 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-roundrect" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-roundrect" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/486 Testing: native-pptx-shape-triangle
+16/486 Test: native-pptx-shape-triangle
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "triangle"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-triangle" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+RGB=FF9900 checked_pixels=5766 max_channel_delta=0 python-pptx_xywh=[72.0, 72.0, 144.0, 108.0] render_bbox=(72, 72, 216, 180) position_error=0.0px
+<end of output>
+Test time =   0.33 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-triangle" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-triangle" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/486 Testing: native-pptx-shape-group
+17/486 Test: native-pptx-shape-group
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "group"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-group" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+RGB=FF0000 checked_pixels=8704 max_channel_delta=0 python-pptx_xywh=[180.0, 108.0, 144.0, 72.0] render_bbox=(180, 108, 324, 180) position_error=0.0px
+RGB=0066FF checked_pixels=17056 max_channel_delta=0 python-pptx_xywh=[396.0, 216.0, 216.0, 90.0] render_bbox=(396, 216, 612, 306) position_error=0.0px
+<end of output>
+Test time =   0.34 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-group" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-group" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/486 Testing: native-pptx-shape-standard
+18/486 Test: native-pptx-shape-standard
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "standard"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-standard" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+RGB=CC33AA checked_pixels=14104 max_channel_delta=0 python-pptx_xywh=[72.0, 108.0, 180.0, 90.0] render_bbox=(72, 108, 252, 198) position_error=0.0px
+<end of output>
+Test time =   0.31 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-standard" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-standard" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/486 Testing: native-pptx-shape-zero-extent
+20/486 Test: native-pptx-shape-zero-extent
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "zero-extent"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-zero-extent" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+open status=0 message='PPTX warning: chExt=0 (1:1)=1; '
+chExt cx=0: bbox=(180, 108, 252, 180) expected_xywh=(180, 108, 72, 72) error=0px
+chExt cx=0: bbox=(288, 216, 396, 306) expected_xywh=(288, 216, 108, 90) error=0px
+open status=0 message='PPTX warning: chExt=0 (1:1)=1; '
+chExt cy=0: bbox=(180, 108, 324, 156) expected_xywh=(180, 108, 144, 48) error=0px
+chExt cy=0: bbox=(396, 180, 612, 240) expected_xywh=(396, 180, 216, 60) error=0px
+<end of output>
+Test time =   0.35 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-zero-extent" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-zero-extent" time elapsed: 00:00:00
+----------------------------------------------------------
+
+19/486 Testing: native-pptx-shape-rotation
+19/486 Test: native-pptx-shape-rotation
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "rotation"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-rotation" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+rotation=90 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+rotation=180 bbox=(72, 72, 216, 144) expected_xywh=(72, 72, 144, 72) error=0px
+rotation=270 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+rotation=450 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+rotation=-90 bbox=(108, 36, 180, 180) expected_xywh=(108, 36, 72, 144) error=0px
+open status=0 message='PPTX warning: ignored rotation=1; '
+<end of output>
+Test time =   0.49 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-rotation" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-rotation" time elapsed: 00:00:00
+----------------------------------------------------------
+
+21/486 Testing: native-pptx-shape-group-transforms
+21/486 Test: native-pptx-shape-group-transforms
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "group-transforms"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-group-transforms" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+group flipH: bbox=(468, 108, 612, 180) expected_xywh=(468, 108, 144, 72) error=0px
+group flipH: bbox=(180, 216, 396, 306) expected_xywh=(180, 216, 216, 90) error=0px
+group flipV: bbox=(180, 234, 324, 306) expected_xywh=(180, 234, 144, 72) error=0px
+group flipV: bbox=(396, 108, 612, 198) expected_xywh=(396, 108, 216, 90) error=0px
+group rotation90: bbox=(423, 99, 495, 243) expected_xywh=(423, 99, 72, 144) error=0px
+group rotation90: bbox=(297, 315, 387, 531) expected_xywh=(297, 315, 90, 216) error=0px
+nested groups: bbox=(126, 78, 198, 114) expected_xywh=(126, 78, 72, 36) error=0px
+nested groups: bbox=(234, 132, 342, 177) expected_xywh=(234, 132, 108, 45) error=0px
+draw sink: caller matrix composed; sink failure propagated; cancellation between shapes honored
+<end of output>
+Test time =   0.49 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-group-transforms" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-group-transforms" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/486 Testing: native-pptx-shape-flips
+22/486 Test: native-pptx-shape-flips
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "flips"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-flips" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+triangle flipH=False flipV=False: orientation pixels pass
+triangle flipH=False flipV=True: orientation pixels pass
+triangle flipH=True flipV=False: orientation pixels pass
+triangle flipH=True flipV=True: orientation pixels pass
+triangle flipH then rotate90: bbox=(90, 54, 198, 198) error=0px; orientation pixels pass
+line flipH=False: diagonal pixels pass
+line flipH=True: diagonal pixels pass
+zero-height connector: bbox=(72, 69, 216, 75) error=0px
+<end of output>
+Test time =   0.49 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-flips" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-flips" time elapsed: 00:00:00
+----------------------------------------------------------
+
+24/486 Testing: native-pptx-shape-fallback
+24/486 Test: native-pptx-shape-fallback
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "fallback"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-fallback" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+open status=0 message='PPTX warning: rect fallback=pentagon,hexagon'
+open status=0 message='PPTX warning: rect fallback=pentagon,hexagon'
+fallback prstGeom values: pentagon, hexagon -> rectangles
+<end of output>
+Test time =   0.31 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-fallback" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-fallback" time elapsed: 00:00:00
+----------------------------------------------------------
+
+23/486 Testing: native-pptx-shape-colors-lines
+23/486 Test: native-pptx-shape-colors-lines
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "colors-lines"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-colors-lines" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+schemeClr accent1: RGB=(79, 129, 189)
+schemeClr dk1: RGB=(0, 0, 0)
+schemeClr lt1: RGB=(255, 255, 255)
+schemeClr accent6: RGB=(247, 150, 70)
+open status=0 message='PPTX warning: invalid color=1; '
+open status=0 message='PPTX warning: invalid color=1; '
+open status=0 message='PPTX warning: invalid color=1; '
+open status=0 message='PPTX warning: invalid color=1; '
+6pt blue border: bbox=(69, 69, 219, 147), interior RGB=(255, 0, 0)
+<end of output>
+Test time =   0.48 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-colors-lines" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-colors-lines" time elapsed: 00:00:00
+----------------------------------------------------------
+
+25/486 Testing: native-pptx-shape-missing
+25/486 Test: native-pptx-shape-missing
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "missing"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-missing" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+open status=0 message='PPTX warning: missing off/ext=1; '
+open status=0 message='PPTX warning: missing off/ext=1; '
+open status=0 message='PPTX warning: skipped pic/graphicFrame=2; '
+missing off/ext: skipped; absent spTree: blank
+<end of output>
+Test time =   0.39 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-missing" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-missing" time elapsed: 00:00:00
+----------------------------------------------------------
+
+26/486 Testing: native-pptx-shape-limits
+26/486 Test: native-pptx-shape-limits
+Command: "C:/Python314/python.exe" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/tests/test_pptx_shapes.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3/libexreader.dll" "limits"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/build/pptx-m3
+"native-pptx-shape-limits" start time: Nov 14 07:29 Eastern Standard Time
+Output:
+----------------------------------------------------------
+open status=6 message='PPTX shapes exceed 10000 on slide 1'
+open status=0 message='PPTX warning: depth>16=1; '
+10001 shapes: EXR_LIMIT; group depth 16: rendered; depth 17: warning + blank
+<end of output>
+Test time =   0.89 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-shape-limits" end time: Nov 14 07:29 Eastern Standard Time
+"native-pptx-shape-limits" time elapsed: 00:00:00
+----------------------------------------------------------
+

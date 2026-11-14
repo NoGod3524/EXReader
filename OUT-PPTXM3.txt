@@ -1,0 +1,44 @@
+已完成。[完整验收记录与日志索引](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m3/OUT-PPTXM3.txt)。
+
+`src/pptx.c`：非空行 **735→1088（+353）**；物理行 **769→1133（+364）**。新增 11 个函数：
+
+`theme_slot`、`hex_rgb`、`read_theme`、`clamp_unit`、`rgb_hsl`、`hsl_rgb`、`image_read`、`image_fill`、`gradient_fill`、`gradient_ramp`、`texture_draw`。
+
+八项验收真实结果：
+
+1. **PNG 填充**：RGB=`(0,255,0)`，最大通道误差 **0**。
+2. **拉伸 100×50→400×50**：五点均为 `(0,255,0)`；双色条纹、翻转检查通过。
+3. **红→蓝渐变**：九点如下，单调过渡。
+
+   ```text
+   (255,0,0), (223,0,32), (191,0,64),
+   (159,0,96), (127,0,128), (95,0,160),
+   (64,0,192), (32,0,224), (0,0,255)
+   ```
+
+4. **主题色**：accent1=`#12A65B`，像素=`(18,166,91)`，完全相等。
+5. **50% 透明红叠白**：`(255,127,127)`，目标误差 **1**。
+6. **缺失图片**：status=`0`，RGB=`(204,204,204)`；警告为 `PPTX warning: missing/invalid image (gray)=1;`，进程正常。
+7. **全量 CTest**：**486/486 通过，71.95 秒**，仅排除指定两项；M2 **14/14**，六份夹具像素和位置误差仍为 **0**。最终运行设置 `PYTHONUTF8=1`。
+8. **新增 CTest**：`native-pptx-fill-*` **19/19 通过**。
+
+清单实际包含 **16 个名称**。夹具 `theme1.xml` 映射如下，同色别名合并展示：
+
+| schemeClr | RGB |
+|---|---|
+| accent1 | `#12A65B` |
+| accent2 | `#C23A55` |
+| accent3 | `#3579BD` |
+| accent4 | `#A05BCA` |
+| accent5 | `#29ADC5` |
+| accent6 | `#E5A336` |
+| dk1、tx1 | `#102030` |
+| dk2、tx2 | `#203040` |
+| lt1、bg1 | `#F1F2F3` |
+| lt2、bg2 | `#D1D2D3` |
+| hlink | `#2255DD` |
+| folHlink | `#8844AA` |
+
+已知边界：线性渐变最多 256 色标，使用 4096 像素 RGBA 色带；简单平铺固定按 96 dpi。图片裁剪、路径渐变、`lin@scaled`、`rotWithShape` 和母版主题继承尚未实现。
+
+Release 构建、分层检查及 **prepush 全部通过**；受保护文件未修改。
