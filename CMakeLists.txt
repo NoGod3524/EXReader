@@ -247,12 +247,15 @@ if(EXR_FULL_TESTS)
   add_test(NAME native-pptx-table-reproducible COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-tables/generate.py --check)
   add_test(NAME native-pptx-real-matrix COMMAND ${Python3_EXECUTABLE}
+      -S
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/pptx_real_matrix.py
     --library $<TARGET_FILE:exreader>
     --output ${CMAKE_CURRENT_BINARY_DIR}/pptx-real-results)
   add_test(NAME native-pptx-real-reproducible COMMAND ${Python3_EXECUTABLE}
+      -S
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/pptx-real/generate.py --check)
   add_test(NAME native-pptx-real-oracle COMMAND ${Python3_EXECUTABLE}
+      -S
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_real_oracle.py)
   set_tests_properties(native-pptx-real-matrix PROPERTIES TIMEOUT 300 RUN_SERIAL TRUE)
   set_tests_properties(native-pptx-real-reproducible native-pptx-real-oracle PROPERTIES TIMEOUT 120)

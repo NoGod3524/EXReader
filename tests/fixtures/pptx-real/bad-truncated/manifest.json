@@ -7,5 +7,7 @@
   "source": "generated",
   "license": "MIT",
   "expected_status": 5,
-  "expected_error": "EXR_FORMAT"
+  "expected_error": "EXR_FORMAT",
+  "sha256": "b053e5f4286f01f6ee74d77b1a3f58644140c9d2808d828c0baa240c10ce3330",
+  "bytes": 5025
 }

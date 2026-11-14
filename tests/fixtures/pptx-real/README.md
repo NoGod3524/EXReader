@@ -4,8 +4,8 @@
 `manifest.json`；[总 manifest](manifest.json) 汇总所有 15 件，使用相对于本目录的
 文件路径，保留下载件的来源、许可、固定上游提交及 SHA-256。
 
-11 份有效生成件由 `python-pptx` 创建完整的 Office OPC 包，包含主题、母版、版式、
-关系及内容类型。下载件为未修改的上游 PowerPoint 文件，原始应用元数据为
+11 份有效生成件仅用 Python 标准库直接创建完整的 Office OPC 包，包含主题、母版、
+空白版式、关系及内容类型。下载件为未修改的上游 PowerPoint 文件，原始应用元数据为
 Microsoft Macintosh PowerPoint 14.0000。它来自公开的 `python-pptx` 集成测试库；
 来源性质及原始字节均保留。
 
@@ -34,12 +34,11 @@ Microsoft Macintosh PowerPoint 14.0000。它来自公开的 `python-pptx` 集成
 
 ## 生成与确定性检查
 
-从仓库根目录运行，生成环境为 Python 3.14、`python-pptx 1.0.2` 和 `Pillow 12.3.0`：
+从仓库根目录运行，只需 Python 3 标准库：
 
 ```powershell
-python -m pip install python-pptx==1.0.2 Pillow==12.3.0
-python tests/fixtures/pptx-real/generate.py
-python tests/fixtures/pptx-real/generate.py --check
+python -S tests/fixtures/pptx-real/generate.py
+python -S tests/fixtures/pptx-real/generate.py --check
 ```
 
 `--check` 重新构造 11 份有效件及 3 份坏文件，并逐字节核对已入库文件与子 manifest；
@@ -48,7 +47,7 @@ python tests/fixtures/pptx-real/generate.py --check
 
 跨平台字节一致性采用：固定文档创建/修改时间和作者字段；ZIP 成员按路径排序；
 固定时间戳、权限及创建系统；所有生成件使用 `ZIP_STORED`；原创 PNG 使用
-`compress_level=0`。固定依赖版本后，`--check` 可直接检查宿主生成的字节是否一致。
+`struct` / `zlib` 写入 filter-0、level-0 PNG。`--check` 可直接检查宿主生成的字节是否一致。
 下载原件保留其原始 ZIP 压缩方式，完整性由子 manifest 中的 SHA-256 校验。
 
 ## 运行逐页矩阵
@@ -56,11 +55,12 @@ python tests/fixtures/pptx-real/generate.py --check
 完成含共享库与测试的 Release 构建后运行：
 
 ```powershell
-python tests/pptx_real_matrix.py --library build/pptx-m6/libexreader.dll --output build/pptx-m6/pptx-real-results
+python -S tests/pptx_real_matrix.py --library build/pptx-m6/libexreader.dll --output build/pptx-m6/pptx-real-results
 ctest --test-dir build/pptx-m6 -R native-pptx-real --output-on-failure
 ```
 
-Linux/macOS 使用相应的 `libexreader.so` / `libexreader.dylib`。运行依赖与生成器相同。
+Linux/macOS 使用相应的 `libexreader.so` / `libexreader.dylib`。Python 矩阵和故障注入测试同样仅用标准库。
+三组 CTest 均使用 `python -S`，禁用 `site-packages`，持续验证不依赖本机安装的第三方包。
 默认检查 12 份有效件全部 31 页及 3 份坏件；`--file twenty` 可单独复测性能，
 `--repeats` 默认每页 5 次。输出目录保留每页实际位图、去文字位图和 `matrix.json`，
 JSON 包含全部采样点、RGB、逐形状分类与 bbox、字形差分像素数、库 SHA-256 与每次耗时；

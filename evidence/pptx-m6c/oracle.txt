@@ -1,0 +1,28 @@
+87/551 Testing: native-pptx-real-oracle
+87/551 Test: native-pptx-real-oracle
+Command: "C:/Python314/python.exe" "-S" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/tests/test_pptx_real_oracle.py"
+Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6
+"native-pptx-real-oracle" start time: Nov 14 12:01 Eastern Standard Time
+Output:
+----------------------------------------------------------
+warning gate: font-only accepted; mixed/nonfont warnings rejected
+control: coverage=ok color=12/12 text=ok
+all-white injection: FAIL detected
+16px translation injection: coverage failure detected
+wrong-color injection: color=6/12; coordinates/RGB retained
+lost-text injection: text failure detected despite intact colored rectangle
+textless package: geometry/fills preserved; reference samples independent
+background-only package: slide count/background preserved; foreground removed
+transparent textbox: inset glyph ink passes without covering the full frame
+text overflow injection: glyphs outside the frame are retained and rejected
+one-of-two textboxes lost: per-shape presence failure detected
+unfilled outline: local non-background ink required; missing border rejected
+colored backdrop: background cannot impersonate missing shape ink
+independent paint oracle: half-alpha compositing and cropped image colors verified
+<end of output>
+Test time =   1.21 sec
+----------------------------------------------------------
+Test Passed.
+"native-pptx-real-oracle" end time: Nov 14 12:01 Eastern Standard Time
+"native-pptx-real-oracle" time elapsed: 00:00:01
+----------------------------------------------------------

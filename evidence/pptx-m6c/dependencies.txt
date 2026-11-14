@@ -1,0 +1,35 @@
+> python -S -c "import lxml"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import lxml
+ModuleNotFoundError: No module named 'lxml'
+exit=1
+> python -S -c "import PIL"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import PIL
+ModuleNotFoundError: No module named 'PIL'
+exit=1
+> git grep -n -E "^[[:space:]]*(from|import)[[:space:]]+(lxml|PIL|pptx)([[:space:].]|$)" -- tests/fixtures/pptx-real/generate.py tests/pptx_real_matrix.py tests/test_pptx_real_oracle.py
+grep exit=1 (no matches)
+> ctest --test-dir build/pptx-m6 -N -V -R pptx-real
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+
+85: Test command: C:\Python314\python.exe "-S" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/tests/pptx_real_matrix.py" "--library" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6/libexreader.dll" "--output" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6/pptx-real-results"
+85: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6
+  Test #85: native-pptx-real-matrix
+
+86: Test command: C:\Python314\python.exe "-S" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/tests/fixtures/pptx-real/generate.py" "--check"
+86: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6
+  Test #86: native-pptx-real-reproducible
+
+87: Test command: C:\Python314\python.exe "-S" "C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/tests/test_pptx_real_oracle.py"
+87: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-pptx-m6/build/pptx-m6
+  Test #87: native-pptx-real-oracle
+
+Total Tests: 3
