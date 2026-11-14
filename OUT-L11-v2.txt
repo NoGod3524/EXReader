@@ -1,0 +1,25 @@
+**隔离构建验收通过；正式源码尚未接入。** 可用程序：[EXReader.exe](C:/Users/Oscar/Documents/Codex/EXReader-fan-L11/build/l11-save/host/EXReader.exe)。
+
+① L11 文件行数：保存模块 103、C 验收 62、Python 验收 83、接入补丁 55。本轮修改后三项，未修改共享入口文件。
+
+② 验收命令：
+
+```powershell
+python tests/docx/check_save_as_l11.py --sdk build/l11-sdk/stage
+```
+
+真实输出节选：
+
+```text
+PASS Save As new path: exr_edit_docx_open text_equal=1 dirty=0 recent_path=updated recent_json=written
+PASS Ctrl+S: overwrites Save As destination text_equal=1 dirty=0
+PASS read-only save: dirty=1 error=5 reason_shown=1 path_unchanged=1
+PASS recent JSON destination verified; no temporary files remain
+PASS original document unchanged after Save As
+```
+
+指定 prepush 检查：`全部通过 —— 可以推`。
+
+③ 边界：路径受 `MAX_PATH` 限制；未运行 GUI 自动化。
+
+你要求仅修改明确允许的既有文件，但允许列表为空。是否允许将[接入补丁](C:/Users/Oscar/Documents/Codex/EXReader-fan-L11/examples/windows/l11_save_integration.patch)应用到 `shell_docedit.inc` 和 `shell_docedit_input.inc`，完成正式接入？

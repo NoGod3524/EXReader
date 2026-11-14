@@ -1,0 +1,71 @@
+L10 当前状态：实现和隔离宿主验收通过，尚未接入工作树 UI；未提交、未推送。
+
+① 文件范围
+本轮新增四个实现/验收/补丁文件，共 388 行：
+examples/windows/shell_docedit_merged_view.inc: 93 lines
+examples/windows/check_shell_docedit_merged_host.c: 95 lines
+examples/windows/l10-merged-integration.patch: 126 lines
+tests/run_l10_merged.py: 74 lines
+分支原有的本路文件：shell_docedit_merged_cells.h 107 行（本轮 +16），check_shell_docedit_merged_cells.c 50 行（本轮 +4）。
+改动既有引擎文件：src/docx_edit.c，允许合并格的纯文字段落编辑；保留纵向合并标记。
+未修改原有 OUT-L10.txt、OUT-L10-v2.txt 内容。
+未修改 tests/check_reading_release.py 或 tools/version_literal_exceptions.json。
+没有新增 Python ctypes 测试。
+
+UI 接入补丁仅修改：
+examples/windows/shell_docedit_paint.inc
+examples/windows/shell_docedit_table_history.inc
+补丁已在隔离 build 副本应用并测试；上述两份工作树文件保持原样。
+原因：用户规定“只改自己的新文件 + 明确列出的既有文件”，L10 未列出既有 UI 文件。
+已通过异步问题请求将这两个文件加入允许范围，尚未收到答复。
+
+② 命令与真实输出
+python tests/run_l10_merged.py --sdk-build C:/Users/Oscar/Documents/Codex/EXReader-e6-20261113/build/e6 --library-build C:/Users/Oscar/Documents/Codex/exr-build-argon
+退出码 0。该命令使用当前 src/docx_edit.c 替换 SDK 的同名编译单元，其余静态组件复用现有 SDK；UI 补丁仅进入 build/l10/overlay。
+PASS codex/01-table-horizontal.docx: real host paint spans=2x1; all covered hits select owner; bitmap=C:\Users\Oscar\Documents\Codex\EXReader-fan-L10\build\l10/merged-0.bmp
+PASS navigation skips continuation cells; +row/delete/width rejected with exact visible status text
+PASS whole-cell UTF-8/multiline typing, undo/redo, write/reopen retains merges; scroll and DPI rebuild
+PASS codex/02-table-vertical.docx: real host paint spans=1x2; all covered hits select owner; bitmap=C:\Users\Oscar\Documents\Codex\EXReader-fan-L10\build\l10/merged-1.bmp
+PASS navigation skips continuation cells; +row/delete/width rejected with exact visible status text
+PASS whole-cell UTF-8/multiline typing, undo/redo, write/reopen retains merges; scroll and DPI rebuild
+PASS argon/02-table-merged-hmerge-vmerge.docx: real host paint spans=2x2; all covered hits select owner; bitmap=C:\Users\Oscar\Documents\Codex\EXReader-fan-L10\build\l10/merged-2.bmp
+PASS navigation skips continuation cells; +row/delete/width rejected with exact visible status text
+PASS whole-cell UTF-8/multiline typing, undo/redo, write/reopen retains merges; scroll and DPI rebuild
+L10 merged host acceptance PASS (memory DC; no windows / no SendInput)
+
+PASS with pending UI integration applied in build copy only
+
+独立主格映射检查：
+gcc -std=c11 -Wall -Wextra -Werror -Iinclude examples/windows/check_shell_docedit_merged_cells.c C:/Users/Oscar/Documents/Codex/EXReader-e6-20261113/build/e6/_deps/expat-build/libexpat.a -o build/l10/check_merged_grid.exe
+build/l10/check_merged_grid.exe
+退出码 0：
+PASS gridSpan + vMerge: 2 columns x 3 rows, all covered positions resolve to one owner
+PASS legacy hMerge continuation resolves to horizontal owner
+PASS nested table properties ignored; orphan continuation remains its own cell
+PASS overflowing spans and malformed XML rejected
+
+pwsh -File C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1 -Worktree .
+退出码 0：
+ok    无冲突标记残留
+ok    code/docs 结构扫描
+ok    check_sdk_docs.py
+全部通过 —— 可以推
+
+git diff --check
+退出码 0，无输出。
+git apply --check --ignore-space-change examples/windows/l10-merged-integration.patch
+退出码 0，无输出。
+
+③ 边界与接入方式
+点击合并格选择整个主格，按 F6 进入现有整格文字编辑面板。
+上一格/下一格跳过所有延续格；+行、删行、列宽按钮禁用，命令入口同样拒绝并设置提示文本。
+提示：合并单元格可修改整格文字；不能增删行或调整列宽。
+含混合文字格式、图片、嵌套表格或其他受保护内容的单元格仍只读。
+本切片绘制统一编辑网格，不复刻 OOXML 的逐边线型、着色和分页。
+未增加创建合并/拆分的命令。
+验收通过内存 DC 与函数入口执行，未创建窗口、未使用 GUI 自动化或 SendInput；生成 BMP 已人工式图像检查。
+现有 E3/E4 测试中“合并格文字必须返回 UNSUPPORTED”的旧预期需要集成方随新需求更新；本轮未越界改其文件。
+
+收到 UI 文件范围确认后可应用：
+git apply --ignore-space-change examples/windows/l10-merged-integration.patch
+然后运行同一验收命令并加 --integrated，验证实际工作树接入。

@@ -1,0 +1,31 @@
+已提交 `f6073db1`，工作树干净。**验收副本通过，正式程序尚未接入。**
+
+① L11 交付文件行数：
+
+- 保存实现：103 行
+- C 验收：54 行
+- Python 验收脚本：77 行
+- 接入补丁：55 行
+
+未修改其他切片的既有源码。
+
+② 验收命令：
+
+```powershell
+python tests/docx/check_save_as_l11.py --sdk C:/Users/Oscar/Documents/Codex/EXReader-docedit-20261112/build/me1/stage
+```
+
+真实输出：
+
+```text
+PASS Save As new path: exr_edit_docx_open text_equal=1 dirty=0 recent_path=updated recent_json=written
+PASS Ctrl+S: overwrites Save As destination text_equal=1 dirty=0
+PASS read-only save: dirty=1 error=5 reason_shown=1 path_unchanged=1
+PASS failed Save As: dirty=1 active_path_unchanged=1 recent_path_unchanged=1
+L11 console acceptance PASS (no HWND / no SendInput)
+PASS recent JSON destination verified; no temporary files remain
+```
+
+指定 prepush 检查全部通过。
+
+③ 边界：路径受 `MAX_PATH` 限制；未运行 GUI 自动化。你给出的既有文件允许列表为空，因此正式接入仍待放行 `shell_docedit.inc` 和 `shell_docedit_input.inc`；具体补丁已准备好。

@@ -16,6 +16,16 @@ cl /nologo /W4 /Iinclude examples\minimal\main.c lib\exreader.lib /Feminimal.exe
 .\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
 ```
 
+### Windows (MinGW x64)
+
+Use the MinGW-w64 compiler that built the SDK, with `gcc` available on PATH.
+
+```powershell
+$env:PATH = "$PWD\lib;$env:PATH"
+gcc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -o minimal.exe
+.\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
+```
+
 ### Linux (x64)
 
 Install a C compiler (for example `sudo apt-get install build-essential`).

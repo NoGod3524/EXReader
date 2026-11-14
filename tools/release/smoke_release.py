@@ -16,9 +16,10 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def quickstart(readme, system):
-    heading = {'Windows': 'Windows', 'Linux': 'Linux', 'Darwin': 'macOS'}[system]
-    section = re.search(r'^### ' + heading + r'[^\n]*\n(.*?)(?=^### |\Z)',
+def quickstart(readme, system, mingw=False):
+    heading = {'Windows': f"Windows ({'MinGW' if mingw else 'MSVC'} x64)",
+               'Linux': 'Linux', 'Darwin': 'macOS'}[system]
+    section = re.search(r'^### ' + re.escape(heading) + r'[^\n]*\n(.*?)(?=^### |\Z)',
                         readme, re.MULTILINE | re.DOTALL)
     if not section:
         raise ValueError(f'Missing README quickstart section: {heading}')
@@ -122,11 +123,16 @@ def main():
         if system not in ('Windows', 'Linux', 'Darwin'):
             raise RuntimeError(f'Unsupported native platform: {system}')
         env = dict(os.environ)
+        mingw = system == 'Windows' and args.compiler and re.search(
+            r'(?:^|-)gcc(?:\.exe)?$', Path(args.compiler).name, re.IGNORECASE)
         for variable in ('CPATH', 'C_INCLUDE_PATH', 'CPLUS_INCLUDE_PATH', 'LIBRARY_PATH',
                          'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH', 'DYLD_FALLBACK_LIBRARY_PATH'):
             env.pop(variable, None)
         if system == 'Windows':
-            env = msvc_environment(args.compiler, env)
+            if mingw:
+                env['PATH'] = str(Path(args.compiler).resolve().parent) + os.pathsep + env.get('PATH', '')
+            else:
+                env = msvc_environment(args.compiler, env)
             shell = shutil.which('pwsh') or shutil.which('powershell')
             if shell is None:
                 raise RuntimeError('PowerShell is required for the Windows README')
@@ -160,7 +166,7 @@ def main():
             sdk = packages[0]
             run([sys.executable, str(ROOT / 'tools/release/check_release.py'), str(sdk),
                  '--json', str(evidence / 'check-release.json')], work, env, 'extracted package check')
-            commands = quickstart((sdk / 'README.md').read_text(encoding='utf-8'), system)
+            commands = quickstart((sdk / 'README.md').read_text(encoding='utf-8'), system, mingw)
             report['commands'] = commands
             report['archive_name'] = archives[0].name
             markers = [f'EXR_README_COMMAND_{number}' for number in range(1, 4)]

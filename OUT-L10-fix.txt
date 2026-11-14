@@ -1,0 +1,15 @@
+已修复，五项验收均退出 0。完整命令与真实输出已写入 [OUT-L10-fix.txt](C:/Users/Oscar/Documents/Codex/EXReader-fan-L10/OUT-L10-fix.txt)。
+
+冲突点是 L10 让 `exr_edit_cell_can_split()` 放行了 `MERGED`，连带改变了段落查询和写操作的行为。现已在 [docx_edit.c:639](C:/Users/Oscar/Documents/Codex/EXReader-fan-L10/src/docx_edit.c:639) 恢复原判定；`locate_block()` 保留只读定位能力。
+
+新增独立只读查询 [`de_merge_cell_view()`](C:/Users/Oscar/Documents/Codex/EXReader-fan-L10/examples/windows/shell_docedit_merged_cells.h:13)，函数本体 4 行，供 L10 绘制读取内容。合并格保持只读。e3/e4 断言及 `tests/check_reading_release.py` 均未修改。
+
+| 验收 | 真实结果 |
+|---|---|
+| E3 | exit 0，全部 PASS |
+| E4 | exit 0，包含 `merged/shaded/nested/opaque protected` |
+| CTest | `100% tests passed out of 437`，246.88 秒 |
+| L10 | exit 0，2×1、1×2、2×2 绘制与命中通过 |
+| prepush | exit 0，`全部通过 —— 可以推` |
+
+CTest 共注册 **439 项**，按指定正则排除两项后实际执行 **437 项**。L10 UI 补丁沿用分支现状，在隔离副本中完成宿主验收。
