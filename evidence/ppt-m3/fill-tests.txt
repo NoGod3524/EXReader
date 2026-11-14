@@ -1,0 +1,94 @@
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+COM png scale=1: RGB=[(0, 255, 0)]; maximum error=0
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+COM png scale=2: RGB=[(0, 255, 0)]; maximum error=0
+native-ppt-fill-png: 2 checks passed
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+COM scale scale=1: RGB=[(0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]; maximum error=0
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+COM scale scale=2: RGB=[(0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]; maximum error=0
+native-ppt-fill-scale: 2 checks passed
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+COM red->blue scale=1: x=[81, 130, 180, 230, 280, 330, 380, 430, 478]; RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (63, 0, 192), (31, 0, 224), (0, 0, 255)]; monotonic=PASS
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+COM red->blue scale=2: x=[81, 130, 180, 230, 280, 330, 380, 430, 478]; RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (63, 0, 192), (31, 0, 224), (1, 0, 254)]; monotonic=PASS
+native-ppt-fill-gradient: 2 checks passed
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+COM accent1: pixel=(17, 83, 211) master=(17, 83, 211)
+COM accent2: pixel=(19, 123, 41) master=(19, 123, 41)
+COM accent3: pixel=(241, 97, 23) master=(241, 97, 23)
+COM accent4: pixel=(91, 31, 201) master=(91, 31, 201)
+COM accent5: pixel=(201, 41, 153) master=(201, 41, 153)
+COM accent6: pixel=(7, 177, 221) master=(7, 177, 221)
+COM background: pixel=(233, 241, 249) master=(233, 241, 249)
+COM text: pixel=(12, 23, 34) master=(12, 23, 34)
+MainMaster COLOR_SCHEME[4]=(17, 83, 211): exact=PASS
+status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+COM accent1: pixel=(17, 83, 211) master=(17, 83, 211)
+COM accent2: pixel=(19, 123, 41) master=(19, 123, 41)
+COM accent3: pixel=(241, 97, 23) master=(241, 97, 23)
+COM accent4: pixel=(91, 31, 201) master=(91, 31, 201)
+COM accent5: pixel=(201, 41, 153) master=(201, 41, 153)
+COM accent6: pixel=(7, 177, 221) master=(7, 177, 221)
+COM background: pixel=(233, 241, 249) master=(233, 241, 249)
+COM text: pixel=(12, 23, 34) master=(12, 23, 34)
+MainMaster COLOR_SCHEME[4]=(17, 83, 211): exact=PASS
+native-ppt-fill-theme: 2 checks passed
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=1 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+invalid pib=0: pixel=(204, 204, 204); process survived
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=1 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+invalid pib=1: pixel=(204, 204, 204); process survived
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=1 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+invalid pib=4294967295: pixel=(204, 204, 204); process survived
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=1 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+unknown blip: shape skipped; process survived
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=1 gradient-horizontal=0 gradient-missing=0 scheme=0
+broken PNG: gray fallback; process survived
+status=0 message=PPT warning: malformed=1 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=1 gradient-horizontal=0 gradient-missing=0 scheme=0
+truncated BSE: gray fallback; following blue shape=PASS
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=1 gradient-horizontal=0 gradient-missing=0 scheme=0
+invalid delayed offset: gray fallback; following blue shape=PASS
+native-ppt-fill-fallback: 7 checks passed
+status=0 message=
+inline blip 0xF01E uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF01E uid_count=2: green=PASS
+status=0 message=
+inline blip 0xF02B uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF02B uid_count=2: green=PASS
+status=0 message=
+inline blip 0xF01D uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF01D uid_count=2: green=PASS
+status=0 message=
+inline blip 0xF02A uid_count=1: green=PASS
+status=0 message=
+inline blip 0xF02A uid_count=2: green=PASS
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=1 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+unsupported BSE retains its index; following pib2 green=PASS
+status=0 message=
+striped picture: group scale(4,2), horizontal flip gives blue-left/red-right=PASS
+native-ppt-fill-blips: 10 checks passed
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+missing gradient endpoint: solid red=PASS
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+fillShadeColors endpoints RGB=[(0, 255, 0), (128, 255, 0), (255, 255, 0)]
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+empty/single/out-of-range/duplicate gradient stops: solid red=PASS
+status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+ellipse gradient: white corner, clipped horizontal red->blue fill=PASS
+native-ppt-fill-gradient-fallback: 7 checks passed
+status=0 message=
+legacy COLOR_SCHEME indices0..7 RGB=[(11, 21, 31), (41, 51, 61), (71, 81, 91), (101, 111, 121), (131, 141, 151), (161, 171, 181), (191, 201, 211), (221, 231, 241)]; exact=PASS
+status=0 message=
+status=0 message=
+status=0 message=
+status=0 message=
+two masters: persist/masterId resolution and slide COLOR_SCHEME override=PASS
+status=0 message=
+missing persist/masterId: nearest preceding physical master selected=PASS
+native-ppt-fill-scheme: 6 checks passed

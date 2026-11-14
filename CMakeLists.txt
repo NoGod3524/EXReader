@@ -1346,6 +1346,11 @@ if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_ppt_shapes.py $<TARGET_FILE:exreader-ppt-shape-probe>
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-shapes ${group})
   endforeach()
+  foreach(group png scale gradient theme fallback blips gradient-fallback scheme)
+    add_test(NAME native-ppt-fill-${group} COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_ppt_fills.py $<TARGET_FILE:exreader-ppt-shape-probe>
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-fills ${group})
+  endforeach()
 endif()
 if(EXR_BUILD_TESTS)
   add_executable(exreader-style-footnotes-test tests/test_style_footnotes.c)

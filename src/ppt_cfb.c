@@ -134,10 +134,10 @@ static int name_is(const unsigned char *p,const char *name) {
 }
 /* Only the root's child tree denotes top-level streams. Embedded OLE storages
    can contain their own identically named streams and must not be selected. */
-static exr_status find_streams(cfb *c,uint32_t *ppt,uint32_t *summary,exr_error *e) {
+static exr_status find_streams(cfb *c,uint32_t *ppt,uint32_t *summary,uint32_t *pictures,exr_error *e) {
   size_t count=c->directory_size/128,top=0,i;uint32_t *stack;
   unsigned char *seen;uint64_t total=0;exr_status s=EXR_OK;
-  *ppt=*summary=CFB_FREE;
+  *ppt=*summary=*pictures=CFB_FREE;
   if(!count || c->directory[66]!=5) return bad(e,0,"missing root directory");
   for(i=0;i<count;i++) {
     const unsigned char *p=c->directory+128*i;unsigned type=p[66],n=u16(p+64);
@@ -167,6 +167,10 @@ static exr_status find_streams(cfb *c,uint32_t *ppt,uint32_t *summary,exr_error 
       if(*summary!=CFB_FREE) { s=bad(e,128*id,"duplicate SummaryInformation stream");break; }
       *summary=id;
     }
+    if(p[66]==2 && name_is(p,"Pictures")) {
+      if(*pictures!=CFB_FREE) { s=bad(e,128*id,"duplicate Pictures stream");break; }
+      *pictures=id;
+    }
     left=u32(p+68);right=u32(p+72);
     if(top+2>count) { s=bad(e,128*id,"cyclic directory siblings");break; }
     if(left!=CFB_FREE) stack[top++]=left;
@@ -175,11 +179,11 @@ static exr_status find_streams(cfb *c,uint32_t *ppt,uint32_t *summary,exr_error 
   free(stack);free(seen);return s;
 }
 void exr_ppt_streams_free(exr_ppt_streams *s) {
-  free(s->document);free(s->summary);memset(s,0,sizeof(*s));
+  free(s->document);free(s->summary);free(s->pictures);memset(s,0,sizeof(*s));
 }
 exr_status exr_ppt_cfb(const void *data,size_t size,const exr_control *control,exr_ppt_streams *out,exr_error *e) {
   static const unsigned char signature[8]={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
-  cfb c={0};const unsigned char *h=data;uint32_t ppt,summary;unsigned shift;
+  cfb c={0};const unsigned char *h=data;uint32_t ppt,summary,pictures;unsigned shift;
   unsigned char *mini_bytes=NULL;size_t mini_size=0,i;exr_status s;
   memset(out,0,sizeof(*out));c.data=data;c.size=size;c.control=control;
   if(!data || size<8 || memcmp(data,signature,8)) return bad(e,0,"invalid signature");
@@ -197,7 +201,7 @@ exr_status exr_ppt_cfb(const void *data,size_t size,const exr_control *control,e
   s=load_fat(&c,h,e);if(s!=EXR_OK) goto done;
   s=chain(&c,u32(h+48),0,1,&c.directory,&c.directory_size,e);if(s!=EXR_OK) goto done;
   if(c.major==4 && c.directory_size/c.sector_size!=u32(h+40)) { s=bad(e,40,"directory sector count mismatch");goto done; }
-  s=find_streams(&c,&ppt,&summary,e);if(s!=EXR_OK) goto done;
+  s=find_streams(&c,&ppt,&summary,&pictures,e);if(s!=EXR_OK) goto done;
   if(ppt==CFB_FREE) { s=exr_fail(e,EXR_FORMAT,"不是 PowerPoint 97-2003 文档: missing PowerPoint Document stream");goto done; }
   if(stream_size(&c,c.directory)>EXR_PPT_MAX_STREAM) { s=exr_fail(e,EXR_LIMIT,"CFB root mini stream exceeds 256 MiB");goto done; }
   s=chain(&c,u32(c.directory+116),(size_t)stream_size(&c,c.directory),0,&c.root,&c.root_size,e);if(s!=EXR_OK) goto done;
@@ -206,10 +210,10 @@ exr_status exr_ppt_cfb(const void *data,size_t size,const exr_control *control,e
   c.mini_count=mini_size/4;c.mini=malloc(mini_size ? mini_size : 1);
   if(!c.mini) { s=exr_fail(e,EXR_MEMORY,"CFB mini FAT allocation failed");goto done; }
   for(i=0;i<c.mini_count;i++) c.mini[i]=u32(mini_bytes+4*i);
-  for(i=0;i<2;i++) {
-    uint32_t id=i ? summary : ppt;const unsigned char *p;size_t length;
-    unsigned char **bytes=i ? &out->summary : &out->document;
-    size_t *n=i ? &out->summary_size : &out->document_size;
+  for(i=0;i<3;i++) {
+    uint32_t id=i==2 ? pictures : i ? summary : ppt;const unsigned char *p;size_t length;
+    unsigned char **bytes=i==2 ? &out->pictures : i ? &out->summary : &out->document;
+    size_t *n=i==2 ? &out->pictures_size : i ? &out->summary_size : &out->document_size;
     if(id==CFB_FREE) continue;
     p=c.directory+128*id;length=(size_t)stream_size(&c,p);
     s=length<4096 ? small_stream(&c,u32(p+116),length,bytes,n,e) : chain(&c,u32(p+116),length,0,bytes,n,e);

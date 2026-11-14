@@ -1,0 +1,174 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 346
+    Start 346: native-ppt-fill-blips
+
+346: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "blips"
+346: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+346: Test timeout computed to be: 10000000
+test 347
+    Start 347: native-ppt-fill-gradient-fallback
+
+347: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "gradient-fallback"
+347: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+347: Test timeout computed to be: 10000000
+347: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+347: missing gradient endpoint: solid red=PASS
+347: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+347: fillShadeColors endpoints RGB=[(0, 255, 0), (128, 255, 0), (255, 255, 0)]
+347: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+347: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+347: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+347: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=1 scheme=0
+347: empty/single/out-of-range/duplicate gradient stops: solid red=PASS
+347: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+347: ellipse gradient: white corner, clipped horizontal red->blue fill=PASS
+347: native-ppt-fill-gradient-fallback: 7 checks passed
+1/8 Test #347: native-ppt-fill-gradient-fallback ...   Passed    0.55 sec
+test 345
+    Start 345: native-ppt-fill-fallback
+
+345: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "fallback"
+345: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+345: Test timeout computed to be: 10000000
+346: status=0 message=
+346: inline blip 0xF01E uid_count=1: green=PASS
+346: status=0 message=
+346: inline blip 0xF01E uid_count=2: green=PASS
+346: status=0 message=
+346: inline blip 0xF02B uid_count=1: green=PASS
+346: status=0 message=
+346: inline blip 0xF02B uid_count=2: green=PASS
+346: status=0 message=
+346: inline blip 0xF01D uid_count=1: green=PASS
+346: status=0 message=
+346: inline blip 0xF01D uid_count=2: green=PASS
+346: status=0 message=
+346: inline blip 0xF02A uid_count=1: green=PASS
+346: status=0 message=
+346: inline blip 0xF02A uid_count=2: green=PASS
+346: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=1 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+346: unsupported BSE retains its index; following pib2 green=PASS
+346: status=0 message=
+346: striped picture: group scale(4,2), horizontal flip gives blue-left/red-right=PASS
+346: status=0 message=
+346: picture pib precedence and rectangle/ellipse fillBlip: green=PASS; ellipse clip and explicit noFill=PASS
+346: native-ppt-fill-blips: 11 checks passed
+2/8 Test #346: native-ppt-fill-blips ...............   Passed    0.69 sec
+test 348
+    Start 348: native-ppt-fill-scheme
+
+348: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "scheme"
+348: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+348: Test timeout computed to be: 10000000
+345: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=1 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+345: invalid pib=0: pixel=(204, 204, 204); process survived
+345: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=1 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+345: invalid pib=1: pixel=(204, 204, 204); process survived
+345: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=1 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+345: invalid pib=4294967295: pixel=(204, 204, 204); process survived
+345: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=1 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+345: unknown blip: shape skipped; process survived
+345: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=1 gradient-horizontal=0 gradient-missing=0 scheme=0
+345: broken PNG: gray fallback; process survived
+345: status=0 message=PPT warning: malformed=1 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=1 gradient-horizontal=0 gradient-missing=0 scheme=0
+345: truncated BSE: gray fallback; following blue shape=PASS
+345: status=0 message=PPT warning: malformed=0 missing-anchor=0 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=1 gradient-horizontal=0 gradient-missing=0 scheme=0
+345: invalid delayed offset: gray fallback; following blue shape=PASS
+345: native-ppt-fill-fallback: 7 checks passed
+3/8 Test #345: native-ppt-fill-fallback ............   Passed    0.50 sec
+test 344
+    Start 344: native-ppt-fill-theme
+
+344: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "theme"
+344: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+344: Test timeout computed to be: 10000000
+348: status=0 message=
+348: legacy COLOR_SCHEME indices0..7 RGB=[(11, 21, 31), (41, 51, 61), (71, 81, 91), (101, 111, 121), (131, 141, 151), (161, 171, 181), (191, 201, 211), (221, 231, 241)]; exact=PASS
+348: status=0 message=
+348: status=0 message=
+348: status=0 message=
+348: status=0 message=
+348: two masters: persist/masterId resolution and slide COLOR_SCHEME override=PASS
+348: status=0 message=
+348: missing persist/masterId: nearest preceding physical master selected=PASS
+348: native-ppt-fill-scheme: 6 checks passed
+4/8 Test #348: native-ppt-fill-scheme ..............   Passed    0.51 sec
+test 342
+    Start 342: native-ppt-fill-scale
+
+342: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "scale"
+342: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+342: Test timeout computed to be: 10000000
+344: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+344: COM accent1: pixel=(17, 83, 211) master=(17, 83, 211)
+344: COM accent2: pixel=(19, 123, 41) master=(19, 123, 41)
+344: COM accent3: pixel=(241, 97, 23) master=(241, 97, 23)
+344: COM accent4: pixel=(91, 31, 201) master=(91, 31, 201)
+344: COM accent5: pixel=(201, 41, 153) master=(201, 41, 153)
+344: COM accent6: pixel=(7, 177, 221) master=(7, 177, 221)
+344: COM background: pixel=(233, 241, 249) master=(233, 241, 249)
+344: COM text: pixel=(12, 23, 34) master=(12, 23, 34)
+344: MainMaster COLOR_SCHEME[4]=(17, 83, 211): exact=PASS
+344: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+344: COM accent1: pixel=(17, 83, 211) master=(17, 83, 211)
+344: COM accent2: pixel=(19, 123, 41) master=(19, 123, 41)
+344: COM accent3: pixel=(241, 97, 23) master=(241, 97, 23)
+344: COM accent4: pixel=(91, 31, 201) master=(91, 31, 201)
+344: COM accent5: pixel=(201, 41, 153) master=(201, 41, 153)
+344: COM accent6: pixel=(7, 177, 221) master=(7, 177, 221)
+344: COM background: pixel=(233, 241, 249) master=(233, 241, 249)
+344: COM text: pixel=(12, 23, 34) master=(12, 23, 34)
+344: MainMaster COLOR_SCHEME[4]=(17, 83, 211): exact=PASS
+344: native-ppt-fill-theme: 2 checks passed
+5/8 Test #344: native-ppt-fill-theme ...............   Passed    0.39 sec
+test 343
+    Start 343: native-ppt-fill-gradient
+
+343: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "gradient"
+343: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+343: Test timeout computed to be: 10000000
+342: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+342: COM scale scale=1: RGB=[(0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]; maximum error=0
+342: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+342: COM scale scale=2: RGB=[(0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0), (0, 255, 0)]; maximum error=0
+342: native-ppt-fill-scale: 2 checks passed
+6/8 Test #342: native-ppt-fill-scale ...............   Passed    0.38 sec
+test 341
+    Start 341: native-ppt-fill-png
+
+341: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/check_ppt_fills.py" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/tests/fixtures/ppt-fills" "png"
+341: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-ppt-m3/build/ppt-m3
+341: Test timeout computed to be: 10000000
+343: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+343: COM red->blue scale=1: x=[81, 130, 180, 230, 280, 330, 380, 430, 478]; RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (63, 0, 192), (31, 0, 224), (0, 0, 255)]; monotonic=PASS
+343: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=1 gradient-missing=0 scheme=0
+343: COM red->blue scale=2: x=[81, 130, 180, 230, 280, 330, 380, 430, 478]; RGB=[(255, 0, 0), (223, 0, 32), (191, 0, 64), (159, 0, 96), (127, 0, 128), (95, 0, 160), (63, 0, 192), (31, 0, 224), (1, 0, 254)]; monotonic=PASS
+343: native-ppt-fill-gradient: 2 checks passed
+7/8 Test #343: native-ppt-fill-gradient ............   Passed    0.43 sec
+341: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+341: COM png scale=1: RGB=[(0, 255, 0)]; maximum error=0
+341: status=0 message=PPT warning: malformed=0 missing-anchor=1 depth=0 zero-chExt=0 unsupported=0 pib=0 blip-unsupported=0 image-decode=0 gradient-horizontal=0 gradient-missing=0 scheme=0
+341: COM png scale=2: RGB=[(0, 255, 0)]; maximum error=0
+341: native-ppt-fill-png: 2 checks passed
+8/8 Test #341: native-ppt-fill-png .................   Passed    0.35 sec
+
+The following tests passed:
+	native-ppt-fill-gradient-fallback
+	native-ppt-fill-blips
+	native-ppt-fill-fallback
+	native-ppt-fill-scheme
+	native-ppt-fill-theme
+	native-ppt-fill-scale
+	native-ppt-fill-gradient
+	native-ppt-fill-png
+
+100% tests passed out of 8
+
+Total Test time (real) =   1.96 sec

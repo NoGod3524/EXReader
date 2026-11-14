@@ -318,9 +318,9 @@ def main():
             pixels, _ = run(presentation(shape((17, 34, 51), line=True, width=6)))
             pixels.check((160, 80), (17, 34, 51))
             pixels.check((160, 120), (17, 34, 51))
-            # Unsupported gradient is skipped, never painted as an arbitrary solid.
-            pixels, _ = run(presentation(shape(extra=prop_table([(0x180, 4)]))))
-            pixels.white()
+            # M3 preserves the available color when a gradient endpoint is absent.
+            pixels, _ = run(presentation(shape(extra=prop_table([(0x180, 4)]))), warning="gradient-missing=")
+            pixels.check((120, 120), (255, 0, 0))
             for kind in (0xF121, 0xF122):
                 pixels, _ = run(presentation(shape(extra=prop_table([(0x181, 0x332211)], kind))))
                 pixels.check((120, 120), (17, 34, 51))
