@@ -1,0 +1,16 @@
+title: slides=1 source=generated ZIP_STORED bytes=10051
+bullets: slides=1 source=generated ZIP_STORED bytes=12093
+image-text: slides=1 source=generated ZIP_STORED bytes=127374
+merged-table: slides=1 source=generated ZIP_STORED bytes=17282
+gradient-alpha: slides=1 source=generated ZIP_STORED bytes=12492
+theme-accents: slides=1 source=generated ZIP_STORED bytes=15978
+chinese: slides=1 source=generated ZIP_STORED bytes=18160
+standard-4x3: slides=1 source=generated ZIP_STORED bytes=11352
+wide-16x9: slides=1 source=generated ZIP_STORED bytes=11355
+nested-groups: slides=1 source=generated ZIP_STORED bytes=12959
+twenty: slides=20 source=generated ZIP_STORED bytes=243415
+bad-truncated: slides=0 source=generated ZIP_STORED bytes=5025
+bad-missing-part: slides=0 source=generated ZIP_STORED bytes=9475
+bad-invalid-xml: slides=0 source=generated ZIP_STORED bytes=9117
+manifest.json: 15 files, 31 valid slides
+generate --check exit=0

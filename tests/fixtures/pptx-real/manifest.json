@@ -1,0 +1,253 @@
+[
+  {
+    "file": "bad-invalid-xml/bad-invalid-xml.pptx",
+    "slides": 0,
+    "features": [
+      "invalid-xml"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "expected_status": 5,
+    "expected_error": "EXR_FORMAT",
+    "sha256": "f8c35e6a2055278f3791a48e702d4c0a934824cefddd931b8cf1b9ec0fcdbb83",
+    "bytes": 9117
+  },
+  {
+    "file": "bad-missing-part/bad-missing-part.pptx",
+    "slides": 0,
+    "features": [
+      "missing-part"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "expected_status": 5,
+    "expected_error": "EXR_FORMAT",
+    "sha256": "07f5f73c05e17d27823274b6b16af3578ddd9a984441aa013c5e5fe48ac24a20",
+    "bytes": 9475
+  },
+  {
+    "file": "bad-truncated/bad-truncated.pptx",
+    "slides": 0,
+    "features": [
+      "truncated"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "expected_status": 5,
+    "expected_error": "EXR_FORMAT",
+    "sha256": "b053e5f4286f01f6ee74d77b1a3f58644140c9d2808d828c0baa240c10ce3330",
+    "bytes": 5025
+  },
+  {
+    "file": "bullets/bullets.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "bullets",
+      "levels-0-1-2",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "630d072f99088bd47584e3ba13f7117c31c2f623a2eddef7a5a57a6278cc84bf",
+    "bytes": 12093
+  },
+  {
+    "file": "chinese/chinese.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "cjk-title",
+      "cjk-body",
+      "cjk-table",
+      "table",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "97ce001bf551f65136fa8808c5bd49738a89d58aaaf12f5161b8517a43064921",
+    "bytes": 18160
+  },
+  {
+    "file": "gradient-alpha/gradient-alpha.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "gradient-background",
+      "alpha",
+      "rect",
+      "ellipse",
+      "roundRect",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "de947c40f51e8eeacdefb59a0e45306088aee530dd1b8c0f334471680a04f8d1",
+    "bytes": 12492
+  },
+  {
+    "file": "image-text/image-text.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "png",
+      "image-stretch",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "5dc7eb895f11ec0fa2cac7ec1a6cc10f93075c7041273a2dae84497709a4d344",
+    "bytes": 127369
+  },
+  {
+    "file": "merged-table/merged-table.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "table",
+      "gridSpan",
+      "rowSpan",
+      "hMerge",
+      "vMerge",
+      "cell-borders",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "d16cdc7da1fa911124aa959964b64386e621e142e5396db20d9dc72d5a7523d2",
+    "bytes": 17282
+  },
+  {
+    "file": "nested-groups/nested-groups.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "grpSp",
+      "nested-grpSp",
+      "group-scale",
+      "roundRect",
+      "ellipse",
+      "triangle",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "56d14dca0e6f003edd6fdb4d1238415d263fe8cfdea10c74e71487fb85398274",
+    "bytes": 12959
+  },
+  {
+    "file": "standard-4x3/standard-4x3.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "rect",
+      "ellipse",
+      "4:3"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "606ba49654e2d41ba589c0038a48bc8eaff68c74c96982fe55e5e6aaf7a5fd7c",
+    "bytes": 11352
+  },
+  {
+    "file": "theme-accents/theme-accents.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "schemeClr",
+      "accent1",
+      "accent2",
+      "accent3",
+      "accent4",
+      "accent5",
+      "accent6",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "c3f6f625a002c7a61f89e407d88fa627abd96487088df93be174e4fcdcc5cd76",
+    "bytes": 15978
+  },
+  {
+    "file": "title/title.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "title",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "55388f0843c570bfdfcce6b46b08480bac668601e34c5a6cff53be62fbbc8cfe",
+    "bytes": 10051
+  },
+  {
+    "file": "twenty/twenty.pptx",
+    "slides": 20,
+    "features": [
+      "text",
+      "png",
+      "image-stretch",
+      "image-tile",
+      "shape-picture-fill",
+      "flipH",
+      "flipV",
+      "quarter-rotation",
+      "line",
+      "ellipse",
+      "circle",
+      "triangle",
+      "table",
+      "grpSp",
+      "nested-grpSp",
+      "20-slides",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "benchmark": true,
+    "sha256": "1514e9066216b1481ead36359a23d432ecb65fb38d79b60252f51f88593e6348",
+    "bytes": 243410
+  },
+  {
+    "file": "upstream-font-color/upstream-font-color.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "theme-color",
+      "accent1",
+      "accent4",
+      "lumMod",
+      "lumOff",
+      "upstream-powerpoint-package"
+    ],
+    "source": "downloaded",
+    "license": "MIT",
+    "source_url": "https://raw.githubusercontent.com/scanny/python-pptx/278b47b1dedd5b46ee84c286e77cdfb0bf4594be/features/steps/test_files/font-color.pptx",
+    "upstream_path": "features/steps/test_files/font-color.pptx",
+    "source_page": "https://github.com/scanny/python-pptx/blob/278b47b1dedd5b46ee84c286e77cdfb0bf4594be/features/steps/test_files/font-color.pptx",
+    "license_url": "https://raw.githubusercontent.com/scanny/python-pptx/278b47b1dedd5b46ee84c286e77cdfb0bf4594be/LICENSE",
+    "upstream_commit": "278b47b1dedd5b46ee84c286e77cdfb0bf4594be",
+    "sha256": "2394d35832c69576e808f8f5196c263a6488eb55d10b7b864f11840843123b69",
+    "bytes": 25061,
+    "original_author": "Steve Canny",
+    "original_modified": "2013-11-10 22:07:41",
+    "provenance": "Unmodified upstream integration fixture; repository MIT license and source-distribution MANIFEST.in are retained alongside it.",
+    "original_application": "Microsoft Macintosh PowerPoint",
+    "original_app_version": "14.0000"
+  },
+  {
+    "file": "wide-16x9/wide-16x9.pptx",
+    "slides": 1,
+    "features": [
+      "text",
+      "rect",
+      "ellipse",
+      "16:9"
+    ],
+    "source": "generated",
+    "license": "MIT",
+    "sha256": "a41a4e481b0d990d9e408fb28c54a2ae01c6542e4f830767921a26a03afc782d",
+    "bytes": 11355
+  }
+]

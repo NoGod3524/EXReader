@@ -1,0 +1,19 @@
+{
+  "file": "theme-accents.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "schemeClr",
+    "accent1",
+    "accent2",
+    "accent3",
+    "accent4",
+    "accent5",
+    "accent6",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT",
+  "sha256": "c3f6f625a002c7a61f89e407d88fa627abd96487088df93be174e4fcdcc5cd76",
+  "bytes": 15978
+}

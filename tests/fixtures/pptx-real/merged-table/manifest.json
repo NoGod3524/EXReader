@@ -1,0 +1,18 @@
+{
+  "file": "merged-table.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "table",
+    "gridSpan",
+    "rowSpan",
+    "hMerge",
+    "vMerge",
+    "cell-borders",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT",
+  "sha256": "d16cdc7da1fa911124aa959964b64386e621e142e5396db20d9dc72d5a7523d2",
+  "bytes": 17282
+}

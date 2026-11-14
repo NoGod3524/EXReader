@@ -1,0 +1,16 @@
+Before rectangle fast-path optimization; same new DLL for both inputs.
+Original twenty.pptx vs an in-memory copy with only p:bg elements removed.
+Each document/page warmed once, then 5 interleaved repetitions x 20 pages.
+Measured public exr_fixed_render only; Python image copying excluded.
+
+removed background nodes: 1 ['ppt/slideMasters/slideMaster1.xml']
+same new DLL, original deck: 100 median= 31.221 max= 53.965
+same new DLL, background nodes removed: 100 median= 18.885 max= 26.762
+paired original-minus-no-bg median= 12.491 ms
+
+Call chain: pptx.c draw -> sink.path -> canvas.c path_impl/fill ->
+vector.c fill_blend. The generic scanner takes four vertical subscanlines
+per pixel row, accumulates horizontal coverage for the full 960px span,
+then clips and composites each pixel. It is not a 4x4 point sampler.
+The inherited full-slide solid background adds a second 960x540 rectangle
+after the fixed pipeline's existing viewport clipping rectangle.

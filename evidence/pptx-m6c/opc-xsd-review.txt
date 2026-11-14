@@ -1,0 +1,3 @@
+OPC static review: 11 generated valid packages; 170 XML/relationship parts; 143 resolved relationships; all 15 hashes/sizes verified
+XSD review 74 parts checked 0 invalid
+Extended properties XSD review: 11 valid

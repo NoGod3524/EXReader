@@ -1,0 +1,16 @@
+{
+  "file": "chinese.pptx",
+  "slides": 1,
+  "features": [
+    "text",
+    "cjk-title",
+    "cjk-body",
+    "cjk-table",
+    "table",
+    "16:9"
+  ],
+  "source": "generated",
+  "license": "MIT",
+  "sha256": "97ce001bf551f65136fa8808c5bd49738a89d58aaaf12f5161b8517a43064921",
+  "bytes": 18160
+}
