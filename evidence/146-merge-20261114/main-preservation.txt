@@ -1,0 +1,7 @@
+origin/main: 7fc3bf84
+Checked every original line with difflib.SequenceMatcher(autojunk=False).
+PASS: src/docx_edit.c retains every origin/main line in order.
+Only insertions: 65 added lines, 0 deleted lines.
+cell_paragraph_splice, locate_block and the main paragraph insertion/deletion paths are unchanged.
+cell_splice and cell property editing are retained from the table UI branch.
+exr_edit_insert_run: 24 lines, src/docx_edit.c:811-834, after exr_edit_set_run_text and before mutable_anchor.

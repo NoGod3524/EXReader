@@ -1,0 +1,7 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-e2a-20261112/build/tables-host
+    Start 1: windows-table-ui
+1/1 Test #1: windows-table-ui .................   Passed    0.81 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.83 sec

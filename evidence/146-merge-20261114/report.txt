@@ -1,0 +1,31 @@
+#146 merge acceptance — 2026-11-14
+Base: origin/main 7fc3bf844f19e7940fabea0ee93b7aaa21bb1489
+Branch: codex/word-editor-tables-20261112
+
+Conflict 1: retain main cell_paragraph_splice and branch cell_splice side by side.
+Conflict 2: keep main exr_edit_insert_paragraph cell path using cell_paragraph_splice.
+Conflict 3: keep main exr_edit_delete_block cell path using cell_paragraph_splice.
+Keep all original main docx_edit.c lines unchanged; add only 65 lines (see main-preservation.txt).
+Keep cell property editing through cell_splice without changing main top-level property editing.
+
+exr_edit_insert_run: src/docx_edit.c:811-834 (24 lines).
+Placed after exr_edit_set_run_text, before mutable_anchor.
+Top-level/cell empty paragraphs can create the first run.
+Invalid offset, NULL text, or zero size return EXR_ARGUMENT before model mutation.
+Regressions cover empty/populated top-level and cell paragraphs; compare model and serialized package after failures.
+
+Windows input: keep branch table-aware caret, insertion, navigation and Ctrl+Alt+Enter.
+Keep main F6 table panel and shared de_history; adapt history to flattened paragraph views.
+Adapt main table panel caret field from de.caret_block to de.caret.block.
+Document non-NULL/nonempty insert_run input contract in edit.h and API.md.
+
+Build: cmake --build build/tables -j 4
+L03 opt-in: -DCMAKE_PROJECT_INCLUDE=<workspace>/tests/table_history_l03.cmake
+Final tests: CTEST_PARALLEL_LEVEL=4 ctest --test-dir build/tables -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure
+Result: 439/439 passed; 93.31 seconds; see ctest.txt.
+Initial sequential run: 438/438 passed; 254.22 seconds (build/146-merge-ctest.log).
+Installed SDK exports: 486; SHA256 3c39ab2b47f54c1ddff0398eddaf912881658f06ce3d6886f926f2abf81817fd.
+Windows EXReader/check_shell_docedit/check_shell_table build: PASS.
+Windows table UI: 1/1 PASS. Baseline editor console acceptance: PASS.
+Prepush command: pwsh -File C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\prepush-check.ps1 -Worktree .
+See prepush.txt for the result. Full diff stat is saved locally in build/146-merge-diff-stat.txt after commit.

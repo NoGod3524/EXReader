@@ -2721,7 +2721,7 @@ int main(void) {
 
 **ABI** 实验（[公开头文件](../include/exr/edit.h)）。
 
-**参数** doc 为模型，tx 必须是该模型的活动事务；paragraph 是顶层或可编辑单元格段落 ID。run_index 为插入前的 run 索引，允许 run_count 表示追加，零 run 段落使用 0。text/text_size 为 UTF-8/XML 文字及字节数，NULL/0 允许空文字。props 可为 NULL，表示继承属性。
+**参数** doc 为模型，tx 必须是该模型的活动事务；paragraph 是顶层或可编辑单元格段落 ID。run_index 为插入前的 run 索引，允许 run_count 表示追加，零 run 段落使用 0。text/text_size 为 UTF-8/XML 文字及字节数；text 不得为 NULL，text_size 不得为 0。props 可为 NULL，使用默认属性。
 
 **返回与失败** EXR_OK 插入一个具有新 ID 的 TEXT run；保留段落 ID、模板、已有 run ID 和同格其他段落。非法模型、事务、ID、索引、属性或文字返回 EXR_ARGUMENT；非段落或受保护单元格返回 EXR_UNSUPPORTED；分配失败为 EXR_MEMORY，容量或 ID 耗尽为 EXR_LIMIT。失败锁存事务状态，提交失败事务整体回滚；一次 commit 对应一次 undo。set_run_text 对零 run 段落仍返回 EXR_ARGUMENT。
 

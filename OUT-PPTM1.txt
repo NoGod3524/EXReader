@@ -1,28 +1,31 @@
-已完成，完整验收输出见 [OUT-PPTM1.txt](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/OUT-PPTM1.txt)。
+仓库已有三层实现；本轮完成复核、COM 夹具重新生成及完整验收，未修改解析源码。详见[交付报告](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/OUT-PPTM1.txt)。
 
-| 夹具 | 引擎 pages | PowerPoint |
+| COM 夹具 | 引擎 pages | PowerPoint |
 |---|---:|---:|
 | 1 页 | 1 | 1 |
 | 5 页 | 5 | 5 |
 | 20 页 | 20 | 20 |
 | 空演示文稿 | 0 | 0 |
 
-非空页均为 **720×540 pt**，文件和内存入口的共 52 次白页渲染全部成功。
+非空页均为 **720×540 pt**。文件、内存入口共 **52 次渲染全部成功，像素全白**。[COM 生成脚本](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy/generate.py) 已入库。
 
-- 新文件：`ppt_cfb.c` 222 行、`ppt_records.c` 77 行、`ppt.c` 100 行；内部头文件 21 行，已登记分层清单。
-- 新增六组 `native-ppt-{cfb,records,slides,size,truncated,wrongformat}` 全通过，共 **63 项检查**。
-- 最终全量 **423/423 通过**，仅排除指定两项；分层检查及 `prepush-check.ps1` 均通过。
+- 文件行数：`ppt_cfb.c` 222、`ppt_records.c` 77、`ppt.c` 100；内部头文件 21 行，已登记分层清单。
+- 六组 `native-ppt-{cfb,records,slides,size,truncated,wrongformat}` 全通过，共 **67 项检查**。
+- 全量 ctest **437/437 通过**，排除指定两项；构建、分层检查和共享 `ops/prepush-check.ps1` 均通过。
+- 未新增依赖，三个禁改文件均无改动。
 
-坏签名及 `.docx` 改名的错误原文：
+坏签名、DOCX 改名均返回 `EXR_FORMAT`：
 
 ```text
 CFB invalid signature at offset 0
 ```
 
-截断至 1/3：
+截断至三分之一返回 `EXR_FORMAT`：
 
 ```text
 CFB truncated/invalid sector at offset 299008
 ```
 
-M1 仅提供白页，不绘制母版、备注或嵌入对象；加密 PPT 尚不支持。增量保存采用最后一个 DocumentContainer 快照，完整编辑映射重建留待后续。
+格式值按微软规范使用：Slide=`0x03EE`，尺寸单位为 `1/576` 英寸，即 `1/8 pt`。[记录类型](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/38fb1fa5-0a62-477a-8b14-178df22de812)、[单位定义](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/ef463dad-817f-4790-9a50-19783cd08827)。
+
+已知边界：M1 仅画白页；母版、备注不计入页数，不绘制嵌入 OLE 对象；加密 PPT 和完整增量编辑链重建尚未支持。

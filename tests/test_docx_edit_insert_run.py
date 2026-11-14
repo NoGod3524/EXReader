@@ -4,9 +4,50 @@ import argparse
 import ctypes as c
 from pathlib import Path
 from test_docx_edit_e4 import E4, text
-from test_docx_edit_io import ID, RP, Run, unzip
+from test_docx_edit_io import ID, RP, Run, package, unzip
 from test_docx_edit_e3 import source
 from test_docx_edit_table_image import cell
+
+
+def check_arguments(api, fn):
+    for label, data in [
+        ('top-level', package(body='<w:p/>')),
+        ('cell', source('<w:tr><w:tc><w:p/></w:tc>' + cell('side') + '</w:tr>')),
+    ]:
+        doc = api.read(data)
+        try:
+            if label == 'cell':
+                tid, _ = api.table(doc)
+                pid = api.cell_paragraph(doc, tid, 0, 0, 0).contents.id
+            else:
+                pid = api.paragraphs(doc)[0].id
+            assert api.find_block(doc, pid).contents.count == 0
+            for populated in (False, True):
+                count = int(populated)
+                saved = unzip(api.write(doc))
+                for offset, value, length in [
+                    (count + 1, b'X', 1), (c.c_size_t(-1).value, b'X', 1),
+                    (0, None, 1), (0, None, 0), (0, b'X', 0),
+                ]:
+                    tx = api.begin(doc)
+                    assert tx
+                    assert fn(doc, tx, pid, offset, value, length, None) == 1
+                    p = api.find_block(doc, pid).contents
+                    assert p.count == count and text(p) == ('X' if populated else '')
+                    assert api.commit(tx) == 1
+                    assert unzip(api.write(doc)) == saved
+                if not populated:
+                    tx = api.begin(doc)
+                    assert fn(doc, tx, pid, 0, b'X', 1, None) == 0
+                    assert api.commit(tx) == 0
+                    assert text(api.find_block(doc, pid).contents) == 'X'
+            assert api.undo(doc) == 0
+            assert api.find_block(doc, pid).contents.count == 0
+            assert api.redo(doc) == 0
+            assert text(api.find_block(doc, pid).contents) == 'X'
+            print(f'PASS {label}: first run / invalid offset / NULL text / zero length / unchanged model / undo-redo')
+        finally:
+            api.doc_free(doc)
 
 
 def check(api):
@@ -14,6 +55,7 @@ def check(api):
     fn.restype = c.c_int
     fn.argtypes = [c.c_void_p, c.c_void_p, ID, c.c_size_t,
                    c.c_void_p, c.c_size_t, c.POINTER(RP)]
+    check_arguments(api, fn)
     doc = api.read(source('<w:tr>' + cell('AB') + cell('side') + '</w:tr>'))
     try:
         tid, _ = api.table(doc)
