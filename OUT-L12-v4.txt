@@ -1,0 +1,36 @@
+分支已有完整实现，本次复验通过，无需修改代码。已 fetch 并确认包含当前 `origin/main`。
+
+① 相对 main 新增文件：
+
+- `check_shell_editor_e2e.c`：190 行
+- `editor_e2e_tests.cmake`：35 行
+- `run_editor_e2e.ps1`：22 行
+
+未改既有源码，原有 OUT 文件保持原状。
+
+② 验收命令：
+
+```powershell
+pwsh -File examples/windows/run_editor_e2e.ps1
+.\build\l12\check_shell_editor_e2e.exe
+pwsh -File C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\prepush-check.ps1 -Worktree .
+```
+
+真实输出：
+
+```text
+1 PASS blocks=11 images=1 table_id=8 cell_paragraph=11
+2 PASS WM_CHAR=U+4E2D caret_byte=3 dirty=1
+3 PASS table_cell=0,0 UTF8_bytes=12->15 cell_paragraphs=3
+4 PASS images=1->2 payload_bytes=7871 EMU=914400x609600
+5 PASS Ctrl+Z=3 restored_original=1 Ctrl+Y=3 restored_all_edits=1
+6 PASS Ctrl+S dirty=0 docx_bytes=8463
+7 PASS retained_parts=11 byte_equal=1
+7 PASS reopen content_equal=1 snapshot_bytes=32362 images=2 dirty=0
+native-shell-editor-e2e PASS
+standalone_exit=0
+```
+
+CTest：`native-shell-editor-e2e` **1/1 PASS，0.43 秒**。指定 prepush 检查全部通过，exit 0。
+
+③ 已知边界：Windows 无窗口验收；表格走宿主文本替换函数，图片走引擎 API，未覆盖 GUI 命中与文件选择器。全部 lane 最终合并后仍需复跑。
