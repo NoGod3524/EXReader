@@ -7,6 +7,7 @@ No ctypes tests are introduced, so no ASan preload registration is needed.
 from pathlib import Path
 import argparse
 import difflib
+import hashlib
 import json
 import shutil
 import subprocess
@@ -64,14 +65,19 @@ def run(command):
     subprocess.run(list(map(str, command)), cwd=root, check=True)
 
 run(['cmake', '-S', cmake.parent, '-B', build / 'host', '-G', 'Ninja',
-     '-DCMAKE_BUILD_TYPE=Release', '-DEXR_SDK=' + args.sdk.resolve().as_posix()])
-run(['cmake', '--build', build / 'host', '--target', 'check_shell_docedit_save', '-j', '2'])
+     '-DCMAKE_BUILD_TYPE=Release', '-DEXR_SDK=' + args.sdk.resolve().as_posix(),
+     '-DEXReader_DIR=' + (args.sdk.resolve() / 'lib/cmake/EXReader').as_posix()])
+run(['cmake', '--build', build / 'host', '--target', 'EXReader', 'check_shell_docedit_save', '-j', '2'])
 for dll in (args.sdk / 'bin').glob('*.dll'):
     shutil.copy2(dll, build / 'host' / dll.name)
 evidence = build / 'evidence'
 evidence.mkdir(exist_ok=True)
-run([build / 'host/check_shell_docedit_save.exe', root / 'tests/fixtures/docx-edit/plain.docx', evidence])
+original = root / 'tests/fixtures/docx-edit/plain.docx'
+original_hash = hashlib.sha256(original.read_bytes()).digest()
+run([build / 'host/check_shell_docedit_save.exe', original, evidence])
+assert hashlib.sha256(original.read_bytes()).digest() == original_hash
 recent = json.loads((evidence / 'recent-books.json').read_text(encoding='utf-8'))
 assert Path(recent['books'][0]['path']) == (evidence / 'new document 中文.docx').resolve()
 assert not list(evidence.glob('exr*.tmp'))
 print('PASS recent JSON destination verified; no temporary files remain', flush=True)
+print('PASS original document unchanged after Save As', flush=True)

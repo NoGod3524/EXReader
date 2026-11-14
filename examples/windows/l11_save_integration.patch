@@ -44,12 +44,12 @@
    exr_error error={0};exr_edit_doc *doc=NULL;
 --- a/examples/windows/shell_docedit_input.inc
 +++ b/examples/windows/shell_docedit_input.inc
-@@ -228,7 +228,7 @@
+@@ -245,7 +245,7 @@
      if(key=='L' || key=='E' || key=='R' || key=='J') {
        de_command(key=='L' ? DE_LEFT:key=='E' ? DE_CENTER:key=='R' ? DE_RIGHT:DE_JUSTIFY,0);return 1;
      }
 -    if(key=='S') {de_save();return 1;}
 +    if(key=='S') {if(shift)de_save_as(NULL);else de_save();return 1;}
      if(key=='Z' || key=='Y') {
-       memset(&de.pending_props,0,sizeof(de.pending_props));
-       exr_status status=key=='Z' ? exr_edit_undo(de.doc):exr_edit_redo(de.doc);
+       de_history(key=='Y');
+       return 1;
