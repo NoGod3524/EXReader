@@ -94,7 +94,7 @@ def build(args):
         ['g++', *flags, '-std=c++17', '-c', ROOT/'examples/windows/shell_epub.cpp', '-o', args.work/'epub.o'],
         ['g++', args.work/'reader.o', args.work/'d2d.o', args.work/'epub.o', '-o', args.work/'TypographyBench.exe',
          '-L'+str(args.sdk_build), '-lexreader', args.sdk_build/'_deps/expat-build/libexpat.a',
-         args.sdk_build/'_deps/miniz-build/libminiz.a', '-ld2d1', '-ldwrite', '-lgdi32', '-lcomdlg32',
+         args.sdk_build/'_deps/miniz-build/libminiz.a', '-ld2d1', '-ldwrite', '-lgdi32', '-lcomdlg32', '-lcomctl32',
          '-lshell32', '-lole32', '-loleaut32', '-luuid', '-luiautomationcore', '-lpsapi', '-lm'],
     ]
     for command in commands:

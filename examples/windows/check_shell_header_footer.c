@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Exercise the real editor with a memory DC; no HWND, SendInput or test editor. */
+/* Exercise the real editor with a memory DC and hidden outline; no SendInput. */
 #define main docedit_baseline_main
 #include "check_shell_docedit.c"
 #undef main
@@ -161,7 +161,42 @@ int main(int argc,char **argv) {
   rich_click(DE_DIFFERENT_FIRST);rich_click(DE_DIFFERENT_EVEN);hf_save_reopen(path);
   puts("extra PASS header Ctrl+A, CJK/surrogate typing, scalar Backspace, undo/redo, leading/trailing empty paragraphs; toolbar default/first/even stories stay independent after reopen");
   puts("extra PASS drag release over header/toolbar clears mouse state; undoing first-page flag returns variant to default");
+  assert(de.doc && !de.hf_mode);reset_caret();rich_click(DE_INSERT_FOOTNOTE);
+  exr_edit_footnote note={0};assert(exr_edit_footnote_count(de.doc)==1);
+  assert(exr_edit_footnote_at(de.doc,0,&note)==EXR_OK && de_footnote_update(note.id,"note1",5));
+  assert(!g.page && !g.window);
+  g.page=CreateWindowW(L"STATIC",L"Header footer outline acceptance",WS_POPUP,
+    0,0,800,600,NULL,NULL,GetModuleHandleW(NULL),NULL);assert(g.page);
+  de.layout_dirty=1;de.scroll_y=0;
+  assert(de_measure(800,600) && deo.tree && de.footnote_row_count==2);
+  float margin=(float)shell_px(24,shell_dpi);assert(de.inset==margin+de_outline_width(800));
+  assert(de_outline_width(800)==shell_px(240,shell_dpi));
+  shell_d2d_edit_row *regions[]={&de.hf_rows[0],&de.rows[0],&de.rows[de.row_count+1],&de.hf_rows[1]};
+  uint32_t *combined=paint_memory(800,600);
+  for(unsigned i=0;i<4;i++) {
+    shell_d2d_edit_row *row=regions[i];
+    RECT box={(LONG)de.inset,(LONG)row->y,(LONG)(800-margin),(LONG)(row->y+row->height)};
+    assert(hf_body_contrast(combined,box)>0);
+    if(i)assert(regions[i-1]->y+regions[i-1]->height<row->y);
+  }
+  free(combined);
+  for(unsigned i=0;i<2;i++) {
+    shell_d2d_edit_row *row=&de.hf_rows[i];
+    assert(de_message(NULL,WM_LBUTTONDBLCLK,0,
+      MAKELPARAM((int)(800-margin-1),(int)(row->y+row->height*.5f-de.scroll_y))));
+    assert(de.hf_mode==i+1);
+  }
+  rich_click(DE_HEADER);SetFocus(g.page);
+  assert(de_key('O',1,1) && GetFocus()==deo.tree && de.hf_mode==1);
+  rich_click(DE_INSERT_FOOTNOTE);assert(exr_edit_footnote_count(de.doc)==1);
+  assert(de_key(VK_ESCAPE,0,0));de.mouse_down=0;
+  shell_d2d_edit_row *note_row=&de.rows[de.row_count+1];
+  assert(de_message(NULL,WM_LBUTTONDOWN,0,
+    MAKELPARAM((int)(800-margin-1),(int)(note_row->y+note_row->height*.5f-de.scroll_y))));
+  assert(!de.hf_mode && !de.mouse_down);
+  de_outline_close();DestroyWindow(g.page);g.page=NULL;
+  puts("merge PASS outline/header/body/footnote/footer paint together; right-edge margin editing, header outline shortcut and footnote isolation");
   de_close();shell_d2d_destroy(host_shell);host_shell=NULL;
   exr_font_free(g.font);exr_font_manager_free(g.font_manager);CoUninitialize();
-  puts("L13 real-editor headless acceptance PASS (no HWND / no SendInput)");return 0;
+  puts("L13 real-editor headless acceptance PASS (no SendInput)");return 0;
 }

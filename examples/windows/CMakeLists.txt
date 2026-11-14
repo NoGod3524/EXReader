@@ -23,7 +23,7 @@ option(EXR_READER_TEST_DRIVERS "Compile acceptance commands (test builds only)" 
 if(EXR_READER_TEST_DRIVERS)
   target_compile_definitions(EXReader PRIVATE EXR_READER_TEST_DRIVERS=1)
 endif()
-target_link_libraries(EXReader PRIVATE EXReader::exreader comdlg32 gdi32 uiautomationcore shell32 user32 winhttp crypt32)
+target_link_libraries(EXReader PRIVATE EXReader::exreader comdlg32 comctl32 gdi32 uiautomationcore shell32 user32 winhttp crypt32)
 if(NOT MSVC)
   target_link_libraries(EXReader PRIVATE m)
 endif()
@@ -73,7 +73,7 @@ if(EXR_READER_WINDOWS_SHELL)
   add_executable(check_shell_header_footer EXCLUDE_FROM_ALL check_shell_header_footer.c shell_d2d.cpp shell_epub.cpp shell_speech.cpp)
   target_compile_features(check_shell_header_footer PRIVATE cxx_std_17)
   target_compile_definitions(check_shell_header_footer PRIVATE EXR_READER_WINDOWS_SHELL=1)
-  target_link_libraries(check_shell_header_footer PRIVATE EXReader::exreader comdlg32 gdi32 uiautomationcore shell32 user32
+  target_link_libraries(check_shell_header_footer PRIVATE EXReader::exreader comdlg32 comctl32 gdi32 uiautomationcore shell32 user32
     winhttp crypt32 d2d1 dwrite advapi32 ole32 uuid EXReader::vendor_miniz EXReader::vendor_expat)
   if(MSVC)
     target_compile_options(check_shell_header_footer PRIVATE /UNDEBUG)
@@ -97,6 +97,21 @@ if(EXR_READER_WINDOWS_SHELL)
   add_test(NAME windows-header-footer-ui COMMAND check_shell_header_footer "${CMAKE_CURRENT_BINARY_DIR}/header-footer-evidence")
   add_test(NAME windows-table-ui COMMAND check_shell_table "${CMAKE_CURRENT_BINARY_DIR}/table-evidence"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/fixtures/rich.docx")
+  add_executable(check_shell_docedit_outline check_shell_docedit_outline.c shell_d2d.cpp shell_epub.cpp shell_speech.cpp)
+  target_compile_features(check_shell_docedit_outline PRIVATE cxx_std_17)
+  target_compile_definitions(check_shell_docedit_outline PRIVATE EXR_READER_WINDOWS_SHELL=1)
+  target_link_libraries(check_shell_docedit_outline PRIVATE EXReader::exreader comdlg32 comctl32 gdi32
+    uiautomationcore shell32 user32 winhttp crypt32 d2d1 dwrite advapi32 ole32 oleaut32 uuid
+    EXReader::vendor_miniz EXReader::vendor_expat)
+  if(MSVC)
+    target_compile_options(check_shell_docedit_outline PRIVATE /UNDEBUG /utf-8)
+  else()
+    target_compile_options(check_shell_docedit_outline PRIVATE -UNDEBUG)
+    target_link_options(check_shell_docedit_outline PRIVATE -static)
+    target_link_libraries(check_shell_docedit_outline PRIVATE m)
+  endif()
+  add_test(NAME windows-docedit-outline-headless COMMAND check_shell_docedit_outline)
+  set_tests_properties(windows-docedit-outline-headless PROPERTIES LABELS headless TIMEOUT 90)
   target_compile_features(check_shell_docedit PRIVATE cxx_std_17)
   target_compile_definitions(check_shell_docedit PRIVATE EXR_READER_WINDOWS_SHELL=1)
   target_link_libraries(check_shell_docedit PRIVATE EXReader::exreader comdlg32 gdi32 uiautomationcore shell32 user32
@@ -111,6 +126,9 @@ if(EXR_READER_WINDOWS_SHELL)
   if(NOT MSVC)
     target_link_options(EXReader PRIVATE -static)
   endif()
+  target_link_libraries(check_shell_docedit PRIVATE comctl32)
+  target_link_libraries(check_shell_table PRIVATE comctl32)
+  target_link_libraries(check_shell_anchor PRIVATE comctl32)
   # Test-only WebDAV server for the cloud-sync acceptance (rclone is not required).
   add_executable(mock_webdav EXCLUDE_FROM_ALL mock_webdav_main.c)
   target_link_libraries(mock_webdav PRIVATE ws2_32)
@@ -124,7 +142,7 @@ if(exr_type STREQUAL "SHARED_LIBRARY")
             PATHS "${EXR_SDK}/bin" NO_DEFAULT_PATH REQUIRED)
   # The console drivers must load the same SDK as the app, including when only
   # a driver is built after an engine API change.
-  foreach(host EXReader check_shell_docedit check_shell_table check_shell_header_footer)
+  foreach(host EXReader check_shell_docedit check_shell_table check_shell_header_footer check_shell_docedit_outline)
     add_custom_command(TARGET ${host} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXR_RUNTIME}" "$<TARGET_FILE_DIR:${host}>"
       VERBATIM)

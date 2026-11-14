@@ -3,7 +3,19 @@
 static unsigned de_units(const char *text,size_t n) {
   return n ? (unsigned)MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,text,(int)n,NULL,0):0;
 }
+static unsigned de_footnote_label(exr_edit_id id,wchar_t label[32]) {
+  exr_edit_footnote note={0};size_t number=0;
+  /* ponytail: scan references for labels; cache ordinals if note-heavy documents need it. */
+  size_t count=exr_edit_footnote_count(de.doc);
+  for(size_t i=0;i<count;i++)
+    if(exr_edit_footnote_at(de.doc,i,&note)==EXR_OK && note.id==id) {number=note.number;break;}
+  wchar_t digits[32];swprintf(digits,32,L"%zu",number);
+  const wchar_t superscript[]=L"⁰¹²³⁴⁵⁶⁷⁸⁹";
+  unsigned n=0;for(;digits[n] && n<31;n++)label[n]=superscript[digits[n]-L'0'];
+  label[n]=0;return n;
+}
 static unsigned de_run_units(const exr_edit_run *r) {
+  if(r->kind==EXR_EDIT_FOOTNOTE) {wchar_t label[32];return de_footnote_label(r->id,label);}
   return r->kind==EXR_EDIT_TEXT ? de_units(r->text,r->text_size):de_run_trivia(r) ? 0:1;
 }
 static unsigned de_offset(de_pos p) {
@@ -51,15 +63,16 @@ static wchar_t *de_paragraph_text(const exr_edit_block *b) {
   for(size_t i=0;i<b->run_count;i++) {
     const exr_edit_run *r=&b->runs[i];
     if(de_run_trivia(r))continue;
-    if(r->kind!=EXR_EDIT_TEXT)text[at++]=0xfffc;
+    if(r->kind==EXR_EDIT_FOOTNOTE) {wchar_t label[32];unsigned n=de_footnote_label(r->id,label);memcpy(text+at,label,n*sizeof(wchar_t));at+=n;}
+    else if(r->kind!=EXR_EDIT_TEXT)text[at++]=0xfffc;
     else if(r->text_size)at+=(size_t)MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,
       r->text,(int)r->text_size,text+at,(int)(count-at));
   }
   return text;
 }
 static void de_drop_layout(void) {
-  for(size_t i=0;i<de.row_count;i++)shell_d2d_edit_release(de.rows[i].layout);
-  free(de.rows);de.rows=NULL;de.row_count=0;de.extent=0;
+  for(size_t i=0;i<de.row_count+de.footnote_row_count;i++)shell_d2d_edit_release(de.rows[i].layout);
+  free(de.rows);de.rows=NULL;de.row_count=de.footnote_row_count=0;de.extent=0;
   for(unsigned i=0;i<2;i++) {
     shell_d2d_edit_release(de.hf_rows[i].layout);memset(&de.hf_rows[i],0,sizeof(de.hf_rows[i]));
     exr_free(de.hf_text[i]);de.hf_text[i]=NULL;de.hf_size[i]=0;
@@ -69,21 +82,25 @@ static int de_measure(int width,int height) {
   /* ponytail: rebuild all paragraph views on edits; cache changed paragraphs if
      editing large documents becomes a measured bottleneck. */
   if(!de.doc || !host_shell)return 0;
+  if(de.layout_dirty)de_outline_update();
+  de_outline_layout(width,height);
   if(!de.layout_dirty && de.width==width && de.height==height && de.dpi==shell_dpi)return 1;
   de_drop_layout();de.width=width;de.height=height;de.dpi=shell_dpi;
-  de.inset=(float)shell_px(24,shell_dpi);
-  size_t count=de_block_count(de.doc);
-  de.rows=calloc(count ? count:1,sizeof(*de.rows));if(!de.rows)return 0;
-  float y=de_toolbar_height()+de.inset;
+  float margin=(float)shell_px(24,shell_dpi);
+  de.inset=margin+de_outline_width(width);
+  size_t count=de_block_count(de.doc),notes=exr_edit_footnote_count(de.doc);
+  size_t total=count+(notes ? notes+1:0);
+  de.rows=calloc(total ? total:1,sizeof(*de.rows));if(!de.rows)return 0;
+  float y=de_toolbar_height()+margin;
   if(!de_hf_measure(0,y)) {de_drop_layout();return 0;}
-  y=de.hf_rows[0].y+de.hf_rows[0].height+de.inset;
+  y=de.hf_rows[0].y+de.hf_rows[0].height+margin;
   float table_top=y,pad=(float)shell_px(6,shell_dpi);size_t table_start=0;
   for(size_t i=0;i<count;i++) {
     const exr_edit_block *block=de_block_at(de.doc,i);
     wchar_t *text=de_paragraph_text(block);
     if(!text) {de_drop_layout();return 0;}
     shell_d2d_edit_row *row=&de.rows[i];
-    de_cell cell=de_cell_at(i);float available=(float)width-2*de.inset;
+    de_cell cell=de_cell_at(i);float available=(float)width-de.inset-margin;
     if(cell.table) {
       const exr_edit_table *t=exr_edit_find_block(de.doc,cell.table)->table;
       de_cell previous=i ? de_cell_at(i-1):(de_cell){0};
@@ -130,11 +147,33 @@ static int de_measure(int width,int height) {
       }
     } else y+=row->height+(float)shell_px(8,shell_dpi);
   }
-  float footer_y=y+de.inset;
+  if(notes) {
+    y+=margin;
+    for(size_t i=0;i<=notes;i++) {
+      wchar_t *text=NULL;
+      if(!i)text=host_wide("──────── 脚注（单击编辑） ────────",strlen("──────── 脚注（单击编辑） ────────"));
+      else {
+        exr_edit_footnote note={0};if(exr_edit_footnote_at(de.doc,i-1,&note)!=EXR_OK) {de_drop_layout();return 0;}
+        wchar_t *body=host_wide(note.text ? note.text:"",note.text_size);
+        if(body) {
+          size_t length=wcslen(body)+40;text=calloc(length,sizeof(*text));
+          if(text)swprintf(text,length,L"%zu  %ls",note.number,body);free(body);
+        }
+      }
+      if(!text) {de_drop_layout();return 0;}
+      shell_d2d_edit_row *row=&de.rows[count+i];row->y=y;
+      HRESULT hr=shell_d2d_edit_layout(host_shell,text,g.font_family[0] ? g.font_family:L"Segoe UI",
+        14.f*shell_dpi/96.f,(float)width-de.inset-margin,&row->layout,&row->height);
+      free(text);
+      if(FAILED(hr)) {shell_d2d_edit_release(row->layout);row->layout=NULL;de_drop_layout();return 0;}
+      de.footnote_row_count++;y+=row->height+(float)shell_px(8,shell_dpi);
+    }
+  }
+  float footer_y=y+margin;
   if(!de_hf_measure(1,footer_y)) {de_drop_layout();return 0;}
-  float bottom=de.height-de.inset-de.hf_rows[1].height;
+  float bottom=de.height-margin-de.hf_rows[1].height;
   if(de.hf_rows[1].y<bottom)de.hf_rows[1].y=bottom;
-  de.extent=de.hf_rows[1].y+de.hf_rows[1].height+de.inset;de.layout_dirty=0;return 1;
+  de.extent=de.hf_rows[1].y+de.hf_rows[1].height+margin;de.layout_dirty=0;return 1;
 }
 static void de_scroll(float delta) {
   float limit=de.extent-de.height;if(limit<0)limit=0;
@@ -144,7 +183,7 @@ static void de_scroll(float delta) {
 }
 static void de_refresh(int reveal) {
   de.blink=1;
-  if(!g.page)return;
+  if(!g.page) {if(de.doc && de.layout_dirty)de_outline_update();return;}
   RECT area;GetClientRect(g.page,&area);
   if(de_measure(area.right,area.bottom) && reveal && (de.hf_mode || de.caret.view<de.row_count)) {
     float box[4];shell_d2d_edit_row *row=de.hf_mode ? &de.hf_rows[de.hf_mode-1]:&de.rows[de.caret.view];
@@ -200,9 +239,11 @@ static HRESULT de_paint_dc(HDC dc,const RECT *area) {
     row->show_caret=!de.hf_mode && i==de.caret.view && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
     row->dimmed=de.hf_mode!=0;
   }
-  shell_d2d_edit_row *paint_rows=malloc((de.row_count+2)*sizeof(*paint_rows));
+  size_t content_rows=de.row_count+de.footnote_row_count;
+  for(size_t i=de.row_count;i<content_rows;i++)de.rows[i].dimmed=de.hf_mode!=0;
+  shell_d2d_edit_row *paint_rows=malloc((content_rows+2)*sizeof(*paint_rows));
   if(!paint_rows)return E_OUTOFMEMORY;
-  memcpy(paint_rows,de.rows,de.row_count*sizeof(*paint_rows));
+  memcpy(paint_rows,de.rows,content_rows*sizeof(*paint_rows));
   for(unsigned i=0;i<2;i++) {
     shell_d2d_edit_row *row=&de.hf_rows[i];int active=de.hf_mode==i+1;
     size_t a=de.hf_anchor,b=de.hf_caret;if(a>b) {size_t t=a;a=b;b=t;}
@@ -210,9 +251,9 @@ static HRESULT de_paint_dc(HDC dc,const RECT *area) {
     row->length=active ? de_units(de.hf_text[i]+a,b-a):0;
     row->caret=active ? de_units(de.hf_text[i],de.hf_caret):0;
     row->show_caret=active && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
-    row->dimmed=!active;paint_rows[de.row_count+i]=*row;
+    row->dimmed=!active;paint_rows[content_rows+i]=*row;
   }
-  HRESULT hr=shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),paint_rows,de.row_count+2,
+  HRESULT hr=shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),paint_rows,content_rows+2,
     de.inset,de.scroll_y,de_toolbar_height());
   free(paint_rows);
   if(hr==S_OK)hr=de_hf_labels(dc);

@@ -7,7 +7,7 @@ extern void XML_ParserFree(void *);
 extern void XML_SetUserData(void *,void *);
 extern void XML_SetElementHandler(void *,void (*)(void *,const char *,const char **),void (*)(void *,const char *));
 extern int XML_Parse(void *,const char *,int,int);
-typedef struct { char id[128],base[128]; exr_edit_run_props props; } de_style;
+typedef struct { char id[128],base[128]; exr_edit_run_props props; unsigned heading,paragraph; } de_style;
 typedef struct { size_t block,run,byte; } de_pos;
 typedef struct {
   size_t block,row,column,run,byte;
@@ -26,7 +26,7 @@ typedef struct {
   char path[MAX_PATH];
   float scroll_y,extent,inset;
   shell_d2d_edit_row *rows;
-  size_t row_count;
+  size_t row_count,footnote_row_count;
   int width,height,layout_dirty,blink,mouse_down,saved;
   unsigned dpi;
   wchar_t high_surrogate,title[512];
@@ -37,6 +37,11 @@ typedef struct {
   shell_d2d_edit_row hf_rows[2];
 } shell_docedit;
 static shell_docedit de;
+static int de_outline_width(int width);
+static void de_outline_update(void);
+static void de_outline_layout(int width,int height);
+static void de_outline_close(void);
+static wchar_t *de_paragraph_text(const exr_edit_block *block);
 
 typedef struct { exr_edit_id table; size_t row,col,paragraph; } de_cell;
 /* A disposable document-order view; engine IDs remain the mutation addresses.
@@ -76,7 +81,7 @@ static int32_t de_column_twips(const exr_edit_table *t,size_t col) {
     t->column_count ? t->width_twips/(int32_t)t->column_count:0;
   /* With no engine width, divide the current viewport equally. */
   if(value<=0 && t->column_count) {
-    float available=de.width-2.f*shell_px(24,shell_dpi);
+    float available=de.width-de_outline_width(de.width)-2.f*shell_px(24,shell_dpi);
     value=(int32_t)((available>0 ? available:552)*1440.f/shell_dpi/t->column_count);
   }
   return value>0 ? value:1;
@@ -111,6 +116,8 @@ static int de_hf_key(WPARAM key,int control,int shift);
 static int de_hf_mouse(HWND window,UINT message,LPARAM lparam);
 static int de_hf_measure(unsigned footer,float y);
 static HRESULT de_hf_labels(HDC dc);
+static int de_footnote_insert(void);
+static int de_footnote_click(float x,float y);
 
 static de_pos de_caret_pos(void) {
   de_pos p={de.caret.view,de.caret.run,de.caret.byte};return p;
@@ -279,6 +286,7 @@ static void de_enter(void) {
   if(de_open(book->path))host_update_controls();
 }
 static void de_close(void) {
+  de_outline_close();
   if(g.page) {KillTimer(g.page,DE_TIMER);if(GetCapture()==g.page)ReleaseCapture();}
   de_drop_layout();free(de.styles);de.styles=NULL;de.style_count=0;de.styles_loaded=0;
   exr_edit_doc_free(de.doc);de.doc=NULL;de.color_panel=0;de.caret_in_table=0;
