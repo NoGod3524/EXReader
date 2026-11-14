@@ -268,6 +268,7 @@ static int de_leave_table(void) {
 static int de_key_modifiers(WPARAM key,int control,int shift,int alt) {
   if(!de.doc)return 0;
   de.high_surrogate=0;
+  if(control && shift && key=='O' && deo.tree) {SetFocus(deo.tree);return 1;}
   if(control && alt && key==VK_RETURN && de.caret_in_table) {de_leave_table();return 1;}
   if(key==VK_F6) {de_table_open();return 1;}
   if(control) {
@@ -346,6 +347,10 @@ static void de_character(wchar_t ch) {
 }
 static int de_translate(const MSG *message) {
   if(!de.doc)return 0;
+  if(message->message==WM_KEYDOWN && deo.pane && IsChild(deo.pane,message->hwnd) &&
+    message->wParam==VK_TAB) {
+    SetFocus(message->hwnd==deo.levels ? deo.tree:deo.levels);return 1;
+  }
   if((message->message==WM_KEYDOWN || (message->message==WM_SYSKEYDOWN &&
     message->wParam==VK_RETURN && (GetKeyState(VK_CONTROL)&0x8000))) && (message->hwnd==g.window || message->hwnd==g.page ||
     message->hwnd==de_button)) {

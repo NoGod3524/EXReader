@@ -195,6 +195,20 @@ static void footnote_acceptance(const char *directory) {
   assert(de_measure(600,240) && de.footnote_row_count==2);
   uint32_t *pixels=paint_memory(600,240);char bitmap[MAX_PATH];
   snprintf(bitmap,sizeof(bitmap),"%s/footnotes-editor.bmp",directory);save_bitmap(bitmap,pixels,600,240);free(pixels);
+  /* A hidden page creates the real outline; g.window stays NULL to avoid a modal note editor. */
+  assert(!g.page && !g.window);
+  g.page=CreateWindowW(L"STATIC",L"Footnote outline acceptance",WS_POPUP,
+    0,0,600,240,NULL,NULL,GetModuleHandleW(NULL),NULL);assert(g.page);
+  de.layout_dirty=1;assert(de_measure(600,240) && de_outline_width(600)==200);
+  float margin=(float)shell_px(24,shell_dpi);
+  shell_d2d_edit_row *last=&de.rows[de.row_count-1],*title=&de.rows[de.row_count],
+    *note=&de.rows[de.row_count+1];
+  float gap=title->y-last->y-last->height-shell_px(8,shell_dpi);
+  assert(gap>margin-.5f && gap<margin+.5f);
+  assert(de_footnote_click(600-margin-1,note->y+note->height*.5f-de.scroll_y));
+  de_outline_close();DestroyWindow(g.page);g.page=NULL;
+  de.layout_dirty=1;assert(de_measure(600,240));
+  puts("L14 PASS outline preserves footnote vertical margin and right-edge editing");
   rich_click(DE_INSERT_FOOTNOTE);assert(exr_edit_footnote_count(de.doc)==2);
   assert(exr_edit_footnote_at(de.doc,1,&second)==EXR_OK && second.number==2);
   assert(de_footnote_update(second.id,"note2",5));assert(de_save());
