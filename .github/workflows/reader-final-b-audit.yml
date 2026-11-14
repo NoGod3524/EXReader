@@ -1,5 +1,14 @@
 name: Reader F08 F09 F10 feasible audit
 on:
+  push:
+    branches: [codex/dfinal-b-f08-f10-audit]
+    paths:
+      - '.github/workflows/reader-final-b-audit.yml'
+      - 'examples/windows/check_shell_budget.inc'
+      - 'examples/windows/check_shell_privacy.inc'
+      - 'examples/windows/selection_tests.cmake'
+      - 'tests/reader_a11y_windows/**'
+      - 'tests/reader_perf_windows/render*'
   workflow_dispatch:
 permissions:
   contents: read
