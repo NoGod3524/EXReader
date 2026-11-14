@@ -26,6 +26,10 @@ jobs:
         run: |
           set -euo pipefail
           ctest --test-dir build/dfinal-sdk -V -R '^(native-library-epub-storage|native-annotation)$' --no-tests=error 2>&1 | tee evidence/dfinal-c-actions/regressions.txt
+      - name: Full CTest excluding only release and doc coverage
+        run: |
+          set -euo pipefail
+          ctest --test-dir build/dfinal-sdk -E '^(sdk-release|sdk-doc-coverage)$' --output-on-failure --parallel 4 --no-tests=error --output-junit "$PWD/evidence/dfinal-c-actions/ctest-full.xml" 2>&1 | tee evidence/dfinal-c-actions/ctest-full.txt
       - name: Installed raw3 model export import preview confirmation and rejection
         run: |
           set -euo pipefail
