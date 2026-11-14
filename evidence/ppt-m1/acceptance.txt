@@ -1,10 +1,10 @@
 PPT-M1 acceptance, 2026-11-14
 
-Baseline: 27e7ebf1 (contains 54436bfa). The native PPT-M1 implementation
-was already present (introduced by 3f6f0386, memory routing corrected by
-4c413869). This pass reviewed the three parser layers and public dispatch,
-regenerated all four fixtures using PowerPoint 16.0 COM, and reran acceptance.
-No parser changes or additional dependencies were needed.
+Baseline: 934ee864 (contains 54436bfa). The native PPT-M1 implementation
+and six CTest groups were already committed. This pass reviewed the three
+parser layers and public dispatch, verified format details against Microsoft
+MS-PPT, regenerated all four fixtures using PowerPoint 16.0 COM, and reran
+acceptance. No parser changes or additional dependencies were needed.
 
 1. Source size (physical lines)
    src/ppt_cfb.c       222
@@ -70,7 +70,7 @@ No parser changes or additional dependencies were needed.
    Encrypted presentations are not supported. At most 10000 fixed pages.
 
 6. Validation logs
-   Full CTest result: 437/437 passed, 173.85 seconds.
+   Full CTest result: 437/437 passed, 141.27 seconds.
    Build: cmake --build build/ppt-m1 -j 4 completed successfully.
    PPT-specific CTest: all six groups passed, 67 checks in total
    (cfb=13, records=11, slides=11, size=9, truncated=14, wrongformat=9).
@@ -81,7 +81,8 @@ No parser changes or additional dependencies were needed.
    1161 source/header dependencies, zero inverse includes.
    Shared prepush script: all checks passed.
    PPT groups and individual check counts are in ppt-tests.txt.
-   Full CTest, layer checks and prepush results are in ctest.txt, layers.txt
-   and prepush.txt. The shared prepush script is located at:
+   COM generation, build, full CTest, layer checks and prepush results are in
+   com-generate.txt, build.txt, ctest.txt, layers.txt and prepush.txt.
+   The shared prepush script is located at:
    C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1
    (this worktree does not contain ops/prepush-check.ps1).

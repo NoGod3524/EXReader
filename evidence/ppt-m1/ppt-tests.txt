@@ -20,7 +20,7 @@ test 305
 305: file: EXR_FORMAT: CFB invalid/cyclic directory tree at offset 128
 305: file: EXR_FORMAT: CFB invalid DIFAT termination/count at offset 68
 305: native-ppt-cfb: 13 checks passed
-1/6 Test #305: native-ppt-cfb ...................   Passed    2.72 sec
+1/6 Test #305: native-ppt-cfb ...................   Passed    4.00 sec
 test 306
     Start 306: native-ppt-records
 
@@ -34,7 +34,7 @@ test 306
 306: records: EXR_LIMIT: PPT record recursion depth exceeds 64 at offset 520
 306: records: EXR_FORMAT: PPT short SlidePersistAtom at offset 16
 306: native-ppt-records: 11 checks passed
-2/6 Test #306: native-ppt-records ...............   Passed    2.24 sec
+2/6 Test #306: native-ppt-records ...............   Passed    1.96 sec
 test 307
     Start 307: native-ppt-slides
 
@@ -48,7 +48,7 @@ test 307
 307: file: EXR_LIMIT: PPT exceeds 10000 slides
 307: cancel: EXR_CANCELLED: Operation cancelled
 307: native-ppt-slides: 11 checks passed
-3/6 Test #307: native-ppt-slides ................   Passed    2.22 sec
+3/6 Test #307: native-ppt-slides ................   Passed    2.24 sec
 test 308
     Start 308: native-ppt-size
 
@@ -57,7 +57,7 @@ test 308
 308: Test timeout computed to be: 10000000
 308: file: EXR_OK: PPT warning: SlidePersistAtom count 1 differs from Slide container count 0; using SlidePersistAtom
 308: native-ppt-size: 9 checks passed
-4/6 Test #308: native-ppt-size ..................   Passed    1.77 sec
+4/6 Test #308: native-ppt-size ..................   Passed    1.73 sec
 test 309
     Start 309: native-ppt-truncated
 
@@ -79,7 +79,7 @@ test 309
 309: file: EXR_FORMAT: CFB truncated header at offset 511
 309: file: EXR_FORMAT: PPT record length exceeds stream/container at offset 164
 309: native-ppt-truncated: 14 checks passed
-5/6 Test #309: native-ppt-truncated .............   Passed    3.15 sec
+5/6 Test #309: native-ppt-truncated .............   Passed    1.33 sec
 test 310
     Start 310: native-ppt-wrongformat
 
@@ -95,7 +95,7 @@ test 310
 310: memory: EXR_FORMAT: 不是 PowerPoint 97-2003 文档: missing PowerPoint Document stream
 310: memory: EXR_FORMAT: PPT missing DocumentContainer at offset 0
 310: native-ppt-wrongformat: 9 checks passed
-6/6 Test #310: native-ppt-wrongformat ...........   Passed    2.32 sec
+6/6 Test #310: native-ppt-wrongformat ...........   Passed    0.93 sec
 
 The following tests passed:
 	native-ppt-cfb
@@ -107,4 +107,4 @@ The following tests passed:
 
 100% tests passed out of 6
 
-Total Test time (real) =  14.56 sec
+Total Test time (real) =  12.29 sec

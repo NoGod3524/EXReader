@@ -1,4 +1,4 @@
-验收完成。当前分支已有三层实现；本轮复核源码、重新生成 COM 夹具并刷新[验收报告](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/evidence/ppt-m1/acceptance.txt)。
+验收通过。当前分支已含三层实现；本轮复核源码、重新生成 COM 夹具并更新[验收报告](/C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/evidence/ppt-m1/acceptance.txt)。
 
 | 夹具 | 引擎 pages | PowerPoint |
 |---|---:|---:|
@@ -7,22 +7,24 @@
 | 20 页 | 20 | 20 |
 | 空演示文稿 | 0 | 0 |
 
-- 非空页均为 **720×540 pt**；文件、内存入口共 **52 次白页渲染成功**。
+- 非空页均为 **720×540 pt**；文件和内存入口共 **52 次白页渲染成功**。
 - 六组 `native-ppt-{cfb,records,slides,size,truncated,wrongformat}` 全通过，共 **67 项检查**。
 - 全量 ctest **437/437 通过**，已排除指定两项；构建、分层检查、共享 `ops/prepush-check.ps1` 均通过。
 - 实现行数：`ppt_cfb.c` **222**、`ppt_records.c` **77**、`ppt.c` **100**；内部头文件 **21** 行，已登记。
-- 无新增依赖，三个禁改文件无改动。COM [生成脚本](C:/Users/Oscar/Documents/Codex/EXReader-ppt-m1-20261113/tests/fixtures/ppt-legacy/generate.py)已在库中。
+- 无新增依赖，三个禁改文件无差异；COM 生成脚本已入库。
 
-坏签名、DOCX 改名均返回 `EXR_FORMAT`：
+坏签名、DOCX 改名均返回 `EXR_FORMAT`，消息原文：
+
 ```text
 CFB invalid signature at offset 0
 ```
 
 20 页夹具截断至三分之一返回 `EXR_FORMAT`：
+
 ```text
 CFB truncated/invalid sector at offset 299008
 ```
 
-题面格式值按微软规范处理：Slide 为 [`0x03EE`](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/38fb1fa5-0a62-477a-8b14-178df22de812)，尺寸单位为 [`1/576` 英寸](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/ef463dad-817f-4790-9a50-19783cd08827)，即 `1/8 pt`。
+题面两处按微软规范处理：Slide 为 [`0x03EE`](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/38fb1fa5-0a62-477a-8b14-178df22de812)，尺寸单位为 [`1/576` 英寸](https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/ef463dad-817f-4790-9a50-19783cd08827)，即 `1/8 pt`。
 
 已知边界：仅白页；母版、备注不计页；不绘制嵌入 OLE 对象；不支持加密 PPT 和完整增量编辑链重建。
