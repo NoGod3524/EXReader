@@ -1,0 +1,85 @@
+diff --git a/src/cbz.c b/src/cbz.c
+index b30803ad..8be70500 100644
+--- a/src/cbz.c
++++ b/src/cbz.c
+@@ -48,6 +48,40 @@ static int compare_pages(const void *left,const void *right) {
+   { int order=strcmp(original_a,original_b);if(order) return order; }
+   return la->frame < lb->frame ? -1 : la->frame > lb->frame;
+ }
++/* A member stored as "/a.png" and one stored as "a.png" denote the same page
++   once the single tolerated leading slash is removed. Neither may displace the
++   other, so the pair is an explicit format error rather than an implicit choice.
++   Frames of one member share key, name and archive index; an identical pair of
++   member names keeps the pre-existing duplicate-path error. */
++typedef struct { const char *name,*key; mz_uint index; } page_identity;
++static const char *page_key(const char *name) { return name[0]=='/' ? name+1 : name; }
++static int compare_identities(const void *left,const void *right) {
++  const page_identity *la=left,*lb=right;int order=strcmp(la->key,lb->key);
++  if(order) return order;
++  return la->index<lb->index ? -1 : la->index>lb->index;
++}
++static exr_status check_normalized_paths(const comic_page *pages,size_t count,exr_error *e) {
++  page_identity *identities;size_t i;
++  if(count<2) return EXR_OK;
++  identities=malloc(count*sizeof(*identities));
++  if(!identities) return exr_fail(e,EXR_MEMORY,"CBZ page identity allocation failed");
++  for(i=0;i<count;i++) {
++    identities[i].name=pages[i].name;
++    identities[i].key=page_key(pages[i].name);
++    identities[i].index=pages[i].index;
++  }
++  qsort(identities,count,sizeof(*identities),compare_identities);
++  for(i=1;i<count;i++)
++    if(identities[i-1].index!=identities[i].index && !strcmp(identities[i-1].key,identities[i].key)) {
++      const char *message=strcmp(identities[i-1].name,identities[i].name)
++        ? "Duplicate CBZ member path after leading-slash normalization"
++        : "Duplicate CBZ page path or frame id";
++      free(identities);
++      return exr_fail(e,EXR_FORMAT,"%s",message);
++    }
++  free(identities);
++  return EXR_OK;
++}
+ static void release(void *context) {
+   comic *d=context;size_t i;if(!d) return;
+   mz_zip_reader_end(&d->zip);
+@@ -286,13 +320,21 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
+   if(total>10000) { status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 archive members");goto done; }
+   capacity=total ? total : 1;d->pages=calloc(capacity,sizeof(*d->pages));if(!d->pages) { status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
+   for(i=0;i<total;i++) {
+-    mz_zip_archive_file_stat st;char name[2049];mz_uint length;int kind;size_t at=0;uint32_t cp;
++    mz_zip_archive_file_stat st;char name[2049],stored[2049];const char *member;mz_uint length;int kind;size_t at=0;uint32_t cp;
+     status=exr_control_poll(d->control,EXR_STAGE_READ,i,total,e);if(status!=EXR_OK) goto done;
+     if(!mz_zip_reader_file_stat(&d->zip,i,&st)) { status=archive_error(d,e,"Invalid CBZ member directory");goto done; }
+     if(st.m_is_directory) continue;
+     length=mz_zip_reader_get_filename(&d->zip,i,name,sizeof(name));
+     if(!length || length>sizeof(name)) { status=exr_fail(e,EXR_LIMIT,"CBZ member name exceeds 2048 bytes");goto done; }
+     if(strlen(name)!=length-1) { status=exr_fail(e,EXR_FORMAT,"CBZ member name contains NUL");goto done; }
++    /* Publisher exports (the two fixed Pepper&Carrot episodes) store every member
++       under exactly one leading '/'. That single, unambiguous prefix is tolerated
++       for validation and classification only: the archive bytes and the page ID
++       keep the name exactly as stored, so a page ID is always a real ZIP member
++       name. '//', "..", drive/UNC, backslash, NUL and normalized collisions still
++       fail on the name below. */
++    member=name;
++    if(name[0]=='/') { memcpy(stored,name,length);memmove(name,name+1,length-1);length--;member=stored; }
+     if(!strncmp(name,"__MACOSX/",9) || name[0]=='.' || strstr(name,"/.")!=NULL) continue;
+     kind=image_kind(name);
+     if(!kind && !equal(name,"ComicInfo.xml")) continue;
+@@ -302,7 +344,7 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
+     if(!kind) { if(info!=UINT_MAX) { status=exr_fail(e,EXR_FORMAT,"Duplicate ComicInfo.xml");goto done; }info=i;continue; }
+     if(!st.m_uncomp_size || st.m_uncomp_size>(size_t)32*1024*1024) { status=exr_fail(e,EXR_LIMIT,"CBZ encoded page exceeds 32 MiB");goto done; }
+     { comic_page *expanded=NULL;size_t expanded_count=0;
+-      status=member_pages(d,i,&st,name,(size_t)st.m_uncomp_size,&work,&expanded,&expanded_count,e);
++      status=member_pages(d,i,&st,member,(size_t)st.m_uncomp_size,&work,&expanded,&expanded_count,e);
+       if(status!=EXR_OK) goto done;
+       if(d->count>(size_t)10000-expanded_count) { free(expanded);status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 pages after frame expansion");goto done; }
+       if(d->count+expanded_count>capacity) {
+@@ -315,6 +357,7 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
+   }
+   if(!d->count) { status=exr_fail(e,EXR_FORMAT,"CBZ contains no supported image pages");goto done; }
+   qsort(d->pages,d->count,sizeof(*d->pages),compare_pages);
++  status=check_normalized_paths(d->pages,d->count,e);if(status!=EXR_OK) goto done;
+   for(i=1;i<d->count;i++) if(!strcmp(d->pages[i-1].id,d->pages[i].id)) { status=exr_fail(e,EXR_FORMAT,"Duplicate CBZ page path or frame id");goto done; }
+   if(info!=UINT_MAX) { status=comic_info(d,info,e);if(status!=EXR_OK) goto done; }
+   for(i=0;i<d->metadata_count;i++) if(!strcmp(d->metadata[i].key,"http://purl.org/dc/terms/title")) { title=d->metadata[i].value;break; }
