@@ -1,5 +1,6 @@
 """Local installed-native two-client tests. Relay simulates disconnection; no TLS/UI claim."""
 import argparse
+from contextlib import closing
 import hashlib
 import json
 from pathlib import Path
@@ -61,8 +62,9 @@ class Clients:
 
     @staticmethod
     def sql(db, query):
-        with sqlite3.connect(db) as connection:
-            return connection.execute(query).fetchall()
+        with closing(sqlite3.connect(db)) as connection:
+            with connection:
+                return connection.execute(query).fetchall()
 
     def equal_metadata(self):
         for table in ('reader_books', 'reader_shelves', 'reader_tags', 'reader_series',
