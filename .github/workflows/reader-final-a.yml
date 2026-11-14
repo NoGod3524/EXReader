@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  PYTHONUTF8: '1'
 jobs:
   native-https:
     name: Native HTTPS session and crash boundaries (${{ matrix.os }})
@@ -82,7 +84,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y patchelf
-          sdkmanager 'ndk;27.0.12077973' 'platforms;android-35' 'build-tools;35.0.0'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;27.0.12077973' 'platforms;android-35' 'build-tools;35.0.0'
       - name: Build SDK, native product and APK without emulator execution
         run: python3 tests/reader_final_a/build_android.py
       - uses: actions/upload-artifact@v4
@@ -207,7 +209,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev xvfb xdotool openbox fonts-dejavu-core
+          sudo apt-get install -y libgtk-3-dev xvfb xdotool openbox fonts-dejavu-core fonts-crosextra-carlito
       - run: python -m pip install Pillow
       - name: Build installed SDK from the same source
         run: |
