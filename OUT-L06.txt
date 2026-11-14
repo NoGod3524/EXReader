@@ -1,0 +1,27 @@
+L06 尚未完成界面接入；计数验证通过。
+
+① 文件：`shell_docedit_status.inc` 82 行；自有测试 `check_shell_docedit_status.c` 51 行，本次补充 13 行。共享既有文件改动为 0。
+
+② 验收命令：
+
+```powershell
+gcc -std=c11 -Wall -Wextra -Werror -Iinclude examples/windows/check_shell_docedit_status.c -o "$env:TEMP/check-l06-status.exe"
+& "$env:TEMP/check-l06-status.exe"
+```
+
+真实输出：
+
+```text
+PASS ten Chinese scalars: words +10, characters +10
+PASS Latin/Chinese/emoji and Unicode whitespace: words=3 characters=6 paragraphs=1
+PASS table cell text included once
+PASS opaque XML excluded; empty paragraph retained
+PASS joined emoji and combining mark counted as five code points
+PASS formatting runs do not add characters or paragraphs
+```
+
+指定 prepush 检查退出码 0，输出“全部通过 —— 可以推”。
+
+③ 边界：状态栏尚未显示，刷新与保存状态切换尚未验收；未推送。
+
+是否允许修改 `examples/reader.c`、`shell_docedit.inc` 和 `shell_docedit_paint.inc` 的必要接入点？需要确认是因为你明确规定“只改自己的新文件 + 明确列出的既有文件”，这些文件未获授权。

@@ -1,0 +1,85 @@
+--- a/examples/reader.c
++++ b/examples/reader.c
+@@ -4225,10 +4225,16 @@
+ #include "windows/shell_tts.inc"
+ #include "windows/shell_dictionary.inc"
+ #include "windows/shell_sync.inc"
++static void de_find_close(void);
++static void de_find_layout(void);
++static float de_find_content_top(void);
++static int de_find_key(WPARAM key,int control,int shift);
++static int de_find_translate(const MSG *message);
+ #include "windows/shell_docedit.inc"
+ #include "windows/shell_docedit_toolbar.inc"
+ #include "windows/shell_docedit_paint.inc"
+ #include "windows/shell_docedit_input.inc"
++#include "windows/shell_docedit_find.inc"
+ #endif
+ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+ #ifdef EXR_READER_WINDOWS_SHELL
+--- a/examples/windows/shell_docedit.inc
++++ b/examples/windows/shell_docedit.inc
+@@ -201,6 +201,7 @@
+   if(de_open(book->path))host_update_controls();
+ }
+ static void de_close(void) {
++  de_find_close();
+   if(g.page) {KillTimer(g.page,DE_TIMER);if(GetCapture()==g.page)ReleaseCapture();}
+   de_drop_layout();free(de.styles);de.styles=NULL;de.style_count=0;de.styles_loaded=0;
+   exr_edit_doc_free(de.doc);de.doc=NULL;de.color_panel=0;
+--- a/examples/windows/shell_docedit_input.inc
++++ b/examples/windows/shell_docedit_input.inc
+@@ -218,6 +218,7 @@
+   set_status(L"无法编辑此位置（表格、图片、保留内容或内存不足）；此次修改已撤回。");return 0;
+ }
+ static int de_key(WPARAM key,int control,int shift) {
++  if(de_find_key(key,control,shift))return 1;
+   if(!de.doc)return 0;
+   de.high_surrogate=0;
+   if(control) {
+@@ -289,6 +290,7 @@
+   if(n)de_edit(DE_TYPE,text,(size_t)n);
+ }
+ static int de_translate(const MSG *message) {
++  if(de_find_translate(message))return 1;
+   if(!de.doc)return 0;
+   if(message->message==WM_KEYDOWN && (message->hwnd==g.window || message->hwnd==g.page ||
+     message->hwnd==de_button)) {
+@@ -308,7 +310,7 @@
+     de_key(wparam,(GetKeyState(VK_CONTROL)&0x8000)!=0,(GetKeyState(VK_SHIFT)&0x8000)!=0);return 1;
+   }
+   if(message==WM_TIMER && wparam==DE_TIMER) {de.blink=!de.blink;InvalidateRect(window,NULL,FALSE);return 1;}
+-  if(message==WM_SIZE) {de.layout_dirty=1;de_refresh(1);return 1;}
++  if(message==WM_SIZE) {de_find_layout();de.layout_dirty=1;de_refresh(1);return 1;}
+   if(message==WM_MOUSEWHEEL) {de_scroll(-(short)HIWORD(wparam)/120.f*51.f*shell_dpi/96.f);return 1;}
+   if(message==WM_LBUTTONDOWN || (message==WM_MOUSEMOVE && de.mouse_down)) {
+     if(message==WM_LBUTTONDOWN) {
+--- a/examples/windows/shell_docedit_paint.inc
++++ b/examples/windows/shell_docedit_paint.inc
+@@ -70,7 +70,7 @@
+   de.inset=(float)shell_px(24,shell_dpi);
+   size_t count=exr_edit_block_count(de.doc);
+   de.rows=calloc(count ? count:1,sizeof(*de.rows));if(!de.rows)return 0;
+-  float y=de_toolbar_height()+de.inset;
++  float y=de_find_content_top()+de.inset;
+   for(size_t i=0;i<count;i++) {
+     const exr_edit_block *block=exr_edit_block_at(de.doc,i);
+     wchar_t *text=de_paragraph_text(block);
+@@ -119,7 +119,7 @@
+     float box[4];shell_d2d_edit_row *row=&de.rows[de.caret_block];
+     shell_d2d_edit_position(row->layout,de_offset(de_caret()),box);
+     float top=row->y+box[1],bottom=top+box[3];
+-    if(top<de.scroll_y+de_toolbar_height())de.scroll_y=top-de_toolbar_height();
++    if(top<de.scroll_y+de_find_content_top())de.scroll_y=top-de_find_content_top();
+     if(bottom>de.scroll_y+de.height)de.scroll_y=bottom-de.height;
+   }
+   de_scroll(0);de_title();
+@@ -158,7 +158,7 @@
+     row->show_caret=i==de.caret_block && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
+   }
+   HRESULT hr=shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),de.rows,de.row_count,
+-    de.inset,de.scroll_y,de_toolbar_height());
++    de.inset,de.scroll_y,de_find_content_top());
+   return hr==S_OK ? de_toolbar_paint(dc):hr;
+ }
+ static void de_paint(HWND window) {

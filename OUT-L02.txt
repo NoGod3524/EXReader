@@ -1,0 +1,33 @@
+L02 图片模块验收通过；主编辑器尚未接入，用户完整流程仍待整合。
+
+1. 相对 `origin/main` 新增文件行数：
+
+   - `shell_docedit_image_paint.inc`：64 行
+   - `check_shell_image_paint.c`：86 行
+   - 验收 `CMakeLists.txt`：14 行
+   - 接入 `README.md`：37 行
+
+   既有文件改动：`shell_d2d.cpp` +40 行、`shell_d2d.h` +5 行。
+
+2. 验收命令：
+
+   ```powershell
+   cmake --build build/l02-check
+   ctest --test-dir build/l02-check -V --output-on-failure
+   ```
+
+   真实输出：
+
+   ```text
+   ninja: no work to do.
+   PASS inserted bitmap red_pixels=4560 blue_pixels=4560
+   PASS center click selected_block=0 highlight=1px
+   PASS blank click selected_block=SIZE_MAX highlight_cleared=1
+   PASS premultiplied alpha, preserved background, paint clipped below toolbar
+   PASS aspect ratio, centering, DPI, scrolling, toolbar clipping, edges, invalid hit inputs
+   100% tests passed out of 1
+   ```
+
+   规定的 `prepush-check.ps1 -Worktree .` 退出码为 0，输出：`全部通过 —— 可以推`。
+
+3. 已知边界：直接读取公共 `block->image` 的载荷与 EMU 尺寸。绘制、布局和点击函数尚未接入主编辑器；所需接入文件不在独占清单内，未越界修改。接入步骤已写入 `image-paint-check/README.md`。

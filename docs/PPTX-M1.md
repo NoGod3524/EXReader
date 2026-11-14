@@ -1,7 +1,37 @@
 # PPTX M1 验收记录
 
+## 2026-11-13：当前 HEAD 复核
+
+复核源码：`21b321d4`，已包含合入的 PPTX M1 和后续 legacy PPT 支持。
+本次核查未发现需要补写的 M1 功能，仅更新本验收记录。下方保留首次实现时的验收历史。
+当前 `EXR_PPT=10`、`EXR_PPTX=11`；`src/pptx.c` 仍为 416 行、15 个函数。
+
+启动时本地 DLL 为旧产物，内存入口与当前枚举不一致。完成当前 HEAD 的全功能
+Release 重建后，文件与内存入口均通过以下检查：
+
+| 检查 | 本次结果 |
+| --- | --- |
+| `cmake --build build/pptx-m1 -j 4` | exit 0 |
+| `python tests/fixtures/pptx-skeleton/generate.py --check` | 六份夹具均字节复现，exit 0 |
+| `ctest --test-dir build/pptx-m1 -R '^native-pptx-' -V --output-on-failure` | 12/12，通过，15.82 秒，exit 0 |
+| `ctest --test-dir build/pptx-m1 -E '^(sdk-release\|sdk-doc-coverage)$' --output-on-failure -j 2 --output-junit m1-recheck-results.xml` | 437/437，通过，200.00 秒，exit 0 |
+| `python tools/check_sdk_docs.py --binary build/pptx-m1/libexreader.dll` | 485/485，100%；DLL 缺失/额外导出均为空，exit 0 |
+| `python tools/check_layers.py build/pptx-m1` | 132 个对象，1540 个符号引用；0 个逆向引用、0 个逆向 include，exit 0 |
+| 共用 `ops/prepush-check.ps1 -Worktree <本工作树>` | 完整检查通过，exit 0 |
+
+六份夹具的引擎/python-pptx 页数分别为 `0/0、1/1、5/5、1/1、1/1、20/20`，
+尺寸与下方对照表一致。文件和内存入口合计 56 次有效页渲染均成功，逐字节验证为全白 RGBA。
+12 组测试名称、坏样本错误原文、缺页警告和 M2 接口清单均与下方记录一致。
+
+本次日志位于 `build/pptx-m1/`：`m1-recheck-build.log`、`m1-recheck-pptx.log`、
+`m1-recheck-all.log`、`m1-recheck-results.xml`、`m1-recheck-sdk-docs.json`。
+`git diff 54436bfa HEAD -- src/docx.c tests/check_reading_release.py tools/version_literal_exceptions.json`
+为空；本次也未修改这些文件，没有新增头文件，未使用 GUI/SendInput。
+
+## 首次实现与验收
+
 基线：`54436bfa`。实现文件 `src/pptx.c` 共 416 行，15 个函数。
-`EXR_PPTX=10` 追加在 `EXR_CBZ=9` 之后；原枚举数值保持不变。
+`EXR_PPTX=11` 追加在 `EXR_PPT=10` 之后；原枚举数值保持不变。
 
 ## 实现结构与函数清单
 
