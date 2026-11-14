@@ -4229,6 +4229,7 @@ static void selection_report(void) {
 #include "windows/shell_docedit_toolbar.inc"
 #include "windows/shell_docedit_paint.inc"
 #include "windows/shell_docedit_input.inc"
+#include "windows/shell_docedit_header_footer.inc"
 #endif
 static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
 #ifdef EXR_READER_WINDOWS_SHELL

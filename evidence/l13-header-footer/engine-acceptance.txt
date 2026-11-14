@@ -1,0 +1,9 @@
+HDR/FTR PASS: saved ZIP header1.xml=HDR footer1.xml=FTR; reopen and second write equal
+flags PASS: sectPr/titlePg and settings/evenAndOddHeaders 0->1->0, undo/redo
+variants/history PASS: independent default/first/even header/footer; UTF-8/XML escaping; atomic rollback
+multiline PASS: leading/trailing/empty lines use four real w:p paragraphs; shrink back to one; save/reopen
+invalid input PASS: kind/variant/XML scalar/flags rejected; saved model unchanged
+rich existing header PASS: word/header9.xml, bold, tabs, bookmark, simple/complex PAGE fields, hyperlink, extension and table retained; undo/reopen
+existing settings PASS: insert/replace/remove evenAndOddHeaders in schema order; zoom/defaultTabStop/compat/docVars/extension retained
+Strict namespaces PASS: new header/footer/settings use Strict W namespace, relationship Types/IDs use Strict R; save/reopen
+L13 engine header/footer acceptance PASS

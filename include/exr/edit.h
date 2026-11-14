@@ -135,7 +135,8 @@ EXR_API exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,
   size_t *size,exr_error *error);
 
 /* Borrowed read-only views. Block/run views expire when that block changes or
-   leaves the model; IDs remain stable. Sections and parts live until doc_free.
+   leaves the model; IDs remain stable. Section/part views expire on a
+   header/footer mutation, undo or redo.
    block_count/at enumerate top-level blocks; find_block also resolves cell blocks.
    Cell views expire on any change to their owning table.
    Objects are single-threaded; callers serialize access. */
@@ -144,6 +145,20 @@ EXR_API const exr_edit_block *exr_edit_block_at(const exr_edit_doc *doc,size_t i
 EXR_API const exr_edit_block *exr_edit_find_block(const exr_edit_doc *doc,exr_edit_id id);
 EXR_API const exr_edit_section *exr_edit_sections(const exr_edit_doc *doc,size_t *count);
 EXR_API const exr_edit_part *exr_edit_parts(const exr_edit_doc *doc,size_t *count);
+/* Header/footer editable plain text. variant: default=0, first=1, even=2.
+   Missing references inherit from earlier sections. Text output is allocated;
+   release it with exr_free(). Fields and other opaque inline XML are retained.
+   Mutations join the document transaction/undo history. */
+EXR_API exr_status exr_edit_header_footer_text(const exr_edit_doc *doc,
+  exr_edit_id section,unsigned footer,unsigned variant,char **text,size_t *size);
+EXR_API exr_status exr_edit_set_header_footer_text(exr_edit_doc *doc,
+  exr_edit_id section,unsigned footer,unsigned variant,const char *text,size_t size);
+/* First-page flag is section-local (titlePg); even/odd is document-wide
+   (settings/evenAndOddHeaders). Both outputs are required. */
+EXR_API exr_status exr_edit_header_footer_flags(const exr_edit_doc *doc,
+  exr_edit_id section,unsigned *first,unsigned *even);
+EXR_API exr_status exr_edit_set_header_footer_flags(exr_edit_doc *doc,
+  exr_edit_id section,unsigned first,unsigned even);
 /* Retained allocation bytes, including history/capacity (excludes allocator overhead). */
 EXR_API size_t exr_edit_memory_bytes(const exr_edit_doc *doc);
 

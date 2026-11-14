@@ -222,6 +222,7 @@ static exr_status de_history(int redo) {
 enum { DE_TYPE,DE_BACKSPACE,DE_DELETE,DE_ENTER };
 static int de_edit(int operation,const char *text,size_t n) {
   if(!de.doc)return 0;
+  if(de.hf_mode)return de_hf_edit(operation,text,n);
   exr_edit_run_props pending=de.pending_props;
   de_pos caret=de_caret_pos(),anchor=de_anchor();int selected=de_selected();
   de_pos other=caret;
@@ -263,6 +264,7 @@ static int de_leave_table(void) {
 static int de_key_modifiers(WPARAM key,int control,int shift,int alt) {
   if(!de.doc)return 0;
   de.high_surrogate=0;
+  if(de.hf_mode)return de_hf_key(key,control,shift);
   if(control && alt && key==VK_RETURN && de.caret_in_table) {de_leave_table();return 1;}
   if(key==VK_F6) {de_table_open();return 1;}
   if(control) {
@@ -364,6 +366,8 @@ static int de_message(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
   if(message==WM_TIMER && wparam==DE_TIMER) {de.blink=!de.blink;InvalidateRect(window,NULL,FALSE);return 1;}
   if(message==WM_SIZE) {de.layout_dirty=1;de_refresh(1);return 1;}
   if(message==WM_MOUSEWHEEL) {de_scroll(-(short)HIWORD(wparam)/120.f*51.f*shell_dpi/96.f);return 1;}
+  if((message==WM_LBUTTONDOWN || message==WM_LBUTTONDBLCLK || message==WM_LBUTTONUP ||
+    (message==WM_MOUSEMOVE && de.mouse_down)) && de_hf_mouse(window,message,lparam))return 1;
   if(message==WM_LBUTTONDOWN || (message==WM_MOUSEMOVE && de.mouse_down)) {
     if(message==WM_LBUTTONDOWN) {
       SetFocus(window);
