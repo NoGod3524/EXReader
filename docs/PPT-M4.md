@@ -15,6 +15,9 @@ and [StyleTextPropAtom](https://learn.microsoft.com/en-us/openspecs/office_file_
 The parser reads the Environment font array, Environment/master text styles,
 paragraph levels, TextRuler margins and shape text insets. Independent textboxes
 use Environment defaults; placeholders may inherit their master's styles.
+Missing master properties inherit the matching Environment level. Character
+formatting at an empty paragraph's CR supplies its font metrics; invisible,
+non-underlined spacers preserve empty paragraphs and consecutive soft breaks.
 `OutlineTextRefAtom` resolves text stored after the slide's persist reference in
 `SlideListWithText`. TextChars wins when both TextChars and TextBytes are present.
 TextBytes uses Latin-1 with a warning. Isolated UTF-16 surrogates become U+FFFD.

@@ -391,9 +391,11 @@ static void text_master(drawing_reader *r,const art_record *a,text_props styles[
   size_t at=a->payload,i;unsigned count,level;unsigned kind=a->instance;
   if(kind>=9 || !text_u16(r,&at,a->end,&count) || count>5) { r->drawing->text_malformed++;return; }
   for(i=0;i<count;i++) {
-    text_props p=styles[kind][i ? i-1 : 0];level=(unsigned)i;
-    if((kind>=5 && !text_u16(r,&at,a->end,&level)) || level>=5 ||
-       !text_pf(r,&at,a->end,&p) || !text_cf(r,&at,a->end,&p)) { r->drawing->text_malformed++;return; }
+    text_props p;level=(unsigned)i;
+    if((kind>=5 && !text_u16(r,&at,a->end,&level)) || level>=5) { r->drawing->text_malformed++;return; }
+    /* MS-PPT 2.9.35: missing master properties inherit the same document level. */
+    p=styles[kind][level];
+    if(!text_pf(r,&at,a->end,&p) || !text_cf(r,&at,a->end,&p)) { r->drawing->text_malformed++;return; }
     styles[kind][level]=p;
   }
 }
@@ -551,7 +553,7 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
      follow the actual CRs, independent of corrupt style run boundaries. */
   start=0;
   for(i=0;i<=units;i++) if(i==units || (chars.end ? u16(r->data+atom.payload+2*i) : r->data[atom.payload+i])==13) {
-    text_props p=levels[0];size_t a=start;
+    text_props p=levels[0],paragraph;size_t a=start;
     if((status=exr_control_cancel(r->control,e))!=EXR_OK) goto done;
     while(j+1<pc && start>=pf[j].end) j++;
     if(pc) p=pf[j].props;
@@ -563,9 +565,12 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
         if(pos==units+1) break;
       }
     }
+    paragraph=p;
+    while(k+1<cc && start>=cf[k].end) k++;
+    if(cc) text_cf_overlay(&paragraph,&cf[k].props);
     if(text->paragraph_count>=65536) { status=exr_fail(e,EXR_LIMIT,"PPT textbox exceeds 65536 paragraphs");goto done; }
     if(!exr_grow((void **)&text->paragraphs,&para_cap,text->paragraph_count+1,sizeof(*text->paragraphs))) goto memory;
-    text->paragraphs[text->paragraph_count++]=(exr_ppt_text_paragraph){map[start],map[i],text_resolve(r,p),NULL};
+    text->paragraphs[text->paragraph_count++]=(exr_ppt_text_paragraph){map[start],map[i],text_resolve(r,paragraph),NULL};
     while(a<i) {
       size_t b=i;text_props v=p;
       while(k+1<cc && a>=cf[k].end) k++;

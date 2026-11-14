@@ -157,7 +157,7 @@ static exr_status text_paragraph(exr_ppt_drawing *d,exr_ppt_text *text,exr_ppt_t
                                  const exr_control *control,exr_error *e) {
   exr_document *model=calloc(1,sizeof(*model));
   const exr_ppt_text_style *base=&para->style;
-  exr_ppt_text_style bullet_style=*base;
+  exr_ppt_text_style bullet_style=*base,blank_style=*base;
   exr_style *styles=NULL;
   ppt_text_span *spans=NULL;
   size_t capacity=0,i,j,bullet_end=3;
@@ -192,12 +192,14 @@ static exr_status text_paragraph(exr_ppt_drawing *d,exr_ppt_text *text,exr_ppt_t
     status=text_add(model,&spans,&capacity,bullet.data,bullet.size,&bullet_style,e);
   }
   bullet_end=model->node_count;
+  blank_style.flags&=~EXR_GLYPH_UNDERLINE;
   for(i=first_run;status==EXR_OK && i<text->run_count;i++) {
     const exr_ppt_text_run *run=&text->runs[i];
     size_t at=run->start>para->start ? run->start : para->start;
     size_t end=run->end<para->end ? run->end : para->end,first=at;
     if(run->start>=para->end) break;
     if(at>=end) continue;
+    blank_style=run->style;blank_style.flags&=~EXR_GLYPH_UNDERLINE;
     while(at<end) {
       unsigned char ch=(unsigned char)text->value[at];
       if(!(at&4095)) {
@@ -207,6 +209,10 @@ static exr_status text_paragraph(exr_ppt_drawing *d,exr_ppt_text *text,exr_ppt_t
         size_t node;
         status=text_add(model,&spans,&capacity,text->value+first,at-first,&run->style,e);
         if(status!=EXR_OK) break;
+        /* Give empty lines font metrics without drawing an underline or ink. */
+        if(model->node_count==bullet_end || model->nodes[model->node_count-1].kind==EXR_NODE_BREAK)
+          status=text_add(model,&spans,&capacity,"\xc2\xa0",2,&blank_style,e);
+        if(status!=EXR_OK) break;
         node=exr_model_node(model,2,0,EXR_NODE_BREAK,"br",NULL,0);
         if(node==SIZE_MAX) { status=exr_fail(e,EXR_LIMIT,"PPT break model allocation failed");break; }
         first=at+1;
@@ -215,6 +221,8 @@ static exr_status text_paragraph(exr_ppt_drawing *d,exr_ppt_text *text,exr_ppt_t
     }
     if(status==EXR_OK) status=text_add(model,&spans,&capacity,text->value+first,end-first,&run->style,e);
   }
+  if(status==EXR_OK && (model->node_count==bullet_end || model->nodes[model->node_count-1].kind==EXR_NODE_BREAK))
+    status=text_add(model,&spans,&capacity,"\xc2\xa0",2,&blank_style,e);
   if(status!=EXR_OK) goto done;
   status=text_model_finish(model,e);if(status!=EXR_OK) goto done;
   styles=calloc(model->node_count,sizeof(*styles));
