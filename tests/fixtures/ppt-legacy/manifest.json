@@ -7,28 +7,28 @@
       "pages": 1,
       "width_pt": 720.0,
       "height_pt": 540.0,
-      "sha256": "f7a67eb9d377ebbe93d9edbc6c5f44bb3bf46db9133659901a79bdf42fe8df94"
+      "sha256": "5aa7037c657f736d2b464d229f36af387ed89d436ff76ff5f58415dd76a252ba"
     },
     {
       "file": "slides-5.ppt",
       "pages": 5,
       "width_pt": 720.0,
       "height_pt": 540.0,
-      "sha256": "9dffea5260df5692b464c4c27478490e2632e4633b7f92134938c93f4ec4cb43"
+      "sha256": "3cba97bf280e62659c59f219c9118f8dd36a2301a1bb92d4d3fb4d1ec7f40081"
     },
     {
       "file": "slides-20.ppt",
       "pages": 20,
       "width_pt": 720.0,
       "height_pt": 540.0,
-      "sha256": "b3fec84c9dae5038bcebe7eba02beeb06dc13282b50de5be9c0af15f32449ddd"
+      "sha256": "1c415570c57d3a0f02d6857bef9ed1685ddad719e99289c18a42af7005d67824"
     },
     {
       "file": "slides-0.ppt",
       "pages": 0,
       "width_pt": 720.0,
       "height_pt": 540.0,
-      "sha256": "febe8e72700539bcba00e7cb3c1a1e024342291758b32c736d286302fe370e2a"
+      "sha256": "c0ac7bd8d45a426779a369a69b9046467385467b4b86614974c15d8463aff31c"
     }
   ]
 }
