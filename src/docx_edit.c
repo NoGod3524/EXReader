@@ -567,6 +567,46 @@ const exr_edit_part *exr_edit_parts(const exr_edit_doc *d,size_t *count) {
   return d ? d->parts : NULL;
 }
 size_t exr_edit_memory_bytes(const exr_edit_doc *d) { return d ? d->bytes : 0; }
+/* Cell paragraph insertion/deletion journals the owning table, just like split. */
+static exr_status cell_paragraph_splice(exr_edit_doc *d,const block_location *loc,
+    const exr_edit_block *insert,exr_edit_id *out) {
+  edit_block *owner;exr_edit_cell *cell;exr_edit_block *blocks;
+  edit_change change;exr_status s;size_t at=loc->block+(insert ? 1:0);
+  if (!exr_edit_cell_can_split(loc->cell)) return command_failure(d,EXR_UNSUPPORTED);
+  if (!insert && loc->cell->block_count==1) return command_failure(d,EXR_UNSUPPORTED);
+  owner=block_copy(d,&d->blocks[loc->index]->view);
+  if (!owner) return command_failure(d,EXR_MEMORY);
+  cell=(exr_edit_cell *)owner->view.table->rows[loc->row].cells+loc->col;
+  blocks=(exr_edit_block *)cell->blocks;
+  if (insert) {
+    exr_edit_block *grown;
+    if (cell->block_count>=SIZE_MAX/sizeof(*grown)) { s=EXR_LIMIT; goto fail; }
+    grown=allocate(d,(cell->block_count+1)*sizeof(*grown));
+    if (!grown) { s=EXR_MEMORY; goto fail; }
+    if (!view_copy(d,grown+at,insert)) {
+      view_free(d,grown+at);release(d,grown);s=EXR_MEMORY;goto fail;
+    }
+    grown[at].section_id=owner->view.section_id;
+    if (!view_ids(d,grown+at,1)) {
+      view_free(d,grown+at);release(d,grown);s=EXR_LIMIT;goto fail;
+    }
+    memcpy(grown,blocks,at*sizeof(*grown));
+    memcpy(grown+at+1,blocks+at,(cell->block_count-at)*sizeof(*grown));
+    release(d,blocks);cell->blocks=grown;cell->block_count++;
+    if (out) *out=grown[at].id;
+  } else {
+    view_free(d,blocks+at);
+    memmove(blocks+at,blocks+at+1,(cell->block_count-at-1)*sizeof(*blocks));
+    cell->block_count--;
+  }
+  cell->changed=CELL_REPLACED;
+  change=(edit_change){loc->index,d->blocks[loc->index],owner};
+  s=modify(d,&change,1);block_unref(d,owner);
+  if (s && out) *out=0;
+  return s;
+fail:
+  block_unref(d,owner);return command_failure(d,s);
+}
 exr_status exr_edit_insert_paragraph(exr_edit_doc *d,exr_edit_id after,const exr_edit_run *runs,
   size_t count,const exr_edit_para_props *props,exr_edit_id *out) {
   size_t index=0; exr_edit_block v={0}; edit_block *b; edit_change c; exr_status s=ready(d);
@@ -575,7 +615,14 @@ exr_status exr_edit_insert_paragraph(exr_edit_doc *d,exr_edit_id after,const exr
   if (!out) return command_failure(d,EXR_ARGUMENT);
   if (after) {
     index=find_index(d,after);
-    if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
+    if (index==SIZE_MAX) {
+      block_location loc;
+      if (!locate_block(d,after,&loc) || !loc.cell) return command_failure(d,EXR_ARGUMENT);
+      v.kind=EXR_EDIT_PARAGRAPH;v.runs=runs;v.run_count=count;
+      if (props) v.props=*props;
+      if (!block_valid(&v)) return command_failure(d,EXR_ARGUMENT);
+      return cell_paragraph_splice(d,&loc,&v,out);
+    }
     v.section_id=d->blocks[index]->view.section_id; index++;
   } else v.section_id=d->sections[0].id;
   v.kind=EXR_EDIT_PARAGRAPH; v.runs=runs; v.run_count=count;
@@ -755,7 +802,11 @@ exr_status exr_edit_delete_block(exr_edit_doc *d,exr_edit_id id) {
   size_t index; edit_change c; exr_status s=ready(d);
   if (s) return s;
   index=find_index(d,id);
-  if (index==SIZE_MAX) return command_failure(d,EXR_ARGUMENT);
+  if (index==SIZE_MAX) {
+    block_location loc;
+    if (!locate_block(d,id,&loc) || !loc.cell) return command_failure(d,EXR_ARGUMENT);
+    return cell_paragraph_splice(d,&loc,NULL,NULL);
+  }
   if (d->blocks[index]->view.kind==EXR_EDIT_TABLE ||
       d->blocks[index]->view.kind==EXR_EDIT_OPAQUE_BLOCK) return command_failure(d,EXR_UNSUPPORTED);
   if (d->blocks[index]->view.image && d->blocks[index]->view.image->anchor_run_id)
