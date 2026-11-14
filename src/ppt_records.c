@@ -100,6 +100,8 @@ typedef struct {
   unsigned color_mask;
   text_props environment[9][5],master_text[9][5];
   size_t outline_begin,outline_end;
+  size_t slide_first,table_first;
+  double width,height;
   int in_table;
 } drawing_reader;
 typedef struct {
@@ -500,9 +502,9 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
   atom=chars.end ? chars : bytes;units=atom.end-atom.payload;
   if(chars.end) { if(units&1) r->drawing->text_unicode++;units/=2; }
   else {
-    /* ASCII TextBytesAtom is the normal PowerPoint table encoding. */
-    for(i=0;r->in_table && i<units && r->data[atom.payload+i]<128;i++) { }
-    if(!r->in_table || i<units) r->drawing->text_bytes_fallback++;
+    /* ASCII TextBytesAtom is a normal PowerPoint encoding in any textbox. */
+    for(i=0;i<units && r->data[atom.payload+i]<128;i++) { }
+    if(i<units) r->drawing->text_bytes_fallback++;
   }
   if(units>EXR_MAX_TEXT/8) return exr_fail(e,EXR_LIMIT,"PPT textbox exceeds text budget");
   map=calloc(units+2,sizeof(*map));text=calloc(1,sizeof(*text));
@@ -606,9 +608,10 @@ static exr_status image_fill(drawing_reader *r,uint32_t pib,exr_ppt_shape *shape
 }
 static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transform *t,exr_error *e) {
   exr_ppt_drawing *d=r->drawing;exr_ppt_shape shape={0};size_t i;int line=s->type==20 || s->type==32;
+  int background=(s->flags&0x400)!=0;
   if(!s->valid || (s->flags&8)) return EXR_OK;
-  if(!s->has_anchor) { d->missing_anchor++;return EXR_OK; }
-  if(!s->has_fsp || (s->type!=1 && s->type!=3 && s->type!=75 && !line && !s->textbox.end) || s->rotation) { d->unsupported++;return EXR_OK; }
+  if(!s->has_anchor && !background) { d->missing_anchor++;return EXR_OK; }
+  if(!s->has_fsp || (s->type!=1 && s->type!=3 && s->type!=5 && s->type!=75 && !line && !s->textbox.end) || s->rotation) { d->unsupported++;return EXR_OK; }
   shape.type=s->type;shape.style=exr_draw_style_defaults();shape.style.flags=0;
   shape.clip_text=r->in_table;
   if(!line && (s->type==75 || (s->fill_type==3 && !((s->fill_flags&0x100000) && !(s->fill_flags&0x10))))) {
@@ -616,7 +619,7 @@ static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transfor
     int skip=0;exr_status status=image_fill(r,pib,&shape,&skip,e);
     if(status!=EXR_OK || skip) return status;
   } else if(!line && !((s->fill_flags&0x100000) && !(s->fill_flags&0x10))) {
-    /* An explicitly unfilled shape is omitted, including its outline (M2). */
+    /* Fill visibility does not disable the independent outline. */
     if(!s->fill_type && colorref(r,s->fill,&shape.style.fill)) shape.style.flags|=EXR_DRAW_FILL;
     else if(s->fill_type>=4 && s->fill_type<=8) {
       int first=colorref(r,s->has_stops ? s->stops[0] : s->fill,&shape.style.fill);
@@ -627,22 +630,22 @@ static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transfor
       } else { d->gradient_missing++;if(!first) { shape.style.fill=0xccccccff;shape.style.flags|=EXR_DRAW_FILL; } }
     }
     else d->unsupported++;
-  } else if(!line && !s->textbox.end) return EXR_OK;
+  }
   if(!((s->line_flags&0x80000) && !(s->line_flags&8))) {
     if(colorref(r,s->line,&shape.style.stroke)) shape.style.flags|=EXR_DRAW_STROKE;
     else d->unsupported++;
   }
-  /* Preserve M2's noFill geometry omission while retaining the textbox. */
-  if(!line && s->type!=75 && (s->fill_flags&0x100000) && !(s->fill_flags&0x10)) shape.style.flags=0;
-  if(s->textbox.end && s->type!=1 && s->type!=3 && s->type!=75 && s->type!=202 && !line) {
+  if(s->textbox.end && s->type!=1 && s->type!=3 && s->type!=5 && s->type!=75 && s->type!=202 && !line) {
     shape.style.flags=0;shape.blip=0;shape.has_gradient=0;d->unsupported++;
   }
   if(!shape.style.flags && !shape.blip && !s->textbox.end) return EXR_OK;
   for(i=0;i<4;i++) {
-    shape.bounds[i]=s->anchor[i]*(i&1 ? t->sy : t->sx)+(i&1 ? t->ty : t->tx);
+    /* fBackground has implicit page coordinates, independent of groups. */
+    shape.bounds[i]=background ? (i<2 ? 0 : i==2 ? r->width : r->height) :
+      s->anchor[i]*(i&1 ? t->sy : t->sx)+(i&1 ? t->ty : t->tx);
     if(!isfinite(shape.bounds[i]) || fabs(shape.bounds[i])>1e7) { d->malformed++;return EXR_OK; }
   }
-  if(line || shape.blip || shape.has_gradient) {
+  if(line || s->type==5 || shape.blip || shape.has_gradient) {
     if(s->flags&0x40) { double v=shape.bounds[0];shape.bounds[0]=shape.bounds[2];shape.bounds[2]=v; }
     if(s->flags&0x80) { double v=shape.bounds[1];shape.bounds[1]=shape.bounds[3];shape.bounds[3]=v; }
   }
@@ -656,7 +659,14 @@ static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transfor
   if(s->textbox.end) {
     exr_status status=read_text(r,s,&shape.text,e);if(status!=EXR_OK) return status;
   }
-  d->shapes[d->count++]=shape;return EXR_OK;
+  if(background) {
+    /* PowerPoint serializes the background after foreground OfficeArt. */
+    memmove(d->shapes+r->slide_first+1,d->shapes+r->slide_first,
+      (d->count-r->slide_first)*sizeof(*d->shapes));
+    for(i=r->table_first;i<d->table_count;i++) d->tables[i].first++;
+    d->shapes[r->slide_first]=shape;
+  } else d->shapes[d->count]=shape;
+  d->count++;return EXR_OK;
 }
 /* MS-ODRAW tableProperties (039F) marks a Spgr, not ClientData. Cells are
    ordinary rectangles/textboxes; borders are independent line shapes. A merge
@@ -674,15 +684,12 @@ static unsigned table_index(const double *edges,unsigned count,double value) {
   unsigned i=0;while(i+1<count && edges[i]<value) i++;return i;
 }
 static exr_status table_frame(drawing_reader *r,const art_shape *group,const transform *t,exr_error *e) {
-  art_shape frame=*group;size_t first=r->drawing->count;exr_status status;
+  art_shape frame=*group;
   r->drawing->table_missing++;
   frame.type=1;frame.flags&=~1u;frame.has_fsp=1;frame.textbox.end=0;
   frame.line_flags=0x80008;
-  /* emit_shape preserves M2's noFill omission; retain only this outline. */
-  frame.fill_type=0;frame.fill=0xffffff;frame.fill_flags=0x100010;
-  status=emit_shape(r,&frame,t,e);
-  if(r->drawing->count>first) r->drawing->shapes[first].style.flags&=~EXR_DRAW_FILL;
-  return status;
+  frame.fill_flags=0x100000;
+  return emit_shape(r,&frame,t,e);
 }
 static exr_status table_border(drawing_reader *r,const art_shape *line,const transform *t,
   const double *xs,unsigned nx,const double *ys,unsigned ny,const unsigned *owners,exr_error *e) {
@@ -853,7 +860,8 @@ exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_inf
   size_t size=streams->document_size;
   drawing_reader r={0};art_record a;size_t at=0,doc=0,doc_end=0,master=0,n=0,i;
   size_t *physical=NULL,*outline=NULL;uint32_t *refs=NULL,*persist=NULL;exr_status status=EXR_OK;
-  memset(out,0,sizeof(*out));r.data=streams->document;r.streams=streams;r.control=control;r.drawing=out;out->pages=info->pages;
+  memset(out,0,sizeof(*out));r.data=streams->document;r.streams=streams;r.control=control;r.drawing=out;
+  r.width=info->width;r.height=info->height;out->pages=info->pages;
   if(!out->pages) return EXR_OK;
   out->slides=calloc(out->pages,sizeof(*out->slides));physical=calloc(out->pages*2,sizeof(*physical));refs=calloc(out->pages,sizeof(*refs));
   outline=calloc(out->pages*2,sizeof(*outline));
@@ -895,7 +903,7 @@ exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_inf
   for(i=0;i<out->pages;i++) {
     size_t offset=physical[i],cursor,master_offset=physical[out->pages+i];art_record slide,child;unsigned flags=0;
     uint32_t master_id=0;
-    out->slides[i].first=out->count;r.shapes=0;r.patriarch=0;
+    r.slide_first=out->slides[i].first=out->count;r.table_first=out->table_count;r.shapes=0;r.patriarch=0;
     r.outline_begin=outline[i];r.outline_end=outline[out->pages+i];
     if(persist && refs[i] && refs[i]<(1u<<20)) {
       uint32_t mapped=persist[refs[i]];

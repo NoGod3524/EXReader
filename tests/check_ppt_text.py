@@ -243,6 +243,10 @@ def main():
             assert 'surrogate' not in message.lower() and mask(valid)
             print('isolated low surrogate -> U+FFFD; valid surrogate pair accepted')
         elif name == 'bytes':
+            ascii, message = render(data=text_ppt('Hello', bytes_text=True))
+            unicode, _ = render(data=text_ppt('Hello'))
+            assert ascii.data == unicode.data and 'latin' not in message.lower(), message
+            print('ASCII TextBytesAtom vs TextCharsAtom Unicode: exact raster match, no encoding warning')
             latin, _ = render(data=text_ppt('Héllo', bytes_text=True), warning='latin')
             unicode, _ = render(data=text_ppt('Héllo'))
             assert latin.data == unicode.data

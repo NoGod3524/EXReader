@@ -85,8 +85,8 @@ static exr_status draw_fill(const exr_ppt_drawing *d,const exr_ppt_shape *s,cons
   m[0]=matrix[0]*w;m[1]=matrix[1]*w;m[2]=matrix[2]*h;m[3]=matrix[3]*h;
   m[4]=matrix[0]*s->bounds[0]+matrix[2]*s->bounds[1]+matrix[4];
   m[5]=matrix[1]*s->bounds[0]+matrix[3]*s->bounds[1]+matrix[5];
-  if(s->type==3) {
-    if(!sink->state || !sink->clip) return exr_fail(e,EXR_UNSUPPORTED,"PPT image ellipse requires clipping callbacks");
+  if(s->type==3 || s->type==5) {
+    if(!sink->state || !sink->clip) return exr_fail(e,EXR_UNSUPPORTED,"PPT shaped image fill requires clipping callbacks");
     status=sink->state(sink->context,EXR_DRAW_SAVE,e);if(status!=EXR_OK) return status;
     status=sink->clip(sink->context,path,count,matrix,EXR_FILL_NONZERO,0,e);
     if(status==EXR_OK) status=sink->image(sink->context,&image,m,1,e);
@@ -114,6 +114,10 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
       p[3].points[0]=point(s,0,.5-k);p[3].points[1]=point(s,.5-k,0);p[3].points[2]=point(s,.5,0);
       p[4].points[0]=point(s,.5+k,0);p[4].points[1]=point(s,1,.5-k);p[4].points[2]=point(s,1,.5);
       p[5].verb=EXR_PATH_CLOSE;count=6;
+    } else if(s->type==5) {
+      p[0].points[0]=point(s,.5,0);p[1].verb=p[2].verb=EXR_PATH_LINE;
+      p[1].points[0]=point(s,1,1);p[2].points[0]=point(s,0,1);
+      p[3].verb=EXR_PATH_CLOSE;count=4;
     } else {
       p[0].points[0]=point(s,0,0);p[1].verb=EXR_PATH_LINE;
       if(s->type==20 || s->type==32) { p[1].points[0]=point(s,1,1);count=2; }
