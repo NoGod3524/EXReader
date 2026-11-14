@@ -1,0 +1,135 @@
+PPTX M4 已完成，基线 48663d73。
+
+src/pptx.c 非空行 1088 -> 1808（+720）；物理行 1133 -> 1878（+745）。
+新增 22 个静态函数：
+  text_free
+  text_xml_declaration / text_xml_start / text_xml_end / text_xml_characters / text_xml_entity
+  skip_invalid_runs
+  text_warning / text_run_style / text_spacing / text_paragraph_style / text_list_style
+  text_defaults / text_related / text_master / text_script / text_font
+  text_model_finish / text_add / text_paragraph / text_body / text_draw
+
+实现沿用引擎 exr_flow_unit、字体管理器、塑形和字体轮廓绘制。
+src/style_internal.h 增加内部 tracking 字段，src/inline.c 将其计入塑形后的 advance，
+因此 spc 会影响自动换行。tools/layers.json 增加 pdf -> layout 依赖，
+cmake/modules.cmake 给 pdf 对象接入现有 Expat，用于验证非法 UTF-8 的恢复边界。
+没有引入新排版库。
+
+十项验收真实输出（Windows Release / FreeType，统计像素灰度阈值 <245）：
+
+1. Hello / 18pt / 黑色 / 居中，1px/pt：
+   bbox=(221,56,260,71)，宽39px，高15px，字形像素237。
+   形状中线 x=240；字形 bbox 中心 x=240.5；偏差0.5px（要求<=2px）。
+
+2. 12/24/48pt，相同 Hello，4px/pt：
+   字形高度=[37,72,146]px；归一比例=[1,1.945946,3.945946]。
+   字形像素=[1377,4956,18506]；相对1:2:4的误差均小于10%。
+
+3. 只有 slideMaster 的 bodyStyle/lvl1pPr/defRPr 设置 sz=2800：
+   master28.pptx 的 run、段落、lstStyle、defaultTextStyle 均没有字号覆盖。
+   实测 bbox=(210,241,457,326)，高85px，字形像素6595（4px/pt）。
+   与在 a:rPr 显式设置28pt的独立夹具逐像素完全相同。
+   另测内置18pt、presentation默认20pt、lstStyle24pt、pPr26pt、rPr30pt，
+   每个结果均与对应显式字号逐像素相同。
+   混合属性级联：default下划线+tracking、master28pt+斜体、lstStyle绿色、
+   pPr粗体，结果与显式扁平化样式逐像素相同。
+   title/ctrTitle/body/other 四种选择及迁移到非固定路径的master均通过。
+
+4. 同段 b=0/b=1，IIIIIIII / 48pt / 4px/pt：
+   字形像素18360 -> 33480；平均竖笔画宽15.0 -> 31.0px。
+
+5. 中文测试 / ea=SimHei / 28pt / 2px/pt：
+   bbox=(106,104,322,156)，高52px，字形像素3903；四个不同字形轮廓。
+   ea 从段落继承、run仅覆盖latin时，结果逐像素相同。
+   ea=Segoe UI 的实际缺字回退夹具：字形像素2724，四个不同中文轮廓。
+   警告原文：
+   PPTX warning: missing glyph: Segoe UI U+4E2D fallback; Segoe UI U+6587 fallback; Segoe UI U+6D4B fallback; Segoe UI U+8BD5 fallback;
+   无任何已安装字体覆盖 U+0378 的夹具警告：
+   PPTX warning: missing glyph: Segoe UI U+0378 missing;
+
+6. 一段200字符，1px/pt：
+   行数14；行宽=[132,132,132,132,132,132,132,132,132,132,132,132,132,40]px。
+   每行均<=180px形状内宽；字形像素9640。
+   a:br 为2行。l/ctr/r bbox分别为(52,58,105,77)、(214,58,267,77)、
+   (376,58,429,77)；just三行可见宽181/180/61px（180px内宽的栅格误差<=1px）。
+   lnSpc 100%/200%/40pt 的行基线间距分别25/50/40px。
+   spcAft=12pt使段起点间距25 -> 37px；spcBef=10pt使首字形下移10px。
+   空段落的段前10pt+段后12pt使可见行间距增加22px。
+   A B / A双空格B 的字形宽70/84px，原始空白保留。
+   窄宽tracking测试行数7 -> 8，最大行宽72px<=80px内宽。
+
+7. 三段 buAutoNum 的前缀与独立渲染的文字比较：
+   1.：字形像素787，mask IoU=1.0。
+   2.：字形像素1178，mask IoU=1.0。
+   3.：字形像素1200，mask IoU=1.0。
+   buChar 单字符圆点另测通过。
+   不设置marL/indent的三段编号也与独立字形IoU=1.0；与正文间隙均36px（4px/pt）。
+
+8. normAutofit fontScale=62500：
+   原48pt -> 30pt；字形高度146 -> 91px（4px/pt）。
+   高度实测比例0.623288；与显式30pt逐像素完全相同。
+   lnSpcReduction=0/25000使40pt行距变为40/30px。
+   fontScale=0/100001/-1/bad均按100%处理并警告。
+   lvl=9/99均夹到8并警告；未裁切形状外溢出文本。
+
+9. 全量CTest：514/514通过，89.87秒。
+   只排除 sdk-release 和 sdk-doc-coverage。
+   M2/M3 native-pptx-shape-* + native-pptx-fill-* 实际共33组，全部通过。
+
+10. 新增 native-pptx-text-* 共21组（20组渲染+1组确定性），21/21通过。
+    独立详细验收18.61秒，全部stdout保存在text-acceptance.log。
+    16份新夹具 ZIP_STORED、固定成员顺序/时间/权限，generate.py --check通过。
+    M3现有6份夹具generate.py --check通过；M4夹具不含PNG。
+
+容错补充实测：
+  非法UTF-8 run跳过后，其余Good文本与独立Good夹具逐像素相同。
+  任意命名空间前缀、Strict命名空间、CDATA恢复均通过。
+  坏属性、外部命名空间t、坏run后XML错配仍返回FORMAT，document=null。
+  警告：PPTX warning: invalid UTF-8 skipped run(s)=1;
+
+字体回退清单（当前验收环境）：
+  M4 Missing Font：不存在，回退Segoe UI；与默认18pt文字逐像素相同。
+    PPTX warning: font fallback=M4 Missing Font;
+  Segoe UI：在中文缺字夹具中缺 U+4E2D/U+6587/U+6D4B/U+8BD5，
+    使用现有字体管理器覆盖链恢复，四个中文均有真实轮廓。
+  U+0378：无已安装字体覆盖，明确发出missing警告，显示缺字轮廓。
+  正常SimHei中文夹具未发生字体回退。
+
+检查结果：
+  Release全目标构建通过（-Wall -Wextra -Wpedantic -Werror）。
+  分层：133 objects / 1607 symbol references / 0 inverse references / 0 new；
+        1183 source/header dependencies / 0 inverse includes。
+  prepush-check.ps1：冲突标记、code/docs结构扫描、check_sdk_docs.py全部通过。
+  git diff --check通过。
+  src/docx.c、src/ppt.c、src/ppt_cfb.c、src/ppt_records.c、
+  tests/check_reading_release.py 的git diff为空。
+
+已知边界：
+  normAutofit直接应用属性；没有按实际溢出测量重新求收缩比例。
+  自动编号只渲染阿拉伯数字加句点；未实现罗马数字/字母编号、图形项目符号、
+  buFont/buClr/buSzPct/buSzPts或自定义制表位。
+  继承实现本次指定的五层；没有追加layout占位符自身文本属性那一条额外继承链，
+  也没有解析主题字体别名（+mj/+mn）；未知字体按默认字体处理并记名警告。
+  未实现竖排、多栏、WordArt等扩展文本效果。当前固定文本使用可缩放字体轮廓，
+  位图/彩色emoji字形不在本次覆盖范围。
+  字体结果受平台安装字体影响；缺字体/缺字可观察，警告沿用公共256字节消息上限。
+
+复现命令（工作树根目录）：
+  cmake --build build/pptx-m4 -j 10
+  $env:PYTHONUTF8='1'
+  ctest --test-dir build/pptx-m4 --output-on-failure -E 'sdk-release|sdk-doc-coverage' -j 8
+  ctest --test-dir build/pptx-m4 -R native-pptx-text -V
+  python -X utf8 tests/fixtures/pptx-text/generate.py --check
+  python -X utf8 tests/fixtures/pptx-fills/generate.py --check
+  python -X utf8 tools/check_layers.py build/pptx-m4
+  pwsh -NoProfile -File C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1 -Worktree C:/Users/Oscar/Documents/Codex/EXReader-pptx-m4
+
+日志及位图（相对工作树）：
+  build/pptx-m4/ctest-all.log
+  build/pptx-m4/text-acceptance.log
+  build/pptx-m4/text-cjk-portable.log
+  build/pptx-m4/text-bullets-final.log
+  build/pptx-m4/text-contact-sheet.png
+  build/pptx-m4/build-all.log
+  build/pptx-m4/layers.log
+  build/pptx-m4/prepush.log
