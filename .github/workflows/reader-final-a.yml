@@ -226,7 +226,7 @@ jobs:
           cmake -S examples/windows -B build/final-a/windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/final-a/sdk-stage" -DEXR_READER_TEST_DRIVERS=ON
           cmake --build build/final-a/windows --parallel 4
           python tools/build_windows_host.py --sdk build/final-a/sdk-stage --binary build/final-a/windows/EXReader.exe --output build/final-a/windows-package
-          python tools/check_windows_host.py --package build/final-a/windows-package/EXReader-Windows --output build/final-a/windows-ui --sdk build/final-a/sdk-stage --manifest build/final-a/windows-package/build.json --selftest-report build/final-a/windows-package/report.json --consumer-binary build/final-a/windows/EXReader.exe
+          python tools/check_windows_host.py --package build/final-a/windows-package/EXReader --output build/final-a/windows-ui --sdk build/final-a/sdk-stage --manifest build/final-a/windows-package/build.json --selftest-report build/final-a/windows-package/report.json --consumer-binary build/final-a/windows/EXReader.exe
       - name: Package and check GTK baseline
         if: runner.os == 'Linux'
         run: |
