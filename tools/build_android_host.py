@@ -146,7 +146,8 @@ def build_product(stage, build):
             ('commands', 'apps/reader/commands', 'reader_commands')):
         location = build / name
         run([cmake, '-S', ROOT / source, '-B', location, *common])
-        run([cmake, '--build', location, '--parallel', '4', '--target', target, '--verbose'])
+        # Install also exports reader_original_import; build all exported archives.
+        run([cmake, '--build', location, '--parallel', '4', '--verbose'])
         run([cmake, '--install', location])
 
 
@@ -357,7 +358,8 @@ def gradle_build(stage, gradle):
     local.write_text('sdk.dir=%s\n' % str(sdk).replace('\\', '\\\\'))
     command = [gradle, '-p', ANDROID, '--no-daemon', '--stacktrace',
                ':app:assembleDebug', ':uitest:assembleDebug', ':uitest:assembleDebugAndroidTest',
-               '-PexrSdk=' + str(stage)]
+               '-PexrSdk=' + str(stage),
+               '-PexrSdkVersion=' + header_version(stage / 'include/exr/base.h', 'EXR_VERSION')]
     env = dict(os.environ)
     env.setdefault('ANDROID_HOME', str(sdk))
     env.setdefault('ANDROID_SDK_ROOT', str(sdk))
