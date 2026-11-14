@@ -1,0 +1,23 @@
+模型与传输验收通过，**快捷键尚未接入，端到端验收未完成，未推送**。
+
+① 相对基线新增：剪贴板切片 209 行、测试 165 行、接线补丁 17 行；共享既有文件零修改。
+
+② 验收命令均退出 0：
+
+```powershell
+pwsh -NoProfile -File examples/windows/check_shell_docedit_clipboard.ps1
+pwsh -File C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\prepush-check.ps1 -Worktree .
+```
+
+真实输出摘录：
+
+```text
+PASS cell-to-cell paste retains destination bold and both sibling paragraphs
+L04 Windows clipboard transport acceptance PASS (isolated clipboard / no GUI)
+PASS actual Windows host syntax check
+全部通过 —— 可以推
+```
+
+③ 边界：单元格 UI 尚待接入；无文本 run 的空单元格暂不支持粘贴；跨段剪切保留段落结构。
+
+接线需修改独占范围未列出的 `shell_docedit_input.inc` 两行，授权问题已提出，尚未收到答复。完整记录见 [OUT-L04.txt](C:/Users/Oscar/Documents/Codex/EXReader-fan-L04/OUT-L04.txt)。
