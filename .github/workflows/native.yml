@@ -44,6 +44,27 @@ jobs:
         shell: bash .github/scripts/ci.sh {0}
     steps:
       - uses: actions/checkout@v4
+      - name: Install metric-compatible Calibri substitute
+        if: runner.os != 'Windows'
+        run: |
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          import sys
+          from urllib.request import urlopen
+          source = 'https://raw.githubusercontent.com/google/fonts/605c9f29dd5770762bd7ee8ea8ac4ae7664b2b7b/ofl/carlito/'
+          directory = Path.home() / ('Library/Fonts' if sys.platform == 'darwin' else '.local/share/fonts')
+          directory.mkdir(parents=True, exist_ok=True)
+          for name, checksum in (
+              ('Carlito-Regular.ttf', 'f6418f708baede9789daef5d458c0f53d2a888af9820e8062934e504fedc6595'),
+              ('OFL.txt', '58402f82a7c332a700294988fe7554fbb0a63a8d27ccc1ee3bbc640311990a00'),
+          ):
+              with urlopen(source + name, timeout=60) as response:
+                  data = response.read()
+              if sha256(data).hexdigest() != checksum:
+                  raise ValueError(f'{name}: SHA-256 mismatch')
+              (directory / ('Carlito-OFL.txt' if name == 'OFL.txt' else name)).write_bytes(data)
+          PY
       - name: Configure native C
         run: cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_JNI=ON -DEXR_ENABLE_AAC=OFF
       - name: Build

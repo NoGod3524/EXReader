@@ -96,8 +96,8 @@
     ],
     "source": "generated",
     "license": "MIT",
-    "sha256": "0d44283b41e0d8793bec33d2e74bd07e2d3c25331a92ca1ca1f7fc8cc4bca959",
-    "bytes": 127374
+    "sha256": "5dc7eb895f11ec0fa2cac7ec1a6cc10f93075c7041273a2dae84497709a4d344",
+    "bytes": 127369
   },
   {
     "file": "merged-table/merged-table.pptx",
@@ -206,8 +206,8 @@
     "source": "generated",
     "license": "MIT",
     "benchmark": true,
-    "sha256": "67cc9ab7cc6b1c6c913918c3920285e84b8dd3a78d914693116464e2bec1f7c7",
-    "bytes": 243415
+    "sha256": "1514e9066216b1481ead36359a23d432ecb65fb38d79b60252f51f88593e6348",
+    "bytes": 243410
   },
   {
     "file": "upstream-font-color/upstream-font-color.pptx",

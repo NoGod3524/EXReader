@@ -159,8 +159,14 @@ def png(width, height, pixel):
     def chunk(tag, data):
         return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', zlib.crc32(tag + data))
     raw = b''.join(b'\0' + b''.join(bytes(pixel(x, y)) for x in range(width)) for y in range(height))
+    # Explicit stored DEFLATE blocks avoid zlib/zlib-ng block-boundary differences.
+    stored = bytearray(b'\x78\x01')
+    for start in range(0, len(raw), 65535):
+        block = raw[start:start + 65535]
+        stored += struct.pack('<BHH', int(start + len(block) == len(raw)), len(block), len(block) ^ 0xffff) + block
+    stored += struct.pack('>I', zlib.adler32(raw))
     return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) +
-            chunk(b'IDAT', zlib.compress(raw, 0)) + chunk(b'IEND', b''))
+            chunk(b'IDAT', stored) + chunk(b'IEND', b''))
 
 
 def illustration():

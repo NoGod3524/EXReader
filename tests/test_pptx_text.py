@@ -414,6 +414,21 @@ def run(engine, group):
         assert actual.data == render(engine, text_data(), 2)[0].data
         assert '+mn-lt' not in warning, warning
         print('uninstalled resolved theme typeface retains the ordinary font-fallback warning')
+        from pptx_real_matrix import font_warnings_only
+        # Noncharacters fill the glyph diagnostic buffer on every host; a
+        # LastResort face may report fallback instead of an unresolved glyph.
+        text = ''.join(chr(cp) for cp in range(0xFDD0, 0xFDF0))
+        data = text_data(text, properties='<a:latin typeface="sans-serif"/>')
+        glyph_image, warning = render(engine, data, warning='missing glyph: sans-serif U+FDD0 ')
+        assert font_warnings_only(warning) and '...' not in warning, warning
+        assert warning.endswith((' missing; ', ' fallback; ')) and len(warning.encode('utf-8')) < 256, warning
+        malformed = shape(number=2).replace('<a:off x="508000" y="508000"/>', '')
+        data = replace(data, b'</p:spTree>', malformed.encode() + b'</p:spTree>')
+        mixed_image, mixed_warning = render(engine, data, warning='missing off/ext=1;')
+        assert mixed_image.data == glyph_image.data
+        assert 'missing glyph: sans-serif U+FDD0 ' in mixed_warning, mixed_warning
+        assert not font_warnings_only(mixed_warning), mixed_warning
+        print('long glyph warnings end at complete records and retain non-font diagnostics')
     elif group == 'invalid-utf8':
         image, _ = render(engine, fixture('invalid-utf8'), 2, 'UTF-8')
         expected, _ = render(engine, text_data('Good'), 2)
