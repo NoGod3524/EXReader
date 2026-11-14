@@ -1,0 +1,4 @@
+gradient-alpha.pptx open status=0 code=0 warning=''
+gradient-alpha.pptx slides engine=1 python-pptx=1 manifest=1 warnings=ok
+gradient-alpha.pptx#1 coverage=ok color=12/12 text=ok
+MATRIX files=1 passed=1 failed=0

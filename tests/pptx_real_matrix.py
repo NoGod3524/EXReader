@@ -5,6 +5,8 @@
 No engine pixels participate in selecting the twelve reference color samples.
 Text is measured by subtracting a second render with txBody paragraphs emptied;
 this distinguishes glyphs from photographs, borders and dark shape fills.
+Area fills and outlines are measured against a third render with foreground
+shapes removed, preserving slide/layout/master backgrounds.
 """
 import argparse
 import colorsys
@@ -23,8 +25,9 @@ import time
 from zipfile import ZipFile, ZIP_STORED
 
 from lxml import etree as ET
-from PIL import Image, ImageChops, ImageDraw
+from PIL import Image, ImageChops
 from pptx import Presentation
+from pptx.enum.dml import MSO_FILL_TYPE
 from pptx.oxml.ns import qn
 
 from test_pptx_skeleton import Bitmap, Engine, Error
@@ -116,6 +119,23 @@ def without_text(data):
     return out.getvalue()
 
 
+def without_shapes(data):
+    """Preserve the package's backgrounds while removing foreground shapes."""
+    out = BytesIO()
+    with ZipFile(BytesIO(data)) as src, ZipFile(out, 'w', ZIP_STORED) as dst:
+        for name in src.namelist():
+            content = src.read(name)
+            if name.endswith('.xml') and name.startswith('ppt/'):
+                root = ET.fromstring(content)
+                for tree in root.iter(qn('p:spTree')):
+                    for shape in list(tree):
+                        if local(shape) not in ('nvGrpSpPr', 'grpSpPr', 'extLst'):
+                            tree.remove(shape)
+                content = ET.tostring(root)
+            dst.writestr(name, content)
+    return out.getvalue()
+
+
 def opened(engine, path=None, data=None):
     doc, error = C.c_void_p(), Error()
     if path is not None:
@@ -186,6 +206,16 @@ class Region:
     paint: Paint | None
     text: bool = False
     stroke: float = 0
+    fill_type: object = None
+
+    @property
+    def coverage_kind(self):
+        # Lines use paint for their stroke, not for an area fill. The resolved
+        # paint also handles inherited theme fills (fill.type is then None).
+        filled = self.fill_type in (MSO_FILL_TYPE.SOLID, MSO_FILL_TYPE.GRADIENT, MSO_FILL_TYPE.PICTURE)
+        if self.geometry != 'line' and (filled or self.paint is not None):
+            return 'filled'
+        return 'text' if self.text else 'outline'
 
     @property
     def bounds(self):
@@ -322,8 +352,8 @@ class Reference:
             return
         self.text_boxes.append(region.bounds)
         # Reference-only conservative exclusion: all paragraph rows, full width.
-        # This affects color sampling only; the coverage assertion still uses
-        # the full, unshrunk python-pptx shape frame, including text-only shapes.
+        # This affects color sampling only. Coverage uses each original frame
+        # and distinguishes area fills, text-only shapes, and outlines.
         sizes = [r.font.size.pt if r.font.size else p.font.size.pt if p.font.size else 24
                  for p in frame.paragraphs for r in p.runs]
         size = max(sizes, default=24)
@@ -368,7 +398,8 @@ class Reference:
                             ch = sum(table.rows[i].height for i in range(row_idx, row_idx+cell.span_height))/12700
                             cell_matrix = compose(matrix, (1, 0, 0, 1, left, top))
                             region = Region(f'{shape.name}/cell{row_idx},{col_idx}', cell_matrix, cw, ch,
-                                            'rect', self.fill(cell._tc.tcPr, shape.part), bool(cell.text.strip()))
+                                            'rect', self.fill(cell._tc.tcPr, shape.part), bool(cell.text.strip()),
+                                            fill_type=cell.fill.type)
                             self.regions.append(region)
                             self.text(cell.text_frame, region)
                         left += col.width/12700
@@ -386,6 +417,7 @@ class Reference:
             if kind == 'line':
                 paint = self.fill(line, shape.part)
             region = Region(shape.name, matrix, w, h, kind, paint, shape.has_text_frame and bool(shape.text.strip()))
+            region.fill_type = shape.fill.type if hasattr(shape, 'fill') else MSO_FILL_TYPE.PICTURE if shape.shape_type == 13 else None
             if kind == 'line':
                 region.stroke = int(line.get('w', 12700))/12700 if line is not None else 1
             self.regions.append(region)
@@ -407,6 +439,19 @@ class Reference:
                 rgba = region.paint.rgba(u, v, region.width, region.height)
                 rgb = [rgba[i]*rgba[3]/255+rgb[i]*(1-rgba[3]/255) for i in range(3)]
         return tuple(max(0, min(255, math.floor(v+.5))) for v in rgb)
+
+    def background_image(self, size):
+        """Independent backdrop: a colored page must not count as shape ink."""
+        if self.background.kind == 'solid':
+            rgba = self.background.value
+            rgb = tuple(math.floor(v*rgba[3]/255+255-rgba[3]+.5) for v in rgba[:3])
+            return Image.new('RGB', size, rgb)
+        pixels = bytearray()
+        for y in range(size[1]):
+            for x in range(size[0]):
+                rgba = self.background.rgba(x+.5, y+.5, self.width, self.height)
+                pixels.extend(max(0, min(255, math.floor(v*rgba[3]/255+255-rgba[3]+.5))) for v in rgba[:3])
+        return Image.frombytes('RGB', size, bytes(pixels))
 
     def samples(self):
         pools = []
@@ -451,30 +496,85 @@ class Reference:
         return [(x, y, self.expected(x, y)) for x, y in result]
 
 
-def metrics(reference, image, textless):
-    expected_box = union(reference.frames)
-    if expected_box:
-        expected_box = (max(0, expected_box[0]), max(0, expected_box[1]),
-                        min(image.width, expected_box[2]), min(image.height, expected_box[3]))
-    actual_box = ImageChops.difference(image, Image.new('RGB', image.size, WHITE)).getbbox()
-    coverage = (expected_box is None and actual_box is None) or bool(actual_box and expected_box and
-        actual_box[0] <= expected_box[0]+4 and actual_box[1] <= expected_box[1]+4 and
-        actual_box[2] >= expected_box[2]-4 and actual_box[3] >= expected_box[3]-4)
+def clipped(bounds, size, margin=0):
+    l, t, r, b = bounds
+    return (max(0, min(size[0], math.floor(l-margin))), max(0, min(size[1], math.floor(t-margin))),
+            max(0, min(size[0], math.ceil(r+margin))), max(0, min(size[1], math.ceil(b+margin))))
+
+
+def crop_bbox(mask, bounds):
+    bbox = mask.crop(bounds).getbbox()
+    return (bbox[0]+bounds[0], bbox[1]+bounds[1], bbox[2]+bounds[0], bbox[3]+bounds[1]) if bbox else None
+
+
+def glyph_regions(diff, boxes):
+    """Attribute every glyph pixel, including overflow outside all text frames.
+
+    Cropping to a frame before finding glyph bounds would silently discard the
+    very overflow we need to reject. Nearest-frame attribution keeps it; ties
+    inside overlapping frames use the nearest frame center.
+    """
+    glyphs = [dict(pixels=0, bbox=None) for _ in boxes]
+    extent = diff.getbbox()
+    if not boxes or extent is None:
+        return glyphs
+    data = diff.crop(extent)
+    for index, value in enumerate(data.tobytes()):
+        if not value:
+            continue
+        x, y = extent[0]+index % data.width, extent[1]+index // data.width
+        def distance(i):
+            l, t, r, b = boxes[i]
+            return (max(l-x-.5, x+.5-r, 0)**2+max(t-y-.5, y+.5-b, 0)**2,
+                    (x+.5-(l+r)/2)**2+(y+.5-(t+b)/2)**2)
+        glyph = glyphs[min(range(len(boxes)), key=distance)]
+        glyph['pixels'] += 1
+        previous = glyph['bbox']
+        glyph['bbox'] = (min(previous[0], x), min(previous[1], y), max(previous[2], x+1), max(previous[3], y+1)) if previous else (x, y, x+1, y+1)
+    return glyphs
+
+
+def metrics(reference, image, textless, backdrop=None):
+    backdrop = backdrop if backdrop is not None else reference.background_image(image.size)
+    channels = ImageChops.difference(textless, backdrop).split()
+    # Production measurements subtract an actual background-only render, so
+    # even faint ink counts without admitting the colored page itself.
+    ink = ImageChops.lighter(ImageChops.lighter(channels[0], channels[1]), channels[2]).point(lambda v: 255 if v else 0)
+    diff = ImageChops.difference(image, textless).convert('L').point(lambda v: 255 if v else 0)
+    glyphs = iter(glyph_regions(diff, reference.text_boxes))
+    checks = []
+    text_checks = []
+    for region in reference.regions:
+        expected = clipped(region.bounds, image.size)
+        glyph = next(glyphs) if region.text else None
+        if glyph is not None:
+            text_checks.append(glyph['pixels'] > 0)
+        kind = region.coverage_kind
+        if kind == 'text':
+            actual = glyph['bbox']
+            ok = bool(actual and glyph['pixels'] > 0 and
+                      actual[0] >= expected[0]-4 and actual[1] >= expected[1]-4 and
+                      actual[2] <= expected[2]+4 and actual[3] <= expected[3]+4)
+        else:
+            actual = crop_bbox(ink, clipped(region.bounds, image.size, 4))
+            ok = bool(actual)
+            if kind == 'filled':
+                ok = bool(actual and actual[0] <= expected[0]+4 and actual[1] <= expected[1]+4 and
+                          actual[2] >= expected[2]-4 and actual[3] >= expected[3]-4)
+        checks.append(dict(name=region.name, kind=kind, expected_bbox=expected, actual_bbox=actual,
+                           glyph_pixels=glyph['pixels'] if glyph else 0, ok=ok))
+    coverage = all(check['ok'] for check in checks)
+    expected_box = union([check['expected_bbox'] for check in checks])
+    actual_box = union([check['actual_bbox'] for check in checks if check['actual_bbox']])
     samples = []
     for x, y, expected in reference.samples():
         actual = image.getpixel((x, y))
         delta = max(abs(a-b) for a, b in zip(actual, expected))
         samples.append(dict(x=x, y=y, actual=actual, expected=expected, delta=delta, ok=delta <= 4))
-    diff = ImageChops.difference(image, textless).convert('L').point(lambda v: 255 if v else 0)
-    mask = Image.new('L', image.size)
-    draw = ImageDraw.Draw(mask)
-    for l, t, r, b in reference.text_boxes:
-        draw.rectangle((max(0, math.floor(l)), max(0, math.floor(t)),
-                        min(image.width-1, math.ceil(r)), min(image.height-1, math.ceil(b))), fill=255)
-    glyph_pixels = ImageChops.multiply(diff, mask).histogram()[255]
-    text = not reference.text_boxes or glyph_pixels > 0
+    glyph_pixels = sum(check['glyph_pixels'] for check in checks)
+    text = all(text_checks)
     colors = sum(p['ok'] for p in samples)
-    return dict(coverage=coverage, expected_bbox=expected_box, actual_bbox=actual_box,
+    return dict(coverage=coverage, coverage_shapes=checks, expected_bbox=expected_box, actual_bbox=actual_box,
                 colors=colors, samples=samples, text=text, has_text=bool(reference.text_boxes),
                 glyph_pixels=glyph_pixels, color_scope='fills-and-background' if any(r.paint for r in reference.regions) else 'background-only',
                 ok=coverage and colors >= 10 and text)
@@ -486,7 +586,7 @@ def check_file(engine, path, entry, output, repeats):
     status, code, warning, doc = opened(engine, path=path)
     result = dict(file=path.name, sha256=sha, status=status, code=code, warning=warning, pages=[], ok=False)
     print(f'{path.name} open status={status} code={code} warning={warning!r}')
-    baseline = None
+    baseline = background = None
     try:
         expected_error = entry.get('expected_status')
         if expected_error is not None:
@@ -512,6 +612,13 @@ def check_file(engine, path, entry, output, repeats):
         engine.lib.exr_fixed_pages(baseline, C.byref(clean_count))
         if clean_count.value != count.value:
             raise ValueError('textless baseline page count changed')
+        bg_status, bg_code, bg_warning, background = opened(engine, data=without_shapes(data))
+        if bg_status or bg_code or not background.value or not font_warnings_only(bg_warning):
+            raise ValueError(f'background-only open failed: {bg_status} {bg_warning}')
+        bg_count = C.c_size_t()
+        engine.lib.exr_fixed_pages(background, C.byref(bg_count))
+        if bg_count.value != count.value:
+            raise ValueError('background-only baseline page count changed')
         times = []
         for index, slide in enumerate(deck.slides):
             page = dict(slide=index+1, ok=False)
@@ -522,10 +629,11 @@ def check_file(engine, path, entry, output, repeats):
                 reference = Reference(deck, slide)
                 image, ms = render(engine, doc, index)
                 clean, _ = render(engine, baseline, index)
+                backdrop, _ = render(engine, background, index)
                 expected_size = (math.ceil(reference.width), math.ceil(reference.height))
-                if image.size != expected_size or clean.size != image.size:
+                if image.size != expected_size or clean.size != image.size or backdrop.size != image.size:
                     raise ValueError(f'bitmap dimensions={image.size}, reference={expected_size}')
-                page.update(metrics(reference, image, clean))
+                page.update(metrics(reference, image, clean, backdrop))
                 page['render_ms'] = ms
                 page['geometry_bounds'] = list(pages[index].geometry.bounds)
                 if any(abs(a-b) > .01 for a, b in zip(page['geometry_bounds'], (0, 0, reference.width, reference.height))):
@@ -533,7 +641,9 @@ def check_file(engine, path, entry, output, repeats):
                     page['geometry_error'] = 'public page geometry differs from python-pptx'
                 print(f'{path.name}#{index+1} coverage={"ok" if page["coverage"] else "FAIL"} color={page["colors"]}/12 text={"ok" if page["text"] else "FAIL"}')
                 if not page['coverage']:
-                    print(f'  bbox actual={page["actual_bbox"]} expected={page["expected_bbox"]} tolerance=4px')
+                    for check in page['coverage_shapes']:
+                        if not check['ok']:
+                            print(f'  {check["kind"]} {check["name"]!r}: bbox actual={check["actual_bbox"]} expected={check["expected_bbox"]} glyph_pixels={check["glyph_pixels"]} tolerance=4px')
                 for sample in page['samples']:
                     if not sample['ok']:
                         print(f'  color ({sample["x"]},{sample["y"]}) actual={sample["actual"]} expected={sample["expected"]} delta={sample["delta"]}')
@@ -544,6 +654,7 @@ def check_file(engine, path, entry, output, repeats):
                     target.mkdir(parents=True, exist_ok=True)
                     image.save(target / f'{index+1:02}.png')
                     clean.save(target / f'{index+1:02}-textless.png')
+                    backdrop.save(target / f'{index+1:02}-background.png')
                 if entry.get('benchmark'):
                     # Measure the unmodified document's public render only,
                     # including allocation, excluding Python copying and oracle.
@@ -558,10 +669,14 @@ def check_file(engine, path, entry, output, repeats):
                 print(f'{path.name}#{index+1} coverage=FAIL color=FAIL/12 text=FAIL error={exc}')
             file_ok &= page['ok']
         if times:
-            result['performance'] = dict(repeats=repeats, samples=len(times), median_ms=statistics.median(times),
-                                         max_ms=max(times), limit_ms=200, ok=max(times) < 200)
+            median = statistics.median(times)
+            baseline_median, median_limit = 20.5, 20.5*1.5
+            result['performance'] = dict(repeats=repeats, samples=len(times), median_ms=median,
+                                         max_ms=max(times), limit_ms=200, baseline_median_ms=baseline_median,
+                                         median_limit_ms=median_limit, median_ratio=median/baseline_median,
+                                         ok=max(times) < 200 and median <= median_limit)
             file_ok &= result['performance']['ok']
-            print(f'{path.name} render samples={len(times)} median={statistics.median(times):.3f}ms max={max(times):.3f}ms limit=200ms')
+            print(f'{path.name} render samples={len(times)} median={median:.3f}ms max={max(times):.3f}ms median-limit={median_limit:.2f}ms ratio={median/baseline_median:.3f} max-limit=200ms')
         result['ok'] = bool(file_ok)
     except Exception as exc:
         result['error'] = str(exc)
@@ -569,6 +684,8 @@ def check_file(engine, path, entry, output, repeats):
     finally:
         if baseline and baseline.value:
             engine.lib.exr_fixed_free(baseline)
+        if background and background.value:
+            engine.lib.exr_fixed_free(background)
         if doc.value:
             engine.lib.exr_fixed_free(doc)
     return result
@@ -578,7 +695,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--library', required=True, type=Path)
     parser.add_argument('--fixtures', type=Path, default=HERE)
-    parser.add_argument('--output', type=Path, help='write JSON and actual/textless PNGs')
+    parser.add_argument('--output', type=Path, help='write JSON and actual/textless/background PNGs')
     parser.add_argument('--file', help='select one fixture stem (all are checked by default)')
     parser.add_argument('--repeats', type=int, default=5)
     args = parser.parse_args()
@@ -599,6 +716,10 @@ def main():
     summary = dict(python=sys.version.split()[0], platform=sys.platform,
                    library=str(args.library.resolve()), library_sha256=hashlib.sha256(args.library.read_bytes()).hexdigest(),
                    coverage_tolerance_px=4, color_tolerance_per_channel=4, color_pass_minimum=10,
+                   coverage_definition=dict(filled='non-background ink bbox covers geometry bbox',
+                                            text='glyph pixels > 0; glyph bbox contained in shape bbox',
+                                            outline='non-background pixels in shape region plus 4px',
+                                            backdrop='foreground removed; original backgrounds retained'),
                    files=len(results), passed=sum(r['ok'] for r in results), results=results)
     print(f'MATRIX files={len(results)} passed={summary["passed"]} failed={len(results)-summary["passed"]}')
     if args.output:

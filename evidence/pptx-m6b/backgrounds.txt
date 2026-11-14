@@ -1,0 +1,28 @@
+background-solid: exit=0
+p:bg solid #123456: [((0, 0), (18, 52, 86)), ((719, 0), (18, 52, 86)), ((0, 539), (18, 52, 86)), ((719, 539), (18, 52, 86)), ((360, 270), (18, 52, 86))]; foreground (100,80)=(0, 255, 0)
+
+background-gradient: exit=0
+p:bg gradient red -> blue angle=0: y=270, [(0, (255, 0, 0)), (180, (191, 0, 64)), (360, (127, 0, 128)), (540, (64, 0, 191)), (719, (0, 0, 255))]
+p:bg gradient angle=0: exact full-slide shape raster match
+p:bg gradient angle=45: exact full-slide shape raster match
+p:bg gradient angle=90: exact full-slide shape raster match
+p:bg gradient angle=180: exact full-slide shape raster match
+p:bg gradient angle=270: exact full-slide shape raster match
+
+background-image: exit=0
+p:bg blipFill 100x50 stretched to 720x540: [((0, 0), (255, 0, 0)), ((180, 270), (255, 0, 0)), ((539, 270), (0, 0, 255)), ((719, 539), (0, 0, 255))]
+
+background-theme: exit=0
+p:bgRef idx=1002 -> second bgFillStyleLst phClr -> accent2 #C23A55: [((0, 0), (194, 58, 85)), ((360, 270), (194, 58, 85)), ((719, 539), (194, 58, 85))]
+p:bgRef schemeClr accent3: RGB=(53, 121, 189)
+p:bgRef idx=1001 -> first bgFillStyleLst entry: RGB=(255, 0, 0)
+p:bgRef idx=1003 -> gradient phClr=accent2: RGB(360,270)=(97, 29, 170), exact direct-gradient match
+p:bgRef idx=0: no background, all pixels white and no warning
+p:bgRef idx=1000: no background, all pixels white and no warning
+
+background-inheritance: exit=0
+absent slide p:bg -> master #5B246D: [((0, 0), (91, 36, 109)), ((360, 270), (91, 36, 109)), ((719, 539), (91, 36, 109))]
+explicit white slide p:bg overrides master background: all pixels white
+layout cyan background overrides master; explicit slide white overrides layout
+master blipFill resolves relationship on master part: RGB=(37, 158, 213)
+absent slide and master p:bg: all pixels white

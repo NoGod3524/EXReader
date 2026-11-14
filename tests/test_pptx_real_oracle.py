@@ -80,7 +80,7 @@ def run():
     print(f'wrong-color injection: color={result["colors"]}/12; coordinates/RGB retained')
 
     result = matrix.metrics(reference, base, base)
-    assert not result['ok'] and result['coverage'] and result['colors'] == 12, result
+    assert not result['ok'] and not result['coverage'] and result['colors'] == 12, result
     assert not result['text'] and result['glyph_pixels'] == 0, result
     assert reference.samples() == samples, 'reference samples changed with actual pixels'
     print('lost-text injection: text failure detected despite intact colored rectangle')
@@ -95,6 +95,12 @@ def run():
     assert empty_reference.expected(45, 45) == reference.expected(45, 45)
     print('textless package: geometry/fills preserved; reference samples independent')
 
+    bare = Presentation(BytesIO(matrix.without_shapes(stream.getvalue())))
+    bare_reference = matrix.Reference(bare, bare.slides[0])
+    assert len(bare.slides) == len(deck.slides) and not bare_reference.regions
+    assert bare_reference.background == reference.background
+    print('background-only package: slide count/background preserved; foreground removed')
+
     text_deck = Presentation()
     text_deck.slide_width, text_deck.slide_height = Pt(360), Pt(240)
     text_page = text_deck.slides.add_slide(text_deck.slide_layouts[6])
@@ -103,8 +109,50 @@ def run():
     ink = blank.copy()
     ImageDraw.Draw(ink).rectangle((48, 48, 89, 69), fill='black')
     result = matrix.metrics(text_reference, ink, blank)
-    assert not result['ok'] and not result['coverage'] and result['text'], result
-    print('transparent textbox: inset glyph ink does not falsely cover the full shape frame')
+    assert result['ok'] and result['coverage'] and result['text'], result
+    assert result['coverage_shapes'][0]['kind'] == 'text', result
+    print('transparent textbox: inset glyph ink passes without covering the full frame')
+
+    overflow = blank.copy()
+    ImageDraw.Draw(overflow).rectangle((48, 48, 175, 69), fill='black')
+    result = matrix.metrics(text_reference, overflow, blank)
+    assert not result['coverage'] and result['text'], result
+    assert result['coverage_shapes'][0]['actual_bbox'] == (48, 48, 176, 70), result
+    print('text overflow injection: glyphs outside the frame are retained and rejected')
+
+    # Per-frame presence must reject one lost textbox even while another has ink.
+    text_page.shapes.add_textbox(Pt(190), Pt(40), Pt(120), Pt(60)).text = 'Second text'
+    two_text_reference = matrix.Reference(text_deck, text_page)
+    result = matrix.metrics(two_text_reference, ink, blank)
+    assert not result['coverage'] and not result['text'], result
+    assert result['coverage_shapes'][0]['ok'] and not result['coverage_shapes'][1]['ok'], result
+    print('one-of-two textboxes lost: per-shape presence failure detected')
+
+    outline_deck = Presentation()
+    outline_deck.slide_width, outline_deck.slide_height = Pt(360), Pt(240)
+    outline_page = outline_deck.slides.add_slide(outline_deck.slide_layouts[6])
+    border = outline_page.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE,
+                                           Pt(40), Pt(40), Pt(120), Pt(60))
+    border.fill.background()
+    border.line.color.rgb = RGBColor(0, 0, 0)
+    outline_reference = matrix.Reference(outline_deck, outline_page)
+    border_image = blank.copy()
+    ImageDraw.Draw(border_image).rectangle((40, 40, 159, 99), outline='black')
+    result = matrix.metrics(outline_reference, border_image, border_image)
+    assert result['coverage'] and result['coverage_shapes'][0]['kind'] == 'outline', result
+    result = matrix.metrics(outline_reference, blank, blank)
+    assert not result['coverage'], result
+    print('unfilled outline: local non-background ink required; missing border rejected')
+
+    outline_page.background.fill.solid()
+    outline_page.background.fill.fore_color.rgb = RGBColor(32, 64, 96)
+    colored_reference = matrix.Reference(outline_deck, outline_page)
+    colored_blank = Image.new('RGB', blank.size, (32, 64, 96))
+    result = matrix.metrics(colored_reference, colored_blank, colored_blank)
+    assert not result['coverage'] and result['colors'] == 12, result
+    result = matrix.metrics(colored_reference, blank, blank, blank)
+    assert not result['coverage'], result
+    print('colored backdrop: background cannot impersonate missing shape ink')
 
     alpha = OxmlElement('a:alpha')
     alpha.set('val', '50000')
