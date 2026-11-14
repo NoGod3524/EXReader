@@ -379,6 +379,19 @@ def static_checks(session, recorder, static):
 
 
 def build_report(recorder, environment, static, output, args, audit_completed):
+    from control_contract import audit
+    control_inventory = {}
+    for path in sorted((output / 'uia').glob('*.json')):
+        result = audit(json.loads(path.read_text(encoding='utf-8')))
+        control_inventory[path.name] = result
+        recorder.record('ALL-' + path.stem, 'all-controls',
+                        'every captured interactive control exposes Name and role', 'blocking',
+                        'pass' if result['name_role_passed'] else 'fail',
+                        'complete UIA tree with named interactive controls',
+                        json.dumps(result, ensure_ascii=False),
+                        steps=['walk every UIA node without an ID whitelist'],
+                        fix='supply missing names/roles or an untruncated capture')
+    evidence.write_json(output / 'all-controls.json', control_inventory)
     counts = recorder.counts()
     blocking = [check["id"] for check in recorder.checks
                 if check["severity"] == "blocking"
