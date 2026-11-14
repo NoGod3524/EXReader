@@ -18,23 +18,202 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import posixpath
 import re
 import statistics
+import struct
 import sys
 import time
+import xml.etree.ElementTree as ET
+import zlib
 from zipfile import ZipFile, ZIP_STORED
-
-from lxml import etree as ET
-from PIL import Image, ImageChops
-from pptx import Presentation
-from pptx.enum.dml import MSO_FILL_TYPE
-from pptx.oxml.ns import qn
 
 from test_pptx_skeleton import Bitmap, Engine, Error
 
 HERE = Path(__file__).resolve().parent / 'fixtures/pptx-real'
 IDENTITY = (1, 0, 0, 1, 0, 0)
 WHITE = (255, 255, 255)
+NAMESPACES = {
+    'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+    'p': 'http://schemas.openxmlformats.org/presentationml/2006/main',
+    'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+}
+for prefix, namespace in NAMESPACES.items():
+    ET.register_namespace(prefix, namespace)
+
+
+def qn(tag):
+    prefix, name = tag.split(':')
+    return '{' + NAMESPACES[prefix] + '}' + name
+
+
+class Part:
+    def __init__(self, deck, name):
+        self.deck, self.name = deck, name
+        self.blob = deck.parts[name]
+        self.root = ET.fromstring(self.blob) if name.endswith('.xml') else None
+        directory, filename = posixpath.split(name)
+        relname = posixpath.join(directory, '_rels', filename + '.rels')
+        self.rels = {}
+        if relname in deck.parts:
+            for rel in ET.fromstring(deck.parts[relname]):
+                if rel.get('TargetMode') != 'External':
+                    target = rel.get('Target')
+                    target = target.lstrip('/') if target.startswith('/') else posixpath.normpath(posixpath.join(directory, target))
+                    self.rels[rel.get('Id')] = (rel.get('Type'), target)
+
+    def related_part(self, relationship):
+        return Part(self.deck, self.rels[relationship][1])
+
+    def related(self, kind):
+        return Part(self.deck, next(target for reltype, target in self.rels.values() if reltype.endswith('/' + kind)))
+
+
+class Presentation:
+    """Read only the OPC relationships and XML used by this corpus oracle."""
+    def __init__(self, source):
+        with ZipFile(source) as package:
+            self.parts = {name: package.read(name) for name in package.namelist()}
+        rels = ET.fromstring(self.parts['_rels/.rels'])
+        name = next(rel.get('Target').lstrip('/') for rel in rels if rel.get('Type').endswith('/officeDocument'))
+        part = Part(self, name)
+        size = child(part.root, 'p:sldSz')
+        self.slide_width, self.slide_height = int(size.get('cx')), int(size.get('cy'))
+        self.slides = [part.related_part(item.get(qn('r:id'))) for item in child(part.root, 'p:sldIdLst')]
+
+
+class Raster:
+    """Small RGB/RGBA/one-channel raster for PNG samples and binary masks."""
+    def __init__(self, width, height, data, channels=3):
+        if width < 0 or height < 0 or channels not in (1, 3, 4):
+            raise ValueError('invalid raster dimensions or channels')
+        self.width, self.height, self.channels = width, height, channels
+        self.size = width, height
+        self.data = bytearray(data)
+        if len(self.data) != width*height*channels:
+            raise ValueError('raster size does not match pixel bytes')
+
+    @classmethod
+    def new(cls, size, color):
+        return cls(*size, bytes(color)*(size[0]*size[1]), len(color))
+
+    @classmethod
+    def png(cls, data):
+        if data[:8] != b'\x89PNG\r\n\x1a\n':
+            raise ValueError('oracle supports PNG images only')
+        offset, compressed = 8, bytearray()
+        while offset < len(data):
+            length = struct.unpack_from('>I', data, offset)[0]
+            tag, payload = data[offset+4:offset+8], data[offset+8:offset+8+length]
+            if zlib.crc32(tag+payload) & 0xffffffff != struct.unpack_from('>I', data, offset+8+length)[0]:
+                raise ValueError('PNG CRC mismatch')
+            if tag == b'IHDR':
+                width, height, depth, color, compression, filtering, interlace = struct.unpack('>IIBBBBB', payload)
+                if depth != 8 or color not in (2, 6) or compression or filtering or interlace:
+                    raise ValueError('oracle supports noninterlaced 8-bit RGB/RGBA PNG only')
+            elif tag == b'IDAT':
+                compressed.extend(payload)
+            offset += length+12
+            if tag == b'IEND':
+                break
+        channels = 3 if color == 2 else 4
+        raw, pixels, previous = zlib.decompress(compressed), bytearray(), bytearray(width*channels)
+        stride = width*channels
+        if len(raw) != height*(stride+1):
+            raise ValueError('PNG scanline size mismatch')
+        for y in range(height):
+            kind, row = raw[y*(stride+1)], bytearray(raw[y*(stride+1)+1:(y+1)*(stride+1)])
+            if kind not in range(5):
+                raise ValueError('invalid PNG filter')
+            if kind:
+                for i in range(stride):
+                    left, up = row[i-channels] if i >= channels else 0, previous[i]
+                    corner = previous[i-channels] if i >= channels else 0
+                    if kind == 1:
+                        predictor = left
+                    elif kind == 2:
+                        predictor = up
+                    elif kind == 3:
+                        predictor = (left+up)//2
+                    else:
+                        p = left+up-corner
+                        distances = abs(p-left), abs(p-up), abs(p-corner)
+                        predictor = (left, up, corner)[distances.index(min(distances))]
+                    row[i] = (row[i]+predictor) & 255
+            pixels.extend(row)
+            previous = row
+        if channels == 3:
+            rgba = bytearray(width*height*4)
+            for channel in range(3):
+                rgba[channel::4] = pixels[channel::3]
+            rgba[3::4] = b'\xff'*(width*height)
+            pixels, channels = rgba, 4
+        return cls(width, height, pixels, channels)
+
+    def save(self, target):
+        def chunk(tag, payload):
+            return struct.pack('>I', len(payload))+tag+payload+struct.pack('>I', zlib.crc32(tag+payload) & 0xffffffff)
+        color = {1: 0, 3: 2, 4: 6}[self.channels]
+        stride = self.width*self.channels
+        raw = b''.join(b'\x00'+self.data[y*stride:(y+1)*stride] for y in range(self.height))
+        data = (b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR', struct.pack('>IIBBBBB', self.width, self.height, 8, color, 0, 0, 0))+
+                chunk(b'IDAT', zlib.compress(raw, 0))+chunk(b'IEND', b''))
+        if hasattr(target, 'write'):
+            target.write(data)
+        else:
+            Path(target).write_bytes(data)
+
+    def copy(self):
+        return Raster(self.width, self.height, self.data, self.channels)
+
+    def getpixel(self, point):
+        x, y = point
+        start = (y*self.width+x)*self.channels
+        return tuple(self.data[start:start+self.channels])
+
+    def rectangle(self, bounds, fill=None, outline=None):
+        l, t, r, b = bounds
+        if fill is not None:
+            left, right = max(0, l), min(self.width, r+1)
+            if left >= right:
+                return
+            for y in range(max(0, t), min(self.height, b+1)):
+                start, end = (y*self.width+left)*self.channels, (y*self.width+right)*self.channels
+                self.data[start:end] = bytes(fill)*(right-left)
+        if outline is not None:
+            for edge in ((l, t, r, t), (l, b, r, b), (l, t, l, b), (r, t, r, b)):
+                self.rectangle(edge, fill=outline)
+
+    def paste(self, other, point):
+        x, y = point
+        if self.channels != other.channels:
+            raise ValueError('paste channel mismatch')
+        for oy in range(max(0, -y), min(other.height, self.height-y)):
+            left, right = max(0, -x), min(other.width, self.width-x)
+            if left < right:
+                start = ((y+oy)*self.width+x+left)*self.channels
+                row = (oy*other.width+left)*self.channels
+                self.data[start:start+(right-left)*self.channels] = other.data[row:row+(right-left)*self.channels]
+
+    def crop(self, bounds):
+        l, t, r, b = bounds
+        result = Raster(r-l, b-t, bytes((r-l)*(b-t)*self.channels), self.channels)
+        result.paste(self, (-l, -t))
+        return result
+
+    def getbbox(self):
+        left, top, right, bottom = self.width, self.height, 0, 0
+        for y in range(self.height):
+            row = self.data[y*self.width*self.channels:(y+1)*self.width*self.channels]
+            if not any(row):
+                continue
+            occupied = [i//self.channels for i, value in enumerate(row) if value]
+            left, right = min(left, occupied[0]), max(right, occupied[-1]+1)
+            top, bottom = min(top, y), y+1
+        return (left, top, right, bottom) if right else None
+
+    def tobytes(self):
+        return bytes(self.data)
 
 
 def child(element, tag):
@@ -42,7 +221,7 @@ def child(element, tag):
 
 
 def local(element):
-    return ET.QName(element).localname
+    return element.tag.rsplit('}', 1)[-1]
 
 
 def compose(a, b):
@@ -110,7 +289,9 @@ def without_text(data):
             content = src.read(name)
             if name.endswith('.xml') and name.startswith('ppt/'):
                 root = ET.fromstring(content)
-                for body in root.iter(qn('p:txBody'), qn('a:txBody')):
+                for body in root.iter():
+                    if body.tag not in (qn('p:txBody'), qn('a:txBody')):
+                        continue
                     for paragraph in list(body.findall(qn('a:p'))):
                         body.remove(paragraph)
                     ET.SubElement(body, qn('a:p'))
@@ -155,9 +336,12 @@ def render(engine, doc, page):
             raise ValueError(f'render status={status} code={error.code}: {error.message!r}')
         if bitmap.channels != 4 or not bitmap.pixels:
             raise ValueError('invalid RGBA bitmap')
-        image = Image.frombytes('RGBA', (bitmap.width, bitmap.height),
-                                C.string_at(bitmap.pixels, bitmap.stride*bitmap.height),
-                                'raw', 'RGBA', bitmap.stride).convert('RGB')
+        rgba = C.string_at(bitmap.pixels, bitmap.stride*bitmap.height)
+        rows = b''.join(rgba[y*bitmap.stride:y*bitmap.stride+bitmap.width*4] for y in range(bitmap.height))
+        rgb = bytearray(bitmap.width*bitmap.height*3)
+        for channel in range(3):
+            rgb[channel::3] = rows[channel::4]
+        image = Raster(bitmap.width, bitmap.height, rgb)
         return image, elapsed
     finally:
         engine.lib.exr_bitmap_free(C.byref(bitmap))
@@ -206,14 +390,11 @@ class Region:
     paint: Paint | None
     text: bool = False
     stroke: float = 0
-    fill_type: object = None
 
     @property
     def coverage_kind(self):
-        # Lines use paint for their stroke, not for an area fill. The resolved
-        # paint also handles inherited theme fills (fill.type is then None).
-        filled = self.fill_type in (MSO_FILL_TYPE.SOLID, MSO_FILL_TYPE.GRADIENT, MSO_FILL_TYPE.PICTURE)
-        if self.geometry != 'line' and (filled or self.paint is not None):
+        # Lines use paint for their stroke. Resolved theme paints count as fills.
+        if self.geometry != 'line' and self.paint is not None:
             return 'filled'
         return 'text' if self.text else 'outline'
 
@@ -244,27 +425,27 @@ class Reference:
         self.width, self.height = deck.slide_width/12700, deck.slide_height/12700
         self.regions, self.frames, self.text_boxes = [], [], []
         self.exclusions = []
-        master = slide.slide_layout.slide_master
-        theme_part = next(r.target_part for r in master.part.rels.values() if r.reltype.endswith('/theme'))
-        self.theme = ET.fromstring(theme_part.blob)
+        layout = slide.related('slideLayout')
+        master = layout.related('slideMaster')
+        self.theme = master.related('theme').root
         scheme = self.theme.find('.//' + qn('a:clrScheme'))
         self.palette = {local(item): next(iter(item)) for item in scheme}
         self.placeholder = None
-        mapping = child(master._element, 'p:clrMap')
+        mapping = child(master.root, 'p:clrMap')
         self.mapping = dict(mapping.attrib) if mapping is not None else {}
-        override = child(child(slide._element, 'p:clrMapOvr'), 'a:overrideClrMapping')
+        override = child(child(slide.root, 'p:clrMapOvr'), 'a:overrideClrMapping')
         if override is not None:
             self.mapping.update(override.attrib)
         self.background = Paint('solid', (*WHITE, 255))
-        for owner in (master, slide.slide_layout, slide):
-            bg = child(child(owner._element, 'p:cSld'), 'p:bg')
+        for owner in (master, layout, slide):
+            bg = child(child(owner.root, 'p:cSld'), 'p:bg')
             if bg is not None:
                 props = child(bg, 'p:bgPr')
                 if props is None:
-                    self.background = self.style_fill(child(bg, 'p:bgRef'), owner.part)
+                    self.background = self.style_fill(child(bg, 'p:bgRef'), owner)
                 else:
-                    self.background = self.fill(props, owner.part) or Paint('solid', (*WHITE, 255))
-        self.walk(slide.shapes)
+                    self.background = self.fill(props, owner) or Paint('solid', (*WHITE, 255))
+        self.walk(child(child(slide.root, 'p:cSld'), 'p:spTree'), slide)
 
     def color(self, element):
         kind = local(element)
@@ -332,7 +513,7 @@ class Reference:
             blip = child(props, 'p:blipFill')
         if blip is not None:
             rel = child(blip, 'a:blip').get(qn('r:embed'))
-            image = Image.open(BytesIO(part.related_part(rel).blob)).convert('RGBA')
+            image = Raster.png(part.related_part(rel).blob)
             if child(blip, 'a:tile') is not None:
                 tile = child(blip, 'a:tile')
                 if any(tile.get(k, default) != default for k, default in (('sx', '100000'), ('sy', '100000'),
@@ -348,87 +529,113 @@ class Reference:
         return None
 
     def text(self, frame, region):
-        if not frame.text.strip():
+        if frame is None or not ''.join(frame.itertext()).strip():
+            return
+        paragraphs = frame.findall(qn('a:p'))
+        text = lambda p: ''.join(p.itertext())
+        if not any(text(p).strip() for p in paragraphs):
             return
         self.text_boxes.append(region.bounds)
         # Reference-only conservative exclusion: all paragraph rows, full width.
-        # This affects color sampling only. Coverage uses each original frame
-        # and distinguishes area fills, text-only shapes, and outlines.
-        sizes = [r.font.size.pt if r.font.size else p.font.size.pt if p.font.size else 24
-                 for p in frame.paragraphs for r in p.runs]
+        # Coverage still attributes glyphs to each original frame.
+        sizes = []
+        for paragraph in paragraphs:
+            default = child(child(paragraph, 'a:pPr'), 'a:defRPr')
+            for run in paragraph.findall(qn('a:r')):
+                props = child(run, 'a:rPr')
+                size = props.get('sz') if props is not None else None
+                size = size or (default.get('sz') if default is not None else None)
+                sizes.append(int(size)/100 if size else 24)
         size = max(sizes, default=24)
-        lines = sum(max(1, math.ceil(len(p.text)*size*.65/max(1, region.width-20))) for p in frame.paragraphs)
+        lines = sum(max(1, math.ceil(len(text(p))*size*.65/max(1, region.width-20))) for p in paragraphs)
         height = min(region.height, lines*size*1.7+20)
-        anchor = frame.vertical_anchor
-        y = region.height-height if anchor == 4 else (region.height-height)/2 if anchor == 3 else 0
+        body = child(frame, 'a:bodyPr')
+        anchor = body.get('anchor', 't') if body is not None else 't'
+        y = region.height-height if anchor == 'b' else (region.height-height)/2 if anchor == 'ctr' else 0
         self.exclusions.append(box(compose(region.matrix, (1, 0, 0, 1, 0, y)), region.width, height))
 
-    def walk(self, shapes, parent=IDENTITY):
+    def walk(self, shapes, part, parent=IDENTITY):
         for shape in shapes:
-            x, y, w, h = [getattr(shape, key)/12700 for key in ('left', 'top', 'width', 'height')]
-            if (not w or not h) and shape.shape_type != 9:
-                raise ValueError(f'zero-area reference shape: {shape.name}')
+            shape_type = local(shape)
+            if shape_type in ('nvGrpSpPr', 'grpSpPr', 'extLst'):
+                continue
+            if shape_type not in ('sp', 'pic', 'cxnSp', 'grpSp', 'graphicFrame'):
+                raise ValueError(f'reference shape not implemented: {shape_type}')
+            name = shape.find('.//' + qn('p:cNvPr')).get('name', '')
+            props = child(shape, 'p:spPr')
+            if shape_type == 'grpSp':
+                props = child(shape, 'p:grpSpPr')
+            xf = child(props, 'a:xfrm')
+            if xf is None:
+                xf = child(shape, 'p:xfrm')
+            if xf is None:
+                raise ValueError(f'reference shape has no transform: {name}')
+            off, ext = child(xf, 'a:off'), child(xf, 'a:ext')
+            x, y, w, h = [int(node.get(key))/12700 for node, key in ((off, 'x'), (off, 'y'), (ext, 'cx'), (ext, 'cy'))]
+            if (not w or not h) and shape_type != 'cxnSp':
+                raise ValueError(f'zero-area reference shape: {name}')
             matrix = compose(parent, (1, 0, 0, 1, x, y))
-            xf = shape._element.find('.//' + qn('a:xfrm'))
-            angle = math.radians(shape.rotation)
-            if angle or (xf is not None and any(xf.get(k) in ('1', 'true') for k in ('flipH', 'flipV'))):
+            angle = math.radians(int(xf.get('rot', 0))/60000)
+            if angle or any(xf.get(k) in ('1', 'true') for k in ('flipH', 'flipV')):
                 c, s = math.cos(angle), math.sin(angle)
-                fx, fy = [-1 if xf is not None and xf.get(k) in ('1', 'true') else 1 for k in ('flipH', 'flipV')]
+                fx, fy = [-1 if xf.get(k) in ('1', 'true') else 1 for k in ('flipH', 'flipV')]
                 a, b, c, d = c*fx, s*fx, -s*fy, c*fy
                 matrix = compose(matrix, (a, b, c, d, w/2-a*w/2-c*h/2, h/2-b*w/2-d*h/2))
             self.frames.append(box(matrix, w, h))
-            if shape.shape_type == 6:
-                xf = shape._element.grpSpPr.xfrm
-                sx, sy = xf.ext.cx/xf.chExt.cx, xf.ext.cy/xf.chExt.cy
-                group = compose(matrix, (sx, 0, 0, sy, -xf.chOff.x/12700*sx, -xf.chOff.y/12700*sy))
-                self.walk(shape.shapes, group)
+            if shape_type == 'grpSp':
+                ch_off, ch_ext = child(xf, 'a:chOff'), child(xf, 'a:chExt')
+                sx, sy = w*12700/int(ch_ext.get('cx')), h*12700/int(ch_ext.get('cy'))
+                group = compose(matrix, (sx, 0, 0, sy, -int(ch_off.get('x'))/12700*sx, -int(ch_off.get('y'))/12700*sy))
+                self.walk(shape, part, group)
                 continue
-            if shape.has_table:
-                table = shape.table
-                props = table._tbl.tblPr
-                if child(props, 'a:tableStyleId') is not None or table.first_row or table.horz_banding:
+            table = shape.find('.//' + qn('a:tbl'))
+            if table is not None:
+                graphic_data = child(child(shape, 'a:graphic'), 'a:graphicData')
+                if graphic_data is None or graphic_data.get('uri') != 'http://schemas.openxmlformats.org/drawingml/2006/table':
+                    raise ValueError('reference table has invalid graphicData URI')
+                table_props = child(table, 'a:tblPr')
+                if child(table_props, 'a:tableStyleId') is not None or any(table_props.get(k) in ('1', 'true') for k in ('firstRow', 'bandRow')):
                     raise ValueError('reference table preset styling not implemented')
+                columns = [int(col.get('w')) for col in child(table, 'a:tblGrid')]
+                rows = table.findall(qn('a:tr'))
+                heights = [int(row.get('h')) for row in rows]
                 top = 0
-                for row_idx, row in enumerate(table.rows):
+                for row_idx, row in enumerate(rows):
                     left = 0
-                    for col_idx, col in enumerate(table.columns):
-                        cell = table.cell(row_idx, col_idx)
-                        if not cell.is_spanned:
-                            cw = sum(table.columns[i].width for i in range(col_idx, col_idx+cell.span_width))/12700
-                            ch = sum(table.rows[i].height for i in range(row_idx, row_idx+cell.span_height))/12700
+                    for col_idx, cell in enumerate(row.findall(qn('a:tc'))):
+                        if not any(cell.get(k) in ('1', 'true') for k in ('hMerge', 'vMerge')):
+                            cw = sum(columns[col_idx:col_idx+int(cell.get('gridSpan', 1))])/12700
+                            ch = sum(heights[row_idx:row_idx+int(cell.get('rowSpan', 1))])/12700
                             cell_matrix = compose(matrix, (1, 0, 0, 1, left, top))
-                            region = Region(f'{shape.name}/cell{row_idx},{col_idx}', cell_matrix, cw, ch,
-                                            'rect', self.fill(cell._tc.tcPr, shape.part), bool(cell.text.strip()),
-                                            fill_type=cell.fill.type)
+                            frame = child(cell, 'a:txBody')
+                            region = Region(f'{name}/cell{row_idx},{col_idx}', cell_matrix, cw, ch,
+                                            'rect', self.fill(child(cell, 'a:tcPr'), part), bool(''.join(frame.itertext()).strip()))
                             self.regions.append(region)
-                            self.text(cell.text_frame, region)
-                        left += col.width/12700
-                    top += row.height/12700
+                            self.text(frame, region)
+                        left += columns[col_idx]/12700
+                    top += heights[row_idx]/12700
                 continue
-            props = child(shape._element, 'p:spPr')
+            if shape_type == 'graphicFrame':
+                raise ValueError('reference graphic frame is not a table')
             geometry = child(props, 'a:prstGeom')
-            kind = 'line' if shape.shape_type == 9 else geometry.get('prst') if geometry is not None else 'rect'
+            kind = 'line' if shape_type == 'cxnSp' else geometry.get('prst') if geometry is not None else 'rect'
             if kind not in ('rect', 'ellipse', 'roundRect', 'triangle', 'line') or child(props, 'a:custGeom') is not None:
-                raise ValueError(f'reference geometry not implemented: {kind} ({shape.name})')
-            paint = self.fill(props, shape.part)
-            if shape.shape_type == 13:
-                paint = self.fill(shape._element, shape.part)
+                raise ValueError(f'reference geometry not implemented: {kind} ({name})')
+            paint = self.fill(shape if shape_type == 'pic' else props, part)
             line = child(props, 'a:ln')
             if kind == 'line':
-                paint = self.fill(line, shape.part)
-            region = Region(shape.name, matrix, w, h, kind, paint, shape.has_text_frame and bool(shape.text.strip()))
-            region.fill_type = shape.fill.type if hasattr(shape, 'fill') else MSO_FILL_TYPE.PICTURE if shape.shape_type == 13 else None
+                paint = self.fill(line, part)
+            frame = child(shape, 'p:txBody')
+            region = Region(name, matrix, w, h, kind, paint, frame is not None and bool(''.join(frame.itertext()).strip()))
             if kind == 'line':
                 region.stroke = int(line.get('w', 12700))/12700 if line is not None else 1
             self.regions.append(region)
             if region.text:
-                self.text(shape.text_frame, region)
-            style = child(shape._element, 'p:style')
+                self.text(frame, region)
+            style = child(shape, 'p:style')
             fill_ref = child(style, 'a:fillRef')
             if paint is None and child(props, 'a:noFill') is None and fill_ref is not None and int(fill_ref.get('idx', 0)):
-                region.paint = self.style_fill(fill_ref, shape.part)
-            if shape.shape_type not in (1, 9, 13, 14, 17):
-                raise ValueError(f'reference shape type not implemented: {shape.shape_type}')
+                region.paint = self.style_fill(fill_ref, part)
 
     def expected(self, x, y):
         result = self.background.rgba(x+.5, y+.5, self.width, self.height)
@@ -445,13 +652,13 @@ class Reference:
         if self.background.kind == 'solid':
             rgba = self.background.value
             rgb = tuple(math.floor(v*rgba[3]/255+255-rgba[3]+.5) for v in rgba[:3])
-            return Image.new('RGB', size, rgb)
+            return Raster.new(size, rgb)
         pixels = bytearray()
         for y in range(size[1]):
             for x in range(size[0]):
                 rgba = self.background.rgba(x+.5, y+.5, self.width, self.height)
                 pixels.extend(max(0, min(255, math.floor(v*rgba[3]/255+255-rgba[3]+.5))) for v in rgba[:3])
-        return Image.frombytes('RGB', size, bytes(pixels))
+        return Raster(*size, pixels)
 
     def samples(self):
         pools = []
@@ -536,11 +743,17 @@ def glyph_regions(diff, boxes):
 
 def metrics(reference, image, textless, backdrop=None):
     backdrop = backdrop if backdrop is not None else reference.background_image(image.size)
-    channels = ImageChops.difference(textless, backdrop).split()
-    # Production measurements subtract an actual background-only render, so
-    # even faint ink counts without admitting the colored page itself.
-    ink = ImageChops.lighter(ImageChops.lighter(channels[0], channels[1]), channels[2]).point(lambda v: 255 if v else 0)
-    diff = ImageChops.difference(image, textless).convert('L').point(lambda v: 255 if v else 0)
+    if image.size != textless.size or image.size != backdrop.size:
+        raise ValueError('metrics bitmap dimensions differ')
+    if image.channels != 3 or textless.channels != 3 or backdrop.channels != 3:
+        raise ValueError('metrics require RGB pixels')
+    # Preserve the RGB difference and rounded luminance thresholds of the
+    # previous measurements, using only byte arrays.
+    ink_bytes = bytearray(a != b for a, b in zip(textless.data, backdrop.data))
+    ink = Raster(*image.size, bytes(a or b or c for a, b, c in zip(ink_bytes[0::3], ink_bytes[1::3], ink_bytes[2::3])), 1)
+    delta = bytearray(abs(a-b) for a, b in zip(image.data, textless.data))
+    diff = Raster(*image.size, bytes(bool((19595*r+38470*g+7471*b+32768) >> 16)
+                                   for r, g, b in zip(delta[0::3], delta[1::3], delta[2::3])), 1)
     glyphs = iter(glyph_regions(diff, reference.text_boxes))
     checks = []
     text_checks = []
@@ -588,14 +801,16 @@ def check_file(engine, path, entry, output, repeats):
     print(f'{path.name} open status={status} code={code} warning={warning!r}')
     baseline = background = None
     try:
+        if entry.get('sha256') and entry['sha256'] != sha:
+            raise ValueError('manifest SHA256 differs from corpus bytes')
+        if 'bytes' in entry and entry['bytes'] != len(data):
+            raise ValueError('manifest size differs from corpus bytes')
         expected_error = entry.get('expected_status')
         if expected_error is not None:
             result['ok'] = status == code == expected_error and status in (5, 6) and not doc.value and bool(warning)
             result['error_name'] = {5: 'EXR_FORMAT', 6: 'EXR_LIMIT'}.get(status, 'UNEXPECTED')
             print(f"{path.name} bad={'ok' if result['ok'] else 'FAIL'} {result['error_name']} status={status} message={warning!r}")
             return result
-        if entry.get('sha256') and entry['sha256'] != sha:
-            raise ValueError('manifest SHA256 differs from corpus bytes')
         deck = Presentation(BytesIO(data))
         result['python_slides'] = len(deck.slides)
         if status != 0 or code != 0 or not doc.value:
@@ -604,7 +819,7 @@ def check_file(engine, path, entry, output, repeats):
         pages = engine.lib.exr_fixed_pages(doc, C.byref(count))
         result['engine_slides'] = count.value
         file_ok = count.value == len(deck.slides) == entry['slides'] and font_warnings_only(warning)
-        print(f'{path.name} slides engine={count.value} python-pptx={len(deck.slides)} manifest={entry["slides"]} warnings={"ok" if font_warnings_only(warning) else "FAIL"}')
+        print(f'{path.name} slides engine={count.value} stdlib-opc={len(deck.slides)} manifest={entry["slides"]} warnings={"ok" if font_warnings_only(warning) else "FAIL"}')
         clean_status, clean_code, clean_warning, baseline = opened(engine, data=without_text(data))
         if clean_status or clean_code or not baseline.value or not font_warnings_only(clean_warning):
             raise ValueError(f'textless open failed: {clean_status} {clean_warning}')
@@ -638,7 +853,7 @@ def check_file(engine, path, entry, output, repeats):
                 page['geometry_bounds'] = list(pages[index].geometry.bounds)
                 if any(abs(a-b) > .01 for a, b in zip(page['geometry_bounds'], (0, 0, reference.width, reference.height))):
                     page['ok'] = False
-                    page['geometry_error'] = 'public page geometry differs from python-pptx'
+                    page['geometry_error'] = 'public page geometry differs from OPC dimensions'
                 print(f'{path.name}#{index+1} coverage={"ok" if page["coverage"] else "FAIL"} color={page["colors"]}/12 text={"ok" if page["text"] else "FAIL"}')
                 if not page['coverage']:
                     for check in page['coverage_shapes']:

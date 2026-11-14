@@ -12,5 +12,7 @@
     "16:9"
   ],
   "source": "generated",
-  "license": "MIT"
+  "license": "MIT",
+  "sha256": "d16cdc7da1fa911124aa959964b64386e621e142e5396db20d9dc72d5a7523d2",
+  "bytes": 17282
 }

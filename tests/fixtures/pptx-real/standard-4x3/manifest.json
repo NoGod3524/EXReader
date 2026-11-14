@@ -8,5 +8,7 @@
     "4:3"
   ],
   "source": "generated",
-  "license": "MIT"
+  "license": "MIT",
+  "sha256": "606ba49654e2d41ba589c0038a48bc8eaff68c74c96982fe55e5e6aaf7a5fd7c",
+  "bytes": 11352
 }
