@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "ppt_internal.h"
+#include <stdarg.h>
 
 static unsigned u16(const unsigned char *p) { return p[0]|((unsigned)p[1]<<8); }
 static uint32_t u32(const unsigned char *p) {
@@ -126,8 +127,31 @@ static exr_status draw(void *context,size_t page,const double matrix[6],const ex
       style.flags&=~EXR_DRAW_FILL;
     }
     if(sink->path && style.flags) { status=sink->path(sink->context,p,count,matrix,&style,e);if(status!=EXR_OK) return status; }
+    status=exr_ppt_text_draw(s,matrix,sink,control,e);if(status!=EXR_OK) return status;
   }
   return EXR_OK;
+}
+static void warning_append(char message[256],const char *format,...) {
+  size_t used=strlen(message);va_list args;
+  if(used>=255) return;
+  va_start(args,format);vsnprintf(message+used,256-used,format,args);va_end(args);
+}
+static void warnings(const exr_ppt_drawing *d,const exr_ppt_info *info,exr_error *e) {
+  char message[256]="PPT warning: ";size_t at;
+#define COUNT(field,label) if(d->field) warning_append(message,label "=%zu ",d->field)
+  COUNT(text_runs,"text-runs");COUNT(text_font_index,"font-index");COUNT(text_color_index,"color-index");
+  COUNT(text_unicode,"surrogate/replacement");COUNT(text_bytes_fallback,"Latin-1");COUNT(text_malformed,"text-malformed");
+  for(at=0;at<d->font_fallbacks.size;at+=strlen(d->font_fallbacks.data+at)+1)
+    warning_append(message,"font fallback=%s; ",d->font_fallbacks.data+at);
+  for(at=0;at<d->glyph_fallbacks.size;at+=strlen(d->glyph_fallbacks.data+at)+1)
+    warning_append(message,"glyph %s; ",d->glyph_fallbacks.data+at);
+  COUNT(malformed,"malformed");COUNT(missing_anchor,"missing-anchor");COUNT(depth,"depth");
+  COUNT(zero_extent,"zero-chExt");COUNT(unsupported,"unsupported");COUNT(bad_pib,"pib");
+  COUNT(unknown_blip,"blip-unsupported");COUNT(image_decode,"image-decode");
+  COUNT(gradient_horizontal,"gradient-horizontal");COUNT(gradient_missing,"gradient-missing");COUNT(scheme,"scheme");
+#undef COUNT
+  if(info->mismatch) warning_append(message,"SlidePersistAtom count %zu differs from Slide container count %zu; using SlidePersistAtom",info->pages,info->slide_containers);
+  if(strlen(message)>13) exr_fail(e,EXR_OK,"%s",message);
 }
 exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
   exr_ppt_streams streams={0};exr_ppt_info info;exr_fixed_input input={0};
@@ -140,6 +164,7 @@ exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open
   drawing=calloc(1,sizeof(*drawing));
   if(!drawing) { s=exr_fail(e,EXR_MEMORY,"PPT drawing allocation failed");goto done; }
   s=exr_ppt_read_drawing(&streams,&info,&options->control,drawing,e);
+  if(s==EXR_OK) s=exr_ppt_text_layout(drawing,&options->control,e);
   if(s!=EXR_OK) goto done;
   title=summary_title(streams.summary,streams.summary_size);
   if(info.pages) {
@@ -155,13 +180,7 @@ exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open
   s=exr_control_poll(&options->control,EXR_STAGE_READ,info.pages,info.pages,e);
   if(s==EXR_OK) s=exr_fixed_create(&input,out,e);
   if(s==EXR_OK) {
-    if(drawing->malformed || drawing->missing_anchor || drawing->depth || drawing->zero_extent || drawing->unsupported ||
-       drawing->bad_pib || drawing->unknown_blip || drawing->image_decode || drawing->gradient_horizontal || drawing->gradient_missing || drawing->scheme)
-      exr_fail(e,EXR_OK,"PPT warning: malformed=%zu missing-anchor=%zu depth=%zu zero-chExt=%zu unsupported=%zu pib=%zu blip-unsupported=%zu image-decode=%zu gradient-horizontal=%zu gradient-missing=%zu scheme=%zu%s",
-        drawing->malformed,drawing->missing_anchor,drawing->depth,drawing->zero_extent,drawing->unsupported,
-        drawing->bad_pib,drawing->unknown_blip,drawing->image_decode,drawing->gradient_horizontal,drawing->gradient_missing,drawing->scheme,
-        info.mismatch ? "; SlidePersistAtom count differs from Slide container count; using SlidePersistAtom" : "");
-    else if(info.mismatch) exr_fail(e,EXR_OK,"PPT warning: SlidePersistAtom count %zu differs from Slide container count %zu; using SlidePersistAtom",info.pages,info.slide_containers);
+    warnings(drawing,&info,e);
     drawing=NULL; /* The fixed provider now owns it. */
   }
 done:

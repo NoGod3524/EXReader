@@ -1,0 +1,1026 @@
+Test project C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+        Start 317: native-convert-corpus
+        Start 184: native-core
+        Start 188: native-flow
+        Start 112: native-hyphen-layout
+        Start 142: native-inks
+        Start 294: native-line-boundary
+        Start 328: native-document-probe
+        Start 247: native-pdf-hybrid-deck
+  1/509 Test #188: native-flow ........................................   Passed    0.23 sec
+        Start 329: native-corpus-triage
+  2/509 Test #184: native-core ........................................   Passed    0.30 sec
+        Start  79: native-docx-footnotes-ui
+  3/509 Test #317: native-convert-corpus ..............................   Passed    4.37 sec
+        Start 321: native-convert-benchmark
+  4/509 Test #247: native-pdf-hybrid-deck .............................   Passed   16.51 sec
+        Start 319: native-convert-cli
+  5/509 Test #329: native-corpus-triage ...............................   Passed   19.85 sec
+        Start 299: native-chapter-reader
+  6/509 Test #321: native-convert-benchmark ...........................   Passed   21.19 sec
+        Start  81: native-docx-realworld-matrix
+  7/509 Test #328: native-document-probe ..............................   Passed   25.68 sec
+        Start 327: native-benchmark
+  8/509 Test #294: native-line-boundary ...............................   Passed   27.35 sec
+        Start 391: release-artifacts
+  9/509 Test  #79: native-docx-footnotes-ui ...........................   Passed   27.27 sec
+        Start 309: native-reflow-long
+ 10/509 Test #142: native-inks ........................................   Passed   29.40 sec
+        Start 204: native-publication-index-boundaries
+ 11/509 Test #319: native-convert-cli .................................   Passed   14.15 sec
+        Start 116: native-float
+ 12/509 Test #299: native-chapter-reader ..............................   Passed   11.29 sec
+        Start 143: native-nested-groups
+ 13/509 Test #309: native-reflow-long .................................   Passed    6.67 sec
+        Start 133: native-library-stream
+ 14/509 Test #116: native-float .......................................   Passed    5.23 sec
+        Start 149: native-pdf-shading
+ 15/509 Test #327: native-benchmark ...................................   Passed   10.79 sec
+ 16/509 Test #204: native-publication-index-boundaries ................   Passed    7.15 sec
+        Start 324: native-hyphen-compound-oracle
+        Start 254: native-blend
+ 17/509 Test #143: native-nested-groups ...............................   Passed    5.79 sec
+        Start  75: native-docx-edit-e5
+ 18/509 Test #254: native-blend .......................................   Passed    0.56 sec
+        Start 326: native-hyphen-conditional-oracle
+ 19/509 Test #149: native-pdf-shading .................................   Passed    1.81 sec
+        Start 350: native-ppt-shape-group
+ 20/509 Test #112: native-hyphen-layout ...............................   Passed   38.11 sec
+        Start  65: native-docx-edit-x6-image-small
+ 21/509 Test #391: release-artifacts ..................................   Passed   10.90 sec
+        Start 343: native-ppt-slides
+ 22/509 Test #326: native-hyphen-conditional-oracle ...................   Passed    2.00 sec
+        Start  96: sdk-release-checker
+ 23/509 Test  #81: native-docx-realworld-matrix .......................   Passed   13.89 sec
+        Start 465: native-docx-real-20-footnote-restart-edited
+ 24/509 Test #324: native-hyphen-compound-oracle ......................   Passed    3.11 sec
+        Start 146: native-alpha-source
+ 25/509 Test #146: native-alpha-source ................................   Passed    0.39 sec
+        Start 394: native-dictionary-contracts
+ 26/509 Test #465: native-docx-real-20-footnote-restart-edited ........   Passed    0.79 sec
+        Start 346: native-ppt-wrongformat
+ 27/509 Test #133: native-library-stream ..............................   Passed    6.11 sec
+        Start 462: native-docx-real-19-section-columns-noop
+ 28/509 Test  #75: native-docx-edit-e5 ................................   Passed    3.28 sec
+        Start 222: native-note-limit
+ 29/509 Test #343: native-ppt-slides ..................................   Passed    2.37 sec
+        Start 413: native-book-codec
+ 30/509 Test  #65: native-docx-edit-x6-image-small ....................   Passed    2.87 sec
+        Start 345: native-ppt-truncated
+ 31/509 Test  #96: sdk-release-checker ................................   Passed    2.06 sec
+        Start 420: native-build-manifest
+ 32/509 Test #350: native-ppt-shape-group .............................   Passed    3.54 sec
+        Start 464: native-docx-real-20-footnote-restart-noop
+ 33/509 Test #462: native-docx-real-19-section-columns-noop ...........   Passed    1.35 sec
+        Start 341: native-ppt-cfb
+ 34/509 Test #346: native-ppt-wrongformat .............................   Passed    1.61 sec
+        Start 261: native-kf8
+ 35/509 Test #261: native-kf8 .........................................   Passed    0.34 sec
+        Start 117: native-table-fragments
+ 36/509 Test #464: native-docx-real-20-footnote-restart-noop ..........   Passed    0.83 sec
+        Start 214: native-document-search-bounded
+ 37/509 Test #345: native-ppt-truncated ...............................   Passed    1.30 sec
+        Start 127: native-chapter-window
+ 38/509 Test #222: native-note-limit ..................................   Passed    2.03 sec
+        Start 463: native-docx-real-19-section-columns-edited
+ 39/509 Test #394: native-dictionary-contracts ........................   Passed    2.34 sec
+        Start 460: native-docx-real-18-section-landscape-noop
+ 40/509 Test #413: native-book-codec ..................................   Passed    2.53 sec
+        Start 256: native-canvas-cmyk
+ 41/509 Test #117: native-table-fragments .............................   Passed    1.42 sec
+        Start 364: native-ppt-fill-blips
+ 42/509 Test #463: native-docx-real-19-section-columns-edited .........   Passed    1.24 sec
+        Start  73: native-docx-editor-e2e
+ 43/509 Test #460: native-docx-real-18-section-landscape-noop .........   Passed    1.26 sec
+        Start 358: native-ppt-shape-styles
+ 44/509 Test #214: native-document-search-bounded .....................   Passed    1.57 sec
+        Start 461: native-docx-real-18-section-landscape-edited
+ 45/509 Test #341: native-ppt-cfb .....................................   Passed    2.24 sec
+        Start 286: native-bidi
+ 46/509 Test #127: native-chapter-window ..............................   Passed    1.96 sec
+        Start 342: native-ppt-records
+ 47/509 Test #420: native-build-manifest ..............................   Passed    3.31 sec
+        Start 466: native-docx-real-21-footnote-table-noop
+ 48/509 Test #256: native-canvas-cmyk .................................   Passed    1.78 sec
+        Start 457: native-docx-real-16-style-theme-fonts-edited
+ 49/509 Test  #73: native-docx-editor-e2e .............................   Passed    1.36 sec
+        Start 335: native-library-source
+ 50/509 Test #461: native-docx-real-18-section-landscape-edited .......   Passed    1.67 sec
+        Start 421: native-vertical-expand-boundaries
+ 51/509 Test #286: native-bidi ........................................   Passed    1.76 sec
+        Start 145: native-zero-opacity
+ 52/509 Test #466: native-docx-real-21-footnote-table-noop ............   Passed    1.59 sec
+        Start 344: native-ppt-size
+ 53/509 Test #364: native-ppt-fill-blips ..............................   Passed    2.59 sec
+        Start 484: native-docx-real-30-chinese-field-code-noop
+ 54/509 Test #342: native-ppt-records .................................   Passed    1.93 sec
+        Start 477: native-docx-real-26-comment-anchors-edited
+ 55/509 Test #358: native-ppt-shape-styles ............................   Passed    2.68 sec
+        Start 336: native-library-epub-storage
+ 56/509 Test #335: native-library-source ..............................   Passed    1.78 sec
+        Start 349: native-ppt-shape-overlap
+ 57/509 Test #457: native-docx-real-16-style-theme-fonts-edited .......   Passed    1.99 sec
+        Start  26: native-pptx-shape-limits
+ 58/509 Test #421: native-vertical-expand-boundaries ..................   Passed    2.09 sec
+        Start 467: native-docx-real-21-footnote-table-edited
+ 59/509 Test #145: native-zero-opacity ................................   Passed    2.11 sec
+        Start 475: native-docx-real-25-textbox-edited
+ 60/509 Test #336: native-library-epub-storage ........................   Passed    1.53 sec
+        Start 351: native-ppt-shape-standard
+ 61/509 Test #484: native-docx-real-30-chinese-field-code-noop ........   Passed    1.99 sec
+        Start 469: native-docx-real-22-image-inline-edited
+ 62/509 Test #477: native-docx-real-26-comment-anchors-edited .........   Passed    1.96 sec
+        Start 425: native-docx-real-reproducible
+ 63/509 Test #344: native-ppt-size ....................................   Passed    2.31 sec
+        Start 352: native-ppt-shape-wide
+ 64/509 Test  #26: native-pptx-shape-limits ...........................   Passed    2.11 sec
+        Start 455: native-docx-real-15-style-direct-override-edited
+ 65/509 Test #349: native-ppt-shape-overlap ...........................   Passed    2.31 sec
+ 66/509 Test #425: native-docx-real-reproducible ......................   Passed    0.96 sec
+ 67/509 Test #475: native-docx-real-25-textbox-edited .................   Passed    1.35 sec
+        Start 458: native-docx-real-17-section-margins-noop
+        Start 453: native-docx-real-14-style-inheritance-edited
+        Start 491: native-docx-real-text-validation
+ 68/509 Test #467: native-docx-real-21-footnote-table-edited ..........   Passed    1.71 sec
+        Start 456: native-docx-real-16-style-theme-fonts-noop
+ 69/509 Test #469: native-docx-real-22-image-inline-edited ............   Passed    1.32 sec
+        Start 448: native-docx-real-12-list-restart-noop
+ 70/509 Test #351: native-ppt-shape-standard ..........................   Passed    1.89 sec
+        Start 468: native-docx-real-22-image-inline-noop
+ 71/509 Test #453: native-docx-real-14-style-inheritance-edited .......   Passed    0.83 sec
+        Start 228: native-pdf-objects
+ 72/509 Test #491: native-docx-real-text-validation ...................   Passed    0.90 sec
+        Start 392: native-dictionary-stardict
+ 73/509 Test #456: native-docx-real-16-style-theme-fonts-noop .........   Passed    0.95 sec
+        Start 489: native-docx-real-text-history
+ 74/509 Test #455: native-docx-real-15-style-direct-override-edited ...   Passed    1.09 sec
+        Start 126: native-chapter-index
+ 75/509 Test #352: native-ppt-shape-wide ..............................   Passed    1.83 sec
+        Start 481: native-docx-real-28-hidden-text-edited
+ 76/509 Test #228: native-pdf-objects .................................   Passed    0.32 sec
+        Start 474: native-docx-real-25-textbox-noop
+ 77/509 Test #448: native-docx-real-12-list-restart-noop ..............   Passed    1.03 sec
+ 78/509 Test #458: native-docx-real-17-section-margins-noop ...........   Passed    1.32 sec
+        Start 470: native-docx-real-23-image-floating-noop
+        Start 493: native-docx-real-oracle-mutations
+ 79/509 Test #468: native-docx-real-22-image-inline-noop ..............   Passed    0.94 sec
+        Start 144: native-paint-source
+ 80/509 Test #489: native-docx-real-text-history ......................   Passed    0.79 sec
+        Start 237: native-pdf-image
+ 81/509 Test #470: native-docx-real-23-image-floating-noop ............   Passed    0.73 sec
+        Start 325: native-hyphen-replacement-oracle
+ 82/509 Test #481: native-docx-real-28-hidden-text-edited .............   Passed    1.00 sec
+        Start 357: native-ppt-shape-transforms
+ 83/509 Test #474: native-docx-real-25-textbox-noop ...................   Passed    1.10 sec
+        Start 106: native-pdf-shading-mesh7
+ 84/509 Test #392: native-dictionary-stardict .........................   Passed    1.43 sec
+        Start 488: native-docx-real-section-tail
+ 85/509 Test #126: native-chapter-index ...............................   Passed    1.44 sec
+        Start 471: native-docx-real-23-image-floating-edited
+ 86/509 Test #237: native-pdf-image ...................................   Passed    0.83 sec
+        Start  61: native-docx-edit-x6-table-preserve
+ 87/509 Test #144: native-paint-source ................................   Passed    1.47 sec
+        Start 480: native-docx-real-28-hidden-text-noop
+ 88/509 Test #493: native-docx-real-oracle-mutations ..................   Passed    1.94 sec
+        Start 363: native-ppt-fill-fallback
+ 89/509 Test #488: native-docx-real-section-tail ......................   Passed    1.01 sec
+        Start 450: native-docx-real-13-list-style-bound-noop
+ 90/509 Test #325: native-hyphen-replacement-oracle ...................   Passed    1.35 sec
+        Start  59: native-docx-edit-x6-table-roundtrip
+ 91/509 Test #106: native-pdf-shading-mesh7 ...........................   Passed    1.25 sec
+        Start 437: native-docx-real-06-field-page-edited
+ 92/509 Test  #61: native-docx-edit-x6-table-preserve .................   Passed    0.93 sec
+        Start 433: native-docx-real-04-table-repeat-header-edited
+ 93/509 Test #357: native-ppt-shape-transforms ........................   Passed    1.59 sec
+        Start 473: native-docx-real-24-shape-group-edited
+ 94/509 Test #471: native-docx-real-23-image-floating-edited ..........   Passed    1.39 sec
+        Start  74: native-docx-header-footer
+ 95/509 Test #480: native-docx-real-28-hidden-text-noop ...............   Passed    0.86 sec
+        Start 434: native-docx-real-05-table-multi-paragraph-noop
+ 96/509 Test #437: native-docx-real-06-field-page-edited ..............   Passed    0.76 sec
+        Start 157: native-pdf-inline
+ 97/509 Test #450: native-docx-real-13-list-style-bound-noop ..........   Passed    1.01 sec
+        Start 483: native-docx-real-29-header-table-edited
+ 98/509 Test  #59: native-docx-edit-x6-table-roundtrip ................   Passed    0.99 sec
+        Start 148: native-mask-scope
+ 99/509 Test #363: native-ppt-fill-fallback ...........................   Passed    1.21 sec
+        Start 354: native-ppt-shape-anchors
+100/509 Test #433: native-docx-real-04-table-repeat-header-edited .....   Passed    1.02 sec
+        Start  68: native-docx-edit-x6-image-shared
+101/509 Test  #74: native-docx-header-footer ..........................   Passed    0.84 sec
+        Start 435: native-docx-real-05-table-multi-paragraph-edited
+102/509 Test #473: native-docx-real-24-shape-group-edited .............   Passed    1.04 sec
+        Start 427: native-docx-real-01-table-horizontal-edited
+103/509 Test #434: native-docx-real-05-table-multi-paragraph-noop .....   Passed    1.18 sec
+        Start 454: native-docx-real-15-style-direct-override-noop
+104/509 Test #157: native-pdf-inline ..................................   Passed    0.96 sec
+        Start 478: native-docx-real-27-bookmarks-noop
+105/509 Test  #68: native-docx-edit-x6-image-shared ...................   Passed    0.72 sec
+        Start 446: native-docx-real-11-list-multilevel-noop
+106/509 Test #483: native-docx-real-29-header-table-edited ............   Passed    1.01 sec
+        Start 428: native-docx-real-02-table-vertical-noop
+107/509 Test #148: native-mask-scope ..................................   Passed    1.22 sec
+        Start 442: native-docx-real-09-field-ref-noop
+108/509 Test #427: native-docx-real-01-table-horizontal-edited ........   Passed    1.03 sec
+        Start 485: native-docx-real-30-chinese-field-code-edited
+109/509 Test #435: native-docx-real-05-table-multi-paragraph-edited ...   Passed    1.16 sec
+        Start 147: native-mask-functions
+110/509 Test #354: native-ppt-shape-anchors ...........................   Passed    1.50 sec
+        Start 486: native-docx-real-text-command
+111/509 Test #478: native-docx-real-27-bookmarks-noop .................   Passed    0.78 sec
+        Start 347: native-ppt-shape-red
+112/509 Test #454: native-docx-real-15-style-direct-override-noop .....   Passed    0.94 sec
+        Start 449: native-docx-real-12-list-restart-edited
+113/509 Test #147: native-mask-functions ..............................   Passed    0.23 sec
+        Start 459: native-docx-real-17-section-margins-edited
+114/509 Test #446: native-docx-real-11-list-multilevel-noop ...........   Passed    0.91 sec
+        Start  11: native-pptx-detection
+115/509 Test #428: native-docx-real-02-table-vertical-noop ............   Passed    0.98 sec
+        Start   8: native-pptx-defaults
+116/509 Test #442: native-docx-real-09-field-ref-noop .................   Passed    0.84 sec
+        Start  70: native-docx-edit-x6-table-delete
+117/509 Test #485: native-docx-real-30-chinese-field-code-edited ......   Passed    0.82 sec
+        Start 323: native-case-reference
+118/509 Test #347: native-ppt-shape-red ...............................   Passed    0.82 sec
+        Start 432: native-docx-real-04-table-repeat-header-noop
+119/509 Test #486: native-docx-real-text-command ......................   Passed    0.86 sec
+        Start   6: native-pptx-twenty
+120/509 Test #449: native-docx-real-12-list-restart-edited ............   Passed    0.83 sec
+        Start 431: native-docx-real-03-table-nested-edited
+121/509 Test  #11: native-pptx-detection ..............................   Passed    0.72 sec
+        Start 443: native-docx-real-09-field-ref-edited
+122/509 Test  #70: native-docx-edit-x6-table-delete ...................   Passed    0.65 sec
+        Start 452: native-docx-real-14-style-inheritance-noop
+123/509 Test #459: native-docx-real-17-section-margins-edited .........   Passed    1.09 sec
+        Start 430: native-docx-real-03-table-nested-noop
+124/509 Test   #8: native-pptx-defaults ...............................   Passed    0.98 sec
+        Start 472: native-docx-real-24-shape-group-noop
+125/509 Test #323: native-case-reference ..............................   Passed    1.11 sec
+        Start 314: native-page-cache
+126/509 Test #431: native-docx-real-03-table-nested-edited ............   Passed    0.92 sec
+127/509 Test #432: native-docx-real-04-table-repeat-header-noop .......   Passed    0.95 sec
+        Start 482: native-docx-real-29-header-table-noop
+        Start 438: native-docx-real-07-field-numpages-noop
+128/509 Test #443: native-docx-real-09-field-ref-edited ...............   Passed    0.91 sec
+        Start 447: native-docx-real-11-list-multilevel-edited
+129/509 Test   #6: native-pptx-twenty .................................   Passed    1.12 sec
+        Start 426: native-docx-real-01-table-horizontal-noop
+130/509 Test #452: native-docx-real-14-style-inheritance-noop .........   Passed    0.87 sec
+        Start 440: native-docx-real-08-field-date-noop
+131/509 Test #430: native-docx-real-03-table-nested-noop ..............   Passed    1.09 sec
+        Start 445: native-docx-real-10-field-toc-edited
+132/509 Test #472: native-docx-real-24-shape-group-noop ...............   Passed    1.25 sec
+        Start 103: native-render-audit
+133/509 Test #482: native-docx-real-29-header-table-noop ..............   Passed    0.90 sec
+        Start  49: native-docx-edit-io-sections
+134/509 Test #447: native-docx-real-11-list-multilevel-edited .........   Passed    0.88 sec
+        Start 451: native-docx-real-13-list-style-bound-edited
+135/509 Test #314: native-page-cache ..................................   Passed    1.03 sec
+        Start 429: native-docx-real-02-table-vertical-edited
+136/509 Test #426: native-docx-real-01-table-horizontal-noop ..........   Passed    0.83 sec
+        Start 492: native-docx-real-text-transaction
+137/509 Test #438: native-docx-real-07-field-numpages-noop ............   Passed    1.05 sec
+        Start 479: native-docx-real-27-bookmarks-edited
+138/509 Test #440: native-docx-real-08-field-date-noop ................   Passed    1.03 sec
+        Start 365: native-ppt-fill-gradient-fallback
+139/509 Test #445: native-docx-real-10-field-toc-edited ...............   Passed    1.04 sec
+        Start 439: native-docx-real-07-field-numpages-edited
+140/509 Test  #49: native-docx-edit-io-sections .......................   Passed    0.72 sec
+        Start 313: native-pager
+141/509 Test #103: native-render-audit ................................   Passed    1.14 sec
+142/509 Test #451: native-docx-real-13-list-style-bound-edited ........   Passed    1.01 sec
+        Start 393: native-dictionary-dictzip
+        Start 476: native-docx-real-26-comment-anchors-noop
+143/509 Test #429: native-docx-real-02-table-vertical-edited ..........   Passed    1.02 sec
+        Start  34: native-pptx-fill-fill-transforms
+144/509 Test #313: native-pager .......................................   Passed    0.51 sec
+        Start 355: native-ppt-shape-truncated
+145/509 Test #479: native-docx-real-27-bookmarks-edited ...............   Passed    1.26 sec
+146/509 Test #492: native-docx-real-text-transaction ..................   Passed    1.31 sec
+        Start  56: native-docx-edit-io-section-boundaries
+        Start 436: native-docx-real-06-field-page-noop
+147/509 Test #439: native-docx-real-07-field-numpages-edited ..........   Passed    1.08 sec
+        Start 331: native-color-png
+148/509 Test #393: native-dictionary-dictzip ..........................   Passed    0.78 sec
+        Start 348: native-ppt-shape-blue
+149/509 Test #365: native-ppt-fill-gradient-fallback ..................   Passed    1.55 sec
+        Start  10: native-pptx-order
+150/509 Test  #34: native-pptx-fill-fill-transforms ...................   Passed    0.86 sec
+        Start 444: native-docx-real-10-field-toc-noop
+151/509 Test  #56: native-docx-edit-io-section-boundaries .............   Passed    0.78 sec
+        Start 441: native-docx-real-08-field-date-edited
+152/509 Test #476: native-docx-real-26-comment-anchors-noop ...........   Passed    1.31 sec
+        Start  82: native-docx-real-argon-reproducible
+153/509 Test #355: native-ppt-shape-truncated .........................   Passed    1.23 sec
+        Start 490: native-docx-real-text-alias
+154/509 Test #331: native-color-png ...................................   Passed    0.81 sec
+        Start  62: native-docx-edit-x6-table-rows
+155/509 Test #436: native-docx-real-06-field-page-noop ................   Passed    1.33 sec
+        Start  38: native-pptx-fill-gradient-stops
+156/509 Test #444: native-docx-real-10-field-toc-noop .................   Passed    1.09 sec
+        Start  54: native-docx-edit-io-section-scope
+157/509 Test #348: native-ppt-shape-blue ..............................   Passed    1.27 sec
+        Start 487: native-docx-real-paragraph-markers
+158/509 Test  #10: native-pptx-order ..................................   Passed    1.32 sec
+        Start  66: native-docx-edit-x6-image-large
+159/509 Test #441: native-docx-real-08-field-date-edited ..............   Passed    1.08 sec
+        Start  43: native-pptx-fill-alpha
+160/509 Test  #62: native-docx-edit-x6-table-rows .....................   Passed    0.84 sec
+161/509 Test  #82: native-docx-real-argon-reproducible ................   Passed    1.05 sec
+        Start  60: native-docx-edit-x6-table-properties
+        Start 366: native-ppt-fill-scheme
+162/509 Test #490: native-docx-real-text-alias ........................   Passed    1.00 sec
+        Start  57: native-docx-edit-io-new
+163/509 Test  #38: native-pptx-fill-gradient-stops ....................   Passed    0.86 sec
+        Start  36: native-pptx-fill-gradient
+164/509 Test  #54: native-docx-edit-io-section-scope ..................   Passed    0.74 sec
+        Start  76: native-docx-edit-e4
+165/509 Test #487: native-docx-real-paragraph-markers .................   Passed    0.82 sec
+        Start  71: native-docx-edit-x6-errors
+166/509 Test  #43: native-pptx-fill-alpha .............................   Passed    0.61 sec
+        Start  55: native-docx-edit-io-section-edits
+167/509 Test  #66: native-docx-edit-x6-image-large ....................   Passed    0.77 sec
+        Start  47: native-docx-edit-io-parts
+168/509 Test  #57: native-docx-edit-io-new ............................   Passed    0.66 sec
+        Start 397: native-font-manager-selection
+169/509 Test  #60: native-docx-edit-x6-table-properties ...............   Passed    0.75 sec
+        Start  32: native-pptx-fill-formats
+170/509 Test  #36: native-pptx-fill-gradient ..........................   Passed    0.69 sec
+        Start  77: native-docx-edit-insert-run
+171/509 Test  #76: native-docx-edit-e4 ................................   Passed    0.97 sec
+172/509 Test  #71: native-docx-edit-x6-errors .........................   Passed    0.83 sec
+        Start  52: native-docx-edit-io-split
+        Start  80: native-docx-edit-e3
+173/509 Test  #55: native-docx-edit-io-section-edits ..................   Passed    0.86 sec
+174/509 Test #366: native-ppt-fill-scheme .............................   Passed    1.38 sec
+        Start 376: native-ppt-text-indices
+        Start  44: native-pptx-fill-alpha-invalid
+175/509 Test  #47: native-docx-edit-io-parts ..........................   Passed    0.95 sec
+        Start  21: native-pptx-shape-group-transforms
+176/509 Test #397: native-font-manager-selection ......................   Passed    0.91 sec
+        Start 220: native-content-reflow
+177/509 Test  #32: native-pptx-fill-formats ...........................   Passed    0.97 sec
+        Start  64: native-docx-edit-x6-history
+178/509 Test  #77: native-docx-edit-insert-run ........................   Passed    1.00 sec
+        Start 141: native-pdf-groupcs
+179/509 Test  #44: native-pptx-fill-alpha-invalid .....................   Passed    0.71 sec
+180/509 Test  #21: native-pptx-shape-group-transforms .................   Passed    0.63 sec
+181/509 Test  #80: native-docx-edit-e3 ................................   Passed    0.78 sec
+        Start 361: native-ppt-fill-gradient
+        Start  23: native-pptx-shape-colors-lines
+        Start 356: native-ppt-shape-limits
+182/509 Test  #52: native-docx-edit-io-split ..........................   Passed    0.95 sec
+        Start  69: native-docx-edit-x6-image-cell
+183/509 Test #220: native-content-reflow ..............................   Passed    0.85 sec
+        Start  25: native-pptx-shape-missing
+184/509 Test  #64: native-docx-edit-x6-history ........................   Passed    1.24 sec
+        Start  22: native-pptx-shape-flips
+185/509 Test #361: native-ppt-fill-gradient ...........................   Passed    0.85 sec
+        Start  67: native-docx-edit-x6-image-delete
+186/509 Test #141: native-pdf-groupcs .................................   Passed    1.05 sec
+        Start  51: native-docx-edit-io-edits
+187/509 Test  #69: native-docx-edit-x6-image-cell .....................   Passed    0.95 sec
+        Start  48: native-docx-edit-io-unknown
+188/509 Test  #23: native-pptx-shape-colors-lines .....................   Passed    1.07 sec
+        Start 125: native-pdf-crypto
+189/509 Test  #25: native-pptx-shape-missing ..........................   Passed    0.92 sec
+        Start  33: native-pptx-fill-picture
+190/509 Test #356: native-ppt-shape-limits ............................   Passed    1.24 sec
+        Start 416: native-book-fb2
+191/509 Test #125: native-pdf-crypto ..................................   Passed    0.47 sec
+192/509 Test  #22: native-pptx-shape-flips ............................   Passed    0.80 sec
+        Start  28: native-pptx-fill-stretch
+        Start 122: native-table-intrinsic
+193/509 Test  #48: native-docx-edit-io-unknown ........................   Passed    0.68 sec
+        Start 417: native-book-errors
+194/509 Test  #51: native-docx-edit-io-edits ..........................   Passed    0.91 sec
+        Start  58: native-docx-edit-io-errors
+195/509 Test  #33: native-pptx-fill-picture ...........................   Passed    0.75 sec
+        Start  53: native-docx-edit-io-namespaces
+196/509 Test  #67: native-docx-edit-x6-image-delete ...................   Passed    1.18 sec
+        Start 423: native-vertical-expand-images
+197/509 Test #416: native-book-fb2 ....................................   Passed    0.77 sec
+        Start 236: native-pdf-raster
+198/509 Test  #28: native-pptx-fill-stretch ...........................   Passed    0.64 sec
+        Start  31: native-pptx-fill-relative-path
+199/509 Test  #58: native-docx-edit-io-errors .........................   Passed    0.57 sec
+        Start  30: native-pptx-fill-image-fallback
+200/509 Test #122: native-table-intrinsic .............................   Passed    0.85 sec
+        Start  63: native-docx-edit-x6-table-new
+201/509 Test #417: native-book-errors .................................   Passed    0.76 sec
+        Start 422: native-vertical-expand-ruby
+202/509 Test  #53: native-docx-edit-io-namespaces .....................   Passed    0.73 sec
+        Start  39: native-pptx-fill-gradient-fallback
+203/509 Test #236: native-pdf-raster ..................................   Passed    0.81 sec
+        Start  29: native-pptx-fill-tile
+204/509 Test #423: native-vertical-expand-images ......................   Passed    0.88 sec
+        Start 415: native-book-kf8
+205/509 Test  #31: native-pptx-fill-relative-path .....................   Passed    0.72 sec
+        Start 396: native-font-manager-discovery
+206/509 Test  #30: native-pptx-fill-image-fallback ....................   Passed    0.77 sec
+        Start  42: native-pptx-fill-color-transforms
+207/509 Test #422: native-vertical-expand-ruby ........................   Passed    0.69 sec
+        Start  37: native-pptx-fill-gradient-angles
+208/509 Test  #63: native-docx-edit-x6-table-new ......................   Passed    0.77 sec
+        Start   9: native-pptx-missing
+209/509 Test  #39: native-pptx-fill-gradient-fallback .................   Passed    0.66 sec
+        Start 221: native-anchor-library
+210/509 Test  #29: native-pptx-fill-tile ..............................   Passed    0.63 sec
+        Start 398: native-font-manager-cache
+211/509 Test #396: native-font-manager-discovery ......................   Passed    0.56 sec
+        Start  46: native-docx-edit-io-roundtrip
+212/509 Test #415: native-book-kf8 ....................................   Passed    0.86 sec
+        Start  78: native-docx-edit-footnotes
+213/509 Test  #42: native-pptx-fill-color-transforms ..................   Passed    0.85 sec
+        Start  72: native-docx-edit-x6-image-package
+214/509 Test #221: native-anchor-library ..............................   Passed    0.72 sec
+        Start 318: native-convert
+215/509 Test #398: native-font-manager-cache ..........................   Passed    0.79 sec
+        Start 424: simplified-observer
+216/509 Test   #9: native-pptx-missing ................................   Passed    1.09 sec
+        Start 360: native-ppt-fill-scale
+217/509 Test  #46: native-docx-edit-io-roundtrip ......................   Passed    0.92 sec
+        Start 109: native-hyphen
+218/509 Test  #37: native-pptx-fill-gradient-angles ...................   Passed    1.34 sec
+        Start 408: native-pdf-deepening-search
+219/509 Test #318: native-convert .....................................   Passed    0.71 sec
+220/509 Test  #72: native-docx-edit-x6-image-package ..................   Passed    0.83 sec
+        Start  27: native-pptx-fill-image
+        Start 399: native-font-manager-integration
+221/509 Test  #78: native-docx-edit-footnotes .........................   Passed    1.17 sec
+        Start 226: native-lazy
+222/509 Test #424: simplified-observer ................................   Passed    0.83 sec
+        Start  40: native-pptx-fill-theme
+223/509 Test #109: native-hyphen ......................................   Passed    0.73 sec
+        Start 362: native-ppt-fill-theme
+224/509 Test #226: native-lazy ........................................   Passed    0.27 sec
+        Start 411: native-pdf-deepening-contracts
+225/509 Test #360: native-ppt-fill-scale ..............................   Passed    0.87 sec
+        Start  19: native-pptx-shape-rotation
+226/509 Test #408: native-pdf-deepening-search ........................   Passed    0.77 sec
+        Start  20: native-pptx-shape-zero-extent
+227/509 Test #399: native-font-manager-integration ....................   Passed    0.63 sec
+        Start  50: native-docx-edit-io-properties
+228/509 Test  #27: native-pptx-fill-image .............................   Passed    0.84 sec
+        Start 118: native-table-border
+229/509 Test #411: native-pdf-deepening-contracts .....................   Passed    0.60 sec
+        Start  18: native-pptx-shape-standard
+230/509 Test  #40: native-pptx-fill-theme .............................   Passed    0.75 sec
+        Start  35: native-pptx-fill-sink
+231/509 Test  #19: native-pptx-shape-rotation .........................   Passed    0.66 sec
+        Start 414: native-book-mobi
+232/509 Test #362: native-ppt-fill-theme ..............................   Passed    0.88 sec
+        Start 395: native-dictionary-dictd
+233/509 Test  #50: native-docx-edit-io-properties .....................   Passed    0.63 sec
+        Start 320: native-docx-write
+234/509 Test  #20: native-pptx-shape-zero-extent ......................   Passed    0.80 sec
+        Start 238: native-audio-library
+235/509 Test  #18: native-pptx-shape-standard .........................   Passed    0.51 sec
+        Start  24: native-pptx-shape-fallback
+236/509 Test #118: native-table-border ................................   Passed    0.69 sec
+        Start 179: native-reanchor-library
+237/509 Test  #35: native-pptx-fill-sink ..............................   Passed    0.66 sec
+        Start 353: native-ppt-shape-colors
+238/509 Test #238: native-audio-library ...............................   Passed    0.39 sec
+        Start 410: native-pdf-deepening-scan
+239/509 Test #414: native-book-mobi ...................................   Passed    1.12 sec
+240/509 Test #179: native-reanchor-library ............................   Passed    0.68 sec
+        Start  15: native-pptx-shape-roundrect
+        Start   3: native-pptx-layouts
+241/509 Test #320: native-docx-write ..................................   Passed    1.07 sec
+242/509 Test #395: native-dictionary-dictd ............................   Passed    1.09 sec
+        Start 259: native-library-unique
+        Start 182: native-text-index
+243/509 Test  #24: native-pptx-shape-fallback .........................   Passed    1.41 sec
+244/509 Test #410: native-pdf-deepening-scan ..........................   Passed    1.17 sec
+245/509 Test #353: native-ppt-shape-colors ............................   Passed    1.21 sec
+246/509 Test #259: native-library-unique ..............................   Passed    0.54 sec
+        Start   2: native-pptx-title
+        Start 244: native-fixed-library
+        Start   7: native-pptx-errors
+        Start  41: native-pptx-fill-theme-default
+247/509 Test  #15: native-pptx-shape-roundrect ........................   Passed    0.82 sec
+        Start 409: native-pdf-deepening-coordinates
+248/509 Test   #3: native-pptx-layouts ................................   Passed    0.85 sec
+249/509 Test #182: native-text-index ..................................   Passed    0.56 sec
+        Start  13: native-pptx-shape-rect
+        Start 262: native-mobi
+250/509 Test #244: native-fixed-library ...............................   Passed    0.52 sec
+        Start 131: native-image-formats
+251/509 Test   #2: native-pptx-title ..................................   Passed    0.63 sec
+252/509 Test #262: native-mobi ........................................   Passed    0.25 sec
+        Start 359: native-ppt-fill-png
+        Start 338: native-library-component
+253/509 Test #131: native-image-formats ...............................   Passed    0.49 sec
+254/509 Test   #7: native-pptx-errors .................................   Passed    0.92 sec
+255/509 Test  #41: native-pptx-fill-theme-default .....................   Passed    0.91 sec
+256/509 Test #409: native-pdf-deepening-coordinates ...................   Passed    0.89 sec
+257/509 Test  #13: native-pptx-shape-rect .............................   Passed    0.85 sec
+        Start   4: native-pptx-wide
+        Start 224: native-rtf-fallback
+        Start 412: native-pdf-deepening-encryption
+        Start 292: native-shaping
+        Start   1: native-pptx-empty
+258/509 Test #224: native-rtf-fallback ................................   Passed    0.10 sec
+259/509 Test #338: native-library-component ...........................   Passed    0.50 sec
+        Start 332: native-pdf-jpx
+        Start 260: native-cover-import
+260/509 Test #292: native-shaping .....................................   Passed    0.18 sec
+        Start   5: native-pptx-standard
+261/509 Test #359: native-ppt-fill-png ................................   Passed    0.72 sec
+        Start  14: native-pptx-shape-circle
+262/509 Test   #4: native-pptx-wide ...................................   Passed    0.44 sec
+        Start 298: native-chapter-bounds
+263/509 Test #332: native-pdf-jpx .....................................   Passed    0.38 sec
+264/509 Test #260: native-cover-import ................................   Passed    0.32 sec
+265/509 Test   #1: native-pptx-empty ..................................   Passed    0.40 sec
+        Start  17: native-pptx-shape-group
+        Start 180: native-progress-library
+        Start 225: native-html-raw
+266/509 Test #412: native-pdf-deepening-encryption ....................   Passed    0.71 sec
+267/509 Test   #5: native-pptx-standard ...............................   Passed    0.52 sec
+        Start 223: native-export-xml
+        Start 174: native-pdf-form
+268/509 Test  #14: native-pptx-shape-circle ...........................   Passed    0.86 sec
+        Start  45: native-pptx-fill-reproducible
+269/509 Test #225: native-html-raw ....................................   Passed    0.47 sec
+270/509 Test #376: native-ppt-text-indices ............................   Passed   10.76 sec
+271/509 Test #298: native-chapter-bounds ..............................   Passed    0.75 sec
+272/509 Test #223: native-export-xml ..................................   Passed    0.40 sec
+273/509 Test #180: native-progress-library ............................   Passed    0.63 sec
+274/509 Test  #17: native-pptx-shape-group ............................   Passed    0.67 sec
+        Start 231: native-pdf-font
+        Start 158: native-stretch
+        Start 339: native-pdf_edit-component
+        Start  12: native-pptx-limit
+        Start 171: native-mp3
+        Start 138: native-pdf-color
+275/509 Test #231: native-pdf-font ....................................   Passed    0.48 sec
+276/509 Test #174: native-pdf-form ....................................   Passed    0.78 sec
+277/509 Test  #45: native-pptx-fill-reproducible ......................   Passed    0.50 sec
+278/509 Test #158: native-stretch .....................................   Passed    0.42 sec
+279/509 Test #339: native-pdf_edit-component ..........................   Passed    0.38 sec
+        Start  16: native-pptx-shape-triangle
+        Start 216: native-content-mapping
+        Start 151: native-font-color
+        Start 373: native-ppt-text-malformed
+        Start 152: native-font-color-v1
+280/509 Test #171: native-mp3 .........................................   Passed    0.46 sec
+        Start 229: native-pdf-pages
+281/509 Test #216: native-content-mapping .............................   Passed    0.38 sec
+282/509 Test  #12: native-pptx-limit ..................................   Passed    0.55 sec
+        Start 255: native-canvas
+        Start 333: native-core-component
+283/509 Test #138: native-pdf-color ...................................   Passed    0.59 sec
+        Start 296: native-book-font
+284/509 Test #151: native-font-color ..................................   Passed    0.53 sec
+285/509 Test #229: native-pdf-pages ...................................   Passed    0.25 sec
+286/509 Test #152: native-font-color-v1 ...............................   Passed    0.41 sec
+        Start 173: native-pdf-write
+        Start  95: native-docx-edit-allocation
+        Start 400: native-xml-input
+287/509 Test  #16: native-pptx-shape-triangle .........................   Passed    0.90 sec
+288/509 Test #333: native-core-component ..............................   Passed    0.39 sec
+        Start 312: native-reflow-disjoint
+        Start 290: native-rtl-mixed
+289/509 Test #296: native-book-font ...................................   Passed    0.45 sec
+290/509 Test #173: native-pdf-write ...................................   Passed    0.37 sec
+291/509 Test  #95: native-docx-edit-allocation ........................   Passed    0.32 sec
+292/509 Test #255: native-canvas ......................................   Passed    0.54 sec
+        Start 382: native-style-footnotes-styles
+        Start 368: native-ppt-text-sizes
+        Start 295: native-font
+        Start 153: native-font-svg
+293/509 Test #312: native-reflow-disjoint .............................   Passed    0.22 sec
+294/509 Test #400: native-xml-input ...................................   Passed    0.44 sec
+        Start 293: native-complex-layout
+        Start 322: native-pdf-group-reference
+295/509 Test #290: native-rtl-mixed ...................................   Passed    0.34 sec
+296/509 Test #295: native-font ........................................   Passed    0.23 sec
+        Start 176: native-page-annotations
+        Start 161: native-vertical
+297/509 Test #382: native-style-footnotes-styles ......................   Passed    0.38 sec
+        Start 258: native-positioned
+298/509 Test #153: native-font-svg ....................................   Passed    0.34 sec
+        Start 235: native-pdf-outline
+299/509 Test #293: native-complex-layout ..............................   Passed    0.29 sec
+300/509 Test #176: native-page-annotations ............................   Passed    0.17 sec
+301/509 Test #161: native-vertical ....................................   Passed    0.11 sec
+        Start 267: native-rtf-table
+        Start 181: native-text-source
+        Start 291: native-rtl-progression
+302/509 Test #235: native-pdf-outline .................................   Passed    0.13 sec
+303/509 Test #258: native-positioned ..................................   Passed    0.18 sec
+304/509 Test #322: native-pdf-group-reference .........................   Passed    0.31 sec
+        Start 172: native-pdf-metadata-write
+        Start 241: native-wave
+        Start 121: native-table-alignment
+305/509 Test #267: native-rtf-table ...................................   Passed    0.28 sec
+        Start 263: native-decoration
+306/509 Test #291: native-rtl-progression .............................   Passed    0.23 sec
+307/509 Test #181: native-text-source .................................   Passed    0.27 sec
+308/509 Test #172: native-pdf-metadata-write ..........................   Passed    0.20 sec
+309/509 Test #241: native-wave ........................................   Passed    0.14 sec
+        Start  97: native-lcp-normal
+        Start 334: native-anchor-boundary
+        Start 227: native-source
+        Start 297: native-budget
+310/509 Test #263: native-decoration ..................................   Passed    0.45 sec
+311/509 Test #121: native-table-alignment .............................   Passed    0.49 sec
+312/509 Test  #97: native-lcp-normal ..................................   Passed    0.41 sec
+313/509 Test #334: native-anchor-boundary .............................   Passed    0.18 sec
+        Start 243: native-audio
+        Start 285: native-text
+        Start 257: native-viewport
+        Start 101: native-lcp-malformed
+314/509 Test #227: native-source ......................................   Passed    0.33 sec
+315/509 Test #297: native-budget ......................................   Passed    0.28 sec
+316/509 Test #243: native-audio .......................................   Passed    0.23 sec
+317/509 Test #285: native-text ........................................   Passed    0.17 sec
+        Start 498: sdk-doc-search
+        Start 315: native-checkpoints
+        Start 302: native-reflow-insertions
+        Start 509: sdk-doc-dictionary
+318/509 Test #257: native-viewport ....................................   Passed    0.24 sec
+319/509 Test #101: native-lcp-malformed ...............................   Passed    0.13 sec
+        Start 177: native-metadata
+        Start 300: native-chapter-oversized-unit
+320/509 Test #498: sdk-doc-search .....................................   Passed    0.23 sec
+        Start 160: native-epub-metadata-write
+321/509 Test #315: native-checkpoints .................................   Passed    0.32 sec
+        Start 206: native-publication-index-incremental
+322/509 Test #300: native-chapter-oversized-unit ......................   Passed    0.17 sec
+        Start 110: native-hyphen-replacements
+323/509 Test #177: native-metadata ....................................   Passed    0.33 sec
+        Start 242: native-audio-player
+324/509 Test #302: native-reflow-insertions ...........................   Passed    0.49 sec
+        Start 266: native-rtf-note
+325/509 Test #160: native-epub-metadata-write .........................   Passed    0.40 sec
+        Start 132: native-cbz-formats
+326/509 Test #110: native-hyphen-replacements .........................   Passed    0.33 sec
+        Start 279: native-opds
+327/509 Test #242: native-audio-player ................................   Passed    0.32 sec
+        Start 316: native-control
+328/509 Test #206: native-publication-index-incremental ...............   Passed    0.47 sec
+329/509 Test #509: sdk-doc-dictionary .................................   Passed    0.73 sec
+330/509 Test #132: native-cbz-formats .................................   Passed    0.19 sec
+        Start 269: native-docx
+        Start 159: native-m4b
+        Start 178: native-annotation
+331/509 Test #266: native-rtf-note ....................................   Passed    0.42 sec
+332/509 Test #279: native-opds ........................................   Passed    0.28 sec
+        Start 301: native-reflow-basic
+        Start 372: native-ppt-text-bullets
+333/509 Test #316: native-control .....................................   Passed    0.28 sec
+334/509 Test #269: native-docx ........................................   Passed    0.23 sec
+335/509 Test #159: native-m4b .........................................   Passed    0.18 sec
+        Start 123: native-table-columns
+        Start 268: native-rtf
+        Start 108: native-normalize
+336/509 Test #178: native-annotation ..................................   Passed    0.28 sec
+337/509 Test #301: native-reflow-basic ................................   Passed    0.23 sec
+        Start 167: native-pdf-markup
+        Start 369: native-ppt-text-bold
+338/509 Test #268: native-rtf .........................................   Passed    0.19 sec
+        Start 128: native-style-budget
+339/509 Test #123: native-table-columns ...............................   Passed    0.33 sec
+        Start  99: native-lcp-expired
+340/509 Test #167: native-pdf-markup ..................................   Passed    0.21 sec
+        Start 170: native-audio-output
+341/509 Test #108: native-normalize ...................................   Passed    0.29 sec
+        Start 190: native-cfi-text
+342/509 Test  #99: native-lcp-expired .................................   Passed    0.12 sec
+        Start 504: sdk-doc-pagination
+343/509 Test #128: native-style-budget ................................   Passed    0.23 sec
+344/509 Test #170: native-audio-output ................................   Passed    0.15 sec
+        Start 150: native-pdf-calculator
+        Start 330: native-png
+345/509 Test #190: native-cfi-text ....................................   Passed    0.12 sec
+        Start 497: sdk-doc-formats
+346/509 Test #504: sdk-doc-pagination .................................   Passed    0.13 sec
+        Start 124: native-table-spacing
+347/509 Test #150: native-pdf-calculator ..............................   Passed    0.14 sec
+348/509 Test #373: native-ppt-text-malformed ..........................   Passed    4.01 sec
+        Start 272: native-export-epub
+        Start 102: native-lcp-lifetime
+349/509 Test #368: native-ppt-text-sizes ..............................   Passed    3.22 sec
+350/509 Test #497: sdk-doc-formats ....................................   Passed    0.20 sec
+        Start 271: native-export-html
+        Start 273: native-sevenz-codecs
+351/509 Test #330: native-png .........................................   Passed    0.31 sec
+        Start 154: native-ot-variation
+352/509 Test #102: native-lcp-lifetime ................................   Passed    0.18 sec
+353/509 Test #272: native-export-epub .................................   Passed    0.23 sec
+354/509 Test #271: native-export-html .................................   Passed    0.15 sec
+        Start 280: native-toc-page
+        Start 104: native-table-dashed
+        Start 155: native-orthogonal
+355/509 Test #124: native-table-spacing ...............................   Passed    0.41 sec
+356/509 Test #273: native-sevenz-codecs ...............................   Passed    0.22 sec
+        Start 277: native-locate-report-reset
+        Start 380: native-ppt-text-master
+357/509 Test #154: native-ot-variation ................................   Passed    0.23 sec
+358/509 Test #280: native-toc-page ....................................   Passed    0.17 sec
+359/509 Test #104: native-table-dashed ................................   Passed    0.14 sec
+        Start 130: native-cbz
+        Start 156: native-variable
+        Start 107: native-pdf-ccitt
+360/509 Test #155: native-orthogonal ..................................   Passed    0.26 sec
+361/509 Test #277: native-locate-report-reset .........................   Passed    0.21 sec
+362/509 Test #156: native-variable ....................................   Passed    0.10 sec
+        Start 381: native-ppt-text-outline
+        Start 289: native-rtl-punctuation
+        Start 165: native-pdf-type3
+363/509 Test #130: native-cbz .........................................   Passed    0.28 sec
+        Start 278: native-navigation
+364/509 Test #107: native-pdf-ccitt ...................................   Passed    0.24 sec
+365/509 Test #289: native-rtl-punctuation .............................   Passed    0.17 sec
+        Start 169: native-pcm
+        Start 500: sdk-doc-library
+366/509 Test #278: native-navigation ..................................   Passed    0.29 sec
+367/509 Test #165: native-pdf-type3 ...................................   Passed    0.37 sec
+        Start 232: native-pdf-text
+        Start 185: native-chapter-layout-chapter
+368/509 Test #169: native-pcm .........................................   Passed    0.24 sec
+        Start 233: native-vector
+369/509 Test #500: sdk-doc-library ....................................   Passed    0.27 sec
+370/509 Test #232: native-pdf-text ....................................   Passed    0.19 sec
+        Start 283: native-toc-recovery
+        Start 270: native-fb2
+371/509 Test #185: native-chapter-layout-chapter ......................   Passed    0.33 sec
+        Start 199: native-cfi-compat-roundtrip
+372/509 Test #283: native-toc-recovery ................................   Passed    0.23 sec
+        Start 189: native-construct
+373/509 Test #233: native-vector ......................................   Passed    0.41 sec
+374/509 Test #270: native-fb2 .........................................   Passed    0.28 sec
+        Start 111: native-case
+        Start 495: sdk-doc-base
+375/509 Test #111: native-case ........................................   Passed    0.10 sec
+        Start 239: native-wave-example
+376/509 Test #189: native-construct ...................................   Passed    0.30 sec
+        Start 386: native-ssml-structure
+377/509 Test #199: native-cfi-compat-roundtrip ........................   Passed    0.50 sec
+378/509 Test #495: sdk-doc-base .......................................   Passed    0.30 sec
+        Start  98: native-lcp-credentials
+        Start 496: sdk-doc-document
+379/509 Test #369: native-ppt-text-bold ...............................   Passed    2.29 sec
+380/509 Test #239: native-wave-example ................................   Passed    0.28 sec
+        Start 240: native-pcm-example
+        Start 105: native-pdf-shading-mesh
+381/509 Test #386: native-ssml-structure ..............................   Passed    0.24 sec
+382/509 Test  #98: native-lcp-credentials .............................   Passed    0.15 sec
+        Start 219: native-content-hits
+        Start 186: native-chapter-layout-title
+383/509 Test #496: sdk-doc-document ...................................   Passed    0.16 sec
+384/509 Test #372: native-ppt-text-bullets ............................   Passed    2.72 sec
+385/509 Test #240: native-pcm-example .................................   Passed    0.12 sec
+        Start  92: native-docx-edit-boundaries
+        Start 502: sdk-doc-textindex
+        Start 304: native-reflow-history
+386/509 Test #219: native-content-hits ................................   Passed    0.13 sec
+        Start 401: native-epub-strict-mimetype
+387/509 Test #186: native-chapter-layout-title ........................   Passed    0.21 sec
+388/509 Test #105: native-pdf-shading-mesh ............................   Passed    0.26 sec
+389/509 Test  #92: native-docx-edit-boundaries ........................   Passed    0.19 sec
+390/509 Test #304: native-reflow-history ..............................   Passed    0.09 sec
+        Start 384: native-style-footnotes-anchors
+        Start 383: native-style-footnotes-footnotes
+        Start 499: sdk-doc-annotation
+        Start 136: native-wp7
+391/509 Test #502: sdk-doc-textindex ..................................   Passed    0.27 sec
+        Start 234: native-pdf-graphics
+392/509 Test #401: native-epub-strict-mimetype ........................   Passed    0.24 sec
+393/509 Test #383: native-style-footnotes-footnotes ...................   Passed    0.14 sec
+394/509 Test #384: native-style-footnotes-anchors .....................   Passed    0.16 sec
+395/509 Test #499: sdk-doc-annotation .................................   Passed    0.14 sec
+        Start 288: native-rtl-numbers
+        Start 100: native-lcp-unsupported
+        Start 503: sdk-doc-audio
+        Start 137: native-ruby
+396/509 Test #136: native-wp7 .........................................   Passed    0.29 sec
+397/509 Test #234: native-pdf-graphics ................................   Passed    0.24 sec
+398/509 Test #288: native-rtl-numbers .................................   Passed    0.20 sec
+399/509 Test #100: native-lcp-unsupported .............................   Passed    0.16 sec
+400/509 Test #503: sdk-doc-audio ......................................   Passed    0.15 sec
+        Start 303: native-reflow-convergence
+        Start 387: native-ssml-chunks
+        Start 264: native-rtf-number
+        Start 209: native-publication-index-anchors
+        Start 374: native-ppt-text-unicode
+401/509 Test #380: native-ppt-text-master .............................   Passed    2.28 sec
+        Start 287: native-rtl-paragraph
+402/509 Test #303: native-reflow-convergence ..........................   Passed    0.12 sec
+403/509 Test #387: native-ssml-chunks .................................   Passed    0.10 sec
+404/509 Test #137: native-ruby ........................................   Passed    0.19 sec
+405/509 Test #264: native-rtf-number ..................................   Passed    0.08 sec
+406/509 Test #209: native-publication-index-anchors ...................   Passed    0.04 sec
+        Start 245: native-fixed-text
+        Start 274: native-sevenz-safety
+        Start 191: native-cfi
+        Start 192: native-fixed-layout-rendition
+        Start 276: native-locate-report-entries
+407/509 Test #287: native-rtl-paragraph ...............................   Passed    0.22 sec
+408/509 Test #245: native-fixed-text ..................................   Passed    0.21 sec
+409/509 Test #274: native-sevenz-safety ...............................   Passed    0.14 sec
+410/509 Test #191: native-cfi .........................................   Passed    0.13 sec
+        Start 281: native-toc-nav
+        Start 406: native-media-epub-degrade
+        Start 265: native-rtf-list
+        Start 253: native-font-path
+411/509 Test #192: native-fixed-layout-rendition ......................   Passed    0.26 sec
+412/509 Test #276: native-locate-report-entries .......................   Passed    0.19 sec
+413/509 Test #281: native-toc-nav .....................................   Passed    0.17 sec
+414/509 Test #406: native-media-epub-degrade ..........................   Passed    0.16 sec
+415/509 Test #265: native-rtf-list ....................................   Passed    0.11 sec
+        Start 340: native-textindex-component
+        Start 140: native-pdf-matte
+        Start 505: sdk-doc-render
+        Start 284: native-toc-fragment
+        Start 139: native-pdf-intent
+416/509 Test #253: native-font-path ...................................   Passed    0.33 sec
+417/509 Test #381: native-ppt-text-outline ............................   Passed    2.79 sec
+418/509 Test #340: native-textindex-component .........................   Passed    0.27 sec
+419/509 Test #140: native-pdf-matte ...................................   Passed    0.17 sec
+420/509 Test #505: sdk-doc-render .....................................   Passed    0.10 sec
+421/509 Test #284: native-toc-fragment ................................   Passed    0.06 sec
+        Start 418: native-batch
+        Start 388: native-ssml-omissions
+        Start 385: native-style-footnotes-toc
+        Start 210: native-document-search-basic
+        Start 306: native-reflow-failures
+        Start 175: native-pdf-appearance
+422/509 Test #306: native-reflow-failures .............................   Passed    0.06 sec
+        Start 113: native-hyphen-builtin-rules
+423/509 Test #139: native-pdf-intent ..................................   Passed    0.22 sec
+424/509 Test #388: native-ssml-omissions ..............................   Passed    0.13 sec
+425/509 Test #418: native-batch .......................................   Passed    0.17 sec
+426/509 Test #210: native-document-search-basic .......................   Passed    0.12 sec
+427/509 Test #385: native-style-footnotes-toc .........................   Passed    0.13 sec
+        Start 183: native-abi
+        Start 501: sdk-doc-graphics
+        Start 375: native-ppt-text-bytes
+        Start 371: native-ppt-text-alignment
+        Start 193: native-fixed-layout-viewport
+428/509 Test #175: native-pdf-appearance ..............................   Passed    0.19 sec
+        Start 407: native-media-epub-plain
+429/509 Test #113: native-hyphen-builtin-rules ........................   Passed    0.18 sec
+430/509 Test #183: native-abi .........................................   Passed    0.13 sec
+431/509 Test #501: sdk-doc-graphics ...................................   Passed    0.10 sec
+        Start 419: native-bench-batch-statistics
+        Start 166: native-aac
+        Start 200: native-cfi-compat-cross
+432/509 Test #193: native-fixed-layout-viewport .......................   Passed    0.18 sec
+433/509 Test #407: native-media-epub-plain ............................   Passed    0.17 sec
+434/509 Test #419: native-bench-batch-statistics ......................   Passed    0.14 sec
+        Start 308: native-reflow-unicode
+        Start 337: native-audio-component
+        Start 248: native-pdf-hybrid-merge
+435/509 Test #166: native-aac .........................................   Passed    0.19 sec
+436/509 Test #200: native-cfi-compat-cross ............................   Passed    0.14 sec
+437/509 Test #308: native-reflow-unicode ..............................   Passed    0.13 sec
+438/509 Test #337: native-audio-component .............................   Passed    0.12 sec
+        Start 506: sdk-doc-font
+        Start 134: native-m4b-metadata
+        Start  93: native-docx-edit-mixed
+        Start 370: native-ppt-text-cjk
+439/509 Test #248: native-pdf-hybrid-merge ............................   Passed    0.19 sec
+        Start 120: native-table-header
+440/509 Test #506: sdk-doc-font .......................................   Passed    0.18 sec
+        Start 252: native-fixed
+441/509 Test #134: native-m4b-metadata ................................   Passed    0.19 sec
+        Start 119: native-border-edges
+442/509 Test  #93: native-docx-edit-mixed .............................   Passed    0.19 sec
+        Start 251: native-fixed-example
+443/509 Test #374: native-ppt-text-unicode ............................   Passed    1.62 sec
+444/509 Test #252: native-fixed .......................................   Passed    0.15 sec
+445/509 Test #120: native-table-header ................................   Passed    0.22 sec
+        Start 367: native-ppt-text-hello
+        Start 246: native-fixed-pdf
+        Start 307: native-reflow-formatting
+446/509 Test #119: native-border-edges ................................   Passed    0.19 sec
+        Start 507: sdk-doc-toc
+447/509 Test #251: native-fixed-example ...............................   Passed    0.23 sec
+        Start  94: native-docx-edit-benchmark
+448/509 Test #246: native-fixed-pdf ...................................   Passed    0.17 sec
+        Start  90: native-docx-edit-history
+449/509 Test #307: native-reflow-formatting ...........................   Passed    0.11 sec
+        Start 282: native-toc-ncx
+450/509 Test #507: sdk-doc-toc ........................................   Passed    0.13 sec
+        Start 135: native-indic
+451/509 Test  #90: native-docx-edit-history ...........................   Passed    0.09 sec
+452/509 Test  #94: native-docx-edit-benchmark .........................   Passed    0.10 sec
+        Start 390: native-ssml-parts
+        Start 187: native-chapter-layout-indent
+453/509 Test #375: native-ppt-text-bytes ..............................   Passed    0.96 sec
+454/509 Test #282: native-toc-ncx .....................................   Passed    0.10 sec
+        Start 115: native-hyphen-builtin-joiners
+        Start 114: native-hyphen-builtin-switches
+455/509 Test #135: native-indic .......................................   Passed    0.10 sec
+        Start 402: native-epub-strict-directory
+456/509 Test #390: native-ssml-parts ..................................   Passed    0.06 sec
+        Start 162: native-combine-upright-geometry
+457/509 Test #115: native-hyphen-builtin-joiners ......................   Passed    0.09 sec
+458/509 Test #114: native-hyphen-builtin-switches .....................   Passed    0.08 sec
+        Start 168: native-flac
+        Start  89: native-docx-edit-rollback
+459/509 Test #187: native-chapter-layout-indent .......................   Passed    0.18 sec
+        Start 201: native-cfi-compat-contracts
+460/509 Test #402: native-epub-strict-directory .......................   Passed    0.16 sec
+461/509 Test #162: native-combine-upright-geometry ....................   Passed    0.15 sec
+        Start 212: native-document-search-flags
+        Start 494: native-docx-real-text-allocation
+462/509 Test #168: native-flac ........................................   Passed    0.14 sec
+463/509 Test  #89: native-docx-edit-rollback ..........................   Passed    0.08 sec
+        Start 403: native-epub-strict-container
+        Start 207: native-publication-index-persistence
+464/509 Test #201: native-cfi-compat-contracts ........................   Passed    0.07 sec
+465/509 Test #212: native-document-search-flags .......................   Passed    0.06 sec
+466/509 Test #371: native-ppt-text-alignment ..........................   Passed    1.22 sec
+        Start 305: native-reflow-anchors
+        Start 379: native-ppt-text-runs
+        Start 163: native-combine-upright-modes
+467/509 Test #403: native-epub-strict-container .......................   Passed    0.07 sec
+468/509 Test #494: native-docx-real-text-allocation ...................   Passed    0.09 sec
+        Start 389: native-ssml-contracts
+        Start 129: native-chapter-source
+469/509 Test #207: native-publication-index-persistence ...............   Passed    0.19 sec
+470/509 Test #305: native-reflow-anchors ..............................   Passed    0.17 sec
+        Start 310: native-reflow-revision
+        Start 250: native-pdf-hybrid-bad-offset
+471/509 Test #370: native-ppt-text-cjk ................................   Passed    0.99 sec
+472/509 Test #163: native-combine-upright-modes .......................   Passed    0.15 sec
+473/509 Test #389: native-ssml-contracts ..............................   Passed    0.14 sec
+        Start  88: native-docx-edit-transaction
+        Start 202: native-anchor
+        Start 208: native-publication-index-errors
+474/509 Test #310: native-reflow-revision .............................   Passed    0.08 sec
+475/509 Test #250: native-pdf-hybrid-bad-offset .......................   Passed    0.08 sec
+476/509 Test #129: native-chapter-source ..............................   Passed    0.19 sec
+477/509 Test  #88: native-docx-edit-transaction .......................   Passed    0.07 sec
+        Start 211: native-document-search-unicode
+        Start 404: native-media-epub-elements
+        Start 275: native-sevenz-source
+        Start 203: native-publication-index-equivalence
+478/509 Test #202: native-anchor ......................................   Passed    0.10 sec
+479/509 Test #208: native-publication-index-errors ....................   Passed    0.06 sec
+480/509 Test #211: native-document-search-unicode .....................   Passed    0.04 sec
+481/509 Test #404: native-media-epub-elements .........................   Passed    0.03 sec
+        Start  83: native-docx-edit-insert
+        Start 195: native-fixed-layout-mixed
+        Start 215: native-document-search-mapping
+        Start  91: native-docx-edit-preservation
+482/509 Test #275: native-sevenz-source ...............................   Passed    0.07 sec
+483/509 Test #203: native-publication-index-equivalence ...............   Passed    0.06 sec
+484/509 Test  #83: native-docx-edit-insert ............................   Passed    0.04 sec
+485/509 Test #215: native-document-search-mapping .....................   Passed    0.02 sec
+        Start 405: native-media-epub-overlay
+        Start 230: native-pdf-cmap
+        Start 213: native-document-search-errors
+        Start 249: native-pdf-hybrid-chain
+486/509 Test #195: native-fixed-layout-mixed ..........................   Passed    0.13 sec
+487/509 Test  #91: native-docx-edit-preservation ......................   Passed    0.11 sec
+488/509 Test #405: native-media-epub-overlay ..........................   Passed    0.10 sec
+489/509 Test #367: native-ppt-text-hello ..............................   Passed    1.02 sec
+490/509 Test #230: native-pdf-cmap ....................................   Passed    0.07 sec
+        Start 377: native-ppt-text-wrap
+        Start 194: native-fixed-layout-absolute
+        Start 196: native-cfi-compat-parse
+        Start 378: native-ppt-text-spacing
+        Start  84: native-docx-edit-split
+491/509 Test #213: native-document-search-errors ......................   Passed    0.09 sec
+        Start  87: native-docx-edit-delete
+492/509 Test #249: native-pdf-hybrid-chain ............................   Passed    0.09 sec
+493/509 Test #194: native-fixed-layout-absolute .......................   Passed    0.06 sec
+494/509 Test #196: native-cfi-compat-parse ............................   Passed    0.06 sec
+        Start 164: native-combine-upright-wrap
+        Start  85: native-docx-edit-para-props
+        Start 508: sdk-doc-pdf
+495/509 Test  #84: native-docx-edit-split .............................   Passed    0.10 sec
+496/509 Test  #87: native-docx-edit-delete ............................   Passed    0.08 sec
+497/509 Test #164: native-combine-upright-wrap ........................   Passed    0.06 sec
+        Start  86: native-docx-edit-run-props
+        Start 218: native-content-expansion
+        Start 217: native-content-relocation
+498/509 Test  #85: native-docx-edit-para-props ........................   Passed    0.10 sec
+499/509 Test #508: sdk-doc-pdf ........................................   Passed    0.09 sec
+        Start 311: native-reflow-empty
+        Start 205: native-publication-index-accents
+500/509 Test  #86: native-docx-edit-run-props .........................   Passed    0.07 sec
+501/509 Test #218: native-content-expansion ...........................   Passed    0.06 sec
+        Start 197: native-cfi-compat-invalid
+        Start 198: native-cfi-compat-mapping
+502/509 Test #217: native-content-relocation ..........................   Passed    0.07 sec
+503/509 Test #311: native-reflow-empty ................................   Passed    0.05 sec
+504/509 Test #205: native-publication-index-accents ...................   Passed    0.05 sec
+505/509 Test #197: native-cfi-compat-invalid ..........................   Passed    0.04 sec
+506/509 Test #198: native-cfi-compat-mapping ..........................   Passed    0.03 sec
+507/509 Test #379: native-ppt-text-runs ...............................   Passed    0.74 sec
+508/509 Test #378: native-ppt-text-spacing ............................   Passed    0.50 sec
+509/509 Test #377: native-ppt-text-wrap ...............................   Passed    0.53 sec
+
+100% tests passed out of 509
+
+Label Time Summary:
+headless    =  27.27 sec*proc (1 test)
+
+Total Test time (real) =  84.13 sec

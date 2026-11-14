@@ -1,0 +1,219 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/exr-build-pptm4/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 368
+      Start 368: native-ppt-text-hello
+
+368: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "hello"
+368: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+368: Test timeout computed to be: 10000000
+368: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+368: COM Hello 18pt black: scale=1 {'bbox': (224, 54, 257, 68), 'height': 14, 'pixels': 221} shape_center=240 glyph_center=240.5 delta=0.5px
+368: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+368: COM Hello 18pt black: scale=2 {'bbox': (449, 108, 513, 135), 'height': 27, 'pixels': 778} shape_center=480 glyph_center=481.0 delta=1.0px
+368: native-ppt-text-hello: 2 checks passed
+ 1/15 Test #368: native-ppt-text-hello ............   Passed    0.67 sec
+test 369
+      Start 369: native-ppt-text-sizes
+
+369: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "sizes"
+369: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+369: Test timeout computed to be: 10000000
+369: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+369: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+369: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+369: COM 12/24/48pt at 4px/pt: heights=[36, 70, 141]px ratios=[1.0, 1.9444444444444444, 3.9166666666666665]
+369: native-ppt-text-sizes: 3 checks passed
+ 2/15 Test #369: native-ppt-text-sizes ............   Passed    1.85 sec
+test 370
+      Start 370: native-ppt-text-bold
+
+370: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "bold"
+370: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+370: Test timeout computed to be: 10000000
+370: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+370: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+370: COM b=0/b=1 48pt: mean_stem_width=[15.0, 22.0]px ink_pixels=[16560, 26496]
+370: native-ppt-text-bold: 2 checks passed
+ 3/15 Test #370: native-ppt-text-bold .............   Passed    1.41 sec
+test 371
+      Start 371: native-ppt-text-cjk
+
+371: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "cjk"
+371: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+371: Test timeout computed to be: 10000000
+371: status=0 message=PPT warning: missing-anchor=1 
+371: COM SimHei index 中文测试: {'bbox': (106, 104, 322, 156), 'height': 52, 'pixels': 3903}; 4 distinct CJK silhouettes, cell_pixels=[798, 838, 1269, 998]
+371: native-ppt-text-cjk: 1 checks passed
+ 4/15 Test #371: native-ppt-text-cjk ..............   Passed    0.57 sec
+test 372
+      Start 372: native-ppt-text-alignment
+
+372: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "alignment"
+372: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+372: Test timeout computed to be: 10000000
+372: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+372: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+372: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+372: COM l/ctr/r bbox_left=[51, 219, 387]px bboxes=[(51, 55, 94, 74), (219, 55, 262, 74), (387, 55, 430, 74)]
+372: native-ppt-text-alignment: 3 checks passed
+ 5/15 Test #372: native-ppt-text-alignment ........   Passed    0.81 sec
+test 373
+      Start 373: native-ppt-text-bullets
+
+373: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "bullets"
+373: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+373: Test timeout computed to be: 10000000
+373: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+373: status=0 message=PPT warning: missing-anchor=1 
+373: COM three bullet dots vs independent literal dot: mask_IoU=[1.0, 1.0, 1.0] rows=[(223, 293), (339, 409), (455, 525)]
+373: native-ppt-text-bullets: 2 checks passed
+ 6/15 Test #373: native-ppt-text-bullets ..........   Passed    1.46 sec
+test 374
+      Start 374: native-ppt-text-malformed
+
+374: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "malformed"
+374: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+374: Test timeout computed to be: 10000000
+374: status=0 message=PPT warning: text-runs=1 
+374: PF count=1000, text_length=5: status=0 ink_pixels=517 warning=PPT warning: text-runs=1 
+374: status=0 message=PPT warning: text-runs=3 text-malformed=1 
+374: PF count=0, text_length=5: status=0 ink_pixels=252 warning=PPT warning: text-runs=3 text-malformed=1 
+374: status=0 message=PPT warning: text-runs=2 
+374: status=0 message=PPT warning: text-runs=1 
+374: PF count1000 clipped to target6 while retaining red/bold/24pt CF properties: exact complete-reference raster match
+374: CF sum=3 vs target=6: missing tail inherits final red/bold/24pt run, exact complete-reference raster match
+374: status=0 message=PPT warning: text-runs=3 text-malformed=1 
+374: status=0 message=PPT warning: text-runs=2 text-malformed=1 
+374: status=0 message=PPT warning: text-runs=2 text-malformed=1 
+374: short PF/CF properties recover with visible text; no crash
+374: PF reserved bit9 / CF reserved bit3 independently set: no phantom field consumed, exact clean-reference rasters
+374: native-ppt-text-malformed: 11 checks passed
+ 7/15 Test #374: native-ppt-text-malformed ........   Passed    2.38 sec
+test 375
+      Start 375: native-ppt-text-unicode
+
+375: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "unicode"
+375: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+375: Test timeout computed to be: 10000000
+375: status=0 message=PPT warning: glyph Arial U+FFFD fallback; 
+375: status=0 message=PPT warning: surrogate/replacement=1 glyph Arial U+FFFD fallback; 
+375: isolated high surrogate -> U+FFFD: exact clean-reference raster match
+375: status=0 message=PPT warning: surrogate/replacement=1 glyph Arial U+FFFD fallback; 
+375: status=0 message=PPT warning: glyph Arial U+1F600 fallback; 
+375: isolated low surrogate -> U+FFFD; valid surrogate pair accepted
+375: native-ppt-text-unicode: 4 checks passed
+ 8/15 Test #375: native-ppt-text-unicode ..........   Passed    0.99 sec
+test 376
+      Start 376: native-ppt-text-bytes
+
+376: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "bytes"
+376: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+376: Test timeout computed to be: 10000000
+376: status=0 message=PPT warning: Latin-1=1 
+376: TextBytesAtom Latin-1 é vs TextCharsAtom Unicode: exact raster match + warning
+376: native-ppt-text-bytes: 2 checks passed
+ 9/15 Test #376: native-ppt-text-bytes ............   Passed    0.82 sec
+test 377
+      Start 377: native-ppt-text-indices
+
+377: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "indices"
+377: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+377: Test timeout computed to be: 10000000
+377: COM FontEntityAtom array table={0: 'Aptos', 1: 'Arial', 2: 'Aptos Display', 3: 'SimHei'}; slide CF latin=1, EA=3, ANSI=1
+377: COM ColorSchemeAtom slots={0: (255, 255, 255), 1: (12, 23, 34), 2: (232, 232, 232), 3: (14, 40, 65), 4: (21, 96, 130), 5: (233, 113, 50), 6: (70, 120, 134), 7: (150, 96, 125)}; text direct COLORINDEX=0xFE22170C -> RGB(12,23,34)
+377: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+377: COLORINDEX high byte 0 -> scheme[0] RGB(255, 255, 255): exact direct-color raster match
+377: COLORINDEX high byte 1 -> scheme[1] RGB(12, 23, 34): exact direct-color raster match
+377: COLORINDEX high byte 2 -> scheme[2] RGB(232, 232, 232): exact direct-color raster match
+377: COLORINDEX high byte 3 -> scheme[3] RGB(14, 40, 65): exact direct-color raster match
+377: COLORINDEX high byte 4 -> scheme[4] RGB(21, 96, 130): exact direct-color raster match
+377: COLORINDEX high byte 5 -> scheme[5] RGB(233, 113, 50): exact direct-color raster match
+377: COLORINDEX high byte 6 -> scheme[6] RGB(70, 120, 134): exact direct-color raster match
+377: COLORINDEX high byte 7 -> scheme[7] RGB(150, 96, 125): exact direct-color raster match
+377: status=0 message=PPT warning: font-index=1 
+377: status=0 message=PPT warning: font-index=2 
+377: status=0 message=PPT warning: text-malformed=1 
+377: damaged FontEntity[0] preserves its slot: valid Arial index1 equals explicit Arial raster
+377: status=0 message=PPT warning: color-index=1 
+377: fontIndex=65535 -> default font; colorIndex=8 -> black; both status=0 + warning
+377: native-ppt-text-indices: 22 checks passed
+10/15 Test #377: native-ppt-text-indices ..........   Passed    4.54 sec
+test 378
+      Start 378: native-ppt-text-wrap
+
+378: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "wrap"
+378: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+378: Test timeout computed to be: 10000000
+378: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+378: COM wrap: lines=8 widths=[176, 176, 176, 176, 176, 176, 176, 176]px <= inner_width=180pt
+378: native-ppt-text-wrap: 1 checks passed
+11/15 Test #378: native-ppt-text-wrap .............   Passed    0.42 sec
+test 379
+      Start 379: native-ppt-text-spacing
+
+379: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "spacing"
+379: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+379: Test timeout computed to be: 10000000
+379: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+379: COM exact lineSpacing=40pt + spaceAfter=12pt: visible-line gaps=[52, 52]px
+379: native-ppt-text-spacing: 1 checks passed
+12/15 Test #379: native-ppt-text-spacing ..........   Passed    0.40 sec
+test 380
+      Start 380: native-ppt-text-runs
+
+380: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "runs"
+380: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+380: Test timeout computed to be: 10000000
+380: status=0 message=PPT warning: Latin-1=1 missing-anchor=1 
+380: COM CF mixed runs Red/Green/Blue: RGB=((255, 0, 0), (0, 170, 0), (0, 0, 255)), bboxes=[(103, 121, 152, 146), (156, 120, 236, 146), (241, 112, 314, 146)]
+380: native-ppt-text-runs: 1 checks passed
+13/15 Test #380: native-ppt-text-runs .............   Passed    0.51 sec
+test 381
+      Start 381: native-ppt-text-master
+
+381: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "master"
+381: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+381: Test timeout computed to be: 10000000
+381: Environment Other MasterTextProp level0 -> 28pt: exact explicit-style raster match
+381: Environment Other MasterTextProp level1 -> 24pt: exact explicit-style raster match
+381: native-ppt-text-master: 4 checks passed
+14/15 Test #381: native-ppt-text-master ...........   Passed    1.25 sec
+test 382
+      Start 382: native-ppt-text-outline
+
+382: Test command: C:\Python314\python.exe "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/check_ppt_text.py" "C:/Users/Oscar/Documents/Codex/exr-build-pptm4/exreader-ppt-shape-probe.exe" "C:/Users/Oscar/Documents/Codex/EXReader-ppt-m4/tests/fixtures/ppt-text" "outline"
+382: Working Directory: C:/Users/Oscar/Documents/Codex/exr-build-pptm4
+382: Test timeout computed to be: 10000000
+382: OutlineTextRef index0 -> SlideListWithText 'Hello'/24pt: exact inline-text raster match
+382: status=0 message=PPT warning: glyph Arial U+4E2D fallback; glyph Arial U+6587 fallback; glyph Arial U+6D4B fallback; glyph Arial U+8BD5 fallback; 
+382: status=0 message=PPT warning: glyph Arial U+4E2D fallback; glyph Arial U+6587 fallback; glyph Arial U+6D4B fallback; glyph Arial U+8BD5 fallback; 
+382: OutlineTextRef index0 -> SlideListWithText '中文测试'/28pt: exact inline-text raster match
+382: native-ppt-text-outline: 4 checks passed
+15/15 Test #382: native-ppt-text-outline ..........   Passed    1.22 sec
+
+The following tests passed:
+	native-ppt-text-hello
+	native-ppt-text-sizes
+	native-ppt-text-bold
+	native-ppt-text-cjk
+	native-ppt-text-alignment
+	native-ppt-text-bullets
+	native-ppt-text-malformed
+	native-ppt-text-unicode
+	native-ppt-text-bytes
+	native-ppt-text-indices
+	native-ppt-text-wrap
+	native-ppt-text-spacing
+	native-ppt-text-runs
+	native-ppt-text-master
+	native-ppt-text-outline
+
+100% tests passed out of 15
+
+Total Test time (real) =  19.37 sec
