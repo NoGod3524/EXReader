@@ -1,0 +1,27 @@
+M2 已完成。[完整验收记录](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m2/OUT-PPTXM2.txt) · [实际渲染拼图](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m2/build/pptx-m2/pptx-shapes/contact-sheet.png)
+
+`src/pptx.c`：非空行 **397→735（+338）**；物理行 **416→769（+353）**。新增 13 个函数：
+
+`drawing_child`、`integer`、`pair`、`multiply`、`flipped`、`transform`、`color`、`preset`、`shape_tree`、`read_shapes`、`shape_path`、`warning_append`、`warnings`。
+
+六份夹具真实像素结果如下，前五份为 16:9，standard 为 4:3：
+
+| 夹具 | 预期 RGB | 校验像素数 | 最大通道误差 |
+|---|---|---:|---:|
+| 红矩形 | FF0000 | 8704 | 0 |
+| 圆 | 00CC44 | 11772 | 0 |
+| 圆角矩形 | 3366CC | 10520 | 0 |
+| 三角形 | FF9900 | 5766 | 0 |
+| 组内两矩形 | FF0000 / 0066FF | 25760 | 0 |
+| standard | CC33AA | 14104 | 0 |
+
+- 组内绝对位置：`(180,108,144,72)`、`(396,216,216,90)`，误差均 **0px**。
+- `chExt=0`：正常渲染，按对应轴 1:1 处理，返回 `PPTX warning: chExt=0 (1:1)=1;`。
+- 旋转 90°：宽高从 **144×72 → 72×144**。
+- 实测退化值：`pentagon`、`hexagon`，均退成矩形并列入警告。
+- 新增 CTest **14/14 通过**；全量 **455/455 通过**，仅排除指定两项，耗时 **127.09 秒**。
+- Release 构建、分层检查、`prepush-check.ps1` 均通过；受保护文件未修改。
+
+[夹具生成器](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m2/tests/fixtures/pptx-shapes/generate.py) 已落盘，`--check` 通过。
+
+已知边界：文本、图片留待后续里程碑；主题使用内置表；暂不解析样式继承、渐变、自定义路径及几何调整参数；非直角旋转忽略并警告。
