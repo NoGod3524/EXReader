@@ -391,6 +391,10 @@ def build_report(recorder, environment, static, output, args, audit_completed):
                         json.dumps(result, ensure_ascii=False),
                         steps=['walk every UIA node without an ID whitelist'],
                         fix='supply missing names/roles or an untruncated capture')
+    if not control_inventory:
+        recorder.record('ALL-MISSING', 'all-controls', 'UIA inventory exists', 'blocking',
+                        'fail', 'at least one complete UIA capture', 'no UIA captures',
+                        fix='capture the current host UIA trees')
     evidence.write_json(output / 'all-controls.json', control_inventory)
     counts = recorder.counts()
     blocking = [check["id"] for check in recorder.checks
