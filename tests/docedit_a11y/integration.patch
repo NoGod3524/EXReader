@@ -1,0 +1,76 @@
+--- a/examples/reader.c
++++ b/examples/reader.c
+@@ -4229,6 +4229,7 @@
+ #include "windows/shell_docedit_toolbar.inc"
+ #include "windows/shell_docedit_paint.inc"
+ #include "windows/shell_docedit_input.inc"
++#include "windows/shell_docedit_a11y.inc"
+ #endif
+ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+ #ifdef EXR_READER_WINDOWS_SHELL
+--- a/examples/windows/shell_docedit.inc
++++ b/examples/windows/shell_docedit.inc
+@@ -30,6 +30,11 @@
+ static shell_docedit de;
+ enum { DE_TIMER=0xDE01 };
+ static HWND de_button;
++static void da_update(void);
++static void da_close(void);
++static int da_key(WPARAM,int,int);
++static int da_character(wchar_t);
++static int da_translate(const MSG *);
+ static void de_refresh(int reveal);
+ static void de_drop_layout(void);
+ static int de_exit(void);
+@@ -186,7 +191,7 @@
+   }
+   de_set_caret(de_start(i));de_set_anchor(de_caret());de.layout_dirty=1;de.blink=1;
+   if(g.page) {SetTimer(g.page,DE_TIMER,GetCaretBlinkTime()==INFINITE ? 530:GetCaretBlinkTime(),NULL);SetFocus(g.page);}
+-  de_title();de_refresh(1);return 1;
++  de_title();de_refresh(1);da_update();return 1;
+ }
+ static int de_eligible(void) {
+   return g.has_current && g.current.format==EXR_DOCX && g.session.active && !g.job && !g.pending && !g.closing;
+@@ -201,6 +206,7 @@
+   if(de_open(book->path))host_update_controls();
+ }
+ static void de_close(void) {
++  da_close();
+   if(g.page) {KillTimer(g.page,DE_TIMER);if(GetCapture()==g.page)ReleaseCapture();}
+   de_drop_layout();free(de.styles);de.styles=NULL;de.style_count=0;de.styles_loaded=0;
+   exr_edit_doc_free(de.doc);de.doc=NULL;de.color_panel=0;
+@@ -238,6 +244,8 @@
+   MoveWindow(de_button,area.right-shell_px(200,shell_dpi),shell_px(8,shell_dpi),
+     shell_px(64,shell_dpi),shell_px(40,shell_dpi),TRUE);
+   ShowWindow(de_button,shell_active && !shelf_requested && !shell_bar_hidden ? SW_SHOWNA:SW_HIDE);
++  host_a11y_describe(de_button,NULL,L"编辑 DOCX，快捷键 F2；F6 打开编辑命令，Ctrl+T 进入表格");
++  if(de.doc)host_a11y_describe(g.page,NULL,L"DOCX 正文编辑区；直接输入，F6 命令面板，Ctrl+T 表格，Ctrl+S 保存");
+   EnableWindow(de_button,de_eligible() && !de.doc);
+   EnableWindow(shell_back,!de.doc);EnableWindow(shell_toc,!de.doc);
+   EnableWindow(shell_search_button,!de.doc);EnableWindow(shell_settings,!de.doc);
+--- a/examples/windows/shell_docedit_input.inc
++++ b/examples/windows/shell_docedit_input.inc
+@@ -218,6 +218,7 @@
+   set_status(L"无法编辑此位置（表格、图片、保留内容或内存不足）；此次修改已撤回。");return 0;
+ }
+ static int de_key(WPARAM key,int control,int shift) {
++  if(da_key(key,control,shift))return 1;
+   if(!de.doc)return 0;
+   de.high_surrogate=0;
+   if(control) {
+@@ -277,6 +278,7 @@
+   if(!shift)de_set_anchor(de_caret());de_refresh(1);return 1;
+ }
+ static void de_character(wchar_t ch) {
++  if(da_character(ch))return;
+   if(ch<32 || ch==127)return; /* Return/Backspace handled exactly once in WM_KEYDOWN. */
+   wchar_t wide[2];int length=1;
+   if(ch>=0xd800 && ch<=0xdbff) {de.high_surrogate=ch;return;}
+@@ -289,6 +291,7 @@
+   if(n)de_edit(DE_TYPE,text,(size_t)n);
+ }
+ static int de_translate(const MSG *message) {
++  if(da_translate(message))return 1;
+   if(!de.doc)return 0;
+   if(message->message==WM_KEYDOWN && (message->hwnd==g.window || message->hwnd==g.page ||
+     message->hwnd==de_button)) {
