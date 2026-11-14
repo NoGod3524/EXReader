@@ -26,6 +26,8 @@ jobs:
           python-version: '3.12'
       - name: Enter compiler environment
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
           $wrapper = Join-Path $env:RUNNER_TEMP 'final-b-vcvars.bat'
@@ -35,19 +37,27 @@ jobs:
           }
       - name: Configure full test profile
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=OFF "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
           exit $LASTEXITCODE
       - name: Compile
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           cmake --build build/audit --parallel 4 *> build.txt
           exit $LASTEXITCODE
       - name: Run full CTest except release and doc coverage
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           ctest --test-dir build/audit --output-on-failure --no-tests=error -E 'sdk-release|sdk-doc-coverage' --output-junit "$env:GITHUB_WORKSPACE/ctest.xml" *> ctest.txt
           exit $LASTEXITCODE
       - name: Record new checks verbosely
         if: always()
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-control|selection-render-budget)' *> new-checks.txt
           exit $LASTEXITCODE
       - uses: actions/upload-artifact@v4
