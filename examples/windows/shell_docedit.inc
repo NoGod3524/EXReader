@@ -26,7 +26,7 @@ typedef struct {
   char path[MAX_PATH];
   float scroll_y,extent,inset;
   shell_d2d_edit_row *rows;
-  size_t row_count;
+  size_t row_count,footnote_row_count;
   int width,height,layout_dirty,blink,mouse_down,saved;
   unsigned dpi;
   wchar_t high_surrogate,title[512];
@@ -101,6 +101,8 @@ static float de_toolbar_height(void);
 static HRESULT de_toolbar_paint(HDC dc);
 static int de_toolbar_click(float x,float y);
 static exr_edit_run_props de_current_props(void);
+static int de_footnote_insert(void);
+static int de_footnote_click(float x,float y);
 
 static de_pos de_caret_pos(void) {
   de_pos p={de.caret.view,de.caret.run,de.caret.byte};return p;

@@ -378,6 +378,7 @@ exr_status exr_edit_docx_read(const void *data,size_t size,const exr_edit_option
   status=exr_edit_xml_parse(&x,p->data,p->size,"document",e); if (status) goto done;
   if (x.body==NONE || !exr_edit_xml_word(x.tree->nodes+x.root,"document")) { status=EXR_FORMAT; goto done; }
   status=decode_blocks(&x,&sections,&ns,&blocks,&nb); if (status) goto done;
+  status=exr_edit_footnotes_decode(&x,parts,np,main,blocks,nb,e); if (status) goto done;
   status=exr_edit_images_decode(&x,parts,np,main,&blocks,&nb,ns); if (status) goto done;
   status=exr_edit_doc_create(sections,ns,blocks,nb,parts,np,options,out);
 done:
@@ -440,7 +441,7 @@ static int namespaced_attribute(const source_xml *x,size_t n,const attr_span *a,
   return 0;
 }
 const char *exr_edit_xml_ns(const source_xml *x) {
-  return x->tree && x->root!=NONE && exr_edit_xml_word(x->tree->nodes+x->root,"document") &&
+  return x->tree && x->root!=NONE && x->tree->nodes[x->root].name &&
     !strncmp(x->tree->nodes[x->root].name,WS "|",sizeof(WS)) ? WS : W;
 }
 static void unused_prefix(const source_xml *x,const char *base,char prefix[64]) {
@@ -690,6 +691,7 @@ static int text_start(exr_buffer *b,const source_xml *x,size_t n) {
 static int write_run(exr_buffer *b,const source_xml *x,const exr_edit_run *r,size_t parent) {
   size_t n,pr,i,j,at; exr_buffer text={0}; int same;
   if (r->kind==EXR_EDIT_OPAQUE_RUN) return exr_append(b,r->opaque_xml,r->opaque_size);
+  if (r->kind==EXR_EDIT_FOOTNOTE) return exr_edit_footnote_reference_write(b,x,r,parent);
   n=exr_edit_xml_locate(x,r->opaque_xml,r->opaque_size,"r",parent); pr=exr_edit_xml_child(x,n,"rPr");
   if (n!=NONE) {
     for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (exr_edit_xml_word(x->tree->nodes+i,"t"))
@@ -844,6 +846,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
   size_t np,ns,nb,i,j,si=0,*sn=NULL; char main[2048]; source_xml x={0};
   exr_buffer xml={0},section={0}; mz_zip_archive zip={0}; exr_status status=EXR_MEMORY; int opened=0;
   edit_image_output *images=NULL; size_t image_count=0,image_index=0;
+  edit_footnote_output notes={0};
   if (e) memset(e,0,sizeof(*e));
   if (data) *data=NULL;
   if (size) *size=0;
@@ -858,6 +861,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
     status=exr_edit_xml_parse(&x,p->data,p->size,"document",e); if (status) goto done;
     if (x.body==NONE) { status=EXR_FORMAT; goto done; }
   }
+  status=exr_edit_footnotes_prepare(doc,&x,parts,np,main,&notes,e); if (status) goto done;
   status=exr_edit_images_prepare(doc,main,&x,&images,&image_count); if (status) goto done;
   status=EXR_MEMORY;
   for (i=0;i<nb;i++) {
@@ -944,7 +948,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
   if (!mz_zip_writer_init_heap(&zip,0,0)) goto done;
   opened=1;
   if (np) {
-    status=exr_edit_images_package(&zip,parts,np,main,&xml,images,image_count,e);
+    status=exr_edit_footnotes_package(&zip,parts,np,main,&xml,images,image_count,&notes,e);
     if (status) goto done;
   }
   status=EXR_MEMORY;
@@ -958,7 +962,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
     const char *names[]={"[Content_Types].xml","_rels/.rels","word/_rels/document.xml.rels","word/styles.xml","word/header1.xml"};
     const char *values[]={types,rels,dr,styles,header};
     for (i=0;i<5;i++) { base[i].name=names[i]; base[i].data=values[i]; base[i].size=strlen(values[i]); }
-    status=exr_edit_images_package(&zip,base,5,main,&xml,images,image_count,e); if (status) goto done;
+    status=exr_edit_footnotes_package(&zip,base,5,main,&xml,images,image_count,&notes,e); if (status) goto done;
     status=EXR_MEMORY;
   }
   if (!exr_edit_zip_add_part(&zip,main,xml.data,xml.size) || !mz_zip_writer_finalize_heap_archive(&zip,data,size)) goto done;
@@ -966,7 +970,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
 done:
   if (status && *data) { mz_free(*data); *data=NULL; *size=0; }
   if (opened) mz_zip_writer_end(&zip);
-  free(images); free(sn); free(xml.data); free(section.data); exr_edit_xml_free(&x);
+  free(images); free(sn); free(xml.data); free(section.data); free(notes.xml.data); exr_edit_xml_free(&x);
   return status ? (e && e->code==status && e->message[0] ? status :
     exr_fail(e,status,"Cannot write editable DOCX")) : EXR_OK;
 }
