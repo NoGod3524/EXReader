@@ -28,7 +28,7 @@ if(WIN32)
   add_library(exreader-shell-d2d STATIC windows/shell_d2d.cpp)
   target_compile_features(exreader-shell-d2d PRIVATE cxx_std_17)
   target_compile_options(exreader-shell-d2d PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/W4 /WX,-Wall -Wextra -Werror>)
-  target_link_libraries(exreader-shell-d2d PUBLIC d2d1 dwrite advapi32)
+  target_link_libraries(exreader-shell-d2d PUBLIC d2d1 dwrite advapi32 comctl32)
   set(EXR_READER_WINDOWS_SHELL ON) # The retired native toolbar has no build path.
 endif()
 foreach(example IN LISTS exr_examples)
