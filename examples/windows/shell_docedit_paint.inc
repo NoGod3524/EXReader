@@ -73,6 +73,10 @@ static wchar_t *de_paragraph_text(const exr_edit_block *b) {
 static void de_drop_layout(void) {
   for(size_t i=0;i<de.row_count+de.footnote_row_count;i++)shell_d2d_edit_release(de.rows[i].layout);
   free(de.rows);de.rows=NULL;de.row_count=de.footnote_row_count=0;de.extent=0;
+  for(unsigned i=0;i<2;i++) {
+    shell_d2d_edit_release(de.hf_rows[i].layout);memset(&de.hf_rows[i],0,sizeof(de.hf_rows[i]));
+    exr_free(de.hf_text[i]);de.hf_text[i]=NULL;de.hf_size[i]=0;
+  }
 }
 static int de_measure(int width,int height) {
   /* ponytail: rebuild all paragraph views on edits; cache changed paragraphs if
@@ -88,6 +92,8 @@ static int de_measure(int width,int height) {
   size_t total=count+(notes ? notes+1:0);
   de.rows=calloc(total ? total:1,sizeof(*de.rows));if(!de.rows)return 0;
   float y=de_toolbar_height()+margin;
+  if(!de_hf_measure(0,y)) {de_drop_layout();return 0;}
+  y=de.hf_rows[0].y+de.hf_rows[0].height+margin;
   float table_top=y,pad=(float)shell_px(6,shell_dpi);size_t table_start=0;
   for(size_t i=0;i<count;i++) {
     const exr_edit_block *block=de_block_at(de.doc,i);
@@ -163,7 +169,11 @@ static int de_measure(int width,int height) {
       de.footnote_row_count++;y+=row->height+(float)shell_px(8,shell_dpi);
     }
   }
-  de.extent=y+margin;de.layout_dirty=0;return 1;
+  float footer_y=y+margin;
+  if(!de_hf_measure(1,footer_y)) {de_drop_layout();return 0;}
+  float bottom=de.height-margin-de.hf_rows[1].height;
+  if(de.hf_rows[1].y<bottom)de.hf_rows[1].y=bottom;
+  de.extent=de.hf_rows[1].y+de.hf_rows[1].height+margin;de.layout_dirty=0;return 1;
 }
 static void de_scroll(float delta) {
   float limit=de.extent-de.height;if(limit<0)limit=0;
@@ -175,9 +185,10 @@ static void de_refresh(int reveal) {
   de.blink=1;
   if(!g.page) {if(de.doc && de.layout_dirty)de_outline_update();return;}
   RECT area;GetClientRect(g.page,&area);
-  if(de_measure(area.right,area.bottom) && reveal && de.caret.view<de.row_count) {
-    float box[4];shell_d2d_edit_row *row=&de.rows[de.caret.view];
-    shell_d2d_edit_position(row->layout,de_offset(de_caret_pos()),box);
+  if(de_measure(area.right,area.bottom) && reveal && (de.hf_mode || de.caret.view<de.row_count)) {
+    float box[4];shell_d2d_edit_row *row=de.hf_mode ? &de.hf_rows[de.hf_mode-1]:&de.rows[de.caret.view];
+    unsigned offset=de.hf_mode ? de_units(de.hf_text[de.hf_mode-1],de.hf_caret):de_offset(de_caret_pos());
+    shell_d2d_edit_position(row->layout,offset,box);
     float top=row->y+box[1],bottom=top+box[3];
     if(top<de.scroll_y+de_toolbar_height())de.scroll_y=top-de_toolbar_height();
     if(bottom>de.scroll_y+de.height)de.scroll_y=bottom-de.height;
@@ -218,17 +229,34 @@ static HRESULT de_paint_dc(HDC dc,const RECT *area) {
   for(size_t i=0;i<de.row_count;i++) {
     shell_d2d_edit_row *row=&de.rows[i];
     row->start=row->length=0;row->selected_break=0;
-    if(selected && i>=a.block && i<=b.block) {
+    if(!de.hf_mode && selected && i>=a.block && i<=b.block) {
       row->start=i==a.block ? de_offset(a):0;
       unsigned end=de_offset(i==b.block ? b:de_end(i));
       row->length=end>=row->start ? end-row->start:0;
       row->selected_break=i<b.block;
     }
     row->caret=i==de.caret.view ? de_offset(de_caret_pos()):0;
-    row->show_caret=i==de.caret.view && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
+    row->show_caret=!de.hf_mode && i==de.caret.view && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
+    row->dimmed=de.hf_mode!=0;
   }
-  HRESULT hr=shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),de.rows,de.row_count+de.footnote_row_count,
+  size_t content_rows=de.row_count+de.footnote_row_count;
+  for(size_t i=de.row_count;i<content_rows;i++)de.rows[i].dimmed=de.hf_mode!=0;
+  shell_d2d_edit_row *paint_rows=malloc((content_rows+2)*sizeof(*paint_rows));
+  if(!paint_rows)return E_OUTOFMEMORY;
+  memcpy(paint_rows,de.rows,content_rows*sizeof(*paint_rows));
+  for(unsigned i=0;i<2;i++) {
+    shell_d2d_edit_row *row=&de.hf_rows[i];int active=de.hf_mode==i+1;
+    size_t a=de.hf_anchor,b=de.hf_caret;if(a>b) {size_t t=a;a=b;b=t;}
+    row->start=active ? de_units(de.hf_text[i],a):0;
+    row->length=active ? de_units(de.hf_text[i]+a,b-a):0;
+    row->caret=active ? de_units(de.hf_text[i],de.hf_caret):0;
+    row->show_caret=active && de.blink && (!g.page || GetFocus()==g.page || host_offscreen);
+    row->dimmed=!active;paint_rows[content_rows+i]=*row;
+  }
+  HRESULT hr=shell_d2d_edit_paint(host_shell,dc,area,shell_is_dark(),paint_rows,content_rows+2,
     de.inset,de.scroll_y,de_toolbar_height());
+  free(paint_rows);
+  if(hr==S_OK)hr=de_hf_labels(dc);
   return hr==S_OK ? de_toolbar_paint(dc):hr;
 }
 static void de_paint(HWND window) {

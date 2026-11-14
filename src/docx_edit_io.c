@@ -754,11 +754,11 @@ static int missing_references(exr_buffer *b,const source_xml *x,const exr_edit_s
   }
   return 1;
 }
-static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit_section *s,int header) {
+static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit_section *s,int header,int first) {
   exr_edit_section old; char v[8][32]; attr_edit sz[3],mar[6]; size_t i,at=n==NONE ? 0 : x->spans[n].open;
-  int size_seen=0,margin_seen=0; unsigned seen=0; size_t emitted=0;
+  int size_seen=0,margin_seen=0,title_seen=0; unsigned seen=0; size_t emitted=0;
   section_props(x,n,&old); old.id=s->id;
-  if (n!=NONE && !memcmp(&old,s,sizeof(old))) {
+  if (n!=NONE && first<0 && !memcmp(&old,s,sizeof(old))) {
     if (x->tree->nodes[n].parent==x->body) return exr_edit_xml_raw(b,x,n);
     return section_start(b,x,n) && exr_append(b,x->bytes+x->spans[n].open,x->spans[n].close-x->spans[n].open) &&
       exr_edit_xml_end(b,x,n,"sectPr");
@@ -793,6 +793,10 @@ static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit
       if (!exr_edit_xml_attrs(b,x,NONE,"pgMar",mar,6)) return 0;
       margin_seen=1;
     }
+    if (first>0 && !title_seen && exr_edit_xml_child(x,n,"titlePg")==NONE && rank>property_rank("titlePg",2)) {
+      if (!scalar(b,x,NONE,"titlePg","1")) return 0;
+      title_seen=1;
+    }
     if (slot>=0) {
       const char *id=slot<3 ? s->header_refs[slot] : s->footer_refs[slot-3];
       const char *previous=slot<3 ? old.header_refs[slot] : old.footer_refs[slot-3];
@@ -800,6 +804,10 @@ static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit
     }
     else if (exr_edit_xml_word(x->tree->nodes+i,"pgSz")) { if (!exr_edit_xml_attrs(b,x,i,"pgSz",sz,3)) return 0; size_seen=1; }
     else if (exr_edit_xml_word(x->tree->nodes+i,"pgMar")) { if (!exr_edit_xml_attrs(b,x,i,"pgMar",mar,6)) return 0; margin_seen=1; }
+    else if (first>=0 && exr_edit_xml_word(x->tree->nodes+i,"titlePg")) {
+      if (first && !scalar(b,x,i,"titlePg","1")) return 0;
+      title_seen=1;
+    }
     else if (!exr_edit_xml_raw(b,x,i)) return 0;
     at=x->spans[i].end;
   }
@@ -809,6 +817,7 @@ static int section_xml(exr_buffer *b,const source_xml *x,size_t n,const exr_edit
   }
   if (!size_seen && !exr_edit_xml_attrs(b,x,NONE,"pgSz",sz,3)) return 0;
   if (!margin_seen && !exr_edit_xml_attrs(b,x,NONE,"pgMar",mar,6)) return 0;
+  if (first>0 && !title_seen && !scalar(b,x,NONE,"titlePg","1")) return 0;
   return (n==NONE || exr_append(b,x->bytes+at,x->spans[n].close-at)) && exr_edit_xml_end(b,x,n,"sectPr");
 }
 
@@ -892,7 +901,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
       (sn[si]!=NONE && x.tree->nodes[sn[si]].parent!=x.body);
     section_props(&x,sn[si],&original); original.id=sections[si].id;
     section.size=0;
-    if (!section_xml(&section,&x,sn[si],sections+si,!np)) goto done;
+    if (!section_xml(&section,&x,sn[si],sections+si,!np,exr_edit_first_override(doc,si))) goto done;
     while (j<nb) {
       const exr_edit_block *b=exr_edit_block_at(doc,j); size_t next=j+1;
       if (b->section_id!=sections[si].id) break;
@@ -913,7 +922,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
           size_t node=exr_edit_xml_locate(&x,b->opaque_xml,b->opaque_size,"p",NONE);
           /* Its original paragraph still supplies every namespace binding.
              Only relocated or changed sections need the expanded template. */
-          const exr_buffer *replacement=sn[si]!=NONE && !memcmp(&original,sections+si,sizeof(original)) &&
+          const exr_buffer *replacement=exr_edit_first_override(doc,si)<0 && sn[si]!=NONE && !memcmp(&original,sections+si,sizeof(original)) &&
             exr_edit_xml_child(&x,exr_edit_xml_child(&x,node,"pPr"),"sectPr")==sn[si] ? NULL : &section;
           if (!exr_edit_xml_paragraph(&xml,&x,b,sn[si],replacement)) goto done;
           emitted=1;
@@ -932,7 +941,7 @@ exr_status exr_edit_docx_write(const exr_edit_doc *doc,void **data,size_t *size,
       if (!put(&xml,"<w:p xmlns:w=\"") || !put(&xml,exr_edit_xml_ns(&x)) || !put(&xml,"\"><w:pPr>") ||
           !exr_append(&xml,section.data,section.size) || !put(&xml,"</w:pPr></w:p>")) goto done;
     } else if (si+1==ns && !paragraph_break && !emitted &&
-        (!p || sn[si]!=NONE || memcmp(&original,sections+si,sizeof(original))) &&
+        (!p || sn[si]!=NONE || exr_edit_first_override(doc,si)>=0 || memcmp(&original,sections+si,sizeof(original))) &&
         !exr_append(&xml,section.data,section.size)) goto done;
   }
   if (j!=nb) { status=EXR_ARGUMENT; goto done; }
@@ -973,4 +982,383 @@ done:
   free(images); free(sn); free(xml.data); free(section.data); free(notes.xml.data); exr_edit_xml_free(&x);
   return status ? (e && e->code==status && e->message[0] ? status :
     exr_fail(e,status,"Cannot write editable DOCX")) : EXR_OK;
+}
+
+/* Header/footer parts share the body run decoder and lossless paragraph writer. */
+#define EDIT_REL "http://schemas.openxmlformats.org/package/2006/relationships"
+#define EDIT_CT "http://schemas.openxmlformats.org/package/2006/content-types"
+static size_t story_section(const exr_edit_doc *d,exr_edit_id id) {
+  size_t i,n; const exr_edit_section *s=exr_edit_sections(d,&n);
+  for (i=0;i<n;i++) if (s[i].id==id) return i;
+  return NONE;
+}
+static int story_relpath(const char *main,char name[2048]) {
+  const char *slash=strrchr(main,'/'); size_t prefix=slash ? (size_t)(slash-main)+1 : 0;
+  if (strlen(main)+11>=2048) return 0;
+  memcpy(name,main,prefix); snprintf(name+prefix,2048-prefix,"_rels/%s.rels",main+prefix);
+  return 1;
+}
+static exr_status story_main(const exr_edit_doc *d,const exr_edit_part **parts,size_t *n,char main[2048]) {
+  *parts=exr_edit_parts(d,n); strcpy(main,"word/document.xml");
+  return *n ? exr_edit_main_part(*parts,*n,main,NULL) : EXR_OK;
+}
+static exr_status story_namespaces(const exr_edit_doc *d,const char **word,const char **relationship) {
+  const exr_edit_part *parts,*part; size_t n; char main[2048]; source_xml x={0};
+  exr_status s=story_main(d,&parts,&n,main);
+  *word=W; *relationship=R;
+  if (s) return s;
+  part=exr_edit_part_named(parts,n,main); if (!part) return EXR_OK;
+  s=exr_edit_xml_parse(&x,part->data,part->size,"document",NULL);
+  if (!s && !strcmp(exr_edit_xml_ns(&x),WS)) { *word=WS; *relationship=RS; }
+  exr_edit_xml_free(&x); return s;
+}
+static exr_status story_rels(const exr_edit_doc *d,char main[2048],char rp[2048],source_xml *rels) {
+  const exr_edit_part *parts,*part; size_t n; exr_status s=story_main(d,&parts,&n,main);
+  if (s) return s;
+  if (!story_relpath(main,rp)) return EXR_LIMIT;
+  part=exr_edit_part_named(parts,n,rp);
+  return part ? exr_edit_xml_parse(rels,part->data,part->size,"Relationships",NULL) : EXR_OK;
+}
+static size_t story_relationship(const source_xml *rels,const char *id,const char *kind) {
+  size_t i;
+  if (!rels->tree) return NONE;
+  for (i=rels->tree->nodes[rels->root].first_child;i!=NONE;i=rels->tree->nodes[i].next_sibling) {
+    const exr_node *n=rels->tree->nodes+i; const char *rid=exr_node_attribute(n,"Id"),*type=exr_node_attribute(n,"Type");
+    if (id && rid && !strcmp(rid,id)) return i;
+    if (kind && type && (!strncmp(type,R "/",sizeof(R)) || !strncmp(type,RS "/",sizeof(RS))) &&
+        !strcmp(strrchr(type,'/')+1,kind)) return i;
+  }
+  return NONE;
+}
+static exr_status story_part(const exr_edit_doc *d,size_t section,unsigned footer,unsigned variant,
+    const exr_edit_part **out,char path[2048]) {
+  const exr_edit_section *sections=exr_edit_sections(d,NULL); const exr_edit_part *parts;
+  source_xml rels={0}; char main[2048],rp[2048]; size_t n,i,node=NONE; const char *id=NULL,*target,*mode,*type; exr_status s;
+  *out=NULL; path[0]=0; parts=exr_edit_parts(d,&n);
+  for (i=section+1;i;i--) {
+    const char *candidate=footer ? sections[i-1].footer_refs[variant] : sections[i-1].header_refs[variant];
+    if (*candidate) { id=candidate; break; }
+  }
+  if (!id) return EXR_OK;
+  s=story_rels(d,main,rp,&rels); if (s) goto done;
+  node=story_relationship(&rels,id,NULL);
+  if (node==NONE) { s=EXR_FORMAT; goto done; }
+  type=exr_node_attribute(rels.tree->nodes+node,"Type");
+  if (!type || (footer ? strcmp(type,R "/footer") && strcmp(type,RS "/footer") :
+      strcmp(type,R "/header") && strcmp(type,RS "/header"))) { s=EXR_FORMAT; goto done; }
+  target=exr_node_attribute(rels.tree->nodes+node,"Target"); mode=exr_node_attribute(rels.tree->nodes+node,"TargetMode");
+  if (!target || (mode && !strcmp(mode,"External")) || !exr_resolve_path(main,target,path)) { s=EXR_FORMAT; goto done; }
+  *out=exr_edit_part_named(parts,n,path); s=*out ? EXR_OK : EXR_FORMAT;
+done:
+  exr_edit_xml_free(&rels); return s;
+}
+static void story_runs_free(exr_edit_run *runs,size_t count) {
+  size_t i; for (i=0;i<count;i++) if (runs[i].kind==EXR_EDIT_TEXT) free((void *)runs[i].text);
+  free(runs);
+}
+static exr_status story_decode_runs(const source_xml *x,size_t p,exr_edit_run **runs,size_t *count) {
+  size_t i,j; unsigned depth=0; exr_status s=exr_edit_xml_decode_runs(x,p,runs,count);
+  if (s) return s;
+  /* Complex fields span several sibling runs; their cached text belongs to
+     the field, just like the text nested inside fldSimple. */
+  for (i=0;i<*count;i++) {
+    exr_edit_run *r=*runs+i; size_t n=exr_edit_xml_locate(x,r->opaque_xml,r->opaque_size,"r",p); unsigned closing=0;
+    if (n!=NONE) for (j=x->tree->nodes[n].first_child;j!=NONE;j=x->tree->nodes[j].next_sibling)
+      if (exr_edit_xml_word(x->tree->nodes+j,"fldChar")) {
+        const char *type=exr_edit_xml_wa(x->tree->nodes+j,"fldCharType");
+        if (type && !strcmp(type,"begin")) depth++;
+        else if (type && !strcmp(type,"end")) closing++;
+      }
+    if (depth && r->kind==EXR_EDIT_TEXT) {
+      free((void *)r->text); r->text=NULL; r->text_size=0; r->kind=EXR_EDIT_OPAQUE_RUN;
+    }
+    depth=closing>depth ? 0 : depth-closing;
+  }
+  return EXR_OK;
+}
+exr_status exr_edit_header_footer_text(const exr_edit_doc *d,exr_edit_id section,unsigned footer,unsigned variant,
+    char **text,size_t *size) {
+  const exr_edit_part *part; char path[2048]; source_xml x={0}; exr_buffer b={0}; size_t si,i,j,paragraphs=0; exr_status s;
+  if (text) *text=NULL;
+  if (size) *size=0;
+  if (!d || !text || !size || footer>1 || variant>2 || (si=story_section(d,section))==NONE) return EXR_ARGUMENT;
+  s=story_part(d,si,footer,variant,&part,path); if (s) return s;
+  if (part) {
+    s=exr_edit_xml_parse(&x,part->data,part->size,footer ? "ftr" : "hdr",NULL); if (s) goto done;
+    for (i=x.tree->nodes[x.root].first_child;i!=NONE;i=x.tree->nodes[i].next_sibling) if (exr_edit_xml_word(x.tree->nodes+i,"p")) {
+      exr_edit_run *runs=NULL; size_t count=0,editable=0;
+      s=story_decode_runs(&x,i,&runs,&count); if (s) goto done;
+      for (j=0;j<count;j++) if (runs[j].kind==EXR_EDIT_TEXT) editable=1;
+      if (editable && paragraphs++ && !put(&b,"\n")) s=EXR_MEMORY;
+      for (j=0;!s && j<count;j++) if (runs[j].kind==EXR_EDIT_TEXT && !exr_append(&b,runs[j].text,runs[j].text_size)) s=EXR_MEMORY;
+      story_runs_free(runs,count); if (s) goto done;
+    }
+  }
+  if (!exr_append(&b,"",1)) { s=EXR_MEMORY; goto done; }
+  *size=b.size-1; *text=(char *)b.data; b.data=NULL; s=EXR_OK;
+done:
+  free(b.data); exr_edit_xml_free(&x); return s;
+}
+static int story_append_root(exr_buffer *b,const exr_edit_part *part,const char *root,const char *space,const exr_buffer *addition) {
+  source_xml x={0}; int ok=0;
+  if (!part) return put(b,"<") && put(b,root) && put(b," xmlns=\"") && put(b,space) && put(b,"\">") &&
+    exr_append(b,addition->data,addition->size) && put(b,"</") && put(b,root) && put(b,">");
+  if (exr_edit_xml_parse(&x,part->data,part->size,root,NULL)) return 0;
+  ok=exr_append(b,x.bytes,x.spans[x.root].start) && exr_edit_xml_start(b,&x,x.root,root) &&
+    exr_append(b,x.bytes+x.spans[x.root].open,x.spans[x.root].close-x.spans[x.root].open) &&
+    exr_append(b,addition->data,addition->size) && exr_edit_xml_end(b,&x,x.root,root) &&
+    exr_append(b,x.bytes+x.spans[x.root].end,x.size-x.spans[x.root].end);
+  exr_edit_xml_free(&x); return ok;
+}
+static int story_add_relationship(exr_buffer *out,const exr_edit_part *part,const char *id,const char *kind,const char *target,const char *rspace) {
+  exr_buffer addition={0}; int ok=put(&addition,"<Relationship xmlns=\"" EDIT_REL "\" Id=\"") &&
+    escaped(&addition,id,strlen(id)) && put(&addition,"\" Type=\"") && put(&addition,rspace) && put(&addition,"/") && put(&addition,kind) &&
+    put(&addition,"\" Target=\"") && escaped(&addition,target,strlen(target)) && put(&addition,"\"/>") &&
+    story_append_root(out,part,"Relationships",EDIT_REL,&addition);
+  free(addition.data); return ok;
+}
+static int story_add_type(exr_buffer *out,const exr_edit_part *part,const char *path,const char *kind) {
+  exr_buffer addition={0}; int ok=put(&addition,"<Override xmlns=\"" EDIT_CT "\" PartName=\"/") && escaped(&addition,path,strlen(path)) &&
+    put(&addition,"\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.") && put(&addition,kind) &&
+    put(&addition,"+xml\"/>") && story_append_root(out,part,"Types",EDIT_CT,&addition);
+  free(addition.data); return ok;
+}
+static exr_status story_seed(exr_edit_doc *d,size_t si) {
+  size_t n,ns,i; void *data=NULL; size_t size=0; exr_edit_doc *copy=NULL; const exr_edit_part *parts;
+  const exr_edit_section *seed; exr_status s;
+  exr_edit_parts(d,&n); if (n) return EXR_OK;
+  s=exr_edit_docx_write(d,&data,&size,NULL); if (s) return s;
+  s=exr_edit_docx_read(data,size,NULL,&copy,NULL); free(data); if (s) return s;
+  parts=exr_edit_parts(copy,&n); seed=exr_edit_sections(copy,&ns);
+  s=exr_edit_package_update(d,si,NULL,parts,n,-1);
+  for (i=0;!s && i<ns;i++) {
+    exr_edit_section value=exr_edit_sections(d,NULL)[i];
+    memcpy(value.header_refs,seed[i].header_refs,sizeof(value.header_refs));
+    memcpy(value.footer_refs,seed[i].footer_refs,sizeof(value.footer_refs));
+    s=exr_edit_package_update(d,i,&value,NULL,0,-1);
+  }
+  exr_edit_doc_free(copy); return s;
+}
+static int story_new_paragraph(exr_buffer *out,const char *word,const char *text,size_t size) {
+  return put(out,"<w:p xmlns:w=\"") && put(out,word) &&
+    put(out,"\"><w:r><w:t xml:space=\"preserve\">") && escaped(out,text,size) && put(out,"</w:t></w:r></w:p>");
+}
+static size_t story_line(const char *text,size_t size,size_t *offset,int *pending) {
+  const char *end=memchr(text+*offset,'\n',size-*offset); size_t length=end ? (size_t)(end-text)-*offset : size-*offset;
+  if (end) *offset=(size_t)(end-text)+1; else { *offset=size; *pending=0; }
+  return length;
+}
+static exr_status story_patch_text(const exr_edit_part *part,unsigned footer,const char *word,const char *text,size_t size,exr_buffer *out) {
+  source_xml x={0}; size_t i,j,at,offset=0; exr_status s=EXR_MEMORY; int pending=1;
+  if (!text) text="";
+  if (part) { s=exr_edit_xml_parse(&x,part->data,part->size,footer ? "ftr" : "hdr",NULL); if (s) return s; }
+  s=EXR_MEMORY;
+  if (part) {
+    if (!exr_append(out,x.bytes,x.spans[x.root].start) || !exr_edit_xml_start(out,&x,x.root,footer ? "ftr" : "hdr")) goto done;
+  } else if (!put(out,footer ? "<w:ftr xmlns:w=\"" : "<w:hdr xmlns:w=\"") || !put(out,word) || !put(out,"\">")) goto done;
+  at=part ? x.spans[x.root].open : 0;
+  for (i=part ? x.tree->nodes[x.root].first_child : NONE;i!=NONE;i=x.tree->nodes[i].next_sibling) if (x.tree->nodes[i].name) {
+    if (!exr_append(out,x.bytes+at,x.spans[i].start-at)) goto done;
+    if (exr_edit_xml_word(x.tree->nodes+i,"p")) {
+      exr_edit_run *runs=NULL,*extra; size_t count=0,line_start=offset,line_size=0; exr_edit_block p={0}; int inserted=0,keep=pending;
+      if (pending) line_size=story_line(text,size,&offset,&pending);
+      s=story_decode_runs(&x,i,&runs,&count); if (s) goto done;
+      p.kind=EXR_EDIT_PARAGRAPH; p.opaque_xml=x.bytes+x.spans[i].start; p.opaque_size=x.spans[i].end-x.spans[i].start;
+      exr_edit_xml_para_props(&x,exr_edit_xml_child(&x,i,"pPr"),&p.props);
+      if (!keep) {
+        size_t kept=0;
+        for (j=0;j<count;j++) {
+          if (runs[j].kind==EXR_EDIT_TEXT) free((void *)runs[j].text);
+          else { size_t k; const char *raw=runs[j].opaque_xml;
+            for (k=0;k<runs[j].opaque_size;k++) if (!isspace((unsigned char)raw[k])) { keep=1; break; }
+            runs[kept++]=runs[j];
+          }
+        }
+        count=kept;
+      } else {
+        for (j=0;j<count;j++) if (runs[j].kind==EXR_EDIT_TEXT) {
+          free((void *)runs[j].text); runs[j].text=NULL; runs[j].text_size=0;
+          if (!inserted) {
+            char *copy=malloc(line_size+1); if (!copy) { story_runs_free(runs,count); s=EXR_MEMORY; goto done; }
+            if (line_size) memcpy(copy,text+line_start,line_size);
+            copy[line_size]=0;
+            runs[j].text=copy; runs[j].text_size=line_size; inserted=1;
+          }
+        }
+        if (!inserted) {
+          extra=realloc(runs,(count+1)*sizeof(*runs)); if (!extra) { story_runs_free(runs,count); s=EXR_MEMORY; goto done; }
+          runs=extra; memset(runs+count,0,sizeof(*runs)); runs[count].text=malloc(line_size+1);
+          if (!runs[count].text) { story_runs_free(runs,count); s=EXR_MEMORY; goto done; }
+          if (line_size) memcpy((void *)runs[count].text,text+line_start,line_size);
+          ((char *)runs[count].text)[line_size]=0; runs[count].text_size=line_size; count++;
+        }
+      }
+      p.runs=runs; p.run_count=count;
+      s=!keep || exr_edit_xml_paragraph(out,&x,&p,NONE,NULL) ? EXR_OK : EXR_MEMORY;
+      story_runs_free(runs,count); if (s) goto done;
+    } else if (!exr_edit_xml_raw(out,&x,i)) { s=EXR_MEMORY; goto done; }
+    at=x.spans[i].end;
+  }
+  s=EXR_MEMORY;
+  if (part && !exr_append(out,x.bytes+at,x.spans[x.root].close-at)) goto done;
+  while (pending) {
+    size_t start=offset,length=story_line(text,size,&offset,&pending);
+    if (!story_new_paragraph(out,part ? exr_edit_xml_ns(&x) : word,text+start,length)) goto done;
+  }
+  if (part) {
+    if (!exr_edit_xml_end(out,&x,x.root,footer ? "ftr" : "hdr") || !exr_append(out,x.bytes+x.spans[x.root].end,x.size-x.spans[x.root].end)) goto done;
+  } else if (!put(out,footer ? "</w:ftr>" : "</w:hdr>")) goto done;
+  s=EXR_OK;
+done:
+  exr_edit_xml_free(&x); return s;
+}
+exr_status exr_edit_set_header_footer_text(exr_edit_doc *d,exr_edit_id section,unsigned footer,unsigned variant,const char *text,size_t size) {
+  const exr_edit_part *part,*parts; exr_edit_part changes[3]={{0}}; exr_edit_section value;
+  char path[2048],main[2048],rp[2048],rid[128],target[128]; source_xml rels={0};
+  const char *word,*relationship;
+  exr_buffer xml={0},relbuf={0},types={0}; size_t si,n,nc=1,k; exr_status s=exr_edit_ready(d); exr_edit_tx *tx=NULL;
+  if (s) return s;
+  if (size>EXR_MAX_INPUT) return exr_edit_failure(d,EXR_LIMIT);
+  if (footer>1 || variant>2 || !exr_edit_text_valid(text,size) || (si=story_section(d,section))==NONE)
+    return exr_edit_failure(d,EXR_ARGUMENT);
+  /* One outer transaction also covers lazy creation of base OPC metadata. */
+  if (!exr_edit_transaction_active(d) && !(tx=exr_edit_begin(d))) return exr_edit_failure(d,EXR_MEMORY);
+  s=story_seed(d,si); if (s) goto done;
+  s=story_namespaces(d,&word,&relationship); if (s) goto done;
+  value=exr_edit_sections(d,NULL)[si];
+  s=story_part(d,si,footer,variant,&part,path); if (s) goto done;
+  s=story_patch_text(part,footer,word,text,size,&xml); if (s) goto done;
+  if (!part) {
+    s=story_rels(d,main,rp,&rels); if (s) goto done;
+    parts=exr_edit_parts(d,&n);
+    for (k=1;;k++) {
+      const char *slash=strrchr(main,'/'); size_t prefix=slash ? (size_t)(slash-main)+1 : 0;
+      snprintf(target,sizeof(target),"%s%zu.xml",footer ? "footer" : "header",k);
+      if (prefix+strlen(target)>=sizeof(path)) { s=EXR_LIMIT; goto done; }
+      memcpy(path,main,prefix); strcpy(path+prefix,target);
+      if (!exr_edit_part_named(parts,n,path)) break;
+    }
+    for (k=1;;k++) {
+      snprintf(rid,sizeof(rid),"exr%s%zu",footer ? "Footer" : "Header",k);
+      if (story_relationship(&rels,rid,NULL)==NONE) break;
+    }
+    strcpy(footer ? value.footer_refs[variant] : value.header_refs[variant],rid);
+    if (!story_add_relationship(&relbuf,exr_edit_part_named(parts,n,rp),rid,footer ? "footer" : "header",target,relationship) ||
+        !story_add_type(&types,exr_edit_part_named(parts,n,"[Content_Types].xml"),path,footer ? "footer" : "header")) { s=EXR_MEMORY; goto done; }
+    changes[1].name=rp; changes[1].data=relbuf.data; changes[1].size=relbuf.size;
+    changes[2].name="[Content_Types].xml"; changes[2].data=types.data; changes[2].size=types.size; nc=3;
+  }
+  changes[0].name=path; changes[0].data=xml.data; changes[0].size=xml.size;
+  s=exr_edit_package_update(d,si,&value,changes,nc,-1);
+done:
+  if (tx) { if (s) exr_edit_rollback(tx); else s=exr_edit_commit(tx); }
+  free(xml.data); free(relbuf.data); free(types.data); exr_edit_xml_free(&rels);
+  return s ? exr_edit_failure(d,s) : EXR_OK;
+}
+exr_status exr_edit_header_footer_flags(const exr_edit_doc *d,exr_edit_id section,unsigned *first,unsigned *even) {
+  const exr_edit_part *parts,*part; char main[2048],rp[2048],path[2048]; source_xml x={0},rels={0};
+  size_t si,n,i,k=0,node; int override; exr_status s;
+  if (first) *first=0;
+  if (even) *even=0;
+  if (!d || !first || !even || (si=story_section(d,section))==NONE) return EXR_ARGUMENT;
+  s=story_main(d,&parts,&n,main); if (s) return s;
+  override=exr_edit_first_override(d,si);
+  part=exr_edit_part_named(parts,n,main);
+  if (override>=0) *first=(unsigned)override;
+  else if (part) {
+    s=exr_edit_xml_parse(&x,part->data,part->size,"document",NULL); if (s) goto done;
+    for (i=x.tree->nodes[x.body].first_child;i!=NONE;i=x.tree->nodes[i].next_sibling) {
+      size_t sect=exr_edit_xml_word(x.tree->nodes+i,"sectPr") ? i : exr_edit_xml_child(&x,exr_edit_xml_child(&x,i,"pPr"),"sectPr");
+      if (sect!=NONE && k++==si) { node=exr_edit_xml_child(&x,sect,"titlePg"); if (node!=NONE) *first=on(exr_edit_xml_wa(x.tree->nodes+node,"val")); break; }
+    }
+  }
+  s=story_rels(d,main,rp,&rels); if (s) goto done;
+  node=story_relationship(&rels,NULL,"settings");
+  if (node!=NONE) {
+    const char *target=exr_node_attribute(rels.tree->nodes+node,"Target");
+    if (!target || !exr_resolve_path(main,target,path)) { s=EXR_FORMAT; goto done; }
+    part=exr_edit_part_named(parts,n,path);
+    if (!part) { s=EXR_FORMAT; goto done; }
+    exr_edit_xml_free(&x); s=exr_edit_xml_parse(&x,part->data,part->size,"settings",NULL); if (s) goto done;
+    node=exr_edit_xml_child(&x,x.root,"evenAndOddHeaders"); if (node!=NONE) *even=on(exr_edit_xml_wa(x.tree->nodes+node,"val"));
+  }
+  s=EXR_OK;
+done:
+  exr_edit_xml_free(&x); exr_edit_xml_free(&rels); return s;
+}
+static int story_settings_after_even(const exr_node *node) {
+  /* CT_Settings sequence in dotnet/Open-XML-SDK data/schemas/
+     schemas_openxmlformats_org_wordprocessingml_2006_main.json. */
+  const char *later="|bookFoldRevPrinting|bookFoldPrinting|bookFoldPrintingSheets|drawingGridHorizontalSpacing|drawingGridVerticalSpacing|"
+    "displayHorizontalDrawingGridEvery|displayVerticalDrawingGridEvery|doNotUseMarginsForDrawingGridOrigin|drawingGridHorizontalOrigin|"
+    "drawingGridVerticalOrigin|doNotShadeFormData|noPunctuationKerning|characterSpacingControl|printTwoOnOne|strictFirstAndLastChars|"
+    "noLineBreaksAfter|noLineBreaksBefore|savePreviewPicture|doNotValidateAgainstSchema|saveInvalidXml|ignoreMixedContent|"
+    "alwaysShowPlaceholderText|doNotDemarcateInvalidXml|saveXmlDataOnly|useXSLTWhenSaving|saveThroughXslt|showXMLTags|"
+    "alwaysMergeEmptyNamespace|updateFields|hdrShapeDefaults|footnotePr|endnotePr|compat|docVars|rsids|mathPr|uiCompat97To2003|"
+    "attachedSchema|themeFontLang|clrSchemeMapping|doNotIncludeSubdocsInStats|doNotAutoCompressPictures|forceUpgrade|captions|"
+    "readModeInkLockDown|smartTagType|schemaLibrary|shapeDefaults|doNotEmbedSmartTags|decimalSymbol|listSeparator|docId|"
+    "discardImageEditingData|defaultImageDpi|conflictMode|chartTrackingRefBased|";
+  const char *local=node->name ? strrchr(node->name,'|') : NULL; char token[128];
+  if (!local || strlen(local+1)>124) return 0;
+  snprintf(token,sizeof(token),"|%s|",local+1); return strstr(later,token)!=NULL;
+}
+exr_status exr_edit_set_header_footer_flags(exr_edit_doc *d,exr_edit_id section,unsigned first,unsigned even) {
+  const exr_edit_part *parts,*part=NULL; exr_edit_part changes[3]={{0}}; source_xml rels={0},x={0};
+  char main[2048],rp[2048],path[2048],rid[128]; exr_buffer settings={0},relbuf={0},types={0};
+  const char *word,*relationship;
+  size_t si,n,node,i,at,nc=1,k; int emitted=0; exr_status s=exr_edit_ready(d); exr_edit_tx *tx=NULL;
+  if (s) return s;
+  if (first>1 || even>1 || (si=story_section(d,section))==NONE) return exr_edit_failure(d,EXR_ARGUMENT);
+  if (!exr_edit_transaction_active(d) && !(tx=exr_edit_begin(d))) return exr_edit_failure(d,EXR_MEMORY);
+  s=story_seed(d,si); if (s) goto done;
+  s=story_namespaces(d,&word,&relationship); if (s) goto done;
+  s=story_rels(d,main,rp,&rels); if (s) goto done;
+  parts=exr_edit_parts(d,&n); node=story_relationship(&rels,NULL,"settings");
+  if (node!=NONE) {
+    const char *target=exr_node_attribute(rels.tree->nodes+node,"Target");
+    if (!target || !exr_resolve_path(main,target,path) || !(part=exr_edit_part_named(parts,n,path))) { s=EXR_FORMAT; goto done; }
+  } else {
+    const char *slash=strrchr(main,'/'); size_t prefix=slash ? (size_t)(slash-main)+1 : 0; char target[64];
+    for (k=1;;k++) {
+      if (k==1) strcpy(target,"settings.xml"); else snprintf(target,sizeof(target),"settings%zu.xml",k);
+      if (prefix+strlen(target)>=sizeof(path)) { s=EXR_LIMIT; goto done; }
+      memcpy(path,main,prefix); strcpy(path+prefix,target); if (!exr_edit_part_named(parts,n,path)) break;
+    }
+    for (k=1;;k++) { snprintf(rid,sizeof(rid),"exrSettings%zu",k); if (story_relationship(&rels,rid,NULL)==NONE) break; }
+    if (!story_add_relationship(&relbuf,exr_edit_part_named(parts,n,rp),rid,"settings",target,relationship) ||
+        !story_add_type(&types,exr_edit_part_named(parts,n,"[Content_Types].xml"),path,"settings")) { s=EXR_MEMORY; goto done; }
+    changes[1].name=rp; changes[1].data=relbuf.data; changes[1].size=relbuf.size;
+    changes[2].name="[Content_Types].xml"; changes[2].data=types.data; changes[2].size=types.size; nc=3;
+  }
+  if (part) { s=exr_edit_xml_parse(&x,part->data,part->size,"settings",NULL); if (s) goto done; }
+  s=EXR_MEMORY;
+  if (part) {
+    if (!exr_append(&settings,x.bytes,x.spans[x.root].start) || !exr_edit_xml_start(&settings,&x,x.root,"settings")) goto done;
+    at=x.spans[x.root].open;
+    for (i=x.tree->nodes[x.root].first_child;i!=NONE;i=x.tree->nodes[i].next_sibling) if (x.tree->nodes[i].name) {
+      int target=exr_edit_xml_word(x.tree->nodes+i,"evenAndOddHeaders");
+      if (!exr_append(&settings,x.bytes+at,x.spans[i].start-at)) goto done;
+      if (even && !emitted && (target || (exr_edit_xml_child(&x,x.root,"evenAndOddHeaders")==NONE &&
+          story_settings_after_even(x.tree->nodes+i)))) {
+        if (!scalar(&settings,&x,target ? i : NONE,"evenAndOddHeaders","1")) goto done;
+        emitted=1;
+      }
+      if (!target && !exr_edit_xml_raw(&settings,&x,i)) goto done;
+      at=x.spans[i].end;
+    }
+    if (!exr_append(&settings,x.bytes+at,x.spans[x.root].close-at)) goto done;
+  } else if (!put(&settings,"<w:settings xmlns:w=\"") || !put(&settings,word) || !put(&settings,"\">")) goto done;
+  if (even && !emitted) {
+    if (part) { if (!scalar(&settings,&x,NONE,"evenAndOddHeaders","1")) goto done; }
+    else if (!put(&settings,"<w:evenAndOddHeaders xmlns:w=\"") || !put(&settings,word) || !put(&settings,"\"/>")) goto done;
+  }
+  if (part) {
+    if (!exr_edit_xml_end(&settings,&x,x.root,"settings") || !exr_append(&settings,x.bytes+x.spans[x.root].end,x.size-x.spans[x.root].end)) goto done;
+  } else if (!put(&settings,"</w:settings>")) goto done;
+  changes[0].name=path; changes[0].data=settings.data; changes[0].size=settings.size;
+  s=exr_edit_package_update(d,si,NULL,changes,nc,(int)first);
+done:
+  if (tx) { if (s) exr_edit_rollback(tx); else s=exr_edit_commit(tx); }
+  free(settings.data); free(relbuf.data); free(types.data); exr_edit_xml_free(&x); exr_edit_xml_free(&rels);
+  return s ? exr_edit_failure(d,s) : EXR_OK;
 }

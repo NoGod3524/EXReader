@@ -2643,7 +2643,7 @@ int main(void) {
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
-**所有权** 借用至 doc_free，不能 free。
+**所有权** 只读借用；页眉页脚修改、undo、redo 或 doc_free 后失效，不能 free。
 
 ### `exr_edit_redo`
 
@@ -2685,7 +2685,63 @@ int main(void) {
 
 **线程** 同一模型、出版物或分页器的访问由宿主串行化；不与修改、重排或释放并发。
 
-**所有权** 借用至 doc_free，不能 free。
+**所有权** 只读借用；页眉页脚修改、undo、redo 或 doc_free 后失效，不能 free。
+
+### `exr_edit_header_footer_text`
+
+**签名** `exr_status exr_edit_header_footer_text(const exr_edit_doc *doc,exr_edit_id section,unsigned footer,unsigned variant,char **text,size_t *size);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** section 为节 ID；footer 为 0（页眉）或 1（页脚），variant 为 0（默认）、1（首页）、2（偶数页）。text、size 必填；缺失引用继承前节同类型引用。
+
+**返回与失败** 成功返回 EXR_OK，输出直接段落内可编辑文字；含文字 run 的段落以 LF 分隔，保留空行。域、超链接、表格等不透明内容不作为可编辑文字。无页眉页脚时返回空字符串；参数、XML 或引用错误返回相应 exr_status，输出清零。
+
+**线程** 调用方串行化同一模型的访问。
+
+**所有权** text 为新分配 UTF-8 缓冲区，以 exr_free 释放；size 不含末尾 NUL。
+
+### `exr_edit_set_header_footer_text`
+
+**签名** `exr_status exr_edit_set_header_footer_text(exr_edit_doc *doc,exr_edit_id section,unsigned footer,unsigned variant,const char *text,size_t size);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** section、footer、variant 同读取 API。text/size 为合法 UTF-8/XML 字节；NULL/0 清空文字。允许输入借用现有视图。
+
+**返回与失败** 按 LF 拆分为 Word 段落，逐段替换首个可编辑 run 并清空后续文字 run；保留首 run 格式、段落属性、域、书签、超链接、绘图和其他不透明 XML。多出的纯文字段落移除，含不透明内容的段落保留。缺失时创建 headerN.xml/footerN.xml，并补齐关系、内容类型和节引用。继承的引用保持链接并修改其目标部件。参与事务及 undo/redo；非法输入返回 EXR_ARGUMENT，过大输入返回 EXR_LIMIT，失败锁存活动事务。
+
+**线程** 调用方串行化同一模型的访问。
+
+**所有权** 输入深拷贝；成功修改后重新获取节和部件视图。
+
+### `exr_edit_header_footer_flags`
+
+**签名** `exr_status exr_edit_header_footer_flags(const exr_edit_doc *doc,exr_edit_id section,unsigned *first,unsigned *even);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** section 为节 ID；first、even 均必填，分别接收首页不同及奇偶不同开关。
+
+**返回与失败** 读取节内 titlePg 和文档 settings/evenAndOddHeaders，缺省为 0；成功返回 EXR_OK，非法参数或 XML/关系错误返回相应 exr_status。
+
+**线程** 调用方串行化同一模型的访问。
+
+**所有权** 只写调用方提供的输出值，无借用缓冲区。
+
+### `exr_edit_set_header_footer_flags`
+
+**签名** `exr_status exr_edit_set_header_footer_flags(exr_edit_doc *doc,exr_edit_id section,unsigned first,unsigned even);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** section 为节 ID；first、even 为 0 或 1。first 对该节生效，even 对全文生效。
+
+**返回与失败** 更新 titlePg 和 settings/evenAndOddHeaders；必要时创建设置部件及关系。关闭时移除对应元素，其他设置保留。参与事务及 undo/redo；失败返回 exr_status 并锁存活动事务。
+
+**线程** 调用方串行化同一模型的访问。
+
+**所有权** 无输入缓冲区；成功修改后重新获取节和部件视图。
 
 ### `exr_edit_set_paragraph_props`
 

@@ -2,7 +2,8 @@
 /* Toolbar and keyboard commands share these model transactions. */
 enum { DE_BOLD,DE_ITALIC,DE_SMALLER,DE_SIZE,DE_LARGER,DE_COLOR,
   DE_LEFT,DE_CENTER,DE_RIGHT,DE_JUSTIFY,DE_INSERT_FOOTNOTE,DE_TEXT_BUTTONS,
-  DE_ADD_ROW=DE_TEXT_BUTTONS,DE_REMOVE_ROW,DE_WIDER,DE_NARROWER,DE_REMOVE_TABLE,DE_BUTTONS };
+  DE_ADD_ROW=DE_TEXT_BUTTONS,DE_REMOVE_ROW,DE_WIDER,DE_NARROWER,DE_REMOVE_TABLE,DE_BUTTONS,
+  DE_HEADER=DE_BUTTONS,DE_FOOTER,DE_DIFFERENT_FIRST,DE_DIFFERENT_EVEN,DE_VARIANT,DE_ALL_BUTTONS };
 static const uint32_t de_colors[]={0x000000,0x808080,0xff0000,0x008000,0x0000ff,0xff8000,0x800080,0xffffff};
 static const wchar_t *de_color_names[]={L"黑",L"灰",L"红",L"绿",L"蓝",L"橙",L"紫",L"白"};
 static void de_merge_props(exr_edit_run_props *to,const exr_edit_run_props *from) {
@@ -172,6 +173,8 @@ static int de_apply_run(const exr_edit_run_props *change) {
 }
 static int de_command(int command,uint32_t color) {
   if(!de.doc)return 0;
+  if(command>=DE_HEADER)return de_hf_command(command);
+  if(de.hf_mode)return 0;
   if(command==DE_INSERT_FOOTNOTE)return de_footnote_insert();
   if(command>=DE_ADD_ROW) {
     de_cell cell=de_cell_at(de.caret.view);if(!cell.table)return 0;
@@ -233,11 +236,15 @@ static void de_confirm_delete_table(void) {
     L"删除表格",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2);
   de_delete_table_choice(choice);
 }
-static float de_toolbar_height(void) {return (float)shell_px(de.caret_in_table ? 88:44,shell_dpi);}
+static float de_toolbar_height(void) {return (float)shell_px(de.caret_in_table && !de.hf_mode ? 132:88,shell_dpi);}
 static RECT de_toolbar_box(int index) {
+  if(index>=DE_HEADER) {
+    int x=8+(index-DE_HEADER)*90;
+    RECT box={shell_px(x,shell_dpi),shell_px(48,shell_dpi),shell_px(x+88,shell_dpi),shell_px(84,shell_dpi)};return box;
+  }
   if(index>=DE_TEXT_BUTTONS) {
     int x=8+(index-DE_TEXT_BUTTONS)*76;
-    RECT box={shell_px(x,shell_dpi),shell_px(48,shell_dpi),shell_px(x+74,shell_dpi),shell_px(84,shell_dpi)};return box;
+    RECT box={shell_px(x,shell_dpi),shell_px(92,shell_dpi),shell_px(x+74,shell_dpi),shell_px(128,shell_dpi)};return box;
   }
   const int widths[]={34,34,56,48,56,64,40,52,40,52,88};
   int x=8;for(int i=0;i<index;i++)x+=widths[i]+2;
@@ -257,12 +264,22 @@ static HRESULT de_toolbar_paint(HDC dc) {
   const exr_edit_block *b=de_block_at(de.doc,de.caret.view);
   int align=b && (b->props.present&EXR_EDIT_ALIGN) ? b->props.alignment:EXR_EDIT_LEFT;
   HRESULT hr=S_OK;
-  int buttons=de.caret_in_table ? DE_BUTTONS:DE_TEXT_BUTTONS;
+  int buttons=de.caret_in_table && !de.hf_mode ? DE_BUTTONS:DE_TEXT_BUTTONS;
   for(int i=0;i<buttons && SUCCEEDED(hr);i++) {
     int selected=(i==DE_BOLD && props.bold) || (i==DE_ITALIC && props.italic) ||
       (i>=DE_LEFT && i<=DE_JUSTIFY && i-DE_LEFT==align) || (i==DE_COLOR && de.color_panel);
-    shell_d2d_look look={SHELL_CONTROL_GHOST,selected ? SHELL_STATE_SELECTED:0,shell_colors->layer_page,0,0};
+    shell_d2d_look look={SHELL_CONTROL_GHOST,de.hf_mode ? SHELL_STATE_DISABLED:selected ? SHELL_STATE_SELECTED:0,shell_colors->layer_page,0,0};
     RECT box=de_toolbar_box(i);hr=shell_d2d_control(host_shell,dc,&box,labels[i],shell_is_dark(),&look);
+  }
+  unsigned first=0,even=0;
+  exr_edit_header_footer_flags(de.doc,de_hf_section(),&first,&even);
+  const wchar_t *hf_labels[]={L"页眉",L"页脚",L"首页不同",L"奇偶不同",
+    de.hf_variant==1 ? L"首页 ▾":de.hf_variant==2 ? L"偶数页 ▾":L"默认 ▾"};
+  for(int i=DE_HEADER;i<DE_ALL_BUTTONS && SUCCEEDED(hr);i++) {
+    int selected=(i==DE_HEADER && de.hf_mode==1) || (i==DE_FOOTER && de.hf_mode==2) ||
+      (i==DE_DIFFERENT_FIRST && first) || (i==DE_DIFFERENT_EVEN && even);
+    shell_d2d_look look={SHELL_CONTROL_GHOST,selected ? SHELL_STATE_SELECTED:0,shell_colors->layer_page,0,0};
+    RECT box=de_toolbar_box(i);hr=shell_d2d_control(host_shell,dc,&box,hf_labels[i-DE_HEADER],shell_is_dark(),&look);
   }
   for(int i=0;de.color_panel && i<8 && SUCCEEDED(hr);i++) {
     RECT box=de_color_box(i);
@@ -281,6 +298,10 @@ static int de_toolbar_click(float x,float y) {
     de_refresh(0);
   }
   if(y>=de_toolbar_height())return 0;
+  for(int i=DE_HEADER;i<DE_ALL_BUTTONS;i++) {RECT box=de_toolbar_box(i);if(PtInRect(&box,point)) {
+    de_command(i,0);return 1;
+  }}
+  if(de.hf_mode)return 1;
   int buttons=de.caret_in_table ? DE_BUTTONS:DE_TEXT_BUTTONS;
   for(int i=0;i<buttons;i++) {RECT box=de_toolbar_box(i);if(PtInRect(&box,point)) {
     if(i==DE_COLOR) {de.color_panel=!was_panel;de_refresh(0);}

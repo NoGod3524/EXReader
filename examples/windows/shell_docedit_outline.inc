@@ -26,6 +26,7 @@ static int de_outline_jump(exr_edit_id id) {
   for(size_t i=0,n=de_block_count(de.doc);i<n;i++) {
     const exr_edit_block *block=de_block_at(de.doc,i);
     if(block->id!=id || !de_heading_level(block))continue;
+    if(de.hf_mode)de_hf_leave();
     de_set_caret(de_normalize(de_start(i)));de_set_anchor(de_caret_pos());
     de_refresh(1);return 1;
   }
