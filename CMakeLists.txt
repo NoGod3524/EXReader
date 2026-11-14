@@ -259,6 +259,16 @@ if(EXR_FULL_TESTS)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_pptx_real_oracle.py)
   set_tests_properties(native-pptx-real-matrix PROPERTIES TIMEOUT 300 RUN_SERIAL TRUE)
   set_tests_properties(native-pptx-real-reproducible native-pptx-real-oracle PROPERTIES TIMEOUT 120)
+  add_test(NAME native-ppt-real-matrix COMMAND ${Python3_EXECUTABLE} -S
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/ppt_real_matrix.py
+    --library $<TARGET_FILE:exreader>
+    --output ${CMAKE_CURRENT_BINARY_DIR}/ppt-real-results)
+  add_test(NAME native-ppt-real-reproducible COMMAND ${Python3_EXECUTABLE} -S
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/ppt-real/generate.py --check)
+  add_test(NAME native-ppt-real-oracle COMMAND ${Python3_EXECUTABLE} -S
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ppt_real_oracle.py)
+  set_tests_properties(native-ppt-real-matrix PROPERTIES TIMEOUT 300 RUN_SERIAL TRUE)
+  set_tests_properties(native-ppt-real-reproducible native-ppt-real-oracle PROPERTIES TIMEOUT 120)
   foreach(group roundtrip parts unknown sections properties edits split namespaces section-scope section-edits section-boundaries new errors)
     add_test(NAME native-docx-edit-io-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_docx_edit_io.py

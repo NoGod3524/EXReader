@@ -176,9 +176,10 @@ def main():
                 assert int(values["pages"]) == 1
                 assert (float(values["width"]), float(values["height"])) == (fixture["width_pt"], fixture["height_pt"])
                 assert (pixels.width, pixels.height) == (math.ceil(fixture["width_pt"] * scale), math.ceil(fixture["height_pt"] * scale))
-                paths = [s for s in fixture["shapes"] if s.get("rgb") is not None or s["kind"] == "line"]
-                assert int(values["draw_count"]) == len(paths), values
-                for index, item in enumerate(paths):
+                paths = [s for s in fixture["shapes"] if s.get("rgb") is not None or s.get("line_rgb") is not None]
+                assert int(values["draw_count"]) == len(paths) + 1, values
+                assert values["draw_0_flags"] == "1" and values["draw_0_fill"] == "ffffffff", values
+                for index, item in enumerate(paths, 1):
                     expected_flags = (1 if item.get("rgb") is not None else 0) | (2 if item.get("line_rgb") else 0)
                     assert int(values[f"draw_{index}_flags"]) == expected_flags, (item["name"], values)
                     for field in ("fill", "stroke"):
@@ -196,6 +197,11 @@ def main():
                         origin = next((s for s in fixture["shapes"] if s.get("rgb") == rgb and s.get("colorref")), None)
                         raw = f" COM_COLORREF={origin['colorref']}" if origin else ""
                         print(f"{path.name} {sample['name']} xy={xy}{raw} expected={rgb} actual={list(actual)} max_error={max(abs(a-b) for a,b in zip(actual,rgb))}")
+                for item in paths:
+                    if item.get("rgb") is None and item["kind"] == "rect":
+                        x, y, w, h = item["bbox_pt"]
+                        for xy in ((x+w/2, y), (x, y+h/2), (x+w/2, y+h), (x+w, y+h/2)):
+                            pixels.check([int(v*scale) for v in xy], item["line_rgb"])
                 checked, maximum = pixels.fill_interiors(fixture["shapes"], scale)
                 print(f"{path.name} scale={scale} interior_pixels={checked} max_RGB_error={maximum}")
                 if name == "group":
@@ -215,6 +221,28 @@ def main():
             pixels.check((420, 130), (255, 0, 0))
             pixels.check((361, 81), (255, 255, 255))
             print("COLORREF 0x00332211 -> RGB [17,34,51]; ellipse corner remains white")
+            pixels, values = run(presentation(shape((17, 34, 51), (80, 80, 240, 180), kind=5)))
+            assert not values["message"], values
+            pixels.check((200, 170), (17, 34, 51))
+            for xy in ((85, 85), (315, 85), (200, 70), (200, 270)):
+                pixels.check(xy, (255, 255, 255))
+            print("triangle: apex centered on top edge, corners outside path remain white")
+            background = shape((211, 230, 241), anchor=False,
+                               extra=record(0xF00A, struct.pack("<II", 1026, 0xC00), 2, 1))
+            pixels, values = run(presentation(shape((17, 34, 51)) + background))
+            assert not values["message"], values
+            pixels.check((20, 20), (211, 230, 241))
+            pixels.check((700, 520), (211, 230, 241))
+            pixels.check((120, 120), (17, 34, 51))
+            print("unanchored fBackground: implicit page extent, drawn before foreground")
+            second_bg = shape((230, 211, 241), anchor=False,
+                              extra=record(0xF00A, struct.pack("<II", 1027, 0xC00), 2, 1))
+            pixels, values = run(presentation(shape((17, 34, 51)) + background,
+                                             second=shape((31, 47, 63)) + second_bg), page=1)
+            assert values["pages"] == "2" and not values["message"], values
+            pixels.check((20, 20), (230, 211, 241))
+            pixels.check((120, 120), (31, 47, 63))
+            print("second slide background: page shape range and foreground order preserved")
         elif name == "anchors":
             pixels, _ = run(presentation(shape(anchor=False)), warning="missing-anchor=1")
             pixels.white()
@@ -309,6 +337,14 @@ def main():
         elif name == "styles":
             pixels, _ = run(presentation(shape(fill=False)))
             pixels.white()
+            for kind in (1, 3):
+                pixels, values = run(presentation(shape((17, 34, 51), fill=False,
+                                                       line=True, width=6, kind=kind)))
+                assert values["draw_count"] == "1" and values["draw_0_flags"] == "2", values
+                pixels.check((200, 80), (17, 34, 51))
+                pixels.check((80, 170), (17, 34, 51))
+                pixels.check((200, 170), (255, 255, 255))
+            print("noFill rectangle/ellipse: outline retained, interior remains white")
             pixels, _ = run(presentation(shape((17, 34, 51), (80, 80, 240, 0), kind=20,
                                                  fill=False, line=True, width=6)))
             pixels.check((160, 80), (17, 34, 51))

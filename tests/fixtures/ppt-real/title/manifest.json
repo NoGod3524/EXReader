@@ -1,0 +1,140 @@
+{
+  "file": "title.ppt",
+  "slides": 1,
+  "features": [
+    "text",
+    "title",
+    "16:9"
+  ],
+  "source": "powerpoint-com",
+  "generated_by": "generate.py",
+  "license": "MIT",
+  "powerpoint_version": "16.0",
+  "powerpoint_reported_slides": 1,
+  "bytes": 302592,
+  "sha256": "028108015722e7c61662531433079b86da9d54705c52665d0a6248d8d0888510",
+  "assets": [
+    {
+      "file": "powerpoint.png",
+      "bytes": 292254,
+      "sha256": "b9ee944381968cc2ff21fd659cee733407fc61a492650ad00c0f8b6e17f04a83"
+    }
+  ],
+  "oracle": {
+    "width": 720,
+    "height": 405,
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "slides": [
+      {
+        "regions": [
+          {
+            "name": "Title",
+            "bounds": [
+              72,
+              160,
+              648,
+              250
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          }
+        ],
+        "samples": [
+          [
+            12,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            200,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            200,
+            255,
+            255,
+            255
+          ],
+          [
+            180,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            540,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            180,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            540,
+            12,
+            255,
+            255,
+            255
+          ]
+        ],
+        "text_content": [
+          "A practical roadmap"
+        ]
+      }
+    ]
+  }
+}

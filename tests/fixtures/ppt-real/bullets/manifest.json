@@ -1,0 +1,155 @@
+{
+  "file": "bullets.ppt",
+  "slides": 1,
+  "features": [
+    "text",
+    "bullets",
+    "levels-0-1-2",
+    "16:9"
+  ],
+  "source": "powerpoint-com",
+  "generated_by": "generate.py",
+  "license": "MIT",
+  "powerpoint_version": "16.0",
+  "powerpoint_reported_slides": 1,
+  "bytes": 303104,
+  "sha256": "15d81e42b89d52ff46f7c49877bdb6bd6c46836c1e86854706f96da1d4393345",
+  "assets": [
+    {
+      "file": "powerpoint.png",
+      "bytes": 292410,
+      "sha256": "3d4c4d668d3753db751969f5310f473eaa432603eb9dbb7dc56f9c3e9d963074"
+    }
+  ],
+  "oracle": {
+    "width": 720,
+    "height": 405,
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "slides": [
+      {
+        "regions": [
+          {
+            "name": "Title",
+            "bounds": [
+              42,
+              28,
+              678,
+              88
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          },
+          {
+            "name": "Three-level list",
+            "bounds": [
+              60,
+              115,
+              660,
+              365
+            ],
+            "geometry": "rect",
+            "fill": null,
+            "text": true,
+            "stroke": 0
+          }
+        ],
+        "samples": [
+          [
+            12,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            354,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            12,
+            200,
+            255,
+            255,
+            255
+          ],
+          [
+            708,
+            200,
+            255,
+            255,
+            255
+          ],
+          [
+            180,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            540,
+            390,
+            255,
+            255,
+            255
+          ],
+          [
+            180,
+            12,
+            255,
+            255,
+            255
+          ],
+          [
+            540,
+            12,
+            255,
+            255,
+            255
+          ]
+        ],
+        "text_content": [
+          "From fieldwork to findings",
+          "Collect source material\nInterview the team\nRecord open questions\nCompare the evidence\nPublish conclusions"
+        ]
+      }
+    ]
+  }
+}

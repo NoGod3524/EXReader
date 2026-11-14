@@ -1,0 +1,3 @@
+Test project <workspaces>/exr-build-pptm6
+No tests were found!!!
+ctest ppt-real exit=0
