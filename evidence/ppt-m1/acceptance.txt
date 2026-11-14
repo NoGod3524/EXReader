@@ -1,0 +1,87 @@
+PPT-M1 acceptance, 2026-11-13
+
+Baseline: 35b84513 (contains 54436bfa). The native PPT-M1 implementation
+was already present (introduced by 3f6f0386, memory routing corrected by
+4c413869). This pass reviewed the three parser layers and public dispatch,
+regenerated all four fixtures using PowerPoint 16.0 COM, and reran acceptance.
+No parser changes or additional dependencies were needed.
+
+1. Source size (physical lines)
+   src/ppt_cfb.c       222
+   src/ppt_records.c    77
+   src/ppt.c          100
+   src/ppt_internal.h  21 (registered in tools/layers.json)
+   No new third-party libraries; CFB and record parsing are native C.
+
+2. Fresh PowerPoint COM fixtures
+   Script: tests/fixtures/ppt-legacy/generate.py
+   PowerPoint 16.0, SaveAs format=1, WithWindow=False; saved files reopened
+   through COM for the manifest oracle. No GUI or SendInput automation.
+   fixture         engine pages   PowerPoint pages   slide dimensions (pt)
+   slides-1.ppt          1                1                  720 x 540
+   slides-5.ppt          5                5                  720 x 540
+   slides-20.ppt        20               20                  720 x 540
+   slides-0.ppt          0                0                  720 x 540 declared
+   File and memory opens both pass. All 26 real slides render successfully
+   through both entries (52 renders); every RGBA byte is 255.
+
+3. Format details verified against Microsoft MS-PPT
+   RT_Slide=0x03EE; RT_SlideAtom=0x03EF; RT_UserEditAtom=0x0FF5.
+   0x0FD9 is HeadersFooters, not Slide. Atom recVer commonly equals zero;
+   recVer=F identifies generic containers. Known document/slide/list types
+   also accept the requested recVer=0 container variant.
+   DocumentAtom.slideSize is at payload offset 0, in master units of
+   1/576 inch (1/8 pt), not half-EMU. Default 5760 x 4320 is 720 x 540 pt.
+   Record types:
+   https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/38fb1fa5-0a62-477a-8b14-178df22de812
+   DocumentAtom:
+   https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/121f2728-3497-4a0a-829e-6f416fee2ee6
+   Master units:
+   https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-ppt/ef463dad-817f-4790-9a50-19783cd08827
+
+4. Exact error and warning messages
+   Corrupt first three signature bytes / DOCX renamed to PPT, EXR_FORMAT:
+   CFB invalid signature at offset 0
+   Real slides-20.ppt truncated to one third, EXR_FORMAT:
+   CFB truncated/invalid sector at offset 299008
+   Truncated record payload, EXR_FORMAT:
+   PPT record length exceeds stream/container at offset 164
+   Missing PPT stream, EXR_FORMAT:
+   不是 PowerPoint 97-2003 文档: missing PowerPoint Document stream
+   Invalid sector shift, EXR_FORMAT:
+   CFB unsupported header geometry at offset 26
+   More than 64 nested containers, EXR_LIMIT:
+   PPT record recursion depth exceeds 64 at offset 520
+   Aggregate streams above 256 MiB, EXR_LIMIT:
+   CFB total stream size exceeds 256 MiB
+   Two persist entries and three physical containers, EXR_OK:
+   PPT warning: SlidePersistAtom count 2 differs from Slide container count 3; using SlidePersistAtom
+
+5. Known boundaries
+   M1 exposes page count, slide geometry and optional SummaryInformation title,
+   with blank drawing. It does not render text, shapes, images, animations,
+   master inheritance, notes or embedded OLE objects. Masters and notes lists
+   do not contribute pages; embedded storage streams are not selected as the
+   top-level PowerPoint stream. Only the requested streams are extracted.
+   Title supports UTF-16, Windows-1252 and UTF-8 property strings; unsupported
+   encodings or malformed property payloads leave the title empty.
+   Incremental snapshots use the last top-level DocumentContainer; full
+   Current User/UserEdit/PersistDirectory edit-chain resolution is outside M1.
+   Encrypted presentations are not supported. At most 10000 fixed pages.
+
+6. Validation logs
+   Full CTest result: 437/437 passed, 398.91 seconds.
+   Build: cmake --build build/ppt-m1 -j 4 completed successfully.
+   PPT-specific CTest: all six groups passed, 67 checks in total
+   (cfb=13, records=11, slides=11, size=9, truncated=14, wrongformat=9).
+   Full CTest command:
+   ctest --test-dir build/ppt-m1 --output-on-failure -j 4
+     -E '^(sdk-release|sdk-doc-coverage)$'
+   Layer audit: 132 objects, 1540 references, zero inverse dependencies;
+   1161 source/header dependencies, zero inverse includes.
+   Shared prepush script: all checks passed.
+   PPT groups and individual check counts are in ppt-tests.txt.
+   Full CTest, layer checks and prepush results are in ctest.txt, layers.txt
+   and prepush.txt. The shared prepush script is located at:
+   C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1
+   (this worktree does not contain ops/prepush-check.ps1).

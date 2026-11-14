@@ -1,0 +1,45 @@
+UpdateCTestConfiguration  from :C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf/DartConfiguration.tcl
+Test project C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: native-l08-reflow-perf
+
+1: Test command: C:\Users\Oscar\Documents\Codex\EXReader-fan-L08\build\l08-perf\exreader-l08-perf.exe "C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/tests/fixtures/fonts/primary.ttf"
+1: Working Directory: C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf
+1: Test timeout computed to be: 10000000
+1: paragraphs position incremental_p50_ms full_p50_ms ratio incremental_max_ms max_key_ratio
+1: 1 start 0.102400 0.118100 0.867062 0.513500 4.164639
+1: 1 middle 0.072400 0.092400 0.783550 0.089400 0.981339
+1: 1 end 0.080100 0.101300 0.790721 0.121300 1.052951
+1: 100 start 0.117100 1.970900 0.059414 0.184600 0.096867
+1: 100 middle 0.112300 1.811100 0.062007 0.145600 0.075632
+1: 100 end 0.117900 1.799000 0.065536 0.332500 0.154464
+1: 200 start 0.150800 3.452200 0.043682 0.210400 0.053567
+1: 200 middle 0.149200 3.759600 0.039685 0.337400 0.092201
+1: 200 end 0.141600 3.787400 0.037387 0.189000 0.052297
+1: 1000 start 0.453900 17.258600 0.026300 0.904000 0.052380
+1: 1000 middle 0.431100 16.803800 0.025655 0.520400 0.031015
+1: key 30: 1000 paragraphs, position 999: 31.853800 / 18.182800 ms (175.19%)
+1: thread cycles: 1916481 / 59453170 (3.22%)
+1: 1000 end 0.453300 17.255000 0.026271 31.853800 1.751864
+1: anchor: page 8 offset 8 -> page 9 offset 8, block 1080 byte 8
+1: anchor UTF8: page 1 offset 4 -> page 1 offset 30, block 100031 byte 4
+1: anchor split: page 5 offset 12 -> page 5 offset 13, byte 12 -> 6
+1: anchor replacement: page 0 offset 16 -> page 0 offset 23, text target
+1: line 58: violations==0 (0 )
+1/1 Test #1: native-l08-reflow-perf ...........***Failed    7.74 sec
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   7.75 sec
+
+The following tests FAILED:
+	  1 - native-l08-reflow-perf (Failed)
+Errors while running CTest
+Output from these tests are in: C:/Users/Oscar/Documents/Codex/EXReader-fan-L08/build/l08-perf/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.

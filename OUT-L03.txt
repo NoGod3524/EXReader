@@ -1,0 +1,7 @@
+L03 已完成，接续关机前保存的实现并补齐验收。
+
+① 相对基线新增文件行数：表格事务助手 53、表格面板 150、CMake 登记 16、C 验收 116、交付记录 60。既有文件仅改 `shell_docedit_input.inc`、`src/docx_edit.c`。
+
+② 三次 undo、三次 redo 的文字与结构逐次比对全部 PASS；删行、连续换段、清空文字和失败回滚测试通过。Windows 入口语法检查、规定 prepush 检查均 exit 0。完整命令与真实输出见 [OUT-L03.txt](C:/Users/Oscar/Documents/Codex/EXReader-fan-L03/OUT-L03.txt)。
+
+③ 边界：入口为编辑模式 F6 面板；文字按单元格编辑会话提交，Enter＋输入合并一笔；混合格式及复杂单元格只读。未运行 GUI 自动化。

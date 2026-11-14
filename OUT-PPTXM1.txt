@@ -1,4 +1,15 @@
-已完成 PPTX M1。[src/pptx.c](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/src/pptx.c) **416 行、15 个函数**。完整函数清单与结构见[验收记录](C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/docs/PPTX-M1.md)。
+当前分支已包含 M1 实现；本次完成重建复核，全部验收通过，仅更新了[验收记录](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/docs/PPTX-M1.md)。
+
+① [src/pptx.c](/C:/Users/Oscar/Documents/Codex/EXReader-pptx-m1-20261113/src/pptx.c) **416 行、15 个函数**：
+
+- 生命周期：`release`
+- XML：`named`、`root`、`child`、`relationship_id`
+- 容器：`check_archive`、`xml_read`
+- 关系：`compare_relationships`、`read_relationships`、`find_relationship`
+- 骨架：`dimension`、`read_presentation`
+- 固定版式：`draw`、`create_fixed`、`exr_pptx_open_owned`
+
+② 六份夹具均通过，生成脚本 `generate.py --check` exit 0：
 
 | 夹具 | 引擎页数 | python-pptx | 页尺寸 pt |
 |---|---:|---:|---|
@@ -9,23 +20,34 @@
 | 4:3 | 1 | 1 | 720×540 |
 | 二十页 | 20 | 20 | 720×540 |
 
-六份均通过文件、内存两种入口；所有有效页渲染成功，并逐字节验证为白色位图。
+文件、内存入口均通过；合计 **56 次有效页渲染成功**，逐字节验证为全白 RGBA。
 
-新增 **12 组**，均采用 `native-pptx-` 前缀：`empty`、`title`、`layouts`、`wide`、`standard`、`twenty`、`errors`、`defaults`、`missing`、`order`、`detection`、`limit`。
+③ 新增 **12 组**，名称均为 `native-pptx-` 加以下后缀：
 
-验证结果：
+```text
+empty title layouts wide standard twenty
+errors defaults missing order detection limit
+```
 
-- PPTX 专项：**12/12 通过**。
-- 全量 ctest：**429/429 通过**，418.90 秒；仅排除指定两项。
-- `check_sdk_docs.py`：**exit 0**，482/482，DLL 导出一致。
+- PPTX 专项：**12/12 通过**，15.82 秒。
+- 全量 CTest：**437/437 通过**，200.00 秒，仅排除指定两项。
+- `check_sdk_docs.py`：**exit 0，485/485**。
 - 分层检查、共用 `ops/prepush-check.ps1`：**exit 0**。
 
-坏样本错误原文：
+④ 坏样本错误原文：
 
-| 状态 | 消息 |
+| 样本 | 状态与消息 |
 |---|---|
-| EXR_FORMAT | `Invalid or truncated PPTX/ZIP container` |
-| EXR_FORMAT | `PPTX part missing: ppt/presentation.xml` |
-| EXR_LIMIT | `ZIP member exceeds 128 MiB: ppt/slides/slide1.xml` |
+| 截断 PPTX | EXR_FORMAT：`Invalid or truncated PPTX/ZIP container` |
+| 缺主文档 | EXR_FORMAT：`PPTX part missing: ppt/presentation.xml` |
+| 成员超限 | EXR_LIMIT：`ZIP member exceeds 128 MiB: ppt/slides/slide1.xml` |
 
-M2 可复用接口包括容器与页目录 `pptx_document.zip/slides`、XML 读取 `xml_read`、关系查询与 `exr_resolve_path`、`draw`/绘制 sink，以及现有固定页几何和渲染 API。逐页预算、关系字符串生命周期及 layout/master/theme 接入位置已写入验收记录。
+缺页警告原文：
+
+```text
+PPTX warning: skipped 1 slide reference(s) with missing or invalid parts
+```
+
+⑤ M2 可复用 `pptx_document.zip/slides`、`xml_read`、关系查询、`exr_resolve_path`、`draw` 和绘制 sink。需要补充 `p:spTree` 解析及 slide/layout/master/theme 关系遍历；关系字符串生命周期、逐次绘制预算的注意事项已写入验收记录。
+
+三份受保护文件均未修改；未新增头文件，全程未使用 GUI/SendInput。
