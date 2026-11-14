@@ -9,3 +9,6 @@ add_test(NAME dfinal-c-annotation-exchange-model
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_exchange.py"
     --probe $<TARGET_FILE:c06-probe> --output "${CMAKE_CURRENT_BINARY_DIR}/results")
 set_tests_properties(dfinal-c-annotation-exchange-model PROPERTIES TIMEOUT 300)
+add_test(NAME dfinal-c-installed-sdk-version-guard
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_version_guard.py"
+    --prefixes "${CMAKE_PREFIX_PATH}")
