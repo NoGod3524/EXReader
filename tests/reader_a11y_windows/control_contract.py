@@ -5,9 +5,10 @@ import argparse
 import json
 from pathlib import Path
 
-ACTIONABLE = {50000, 50002, 50003, 50004, 50005, 50007, 50008, 50009,
+ACTIONABLE = {50000, 50001, 50002, 50003, 50004, 50005, 50007, 50008, 50009,
               50010, 50011, 50013, 50014, 50015, 50016, 50018, 50019,
-              50020, 50023, 50024, 50025, 50029, 50030}
+              50020, 50021, 50023, 50024, 50025, 50027, 50028, 50029,
+              50030, 50031, 50035, 50039, 50040}
 
 
 def audit(payload):
@@ -21,6 +22,8 @@ def audit(payload):
         if node.get('error') or node.get('truncated') or node.get('children_truncated') or node.get('child_count', len(children)) > len(children):
             errors.append(address + ': incomplete UIA tree')
         role = node.get('control_type_id', node.get('type_id'))
+        if not isinstance(role, int) or not 50000 <= role <= 50040:
+            errors.append(address + ': missing or invalid UIA role')
         focusable = node.get('keyboard_focusable', node.get('focusable', False))
         # The system title-bar container is unnamed on Windows; its individual
         # minimize/maximize/close Buttons are still checked below it.
@@ -51,6 +54,8 @@ def self_test():
     assert not audit([dict(base, name='')])['name_role_passed']
     assert not audit([dict(base, name=None)])['name_role_passed']
     assert not audit([dict(base, type_id=0)])['name_role_passed']
+    assert not audit([base, {'type_id': 0, 'focusable': False}])['name_role_passed']
+    assert not audit([dict(base, type_id=50031, name='', focusable=False)])['name_role_passed']
     assert not audit([dict(base, child_count=2, children=[])])['name_role_passed']
     assert not audit([])['name_role_passed']
     assert audit([base, {'type_id': 50037, 'name': None, 'focusable': True}])['name_role_passed']
