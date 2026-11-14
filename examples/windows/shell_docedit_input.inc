@@ -188,6 +188,22 @@ static exr_status de_insert(const char *text,size_t n) {
   if(status==EXR_OK)status=exr_edit_delete_block(de.doc,old);
   if(status==EXR_OK) {p.run=inserted;p.byte=n;de_set_caret(p);de.pending_props=pending;}return status;
 }
+static exr_status de_history(int redo) {
+  memset(&de.pending_props,0,sizeof(de.pending_props));
+  exr_status status=redo ? exr_edit_redo(de.doc):exr_edit_undo(de.doc);
+  if(status==EXR_OK) {
+    de.dirty=1;de.layout_dirty=1;
+    de_pos p=de_normalize(de_caret());
+    const exr_edit_block *b=exr_edit_block_at(de.doc,p.block);
+    if(!b || b->kind!=EXR_EDIT_PARAGRAPH) {
+      p=de_start(0);while(p.block<exr_edit_block_count(de.doc) &&
+        exr_edit_block_at(de.doc,p.block)->kind!=EXR_EDIT_PARAGRAPH)p.block++;
+    }
+    de_set_caret(p);de_set_anchor(p);de_refresh(1);
+  }
+  return status;
+}
+#include "shell_docedit_table_history.inc"
 enum { DE_TYPE,DE_BACKSPACE,DE_DELETE,DE_ENTER };
 static int de_edit(int operation,const char *text,size_t n) {
   if(!de.doc)return 0;
@@ -220,6 +236,7 @@ static int de_edit(int operation,const char *text,size_t n) {
 static int de_key(WPARAM key,int control,int shift) {
   if(!de.doc)return 0;
   de.high_surrogate=0;
+  if(key==VK_F6) {de_table_open();return 1;}
   if(control) {
     if(key=='B' || key=='I') {de_command(key=='B' ? DE_BOLD:DE_ITALIC,0);return 1;}
     if(shift && (key==VK_OEM_PERIOD || key==VK_OEM_COMMA)) {
@@ -230,18 +247,7 @@ static int de_key(WPARAM key,int control,int shift) {
     }
     if(key=='S') {de_save();return 1;}
     if(key=='Z' || key=='Y') {
-      memset(&de.pending_props,0,sizeof(de.pending_props));
-      exr_status status=key=='Z' ? exr_edit_undo(de.doc):exr_edit_redo(de.doc);
-      if(status==EXR_OK) {
-        de.dirty=1;de.layout_dirty=1;
-        de_pos p=de_normalize(de_caret());
-        const exr_edit_block *b=exr_edit_block_at(de.doc,p.block);
-        if(!b || b->kind!=EXR_EDIT_PARAGRAPH) {
-          p=de_start(0);while(p.block<exr_edit_block_count(de.doc) &&
-            exr_edit_block_at(de.doc,p.block)->kind!=EXR_EDIT_PARAGRAPH)p.block++;
-        }
-        de_set_caret(p);de_set_anchor(p);de_refresh(1);
-      }
+      de_history(key=='Y');
       return 1;
     }
     if(key=='A') {
