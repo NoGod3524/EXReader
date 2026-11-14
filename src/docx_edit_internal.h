@@ -18,6 +18,8 @@ typedef struct {
   XML_Parser parser;
   size_t cursor,depth,stack[256];
   exr_status status;
+  const exr_edit_doc *edit_doc;
+  int footnotes_changed;
 } source_xml;
 typedef struct { const char *key,*value; } attr_edit;
 int exr_edit_xml_word(const exr_node *n,const char *tag);
@@ -57,4 +59,17 @@ int exr_edit_image_write(exr_buffer *b,const source_xml *x,const edit_image_outp
 int exr_edit_zip_add_part(mz_zip_archive *zip,const char *name,const void *data,size_t size);
 exr_status exr_edit_images_package(mz_zip_archive *zip,const exr_edit_part *parts,size_t count,
   const char *main,const exr_buffer *xml,const edit_image_output *images,size_t image_count,exr_error *e);
+typedef struct {
+  exr_buffer xml;
+  char part[2048],relpart[2048];
+  int changed,strict;
+} edit_footnote_output;
+exr_status exr_edit_footnotes_decode(const source_xml *main,const exr_edit_part *parts,size_t count,
+  const char *path,exr_edit_block *blocks,size_t block_count,exr_error *e);
+exr_status exr_edit_footnotes_prepare(const exr_edit_doc *doc,source_xml *main,
+  const exr_edit_part *parts,size_t count,const char *path,edit_footnote_output *out,exr_error *e);
+int exr_edit_footnote_reference_write(exr_buffer *b,const source_xml *x,const exr_edit_run *r,size_t parent);
+exr_status exr_edit_footnotes_package(mz_zip_archive *zip,const exr_edit_part *parts,size_t count,
+  const char *main,const exr_buffer *xml,const edit_image_output *images,size_t image_count,
+  const edit_footnote_output *notes,exr_error *e);
 #endif

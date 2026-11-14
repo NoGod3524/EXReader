@@ -38,8 +38,9 @@ function(exr_docx_real_tests)
     endif()
     get_property(docx_tests DIRECTORY PROPERTY TESTS)
     foreach(test IN LISTS docx_tests)
-      if(test MATCHES "^(native-docx-(edit-io-|edit-x6-|edit-e[345]$|edit-insert-run$|editor-e2e$|realworld-matrix$|real-)|native-pptx-|native-ppt-)"
-          AND NOT test MATCHES "(reproducible|oracle-mutations|text-allocation)$")
+      # python ctypes 宿主一律预载 ASan；用家族前缀 + 排除 C 测试的写法，新加测试不用再改这里
+      if(test MATCHES "^(native-docx-edit-|native-docx-(editor-e2e|realworld-matrix|real-)|native-pptx-|native-ppt-)"
+          AND NOT test MATCHES "(reproducible|oracle-mutations|text-allocation|native-docx-edit-allocation|native-docx-edit-benchmark)$")
         set_property(TEST "${test}" APPEND PROPERTY ENVIRONMENT_MODIFICATION
           "LD_PRELOAD=path_list_prepend:${asan_runtime}" "PYTHONMALLOC=set:malloc")
       endif()

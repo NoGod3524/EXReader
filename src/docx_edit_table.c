@@ -254,10 +254,17 @@ static int cell_block_write(exr_buffer *b,const source_xml *x,const exr_edit_blo
   return p->kind==EXR_EDIT_PARAGRAPH ? exr_edit_xml_paragraph(b,x,p,NONE,NULL) :
     exr_append(b,p->opaque_xml,p->opaque_size);
 }
+static int cell_footnotes(const source_xml *x,const exr_edit_cell *c) {
+  size_t i,j;
+  if (!x->footnotes_changed) return 0;
+  for (i=0;i<c->block_count;i++) for (j=0;j<c->blocks[i].run_count;j++)
+    if (c->blocks[i].runs[j].kind==EXR_EDIT_FOOTNOTE) return 1;
+  return 0;
+}
 static int cell_write(exr_buffer *b,const source_xml *x,const exr_edit_cell *c,size_t n) {
   size_t pr=exr_edit_xml_child(x,n,"tcPr"),i,at=x->spans[n].open,j=0;
   if (!exr_edit_xml_start(b,x,n,"tc")) return 0;
-  if (c->changed&CELL_PATCHED) {
+  if ((c->changed&CELL_PATCHED) || (!(c->changed&CELL_REPLACED) && cell_footnotes(x,c))) {
     /* Text edits and drawing deletion patch paragraphs in place, including protected
        cells. Nested tables, shading, comments and whitespace retain their bytes. */
     for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (x->tree->nodes[i].name) {
@@ -283,7 +290,7 @@ static size_t row_node(const source_xml *x,const exr_edit_row *r,size_t parent) 
 static int row_write(exr_buffer *b,const source_xml *x,const exr_edit_row *r,size_t parent) {
   size_t i,j,n=row_node(x,r,parent),at,ci=0;
   int changed=n==NONE;
-  for (i=0;i<r->cell_count;i++) if (r->cells[i].changed&(CELL_REPLACED|CELL_PATCHED)) changed=1;
+  for (i=0;i<r->cell_count;i++) if ((r->cells[i].changed&(CELL_REPLACED|CELL_PATCHED)) || cell_footnotes(x,r->cells+i)) changed=1;
   if (!changed) return exr_edit_xml_raw(b,x,n);
   if (!exr_edit_xml_start(b,x,n,"tr")) return 0;
   at=n==NONE ? 0 : x->spans[n].open;
@@ -291,7 +298,7 @@ static int row_write(exr_buffer *b,const source_xml *x,const exr_edit_row *r,siz
     if (!exr_append(b,x->bytes+at,x->spans[i].start-at)) return 0;
     if (exr_edit_xml_word(x->tree->nodes+i,"tc")) {
       const exr_edit_cell *c=r->cells+ci++;
-      if (!(c->changed&(CELL_REPLACED|CELL_PATCHED))) { if (!exr_edit_xml_raw(b,x,i)) return 0; }
+      if (!(c->changed&(CELL_REPLACED|CELL_PATCHED)) && !cell_footnotes(x,c)) { if (!exr_edit_xml_raw(b,x,i)) return 0; }
       else if (!cell_write(b,x,c,i)) return 0;
     } else if (!exr_edit_xml_raw(b,x,i)) return 0;
     at=x->spans[i].end;
@@ -379,7 +386,7 @@ int exr_edit_table_write(exr_buffer *b,const source_xml *x,const exr_edit_block 
     size_t count=0,j; int same=1;
     for (i=x->tree->nodes[n].first_child;i!=NONE;i=x->tree->nodes[i].next_sibling) if (exr_edit_xml_word(x->tree->nodes+i,"tr")) {
       if (count>=t->row_count || row_node(x,t->rows+count,n)!=i) { same=0; break; }
-      for (j=0;j<t->rows[count].cell_count;j++) if (t->rows[count].cells[j].changed&(CELL_REPLACED|CELL_PATCHED)) same=0;
+      for (j=0;j<t->rows[count].cell_count;j++) if ((t->rows[count].cells[j].changed&(CELL_REPLACED|CELL_PATCHED)) || cell_footnotes(x,t->rows[count].cells+j)) same=0;
       count++;
     }
     if (same && count==t->row_count) return exr_edit_xml_raw(b,x,n);

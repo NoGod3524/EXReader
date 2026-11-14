@@ -2757,6 +2757,76 @@ int main(void) {
 
 **所有权** 段落属性复制；修改后重新取得借用视图。
 
+### `exr_edit_footnote_count`
+
+**签名** `size_t exr_edit_footnote_count(const exr_edit_doc *doc);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为编辑模型。
+
+**返回与失败** 返回正文及表格单元格中已建模脚注引用的数量；NULL 模型返回 0。按文档顺序编号，从 1 开始；删除引用后后续编号自动连续。只读查询不产生历史，也不锁存事务失败。
+
+**线程** 调用方串行访问同一模型，读取、修改、写出及释放不得并发。
+
+**所有权** 按值返回，无分配。
+
+### `exr_edit_footnote_at`
+
+**签名** `exr_status exr_edit_footnote_at(const exr_edit_doc *doc,size_t index,exr_edit_footnote *out);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为模型，index 为从 0 起的文档顺序索引，out 接收脚注 ID、所属段落 ID、run 索引、显示编号及文字。
+
+**返回与失败** 成功返回 EXR_OK；非法模型、索引或 NULL 输出返回 EXR_ARGUMENT，并清空非 NULL 的 out。FOOTNOTE run 的 text 是脚注正文，正文中的上标使用 out->number。只读查询不产生历史，也不锁存事务失败。
+
+**线程** 调用方串行访问同一模型，读取、修改、写出及释放不得并发。
+
+**所有权** out 结构由调用方提供，text 为只读借用，不可释放；所属段落或表格修改、undo/redo、回滚及模型释放后须重新获取。脚注 ID 在模型生命周期内保持稳定。
+
+### `exr_edit_footnote_insert`
+
+**签名** `exr_status exr_edit_footnote_insert(exr_edit_doc *doc,exr_edit_id paragraph_id, size_t run_index,size_t byte_offset,const char *text,size_t text_size,exr_edit_id *new_id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** paragraph_id 指定顶层或可编辑单元格段落；run_index/byte_offset 指定 TEXT run 内的 UTF-8 标量边界，(run_count,0) 追加，其他 run 只允许 offset=0。text/text_size 为有效 UTF-8/XML 脚注文字及字节数，允许 NULL/0。new_id 必须非 NULL。
+
+**返回与失败** EXR_OK 插入一个原子脚注引用，必要时分割正文 run，并保留原文字及属性；new_id 接收新脚注 ID，失败时清零。非法参数返回 EXR_ARGUMENT，非段落及受保护单元格返回 EXR_UNSUPPORTED，分配失败返回 EXR_MEMORY，容量或 ID 耗尽返回 EXR_LIMIT。参与当前事务及 undo/redo；无活动事务时自动形成一次历史记录，事务内失败锁存并在提交时整体回滚。DOCX 写出同步生成脚注部件、relationship 和内容类型。
+
+**线程** 调用方串行访问同一模型，读取、修改、写出及释放不得并发。
+
+**所有权** 输入可别名模型借用文字，调用期间深拷贝；新引用及文字由模型持有。成功修改使所属段落视图失效；单元格修改使所属表格及子视图失效。
+
+### `exr_edit_footnote_set_text`
+
+**签名** `exr_status exr_edit_footnote_set_text(exr_edit_doc *doc,exr_edit_id id, const char *text,size_t text_size);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为模型，id 为脚注 ID；text/text_size 为有效 UTF-8/XML 文字及字节数，允许 NULL/0 清空脚注正文。
+
+**返回与失败** EXR_OK 替换脚注文字，保留引用 ID 和位置。非法模型、ID 或文字返回 EXR_ARGUMENT，受保护单元格返回 EXR_UNSUPPORTED，分配失败返回 EXR_MEMORY。参与当前事务及 undo/redo，无活动事务时自动形成一次历史记录；事务内失败遵循锁存和回滚规则。保存重开保留文字。
+
+**线程** 调用方串行访问同一模型，读取、修改、写出及释放不得并发。
+
+**所有权** 输入可别名原脚注文字，调用期间深拷贝；旧段落或所属表格的借用视图在成功修改后失效。无返回内存需要释放。
+
+### `exr_edit_footnote_delete`
+
+**签名** `exr_status exr_edit_footnote_delete(exr_edit_doc *doc,exr_edit_id id);`
+
+**ABI** 实验（[公开头文件](../include/exr/edit.h)）。
+
+**参数** doc 为模型，id 为要删除的脚注 ID。
+
+**返回与失败** EXR_OK 删除正文引用及对应脚注，后续显示编号自动连续，DOCX 写出同步移除脚注条目并重编号。非法模型或 ID 返回 EXR_ARGUMENT，受保护单元格返回 EXR_UNSUPPORTED，分配失败返回 EXR_MEMORY。参与当前事务及 undo/redo，无活动事务时自动形成一次历史记录；事务内失败遵循锁存和回滚规则。
+
+**线程** 调用方串行访问同一模型，读取、修改、写出及释放不得并发。
+
+**所有权** 所属段落或表格的借用视图在成功删除后失效；被删除的脚注 ID 不再解析，undo 可恢复原 ID 和内容。无返回内存需要释放。
+
 ### `exr_edit_table_cell_block_count`
 
 **签名** `size_t exr_edit_table_cell_block_count( const exr_edit_doc *doc,exr_edit_id table,size_t row,size_t column);`

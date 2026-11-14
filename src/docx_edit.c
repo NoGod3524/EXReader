@@ -136,7 +136,7 @@ static int block_valid(const exr_edit_block *b) {
   for (i=0;i<b->run_count;i++) {
     const exr_edit_run *r=b->runs+i;
     if (!run_props_valid(&r->props) || (r->opaque_size && !r->opaque_xml)) return 0;
-    if (r->kind==EXR_EDIT_TEXT) { if (!utf8(r->text,r->text_size)) return 0; }
+    if (r->kind==EXR_EDIT_TEXT || r->kind==EXR_EDIT_FOOTNOTE) { if (!utf8(r->text,r->text_size)) return 0; }
     else if (r->kind!=EXR_EDIT_OPAQUE_RUN || !r->opaque_size || r->text_size) return 0;
   }
   return 1;
@@ -186,7 +186,7 @@ static int view_copy(exr_edit_doc *d,exr_edit_block *b,const exr_edit_block *v) 
     for (i=0;i<v->run_count;i++) {
       runs[i]=v->runs[i]; runs[i].text=NULL; runs[i].opaque_xml=NULL;
       b->run_count++;
-      if (v->runs[i].kind==EXR_EDIT_TEXT) {
+      if (v->runs[i].kind==EXR_EDIT_TEXT || v->runs[i].kind==EXR_EDIT_FOOTNOTE) {
         runs[i].text=copy_bytes(d,v->runs[i].text,v->runs[i].text_size,1);
         if (!runs[i].text) return 0;
       }
@@ -669,7 +669,8 @@ int exr_edit_cell_can_split(const exr_edit_cell *cell) {
   for (i=0;i<cell->block_count;i++) {
     if (cell->blocks[i].kind!=EXR_EDIT_PARAGRAPH) return 0;
     for (j=0;j<cell->blocks[i].run_count;j++)
-      if (cell->blocks[i].runs[j].kind!=EXR_EDIT_TEXT) return 0;
+      if (cell->blocks[i].runs[j].kind!=EXR_EDIT_TEXT &&
+          cell->blocks[i].runs[j].kind!=EXR_EDIT_FOOTNOTE) return 0;
   }
   return 1;
 }
@@ -688,7 +689,7 @@ exr_status exr_edit_split_paragraph(exr_edit_doc *d,exr_edit_id id,size_t at,siz
   left_count=at; right_start=at;
   if (at<v->run_count) {
     const exr_edit_run *r=v->runs+at;
-    if (offset>r->text_size || (r->kind==EXR_EDIT_OPAQUE_RUN && offset) ||
+    if (offset>r->text_size || (r->kind!=EXR_EDIT_TEXT && offset) ||
         (offset<r->text_size && ((unsigned char)r->text[offset]&0xc0)==0x80))
       return command_failure(d,EXR_ARGUMENT);
     if (offset && offset==r->text_size) { left_count=at+1; right_start=at+1; }
@@ -832,6 +833,107 @@ exr_status exr_edit_insert_run(exr_edit_doc *d,exr_edit_tx *tx,exr_edit_id id,
   s=!runs[at].id ? command_failure(d,EXR_LIMIT):loc.cell ?
     cell_splice(d,&loc,loc.block,1,&changed):exr_edit_replace(d,id,&changed);
   release(d,runs); return s;
+}
+static int footnote_scan(const exr_edit_block *b,size_t wanted,exr_edit_id id,
+  size_t *number,exr_edit_footnote *out) {
+  size_t i,j,k;
+  for (i=0;i<b->run_count;i++) if (b->runs[i].kind==EXR_EDIT_FOOTNOTE) {
+    const exr_edit_run *r=b->runs+i;
+    size_t index=(*number)++;
+    if ((id && r->id==id) || (!id && index==wanted)) {
+      if (out) *out=(exr_edit_footnote){r->id,b->id,i,index+1,r->text,r->text_size};
+      return 1;
+    }
+  }
+  if (b->table) for (i=0;i<b->table->row_count;i++) for (j=0;j<b->table->rows[i].cell_count;j++) {
+    const exr_edit_cell *c=b->table->rows[i].cells+j;
+    for (k=0;k<c->block_count;k++) if (footnote_scan(c->blocks+k,wanted,id,number,out)) return 1;
+  }
+  return 0;
+}
+static int footnote_lookup(const exr_edit_doc *d,size_t wanted,exr_edit_id id,exr_edit_footnote *out) {
+  size_t i,number=0;
+  if (d) for (i=0;i<d->count;i++)
+    if (footnote_scan(&d->blocks[i]->view,wanted,id,&number,out)) return 1;
+  return 0;
+}
+size_t exr_edit_footnote_count(const exr_edit_doc *d) {
+  size_t i,number=0;
+  if (d) for (i=0;i<d->count;i++) footnote_scan(&d->blocks[i]->view,SIZE_MAX,0,&number,NULL);
+  return number;
+}
+exr_status exr_edit_footnote_at(const exr_edit_doc *d,size_t index,exr_edit_footnote *out) {
+  if (out) memset(out,0,sizeof(*out));
+  return d && out && footnote_lookup(d,index,0,out) ? EXR_OK:EXR_ARGUMENT;
+}
+exr_status exr_edit_footnote_insert(exr_edit_doc *d,exr_edit_id id,size_t at,size_t offset,
+  const char *text,size_t size,exr_edit_id *out) {
+  block_location loc; const exr_edit_block *v; exr_edit_block changed;
+  exr_edit_run *runs; exr_edit_id note; size_t note_at,extra=1; exr_status s=ready(d);
+  if (out) *out=0;
+  if (s) return s;
+  if (!out || size==SIZE_MAX || !utf8(text,size)) return command_failure(d,EXR_ARGUMENT);
+  v=locate_block(d,id,&loc);
+  if (!v || at>v->run_count || (at==v->run_count && offset)) return command_failure(d,EXR_ARGUMENT);
+  if (v->kind!=EXR_EDIT_PARAGRAPH || (loc.cell && !exr_edit_cell_can_split(loc.cell)))
+    return command_failure(d,EXR_UNSUPPORTED);
+  if (at<v->run_count) {
+    const exr_edit_run *r=v->runs+at;
+    if (offset>r->text_size || (r->kind!=EXR_EDIT_TEXT && offset) ||
+        (offset<r->text_size && ((unsigned char)r->text[offset]&0xc0)==0x80))
+      return command_failure(d,EXR_ARGUMENT);
+    if (offset) { if (offset==r->text_size) at++; else extra++; }
+  }
+  if (v->run_count>SIZE_MAX/sizeof(*runs)-extra) return command_failure(d,EXR_LIMIT);
+  runs=allocate(d,(v->run_count+extra)*sizeof(*runs));
+  if (!runs) return command_failure(d,EXR_MEMORY);
+  if (at) memcpy(runs,v->runs,at*sizeof(*runs));
+  note_at=at+(extra==2);
+  if (extra==2) {
+    runs[at]=v->runs[at]; runs[at].text_size=offset;
+    runs[at+2]=v->runs[at]; runs[at+2].text+=offset; runs[at+2].text_size-=offset;
+    runs[at+2].id=fresh_id(d);
+    if (!runs[at+2].id) { release(d,runs); return command_failure(d,EXR_LIMIT); }
+  }
+  note=fresh_id(d); runs[note_at].id=note; runs[note_at].kind=EXR_EDIT_FOOTNOTE;
+  runs[note_at].text=text; runs[note_at].text_size=size;
+  if (v->run_count>at+(extra==2))
+    memcpy(runs+at+extra+(extra==2),v->runs+at+(extra==2),
+      (v->run_count-at-(extra==2))*sizeof(*runs));
+  changed=*v; changed.runs=runs; changed.run_count+=extra;
+  s=!note ? command_failure(d,EXR_LIMIT):loc.cell ?
+    cell_splice(d,&loc,loc.block,1,&changed):exr_edit_replace(d,id,&changed);
+  if (!s) *out=note;
+  release(d,runs); return s;
+}
+static exr_status footnote_change(exr_edit_doc *d,exr_edit_id id,const char *text,size_t size,int remove) {
+  exr_edit_footnote note; block_location loc; const exr_edit_block *v; exr_edit_block changed;
+  exr_edit_run *runs; size_t count; exr_status s=ready(d);
+  if (s) return s;
+  if (!id || (!remove && (size==SIZE_MAX || !utf8(text,size))) ||
+      !footnote_lookup(d,SIZE_MAX,id,&note)) return command_failure(d,EXR_ARGUMENT);
+  v=locate_block(d,note.paragraph_id,&loc);
+  if (loc.cell && !exr_edit_cell_can_split(loc.cell)) return command_failure(d,EXR_UNSUPPORTED);
+  count=v->run_count-(remove!=0);
+  runs=count ? allocate(d,count*sizeof(*runs)):NULL;
+  if (count && !runs) return command_failure(d,EXR_MEMORY);
+  if (remove) {
+    if (note.run_index) memcpy(runs,v->runs,note.run_index*sizeof(*runs));
+    if (v->run_count>note.run_index+1)
+      memcpy(runs+note.run_index,v->runs+note.run_index+1,(v->run_count-note.run_index-1)*sizeof(*runs));
+  } else {
+    memcpy(runs,v->runs,count*sizeof(*runs));
+    runs[note.run_index].text=text; runs[note.run_index].text_size=size;
+  }
+  changed=*v; changed.runs=runs; changed.run_count=count;
+  s=loc.cell ? cell_splice(d,&loc,loc.block,1,&changed):exr_edit_replace(d,v->id,&changed);
+  release(d,runs); return s;
+}
+exr_status exr_edit_footnote_set_text(exr_edit_doc *d,exr_edit_id id,const char *text,size_t size) {
+  return footnote_change(d,id,text,size,0);
+}
+exr_status exr_edit_footnote_delete(exr_edit_doc *d,exr_edit_id id) {
+  return footnote_change(d,id,NULL,0,1);
 }
 static exr_edit_run *mutable_anchor(exr_edit_block *b,exr_edit_id paragraph,size_t run) {
   size_t i,j,k;

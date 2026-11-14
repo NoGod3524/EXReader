@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "shell_docedit_footnote.inc"
 /* All model mutations, including replacing a selection, share one transaction. */
 /* Rebuilding cannot carry the paragraph's original XML template through the
    public insert API. Only rebuild when every paragraph property is modeled;
@@ -80,7 +81,7 @@ static de_pos de_step(de_pos p,int direction) {
       if(r->kind==EXR_EDIT_TEXT && at<r->text_size) {
         p.run=run;p.byte=de_next_byte(r->text,r->text_size,at);return de_normalize(p);
       }
-      if(r->kind==EXR_EDIT_OPAQUE_RUN && !de_run_trivia(r)) {p.run=run+1;p.byte=0;return de_normalize(p);}
+      if((r->kind==EXR_EDIT_OPAQUE_RUN && !de_run_trivia(r)) || r->kind==EXR_EDIT_FOOTNOTE) {p.run=run+1;p.byte=0;return de_normalize(p);}
     }
     for(size_t i=p.block+1;i<de_block_count(de.doc);i++)
       if(de_block_at(de.doc,i)->kind==EXR_EDIT_PARAGRAPH)return de_normalize(de_start(i));
@@ -152,11 +153,15 @@ static exr_status de_delete_range(de_pos a,de_pos b) {
   const exr_edit_block *block=de_block_at(de.doc,a.block);
   if(!block || block->kind!=EXR_EDIT_PARAGRAPH)return EXR_UNSUPPORTED;
   exr_edit_id id=block->id;size_t count=block->run_count;
-  for(size_t i=a.run;i<count && i<=b.run;i++) {
+  size_t limit=b.run<count ? b.run+1:count;
+  for(size_t end=limit;end>a.run;) {
+    size_t i=--end;
     block=exr_edit_find_block(de.doc,id);const exr_edit_run *r=&block->runs[i];
     size_t from=i==a.run ? a.byte:0,to=i==b.run ? b.byte:r->text_size;
     if(de_run_trivia(r))continue;
-    if(r->kind==EXR_EDIT_OPAQUE_RUN) {
+    if(r->kind==EXR_EDIT_FOOTNOTE) {
+      if(i<b.run) {exr_status status=exr_edit_footnote_delete(de.doc,r->id);if(status!=EXR_OK)return status;}
+    } else if(r->kind==EXR_EDIT_OPAQUE_RUN) {
       if(i<b.run)return EXR_UNSUPPORTED;
     } else if(from!=to) {
       exr_status status=de_replace_run(id,i,from,to,NULL,0);if(status!=EXR_OK)return status;
@@ -373,6 +378,7 @@ static int de_message(HWND window,UINT message,WPARAM wparam,LPARAM lparam) {
     if(message==WM_LBUTTONDOWN) {
       SetFocus(window);
       if(de_toolbar_click((float)(short)LOWORD(lparam),(float)(short)HIWORD(lparam)))return 1;
+      if(de_footnote_click((float)(short)LOWORD(lparam),(float)(short)HIWORD(lparam)))return 1;
       SetCapture(window);de.mouse_down=1;
     }
     int x=(short)LOWORD(lparam),y=(short)HIWORD(lparam);
