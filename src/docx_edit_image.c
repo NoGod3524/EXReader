@@ -173,7 +173,7 @@ static int64_t vml_size(const char *style,const char *key) {
     while (*p==' ' || *p=='\t' || *p==';') p++;
     colon=strchr(p,':'); if (!colon) break;
     if ((size_t)(colon-p)==len && !memcmp(p,key,len)) {
-      v=strtod(colon+1,&end);
+      v=exr_strtod(colon+1,&end);
       while (*end==' ') end++;
       scale=!strncmp(end,"pt",2) ? 12700 : !strncmp(end,"px",2) ? 9525 :
         !strncmp(end,"in",2) ? 914400 : !strncmp(end,"cm",2) ? 360000 :
