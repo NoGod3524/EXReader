@@ -25,6 +25,7 @@ jobs:
           query session
           "source_sha=$env:GITHUB_SHA" | Tee-Object identity.txt
           "run=$env:GITHUB_RUN_ID/$env:GITHUB_RUN_ATTEMPT" | Tee-Object identity.txt -Append
+          exit 0
       - name: Enter compiler environment
         run: |
           $ErrorActionPreference = 'Stop'
