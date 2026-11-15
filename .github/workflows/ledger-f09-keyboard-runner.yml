@@ -1,0 +1,69 @@
+name: F09 Windows shell keyboard focus order (runner evidence)
+on:
+  push:
+    branches: [codex/ledger-f09-keyboard-runner-20261115]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  keyboard:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Report the runner desktop
+        run: |
+          query session
+          "source_sha=$env:GITHUB_SHA" | Tee-Object identity.txt
+          "run=$env:GITHUB_RUN_ID/$env:GITHUB_RUN_ATTEMPT" | Tee-Object identity.txt -Append
+      - name: Enter compiler environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
+          $wrapper = Join-Path $env:RUNNER_TEMP 'f09-vcvars.bat'
+          Set-Content $wrapper ('@call "' + $bat + '" >nul' + "`r`n@set")
+          & cmd.exe /c $wrapper | ForEach-Object {
+            if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+      - name: Build the current production shell (EXReaderAudit)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=ON "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
+          cmake --build build/audit --parallel 4 --target EXReaderAudit *> build.txt
+          Get-FileHash build/audit/EXReaderAudit.exe | Format-List | Tee-Object binary.txt
+      - name: Fetch the frozen original books
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python tests/reader_perf_windows/render_budget.py --fetch-corpus --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books *> fetch.txt
+          python -m pip install --disable-pip-version-check "uiautomation==2.0.29" *> pip.txt
+      - name: Collect shell UIA and real SendInput keyboard focus order (one foreground activation)
+        run: |
+          python evidence/ledger-f08-f09-f10-r2-20261115/F09-keyboard-single-activation.py --binary build/audit/EXReaderAudit.exe --book build/f08-books/pg11.epub --font C:/Windows/Fonts/segoeui.ttf --output f09-keyboard --extended *> f09-keyboard.txt
+          "exit=$LASTEXITCODE" | Tee-Object f09-keyboard.txt -Append
+          Get-Content f09-keyboard.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: f09-keyboard-runner-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            identity.txt
+            configure.txt
+            build.txt
+            binary.txt
+            fetch.txt
+            f09-keyboard.txt
+            f09-keyboard/
+          if-no-files-found: error
