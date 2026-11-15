@@ -109,7 +109,11 @@ int main(int argc, char **argv) {
   CHECK(c_lines[0][1] - c_lines[0][0] > c_lines[3][1] - c_lines[3][0]);
   CHECK(strstr(css_c, "1.75") && strstr(docx_c, ".0000"));
 
-  if (!comma_locale()) { puts("locale numbers: no decimal-comma locale installed; skipped"); return 77; }
+  if (!comma_locale()) {
+    free(docx_c);
+    puts("locale numbers: no decimal-comma locale installed; skipped");
+    return 77;
+  }
   for (i = 0; i < 4; i++) {
     styled_lines(font, styles[i], comma_lines[i]);
     CHECK(!memcmp(c_lines[i], comma_lines[i], sizeof(c_lines[i])));
@@ -123,3 +127,4 @@ int main(int argc, char **argv) {
   free(docx_comma);
   return 0;
 }
+
