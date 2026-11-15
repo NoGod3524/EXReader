@@ -1,0 +1,17 @@
+{
+  "scope": "Three fixed Gutenberg originals; sequential host renders, not a populated shelf workload",
+  "books": [
+    {
+      "file": "pg1.epub",
+      "sha256": "f9bdcd2a6d3e8008f0a970a545abad2de48f55de8bf12a44c44ee6e42ec2d29c"
+    },
+    {
+      "file": "pg10.epub",
+      "sha256": "a873ce9091a8f234e649b773c1a08a00fa4ffa42631d77af30430f005b4799b0"
+    },
+    {
+      "file": "pg11.epub",
+      "sha256": "4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036"
+    }
+  ]
+}

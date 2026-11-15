@@ -1,0 +1,77 @@
+name: Reader F08 F09 F10 feasible audit
+on:
+  push:
+    branches: [codex/dfinal-b-f08-f10-audit]
+    paths:
+      - '.github/workflows/reader-final-b-audit.yml'
+      - 'examples/windows/check_shell_budget.inc'
+      - 'examples/windows/check_shell_privacy.inc'
+      - 'examples/windows/selection_tests.cmake'
+      - 'tests/reader_a11y_windows/**'
+      - 'tests/reader_perf_windows/render*'
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enter compiler environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
+          $wrapper = Join-Path $env:RUNNER_TEMP 'final-b-vcvars.bat'
+          Set-Content $wrapper ('@call "' + $bat + '" >nul' + "`r`n@set")
+          & cmd.exe /c $wrapper | ForEach-Object {
+            if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+      - name: Configure full test profile
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=ON "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
+          exit $LASTEXITCODE
+      - name: Compile
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          cmake --build build/audit --parallel 4 *> build.txt
+          exit $LASTEXITCODE
+      - name: Run full CTest except release and doc coverage
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          ctest --test-dir build/audit --output-on-failure --no-tests=error -E 'sdk-release|sdk-doc-coverage' --output-junit "$env:GITHUB_WORKSPACE/ctest.xml" *> ctest.txt
+          exit $LASTEXITCODE
+      - name: Record new checks verbosely
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-control|selection-render-budget)' *> new-checks.txt
+          exit $LASTEXITCODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-b-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            configure.txt
+            build.txt
+            ctest.txt
+            ctest.xml
+            new-checks.txt
+            build/audit/control-inventory.json
+          if-no-files-found: error
