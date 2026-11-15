@@ -41,6 +41,19 @@ from the strict validator.
 finding forces `accessibility_accepted: false` while the CI job can still succeed
 because the evidence itself is valid.
 
+`capture_shell.py --binary EXReaderAudit.exe --book BOOK --font FONT --output DIR`
+collects a current production-shell sample without the old product host's fixed
+control map. It captures the closed reader, search, settings, TOC and shelf, and
+records forward/reverse Tab input only while its own process is foreground.
+`all-controls.json` lists every captured interactive role or action-pattern node,
+its Name/role and exact raw UIA identity matches to measured keyboard steps.
+Unopened dialogs, complete keyboard order and speech remain missing; collection
+exit 0 does not grant F09. This probe does not change system contrast or fonts.
+
+The shared collector preserves child-enumeration failures as errors and samples
+action patterns at every depth. `control_contract.py` rejects incomplete or
+malformed trees, including a provider that disconnects while enumerating children.
+
 ## Limits
 
 - Automated UIA plus injected input is **not** screen-reader acceptance. No NVDA or

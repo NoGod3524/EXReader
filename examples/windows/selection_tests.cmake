@@ -4,6 +4,21 @@
 if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
   enable_language(CXX)
   function(exr_add_selection_tests)
+    # Current production shell, kept separate from the console test entry.
+    add_executable(EXReaderAudit WIN32
+      "${CMAKE_CURRENT_SOURCE_DIR}/examples/reader.c"
+      "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/shell_d2d.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/shell_speech.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/shell_epub.cpp")
+    target_compile_definitions(EXReaderAudit PRIVATE EXR_READER_WINDOWS_SHELL=1)
+    target_compile_features(EXReaderAudit PRIVATE cxx_std_17)
+    target_link_libraries(EXReaderAudit PRIVATE exreader miniz expat d2d1 dwrite
+      gdi32 comdlg32 comctl32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp crypt32)
+    if(MSVC)
+      target_compile_options(EXReaderAudit PRIVATE /utf-8)
+    else()
+      target_link_libraries(EXReaderAudit PRIVATE m)
+    endif()
     add_executable(exreader-shell-selection-test
       "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/check_shell_selection.c"
       "${CMAKE_CURRENT_SOURCE_DIR}/examples/windows/shell_d2d.cpp"
@@ -50,6 +65,8 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
     add_test(NAME windows-opds-timeout COMMAND check_shell_opds --timeout-only "${CMAKE_CURRENT_BINARY_DIR}/opds-timeout")
     set_tests_properties(windows-opds-timeout PROPERTIES TIMEOUT 15 LABELS "headless")
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_test(NAME windows-render-budget-report-contract COMMAND ${Python3_EXECUTABLE}
+      "${CMAKE_CURRENT_SOURCE_DIR}/tests/reader_perf_windows/render_budget.py" --self-check)
     add_test(NAME windows-a11y-control-contract COMMAND ${Python3_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/tests/reader_a11y_windows/control_contract.py")
     add_test(NAME windows-a11y-control-inventory COMMAND ${Python3_EXECUTABLE}
