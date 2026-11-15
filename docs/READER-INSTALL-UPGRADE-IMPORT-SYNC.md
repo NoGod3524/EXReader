@@ -11,11 +11,14 @@ SDK 头文件/静态库用于开发，安装阅读器需要包含宿主可执行
 | Windows | 含 `EXReader.exe` 的开发 ZIP | 完整解压到可写目录，保留同包 DLL/资源后启动；选择本地书库。不要只拷贝 EXE。 |
 | Linux | GTK 开发包 | 按该包列出的 GTK/系统库依赖安装，解压后运行宿主；无显示环境只能测模型。 |
 | macOS | 开发 `.app` | 保留完整 app bundle；开发签名和正式签名/公证分别核对包说明。正式公证发布未在本轮验证。 |
-| Android | 历史 x86_64 debug APK | 适用于对应模拟器；开发者可用 `adb install -r app-debug.apk`。arm64 SDK 构建产物不能安装，尚缺 arm64 宿主 APK 和真机结果。 |
+| Android | 历史 x86_64 debug APK；arm64 debug 宿主构建入口 | x86_64 适用于对应模拟器。arm64 开发包由 `tools/build_android_arm64_host.py` 构建，下载前核对该次 Actions 的 APK 散列及 `signature.txt`；开发者使用 `adb install -r app-debug.apk`。arm64 SDK 静态库不能安装；APK 构建不证明安装、启动或真机能力已通过。 |
 | iPhone/iPad | arm64 simulator app；device SDK | simulator app 只能由对应 Xcode Simulator 安装；普通设备需要 owner 的 Apple 签名身份、provisioning 及已签宿主包。本轮 device 静态库与 unsigned IPA 不提供普通真机安装能力。 |
 
 Apple 开发宿主构建入口为 `tools/build_apple_host.py`，Android 为 `tools/build_android_host.py`；
 它们是开发/CI 工具，所需 SDK 和可选产品模块须是匹配版本，不能拿历史 SDK 包与新宿主随意拼接。
+arm64 debug 包为基础参考宿主，未开启可选同步/阅读命令/wave3 功能；使用对应完整功能宿主前需另外核对启用清单。
+debug 签名只用于测试；更新包必须由相同签名密钥生成。若 `adb install -r` 报签名不匹配，先导出并核对旧数据，
+不要直接卸载；卸载会删除私有书库和账号数据。卸载后重装不能作为升级保留数据的证据。
 
 ## 升级与备份
 

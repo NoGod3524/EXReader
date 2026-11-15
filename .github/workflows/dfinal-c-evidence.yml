@@ -1,7 +1,7 @@
 name: D-FINAL-C model and mobile build evidence
 on:
   push:
-    branches: [codex/dfinal-c-evidence]
+    branches: [codex/dfinal-c-evidence, codex/dfinal-c-followup-20261114]
   workflow_dispatch:
 permissions:
   contents: read
@@ -92,6 +92,7 @@ jobs:
           cmake --preset reading-library -B build/mobile -DCMAKE_INSTALL_PREFIX="$PWD/build/mobile-stage" "${flags[@]}" 2>&1 | tee build/mobile-evidence/configure.txt
           cmake --build build/mobile --parallel 4 2>&1 | tee build/mobile-evidence/build.txt
           cmake --install build/mobile 2>&1 | tee build/mobile-evidence/install.txt
+          python3 tools/check_reading_licenses.py reading-library build/mobile build/mobile-stage build/mobile-evidence/licenses.json > build/mobile-evidence/licenses.txt
           python3 - <<'PY'
           import hashlib, json, os
           from pathlib import Path
@@ -112,4 +113,46 @@ jobs:
           path: |
             build/mobile-evidence/
             build/mobile-stage/
+          if-no-files-found: error
+  android-host:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install Android host build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y ninja-build patchelf
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            'platforms;android-35' 'build-tools;35.0.0' 'cmake;3.22.1' 'ndk;27.0.12077973'
+      - name: Build arm64 debug APK and inspect packaged ABI (no deployment)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/arm64-host
+          python tools/build_android_arm64_host.py \
+            --stage build/arm64-host/sdk-stage --sdk-build build/arm64-host/sdk \
+            --product-stage build/arm64-host/product-stage --build-dir build/arm64-host \
+            --gradle gradle 2>&1 | tee build/arm64-host/run.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dfinal-c-android-arm64-host-${{ github.sha }}
+          path: |
+            build/arm64-host/build.json
+            build/arm64-host/artifacts/
+            build/arm64-host/logs/
+            build/arm64-host/run.txt
           if-no-files-found: error

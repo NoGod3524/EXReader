@@ -11,6 +11,44 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def malformed_phase(checks, probe, work, keys, pdf):
+    # Start with old annotations already committed by raw_phase, rather than an
+    # empty receiver, so rejection also proves that existing user data survives.
+    receiver = work / 'recv-pdf.sqlite'
+    before = checks.dump(receiver)
+    data = (work / 'out/pdf.jsonl').read_bytes()
+    lines = data.splitlines(keepends=True)
+    cases = {
+        'empty-file': b'',
+        'missing-final-LF': data[:-1],
+        'incomplete-footer': data.replace(b'"complete":true', b'"complete":false'),
+        'duplicate-header-key': data.replace(b'"type":"header"', b'"type":"header","type":"header"', 1),
+        'duplicate-annotation': b''.join(lines[:2] + [lines[1]] + lines[2:]),
+        'invalid-UTF8': data.replace(b'actual PDF', b'actual \xffPDF', 1),
+        'raw-NUL': data.replace(b'actual PDF', b'actual \x00PDF', 1),
+        'escaped-NUL': data.replace(b'actual PDF', b'actual \\u0000PDF', 1),
+        'unpaired-surrogate': data.replace(b'actual PDF', b'actual \\ud800PDF', 1),
+        'Markdown-as-JSONL': (work / 'out/pdf.md').read_bytes(),
+    }
+    for name, payload in cases.items():
+        path = work / 'negative' / (name + '.jsonl')
+        path.write_bytes(payload)
+        for mode in ('preview', 'commit'):
+            rejected = checks.probe(probe, 'raw-import', 'raw', receiver, keys['pdf'], path,
+                                    mode, 'required', checks.sha(path), 0, 0, pdf,
+                                    label=name + '-' + mode)
+            checks.expect(rejected.status == checks.AI_FORMAT and
+                          rejected.stats['validated'] == 0 and rejected.stats['committed'] == 0 and
+                          rejected.stats['fingerprint'] == '' and checks.dump(receiver) == before,
+                          f'malformed {name}: {mode} rejects with no confirmed digest or old-data changes', rejected.text)
+    title = work / 'unicode-title.jsonl'
+    title.write_bytes(data.replace(b'actual PDF', '中文标题 📚'.encode('utf-8'), 1))
+    preview = checks.probe(probe, 'raw-import', 'raw', receiver, keys['pdf'], title,
+                           'preview', 'required', 0, 0, 0, pdf, label='unicode-title-preview')
+    checks.expect(preview.status == checks.AI_OK and preview.stats['fingerprint'] == checks.sha(title) and
+                  checks.dump(receiver) == before, 'valid CJK and supplementary Unicode title previews without writes', preview.text)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--probe', required=True, type=Path)
@@ -32,7 +70,8 @@ def main():
         checks.legacy_phase('off', args.probe.resolve(), checks.OUT / 'legacy-off')
         pdf = ROOT / 'tests/fixtures/pdf-public-text.pdf'
         checks.expect(checks.sha(pdf) == checks.PDF_SHA, 'fixed PDF fixture SHA-256')
-        hashes, _ = checks.raw_phase(args.probe.resolve(), args.probe.resolve(), pdf, checks.OUT / 'raw')
+        hashes, keys = checks.raw_phase(args.probe.resolve(), args.probe.resolve(), pdf, checks.OUT / 'raw')
+        malformed_phase(checks, args.probe.resolve(), checks.OUT / 'raw', keys, pdf)
         result.update(passed=True, exported_sha256=hashes)
     finally:
         result.update(checks=checks.CHECKS, failed=checks.FAILED, count=len(checks.CHECKS))
