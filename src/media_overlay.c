@@ -40,7 +40,7 @@ static long long clock_ms(const char *s) {
     int parts = 0;
     if (colons > 2) return -1;
     for (;;) {
-      v = strtod(s, &end);
+      v = exr_strtod(s, &end);
       if (end == s || v < 0) return -1;
       total = total * 60 + v;
       parts++;
@@ -52,7 +52,7 @@ static long long clock_ms(const char *s) {
     while (isspace((unsigned char)*s)) s++;
     return *s ? -1 : (long long)(total * 1000 + 0.5);
   }
-  v = strtod(s, &end);
+  v = exr_strtod(s, &end);
   if (end == s || v < 0) return -1;
   while (isspace((unsigned char)*end)) end++;
   if (!*end || !strcmp(end, "s")) return (long long)(v * 1000 + 0.5);

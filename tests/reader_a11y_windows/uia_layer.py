@@ -310,14 +310,19 @@ class Uia(object):
         if budget["nodes"] >= max_nodes:
             return {"truncated": True}
         budget["nodes"] += 1
-        node = self.describe(control, patterns=depth <= pattern_depth)
+        # Read patterns for every node: a Custom/Image/Pane may advertise an
+        # action even when it has no keyboard stop or built-in actionable role.
+        node = self.describe(control, patterns=True)
         node["depth"] = depth
+        try:
+            children = list(control.GetChildren() or [])
+        except Exception as exc:
+            node["error"] = "child enumeration failed: %s" % exc
+            return node
         if depth >= max_depth:
-            children = self.children(control)
             node["child_count"] = len(children)
             node["children_truncated"] = bool(children)
             return node
-        children = self.children(control)
         node["child_count"] = len(children)
         node["children"] = [
             self._dump(child, depth + 1, max_depth, max_nodes, pattern_depth, max_children, budget)

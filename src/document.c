@@ -696,7 +696,7 @@ int exr_viewport_parse(const char *content, float *width, float *height) {
     while (*at == ' ') at++;
     if (*at != '=') { while (*at && *at != ',' && *at != ';') at++; continue; }
     at++; while (*at == ' ') at++;
-    value = strtod(at, &end);
+    value = exr_strtod(at, &end);
     if (end != at && isfinite(value)) {
       if (!strcmp(key, "width")) w = (float)value;
       else if (!strcmp(key, "height")) h = (float)value;

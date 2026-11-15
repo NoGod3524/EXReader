@@ -73,6 +73,27 @@ def fetch(url, limit):
             time.sleep(delay)
 
 
+# Since 2026-11-15 www.gutenberg.org answers GitHub-hosted runners with 403.
+# The Project Gutenberg Literary Archive Foundation mirror serves the same
+# current /cache/epub/<n>/pg<n>.rdf rights records; required license terms are
+# still checked, and retrieved_license_url records which host answered.
+LICENSE_MIRRORS = {'https://www.gutenberg.org/cache/epub/': 'https://gutenberg.pglaf.org/cache/epub/'}
+
+
+def fetch_license(url, limit):
+    try:
+        return fetch(url, limit)
+    except urllib.error.HTTPError as error:
+        mirror = next((target + url[len(prefix):] for prefix, target in LICENSE_MIRRORS.items()
+                       if url.startswith(prefix)), None)
+        if error.code != 403 or mirror is None:
+            raise
+        error.close()
+        print(json.dumps({'license_mirror': {'url': url, 'status': 403, 'mirror': mirror}}), flush=True)
+        time.sleep(0.5)
+        return fetch(mirror, limit)
+
+
 def structure(path, entry):
     # Independent source inspection only: no SDK outcomes influence selection.
     if entry['format'] == 'EPUB':
@@ -144,7 +165,7 @@ def main():
             hashes.add(sha(data))
             target.write_bytes(data)
             time.sleep(0.5)
-            rights, rights_url = fetch(entry['license_url'], 4 * 1024 * 1024)
+            rights, rights_url = fetch_license(entry['license_url'], 4 * 1024 * 1024)
             evidence = a.output / 'licenses' / (entry['id'] + '.txt')
             evidence.parent.mkdir(exist_ok=True)
             evidence.write_bytes(rights)

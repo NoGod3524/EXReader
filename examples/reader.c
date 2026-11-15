@@ -4790,6 +4790,36 @@ static size_t selection_bytes(char **text) {
   }
 }
 
+/* Clipboard listeners briefly hold the global clipboard after a copy. Keep
+   acquisition bounded so a busy viewer neither drops Ctrl+C nor stalls the UI. */
+static int clipboard_open(void) {
+  ULONGLONG deadline = GetTickCount64() + 200;
+  for (;;) {
+    if (OpenClipboard(g.window)) return 1;
+    DWORD error = GetLastError();
+    if (error != ERROR_ACCESS_DENIED || GetTickCount64() >= deadline) {
+      SetLastError(error);
+      return 0;
+    }
+    Sleep(5);
+  }
+}
+
+#ifdef EXR_READER_TEST_DRIVERS
+static void clipboard_diagnostic(const char *operation, DWORD error, DWORD before,
+                                 SIZE_T storage_bytes, size_t text_bytes) {
+  HWND owner = GetClipboardOwner(), opened = GetOpenClipboardWindow();
+  DWORD owner_pid = 0, opened_pid = 0;
+  if (owner) GetWindowThreadProcessId(owner, &owner_pid);
+  if (opened) GetWindowThreadProcessId(opened, &opened_pid);
+  fprintf(stderr, "CLIPBOARD %s error=%lu sequence=%lu->%lu owner=%p owner_pid=%lu open_window=%p open_pid=%lu storage_bytes=%llu utf8_bytes=%llu\n",
+          operation, (unsigned long)error, (unsigned long)before,
+          (unsigned long)GetClipboardSequenceNumber(), (void *)owner,
+          (unsigned long)owner_pid, (void *)opened, (unsigned long)opened_pid,
+          (unsigned long long)storage_bytes, (unsigned long long)text_bytes);
+}
+#endif
+
 static int clipboard_set(const char *utf8, size_t size) {
   wchar_t *wide = host_wide(utf8, size);
   HGLOBAL memory;
@@ -4803,9 +4833,20 @@ static int clipboard_set(const char *utf8, size_t size) {
   if (!target) { GlobalFree(memory); free(wide); return 0; }
   memcpy(target, wide, bytes);
   GlobalUnlock(memory);
-  if (!OpenClipboard(g.window)) { GlobalFree(memory); free(wide); return 0; }
+#ifdef EXR_READER_TEST_DRIVERS
+  DWORD clipboard_sequence = GetClipboardSequenceNumber();
+#endif
+  if (!clipboard_open()) {
+#ifdef EXR_READER_TEST_DRIVERS
+    clipboard_diagnostic("write-open-failed", GetLastError(), clipboard_sequence, bytes, size);
+#endif
+    GlobalFree(memory); free(wide); return 0;
+  }
   EmptyClipboard();
   if (!SetClipboardData(CF_UNICODETEXT, memory)) {
+#ifdef EXR_READER_TEST_DRIVERS
+    clipboard_diagnostic("write-data-failed", GetLastError(), clipboard_sequence, bytes, size);
+#endif
     GlobalFree(memory);
     CloseClipboard();
     free(wide);

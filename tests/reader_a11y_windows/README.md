@@ -41,6 +41,34 @@ from the strict validator.
 finding forces `accessibility_accepted: false` while the CI job can still succeed
 because the evidence itself is valid.
 
+`capture_shell.py --binary EXReaderAudit.exe --book BOOK --font FONT --output DIR`
+collects a current production-shell sample without the old product host's fixed
+control map. It captures the closed reader, search, settings, TOC and shelf, and
+records forward/reverse Tab input only while its own process is foreground.
+`all-controls.json` lists every captured interactive role or action-pattern node,
+its Name/role and exact raw UIA identity matches to measured keyboard steps.
+Unopened dialogs, complete keyboard order and speech remain missing; collection
+exit 0 does not grant F09. This probe does not change system contrast or fonts.
+
+Use `--extended` to include dictionary settings, vocabulary and the WebDAV account
+panel through their visible, enabled owned controls. `--uia-only` uses UIA Invoke
+and never claims keyboard input. The current-shell probe fails with exit 1 for
+any captured unnamed/invalid-role control, missing surface, collection error or
+abnormal child exit. Its `audit_completed` still distinguishes completed sampling
+from passing Name/role assertions. `--self-check` verifies those exit verdicts.
+The report records the child exit code, collector/contract hashes and per-surface
+counts, alongside each control's name, role and measured focus steps.
+
+`inventory_controls.py` includes every `dict_control`/`dict_card_create` caller and
+painted shelf `sm_add_hit`/`sm_chip` target, as well as native constructors.
+It keeps source paths/lines/hashes and marks missing runtime evidence even when
+the UIA tree contains no node for a painted action. Source sites and loops are
+not runtime instance counts.
+
+The shared collector preserves child-enumeration failures as errors and samples
+action patterns at every depth. `control_contract.py` rejects incomplete or
+malformed trees, including a provider that disconnects while enumerating children.
+
 ## Limits
 
 - Automated UIA plus injected input is **not** screen-reader acceptance. No NVDA or

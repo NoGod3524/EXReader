@@ -6,6 +6,12 @@
 #include <math.h>
 #include "cmyk_reference.h"
 #define NEAR(a,b) CHECK(fabs((a)-(b))<1e-8)
+/* Malformed JPX with the codec built in; a codec-less build cannot inspect it. */
+#ifdef EXR_ENABLE_PDF_JPX
+#define EXPECTED_LAZY_JPX EXR_FORMAT
+#else
+#define EXPECTED_LAZY_JPX EXR_UNSUPPORTED
+#endif
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -35,7 +41,7 @@ static void public_pages(const char *dir) {
   OK(exr_fixed_render(d,0,1,NULL,&b,&error)); CHECK(b.width==12 && b.height==12); pixel(&b,6,10,0,0,0); pixel(&b,1,10,255,255,255); exr_bitmap_free(&b);
   CHECK(exr_fixed_render(d,1,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels); /* Missing host font. */
   OK(exr_fixed_render(d,0,1,NULL,&b,&error)); pixel(&b,6,10,0,0,0); exr_bitmap_free(&b);
-  CHECK(exr_fixed_render(d,2,1,NULL,&b,&error)==EXR_FORMAT && !b.pixels); /* Unsupported lazy image codec. */
+  CHECK(exr_fixed_render(d,2,1,NULL,&b,&error)==EXPECTED_LAZY_JPX && !b.pixels); /* Unsupported lazy image codec. */
   OK(exr_fixed_render(d,0,1,NULL,&b,&error)); pixel(&b,6,10,0,0,0); exr_bitmap_free(&b);
   OK(exr_fixed_render(d,4,1,NULL,&b,&error)); pixel(&b,0,5,255,127,127); pixel(&b,0,10,127,127,255); exr_bitmap_free(&b);
   inspect.document=d; sink.path=inspect_path; sink.context=&inspect;

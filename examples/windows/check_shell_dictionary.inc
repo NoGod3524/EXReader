@@ -1,6 +1,33 @@
 /* SPDX-License-Identifier: MIT */
 /* Production persistence paths: preserve foreign fields, rollback and anchors. */
+static void dictionary_expect_name(HWND control,const wchar_t *expected) {
+  HMODULE module=LoadLibraryW(L"oleacc.dll");assert(module);
+  typedef HRESULT (WINAPI *accessible_from_window)(HWND,DWORD,REFIID,void **);
+  accessible_from_window load=(accessible_from_window)GetProcAddress(module,"AccessibleObjectFromWindow");assert(load);
+  IAccessible *object=NULL;BSTR name=NULL;VARIANT child;VariantInit(&child);child.vt=VT_I4;child.lVal=CHILDID_SELF;
+  assert(SUCCEEDED(load(control,OBJID_CLIENT,&IID_IAccessible,(void **)&object)) && object);
+  assert(SUCCEEDED(object->lpVtbl->get_accName(object,child,&name)) && name && !wcscmp(name,expected));
+  SysFreeString(name);object->lpVtbl->Release(object);FreeLibrary(module);
+}
 static void test_dictionary_storage(void) {
+  HWND panel=CreateWindowW(L"STATIC",L"Dictionary naming test",WS_CHILD,0,0,100,100,g.window,NULL,NULL,NULL);assert(panel);
+  const struct {const wchar_t *type,*label;int id;DWORD style;const wchar_t *name;} naming[]={
+    {L"LISTBOX",L"词典目录（查询顺序）",DICT_PATHS,0,L"词典目录（查询顺序）"},
+    {L"COMBOBOX",L"按书筛选",DICT_FILTER,CBS_DROPDOWNLIST,L"按书筛选"},
+    {L"EDIT",L"",DICT_QUERY,ES_READONLY,L"查询词条"},
+    {L"EDIT",L"",DICT_STATUS,ES_READONLY,L"查询状态"},
+    {L"EDIT",L"",SY_ID_URL,0,L"WebDAV 服务器地址"},
+    {L"EDIT",L"",SY_ID_USER,0,L"WebDAV 用户名"},
+    {L"EDIT",L"",SY_ID_PASS,ES_PASSWORD,L"WebDAV 密码"},
+    {L"EDIT",L"",SY_ID_STATUS,ES_READONLY,L"云同步状态"},
+    {L"EDIT",L"",1000,ES_READONLY,L"词典释义"},
+    {L"EDIT",L"",1063,ES_READONLY,L"词典释义"}
+  };
+  for(size_t i=0;i<sizeof(naming)/sizeof(*naming);i++) {
+    HWND control=dict_control(panel,naming[i].type,naming[i].label,naming[i].id,naming[i].style);assert(control);
+    dictionary_expect_name(control,naming[i].name);DestroyWindow(control);
+  }
+  DestroyWindow(panel);puts("DICTIONARY accessibility: 10 native list/combo/query/status/WebDAV/dynamic-body names read through IAccessible PASS");
   wchar_t temporary[HOST_PATH],directory[HOST_PATH],good[HOST_PATH],csv[HOST_PATH];
   GetTempPathW(HOST_PATH,temporary);
   swprintf(directory,HOST_PATH,L"%lsexreader-dict-storage-%lu",temporary,(unsigned long)GetCurrentProcessId());
