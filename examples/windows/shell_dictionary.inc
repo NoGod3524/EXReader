@@ -295,6 +295,17 @@ static void dict_set_text(HWND window,const char *text) {
 }
 static HWND dict_control(HWND parent,const wchar_t *type,const wchar_t *label,int id,DWORD style) {
   HWND control=CreateWindowExW(0,type,label,WS_CHILD|WS_VISIBLE|WS_TABSTOP|style,0,0,0,0,parent,(HMENU)(INT_PTR)id,NULL,NULL);
+  const wchar_t *name=label && label[0] ? label:NULL;
+  if(!name) {
+    if(id==DICT_QUERY)name=L"查询词条";
+    else if(id==DICT_STATUS)name=parent==dict_manager ? L"词典加载状态":parent==vocab_panel ? L"词条释义与例句":L"查询状态";
+    else if(id==SY_ID_URL)name=L"WebDAV 服务器地址";
+    else if(id==SY_ID_USER)name=L"WebDAV 用户名";
+    else if(id==SY_ID_PASS)name=L"WebDAV 密码";
+    else if(id==SY_ID_STATUS)name=L"云同步状态";
+    else if(id>=1000 && id<1064)name=L"词典释义";
+  }
+  if(name)host_a11y_describe(control,name,NULL);
   SendMessageW(control,WM_SETFONT,(WPARAM)dict_font,TRUE);return control;
 }
 static void dict_place(HWND parent,int id,int x,int y,int width,int height) {

@@ -6,6 +6,8 @@ on:
       - '.github/workflows/reader-final-b-audit.yml'
       - 'examples/windows/check_shell_budget.inc'
       - 'examples/windows/check_shell_privacy.inc'
+      - 'examples/windows/check_shell_dictionary.inc'
+      - 'examples/windows/shell_dictionary.inc'
       - 'examples/windows/check_shell_selection.c'
       - 'examples/windows/check_sync.c'
       - 'examples/windows/shell_drive_test.inc'
@@ -66,7 +68,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-(control|shell)|render-budget-report|selection-(render-budget|sync|keyboard))' *> new-checks.txt
+          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-(control|shell)|render-budget-report|selection-(render-budget|sync|keyboard|dictionary-storage))' *> new-checks.txt
           exit $LASTEXITCODE
       - name: Fetch frozen original books
         run: |
