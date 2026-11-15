@@ -82,9 +82,10 @@ static int number(const char *s,int *out) {
   *out=(int)n; return 1;
 }
 static int pixels(exr_buffer *b,const char *property,const char *s,float scale) {
-  int n; char result[100];
+  int n; char result[100],value[64];
   if(!number(s,&n)) return 1;
-  snprintf(result,sizeof(result),"%s:%.4fpx;",property,n*scale); return put(b,result);
+  exr_format_number(value,sizeof(value),"%.4f",n*scale);
+  snprintf(result,sizeof(result),"%s:%spx;",property,value); return put(b,result);
 }
 static int color(exr_buffer *b,const char *property,const char *s) {
   size_t i;
@@ -130,9 +131,9 @@ static int properties(docx *x,const exr_document *d,size_t node,exr_buffer *css,
       if(!pixels(css,"margin-top",attr(v,"before"),1.0f/15) || !pixels(css,"margin-bottom",attr(v,"after"),1.0f/15)) return 0;
       s=attr(v,"line");
       if(number(s,&line) && line>0) {
-        char result[80]; const char *rule=attr(v,"lineRule");
-        if(rule && strcmp(rule,"auto")) snprintf(result,sizeof(result),"line-height:%.4fpx;",line/15.0f);
-        else snprintf(result,sizeof(result),"line-height:%.4f;",line/240.0f);
+        char result[80],value[64]; const char *rule=attr(v,"lineRule"); int px=rule && strcmp(rule,"auto");
+        exr_format_number(value,sizeof(value),"%.4f",px ? line/15.0f : line/240.0f);
+        snprintf(result,sizeof(result),"line-height:%s%s;",value,px ? "px" : "");
         if(!put(css,result)) return 0;
       }
     } else if(word(v,"ind")) {
@@ -315,8 +316,8 @@ static int image(docx *x,size_t parent,const exr_node *blip,float width,float he
     ok=ok && set(x,at,"src",href.data); free(href.data); if(!ok) return 0;
   }
   if(width>0 && height>0) {
-    snprintf(numbered,sizeof(numbered),"%.4f",width); if(!set(x,at,"width",numbered)) return 0;
-    snprintf(numbered,sizeof(numbered),"%.4f",height); if(!set(x,at,"height",numbered)) return 0;
+    exr_format_number(numbered,sizeof(numbered),"%.4f",width); if(!set(x,at,"width",numbered)) return 0;
+    exr_format_number(numbered,sizeof(numbered),"%.4f",height); if(!set(x,at,"height",numbered)) return 0;
   }
   return 1;
 }
