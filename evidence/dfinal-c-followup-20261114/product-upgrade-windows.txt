@@ -1,0 +1,4 @@
+product schema 1 -> 3: failure rollback, metadata/mappings/organization/revisions/outbox, installed API and reopen passed
+product schema 2 -> 3: failure rollback, metadata/mappings/organization/revisions/outbox/original reference, installed API and reopen passed
+541 product catalog upgrade checks passed
+exit=0

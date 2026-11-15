@@ -1,0 +1,18 @@
+{
+  "Windows": {
+    "tests": 581,
+    "failures": 0,
+    "skipped": 0,
+    "disabled": 0
+  },
+  "Actions-Linux": {
+    "tests": 580,
+    "failures": 0,
+    "skipped": 0,
+    "disabled": 0
+  },
+  "Windows-only": [
+    "native-docx-footnotes-ui"
+  ],
+  "Linux-only": []
+}

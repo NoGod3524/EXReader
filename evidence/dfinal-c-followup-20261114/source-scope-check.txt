@@ -1,0 +1,3 @@
+SDK source files unchanged from origin/main starting commit 38a70318
+Current app/test/workflow/tools/examples code exactly matches tested final product source cdf0204dd6ef5a4e9c558921213621680cfd54cd
+Windows model report source matches: 185 checks, actions=false, host_ui=false, physical=false

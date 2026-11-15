@@ -1,0 +1,5 @@
+catalog changed only: F11, F12, H.ipad.annotation_exchange
+registered evidence references valid; titles/IDs/top-level catalog unchanged
+denominator=108; groups= {'foundation': 12, 'host': 84, 'final': 12}
+states= {'verified': 99, 'pending': 9}
+tests/check_reading_release.py unchanged

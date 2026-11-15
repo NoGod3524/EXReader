@@ -1,0 +1,69 @@
+docs/reader-total-progress/catalog.json:1596:       "id": "H.ipad.annotation_exchange",
+docs/reader-total-progress/catalog.json:1597:       "group": "host",
+docs/reader-total-progress/catalog.json:1598:       "platform": "ipad",
+docs/reader-total-progress/catalog.json:1599:       "title": "iPad：宿主标注文件导入/导出、预览确认及错误拒绝",
+docs/reader-total-progress/catalog.json:1600:       "state": "pending",
+docs/reader-total-progress/catalog.json:1601:       "evidence": [],
+docs/reader-total-progress/catalog.json:1602:       "note": "D-FINAL-C 审计：docs/reader-total-progress/dfinal-c-audit.md；最近 iPad 宿主候选 40923468266 的 job123625260444 失败。当前 raw3 读写/预览摘要确认/非法拒绝模型164检查及安装版本守卫5检查在 Actions43648272236 通过，日志见 evidence/dfinal-c/actions-43648272236/。缺 iPad 实际系统文件保存/选择、预览/取消/确认、错误拒绝与旧库不变、原件及程序身份的完整证据；预览确认 UI 需真机。"
+docs/reader-total-progress/catalog.json:1726:       "id": "F11",
+docs/reader-total-progress/catalog.json:1727:       "group": "final",
+docs/reader-total-progress/catalog.json:1728:       "title": "移动端可用部署架构与真机能力，未测项目逐项登记并补足交付缺口",
+docs/reader-total-progress/catalog.json:1729:       "state": "pending",
+docs/reader-total-progress/catalog.json:1730:       "evidence": [
+docs/reader-total-progress/catalog.json:1731:         "f06_sdk342_six_packages"
+docs/reader-total-progress/catalog.json:1732:       ],
+docs/reader-total-progress/catalog.json:1733:       "note": "D-FINAL-C 审计：docs/reader-total-progress/dfinal-c-audit.md；F06 仅为历史模拟器安装与构建证据。当前源码 c0b07a69 的 Actions43648272236 三作业成功，Android arm64 SDK473/iOS device arm64 SDK472 个文件散列核对通过，见 evidence/dfinal-c/actions-43648272236/verified.json。缺 Android arm64 宿主 APK、iPhone/iPad 签名部署、真机能力/读屏/性能与两设备闭环；需真机，不授予完整验收。"
+docs/reader-total-progress/catalog.json:1734:     },
+docs/reader-total-progress/catalog.json:1735:     {
+docs/reader-total-progress/catalog.json:1736:       "id": "F12",
+docs/reader-total-progress/catalog.json:1737:       "group": "final",
+docs/reader-total-progress/catalog.json:1738:       "title": "最终版本升级/旧库兼容、许可/依赖与用户安装/导入/同步说明完备",
+docs/reader-total-progress/catalog.json:1739:       "state": "pending",
+docs/reader-total-progress/catalog.json:1740:       "evidence": [],
+docs/reader-total-progress/catalog.json:1741:       "note": "D-FINAL-C 审计与安装/升级/导入/同步说明：docs/reader-total-progress/dfinal-c-audit.md、docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md。Actions43648272236 的 schema1–6→7 保留/回滚/复开通过，完整存储套件2765检查、全量CTest580/580通过；许可清单22组件及31负例自检通过。缺最终六端宿主旧数据/产品库/outbox/凭据升级、中断恢复及最终分发包许可/SBOM 核查。独立模块通过不能转授最终版本。"
+docs/READER-PRODUCT-PLAN.md:149: ## 并行工作包
+docs/READER-PRODUCT-PLAN.md:150: 
+docs/READER-PRODUCT-PLAN.md:151: | 包 | 交付 | 出口 |
+docs/READER-PRODUCT-PLAN.md:152: | --- | --- | --- |
+docs/READER-PRODUCT-PLAN.md:153: | P1 产品书库 | 独立metadata数据库；书籍身份、本机SDK映射、子书架、标签、系列顺序、分页索引及离线待同步数据 | 数据约束、事务回滚、幂等、删除记录与数千书分页；不以数据库检查冒充UI流畅性 |
+docs/READER-PRODUCT-PLAN.md:154: | P2 导入模块 | 独立`extras/sideload`，只使用公开书库API；系统文件、本地文件及云端下载完成后复用同一路径 | 安装后消费、原件回读、精确去重、限额、短读、取消和所有权 |
+docs/READER-PRODUCT-PLAN.md:155: | P3 WebDAV同步 | 一个账号及专用目录；不可变原书、实体修订、离线outbox、冲突保留与删除墓碑 | 两端往返、离线重连、并发修改、删除、断电重试、HTTPS及凭据隔离 |
+docs/READER-PRODUCT-PLAN.md:156: | P4 原生产品UI | 复用Windows、GTK、Android、SwiftUI四套壳覆盖六目标；书架、导入、整理、阅读与标注 | 六目标实际流程、生命周期恢复及固定规模书架帧时间／内存预算 |
+docs/READER-PRODUCT-PLAN.md:157: | P5 联合验收 | 同一产品源码、相同协议与各平台独立证据 | 六目标闭环，至少两设备同步原书、进度、标注和分类；真机及读屏单独登记 |
+docs/READER-PRODUCT-PLAN.md:158: 
+docs/READER-PRODUCT-PLAN.md:159: P1、P2先并行；数据字段固定后P3与各平台P4可并行。共享SDK的变更必须重新冻结，
+docs/READER-PRODUCT-PLAN.md:160: 产品层改动按实际影响复验。所有构建、测试、语法检查、夹具和证据解析仅在GitHub Actions运行。
+docs/READER-PRODUCT-PLAN.md:162: ## 导入与阅读边界
+docs/READER-PRODUCT-PLAN.md:163: 
+docs/READER-PRODUCT-PLAN.md:164: - EPUB/CBZ使用借用的不可变、可随机读source，书库分块复制原件。
+docs/READER-PRODUCT-PLAN.md:165: - PDF由宿主提供调用期间稳定的私有文件；公开file入口会多次按路径打开，且没有调用内取消参数。
+docs/READER-PRODUCT-PLAN.md:166: - 其他重排格式首版最多32MiB，分块读取后使用既有memory导入；不声称它们已有有界章解析。
+docs/READER-PRODUCT-PLAN.md:167: - 精确去重由SDK按格式和原始字节完成。取消不能删除重复命中的旧书；已提交结果必须明确返回。
+docs/READER-PRODUCT-PLAN.md:168: - 权限、系统选择器、Android URI、安全作用域URL、线程和文件稳定性由宿主管理。
+docs/READER-PRODUCT-PLAN.md:169: - 有线导入先使用Android系统文件传输和Apple文件共享；桌面使用本地文件／系统云盘入口。
+docs/READER-PRODUCT-PLAN.md:170: 
+docs/READER-PRODUCT-PLAN.md:171: ## 产品身份与同步规则
+docs/READER-PRODUCT-PLAN.md:172: 
+docs/READER-PRODUCT-PLAN.md:173: 跨设备书籍身份是原书SHA-256加格式，本机SDK行号仅为映射。子书架树、标签和系列分别建模。
+docs/READER-PRODUCT-PLAN.md:174: 同步原书与实体数据，不同步运行中的SQLite文件。全部SDK写入经宿主owner队列，避免其他连接
+docs/READER-PRODUCT-PLAN.md:175: 提交使现有source失效。
+docs/READER-PRODUCT-PLAN.md:176: 
+docs/READER-PRODUCT-PLAN.md:177: EPUB章内锚点、普通重排UTF-8锚点、固定页锚点保持显式模式。远端位置须经公开resolve得到
+docs/READER-PRODUCT-PLAN.md:178: `FOUND`才可导航；歧义或缺失保留原始记录。当前阅读不被远端进度强制跳转。
+docs/READER-PRODUCT-PLAN.md:179: 
+docs/READER-PRODUCT-PLAN.md:180: 首版同步以独立不可变修订保留并发版本，删除同样保留墓碑；设备时钟只供展示，不裁决覆盖。
+docs/READER-PRODUCT-PLAN.md:181: ETag可用于缓存，具体发现和写入协议由P3实现及互操作验证固定。
+docs/READER-PRODUCT-PLAN.md:182: 原书先验证长度和散列再发布引用。远端暂时缺文件不等于删除；首版不自动回收远端历史和原书。
+docs/READER-PRODUCT-PLAN.md:183: “移除本机下载”和“从书库删除”使用不同操作，云端书籍支持按需下载及保留离线。
+docs/READER-PRODUCT-PLAN.md:184: 
+docs/READER-PRODUCT-PLAN.md:185: 凭据使用平台安全存储：Apple Keychain、Windows Credential Manager、Linux Secret Service、
+docs/READER-PRODUCT-PLAN.md:186: Android Keystore保护的加密存储；不可用时仅保留当前会话。日志、书库和同步载荷不含凭据。
+docs/READER-PRODUCT-PLAN.md:187: HTTPS、证书验证、跨源凭据隔离、远端载荷限额和临时文件原子发布进入P3验收。
+docs/READER-PRODUCT-PLAN.md:189: ## 默认界面
+docs/READER-PRODUCT-PLAN.md:190: 
+docs/READER-PRODUCT-PLAN.md:191: 首页显示书架、搜索、导入和继续阅读。子书架、分类、系列及批量整理按需进入，
+docs/READER-PRODUCT-PLAN.md:192: 阅读时工具自动收起。逐步覆盖书签、标注增改删、目录、全文搜索、排版设置、主题及常见阅读操作，
+docs/READER-PRODUCT-PLAN.md:193: 以可达的菜单和上下文操作保持默认界面简洁。
+docs/READER-PRODUCT-PLAN.md:194: 
+docs/READER-PRODUCT-PLAN.md:195: 书架使用分页、虚拟化及有界缩略图缓存。帧时间、峰值内存和首次可交互预算需在产品实现后
+docs/READER-PRODUCT-PLAN.md:196: 按固定设备／runner及固定书库规模测量并冻结；现有SDK性能结果不替代产品UI预算。

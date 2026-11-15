@@ -1,5 +1,8 @@
 # D-FINAL-C：F11 / F12 / H.ipad.annotation_exchange
 
+2026-11-14 接续审计、新增产品库升级/非法标注回归及 Android arm64 宿主构建见
+[接续报告](dfinal-c-followup-20261114.md)。下文保留上一轮固定源码的原始结果。
+
 本轮从 `origin/main` 的 `df8e60313e8107ce083572039460de3a0149845e` 建立
 `codex/dfinal-c-evidence`；PR base 为 `main`。当前用户明确授权三项台账更新、本地构建与 Actions，
 取代 SESSION-CONTRACT.md:6 和产品计划:160 的历史只读/仅 Actions 限制。

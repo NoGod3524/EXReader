@@ -1,0 +1,1907 @@
+RUN cmake -S apps/reader/store/native -B <workspace>\build\dfinal-c-models-followup\product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON -DFETCHCONTENT_SOURCE_DIR_READER_CATALOG_SQLITE_SOURCE=<workspaces>\exr-build-cf112\_deps\sqlite-src
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/product
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\product --parallel 4
+[1/5] Building C object CMakeFiles/reader_catalog.dir/catalog.c.obj
+[2/5] Linking C static library libreader_catalog.a
+[3/5] Linking C executable reader-originals-check.exe
+[4/5] Linking C executable reader-catalog-check.exe
+[5/5] Linking CXX executable reader-original-import-check.exe
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\product
+-- Install configuration: "Release"
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_catalog.a
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_catalog_sqlite.a
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/include/exreader-product/catalog.h
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/include/exreader-product/sqlite3.h
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/001_catalog.sql
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/002_originals.sql
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/003_original_staging.sql
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/sqlite-public-domain.txt
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets-release.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfig.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfigVersion.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_original_import.a
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/include/exreader-product/original_import.h
+RUN cmake -S apps/reader/revisions -B <workspace>\build\dfinal-c-models-followup\revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/revisions
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\revisions --parallel 4
+ninja: no work to do.
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\revisions
+-- Install configuration: "Release"
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_revisions.a
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_revision_hash.a
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/include/reader_revisions.h
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/include/reader_projection.h
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets-release.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsConfig.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsConfigVersion.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/include/reader_selector_bytes_detail.h
+RUN cmake -S apps/reader/reading-state -B <workspace>\build\dfinal-c-models-followup\reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/reading-state
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\reading-state --parallel 4
+ninja: no work to do.
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\reading-state
+-- Install configuration: "Release"
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_reading_state.a
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_reading_state_codec.a
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/include/reader_reading_state.h
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets-release.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateConfig.cmake
+-- Up-to-date: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateConfigVersion.cmake
+RUN cmake -S apps/reader/annotation-export -B <workspace>\build\dfinal-c-models-followup\export -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON
+-- Configuring done (0.2s)
+-- Generating done (0.1s)
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/export
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\export --parallel 4
+[1/2] Building CXX object CMakeFiles/reader_annotation_export.dir/src/annotation_export.cpp.obj
+[2/2] Linking CXX static library libreader_annotation_export.a
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\export
+-- Install configuration: "Release"
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_annotation_export.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_annotation_export.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_annotation_export_raw3.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportTargets-release.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfig.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationExport/EXReaderAnnotationExportConfigVersion.cmake
+RUN cmake -S apps/reader/annotation-import -B <workspace>\build\dfinal-c-models-followup\import -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (3.5s)
+-- Generating done (0.1s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    EXR_SDK
+    READER_PRODUCT_PREFIX
+
+
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/import
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\import --parallel 4
+[1/2] Building CXX object CMakeFiles/reader_annotation_import.dir/src/annotation_import.cpp.obj
+[2/2] Linking CXX static library libreader_annotation_import.a
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\import
+-- Install configuration: "Release"
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_annotation_import.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_annotation_import.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_annotation_import_raw3.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportTargets-release.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfig.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderAnnotationImport/EXReaderAnnotationImportConfigVersion.cmake
+RUN cmake -S tests/dfinal_c -B <workspace>\build\dfinal-c-models-followup\consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON -DPython3_EXECUTABLE=C:\Python314\python.exe
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: C:\Python314\python.exe (found version "3.14.7") found components: Interpreter
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (3.5s)
+-- Generating done (0.1s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    EXR_READER_SELECTOR_BYTES_CANDIDATE
+    EXR_SDK
+    READER_ANNOTATION_IMPORT_BUILD
+    READER_PRODUCT_PREFIX
+
+
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/consumer
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\consumer --parallel 4
+[1/5] Building C object consumer/CMakeFiles/c06-probe.dir/api.c.obj
+[2/5] Building C object CMakeFiles/dfinal-c-catalog-upgrade.dir/check_catalog_upgrade.c.obj
+[3/5] Linking C executable dfinal-c-catalog-upgrade.exe
+[4/5] Building CXX object consumer/CMakeFiles/c06-probe.dir/probe.cpp.obj
+[5/5] Linking CXX executable consumer\c06-probe.exe
+RUN ctest --test-dir <workspace>\build\dfinal-c-models-followup\consumer -V --no-tests=error --output-junit <workspace>\build\dfinal-c-models-followup\model-tests.xml
+UpdateCTestConfiguration  from :<workspace>/build/dfinal-c-models-followup/consumer/DartConfiguration.tcl
+Test project <workspace>/build/dfinal-c-models-followup/consumer
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: dfinal-c-annotation-exchange-model
+
+1: Test command: C:\Python314\python.exe "<workspace>/tests/dfinal_c/check_exchange.py" "--probe" "<workspace>/build/dfinal-c-models-followup/consumer/consumer/c06-probe.exe" "--output" "<workspace>/build/dfinal-c-models-followup/consumer/results"
+1: Working Directory: <workspace>/build/dfinal-c-models-followup/consumer
+1: Test timeout computed to be: 300
+1: off-legacy-seed 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: KEY txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6
+1: 
+1: CHECK off legacy seed
+1: off-legacy-export 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0
+1: STATS 2 2 1 1 2899 1469
+1: 
+1: CHECK off legacy export OK
+1: make-store legacy <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\legacy-off\legacy-receiver.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\legacy-off\books\legacy-txt.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK off legacy receiver seeded
+1: off-legacy-import 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0
+1: STATS 2 2 2 2 0 1
+1: 
+1: CHECK off legacy import OK
+1: CHECK off legacy v1 header unchanged
+1: CHECK fixed PDF fixture SHA-256
+1: raw-seed 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: KEYS pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6 txt:7777777777777777777777777777777777777777777777777777777777777777 pdf:8888888888888888888888888888888888888888888888888888888888888888
+1: 
+1: CHECK raw seed from the real PDF through the explicit raw encoder
+1: export-pdf 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0
+1: STATS 4 4 1 1 6151 2594
+1: 
+1: CHECK raw3 export pdf
+1: CHECK raw3 JSONL is LF-terminated UTF-8 without CR/NUL pdf:5627
+1: CHECK raw3 header identity pdf:5627
+1: CHECK annotations ascending pdf:5627
+1: CHECK head key order pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001002
+1: CHECK head wire sha/bytes self-check pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001002
+1: CHECK independent location equals wire pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001002
+1: CHECK location key order pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001002
+1: CHECK head key order pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001005
+1: CHECK head wire sha/bytes self-check pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001005
+1: CHECK independent location equals wire pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001005
+1: CHECK location key order pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001005
+1: CHECK head key order pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001006
+1: CHECK head wire sha/bytes self-check pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001006
+1: CHECK independent location equals wire pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001006
+1: CHECK location key order pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/00000000000000000000000000001006
+1: CHECK head key order pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/0000000000000000000000000000100a
+1: CHECK head wire sha/bytes self-check pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/0000000000000000000000000000100a
+1: CHECK independent location equals wire pdf:5627a430fa04cbe11d38eb2682e336ef21e147d445753ed46ed11a7d5e3167cc/0000000000000000000000000000100a
+1: CHECK footer proves completeness pdf:5627
+1: CHECK footer annotations=4 pdf:5627
+1: CHECK footer current=3 pdf:5627
+1: CHECK footer tombstones=1 pdf:5627
+1: CHECK footer pending_parents=0 pdf:5627
+1: CHECK footer concurrent=0 pdf:5627
+1: CHECK footer blocked_restore=0 pdf:5627
+1: CHECK footer head_wires=4 pdf:5627
+1: export-txt 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0
+1: STATS 2 2 1 1 3566 1620
+1: 
+1: CHECK raw3 export txt
+1: CHECK raw3 JSONL is LF-terminated UTF-8 without CR/NUL txt:6029
+1: CHECK raw3 header identity txt:6029
+1: CHECK annotations ascending txt:6029
+1: CHECK head key order txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100c
+1: CHECK head wire sha/bytes self-check txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100c
+1: CHECK independent location equals wire txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100c
+1: CHECK location key order txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100c
+1: CHECK head key order txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100d
+1: CHECK head wire sha/bytes self-check txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100d
+1: CHECK independent location equals wire txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100d
+1: CHECK location key order txt:602961b11acfeae5358ba6db8293f635ab2ccaa1440b06023f3cf1678013c7d6/0000000000000000000000000000100d
+1: CHECK footer proves completeness txt:6029
+1: CHECK footer annotations=2 txt:6029
+1: CHECK footer current=2 txt:6029
+1: CHECK footer tombstones=0 txt:6029
+1: CHECK footer head_wires=2 txt:6029
+1: export-ambiguous 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0
+1: STATS 1 1 1 1 2082 1055
+1: 
+1: CHECK raw3 export ambiguous
+1: CHECK raw3 JSONL is LF-terminated UTF-8 without CR/NUL txt:7777
+1: CHECK raw3 header identity txt:7777
+1: CHECK annotations ascending txt:7777
+1: CHECK head key order txt:7777777777777777777777777777777777777777777777777777777777777777/0000000000000000000000000000100f
+1: CHECK head wire sha/bytes self-check txt:7777777777777777777777777777777777777777777777777777777777777777/0000000000000000000000000000100f
+1: CHECK independent location equals wire txt:7777777777777777777777777777777777777777777777777777777777777777/0000000000000000000000000000100f
+1: CHECK location key order txt:7777777777777777777777777777777777777777777777777777777777777777/0000000000000000000000000000100f
+1: CHECK footer proves completeness txt:7777
+1: CHECK footer annotations=1 txt:7777
+1: CHECK footer current=1 txt:7777
+1: CHECK footer head_wires=1 txt:7777
+1: export-pdf2 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0
+1: STATS 1 1 1 1 2008 1063
+1: 
+1: CHECK raw3 export pdf2
+1: CHECK raw3 JSONL is LF-terminated UTF-8 without CR/NUL pdf:8888
+1: CHECK raw3 header identity pdf:8888
+1: CHECK annotations ascending pdf:8888
+1: CHECK head key order pdf:8888888888888888888888888888888888888888888888888888888888888888/00000000000000000000000000001008
+1: CHECK head wire sha/bytes self-check pdf:8888888888888888888888888888888888888888888888888888888888888888/00000000000000000000000000001008
+1: CHECK independent location equals wire pdf:8888888888888888888888888888888888888888888888888888888888888888/00000000000000000000000000001008
+1: CHECK location key order pdf:8888888888888888888888888888888888888888888888888888888888888888/00000000000000000000000000001008
+1: CHECK footer proves completeness pdf:8888
+1: CHECK footer annotations=1 pdf:8888
+1: CHECK footer current=1 pdf:8888
+1: CHECK footer head_wires=1 pdf:8888
+1: CHECK export left the sender store unchanged
+1: CHECK source anchor versions 1, 2 and 3 are preserved
+1: CHECK typed NULL exact stays NULL
+1: CHECK allocated empty stays allocated empty
+1: CHECK NUL selector bytes keep their byte length
+1: CHECK anchor1 and anchor2 sources keep their versions
+1: CHECK tombstone head has no location
+1: CHECK Markdown distinguishes NULL, empty and NUL
+1: make-store legacy <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\legacy-store.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\txt.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK legacy store seeded for mixed-entry cases
+1: old-export-on-raw 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 1
+1: MESSAGE Use the explicit API matching this store capability
+1: REVISION 1
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK legacy export refuses a raw store with no output
+1: raw-export-on-legacy 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 3
+1: MESSAGE Use the explicit API matching this store capability
+1: REVISION 1 RS 0
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK raw export refuses a legacy store with no output
+1: raw-export-on-legacy-markdown 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 3
+1: MESSAGE Use the explicit API matching this store capability
+1: REVISION 1 RS 0
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK raw export capability refusal is REVISION before markdown output
+1: raw-export-on-legacy-both 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 3
+1: MESSAGE Use the explicit API matching this store capability
+1: REVISION 1 RS 0
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK raw export capability refusal is REVISION before both output
+1: export-budget 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Output size budget exceeded
+1: REVISION 0 RS 0
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK output budget breach publishes nothing
+1: export-cancel 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 7
+1: MESSAGE Export was cancelled
+1: REVISION 0 RS 0
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK export cancellation preserves both previous outputs
+1: make-store raw <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\raw-recv-txt.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\txt.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK raw receiver for the txt book
+1: raw-import-legacy-file 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Not a raw3 portable export (format name differs)
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK raw importer refuses the legacy v1 file with zero writes
+1: make-store legacy <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\old-recv.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\txt.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK legacy receiver for the txt book
+1: old-import-raw3-file 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Unknown export format
+1: REVISION 0
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK legacy importer refuses the raw3 file with zero writes
+1: old-import-on-raw-store 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Revision owner/graph check rejected before input I/O
+1: REVISION 1
+1: STATS 0 0 0 0 0 0
+1: 
+1: CHECK legacy importer refuses a raw store with zero writes
+1: raw-import-on-legacy-store 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Raw store/original identity check rejected before input I/O
+1: REVISION 1 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK raw importer refuses a legacy store with zero writes
+1: make-store raw <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\recv-pdf.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\pdf.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK raw receiver pdf
+1: pdf-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=cc8ad86c3f8db5e296e003ef71deb2e7cce5f96b7a92ae4b3c7f58b02efc0d6d found_checked=1 accepted=0
+1: 
+1: CHECK preview reports real public FOUND, NULL preserved, omitted history
+1: CHECK preview writes nothing
+1: CHECK preview fingerprint is independent full-input SHA-256
+1: sha-boundary-0 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=9d67b5fb62a8899f721f38719b181c29ccf7c62df5f63d1d3449c5a1c111426a found_checked=1 accepted=0
+1: 
+1: CHECK preview SHA-256 covers chunk and padding boundary 0
+1: sha-boundary-55 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=f002fb2e36f09af6c3b8ee85bbee39f386e6d6bbd063dc9019fae03ea22916ed found_checked=1 accepted=0
+1: 
+1: CHECK preview SHA-256 covers chunk and padding boundary 55
+1: sha-boundary-56 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=c3b28cd185553c11a91c164abb289c1a39fa3153ba5b44cb1fb95585aaf54328 found_checked=1 accepted=0
+1: 
+1: CHECK preview SHA-256 covers chunk and padding boundary 56
+1: sha-boundary-63 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=ebce49b02d29a4cea7007f593fda28cee8a7f434a2792474795e927bebb2673c found_checked=1 accepted=0
+1: 
+1: CHECK preview SHA-256 covers chunk and padding boundary 63
+1: sha-boundary-65537 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=1f5ae64698e11fd6e5d8021c8ac34c1fb09da8eed429f28a1b1884405ca42732 found_checked=1 accepted=0
+1: 
+1: CHECK preview SHA-256 covers chunk and padding boundary 65537
+1: pdf-commit-missing 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: STATUS 11
+1: MESSAGE Commit requires the full SHA-256 fingerprint of the previewed file
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=cc8ad86c3f8db5e296e003ef71deb2e7cce5f96b7a92ae4b3c7f58b02efc0d6d found_checked=1 accepted=0
+1: 
+1: CHECK commit with missing preview fingerprint is refused with zero writes
+1: pdf-commit-wrong 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: STATUS 11
+1: MESSAGE Commit requires the full SHA-256 fingerprint of the previewed file
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=cc8ad86c3f8db5e296e003ef71deb2e7cce5f96b7a92ae4b3c7f58b02efc0d6d found_checked=1 accepted=0
+1: 
+1: CHECK commit with wrong preview fingerprint is refused with zero writes
+1: changed-title-confirmation 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: STATUS 11
+1: MESSAGE Commit requires the full SHA-256 fingerprint of the previewed file
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=aa7451830adca75da7b402a9e9efac195c96ccc70140705223c65526f3fb7de6 found_checked=1 accepted=0
+1: 
+1: CHECK preview confirmation binds header metadata as well as retained head wires
+1: pdf-preview-cancel 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: STATUS 7
+1: MESSAGE Item callback cancelled; any reported commit retained
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK cancelled preview exposes no validated fingerprint and writes nothing
+1: input-budget-1 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 5
+1: MESSAGE Input exceeds configured byte budget
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK input byte budget refusal 1 writes nothing
+1: input-budget-67108865 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 1
+1: MESSAGE Invalid path, original book identity or byte budget
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK input byte budget refusal 67108865 writes nothing
+1: pdf-commit-cancel 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: ITEM 0 outcome=3 found=1 committed=1 created=1 duplicate=0
+1: ITEM 1 outcome=3 found=1 committed=1 created=1 duplicate=0
+1: STATUS 7
+1: MESSAGE Item callback cancelled; any reported commit retained
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=4 would_duplicate=0 created=2 duplicates=0 committed=2 next_index=2 source_bytes=8845 fingerprint=cc8ad86c3f8db5e296e003ef71deb2e7cce5f96b7a92ae4b3c7f58b02efc0d6d found_checked=1 accepted=0
+1: 
+1: CHECK cancel keeps earlier commits and reports next_index
+1: CHECK only the two committed heads (plus the book) are stored after cancel
+1: pdf-commit-resume 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: ITEM 2 outcome=0 found=3 committed=1 created=1 duplicate=0
+1: ITEM 3 outcome=3 found=0 committed=1 created=1 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=2 would_duplicate=2 created=2 duplicates=0 committed=2 next_index=4 source_bytes=8845 fingerprint=cc8ad86c3f8db5e296e003ef71deb2e7cce5f96b7a92ae4b3c7f58b02efc0d6d found_checked=1 accepted=0
+1: 
+1: CHECK resume from next_index completes the import
+1: CHECK receiver holds exactly the exported head bytes plus the book, no forged ancestor
+1: CHECK real receiving graph is reported per item (missing parents are not forged)
+1: CHECK commit callbacks preserve preflight FOUND NULL and deletion classifications
+1: pdf-commit-repeat 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: ITEM 0 outcome=1 found=1 committed=1 created=0 duplicate=1
+1: ITEM 1 outcome=1 found=1 committed=1 created=0 duplicate=1
+1: ITEM 2 outcome=1 found=3 committed=1 created=0 duplicate=1
+1: ITEM 3 outcome=1 found=0 committed=1 created=0 duplicate=1
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=0 would_duplicate=4 created=0 duplicates=4 committed=4 next_index=4 source_bytes=8845 fingerprint=cc8ad86c3f8db5e296e003ef71deb2e7cce5f96b7a92ae4b3c7f58b02efc0d6d found_checked=1 accepted=0
+1: 
+1: CHECK repeating the import is an exact duplicate with no history change
+1: CHECK remote receive creates no outbox rows
+1: CHECK typed NULL record stored byte-identical
+1: make-store raw <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\recv-neg.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\pdf.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK raw receiver neg
+1: negative-unknown-format-version 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Unknown raw3 export format version
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: unknown format version rejected with zero writes
+1: negative-commit-unknown-format-version 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Unknown raw3 export format version
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: unknown format version writes nothing
+1: negative-unknown-format-name 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Not a raw3 portable export (format name differs)
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: unknown format name rejected with zero writes
+1: negative-commit-unknown-format-name 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Not a raw3 portable export (format name differs)
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: unknown format name writes nothing
+1: negative-unknown-module-version 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Unknown raw3 module version
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: unknown module version rejected with zero writes
+1: negative-commit-unknown-module-version 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Unknown raw3 module version
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: unknown module version writes nothing
+1: negative-NULL-changed-to-allocated-empty 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: ITEM 0 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: ITEM 1 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: STATUS 4
+1: MESSAGE Location summary differs from the exact wire
+1: REVISION 0 RS 0 LINE 4 ITEM_INDEX 2
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: NULL changed to allocated empty rejected with zero writes
+1: negative-commit-NULL-changed-to-allocated-empty 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Location summary differs from the exact wire
+1: REVISION 0 RS 0 LINE 4 ITEM_INDEX 2
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: NULL changed to allocated empty writes nothing
+1: negative-size-changed 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Location summary differs from the exact wire
+1: REVISION 0 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: size changed rejected with zero writes
+1: negative-commit-size-changed 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Location summary differs from the exact wire
+1: REVISION 0 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: size changed writes nothing
+1: negative-wire-edited-keeps-sha 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Public raw wire validation rejected input
+1: REVISION 6 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: wire edited keeps sha rejected with zero writes
+1: negative-commit-wire-edited-keeps-sha 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Public raw wire validation rejected input
+1: REVISION 6 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: wire edited keeps sha writes nothing
+1: negative-sha-changed 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Public raw wire validation rejected input
+1: REVISION 6 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: sha changed rejected with zero writes
+1: negative-commit-sha-changed 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Public raw wire validation rejected input
+1: REVISION 6 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: sha changed writes nothing
+1: negative-source-bytes-differ 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 9
+1: MESSAGE Original byte length differs from the target store
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: source bytes differ rejected with zero writes
+1: negative-commit-source-bytes-differ 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 9
+1: MESSAGE Original byte length differs from the target store
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: source bytes differ writes nothing
+1: negative-source-bytes-null 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 9
+1: MESSAGE Export carries no original byte length
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: source bytes null rejected with zero writes
+1: negative-commit-source-bytes-null 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 9
+1: MESSAGE Export carries no original byte length
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: source bytes null writes nothing
+1: negative-other-book-key 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 9
+1: MESSAGE Header does not match host-confirmed original book identity
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: other book key rejected with zero writes
+1: negative-commit-other-book-key 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 9
+1: MESSAGE Header does not match host-confirmed original book identity
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: other book key writes nothing
+1: negative-footer-count 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: ITEM 0 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: ITEM 1 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 4
+1: MESSAGE Footer head count mismatch
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: footer count rejected with zero writes
+1: negative-commit-footer-count 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Footer head count mismatch
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: footer count writes nothing
+1: negative-truncated-before-footer 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: ITEM 0 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: ITEM 1 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 4
+1: MESSAGE Unexpected JSON token, duplicate/unknown key or truncated input
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: truncated before footer rejected with zero writes
+1: negative-commit-truncated-before-footer 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Unexpected JSON token, duplicate/unknown key or truncated input
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: truncated before footer writes nothing
+1: negative-trailing-data-after-footer 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: ITEM 0 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: ITEM 1 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 4
+1: MESSAGE Data after footer
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: trailing data after footer rejected with zero writes
+1: negative-commit-trailing-data-after-footer 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Data after footer
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: trailing data after footer writes nothing
+1: negative-location-of-another-head 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Location summary differs from the exact wire
+1: REVISION 0 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: location of another head rejected with zero writes
+1: negative-commit-location-of-another-head 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 4
+1: MESSAGE Location summary differs from the exact wire
+1: REVISION 0 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: location of another head writes nothing
+1: negative-unknown-source-anchor-version-4 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Public raw wire validation rejected input
+1: REVISION 4 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative: unknown source anchor version 4 rejected with zero writes
+1: negative-commit-unknown-source-anchor-version-4 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Public raw wire validation rejected input
+1: REVISION 4 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK negative commit: unknown source anchor version 4 writes nothing
+1: make-store raw <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\recv-collide.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\pdf.json <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\collide-wire.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: MADE 2
+1: 
+1: CHECK collision receiver seeded
+1: collision 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 6
+1: MESSAGE Existing revision ID has different exact wire
+1: REVISION 7 RS 0 LINE 2 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK same ID with different bytes is rejected in preflight
+1: required-no-document 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: ITEM 0 outcome=0 found=2 committed=0 created=0 duplicate=0
+1: ITEM 1 outcome=0 found=2 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=0 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=0 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=0 unresolved=2 null_preserved=1 would_create=4 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=cc8ad86c3f8db5e296e003ef71deb2e7cce5f96b7a92ae4b3c7f58b02efc0d6d found_checked=1 accepted=0
+1: 
+1: CHECK without a public document nothing is FOUND
+1: required-no-callback 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: STATUS 1
+1: MESSAGE A public FOUND resolve callback is required (or ALREADY_VERIFIED must be explicit)
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK required policy without a callback is refused
+1: make-store raw <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\recv-ambiguous.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\ambiguous.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK raw receiver ambiguous
+1: ambiguous-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 ambiguous 6 2 ambiguous_state=2
+1: ITEM 0 outcome=0 found=2 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=1 annotations=1 head_wires=1 omitted=0 found=0 unresolved=1 null_preserved=0 would_create=1 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=800 fingerprint=9c7d2ba2e38a961b071f554c38782859327d798225cb00aa1a6108e6a33f7581 found_checked=1 accepted=0
+1: 
+1: CHECK ambiguous reflow selector is not a public FOUND (offsets never break the tie)
+1: ambiguous-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 ambiguous 6 2 ambiguous_state=2
+1: STATUS 10
+1: MESSAGE At least one head is not a public FOUND; nothing was written
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=1 annotations=1 head_wires=1 omitted=0 found=0 unresolved=1 null_preserved=0 would_create=1 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=800 fingerprint=9c7d2ba2e38a961b071f554c38782859327d798225cb00aa1a6108e6a33f7581 found_checked=1 accepted=0
+1: 
+1: CHECK unresolved file commits nothing
+1: make-store raw <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\recv-txt.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\txt.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK raw receiver txt
+1: txt-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 reflow 0 1
+1: ITEM 0 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 reflow 0 1
+1: ITEM 1 outcome=0 found=1 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 4 ITEM_INDEX 2
+1: STATS validated=1 annotations=2 head_wires=2 omitted=0 found=2 unresolved=0 null_preserved=0 would_create=2 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=70 fingerprint=582544b36d1da789f0329f592b490d964820e40f9e1f04c4a4a995931a81747c found_checked=1 accepted=0
+1: 
+1: CHECK anchor1 and anchor2 resolve FOUND through the public SDK
+1: txt-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 reflow 0 1
+1: RESOLVE 1 reflow 0 1
+1: ITEM 0 outcome=0 found=1 committed=1 created=1 duplicate=0
+1: ITEM 1 outcome=0 found=1 committed=1 created=1 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 4 ITEM_INDEX 2
+1: STATS validated=1 annotations=2 head_wires=2 omitted=0 found=2 unresolved=0 null_preserved=0 would_create=2 would_duplicate=0 created=2 duplicates=0 committed=2 next_index=2 source_bytes=70 fingerprint=582544b36d1da789f0329f592b490d964820e40f9e1f04c4a4a995931a81747c found_checked=1 accepted=0
+1: 
+1: CHECK anchor1/anchor2 heads stored byte-identical
+1: make-store raw <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\recv-pdf2.sqlite <workspace>\build\dfinal-c-models-followup\consumer\results\exchange-apj5k0jq\raw\books\pdf2.json 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS 
+1: PASS 
+1: MADE 1
+1: 
+1: CHECK raw receiver pdf2
+1: pdf2-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: ITEM 0 outcome=0 found=4 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=1 annotations=1 head_wires=1 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=1 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=b6290dec0559f84229b9478725fac67ad03e57c5c30b1402c1dbb8ae87178431 found_checked=0 accepted=0
+1: 
+1: CHECK ALREADY_VERIFIED is reported as not checked
+1: pdf2-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: ITEM 0 outcome=0 found=4 committed=1 created=1 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=1 annotations=1 head_wires=1 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=1 would_duplicate=0 created=1 duplicates=0 committed=1 next_index=1 source_bytes=8845 fingerprint=b6290dec0559f84229b9478725fac67ad03e57c5c30b1402c1dbb8ae87178431 found_checked=0 accepted=0
+1: 
+1: CHECK allocated-empty head stored byte-identical
+1: empty-file-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unexpected JSON token, duplicate/unknown key or truncated input
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed empty-file: preview rejects with no confirmed digest or old-data changes
+1: empty-file-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unexpected JSON token, duplicate/unknown key or truncated input
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed empty-file: commit rejects with no confirmed digest or old-data changes
+1: missing-final-LF-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=1 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=1 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=1 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=1 found=0 committed=0 created=0 duplicate=0
+1: STATUS 4
+1: MESSAGE Every complete record must end in LF
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed missing-final-LF: preview rejects with no confirmed digest or old-data changes
+1: missing-final-LF-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: STATUS 4
+1: MESSAGE Every complete record must end in LF
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed missing-final-LF: commit rejects with no confirmed digest or old-data changes
+1: incomplete-footer-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=1 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=1 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=1 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=1 found=0 committed=0 created=0 duplicate=0
+1: STATUS 4
+1: MESSAGE Incomplete export footer
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed incomplete-footer: preview rejects with no confirmed digest or old-data changes
+1: incomplete-footer-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: RESOLVE 1 fixed 0 1
+1: STATUS 4
+1: MESSAGE Incomplete export footer
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed incomplete-footer: commit rejects with no confirmed digest or old-data changes
+1: duplicate-header-key-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unknown, duplicate, missing or reordered G05 field
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed duplicate-header-key: preview rejects with no confirmed digest or old-data changes
+1: duplicate-header-key-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unknown, duplicate, missing or reordered G05 field
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed duplicate-header-key: commit rejects with no confirmed digest or old-data changes
+1: duplicate-annotation-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=1 found=1 committed=0 created=0 duplicate=0
+1: STATUS 4
+1: MESSAGE Duplicate or unordered annotation ID
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed duplicate-annotation: preview rejects with no confirmed digest or old-data changes
+1: duplicate-annotation-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: STATUS 4
+1: MESSAGE Duplicate or unordered annotation ID
+1: REVISION 0 RS 0 LINE 3 ITEM_INDEX 1
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed duplicate-annotation: commit rejects with no confirmed digest or old-data changes
+1: invalid-UTF8-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE String is not non-NUL scalar UTF-8
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed invalid-UTF8: preview rejects with no confirmed digest or old-data changes
+1: invalid-UTF8-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE String is not non-NUL scalar UTF-8
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed invalid-UTF8: commit rejects with no confirmed digest or old-data changes
+1: raw-NUL-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Truncated string or unescaped control
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed raw-NUL: preview rejects with no confirmed digest or old-data changes
+1: raw-NUL-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Truncated string or unescaped control
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed raw-NUL: commit rejects with no confirmed digest or old-data changes
+1: escaped-NUL-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE String is not non-NUL scalar UTF-8
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed escaped-NUL: preview rejects with no confirmed digest or old-data changes
+1: escaped-NUL-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE String is not non-NUL scalar UTF-8
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed escaped-NUL: commit rejects with no confirmed digest or old-data changes
+1: unpaired-surrogate-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unpaired high surrogate
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed unpaired-surrogate: preview rejects with no confirmed digest or old-data changes
+1: unpaired-surrogate-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unpaired high surrogate
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed unpaired-surrogate: commit rejects with no confirmed digest or old-data changes
+1: Markdown-as-JSONL-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unexpected JSON token, duplicate/unknown key or truncated input
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed Markdown-as-JSONL: preview rejects with no confirmed digest or old-data changes
+1: Markdown-as-JSONL-commit 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: STATUS 4
+1: MESSAGE Unexpected JSON token, duplicate/unknown key or truncated input
+1: REVISION 0 RS 0 LINE 0 ITEM_INDEX 0
+1: STATS validated=0 annotations=0 head_wires=0 omitted=0 found=0 unresolved=0 null_preserved=0 would_create=0 would_duplicate=0 created=0 duplicates=0 committed=0 next_index=0 source_bytes=0 fingerprint= found_checked=0 accepted=0
+1: 
+1: CHECK malformed Markdown-as-JSONL: commit rejects with no confirmed digest or old-data changes
+1: unicode-title-preview 0 PASS installed C ABI constants and argument contract
+1: SDK 3.42.0
+1: PASS open store 
+1: PASS same real PDF size
+1: PASS 
+1: PASS same page-1 route
+1: PASS 
+1: PASS actual PDF public text contains NUL
+1: PASS 
+1: PASS actual zero point suffix contains NUL
+1: PASS 
+1: PASS actual nonempty range exact contains NUL
+1: PASS 
+1: PASS 
+1: PASS 
+1: PASS 
+1: RESOLVE 0 fixed 0 1
+1: ITEM 0 outcome=1 found=1 committed=0 created=0 duplicate=0
+1: RESOLVE 1 fixed 0 1
+1: ITEM 1 outcome=1 found=1 committed=0 created=0 duplicate=0
+1: ITEM 2 outcome=1 found=3 committed=0 created=0 duplicate=0
+1: ITEM 3 outcome=1 found=0 committed=0 created=0 duplicate=0
+1: STATUS 0
+1: MESSAGE 
+1: REVISION 0 RS 0 LINE 6 ITEM_INDEX 4
+1: STATS validated=1 annotations=4 head_wires=4 omitted=4 found=2 unresolved=0 null_preserved=1 would_create=0 would_duplicate=4 created=0 duplicates=0 committed=0 next_index=0 source_bytes=8845 fingerprint=22b5b48a3891be3b6fdc48b3ab061352454d5f11db8147d1f136743a37c16cee found_checked=1 accepted=0
+1: 
+1: CHECK valid CJK and supplementary Unicode title previews without writes
+1: DFINAL-C annotation model: 185 checks, passed=True
+1/4 Test #1: dfinal-c-annotation-exchange-model .....   Passed    4.92 sec
+test 2
+    Start 2: dfinal-c-android-abi-inspection
+
+2: Test command: C:\Python314\python.exe "<workspace>/tests/dfinal_c/check_android_abi.py"
+2: Working Directory: <workspace>/build/dfinal-c-models-followup/consumer
+2: Test timeout computed to be: 10000000
+2: x86_64: valid accepted
+2: x86_64: wrong-machine rejected
+2: x86_64: extra-abi rejected
+2: x86_64: missing-library rejected
+2: arm64-v8a: valid accepted
+2: arm64-v8a: wrong-machine rejected
+2: arm64-v8a: extra-abi rejected
+2: arm64-v8a: missing-library rejected
+2: 8 Android APK ABI checks passed (synthetic files; no device execution)
+2/4 Test #2: dfinal-c-android-abi-inspection ........   Passed    0.29 sec
+test 3
+    Start 3: dfinal-c-installed-sdk-version-guard
+
+3: Test command: C:\Python314\python.exe "<workspace>/tests/dfinal_c/check_version_guard.py" "--prefixes" "<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage"
+3: Working Directory: <workspace>/build/dfinal-c-models-followup/consumer
+3: Test timeout computed to be: 10000000
+3: old-literal: accepted
+3: current-alias: accepted
+3: wrong-version: rejected at version guard
+3: missing-version: rejected at version guard
+3: missing-include: rejected at version guard
+3: 5 installed SDK version guard checks passed
+3/4 Test #3: dfinal-c-installed-sdk-version-guard ...   Passed    9.44 sec
+test 4
+    Start 4: dfinal-c-product-catalog-upgrade
+
+4: Test command: <workspace>\build\dfinal-c-models-followup\consumer\dfinal-c-catalog-upgrade.exe "<workspace>/tests/dfinal_c/../../apps/reader/store/001_catalog.sql" "<workspace>/tests/dfinal_c/../../apps/reader/store/002_originals.sql" "<workspace>/build/dfinal-c-models-followup/consumer"
+4: Working Directory: <workspace>/build/dfinal-c-models-followup/consumer
+4: Test timeout computed to be: 10000000
+4: product schema 1 -> 3: failure rollback, metadata/mappings/organization/revisions/outbox, installed API and reopen passed
+4: product schema 2 -> 3: failure rollback, metadata/mappings/organization/revisions/outbox/original reference, installed API and reopen passed
+4: 541 product catalog upgrade checks passed
+4/4 Test #4: dfinal-c-product-catalog-upgrade .......   Passed    0.29 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =  14.96 sec
+models exit=0

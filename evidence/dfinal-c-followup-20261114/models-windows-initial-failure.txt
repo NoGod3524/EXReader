@@ -1,0 +1,198 @@
+RUN cmake -S apps/reader/store/native -B <workspace>\build\dfinal-c-models-followup\product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON -DFETCHCONTENT_SOURCE_DIR_READER_CATALOG_SQLITE_SOURCE=<workspaces>\exr-build-cf112\_deps\sqlite-src
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (3.8s)
+-- Generating done (0.2s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    EXR_READER_SELECTOR_BYTES_CANDIDATE
+    EXR_SDK
+    READER_ANNOTATION_IMPORT_BUILD
+    READER_PRODUCT_PREFIX
+
+
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/product
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\product --parallel 4
+[1/12] Building C object CMakeFiles/reader-originals-check.dir/C_/<workspace>/tests/reader_catalog/originals_check.c.obj
+[2/12] Building C object CMakeFiles/reader_catalog.dir/catalog.c.obj
+[3/12] Building C object CMakeFiles/reader-catalog-check.dir/C_/<workspace>/tests/reader_catalog/native_catalog_check.c.obj
+[4/12] Building CXX object CMakeFiles/reader-original-import-check.dir/C_/<workspace>/tests/reader_catalog/original_import_check.cpp.obj
+[5/12] Building CXX object CMakeFiles/reader_original_import.dir/C_/<workspace>/apps/reader/original-import/original_import.cpp.obj
+[6/12] Building C object CMakeFiles/reader_catalog_sqlite.dir/C_/<workspaces>/exr-build-cf112/_deps/sqlite-src/sqlite3.c.obj
+[7/12] Linking C static library libreader_catalog_sqlite.a
+[8/12] Linking C static library libreader_catalog.a
+[9/12] Linking CXX static library libreader_original_import.a
+[10/12] Linking C executable reader-originals-check.exe
+[11/12] Linking C executable reader-catalog-check.exe
+[12/12] Linking CXX executable reader-original-import-check.exe
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\product
+-- Install configuration: "Release"
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_catalog.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_catalog_sqlite.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/exreader-product/catalog.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/exreader-product/sqlite3.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/001_catalog.sql
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/002_originals.sql
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/003_original_staging.sql
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/share/exreader-product/sqlite-public-domain.txt
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogTargets-release.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfig.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderProductCatalog/EXReaderProductCatalogConfigVersion.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_original_import.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/exreader-product/original_import.h
+RUN cmake -S apps/reader/revisions -B <workspace>\build\dfinal-c-models-followup\revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (3.9s)
+-- Generating done (0.1s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    EXR_SDK
+    READER_ANNOTATION_IMPORT_BUILD
+
+
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/revisions
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\revisions --parallel 4
+[1/5] Building CXX object CMakeFiles/reader_revisions.dir/src/organization_projection.cpp.obj
+[2/5] Building C object CMakeFiles/reader_revision_hash.dir/C_/<workspace>/extras/opds/src/opds_core.c.obj
+[3/5] Linking C static library libreader_revision_hash.a
+[4/5] Building CXX object CMakeFiles/reader_revisions.dir/src/revisions.cpp.obj
+[5/5] Linking CXX static library libreader_revisions.a
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\revisions
+-- Install configuration: "Release"
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_revisions.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_revision_hash.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_revisions.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_projection.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets-release.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsConfig.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsConfigVersion.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_selector_bytes_detail.h
+RUN cmake -S apps/reader/reading-state -B <workspace>\build\dfinal-c-models-followup\reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (3.1s)
+-- Generating done (0.1s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    READER_ANNOTATION_IMPORT_BUILD
+    READER_PRODUCT_PREFIX
+
+
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/reading-state
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\reading-state --parallel 4
+[1/4] Building CXX object CMakeFiles/reader_reading_state.dir/src/reading_resolve.cpp.obj
+[2/4] Building CXX object CMakeFiles/reader_reading_state_codec.dir/src/reading_state.cpp.obj
+[3/4] Linking CXX static library libreader_reading_state_codec.a
+[4/4] Linking CXX static library libreader_reading_state.a
+RUN cmake --install <workspace>\build\dfinal-c-models-followup\reading-state
+-- Install configuration: "Release"
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_reading_state.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/libreader_reading_state_codec.a
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/include/reader_reading_state.h
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateTargets-release.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateConfig.cmake
+-- Installing: <workspace>/build/dfinal-c-models-followup/stage/lib/cmake/EXReaderReadingState/EXReaderReadingStateConfigVersion.cmake
+RUN cmake -S apps/reader/annotation-export -B <workspace>\build\dfinal-c-models-followup\export -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DCMAKE_PREFIX_PATH=<workspace>\build\dfinal-c-models-followup\stage;<workspace>\build\dfinal-c-stage -DREADER_PRODUCT_PREFIX=<workspace>\build\dfinal-c-models-followup\stage -DEXR_SDK=<workspace>\build\dfinal-c-stage -DEXR_READER_SELECTOR_BYTES_CANDIDATE=ON -DREADER_ANNOTATION_IMPORT_BUILD=ON
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/c++.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Configuring done (3.3s)
+-- Generating done (0.1s)
+CMake Warning (unused-cli):
+  Manually-specified variables were not used by the project:
+
+    EXR_SDK
+    READER_ANNOTATION_IMPORT_BUILD
+    READER_PRODUCT_PREFIX
+
+
+-- Build files have been written to: <workspace>/build/dfinal-c-models-followup/export
+RUN cmake --build <workspace>\build\dfinal-c-models-followup\export --parallel 4
+[1/2] Building CXX object CMakeFiles/reader_annotation_export.dir/src/annotation_export.cpp.obj
+FAILED: [code=1] CMakeFiles/reader_annotation_export.dir/src/annotation_export.cpp.obj 
+<app-data>\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\c++.exe -DEXR_READER_SELECTOR_BYTES_CANDIDATE=1 -IC:<workspace>/apps/reader/annotation-export/include -isystem <workspace>/build/dfinal-c-stage/include -isystem <workspace>/build/dfinal-c-models-followup/stage/include -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -Werror -MD -MT CMakeFiles/reader_annotation_export.dir/src/annotation_export.cpp.obj -MF CMakeFiles\reader_annotation_export.dir\src\annotation_export.cpp.obj.d -o CMakeFiles/reader_annotation_export.dir/src/annotation_export.cpp.obj -c <workspace>/apps/reader/annotation-export/src/annotation_export.cpp
+<workspace>/apps/reader/annotation-export/src/annotation_export.cpp:18:9: error: 'NOMINMAX' redefined [-Werror]
+   18 | #define NOMINMAX
+      |         ^~~~~~~~
+In file included from <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/include/c++/16.2.0/x86_64-w64-mingw32/bits/c++config.h:733,
+                 from <app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/include/c++/16.2.0/cstddef:51,
+                 from <workspace>/build/dfinal-c-models-followup/stage/include/reader_selector_bytes_detail.h:5,
+                 from <workspace>/apps/reader/annotation-export/src/annotation_export.cpp:5:
+<app-data>/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/include/c++/16.2.0/x86_64-w64-mingw32/bits/os_defines.h:45:9: note: this is the location of the previous definition
+   45 | #define NOMINMAX 1
+      |         ^~~~~~~~
+cc1plus.exe: all warnings being treated as errors
+ninja: build stopped: subcommand failed.
+Traceback (most recent call last):
+  File "<workspace>\tools\run_dfinal_c_models.py", line 44, in <module>
+    main()
+    ~~~~^^
+  File "<workspace>\tools\run_dfinal_c_models.py", line 34, in main
+    run('cmake', '--build', work / name, '--parallel', '4')
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>\tools\run_dfinal_c_models.py", line 22, in run
+    subprocess.run(list(map(str, command)), cwd=ROOT, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['cmake', '--build', '<workspace>\\build\\dfinal-c-models-followup\\export', '--parallel', '4']' returned non-zero exit status 1.
+models exit=1

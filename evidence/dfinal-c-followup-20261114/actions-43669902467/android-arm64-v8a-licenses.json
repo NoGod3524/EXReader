@@ -1,0 +1,832 @@
+{
+  "schema": 1,
+  "profile": "reading-library",
+  "scope": "Materials check against the registered manifest: sources, pins, enable conditions, linked archives and installed license texts. Not a legal opinion.",
+  "legal_judgment": "not performed",
+  "materials_check_passed": true,
+  "failures": [],
+  "pending": [],
+  "mandatory_missing": [],
+  "release_ready": true,
+  "audio_switches": {
+    "EXR_ENABLE_AUDIO": "OFF",
+    "EXR_ENABLE_MP3": "OFF",
+    "EXR_ENABLE_AAC": "OFF"
+  },
+  "layers": [
+    "base",
+    "graphics",
+    "text",
+    "doc",
+    "formats",
+    "layout",
+    "render",
+    "pdf",
+    "library"
+  ],
+  "cache_switches": {
+    "EXR_BUILD_FUZZ": "OFF",
+    "EXR_BUILD_JNI": "OFF",
+    "EXR_BUILD_MANIFEST": "ON",
+    "EXR_BUILD_SHARED_COMPAT": "OFF",
+    "EXR_BUILD_TESTS": "OFF",
+    "EXR_BUILD_TEXT_INDEX": "OFF",
+    "EXR_BUILD_TOOLS": "OFF",
+    "EXR_EDIT_MODEL_SOURCE": "OFF",
+    "EXR_ENABLE_AAC": "OFF",
+    "EXR_ENABLE_AUDIO": "OFF",
+    "EXR_ENABLE_ICC": "ON",
+    "EXR_ENABLE_IMAGE_AVIF": "ON",
+    "EXR_ENABLE_IMAGE_TIFF": "ON",
+    "EXR_ENABLE_IMAGE_WEBP": "ON",
+    "EXR_ENABLE_LCP": "ON",
+    "EXR_ENABLE_LIBRARY": "ON",
+    "EXR_ENABLE_MP3": "OFF",
+    "EXR_ENABLE_PDF": "ON",
+    "EXR_ENABLE_PDF_CRYPTO": "ON",
+    "EXR_ENABLE_PDF_EDIT": "OFF",
+    "EXR_ENABLE_PDF_JPX": "ON",
+    "EXR_ENABLE_TEXT_INDEX": "OFF",
+    "EXR_PERL_EXECUTABLE": "OFF",
+    "EXR_REPRODUCIBLE": "OFF",
+    "EXR_SANITIZE": "OFF"
+  },
+  "fetched_dependencies": [
+    "expat",
+    "freetype",
+    "lcms",
+    "libaom",
+    "libavif",
+    "libtiff",
+    "libwebp",
+    "mbedtls",
+    "miniz",
+    "openjpeg",
+    "sqlite",
+    "stb",
+    "zlib"
+  ],
+  "linked_vendor_archives": [
+    "aom",
+    "avif",
+    "expat",
+    "exr_crypto",
+    "exr_jpx",
+    "exr_lcms",
+    "exr_sqlite",
+    "freetype",
+    "miniz",
+    "sharpyuv",
+    "tiff",
+    "webp",
+    "webpdemux",
+    "zlibstatic"
+  ],
+  "components": [
+    {
+      "id": "exreader",
+      "name": "EXReader (first party)",
+      "version": "repository HEAD",
+      "source": "repository",
+      "archive_sha256": null,
+      "license": "MIT",
+      "when": "",
+      "linkage": "EXReader component archives",
+      "active": true,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "repository",
+          "source": "LICENSE",
+          "installed": "LICENSE",
+          "expected": true,
+          "pinned_sha256": null,
+          "present": true,
+          "bytes": 1078,
+          "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+        },
+        {
+          "origin": "repository",
+          "source": "LICENSE",
+          "installed": "share/exreader/LICENSE",
+          "expected": true,
+          "pinned_sha256": null,
+          "present": true,
+          "bytes": 1078,
+          "sha256": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+        },
+        {
+          "origin": "repository",
+          "source": "THIRD_PARTY_NOTICES.md",
+          "installed": "THIRD_PARTY_NOTICES.md",
+          "expected": true,
+          "pinned_sha256": null,
+          "present": true,
+          "bytes": 21272,
+          "sha256": "459be995165743d141ed3c1adae6bbfade0d308f78b1d4a3e1c839ac24ff94db"
+        },
+        {
+          "origin": "repository",
+          "source": "THIRD_PARTY_NOTICES.md",
+          "installed": "share/exreader/THIRD_PARTY_NOTICES.md",
+          "expected": true,
+          "pinned_sha256": null,
+          "present": true,
+          "bytes": 21272,
+          "sha256": "459be995165743d141ed3c1adae6bbfade0d308f78b1d4a3e1c839ac24ff94db"
+        }
+      ],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "freetype",
+      "name": "FreeType",
+      "version": "VER-2-15-0",
+      "source": "https://codeload.github.com/freetype/freetype/tar.gz/refs/tags/VER-2-15-0",
+      "archive_sha256": "87c7f1f8699b91e89f773f7dcfa505b044e1dae67f62a55d4e29c3afdcac4fb8",
+      "license": "FTL OR GPL-2.0-only; FTL selected in THIRD_PARTY_NOTICES.md",
+      "when": "",
+      "linkage": "private static archive",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "freetype"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/freetype-src/docs/FTL.TXT",
+          "installed": "share/exreader/licenses/freetype/FTL.TXT",
+          "expected": true,
+          "pinned_sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f",
+          "present": true,
+          "bytes": 6743,
+          "sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f"
+        },
+        {
+          "origin": "upstream",
+          "source": "_deps/freetype-src/LICENSE.TXT",
+          "installed": "share/exreader/licenses/freetype/LICENSE.TXT",
+          "expected": true,
+          "pinned_sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b",
+          "present": true,
+          "bytes": 2149,
+          "sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE.TXT",
+          "sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b"
+        }
+      ]
+    },
+    {
+      "id": "expat",
+      "name": "Expat",
+      "version": "R_2_9_0",
+      "source": "https://codeload.github.com/libexpat/libexpat/tar.gz/refs/tags/R_2_9_0",
+      "archive_sha256": "6e8ce7b52ebbaa423c59becc7cf1e6875c42e49228c062ac8123c10e700cec27",
+      "license": "MIT",
+      "when": "",
+      "linkage": "private static archive",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "expat"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/expat-src/expat/COPYING",
+          "installed": "share/exreader/licenses/expat/COPYING",
+          "expected": true,
+          "pinned_sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87",
+          "present": true,
+          "bytes": 1144,
+          "sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87"
+        },
+        {
+          "origin": "upstream",
+          "source": "_deps/expat-src/COPYING",
+          "installed": "share/exreader/licenses/expat/upstream-root/COPYING",
+          "expected": true,
+          "pinned_sha256": "73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e",
+          "present": true,
+          "bytes": 1144,
+          "sha256": "73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "COPYING",
+          "sha256": "73cc92f80889ab23c7287b1a11dd50fdec190c3f26ebe5938c579043817d651e"
+        },
+        {
+          "path": "expat/COPYING",
+          "sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87"
+        }
+      ]
+    },
+    {
+      "id": "miniz",
+      "name": "miniz",
+      "version": "3.1.2",
+      "source": "https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2",
+      "archive_sha256": "98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb",
+      "license": "MIT",
+      "when": "",
+      "linkage": "private static archive",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "miniz"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/miniz-src/LICENSE",
+          "installed": "share/exreader/licenses/miniz/LICENSE",
+          "expected": true,
+          "pinned_sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3",
+          "present": true,
+          "bytes": 1184,
+          "sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3"
+        }
+      ]
+    },
+    {
+      "id": "stb",
+      "name": "stb_image",
+      "version": "commit 2c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "source": "https://codeload.github.com/nothings/stb/tar.gz/2c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "archive_sha256": "9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515",
+      "license": "MIT OR public domain; MIT selected in THIRD_PARTY_NOTICES.md",
+      "when": "",
+      "linkage": "header compiled into exr_graphics from a patched private copy",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/stb-src/LICENSE",
+          "installed": "share/exreader/licenses/stb/LICENSE",
+          "expected": true,
+          "pinned_sha256": "bebfe904b14301657e4e5d655c811d51fd31b97c455b9cc2d8600d6bac6cff63",
+          "present": true,
+          "bytes": 2510,
+          "sha256": "bebfe904b14301657e4e5d655c811d51fd31b97c455b9cc2d8600d6bac6cff63"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "bebfe904b14301657e4e5d655c811d51fd31b97c455b9cc2d8600d6bac6cff63"
+        }
+      ]
+    },
+    {
+      "id": "libwebp",
+      "name": "libwebp",
+      "version": "v1.5.0",
+      "source": "https://codeload.github.com/webmproject/libwebp/tar.gz/refs/tags/v1.5.0",
+      "archive_sha256": "668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37",
+      "license": "BSD-3-Clause",
+      "when": "EXR_ENABLE_IMAGE_WEBP",
+      "linkage": "private static archives",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "sharpyuv",
+        "webp",
+        "webpdemux"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/libwebp-src/COPYING",
+          "installed": "share/exreader/licenses/libwebp/COPYING",
+          "expected": true,
+          "pinned_sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf",
+          "present": true,
+          "bytes": 1496,
+          "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+        },
+        {
+          "origin": "upstream",
+          "source": "_deps/libwebp-src/PATENTS",
+          "installed": "share/exreader/licenses/libwebp/PATENTS",
+          "expected": true,
+          "pinned_sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c",
+          "present": true,
+          "bytes": 1436,
+          "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "COPYING",
+          "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf"
+        },
+        {
+          "path": "PATENTS",
+          "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
+        }
+      ]
+    },
+    {
+      "id": "zlib",
+      "name": "zlib",
+      "version": "v1.3.1",
+      "source": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.3.1",
+      "archive_sha256": "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c",
+      "license": "Zlib",
+      "when": "EXR_ENABLE_IMAGE_TIFF",
+      "linkage": "private static archive",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "zlibstatic"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/zlib-src/LICENSE",
+          "installed": "share/exreader/licenses/zlib/LICENSE",
+          "expected": true,
+          "pinned_sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243",
+          "present": true,
+          "bytes": 1002,
+          "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+        }
+      ]
+    },
+    {
+      "id": "libtiff",
+      "name": "libtiff",
+      "version": "v4.7.0",
+      "source": "https://codeload.github.com/libsdl-org/libtiff/tar.gz/refs/tags/v4.7.0",
+      "archive_sha256": "8f568a0dfac2e514074b04d7368c22e8afc1009af29780762a2536fd4d111e16",
+      "license": "libtiff",
+      "when": "EXR_ENABLE_IMAGE_TIFF",
+      "linkage": "private static archive",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "tiff"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/libtiff-src/LICENSE.md",
+          "installed": "share/exreader/licenses/libtiff/LICENSE.md",
+          "expected": true,
+          "pinned_sha256": "0780558a8bfba0af1160ec1ff11ade4f41c0d7deafd6ecfc796b492a788e380d",
+          "present": true,
+          "bytes": 1164,
+          "sha256": "0780558a8bfba0af1160ec1ff11ade4f41c0d7deafd6ecfc796b492a788e380d"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE.md",
+          "sha256": "0780558a8bfba0af1160ec1ff11ade4f41c0d7deafd6ecfc796b492a788e380d"
+        }
+      ]
+    },
+    {
+      "id": "libaom",
+      "name": "libaom",
+      "version": "commit af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "source": "https://codeload.github.com/arthenica/libaom/tar.gz/af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "archive_sha256": "a606215ed62ee1aaffc1360867c637b0ccafbc1a0c1c8430e2412257b8baa62a",
+      "license": "BSD-2-Clause AND AOM Patent License 1.0",
+      "when": "EXR_ENABLE_IMAGE_AVIF",
+      "linkage": "private static archive (decoder only)",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "aom"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/libaom-src/LICENSE",
+          "installed": "share/exreader/licenses/libaom/LICENSE",
+          "expected": true,
+          "pinned_sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2",
+          "present": true,
+          "bytes": 1316,
+          "sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2"
+        },
+        {
+          "origin": "upstream",
+          "source": "_deps/libaom-src/PATENTS",
+          "installed": "share/exreader/licenses/libaom/PATENTS",
+          "expected": true,
+          "pinned_sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61",
+          "present": true,
+          "bytes": 5701,
+          "sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2"
+        },
+        {
+          "path": "PATENTS",
+          "sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61"
+        }
+      ],
+      "observed_version": "3.15.2"
+    },
+    {
+      "id": "libavif",
+      "name": "libavif",
+      "version": "v1.2.0",
+      "source": "https://codeload.github.com/AOMediaCodec/libavif/tar.gz/refs/tags/v1.2.0",
+      "archive_sha256": "2182f4900d1a9617cee89746922a58dd825f2a3547f23907b8d78dc3685f7d8c",
+      "license": "BSD-2-Clause",
+      "when": "EXR_ENABLE_IMAGE_AVIF",
+      "linkage": "private static archive",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "avif"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/libavif-src/LICENSE",
+          "installed": "share/exreader/licenses/libavif/LICENSE",
+          "expected": true,
+          "pinned_sha256": "165abf92cc04b39e80d29cadea7a6a7e8fddf59407d4ad2616507a7ebe8216f9",
+          "present": true,
+          "bytes": 20415,
+          "sha256": "165abf92cc04b39e80d29cadea7a6a7e8fddf59407d4ad2616507a7ebe8216f9"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "165abf92cc04b39e80d29cadea7a6a7e8fddf59407d4ad2616507a7ebe8216f9"
+        }
+      ]
+    },
+    {
+      "id": "mbedtls",
+      "name": "Mbed TLS crypto subset",
+      "version": "mbedtls-3.6.7",
+      "source": "https://codeload.github.com/Mbed-TLS/mbedtls/tar.gz/refs/tags/mbedtls-3.6.7",
+      "archive_sha256": "807f0a1cc7c63b571180e9efeb6236b677e550869eb0442ace33aa9c69055fcc",
+      "license": "Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected in THIRD_PARTY_NOTICES.md",
+      "when": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_CRYPTO",
+      "linkage": "seven upstream sources in exr_crypto; ARC4 adapted from mbedtls-2.28.10 into src/pdf_crypto.c",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "exr_crypto"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/mbedtls-src/LICENSE",
+          "installed": "share/exreader/licenses/mbedtls/LICENSE",
+          "expected": true,
+          "pinned_sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b",
+          "present": true,
+          "bytes": 29852,
+          "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+        }
+      ]
+    },
+    {
+      "id": "openjpeg",
+      "name": "OpenJPEG",
+      "version": "2.5.4",
+      "source": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4",
+      "archive_sha256": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a",
+      "license": "BSD-2-Clause",
+      "when": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_JPX",
+      "linkage": "22 fixed upstream C library sources in the private static exr_jpx archive; thread stubs",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "exr_jpx"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/openjpeg-src/LICENSE",
+          "installed": "share/exreader/licenses/openjpeg/LICENSE",
+          "expected": true,
+          "pinned_sha256": "a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6",
+          "present": true,
+          "bytes": 2112,
+          "sha256": "a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "a6af136f3e15038a666b61f376612a07d9a4e48cb7c01adbf3e33b3f14ab49b6"
+        }
+      ]
+    },
+    {
+      "id": "lcms",
+      "name": "LittleCMS",
+      "version": "lcms2.19.1",
+      "source": "https://codeload.github.com/mm2/Little-CMS/tar.gz/refs/tags/lcms2.19.1",
+      "archive_sha256": "267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709",
+      "license": "MIT",
+      "when": "EXR_ENABLE_ICC",
+      "linkage": "upstream src/cms*.c in exr_lcms",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "exr_lcms"
+      ],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/lcms-src/LICENSE",
+          "installed": "share/exreader/licenses/lcms/LICENSE",
+          "expected": true,
+          "pinned_sha256": "6dbd60437f8ef91d8de1f08ad75882547fd4931bfcc3566a0735f28db1484d31",
+          "present": true,
+          "bytes": 1080,
+          "sha256": "6dbd60437f8ef91d8de1f08ad75882547fd4931bfcc3566a0735f28db1484d31"
+        }
+      ],
+      "upstream_notice_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "6dbd60437f8ef91d8de1f08ad75882547fd4931bfcc3566a0735f28db1484d31"
+        }
+      ]
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite amalgamation",
+      "version": "3.54.0",
+      "source": "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip",
+      "archive_sha256": "68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d",
+      "license": "Public domain",
+      "when": "EXR_ENABLE_LIBRARY|EXR_BUILD_TEXT_INDEX",
+      "linkage": "private static archive",
+      "active": true,
+      "fetched": true,
+      "linked_archives": [
+        "exr_sqlite"
+      ],
+      "files": [
+        {
+          "origin": "repository",
+          "source": "licenses/sqlite-public-domain.txt",
+          "installed": "share/exreader/licenses/sqlite/sqlite-public-domain.txt",
+          "expected": true,
+          "pinned_sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc",
+          "present": true,
+          "bytes": 761,
+          "sha256": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc"
+        }
+      ],
+      "upstream_notice_files": [],
+      "source_statement": {
+        "source": "sqlite3.c",
+        "notice": "licenses/sqlite-public-domain.txt",
+        "source_sha256": "2da161e310ef0aba3465f22a4d12b8a43723236f0942fa76e8aac523c3317243"
+      },
+      "observed_version": "3.54.0"
+    },
+    {
+      "id": "minimp3",
+      "name": "minimp3",
+      "version": "commit ea99364f61c14656440e8d77e9c233ccf3124633",
+      "source": "https://codeload.github.com/lieff/minimp3/tar.gz/ea99364f61c14656440e8d77e9c233ccf3124633",
+      "archive_sha256": "5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34",
+      "license": "CC0-1.0",
+      "when": "EXR_ENABLE_AUDIO&EXR_ENABLE_MP3",
+      "linkage": "header compiled into exr_audio",
+      "active": false,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/minimp3-src/LICENSE",
+          "installed": "share/exreader/licenses/minimp3/LICENSE",
+          "expected": false,
+          "pinned_sha256": null,
+          "present": false
+        }
+      ],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "faad2",
+      "name": "FAAD2",
+      "version": "commit 521d105979795b887ea11e1f36565e97a8fbfc53",
+      "source": "https://codeload.github.com/knik0/faad2/tar.gz/521d105979795b887ea11e1f36565e97a8fbfc53",
+      "archive_sha256": "9284bd9c5ef998f636b233055f4d988aadf0d5a97acdb3109bcb9d4e3c7cfdd8",
+      "license": "GPL-2.0-or-later",
+      "when": "EXR_ENABLE_AUDIO&EXR_ENABLE_AAC",
+      "linkage": "private static archive",
+      "active": false,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "upstream",
+          "source": "_deps/faad2-src/COPYING",
+          "installed": "share/exreader/licenses/faad2/COPYING",
+          "expected": false,
+          "pinned_sha256": null,
+          "present": false
+        },
+        {
+          "origin": "repository",
+          "source": "licenses/faad2-notice.txt",
+          "installed": "share/exreader/licenses/faad2/faad2-notice.txt",
+          "expected": false,
+          "pinned_sha256": null,
+          "present": false
+        }
+      ],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "unicode",
+      "name": "Unicode Character Database derived tables",
+      "version": "17.0.0 and 3.2",
+      "source": "https://www.unicode.org/Public/ (pinned by tools/generate_*.py)",
+      "archive_sha256": null,
+      "license": "Unicode-3.0",
+      "when": "",
+      "linkage": "generated C tables in core and PDF sources",
+      "active": true,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "repository",
+          "source": "tests/fixtures/unicode/LICENSE.txt",
+          "installed": "share/exreader/licenses/unicode/LICENSE.txt",
+          "expected": true,
+          "pinned_sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+          "present": true,
+          "bytes": 1995,
+          "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+        }
+      ],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "argyll-cmyk",
+      "name": "Argyll fallback CMYK profile",
+      "version": "repository data",
+      "source": "src/profiles/default_cmyk.icc.zlib",
+      "archive_sha256": null,
+      "license": "Public domain",
+      "when": "EXR_ENABLE_ICC",
+      "linkage": "embedded generated header in exr_graphics",
+      "active": true,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "repository",
+          "source": "licenses/default-cmyk-profile.txt",
+          "installed": "share/exreader/licenses/default-cmyk-profile.txt",
+          "expected": true,
+          "pinned_sha256": "45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da",
+          "present": true,
+          "bytes": 507,
+          "sha256": "45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da"
+        }
+      ],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "adobe-glyph-list",
+      "name": "Adobe Glyph List and ITC Zapf Dingbats Glyph List",
+      "version": "agl-aglfn commit 4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "source": "https://github.com/adobe-type-tools/agl-aglfn/tree/4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "archive_sha256": null,
+      "license": "BSD-3-Clause",
+      "when": "EXR_ENABLE_PDF",
+      "linkage": "facts in src/pdf_font_data.h",
+      "active": true,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "repository",
+          "source": "licenses/adobe-glyph-list.txt",
+          "installed": "share/exreader/licenses/pdf-font-data/adobe-glyph-list.txt",
+          "expected": true,
+          "pinned_sha256": "c85f2b0da9de3e0a96cb42594708d19f7696945bb185cfd98c262f8f2d6f3aa7",
+          "present": true,
+          "bytes": 1456,
+          "sha256": "c85f2b0da9de3e0a96cb42594708d19f7696945bb185cfd98c262f8f2d6f3aa7"
+        }
+      ],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "pdfjs-data",
+      "name": "PDF.js encoding and metric facts",
+      "version": "pdf.js commit 81525fd446779f0a29003cf06e3ba33751954826",
+      "source": "https://github.com/mozilla/pdf.js/tree/81525fd446779f0a29003cf06e3ba33751954826/src/core",
+      "archive_sha256": null,
+      "license": "Apache-2.0",
+      "when": "EXR_ENABLE_PDF",
+      "linkage": "facts in src/pdf_font_data.h",
+      "active": true,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "repository",
+          "source": "licenses/pdfjs.txt",
+          "installed": "share/exreader/licenses/pdf-font-data/pdfjs.txt",
+          "expected": true,
+          "pinned_sha256": "8d1fb64269e430755e4f12c2eb113d71b4b2a33ad11db0069e09ebb47415ca53",
+          "present": true,
+          "bytes": 10209,
+          "sha256": "8d1fb64269e430755e4f12c2eb113d71b4b2a33ad11db0069e09ebb47415ca53"
+        }
+      ],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "pdf-calculator-names",
+      "name": "PostScript calculator operator names",
+      "version": "PDF 32000-1 table 42",
+      "source": "THIRD_PARTY_NOTICES.md",
+      "archive_sha256": null,
+      "license": "Adobe permission notice",
+      "when": "EXR_ENABLE_PDF",
+      "linkage": "operator names in src/pdf_calculator.c",
+      "active": true,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [],
+      "upstream_notice_files": []
+    },
+    {
+      "id": "noto-test-fonts",
+      "name": "Noto Sans script test fonts (notice only)",
+      "version": "tests/fixtures/wp7",
+      "source": "licenses/noto-sans-test-fonts.txt",
+      "archive_sha256": null,
+      "license": "OFL-1.1",
+      "when": "",
+      "linkage": "none; fonts are not installed",
+      "active": true,
+      "fetched": false,
+      "linked_archives": [],
+      "files": [
+        {
+          "origin": "repository",
+          "source": "licenses/noto-sans-test-fonts.txt",
+          "installed": "share/exreader/licenses/wp7-fonts/noto-sans-test-fonts.txt",
+          "expected": true,
+          "pinned_sha256": "754f0e221aa7d5a915489f3bf1f20fe53ddc35ab2834a4d91656d78f9622de70",
+          "present": true,
+          "bytes": 4383,
+          "sha256": "754f0e221aa7d5a915489f3bf1f20fe53ddc35ab2834a4d91656d78f9622de70"
+        }
+      ],
+      "upstream_notice_files": []
+    }
+  ],
+  "source_sha": "cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+  "ci": {
+    "GITHUB_RUN_ID": "43669902467",
+    "GITHUB_RUN_ATTEMPT": "1"
+  }
+}

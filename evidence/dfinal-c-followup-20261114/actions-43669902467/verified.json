@@ -1,0 +1,58 @@
+{
+  "run": 43669902467,
+  "source": "cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+  "jobs_passed": 4,
+  "artifacts": [
+    {
+      "id": 14143777006,
+      "name": "dfinal-c-android-arm64-v8a-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "bytes": 25133721,
+      "zip_sha256": "b8a7b2d1f0cc5d9b36fe1f27d4f023f3931e0b2a4cdf973ed8ca054bef43ed0f",
+      "checked_files_or_model_assertions": 475,
+      "licenses": {
+        "materials_check_passed": true,
+        "pending": [],
+        "release_ready": true
+      }
+    },
+    {
+      "id": 14143667948,
+      "name": "dfinal-c-models-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "bytes": 278905,
+      "zip_sha256": "f27c5e2d61d1be8c7327ab593cc20dcf2003b6bad91aa5c96857b5e6a28f2b7b",
+      "checked_files_or_model_assertions": 185,
+      "model_tests_passed": [
+        "dfinal-c-android-abi-inspection",
+        "dfinal-c-annotation-exchange-model",
+        "dfinal-c-installed-sdk-version-guard",
+        "dfinal-c-product-catalog-upgrade"
+      ]
+    },
+    {
+      "id": 14143443880,
+      "name": "dfinal-c-iphoneos-arm64-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "bytes": 8971893,
+      "zip_sha256": "9f5f76fcabc62abf52691d8b00ee246abf6c21c5541c60a7f893ec9c05c850fd",
+      "checked_files_or_model_assertions": 474,
+      "licenses": {
+        "materials_check_passed": true,
+        "pending": [],
+        "release_ready": true
+      }
+    },
+    {
+      "id": 14143154386,
+      "name": "dfinal-c-android-arm64-host-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "bytes": 19521873,
+      "zip_sha256": "7fd320d179122072d9c09cc80ae61752f84145bb92ef1a2367f8fb06b250bf58",
+      "checked_files_or_model_assertions": 10,
+      "apk_sha256": "287a55ffd902df3b6d500174ceb5e633f3080fb717af8157c5aff400bdcc7e74",
+      "native_libraries_checked": 4,
+      "apksigner_report_verified": true,
+      "signer_certificate_sha256": "218cf1e2d794371ff7e86a9729cd0d29b8aff4758ec656016664ddce9ab70bac",
+      "host_deployed": false,
+      "physical_device_verified": false
+    }
+  ],
+  "passed": true
+}

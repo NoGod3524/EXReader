@@ -1,0 +1,31 @@
+diff --git a/docs/reader-total-progress/catalog.json b/docs/reader-total-progress/catalog.json
+index bedefd21..98bdf524 100644
+--- a/docs/reader-total-progress/catalog.json
++++ b/docs/reader-total-progress/catalog.json
+@@ -1599,7 +1599,7 @@
+       "title": "iPad：宿主标注文件导入/导出、预览确认及错误拒绝",
+       "state": "pending",
+       "evidence": [],
+-      "note": "D-FINAL-C 审计：docs/reader-total-progress/dfinal-c-audit.md；最近 iPad 宿主候选 40923468266 的 job123625260444 失败。当前 raw3 读写/预览摘要确认/非法拒绝模型164检查及安装版本守卫5检查在 Actions43648272236 通过，日志见 evidence/dfinal-c/actions-43648272236/。缺 iPad 实际系统文件保存/选择、预览/取消/确认、错误拒绝与旧库不变、原件及程序身份的完整证据；预览确认 UI 需真机。"
++      "note": "D-FINAL-C 接续审计：docs/reader-total-progress/dfinal-c-followup-20261114.md；已有 iPad 宿主候选40923468266/job123625260444失败保留。本机 raw3 模型185检查通过，新增非法编码等10类文件各走预览/正确摘要提交拒绝并验证旧库不变，合法中文/emoji预览通过；当前源码 Actions43669902467 与原件核验见报告。缺 iPad 实际系统文件保存/选择、预览/取消/确认、错误UI、原始导出与程序身份的完整宿主证据；H-P01需真机，保持pending。"
+     },
+     {
+       "id": "H.ipad.original_export",
+@@ -1730,7 +1730,7 @@
+       "evidence": [
+         "f06_sdk342_six_packages"
+       ],
+-      "note": "D-FINAL-C 审计：docs/reader-total-progress/dfinal-c-audit.md；F06 仅为历史模拟器安装与构建证据。当前源码 c0b07a69 的 Actions43648272236 三作业成功，Android arm64 SDK473/iOS device arm64 SDK472 个文件散列核对通过，见 evidence/dfinal-c/actions-43648272236/verified.json。缺 Android arm64 宿主 APK、iPhone/iPad 签名部署、真机能力/读屏/性能与两设备闭环；需真机，不授予完整验收。"
++      "note": "D-FINAL-C 接续审计：docs/reader-total-progress/dfinal-c-followup-20261114.md；F06仍仅为历史模拟器安装与构建证据。本轮 Android arm64基础debug宿主打包、移动SDK构建和签名/ABI日志的 Actions43669902467 证据见报告；构建/部署/真机三档分列，保留F11-A01等原待测ID。缺 Android实际安装/启动及完整功能宿主、iPhone/iPad签名宿主和部署、三个真机权限/生命周期/凭据/同步/读屏/同机性能记录与两设备闭环；需真机，保持pending。"
+     },
+     {
+       "id": "F12",
+@@ -1738,7 +1738,7 @@
+       "title": "最终版本升级/旧库兼容、许可/依赖与用户安装/导入/同步说明完备",
+       "state": "pending",
+       "evidence": [],
+-      "note": "D-FINAL-C 审计与安装/升级/导入/同步说明：docs/reader-total-progress/dfinal-c-audit.md、docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md。Actions43648272236 的 schema1–6→7 保留/回滚/复开通过，完整存储套件2765检查、全量CTest580/580通过；许可清单22组件及31负例自检通过。缺最终六端宿主旧数据/产品库/outbox/凭据升级、中断恢复及最终分发包许可/SBOM 核查。独立模块通过不能转授最终版本。"
++      "note": "D-FINAL-C 接续审计及用户说明：docs/reader-total-progress/dfinal-c-followup-20261114.md、docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md。本机全量CTest581/581及独立模型4/4通过；新增product v1/v2→3迁移故障回滚、metadata/组织/revision/outbox/原件引用保留和已安装API复开541检查；schema1–6→7保留回归。当前源码 Actions43669902467 的构建/全量/许可材料原件核验见报告。缺最终六端实际旧宿主数据/凭据/账号升级、中断恢复与最终分发包完整许可/SBOM/字体依赖核查，F12-M01需真机及最终包，保持pending。"
+     }
+   ]
+ }
