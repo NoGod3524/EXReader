@@ -172,7 +172,6 @@ def main():
             activate(813, '词典设置')
             snapshot('vocabulary', 20)
             activate(815, '生词本')
-            activate(815, '词典设置')
             activate(161)
             activate(184)
             snapshot('webdav-account', 24)
