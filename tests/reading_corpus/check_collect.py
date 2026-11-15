@@ -98,6 +98,32 @@ class CollectorProtocol(unittest.TestCase):
                 self.assertEqual(opened.call_count, 1)
                 slept.assert_not_called()
 
+    def test_gutenberg_license_403_uses_foundation_mirror(self):
+        main = 'https://www.gutenberg.org/cache/epub/11/pg11.rdf'
+        mirror = 'https://gutenberg.pglaf.org/cache/epub/11/pg11.rdf'
+        with network([error(403, url=main), response(b'rights', mirror)]) as (opened, slept),                 redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(collect.fetch_license(main, 8), (b'rights', mirror))
+            self.assertEqual([call.args[0].full_url for call in opened.call_args_list], [main, mirror])
+            self.assertEqual(json.loads(printed.getvalue())['license_mirror']['mirror'], mirror)
+
+    def test_license_mirror_is_only_for_gutenberg_403(self):
+        gutenberg = 'https://www.gutenberg.org/cache/epub/11/pg11.rdf'
+        for url, failure in ((URL, error(403)), (gutenberg, error(404, url=gutenberg)),
+                             (gutenberg, error(503, url=gutenberg))):
+            with self.subTest(url=url, code=failure.code), network([failure]) as (opened, slept):
+                with self.assertRaises(urllib.error.HTTPError):
+                    collect.fetch_license(url, 8)
+                self.assertEqual(opened.call_count, 1)
+
+    def test_license_mirror_failure_is_reported(self):
+        main = 'https://www.gutenberg.org/cache/epub/11/pg11.rdf'
+        mirror = 'https://gutenberg.pglaf.org/cache/epub/11/pg11.rdf'
+        with network([error(403, url=main), error(403, url=mirror)]) as (opened, slept),                 redirect_stdout(io.StringIO()):
+            with self.assertRaises(urllib.error.HTTPError) as raised:
+                collect.fetch_license(main, 8)
+            self.assertEqual(raised.exception.url, mirror)
+            self.assertEqual(opened.call_count, 2)
+
     def test_byte_bound_is_preserved(self):
         with network([response(b'original!')]) as (opened, slept):
             with self.assertRaisesRegex(ValueError, 'download bound'):
