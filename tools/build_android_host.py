@@ -142,7 +142,9 @@ def build_product(stage, build, abi='x86_64'):
               '-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + str(stage),
               '-DREADER_PRODUCT_PREFIX=' + str(stage)]
     for name, source, target in (
-            ('catalog', 'apps/reader/store/native', 'reader_catalog'),
+            # This installed export also contains original-import; its dependency
+            # closure builds the catalog and SQLite without building test programs.
+            ('catalog', 'apps/reader/store/native', 'reader_original_import'),
             ('revisions', 'apps/reader/revisions', 'reader_revisions'),
             ('commands', 'apps/reader/commands', 'reader_commands')):
         location = build / name
