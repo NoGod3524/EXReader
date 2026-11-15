@@ -19,3 +19,6 @@ evidence/s5/**/build-manifest-original.json -text
 # Keep this audit's captured CRLF/trailing spaces verbatim; source checks stay enabled.
 evidence/dfinal-b-20261114/** -text -whitespace
 evidence/dfinal-b-followup-20261114/** -text -whitespace
+# Preserve D-FINAL-C original Actions logs and extracted artifact bytes.
+evidence/dfinal-c-20261114/** -text -whitespace
+

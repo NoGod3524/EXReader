@@ -59,7 +59,7 @@ static int set(rtf_context *c,size_t node,const char *key,const char *value) {
   if(!exr_model_attribute(c->doc,node,key,value)) { c->status=EXR_LIMIT; return 0; } return 1;
 }
 static int css_number(exr_buffer *b,const char *name,float value,int px) {
-  char text[100]; snprintf(text,sizeof(text),"%s:%.4f%s;",name,value,px ? "px" : ""); return put(b,text);
+  char text[100],number[64]; exr_format_number(number,sizeof(number),"%.4f",value); snprintf(text,sizeof(text),"%s:%s%s;",name,number,px ? "px" : ""); return put(b,text);
 }
 static int run_flush(rtf_context *c);
 static int style_control(rtf_context *c,rtf_state *s,const char *word,long value,int has);
@@ -581,11 +581,11 @@ static int picture_finish(rtf_context *c,const rtf_state *s) {
   if(!resources[i].id || !resources[i].path || !resources[i].media_type || !resources[i].properties || !paragraph(c,s)) { c->status=EXR_LIMIT; return 0; }
   node=make(c,c->paragraph,EXR_NODE_IMAGE,"img",NULL); if(node==SIZE_MAX || !set(c,node,"src",path)) return 0;
   if(p->goal_width || p->width) {
-    snprintf(value,sizeof(value),"%.4f",(p->goal_width ? p->goal_width/15.0 : p->width)*p->scale_x/100.0);
+    exr_format_number(value,sizeof(value),"%.4f",(p->goal_width ? p->goal_width/15.0 : p->width)*p->scale_x/100.0);
     if(!set(c,node,"width",value)) return 0;
   }
   if(p->goal_height || p->height) {
-    snprintf(value,sizeof(value),"%.4f",(p->goal_height ? p->goal_height/15.0 : p->height)*p->scale_y/100.0);
+    exr_format_number(value,sizeof(value),"%.4f",(p->goal_height ? p->goal_height/15.0 : p->height)*p->scale_y/100.0);
     if(!set(c,node,"height",value)) return 0;
   }
   c->last_picture=p->type==1 || p->type==2; return 1;
