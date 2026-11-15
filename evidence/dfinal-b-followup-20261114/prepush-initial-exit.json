@@ -1,0 +1,11 @@
+{
+  "command": [
+    "pwsh",
+    "-NoProfile",
+    "-File",
+    "C:/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/prepush-check.ps1",
+    "-Worktree",
+    "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-dfinal-b"
+  ],
+  "exit": 0
+}
