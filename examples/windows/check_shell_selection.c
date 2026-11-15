@@ -197,6 +197,7 @@ static void test_generated(void) {
 #include "check_shell_style.inc"
 #include "check_shell_shelfmeta.inc"
 #include "check_shell_dictionary.inc"
+#include "check_shell_budget.inc"
 int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   assert(argc == 3); SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX);
@@ -210,7 +211,8 @@ int main(int argc, char **argv) {
   ok(exr_publication_create(&input, &g.session.publication, NULL), NULL);
   g.session.active = g.session.bounded = g.frame.valid = 1;
   g.frame.book_id = g.session.book_id = 1;
-  if (!strcmp(argv[1], "shelf")) test_shelf();
+  if (!strcmp(argv[1], "render-budget")) test_render_budget();
+  else if (!strcmp(argv[1], "shelf")) test_shelf();
   else if (!strcmp(argv[1], "annotations")) test_annotations();
   else if (!strcmp(argv[1], "style")) test_style();
   else if (!strcmp(argv[1], "shelfmeta")) test_shelfmeta();

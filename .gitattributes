@@ -16,3 +16,5 @@
 # Preserve measured evidence bytes (including Windows CRLF) for SHA-256 replay.
 evidence/s5/**/*.log -text
 evidence/s5/**/build-manifest-original.json -text
+# Keep this audit's captured CRLF/trailing spaces verbatim; source checks stay enabled.
+evidence/dfinal-b-20261114/** -text -whitespace
