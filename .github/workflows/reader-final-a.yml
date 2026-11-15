@@ -1,0 +1,257 @@
+name: D-FINAL-A same-source evidence
+on:
+  push:
+    branches: [codex/dfinal-a-evidence]
+  workflow_dispatch:
+    inputs:
+      clients_only:
+        description: Run only the two-client catalog integration checks
+        type: boolean
+        default: false
+permissions:
+  contents: read
+env:
+  PYTHONUTF8: '1'
+jobs:
+  native-https:
+    if: ${{ !inputs.clients_only }}
+    name: Native HTTPS session and crash boundaries (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install native TLS fixture and transport dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config ninja-build openssl
+      - name: Build installed native modules and original consumers from this source
+        run: |
+          set -euo pipefail
+          prefix="$PWD/build/final-a-https/stage"
+          if [ "$RUNNER_OS" = Windows ]; then prefix=$(cygpath -m "$prefix"); fi
+          for entry in 'store:apps/reader/store/native' 'dav:extras/webdav' 'revisions:apps/reader/revisions' 'sync:apps/reader/sync' 'session:apps/reader/session'; do
+            name=${entry%%:*}
+            source=${entry#*:}
+            cmake -S "$source" -B "build/final-a-https/$name" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" -DCMAKE_PREFIX_PATH="$prefix" -DREADER_PRODUCT_PREFIX="$prefix"
+            cmake --build "build/final-a-https/$name" --parallel 4
+            cmake --install "build/final-a-https/$name"
+          done
+          for entry in 'revision:reader_revisions' 'session:reader_session' 'resilience:reader_sync_resilience'; do
+            name=${entry%%:*}
+            source=${entry#*:}
+            cmake -S "tests/$source/consumer" -B "build/final-a-https/$name-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+            cmake --build "build/final-a-https/$name-consumer" --parallel 4
+          done
+      - name: Run unchanged 20 session checks and 21 real HTTPS fault boundaries
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" = Windows ]; then exe=.exe; else exe=; fi
+          python tests/reader_session/check_session.py --consumer "build/final-a-https/session-consumer/session-consumer$exe" --revision-consumer "build/final-a-https/revision-consumer/revision-consumer$exe" --output build/final-a-https/session-evidence
+          python tests/reader_sync_resilience/check_resilience.py --consumer "build/final-a-https/resilience-consumer/resilience-consumer$exe" --revision-consumer "build/final-a-https/revision-consumer/revision-consumer$exe" --original-report build/final-a-https/session-evidence/result.json --output build/final-a-https/resilience-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-native-https-${{ runner.os }}-${{ github.sha }}
+          path: |
+            build/final-a-https/session-evidence/
+            build/final-a-https/resilience-evidence/
+            build/final-a-https/*/CMakeCache.txt
+            !build/**/certificates/*.key
+          if-no-files-found: error
+  android-build-only:
+    if: ${{ !inputs.clients_only }}
+    name: Android build-only (no device acceptance)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install pinned Android build dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y patchelf
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;27.0.12077973' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build SDK, native product and APK without emulator execution
+        run: python3 tests/reader_final_a/build_android.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-build-only-android-${{ github.sha }}
+          path: |
+            build/android-host/build.json
+            build/android-host/*.apk
+            build/android-host/artifacts/
+            build/android-sdk/CMakeCache.txt
+          if-no-files-found: error
+  apple-build-only:
+    if: ${{ !inputs.clients_only }}
+    name: ${{ matrix.target }} build-only (no device acceptance)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: macos
+            sdk: macosx
+            platform: macos
+          - target: iphone
+            sdk: iphoneos
+            platform: iphoneos
+          - target: ipad
+            sdk: iphoneos
+            platform: iphoneos
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build SDK, native product and application without launching it
+        run: |
+          set -euo pipefail
+          args=(-DCMAKE_OSX_SYSROOT='${{ matrix.sdk }}')
+          if [ '${{ matrix.sdk }}' != macosx ]; then
+            args+=(-DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO)
+          else
+            args+=(-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0)
+          fi
+          cmake -S . -B build/final-a/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_BUILD_TESTS=OFF -DEXR_BUILD_TOOLS=OFF -DEXR_ENABLE_AAC=OFF "${args[@]}"
+          cmake --build build/final-a/sdk --parallel 4
+          cmake --install build/final-a/sdk --prefix "$PWD/build/final-a/stage"
+          if [ '${{ matrix.sdk }}' = macosx ]; then product=macos; else product=iphoneos; fi
+          python3 tools/build_apple_product.py --sdk build/final-a/stage --target "$product" --build build/final-a/product
+          python3 tools/build_apple_host.py --sdk build/final-a/stage --platform '${{ matrix.platform }}' --output build/final-a/app
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-build-only-${{ matrix.target }}-${{ github.sha }}
+          path: |
+            build/final-a/app/
+            build/final-a/product/*.json
+            build/final-a/sdk/CMakeCache.txt
+          if-no-files-found: error
+  clients:
+    name: Installed catalog two-client integration (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Build and install product catalog and revisions from this checkout
+        run: |
+          set -euo pipefail
+          prefix="$PWD/build/final-a/stage"
+          if [ "$RUNNER_OS" = Windows ]; then prefix=$(cygpath -m "$prefix"); fi
+          cmake -S apps/reader/store/native -B build/final-a/store -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/final-a/store --parallel 4
+          cmake --install build/final-a/store
+          cmake -S apps/reader/revisions -B build/final-a/revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/final-a/revisions --parallel 4
+          cmake --install build/final-a/revisions
+          cmake -S tests/reader_final_a -B build/final-a/clients -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/final-a/clients --parallel 4
+      - name: Run all local integration scenarios and catalog tests
+        run: |
+          set -euo pipefail
+          ctest --test-dir build/final-a/clients -V | tee build/final-a/clients-ctest.log
+          ctest --test-dir build/final-a/store -V | tee build/final-a/store-ctest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-clients-${{ runner.os }}-${{ github.sha }}
+          path: |
+            build/final-a/*-ctest.log
+            build/final-a/*/Testing/
+            build/final-a/*/CMakeCache.txt
+            build/final-a/clients/final-a-consumer*
+          if-no-files-found: error
+  hosts:
+    if: ${{ !inputs.clients_only }}
+    name: Supported host baseline (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install GTK UI test dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev xvfb xdotool xclip x11-utils imagemagick openbox fonts-dejavu-core fonts-crosextra-carlito
+      - run: python -m pip install Pillow
+      - name: Build installed SDK from the same source
+        run: |
+          set -euo pipefail
+          cmake -S . -B build/final-a/sdk -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_ENABLE_AAC=OFF -DCMAKE_INSTALL_PREFIX="$PWD/build/final-a/sdk-stage"
+          cmake --build build/final-a/sdk --parallel 4
+          cmake --install build/final-a/sdk
+      - name: Full SDK CTest except requested release and documentation coverage exclusions
+        run: ctest --test-dir build/final-a/sdk --output-on-failure --parallel 2 -E '^sdk-(release|doc-coverage)$'
+      - name: Package and check Windows baseline
+        if: runner.os == 'Windows'
+        run: |
+          set -euo pipefail
+          cmake -S examples/windows -B build/final-a/windows -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/final-a/sdk-stage" -DEXR_READER_TEST_DRIVERS=ON
+          cmake --build build/final-a/windows --parallel 4
+          python tools/build_windows_host.py --sdk build/final-a/sdk-stage --binary build/final-a/windows/EXReader.exe --output build/final-a/windows-package
+          python tools/check_windows_host.py --package build/final-a/windows-package/EXReader --output build/final-a/windows-ui --sdk build/final-a/sdk-stage --manifest build/final-a/windows-package/build.json --selftest-report build/final-a/windows-package/report.json --consumer-binary build/final-a/windows/EXReader.exe
+      - name: Package and check GTK baseline
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          python tools/build_linux_host.py --sdk build/final-a/sdk-stage --output build/final-a/gtk-package
+          xvfb-run -a -s '-screen 0 1440x2400x24' bash -euc 'openbox >/tmp/final-a-openbox.log 2>&1 & python tools/check_linux_host.py --payload build/final-a/gtk-package/EXReader-Linux --output build/final-a/gtk-ui'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-a-host-${{ runner.os }}-${{ github.sha }}
+          path: |
+            build/final-a/*-package/
+            build/final-a/*-ui/
+            build/final-a/sdk/Testing/
+            build/final-a/sdk/CMakeCache.txt
+          if-no-files-found: error

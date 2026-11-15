@@ -239,12 +239,16 @@ def render_script(template, package, fixtures):
                     .replace('@@FIXTURES@@', str(fixtures)))
 
 
-def run_phase(exe, script, output, phase, data, package, timeout):
+def run_phase(exe, script, output, phase, data, package, timeout, offscreen=False, font=None):
     evidence = output / phase
     evidence.mkdir(parents=True, exist_ok=True)
     command = [str(exe), '--drive', str(script), '--evidence', str(evidence),
                '--data', str(data), '--library', str(data / 'library.sqlite'),
                '--phase', str(PHASES.index(phase) + 1)]
+    if offscreen:
+        command.append('--offscreen')
+    if font:
+        command.extend(['--font', str(font)])
     env = dict(os.environ)
     env.setdefault('EXREADER_HOST_ACCEPTANCE', '1')
     creationflags = 0
@@ -373,6 +377,28 @@ def normalized_notes(rows):
     return sorted((row.get('id', ''), row.get('quote', ''), row.get('comment', '')) for row in rows)
 
 
+def check_note_jump(added, jumped, created_notes, jumped_notes):
+    # A reflow note belongs to its stored chapter-local range. select_all
+    # selects the whole part, so its start can precede the creation page.
+    require(len(created_notes) == len(jumped_notes) == 1, 'expected one positive annotation')
+    note, restored = created_notes[0], jumped_notes[0]
+    require(all(note[key] == restored[key] for key in ('id', 'storage', 'part', 'path', 'start', 'end')),
+            'positive annotation identity or stored range changed')
+    require(note['storage'] == 'epub_notes' and note['id'] not in ('', '0'), 'missing stored EPUB annotation')
+    require(added['book_id'] == jumped['book_id'] and added['book_id'] not in ('', '0') and
+            added['part'] == jumped['part'] == note['part'] and
+            added['part_path'] == jumped['part_path'] == note['path'] and bool(note['path']),
+            'positive annotation returned to a different book or chapter')
+    start, end = int(note['start']), int(note['end'])
+    offset, length = int(jumped['offset']), int(jumped['range_len'])
+    require(0 <= start < end and 0 <= offset <= start < offset + length and
+            0 <= int(jumped['page']) < int(jumped['page_count']),
+            'positive annotation target page does not contain its stored start')
+    require(jumped['selection_active'] == '1' and
+            int(jumped['selection_start']) == start and int(jumped['selection_end']) == end,
+            'positive annotation selection differs from its exact stored range')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--package', type=Path, required=True)
@@ -385,6 +411,8 @@ def main():
     parser.add_argument('--consumer-binary', type=Path, required=True)
     parser.add_argument('--static-link-map', type=Path, help='Explicit lightweight static SDK provider map; default shared runtime checks remain unchanged')
     parser.add_argument('--timeout', type=float, default=420)
+    parser.add_argument('--offscreen', action='store_true', help='drive the host without foreground windows (local diagnosis only)')
+    parser.add_argument('--font', type=Path, default=None, help='explicit body font file for hosts without a discoverable default')
     args = parser.parse_args()
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -428,7 +456,7 @@ def main():
         except (OSError, ValueError) as error:
             errors.append(str(error))
             break
-        code, elapsed, pid = run_phase(exe, scripts[phase], output, phase, data, package, args.timeout)
+        code, elapsed, pid = run_phase(exe, scripts[phase], output, phase, data, package, args.timeout, args.offscreen, args.font)
         runs[phase] = {'exit_code': code, 'elapsed_seconds': round(elapsed, 3), 'pid': pid}
         log_path = output / phase / 'drive.log'
         print('PHASE %s exit=%s elapsed=%.2fs log=%s' % (phase, code, elapsed, log_path.exists()),
@@ -573,10 +601,11 @@ def main():
     if state('A', 'note_deleted').get('notes') != '1':
         errors.append('reflow annotation deletion was not persisted')
     added, jumped = state('A', 'note_added'), state('A', 'after_note_jump')
-    if any(added.get(key) != jumped.get(key) for key in ('book_id', 'part', 'page', 'offset', 'page_text_fnv')) or \
-            jumped.get('selection_active') != '1' or jumped.get('selection_start') != added.get('offset') or \
-            int(jumped.get('selection_end', '-1')) != int(added.get('offset', '-2')) + int(added.get('range_len', '-3')):
-        errors.append('positive annotation did not return to its exact chapter/page/range')
+    try:
+        check_note_jump(added, jumped, notes.get('A', {}).get('note_added', []),
+                        notes.get('A', {}).get('after_note_jump', []))
+    except (ValueError, KeyError, TypeError) as error:
+        errors.append('positive annotation did not return to its exact chapter/page/range: ' + str(error))
     # The original 158 actions now exercise the normal default bounded EPUB
     # import/reader, rather than obtaining credit from a legacy memory import.
     for phase, name in [('A', 'epub_open'), ('A', 'final'), ('B', 'restored'),
@@ -700,3 +729,6 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+

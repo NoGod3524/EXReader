@@ -1,0 +1,25 @@
+=== phase A drive.log（26629 字节）===
+STEP	24	check	FAIL	font=150;window_status=第 3 页。
+STEP	45	check	FAIL	active=0;window_status=第 1 页。
+STEP	46	check	FAIL	needle=标注;window_status=第 1 页。
+STEP	49	check	FAIL	active=0;window_status=第 1 页。
+STEP	52	check	FAIL	count=1;window_status=请先选择文字，再添加标注。
+STEP	55	check	FAIL	count=0;window_status=已删除标注。
+DONE	120	eof	FAIL	script finished
+=== phase B drive.log（5864 字节）===
+STEP	6	check	FAIL	count=0;window_status=已打开《EXReader benchmark》。
+STEP	7	check	FAIL	needle=恢复;window_status=已打开《EXReader benchmark》。
+STEP	9	note_select	FAIL	note index out of range
+STEP	10	jump_note	FAIL	note index out of range
+STEP	11	check	FAIL	active=0;window_status=已打开《EXReader benchmark》。
+STEP	12	check	FAIL	needle=标注;window_status=已打开《EXReader benchmark》。
+STEP	15	check	FAIL	page=5;page_count=0;kind=reflow;window_status=第 5 页。
+STEP	23	check	FAIL	page=5;page_count=0;kind=reflow;window_status=已打开《EXReader benchmark》。
+STEP	24	check	FAIL	count=0;window_status=已打开《EXReader benchmark》。
+STEP	26	check	FAIL	font=150;window_status=第 10 页。
+DONE	29	eof	FAIL	script finished
+=== phase C drive.log（1813 字节）===
+STEP	5	check	FAIL	font=150;window_status=已打开《EXReader benchmark》。
+STEP	6	check	FAIL	count=0;window_status=已打开《EXReader benchmark》。
+STEP	7	check	FAIL	needle=恢复;window_status=已打开《EXReader benchmark》。
+DONE	9	eof	FAIL	script finished

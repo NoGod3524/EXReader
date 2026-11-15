@@ -1,0 +1,31 @@
+已提交并推送至 [Draft PR #209](https://github.com/NoGod3524/EXReader/pull/209)，分支从 `origin/main` 新建，base 为 `main`。
+
+**F01/F03/F05 全部保持 pending**；分母 108，计数仍为 **99 verified / 1 partial / 8 pending**。
+
+| 项目 | 本次补齐 | 剩余缺口 |
+|---|---|---|
+| F01 | 同源 Windows/Linux 编译与测试、GTK 基线 UI；四端 build-only 产物及散列核对 | Windows A/B/C UI 失败，六端完整功能验收未齐 |
+| F03 | 子书架、分类、系列、成员及书籍删除/显式恢复测试 | 当前同源六端 UI 和跨平台往返一致性 |
+| F05 | 双库离线并发、多头/墓碑、幂等重传、实际杀进程恢复 | 完整宿主经真实传输后的 UI、原书映射及跨设备闭环 |
+
+真实验证结果：
+
+```text
+本机 Release 编译：exit 0
+全量 CTest：581/581（仅排除指定两项）
+新增集成测试：3/3，15 个具名阶段
+Actions Windows/Linux：581/581、580/580
+两端 HTTPS：各 20+21 全通过
+GTK 基线 UI：20/20
+prepush exit=0
+```
+
+Android/iPhone/iPad 真机能力仍缺。当前专用 iPhone/macOS 作业快照为排队；已核对的构建来源及源码身份区别均已登记。Windows UI 失败包括字号、标注及重开状态，未授予通过。
+
+交付文件：
+
+- [完整审计报告：原文行号、已有/缺失证据、测试输出与产物身份](<workspace>/evidence/dfinal-a/REPORT.md)
+- [全量 CTest 原始输出](<workspace>/evidence/dfinal-a/sdk-ctest.log)
+- [新增测试原始输出](<workspace>/evidence/dfinal-a/clients-ctest.log)
+- [catalog diff：只改三项](<workspace>/evidence/dfinal-a/catalog.diff)
+- [prepush 输出](<workspace>/evidence/dfinal-a/prepush-final.log)
