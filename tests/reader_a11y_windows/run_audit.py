@@ -382,9 +382,10 @@ def build_report(recorder, environment, static, output, args, audit_completed):
     from control_contract import audit
     control_inventory = {}
     for path in sorted((output / 'uia').glob('*.json')):
-        result = audit(json.loads(path.read_text(encoding='utf-8')))
+        result = audit(json.loads(path.read_text(encoding='utf-8')),
+                       recorder.trace.events if recorder.trace else ())
         control_inventory[path.name] = result
-        recorder.record('ALL-' + path.stem, 'all-controls',
+        recorder.record('ALL-' + path.stem, 'keyboard',
                         'every captured interactive control exposes Name and role', 'blocking',
                         'pass' if result['name_role_passed'] else 'fail',
                         'complete UIA tree with named interactive controls',
@@ -392,7 +393,7 @@ def build_report(recorder, environment, static, output, args, audit_completed):
                         steps=['walk every UIA node without an ID whitelist'],
                         fix='supply missing names/roles or an untruncated capture')
     if not control_inventory:
-        recorder.record('ALL-MISSING', 'all-controls', 'UIA inventory exists', 'blocking',
+        recorder.record('ALL-MISSING', 'keyboard', 'UIA inventory exists', 'blocking',
                         'fail', 'at least one complete UIA capture', 'no UIA captures',
                         fix='capture the current host UIA trees')
     evidence.write_json(output / 'all-controls.json', control_inventory)
@@ -406,6 +407,7 @@ def build_report(recorder, environment, static, output, args, audit_completed):
     gaps = [check["id"] for check in recorder.checks if check["status"] == "gap"]
     accepted = bool(audit_completed) and not blocking and not errors
     artifacts = []
+    artifacts.extend(artifact_index(output, ['all-controls.json']))
     for key in ("screenshots", "uia_trees", "focus_crops"):
         round_trip = [str(item) for item in _collect(output, key)]
         artifacts.extend(artifact_index(output, round_trip))

@@ -8,16 +8,24 @@ static void test_render_budget(void) {
   const char *book=getenv("EXR_AUDIT_BOOK");
   if(book) snprintf(fixture_path,sizeof(fixture_path),"%s",book);
   LARGE_INTEGER frequency,start,end;assert(QueryPerformanceFrequency(&frequency));
-  double p95[2],memory[2];
-  for(int cohort=0;cohort<2;cohort++) {
+  double p95[2]={0},memory[2]={0};
+  int cohorts=getenv("EXR_BUDGET_SINGLE_PROCESS") ? 1 : 2;
+  for(int cohort=0;cohort<cohorts;cohort++) {
     double samples[64];
+    QueryPerformanceCounter(&start);
     prepare_layout(0); /* same book, font, geometry and 0/1 page workload */
+    QueryPerformanceCounter(&end);
+    printf("BUDGET setup_render_ready_ms=%.6f; first_interactive=missing\n",
+      1000.0*(double)(end.QuadPart-start.QuadPart)/(double)frequency.QuadPart);
     for(int i=0;i<8;i++) load_frame((size_t)(i%2));
     for(int i=0;i<64;i++) {
       QueryPerformanceCounter(&start);load_frame((size_t)(i%2));QueryPerformanceCounter(&end);
       samples[i]=1000.0*(double)(end.QuadPart-start.QuadPart)/(double)frequency.QuadPart;
       assert(g.frame.valid && g.frame.bitmap.pixels);
     }
+    printf("BUDGET raw_render_ms=[");
+    for(int i=0;i<64;i++)printf("%s%.6f",i ? "," : "",samples[i]);
+    puts("]");
     qsort(samples,64,sizeof(double),budget_compare);p95[cohort]=samples[60];
     PROCESS_MEMORY_COUNTERS counters={0};counters.cb=sizeof(counters);
     assert(GetProcessMemoryInfo(GetCurrentProcess(),&counters,sizeof(counters)));
@@ -26,6 +34,7 @@ static void test_render_budget(void) {
       cohort,(samples[31]+samples[32])/2,p95[cohort],memory[cohort]);
   }
   assert(p95[0]>0 && memory[0]>0);
+  if(cohorts==1)return; /* Fresh-process comparisons are made by render_budget.py. */
   printf("BUDGET same_process_repeat_p95_ratio=%.6f limit=2.5 peak_ratio=%.6f limit=1.25; present_frame=missing first_interactive=missing\n",
     p95[1]/p95[0],memory[1]/memory[0]);
   assert(p95[1]/p95[0]<2.5 && memory[1]/memory[0]<1.25);

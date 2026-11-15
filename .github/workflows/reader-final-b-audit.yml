@@ -1,11 +1,12 @@
 name: Reader F08 F09 F10 feasible audit
 on:
   push:
-    branches: [codex/dfinal-b-f08-f10-audit]
+    branches: [codex/dfinal-b-f08-f10-audit, codex/dfinal-b-evidence-followup]
     paths:
       - '.github/workflows/reader-final-b-audit.yml'
       - 'examples/windows/check_shell_budget.inc'
       - 'examples/windows/check_shell_privacy.inc'
+      - 'examples/windows/shell_sync.inc'
       - 'examples/windows/selection_tests.cmake'
       - 'tests/reader_a11y_windows/**'
       - 'tests/reader_perf_windows/render*'
@@ -54,14 +55,14 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          ctest --test-dir build/audit --output-on-failure --no-tests=error -E 'sdk-release|sdk-doc-coverage' --output-junit "$env:GITHUB_WORKSPACE/ctest.xml" *> ctest.txt
+          ctest --test-dir build/audit --parallel 4 --output-on-failure --no-tests=error -E 'sdk-release|sdk-doc-coverage' --output-junit "$env:GITHUB_WORKSPACE/ctest.xml" *> ctest.txt
           exit $LASTEXITCODE
       - name: Record new checks verbosely
         if: always()
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-control|selection-render-budget)' *> new-checks.txt
+          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-control|render-budget-report|selection-(render-budget|sync))' *> new-checks.txt
           exit $LASTEXITCODE
       - uses: actions/upload-artifact@v4
         if: always()
