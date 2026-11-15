@@ -107,11 +107,23 @@ static void shell_settings_refresh(void) {
 static void shell_step_font(int delta) {
   size_t n=sizeof(SHELL_FONT_STEPS)/sizeof(*SHELL_FONT_STEPS);
   if(g.frame.fixed) return;
-  if(delta>0) {
-    for(size_t i=0;i<n;i++) if(SHELL_FONT_STEPS[i]>shell_font) { shell_font=(float)SHELL_FONT_STEPS[i];break; }
-  } else {
-    for(size_t i=n;i>0;i--) if(SHELL_FONT_STEPS[i-1]<shell_font) { shell_font=(float)SHELL_FONT_STEPS[i-1];break; }
+  /* The user-visible contract is the percentage: one step is ten percent.
+     The shell keeps a point size, so map the percentage to the nearest step
+     with the invariant that 100% is 12pt (the default 150% is 18pt). */
+  int percent = g.font_percent + (delta > 0 ? 10 : -10);
+  if (percent < SHELL_FONT_PERCENT_MIN) percent = SHELL_FONT_PERCENT_MIN;
+  if (percent > SHELL_FONT_PERCENT_MAX) percent = SHELL_FONT_PERCENT_MAX;
+  {
+    int target = (percent * 12 + 50) / 100;
+    int best = SHELL_FONT_STEPS[0];
+    int best_gap = target > best ? target - best : best - target;
+    for (size_t i = 1; i < n; i++) {
+      int gap = target > SHELL_FONT_STEPS[i] ? target - SHELL_FONT_STEPS[i] : SHELL_FONT_STEPS[i] - target;
+      if (gap < best_gap) { best = SHELL_FONT_STEPS[i]; best_gap = gap; }
+    }
+    shell_font = (float)best;
   }
+  g.font_percent = percent;
   shell_request_layout(); settings_save(); shell_settings_refresh();
 }
 
@@ -398,3 +410,4 @@ static void shell_prepare_settings(void) {
   }
   DeleteDC(dc);
 }
+

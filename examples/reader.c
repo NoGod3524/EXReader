@@ -4574,8 +4574,13 @@ static void apply_pending_selection(void) {
   if (start == SIZE_MAX || end == SIZE_MAX || start >= end) return;
   if (g.frame.fixed) {
     if (end > g.frame.text_bytes) return;
-  } else if (start < g.frame.range_start || end > g.frame.range_end) {
-    return;
+  } else {
+    /* A reflow note stores part-level offsets while the frame exposes the page
+       range, so an exact fit is not expected. Highlight the intersection with
+       the page the reader landed on instead of refusing the whole jump. */
+    if (start >= g.frame.range_end || end <= g.frame.range_start) return;
+    if (start < g.frame.range_start) start = g.frame.range_start;
+    if (end > g.frame.range_end) end = g.frame.range_end;
   }
   g.selection.active = 1;
   g.selection.fixed = g.frame.fixed;
@@ -6662,4 +6667,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   LocalFree(argv);
   return (int)result;
 }
+
+
+
+
+
+
+
+
 
