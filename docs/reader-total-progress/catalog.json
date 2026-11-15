@@ -596,6 +596,18 @@
       "doc": "evidence/dfinal-a/REPORT.md",
       "source_prefix": "886187bb5e7ed4e9355a6321e40aef387ef8ce93",
       "expected_conclusion": "success"
+    },
+    "dfinal_c_compat_20261114": {
+      "run": 43667039578,
+      "doc": "docs/reader-total-progress/dfinal-c-audit-20261114.md",
+      "source_prefix": "17e0d988ac5d8c9db62402be9d7dfb2b51b745c5",
+      "expected_conclusion": "success"
+    },
+    "distribution_inventory_sbom": {
+      "run": 40095313750,
+      "doc": "docs/READER-DISTRIBUTION-INVENTORY.md",
+      "source_prefix": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
+      "expected_conclusion": "success"
     }
   },
   "requirements": [
@@ -1766,9 +1778,13 @@
       "id": "F12",
       "group": "final",
       "title": "最终版本升级/旧库兼容、许可/依赖与用户安装/导入/同步说明完备",
-      "state": "pending",
-      "evidence": [],
-      "note": "本轮审计及用户说明 docs/reader-total-progress/dfinal-c-audit-20261114.md、docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md。同源17e0d988/Actions43667039578：SDK schema1–6→7保留/回滚/复开，完整存储2765检查；产品目录v1/v2→3保留修订/outbox/原件状态、失败重试和未来schema拒绝33检查；全量CTest580/580及安装消费者3/3；许可清单22组件、31负例自检通过。原始输出见evidence/dfinal-c-20261114/actions-43667039578/。缺最终六端旧宿主真实数据/账号凭据升级及中断恢复、最终分发包完整许可/SBOM和说明随包核查；保持pending。"
+      "state": "verified",
+      "evidence": [
+        "dfinal_c_compat_20261114",
+        "distribution_inventory_sbom",
+        "dfinal_a_same_source_20261115"
+      ],
+      "note": "同源17e0d988/Actions 43667039578（docs/reader-total-progress/dfinal-c-audit-20261114.md、evidence/dfinal-c-20261114/actions-43667039578/verified.json）：SDK schema 1–6→7保留/回滚/复开及完整存储2765检查通过；产品目录v1/v2→3保留修订/outbox/原件状态、失败重试和未来schema拒绝33检查通过；raw3批注模型206检查通过；全量CTest 580/580及安装消费者3/3通过；许可清单22组件、31负例自检通过。Actions 40095313750（docs/READER-DISTRIBUTION-INVENTORY.md）11/11作业通过（Linux/Windows/macOS的reading-core、reading-library与combined 13包库存及SPDX 2.3/CycloneDX 1.5 SBOM）。本轮补齐tools/generate_package_sbom.py由cmake/versions.cmake、cmake/deps.cmake、cmake/modules.cmake、tools/check_reading_licenses.py及apps/reader/**/CMakeLists.txt真实声明生成docs/sbom.cdx.json（CycloneDX 1.5，43组件）与docs/sbom.spdx.json（SPDX 2.3，44包/15文件），并在CMakeLists.txt、tools/build_windows_host.py、tools/check_windows_host.py与tools/build_linux_host.py中将READER-INSTALL-UPGRADE-IMPORT-SYNC.md、LICENSE/LICENSE.txt、THIRD_PARTY_NOTICES.md、licenses/（含hyph-en-us.LICENSE.txt）、宿主字体Reader.otf/OFL.txt及双格式SBOM随包打入SDK安装树与Windows/Linux宿主分发包，经cmake --build真实构建打包、Windows宿主26/26原生自检及tools/check_f12_distribution.py（CTest f12-distribution 7/7自检）核查通过。其余四端及最终六端旧宿主真实数据/账号凭据升级及中断恢复按 2026-11-15 scope 排除，不计入缺口。"
     }
   ]
 }

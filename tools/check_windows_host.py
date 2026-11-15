@@ -318,6 +318,8 @@ def seal_inputs(package, sdk, manifest_path, selftest_path, consumer, steps_dir,
                       'archives': {str(path.resolve()): digest(path) for path in static_paths[:-1]},
                       'link_map_sha256': digest(static_link_map)}
     required = {'EXReader.exe', 'Reader.otf', 'OFL.txt', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.md',
+                'READER-INSTALL-UPGRADE-IMPORT-SYNC.md', 'sbom.cdx.json', 'sbom.spdx.json',
+                'licenses/hyph-en-us.LICENSE.txt',
                 'Sample.epub', 'Sample-positive.epub', 'Sample.pdf', 'Sample-Text.pdf'}
     if runtime is not None:
         required.add(runtime)
