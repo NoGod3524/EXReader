@@ -1,0 +1,35 @@
+**尚未达到全 PASS：当前 153 PASS / 5 FAIL。** 原来 19 项中，17 项已转为 PASS。
+
+剩余失败：`A43、A115、B5、B15、B23`，均为固定页码检查。原脚本、断言及 `EXPECTED_STEPS` 未改。
+
+三段日志尾部：
+
+```text
+STEP 119 state PASS state captured
+STEP 120 quit  PASS closing
+DONE 120 eof   FAIL script finished
+```
+
+```text
+STEP 28 snapshot PASS screenshot written
+STEP 29 quit     PASS closing
+DONE 29 eof      FAIL script finished
+```
+
+```text
+STEP 8 snapshot PASS screenshot written
+STEP 9 quit     PASS closing
+DONE 9 eof      PASS script finished
+```
+
+真实 grep 计数：`STEP 总数=158，STEP FAIL=5`。
+
+native ctest 按要求排除两项后，**581/581，exit 0**。
+
+- [19 项逐条判定、代码行号及修前修后值](<workspace>/examples/windows/acceptance-dfinal-a-fix/REPORT.txt)
+- [完整 ctest 输出](<workspace>/examples/windows/acceptance-dfinal-a-fix/native-ctest-full.txt)
+- [完整 checker 输出](<workspace>/examples/windows/acceptance-dfinal-a-fix/checker-full.txt)
+
+代码已提交在从 `origin/main` 新建的 `fix/dfinal-a-host-ui`，未推送。prepush 入口未找到，因此不能报告 exit 0。
+
+继续处理需要你确认是否允许修改 `examples/reader.c` 的相关共享宿主逻辑，并提供 prepush 命令。申请扩大范围的原因是你本轮明确限定只能修改 `examples/windows/`。
