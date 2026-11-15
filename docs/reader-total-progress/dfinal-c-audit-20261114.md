@@ -205,8 +205,9 @@ Android SDK因现有JNI适配器依赖而开启audio core/PDF，明确MP3/AAC=OF
 
 ## 6. 台账判定与范围
 
-三项继续 **pending**：F11缺真机可部署的完整功能宿主与能力证据；F12缺最终六端实际升级与随包完整分发材料；
+2026-11-14 初审时三项保持 **pending**：F11缺真机可部署的完整功能宿主与能力证据；F12缺最终六端实际升级与随包完整分发材料；
 H.ipad缺成功宿主证据，预览确认需真机。本轮不授予verified，不变108分母。
+2026-11-15 补齐 F12 随包完整许可、SBOM（`docs/sbom.cdx.json` CycloneDX 1.5 43组件、`docs/sbom.spdx.json` SPDX 2.3 44包/15文件）与用户说明（`READER-INSTALL-UPGRADE-IMPORT-SYNC.md`、`LICENSE`/`LICENSE.txt`、`THIRD_PARTY_NOTICES.md`、`licenses/` 含 `hyph-en-us.LICENSE.txt`）随包打包与自动核查（`tools/generate_package_sbom.py`、`tools/check_f12_distribution.py`、Actions 43667039578 与 Actions 40095313750）；非 Windows 真机四端及旧宿主真实数据/账号凭据升级中断恢复按 2026-11-15 scope 排除，F12 推进为 **verified**（103/108）。
 
 catalog的 `evidence` 是顶层注册键数组（`tools/reader_composition/total_progress.py:632–633`），不能塞路径或“缺”文字。
 三项state按实际保留pending；F11的evidence保留已有F06限定范围引用，F12/iPad仍为空，未造完整验收的注册键。

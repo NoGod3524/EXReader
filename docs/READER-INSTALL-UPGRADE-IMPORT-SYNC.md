@@ -78,6 +78,6 @@ debug certificate SHA-256 为 `d28e33bf727af4f0d11f273e75413ce13a15acbd2df27e91e
 OpenJPEG、LittleCMS、Mbed TLS 随功能开关启用。音频独立，MP3/minimp3 与 AAC/FAAD2 不属于默认 reading preset；
 FAAD2 的 GPL 许可开关需按实际构建记录，不能沿用纯 MIT 说明。宿主字体、平台库和可选同步/产品模块另列。
 
-已有 [分发依赖/SBOM 库存](READER-DISTRIBUTION-INVENTORY.md) 与
-[阅读许可材料检查](READING-LICENSES.md)。库存成功和严格 `release_ready` 成功分别判定；
-最终宿主包的许可/SBOM、字体与各平台系统依赖实测仍缺，不宣称已满足 F12。
+已有 [分发依赖/SBOM 库存](READER-DISTRIBUTION-INVENTORY.md)、[阅读许可材料检查](READING-LICENSES.md)、
+CycloneDX 1.5 SBOM（`docs/sbom.cdx.json`）与 SPDX 2.3 SBOM（`docs/sbom.spdx.json`）。
+SDK 安装包（`share/exreader/` 及 `docs/`）与 Windows/Linux 宿主分发包（`tools/build_windows_host.py`、`tools/check_windows_host.py`、`tools/build_linux_host.py`）均随包打入本说明文档（`READER-INSTALL-UPGRADE-IMPORT-SYNC.md`）、`LICENSE`（Windows 包为 `LICENSE.txt`）、`THIRD_PARTY_NOTICES.md`、`licenses/`（含 `hyph-en-us.LICENSE.txt`）、宿主字体 `Reader.otf`/`OFL.txt` 以及 `sbom.cdx.json`/`sbom.spdx.json`，由 `tools/check_f12_distribution.py` 自动核查文件存在性与组件数（43 个 CycloneDX 组件 / 44 个 SPDX 包）。非 Windows 真机四端及旧宿主真实数据/账号凭据升级中断恢复按 2026-11-15 scope 排除。

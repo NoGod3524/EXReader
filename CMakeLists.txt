@@ -1316,7 +1316,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/include/exr/version.h" DEST
 configure_file(cmake/exreader.pc.in exreader.pc @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/exreader.pc" DESTINATION lib/pkgconfig)
 include(cmake/install_dependencies.cmake)
-install(FILES LICENSE THIRD_PARTY_NOTICES.md DESTINATION share/exreader)
+install(FILES LICENSE THIRD_PARTY_NOTICES.md docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md data/hyph-en-us.LICENSE.txt docs/sbom.cdx.json docs/sbom.spdx.json DESTINATION share/exreader)
 
 install(FILES ${freetype_SOURCE_DIR}/docs/FTL.TXT ${freetype_SOURCE_DIR}/LICENSE.TXT DESTINATION share/exreader/licenses/freetype)
 install(FILES ${expat_SOURCE_DIR}/expat/COPYING DESTINATION share/exreader/licenses/expat)
@@ -1356,7 +1356,7 @@ install(FILES tests/fixtures/unicode/LICENSE.txt DESTINATION share/exreader/lice
 install(FILES licenses/adobe-glyph-list.txt licenses/pdfjs.txt DESTINATION share/exreader/licenses/pdf-font-data)
 
 install(FILES README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md DESTINATION .)
-install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/WP7-SCRIPTS.md docs/WP8_COLR_V1.md docs/WP8_SVG_FONTS.md docs/WP12A-FORMATS.md docs/WP12A-STREAMING.md docs/CONVERSION.md docs/WP6-BOUNDED-READER.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
+install(FILES docs/VERSIONING.md docs/SDK_COMPATIBILITY.md docs/SUPPORT_MATRIX.md docs/WP7-SCRIPTS.md docs/WP8_COLR_V1.md docs/WP8_SVG_FONTS.md docs/WP12A-FORMATS.md docs/WP12A-STREAMING.md docs/CONVERSION.md docs/WP6-BOUNDED-READER.md docs/NATIVE_API.md docs/NATIVE_VALIDATION.md docs/PERFORMANCE.md docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md docs/READING-LICENSES.md docs/READING-LICENSE-REVIEW.md docs/READER-DISTRIBUTION-INVENTORY.md docs/sbom.cdx.json docs/sbom.spdx.json docs/native-page.png docs/styled-page.png docs/complex-text.png DESTINATION docs)
 install(FILES licenses/noto-sans-test-fonts.txt DESTINATION share/exreader/licenses/wp7-fonts)
 install(DIRECTORY examples DESTINATION .)
 install(FILES tools/convert_json.h tools/convert_json.c DESTINATION tools)
@@ -1455,6 +1455,8 @@ if(EXR_BUILD_TESTS)
   add_executable(exreader-dictionary-probe tests/dictionary_probe.c)
   add_test(NAME release-artifacts COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_release_artifacts.py)
+  add_test(NAME f12-distribution COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_f12_distribution.py --self-test)
   target_link_libraries(exreader-dictionary-probe PRIVATE exreader)
   foreach(group stardict dictzip contracts dictd)
     add_test(NAME native-dictionary-${group} COMMAND ${Python3_EXECUTABLE}
