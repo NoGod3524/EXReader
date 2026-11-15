@@ -961,7 +961,7 @@ static void text_paragraph_style(pptx_document *d,pptx_text_style *s,const exr_d
 }
 
 static void text_list_style(pptx_document *d,pptx_text_style *s,const exr_document *xml,size_t list,int level) {
-  char tag[16];
+  char tag[24];
   if(!xml || list==SIZE_MAX) return;
   text_paragraph_style(d,s,xml,drawing_child(xml,list,"defPPr"));
   snprintf(tag,sizeof(tag),"lvl%dpPr",level+1);
