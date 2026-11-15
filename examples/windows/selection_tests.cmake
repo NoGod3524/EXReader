@@ -69,6 +69,8 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
       "${CMAKE_CURRENT_SOURCE_DIR}/tests/reader_perf_windows/render_budget.py" --self-check)
     add_test(NAME windows-a11y-control-contract COMMAND ${Python3_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/tests/reader_a11y_windows/control_contract.py")
+    add_test(NAME windows-a11y-shell-capture-gate COMMAND ${Python3_EXECUTABLE}
+      "${CMAKE_CURRENT_SOURCE_DIR}/tests/reader_a11y_windows/capture_shell.py" --self-check)
     add_test(NAME windows-a11y-control-inventory COMMAND ${Python3_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/tests/reader_a11y_windows/inventory_controls.py"
       --out "${CMAKE_CURRENT_BINARY_DIR}/control-inventory.json")

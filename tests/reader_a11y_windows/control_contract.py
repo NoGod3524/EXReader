@@ -59,6 +59,7 @@ def audit(payload, focus_events=()):
                                      'modifiers': value.get('modifiers', [])})
             rows.append({'address': address, 'id': node.get('automation_id', node.get('id')),
                          'name': name, 'role': role, 'name_ok': bool(name),
+                         'role_name': node.get('control_type', ''),
                          'role_ok': type(role) is int and 50000 <= role <= 50040,
                          'keyboard_focusable': focusable,
                          'enabled': node.get('enabled'), 'offscreen': node.get('offscreen'),
@@ -75,6 +76,11 @@ def audit(payload, focus_events=()):
     if not rows:
         errors.append('no interactive controls captured')
     return {'controls': rows, 'errors': errors,
+            'counts': {'interactive_controls': len(rows),
+                       'named_controls': sum(r['name_ok'] for r in rows),
+                       'valid_roles': sum(r['role_ok'] for r in rows),
+                       'observed_keyboard_controls': sum(bool(r['observed_keyboard_steps']) for r in rows),
+                       'missing_measured_focus': sum(not r['observed_keyboard_steps'] for r in rows)},
             'name_role_passed': bool(rows) and not errors and all(r['name_ok'] and r['role_ok'] for r in rows),
             'complete_keyboard_verified': False, 'screen_reader_verified': False}
 

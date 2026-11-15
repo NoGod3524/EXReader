@@ -6,12 +6,13 @@ This is a source coverage audit, never a UIA or speech acceptance result.
 Repeated loop constructors are sites, not a count of runtime controls.
 """
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CALL = re.compile(r'\b(CreateWindow(?:Ex)?W|shell_make_button)\s*\(')
+CALL = re.compile(r'\b(CreateWindow(?:Ex)?W|shell_make_button|dict_control|dict_card_create|sm_add_hit|sm_chip)\s*\(')
 
 
 def calls(source):
@@ -36,6 +37,9 @@ def calls(source):
             continue
         rows.append({'line': source.count('\n', 0, match.start()) + 1,
                      'constructor': match[1], 'expression': expression,
+                     'site_kind': ('painted_hit_target' if match[1] in {'sm_add_hit', 'sm_chip'} else
+                                   'shared_control_helper' if match[1] in {'dict_control', 'dict_card_create'} else
+                                   'native_control_constructor'),
                      'native_role_hint': re.findall(r'L"(BUTTON|EDIT|LISTBOX|COMBOBOX|STATIC|EXReaderPage)"', expression),
                      'tabstop_declared': 'WS_TABSTOP' in expression,
                      'name_role_focus_verified': False,
@@ -52,6 +56,10 @@ def main():
     assert len(probe) == 1 and probe[0]['tabstop_declared']
     assert not probe[0]['name_role_focus_verified']
     assert not calls('// CreateWindowW();\n/* shell_make_button(); */')
+    assert len(calls('dict_control(panel,L"EDIT",L"",840,ES_PASSWORD);')) == 1
+    assert len(calls('dict_card_create(L"WebDAV");')) == 1
+    assert not calls('static HWND dict_card_create(const wchar_t *title) { return 0; }')
+    assert calls('sm_add_hit(rect,SM_HIT_IMPORT,0);')[0]['site_kind'] == 'painted_hit_target'
     rows, names = [], []
     paths = [ROOT/'examples/reader.c', *sorted((ROOT/'examples/windows').glob('shell_*.inc'))]
     for path in paths:
@@ -64,13 +72,15 @@ def main():
                 names.append({'path': path.relative_to(ROOT).as_posix(), 'line': number, 'registration': line.strip()})
     assert rows and names
     result = {'kind': 'source-inventory', 'creation_sites': rows, 'name_registration_sites': names,
+              'source_sha256': {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                                for p in paths},
               'platforms': {p: {'keyboard': 'missing current complete runtime inventory',
                                 'screen_reader': 'missing speech transcript/recording'}
                             for p in ['windows', 'linux', 'macos', 'iphone', 'ipad', 'android']}}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
-    print(f'PASS inventory: {len(rows)} creation sites, {len(names)} name registration sites; unnamed/dynamic sites retained')
-    print('PASS negative controls: unnamed EDIT retained, comments ignored; runtime UIA/keyboard/speech remain missing')
+    print(f'PASS inventory: {len(rows)} constructor/helper/painted-target sites, {len(names)} name registration sites; unnamed/dynamic sites retained')
+    print('PASS negative controls: unnamed EDIT, shared-helper calls and painted hit targets retained, comments/declarations ignored; runtime UIA/keyboard/speech remain missing')
 
 
 if __name__ == '__main__':
