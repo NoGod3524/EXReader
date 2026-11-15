@@ -12,3 +12,12 @@ set_tests_properties(dfinal-c-annotation-exchange-model PROPERTIES TIMEOUT 300)
 add_test(NAME dfinal-c-installed-sdk-version-guard
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_version_guard.py"
     --prefixes "${CMAKE_PREFIX_PATH}")
+add_executable(dfinal-c-catalog-upgrade catalog_upgrade.c)
+target_link_libraries(dfinal-c-catalog-upgrade PRIVATE EXReaderProductCatalog::reader_catalog)
+if(MSVC)
+  set_property(TARGET dfinal-c-catalog-upgrade PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+add_test(NAME dfinal-c-product-catalog-upgrade
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_catalog_upgrade.py"
+    --probe $<TARGET_FILE:dfinal-c-catalog-upgrade> --output "${CMAKE_CURRENT_BINARY_DIR}/results")
+set_tests_properties(dfinal-c-product-catalog-upgrade PROPERTIES TIMEOUT 60)
