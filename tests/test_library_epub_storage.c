@@ -114,14 +114,20 @@ static void legacy_schema(const char *path,int version,int conflict) {
          "CREATE TABLE notes(id INTEGER PRIMARY KEY,book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,start INTEGER NOT NULL CHECK(start>=0),end INTEGER NOT NULL CHECK(end>=start),text TEXT NOT NULL);CREATE INDEX notes_book ON notes(book_id);"
          "INSERT INTO books VALUES(11,1,'Legacy title','Legacy author','old tags',1,2,5,21,x'4c6567616379206f726967696e616c20746578742e',x'636f766572');"
          "INSERT INTO notes VALUES(17,11,1,4,'Legacy comment');PRAGMA application_id=1163416131;PRAGMA user_version=1;");
-  if(version==6) {
-    sql(db,"ALTER TABLE notes ADD COLUMN anchor_exact TEXT;ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;ALTER TABLE notes ADD COLUMN location_state INTEGER NOT NULL DEFAULT 1 CHECK(location_state BETWEEN 0 AND 3);"
-           "CREATE TABLE fixed_notes(id INTEGER PRIMARY KEY,book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,page INTEGER NOT NULL,start INTEGER NOT NULL,end INTEGER NOT NULL,text TEXT NOT NULL,page_id TEXT NOT NULL,exact BLOB NOT NULL,prefix BLOB NOT NULL,suffix BLOB NOT NULL);CREATE INDEX fixed_notes_book ON fixed_notes(book_id,page,start);"
-           "CREATE TABLE audio_resume(audio_id TEXT PRIMARY KEY,track_id TEXT NOT NULL,offset BLOB NOT NULL,rate REAL NOT NULL);CREATE TABLE audio_marks(id INTEGER PRIMARY KEY,audio_id TEXT NOT NULL,track_id TEXT NOT NULL,offset BLOB NOT NULL,rate REAL NOT NULL,label TEXT NOT NULL);CREATE INDEX audio_marks_key ON audio_marks(audio_id,id);"
-           "CREATE TABLE book_progress(book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,position INTEGER NOT NULL,state INTEGER NOT NULL,prefix TEXT,suffix TEXT,chapter TEXT);"
+  /* Independent historical layouts, rather than downgrading a current database. */
+  if(version>=2)
+    sql(db,"ALTER TABLE notes ADD COLUMN anchor_exact TEXT;ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;");
+  if(version>=3)
+    sql(db,"CREATE TABLE fixed_notes(id INTEGER PRIMARY KEY,book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,page INTEGER NOT NULL,start INTEGER NOT NULL,end INTEGER NOT NULL,text TEXT NOT NULL,page_id TEXT NOT NULL,exact BLOB NOT NULL,prefix BLOB NOT NULL,suffix BLOB NOT NULL);CREATE INDEX fixed_notes_book ON fixed_notes(book_id,page,start);");
+  if(version>=4)
+    sql(db,"CREATE TABLE audio_resume(audio_id TEXT PRIMARY KEY,track_id TEXT NOT NULL,offset BLOB NOT NULL,rate REAL NOT NULL);CREATE TABLE audio_marks(id INTEGER PRIMARY KEY,audio_id TEXT NOT NULL,track_id TEXT NOT NULL,offset BLOB NOT NULL,rate REAL NOT NULL,label TEXT NOT NULL);CREATE INDEX audio_marks_key ON audio_marks(audio_id,id);");
+  if(version>=5)
+    sql(db,"CREATE TABLE book_progress(book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,position INTEGER NOT NULL,state INTEGER NOT NULL,prefix TEXT,suffix TEXT,chapter TEXT);"
            "CREATE TRIGGER books_progress_changed AFTER UPDATE OF position ON books WHEN OLD.position<>NEW.position BEGIN DELETE FROM book_progress WHERE book_id=NEW.id;END;"
-           "INSERT INTO book_progress VALUES(11,5,1,'Legac','y original text.',NULL);PRAGMA user_version=6;");
-  }
+           "INSERT INTO book_progress VALUES(11,5,1,'Legac','y original text.',NULL);");
+  if(version>=6)
+    sql(db,"ALTER TABLE notes ADD COLUMN location_state INTEGER NOT NULL DEFAULT 1 CHECK(location_state BETWEEN 0 AND 3);");
+  { char pragma[64];snprintf(pragma,sizeof(pragma),"PRAGMA user_version=%d",version);sql(db,pragma); }
   if(conflict) sql(db,"CREATE TABLE epub_notes(conflict INTEGER)");
   CHECK(sqlite3_close(db)==SQLITE_OK);
 }
@@ -135,8 +141,8 @@ static void legacy_preserved(exr_library *library,const char *path,int old_versi
   OK(exr_library_notes(library,11,&notes,&count,&error));
   CHECK(count==1 && notes[0].id==17 && notes[0].start==1 && notes[0].end==4 && !strcmp(notes[0].text,"Legacy comment"));exr_notes_free(notes,count);
   OK(exr_library_progress_get(library,11,&progress,&state,&error));
-  CHECK(progress.start==5 && progress.end==5 && state==(old_version==6 ? EXR_ANCHOR_FOUND : EXR_ANCHOR_LEGACY));
-  if(old_version==6) { same_string(progress.prefix,"Legac");same_string(progress.suffix,"y original text."); }
+  CHECK(progress.start==5 && progress.end==5 && state==(old_version>=5 ? EXR_ANCHOR_FOUND : EXR_ANCHOR_LEGACY));
+  if(old_version>=5) { same_string(progress.prefix,"Legac");same_string(progress.suffix,"y original text."); }
   exr_anchor_free(&progress);
   CHECK(scalar(path,"SELECT hex(cover)='636F766572' FROM books WHERE id=11")==1);
   CHECK(scalar(path,"SELECT text_size FROM books WHERE id=11")==21);
@@ -145,7 +151,7 @@ static void legacy_preserved(exr_library *library,const char *path,int old_versi
 }
 static void migrations(const char *directory) {
   char path[4096];exr_library *library=NULL;int version;
-  for(version=1;version<=6;version+=5) {
+  for(version=1;version<=6;version++) {
     snprintf(path,sizeof(path),"%s/epub-storage-migrate-%d.sqlite",directory,version);legacy_schema(path,version,1);
     CHECK(exr_library_open(path,&library,&error)==EXR_DATABASE && !library);
     CHECK(scalar(path,"PRAGMA user_version")==version);
@@ -156,7 +162,12 @@ static void migrations(const char *directory) {
     if(version==1) CHECK(scalar(path,"SELECT count(*) FROM pragma_table_info('notes') WHERE name='anchor_exact'")==0);
     execute(path,"DROP TABLE epub_notes");OK(exr_library_open(path,&library,&error));
     CHECK(scalar(path,"PRAGMA user_version")==7);legacy_preserved(library,path,version);exr_library_close(library);library=NULL;
-    OK(exr_library_open(path,&library,&error));legacy_preserved(library,path,version);exr_library_close(library);library=NULL;remove(path);
+    OK(exr_library_open(path,&library,&error));legacy_preserved(library,path,version);
+    { exr_document *document=NULL;size_t text_size=0;const char *text;
+      OK(exr_library_document(library,11,&document,&error));text=exr_document_text(document,&text_size);
+      CHECK(text_size==21 && !memcmp(text,"Legacy original text.",21));exr_document_free(document); }
+    exr_library_close(library);library=NULL;remove(path);
+    printf("schema %d -> 7: rollback, metadata/source/notes/progress, reopen and document open passed\n",version);
   }
 }
 
