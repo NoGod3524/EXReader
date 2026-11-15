@@ -1946,6 +1946,7 @@ static exr_status render_reflow(host_session *session, size_t page, host_frame *
   out->range_end = info->end;
   out->valid = 1;
   out->fixed = 0;
+  out->page_count = count;
   out->render_scale = 1;
   out->book_id = session->book_id;
   {
@@ -6661,3 +6662,4 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   LocalFree(argv);
   return (int)result;
 }
+
