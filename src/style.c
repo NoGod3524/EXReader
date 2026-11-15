@@ -725,7 +725,7 @@ static int length(const char *s, float em, float rem, int unitless, exr_length *
     *out = (exr_length){-1, 0};
     return 1;
   }
-  v = strtof(s, &end);
+  v = exr_strtof(s, &end);
   if (end == s || !isfinite(v) || v < 0 || v > 10000)
     return 0;
   out->percent = 0;
@@ -919,7 +919,7 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
       s->leading_relative = 1;
       return 1;
     }
-    number = strtof(v, &end);
+    number = exr_strtof(v, &end);
     if (end != v && !*end && isfinite(number) && number >= 0.8f && number <= 10) {
       s->leading = number;
       s->leading_relative = 1;
@@ -935,7 +935,7 @@ static int apply(exr_style *s, const exr_style *parent, int prop, const char *v,
     else if (!strcmp(v, "normal") || !strcmp(v, "lighter"))
       s->flags &= ~1u;
     else {
-      number = strtof(v, &end);
+      number = exr_strtof(v, &end);
       if (*end || end == v || !isfinite(number) || number < 100 || number > 900)
         return 0;
       if (number >= 600)

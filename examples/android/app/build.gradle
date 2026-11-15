@@ -4,6 +4,11 @@ plugins {
 
 def exrSdk = project.findProperty('exrSdk') ?: ''
 def exrSdkVersion = project.findProperty('exrSdkVersion') ?: '3.41.0'
+
+def exrAbi = project.findProperty('exrAbi') ?: 'x86_64'
+if (!(exrAbi in ['x86_64', 'arm64-v8a'])) {
+    throw new GradleException('Unsupported EXReader host ABI: ' + exrAbi)
+}
 def exrProduct = project.findProperty('exrProduct') ?: "${rootProject.projectDir}/../../stage/android-product"
 def exrSync = project.findProperty('exrSync') == 'true'
 def exrSearch = project.findProperty('exrSearch') == 'true'
@@ -43,7 +48,7 @@ android {
         buildConfigField 'boolean', 'READER_WAVE3', exrWave3.toString()
         testInstrumentationRunner (project.findProperty('exrTestRunner') ?: 'org.exreader.host.CatalogStoreTest')
         ndk {
-            abiFilters 'x86_64'
+            abiFilters exrAbi
         }
         externalNativeBuild {
             cmake {
