@@ -2,6 +2,7 @@
 /* Console-only entry: reuse the production sync and storage paths without
    entering WinMain, creating an HWND, or loading a font/publication. */
 #define WinMain reader_WinMain
+#define EXR_READER_SYNC_TEST_DRIVERS 1
 #include "../reader.c"
 #undef WinMain
 #include <assert.h>
@@ -12,6 +13,13 @@ int main(int argc,char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
   host_offscreen = 1;
+  if(argc==4 && !strcmp(argv[1],"--privacy-credential-crash")) {
+    wchar_t *root=host_wide(argv[2],strlen(argv[2])),*event=host_wide(argv[3],strlen(argv[3]));assert(root && event);
+    wcscpy(g.data_dir,root);sy_default_paths();
+    sy_test_after_flush_event=OpenEventW(EVENT_MODIFY_STATE,FALSE,event);assert(sy_test_after_flush_event);
+    /* The parent force-terminates after the production writer flushes. */
+    assert(sy_cred_save("interrupted-user","interrupted-password"));return 1;
+  }
   if(argc==3 && !strcmp(argv[1],"--privacy-crash")) {
     wchar_t *path=host_wide(argv[2],strlen(argv[2]));assert(path);
     HANDLE file=CreateFileW(path,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,0,NULL);assert(file!=INVALID_HANDLE_VALUE);

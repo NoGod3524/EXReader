@@ -26,15 +26,48 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def verdict(captures, expected, errors, child_exit):
+    """A complete collection with a failed control assertion must fail the CLI."""
+    completed = set(captures) == set(expected) and not errors and child_exit == 0
+    return {'audit_completed': completed,
+            'name_role_passed': completed and all(
+                item['name_role_passed'] for item in captures.values()),
+            'child_exit_code': child_exit,
+            'complete_keyboard_verified': False, 'screen_reader_verified': False}
+
+
+def self_check():
+    good = audit([{'name': 'Search', 'type_id': 50004, 'focusable': True}])
+    bad = audit([{'name': '', 'type_id': 50004, 'focusable': True}])
+    assert verdict({'reader': good}, ['reader'], [], 0)['name_role_passed']
+    failed = verdict({'reader': bad}, ['reader'], [], 0)
+    assert failed['audit_completed'] and not failed['name_role_passed']
+    assert not verdict({'reader': good}, ['reader', 'sync'], [], 0)['audit_completed']
+    assert not verdict({'reader': good, 'extra': good}, ['reader'], [], 0)['audit_completed']
+    assert not verdict({'reader': good}, ['reader'], ['provider disconnected'], 0)['name_role_passed']
+    assert not verdict({'reader': good}, ['reader'], [], 77)['name_role_passed']
+    assert not verdict({'reader': good}, ['reader'], [], None)['name_role_passed']
+    assert not failed['complete_keyboard_verified'] and not failed['screen_reader_verified']
+    print('PASS shell audit gate: unnamed controls, missing/extra surfaces, collection errors and abnormal child exits fail; keyboard/speech remain missing')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--binary', required=True, type=Path)
-    parser.add_argument('--book', required=True, type=Path)
-    parser.add_argument('--font', required=True, type=Path)
-    parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--self-check', action='store_true')
+    parser.add_argument('--binary', type=Path)
+    parser.add_argument('--book', type=Path)
+    parser.add_argument('--font', type=Path)
+    parser.add_argument('--output', type=Path)
+    parser.add_argument('--extended', action='store_true',
+                        help='also collect dictionary settings, vocabulary and WebDAV account panels')
     parser.add_argument('--uia-only', action='store_true',
                         help='collect owned UIA InvokePattern surfaces without keyboard input')
     args = parser.parse_args()
+    if args.self_check:
+        self_check()
+        return 0
+    if any(p is None for p in (args.binary, args.book, args.font, args.output)):
+        parser.error('--binary, --book, --font and --output are required for collection')
     binary, book, font, output = (p.resolve() for p in
                                   (args.binary, args.book, args.font, args.output))
     output.mkdir(parents=True, exist_ok=True)
@@ -46,6 +79,9 @@ def main():
                                 '--font', str(font), str(book)], cwd=binary.parent)
     hwnd, keyboard = None, None
     captures, errors = {}, []
+    expected = ['closed', 'search', 'settings', 'toc', 'shelf']
+    if args.extended:
+        expected += ['dictionary-settings', 'vocabulary', 'webdav-account']
 
     def press(key, modifiers=()):
         foreground = w32.foreground()
@@ -71,11 +107,15 @@ def main():
             label, len(captures[label]['controls']), captures[label]['name_role_passed'],
             sum(bool(r['observed_keyboard_steps']) for r in captures[label]['controls'])))
 
-    def activate(identifier):
+    def activate(identifier, panel_title=None):
         targets = [child for child in w32.child_windows(hwnd)
-                   if w32.ctrl_id(child) == identifier]
-        if not targets:
-            raise RuntimeError('missing owned control %d' % identifier)
+                   if w32.ctrl_id(child) == identifier
+                   and w32.user32.IsWindowVisible(child)
+                   and w32.user32.IsWindowEnabled(child)
+                   and (panel_title is None or w32.window_text(w32.parent(child)) == panel_title)]
+        if len(targets) != 1:
+            raise RuntimeError('expected one visible enabled owned control %d, found %d' %
+                               (identifier, len(targets)))
         if args.uia_only:
             control = uia.control(targets[0])
             if 'InvokePattern' not in uia.patterns(control):
@@ -125,6 +165,17 @@ def main():
         activate(160)
         snapshot('toc', 16)
         activate(160) if args.uia_only else press('escape')
+        if args.extended:
+            activate(161)
+            activate(183)
+            snapshot('dictionary-settings', 20)
+            activate(813, '词典设置')
+            snapshot('vocabulary', 20)
+            activate(815, '生词本')
+            activate(161)
+            activate(184)
+            snapshot('webdav-account', 24)
+            activate(846)
         activate(180) if args.uia_only else press(0x57, ('ctrl',))
         time.sleep(.3)
         snapshot('shelf', 30)
@@ -145,17 +196,17 @@ def main():
                   'platform': platform.platform(), 'python': sys.version.split()[0],
                   'input_mode': 'UIA InvokePattern only; keyboard not run' if args.uia_only else 'SendInput',
                   'files': {str(p): digest(p) for p in (binary, book, font)},
-                  'audit_completed': len(captures) == 5 and not errors,
-                  'name_role_passed': len(captures) == 5 and not errors and all(
-                      item['name_role_passed'] for item in captures.values()),
+                  'collector_sha256': digest(Path(__file__).resolve()),
+                  'control_contract_sha256': digest(Path(__file__).resolve().with_name('control_contract.py')),
+                  'expected_surfaces': expected,
+                  **verdict(captures, expected, errors, process.returncode),
                   'captures': captures, 'errors': errors,
-                  'complete_keyboard_verified': False, 'screen_reader_verified': False,
                   'missing': ['unopened dialogs and full product catalog flows',
                               'complete keyboard/arrow coverage', 'Narrator/NVDA speech',
                               'Linux/macOS/iPhone/iPad/Android runtime evidence']}
         evidence.write_json(output / 'all-controls.json', result)
         print(json.dumps({k: v for k, v in result.items() if k != 'captures'}, ensure_ascii=False, indent=2))
-    return int(not result['audit_completed'])
+    return int(not result['name_role_passed'])
 
 
 if __name__ == '__main__':
