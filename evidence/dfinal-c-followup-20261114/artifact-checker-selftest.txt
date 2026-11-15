@@ -1,0 +1,16 @@
+historical XML: path=C:\Users\Oscar\Documents\Codex\EXReader-dfinal-c\evidence\dfinal-c\actions-43648272236\model-tests.xml, sha256=7dbd9e884c34d8dd34620caefca1302c945b0066c44ced210a3203d1d6f0a1d3, root=testsuite
+historical: original 2/2 passed; names=['dfinal-c-annotation-exchange-model', 'dfinal-c-installed-sdk-version-guard']
+historical: missing rejected
+historical: failure rejected
+historical: skipped rejected
+historical: duplicate rejected
+historical: wrong-mode rejected
+current XML: path=C:\Users\Oscar\Documents\Codex\EXReader-dfinal-c\build\dfinal-c-models-followup\model-tests.xml, sha256=af4096702ccdbe1d6a3c3736a92f245feaeb938601287873c1a3fd3f90779a42, root=testsuite
+current: original 4/4 passed; names=['dfinal-c-android-abi-inspection', 'dfinal-c-annotation-exchange-model', 'dfinal-c-installed-sdk-version-guard', 'dfinal-c-product-catalog-upgrade']
+current: missing rejected
+current: failure rejected
+current: skipped rejected
+current: duplicate rejected
+current: wrong-mode rejected
+artifact checker selftest passed: 2 original CTest suites, 10 corrupt/mismatched suites rejected
+artifact checker selftest exit=0

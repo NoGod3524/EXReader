@@ -1,0 +1,85 @@
+{
+  "total_count": 4,
+  "artifacts": [
+    {
+      "id": 14143777006,
+      "node_id": "MDg6QXJ0aWZhY3QxNDE0Mzc3NzAwNg==",
+      "name": "dfinal-c-android-arm64-v8a-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "size_in_bytes": 25133721,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143777006",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143777006/zip",
+      "expired": false,
+      "digest": "sha256:b8a7b2d1f0cc5d9b36fe1f27d4f023f3931e0b2a4cdf973ed8ca054bef43ed0f",
+      "created_at": "2026-11-15T02:55:34Z",
+      "updated_at": "2026-11-15T02:55:34Z",
+      "expires_at": "2027-02-13T02:54:10Z",
+      "workflow_run": {
+        "id": 43669902467,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dfinal-c-followup-20261114",
+        "head_sha": "cdf0204dd6ef5a4e9c558921213621680cfd54cd"
+      }
+    },
+    {
+      "id": 14143667948,
+      "node_id": "MDg6QXJ0aWZhY3QxNDE0MzY2Nzk0OA==",
+      "name": "dfinal-c-models-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "size_in_bytes": 278905,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143667948",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143667948/zip",
+      "expired": false,
+      "digest": "sha256:f27c5e2d61d1be8c7327ab593cc20dcf2003b6bad91aa5c96857b5e6a28f2b7b",
+      "created_at": "2026-11-15T02:59:17Z",
+      "updated_at": "2026-11-15T02:59:17Z",
+      "expires_at": "2027-02-13T02:54:10Z",
+      "workflow_run": {
+        "id": 43669902467,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dfinal-c-followup-20261114",
+        "head_sha": "cdf0204dd6ef5a4e9c558921213621680cfd54cd"
+      }
+    },
+    {
+      "id": 14143443880,
+      "node_id": "MDg6QXJ0aWZhY3QxNDE0MzQ0Mzg4MA==",
+      "name": "dfinal-c-iphoneos-arm64-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "size_in_bytes": 8971893,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143443880",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143443880/zip",
+      "expired": false,
+      "digest": "sha256:9f5f76fcabc62abf52691d8b00ee246abf6c21c5541c60a7f893ec9c05c850fd",
+      "created_at": "2026-11-15T02:58:40Z",
+      "updated_at": "2026-11-15T02:58:40Z",
+      "expires_at": "2027-02-13T02:54:10Z",
+      "workflow_run": {
+        "id": 43669902467,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dfinal-c-followup-20261114",
+        "head_sha": "cdf0204dd6ef5a4e9c558921213621680cfd54cd"
+      }
+    },
+    {
+      "id": 14143154386,
+      "node_id": "MDg6QXJ0aWZhY3QxNDE0MzE1NDM4Ng==",
+      "name": "dfinal-c-android-arm64-host-cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+      "size_in_bytes": 19521873,
+      "url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143154386",
+      "archive_download_url": "https://api.github.com/repos/NoGod3524/EXReader/actions/artifacts/14143154386/zip",
+      "expired": false,
+      "digest": "sha256:7fd320d179122072d9c09cc80ae61752f84145bb92ef1a2367f8fb06b250bf58",
+      "created_at": "2026-11-15T02:57:19Z",
+      "updated_at": "2026-11-15T02:57:19Z",
+      "expires_at": "2027-02-13T02:54:10Z",
+      "workflow_run": {
+        "id": 43669902467,
+        "repository_id": 1421442522,
+        "head_repository_id": 1421442522,
+        "head_branch": "codex/dfinal-c-followup-20261114",
+        "head_sha": "cdf0204dd6ef5a4e9c558921213621680cfd54cd"
+      }
+    }
+  ]
+}

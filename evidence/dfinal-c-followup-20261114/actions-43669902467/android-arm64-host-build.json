@@ -1,0 +1,87 @@
+{
+  "source": "cdf0204dd6ef5a4e9c558921213621680cfd54cd",
+  "run": "43669902467",
+  "attempt": "1",
+  "target": "android-arm64-v8a",
+  "tier": "debug-apk-build-only",
+  "sdk_version": "3.42.0",
+  "android_platform": "android-26",
+  "ndk": "27.0.12077973",
+  "host_deployed": false,
+  "physical_device_verified": false,
+  "features": "base reference host; optional sync/reading/wave3 integration disabled",
+  "apk": {
+    "path": "artifacts/app-debug.apk",
+    "bytes": 26126725,
+    "sha256": "287a55ffd902df3b6d500174ceb5e633f3080fb717af8157c5aff400bdcc7e74"
+  },
+  "native": {
+    "lib/arm64-v8a/libexreader_product.so": {
+      "machine": 183,
+      "load_alignments": [
+        16384
+      ],
+      "needed": [
+        "libdl.so",
+        "libm.so",
+        "libc.so"
+      ],
+      "soname": "libexreader_product.so",
+      "sha256": "d0ff30aebb3c831cea31e4af8b9e2c0acb0f0a21c696a1b9e957936b95cf2d5e",
+      "build_id": "efadf3ea1779c5a633daed382d56974d129ebe51"
+    },
+    "lib/arm64-v8a/libexreader.so": {
+      "machine": 183,
+      "load_alignments": [
+        16384
+      ],
+      "needed": [
+        "libOpenSLES.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ],
+      "soname": "libexreader.so",
+      "sha256": "12432373921ea4a72a2fdfa05fb706e3ade1e8afc4b9b7e6d0dd7278028a673f",
+      "build_id": "e60a6a3c6fdfb058a6f21ccb6ec09d4f33601deb"
+    },
+    "lib/arm64-v8a/libexreader_jni.so": {
+      "machine": 183,
+      "load_alignments": [
+        16384
+      ],
+      "needed": [
+        "libexreader.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ],
+      "soname": "libexreader_jni.so",
+      "sha256": "e902396014ae9f9d081eb17ab9a888e550f149b497cd45d6f2010eb0315b43d9",
+      "build_id": "038a10cea2d3bd6e5e2f619bf47cd133ade47091"
+    },
+    "lib/arm64-v8a/libexreader_host.so": {
+      "machine": 183,
+      "load_alignments": [
+        16384
+      ],
+      "needed": [
+        "libexreader.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ],
+      "soname": "libexreader_host.so",
+      "sha256": "794e8dcd8e1bf7bf503c2f954f7b4a925a2af1d11c186354ec22266ab8a54186",
+      "build_id": "367f3b7e6fb1c90a45ae509899bd291f2fe3ca64"
+    }
+  },
+  "files": {
+    "LICENSE": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b",
+    "READER-INSTALL-UPGRADE-IMPORT-SYNC.md": "0c89873568ec5858a431b3234712c0ca189f56f7b635c12ff4a6af684e6d9cd7",
+    "THIRD_PARTY_NOTICES.md": "459be995165743d141ed3c1adae6bbfade0d308f78b1d4a3e1c839ac24ff94db",
+    "app-debug.apk": "287a55ffd902df3b6d500174ceb5e633f3080fb717af8157c5aff400bdcc7e74",
+    "badging.txt": "7f607af4c8243820989455f1f11f397638fc1069634c33c3cdc369631c5cb335",
+    "signature.txt": "2681edf1fbb92cb3d7ed812fd8830486d74ff41494a1bea4b6a05bba8c9494b6"
+  }
+}

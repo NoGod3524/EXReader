@@ -1,0 +1,10 @@
+x86_64: valid accepted
+x86_64: wrong-machine rejected
+x86_64: extra-abi rejected
+x86_64: missing-library rejected
+arm64-v8a: valid accepted
+arm64-v8a: wrong-machine rejected
+arm64-v8a: extra-abi rejected
+arm64-v8a: missing-library rejected
+8 Android APK ABI checks passed (synthetic files; no device execution)
+ABI checker exit=0

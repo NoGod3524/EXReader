@@ -1,0 +1,18 @@
+{
+  "platform": "Windows/MinGW",
+  "source": "9c38f335fb3504b9ba0b549837691244709a7191",
+  "test": "tests/dfinal_c/check_catalog_upgrade.c",
+  "test_sha256": "be5a64b7ca851e441ac51ffa7fd3cf3820972f8a52a737f3b7c517f0b3596936",
+  "catalog_source_sha256": "916382c3ee3a8e2a7edf858564f87532af3524e075115320388339282a4857fa",
+  "command": "gcc -std=c11 -O2 -Wall -Wextra -Werror -I build/dfinal-c-upgrade-probe-stage/include/exreader-product tests/dfinal_c/check_catalog_upgrade.c build/dfinal-c-upgrade-probe-stage/lib/libreader_catalog.a build/dfinal-c-upgrade-probe-stage/lib/libreader_catalog_sqlite.a -o build/dfinal-c-upgrade-probe/catalog-upgrade.exe",
+  "run": "build/dfinal-c-upgrade-probe/catalog-upgrade.exe apps/reader/store/001_catalog.sql apps/reader/store/002_originals.sql build/dfinal-c-upgrade-probe",
+  "installed_files": {
+    "include/exreader-product/sqlite3.h": "cd20a2877bc82b94e36c1093b727dd87cfa3c1d581aac6e240925535cbd90166",
+    "lib/libreader_catalog.a": "78e1d2205d270644a4ceb9a86adceb3b1d624e87c60dcf5132a5152605ba9708",
+    "include/exreader-product/catalog.h": "ca55b525cff33d81d725f4a342f193d37538951ba82b9c0edee32c2e79085d04",
+    "lib/libreader_catalog_sqlite.a": "bd49deebf3d3ad38949d7db47e2a8b560444915374b175d5350d6a8383b99709"
+  },
+  "passed": true,
+  "checks": 541,
+  "scope": "Native installed product v1/v2 model migration only; no final host/device/credential credit"
+}

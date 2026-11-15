@@ -1,0 +1,4 @@
+platform=Windows
+PATH commands:
+java.exe C:\Users\Oscar\.dsh\tools\jdk\jdk-21.0.13+9\bin\java.exe
+adb not found in PATH or standard configured SDK locations; no local Android runtime/device evidence acquired
