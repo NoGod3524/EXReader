@@ -2,7 +2,7 @@
 
 当前可用的是开发/测试包。下载时核对源码 SHA、SDK 版本、操作系统、CPU 架构和包内 manifest；
 SDK 头文件/静态库用于开发，安装阅读器需要包含宿主可执行程序的包。
-本轮能力与未测列表见 [D-FINAL-C 审计](reader-total-progress/dfinal-c-audit.md)。
+本轮能力与未测列表见 [D-FINAL-C 审计](reader-total-progress/dfinal-c-audit-20261114.md)；[前轮记录](reader-total-progress/dfinal-c-audit.md)保留原始范围。
 
 ## 安装与首次打开
 
@@ -11,11 +11,14 @@ SDK 头文件/静态库用于开发，安装阅读器需要包含宿主可执行
 | Windows | 含 `EXReader.exe` 的开发 ZIP | 完整解压到可写目录，保留同包 DLL/资源后启动；选择本地书库。不要只拷贝 EXE。 |
 | Linux | GTK 开发包 | 按该包列出的 GTK/系统库依赖安装，解压后运行宿主；无显示环境只能测模型。 |
 | macOS | 开发 `.app` | 保留完整 app bundle；开发签名和正式签名/公证分别核对包说明。正式公证发布未在本轮验证。 |
-| Android | 历史 x86_64 debug APK | 适用于对应模拟器；开发者可用 `adb install -r app-debug.apk`。arm64 SDK 构建产物不能安装，尚缺 arm64 宿主 APK 和真机结果。 |
+| Android | 历史 x86_64 debug APK；本轮 arm64 基础 debug APK | x86_64 包用于对应模拟器；本轮 [Actions43667039578](https://github.com/NoGod3524/EXReader/actions/runs/43667039578/artifacts/14143305427) 含 `mobile-host/host-debug-arm64-v8a.apk`，可用 `adb install -r host-debug-arm64-v8a.apk` 安装到匹配设备，实际设备安装尚未验证。该基础包关闭可选同步/阅读记录/wave3集成，不能作为完整产品使用。 |
 | iPhone/iPad | arm64 simulator app；device SDK | simulator app 只能由对应 Xcode Simulator 安装；普通设备需要 owner 的 Apple 签名身份、provisioning 及已签宿主包。本轮 device 静态库与 unsigned IPA 不提供普通真机安装能力。 |
 
 Apple 开发宿主构建入口为 `tools/build_apple_host.py`，Android 为 `tools/build_android_host.py`；
 它们是开发/CI 工具，所需 SDK 和可选产品模块须是匹配版本，不能拿历史 SDK 包与新宿主随意拼接。
+本轮 arm64 APK 的 SHA-256 为 `90f93eba01cddf00f72a633d2e1c872f8e6a3b2c24c7d19114f36f2a62cb5cdf`；
+debug certificate SHA-256 为 `d28e33bf727af4f0d11f273e75413ce13a15acbd2df27e91e9b6375bdce9e1e6`。
+覆盖更新需与旧包签名一致；若不一致，保留原数据和旧包，停止覆盖更新，不以卸载绕过升级检查。
 
 ## 升级与备份
 
@@ -26,6 +29,15 @@ Apple 开发宿主构建入口为 `tools/build_apple_host.py`，Android 为 `too
 4. 迁移后的库不要交给旧程序直接使用。未知 schema/其他应用数据库应拒绝；不要改 `user_version` 强行打开。
 5. 宿主 parser 标签与 SDK schema 是两件事。3.40→3.41 的 macOS owner 历史证据不能证明最终六端兼容；
    当前最终包的产品数据、账号/凭据迁移及中断恢复仍待平台实测。
+
+产品目录库单独使用 schema1→2→3 的逐段事务升级，和 SDK schema7 独立。
+某一段失败时会回滚该段，先前完成的段可以保留：例如从1升级时，第二段失败可能留下完整的2。
+不要手工删除迁移冲突表或修改版本号；保留失败副本及日志，由修复后的程序重新打开副本，
+核对原件状态、分类、原修订和 outbox 重试计数后再决定替换正式库。
+当前自动测试用历史 SQL 布局和注入的事务失败验证保留/重试，实际旧宿主升级与断电恢复另需平台证据。
+
+系统安全存储的凭据不在书库备份里。保留原应用身份及平台账号访问，升级后先检查账号连接；
+需要重新认证时在宿主账号入口输入，不把 Keychain、Credential Manager 或 Keystore 的内容写入迁移包。
 
 旧 Web/IndexedDB 数据使用 [旧版迁移工具及包格式](WP12-LEGACY-MIGRATION.md) 导出迁移包后导入，
 不要把浏览器数据库文件改名为原生书库。原始导出包与旧库备份保留到新端核查完成。
