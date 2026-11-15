@@ -404,7 +404,11 @@ exr_status exr_toc_pages_create(exr_publication *pub, exr_font *font, const exr_
           if ((*u & 0xc0) != 0x80) reserve += *u < 0x80 ? 0.6f : 1.0f;
         reserve += 1.5f;
       }
-      snprintf(s, sizeof(s), "margin:0 %.2fem 0 %zuem;text-indent:0;line-height:1;writing-mode:horizontal-tb", (double)reserve, level);
+      {
+        char em[32];
+        exr_format_number(em, sizeof(em), "%.2f", (double)reserve);
+        snprintf(s, sizeof(s), "margin:0 %sem 0 %zuem;text-indent:0;line-height:1;writing-mode:horizontal-tb", em, level);
+      }
       row[i] = add_block(&b, chapter, EXR_NODE_PARAGRAPH, "p", toc[i].title && *toc[i].title ? toc[i].title : "\xe2\x80\x94", s);
     }
     cont = add_block(&b, chapter, EXR_NODE_HEADING, "h1", continued, plain);

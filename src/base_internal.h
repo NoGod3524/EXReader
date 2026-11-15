@@ -41,6 +41,12 @@ int exr_uri_path(exr_buffer *buffer, const char *path);
 int exr_uri_decode(const char *text, size_t size, char out[2048]);
 int exr_resolve_path(const char *base, const char *href, char out[2048]);
 int exr_link_case_equal(const char *a,const char *b);
+/* strtod/strtof/snprintf for one number, always with '.' whatever setlocale()
+   selected. Parsing accepts only [sign]digits[.digits][exponent]; format holds
+   exactly one floating conversion such as "%.4f". */
+double exr_strtod(const char *text, char **end);
+float exr_strtof(const char *text, char **end);
+int exr_format_number(char *out, size_t size, const char *format, double value);
 
 exr_status exr_file_source_limit(const char *path,uint64_t maximum,exr_source *source,exr_error *error);
 exr_status exr_file_source(const char *path,exr_source *source,exr_error *error);

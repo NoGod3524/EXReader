@@ -1,0 +1,12 @@
+[
+  {
+    "Id": 6392,
+    "ProcessName": "GameViewer",
+    "Path": "C:\\Program Files\\Netease\\GameViewer\\bin\\GameViewer.exe"
+  },
+  {
+    "Id": 9028,
+    "ProcessName": "svchost",
+    "Path": "C:\\Windows\\system32\\svchost.exe"
+  }
+]

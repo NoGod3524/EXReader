@@ -340,3 +340,84 @@ int exr_css_unescape(const char *s, size_t n, char *out, size_t capacity) {
   out[used] = 0;
   return used != 0;
 }
+/* Locale-independent decimal text. Hosts may call setlocale() (GTK does in
+   gtk_init), but CSS, SVG, SMIL clock values and the style text the engine
+   generates always use '.'. The C library only knows the current locale, so
+   translate '.' to its separator before parsing and back after formatting. */
+static size_t decimal_separator(char out[8]) {
+  char text[32];
+  int n = snprintf(text, sizeof(text), "%.1f", 0.5);
+  if (n < 3 || (size_t)n - 2 >= 8 || text[0] != '0' || text[n - 1] != '5') { out[0] = '.'; return 1; }
+  memcpy(out, text + 1, (size_t)n - 2);
+  return (size_t)n - 2;
+}
+/* End of the longest C-locale decimal prefix: [sign] digits [. digits] [exponent]. */
+static const char *decimal_end(const char *p, const char **point) {
+  const char *q = p;
+  int digits = 0;
+  *point = NULL;
+  if (*q == '+' || *q == '-') q++;
+  while (isdigit((unsigned char)*q)) { q++; digits = 1; }
+  if (*q == '.') {
+    const char *dot = q++;
+    int fraction = 0;
+    while (isdigit((unsigned char)*q)) { q++; fraction = 1; }
+    if (digits || fraction) { *point = dot; digits = 1; }
+    else q = dot;
+  }
+  if (!digits) return p;
+  if (*q == 'e' || *q == 'E') {
+    const char *x = q + 1;
+    if (*x == '+' || *x == '-') x++;
+    if (isdigit((unsigned char)*x)) { while (isdigit((unsigned char)*x)) x++; q = x; }
+  }
+  return q;
+}
+static double decimal_parse(const char *s, char **end, int single) {
+  const char *p = s, *point, *stop;
+  char separator[8], local[128], *buffer = local, *parsed;
+  size_t length, width = 1, consumed;
+  double value;
+  while (isspace((unsigned char)*p)) p++;
+  stop = decimal_end(p, &point);
+  if (stop == p) { if (end) *end = (char *)s; return 0; }
+  length = (size_t)(stop - p);
+  if (point) width = decimal_separator(separator);
+  if (length + width >= sizeof(local) && !(buffer = malloc(length + width + 1))) {
+    if (end) *end = (char *)s;
+    return 0;
+  }
+  if (point) {
+    size_t before = (size_t)(point - p);
+    memcpy(buffer, p, before);
+    memcpy(buffer + before, separator, width);
+    memcpy(buffer + before + width, point + 1, length - before - 1);
+    buffer[length - 1 + width] = 0;
+  } else {
+    memcpy(buffer, p, length);
+    buffer[length] = 0;
+  }
+  value = single ? (double)strtof(buffer, &parsed) : strtod(buffer, &parsed);
+  consumed = (size_t)(parsed - buffer);
+  if (point && consumed > (size_t)(point - p)) consumed -= width - 1;
+  if (end) *end = (char *)(consumed ? p + consumed : s);
+  if (buffer != local) free(buffer);
+  return value;
+}
+double exr_strtod(const char *s, char **end) { return decimal_parse(s, end, 0); }
+float exr_strtof(const char *s, char **end) { return (float)decimal_parse(s, end, 1); }
+int exr_format_number(char *out, size_t size, const char *format, double value) {
+  char separator[8];
+  size_t width;
+  char *at;
+  int n = snprintf(out, size, format, value);
+  if (n < 0 || (size_t)n >= size) return n;
+  width = decimal_separator(separator);
+  if (width == 1 && separator[0] == '.') return n;
+  separator[width] = 0;
+  at = strstr(out, separator);
+  if (!at) return n;
+  *at = '.';
+  memmove(at + 1, at + width, strlen(at + width) + 1);
+  return n - (int)(width - 1);
+}

@@ -1,0 +1,10 @@
+{
+  "command": [
+    "cmake",
+    "--build",
+    "build/audit-msvc",
+    "--parallel",
+    "8"
+  ],
+  "exit": 0
+}

@@ -388,7 +388,11 @@ static int clipboard_contains(const char *needle) {
   wchar_t *text;
   char *utf8;
   int found = 0;
-  if (!OpenClipboard(g.window)) return 0;
+  DWORD sequence = GetClipboardSequenceNumber();
+  if (!clipboard_open()) {
+    clipboard_diagnostic("read-open-failed", GetLastError(), sequence, 0, 0);
+    return 0;
+  }
   handle = GetClipboardData(CF_UNICODETEXT);
   if (handle) {
     text = GlobalLock(handle);
@@ -396,11 +400,15 @@ static int clipboard_contains(const char *needle) {
       utf8 = host_utf8(text);
       if (utf8) {
         found = strstr(utf8, needle) != NULL;
+        if (!found) clipboard_diagnostic("read-substring-missing", 0, sequence,
+                                        GlobalSize(handle), strlen(utf8));
         free(utf8);
-      }
+      } else clipboard_diagnostic("read-utf8-failed", GetLastError(), sequence,
+                                  GlobalSize(handle), 0);
       GlobalUnlock(handle);
-    }
-  }
+    } else clipboard_diagnostic("read-lock-failed", GetLastError(), sequence,
+                                GlobalSize(handle), 0);
+  } else clipboard_diagnostic("read-data-failed", GetLastError(), sequence, 0, 0);
   CloseClipboard();
   return found;
 }

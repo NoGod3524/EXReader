@@ -216,6 +216,9 @@ class Session(object):
         if before == "none":
             self.ensure_focus("focus was lost before a Tab")
         self.kb.press("tab", modifiers, note=note)
+        self.trace.event('keyboard_focus_observed', {
+            'transport': self.kb.transport, 'key': 'tab', 'modifiers': list(modifiers),
+            'element': self.uia.focused()})
         after = self.focus_name()
         if after == "none":
             self.ensure_focus("Tab did not restore focus")
@@ -223,6 +226,9 @@ class Session(object):
         if after == before and before != "none":
             self.kb.ready()
             self.kb.press("tab", modifiers, note="retry after re-activating the host")
+            self.trace.event('keyboard_focus_observed', {
+                'transport': self.kb.transport, 'key': 'tab', 'modifiers': list(modifiers),
+                'element': self.uia.focused()})
             after = self.focus_name()
             self.trace.event("focus_retry", {"before": before, "after": after})
             if after == before:
