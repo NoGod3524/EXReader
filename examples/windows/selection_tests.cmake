@@ -76,6 +76,11 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
       "${CMAKE_CURRENT_SOURCE_DIR}/docs/ui/acceptance/check_a11y_c2.py"
       --out "${CMAKE_CURRENT_BINARY_DIR}/a11y-c2-static")
     set_tests_properties(windows-a11y-c2-static PROPERTIES LABELS "headless")
+    # This hidden-HWND DirectWrite/D2D editor still uses desktop resources.
+    # Isolate it like the selection tests; keep its timeout/assertions intact.
+    if(TEST native-docx-footnotes-ui)
+      set_tests_properties(native-docx-footnotes-ui PROPERTIES RUN_SERIAL TRUE)
+    endif()
     foreach(group boundaries copy keyboard raster generated annotations shelf style shelfmeta dictionary-storage render-budget)
       add_test(NAME windows-selection-${group} COMMAND exreader-shell-selection-test ${group}
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf")
