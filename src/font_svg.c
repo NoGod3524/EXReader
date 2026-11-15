@@ -498,7 +498,7 @@ static int svg_number(const unsigned char **pp, const unsigned char *end, double
     if (length >= sizeof(buffer)) return 0;
     memcpy(buffer, start, length);
     buffer[length] = 0;
-    *out = strtod(buffer, NULL);
+    *out = exr_strtod(buffer, NULL);
     if (!isfinite(*out)) return 0;
   }
   *pp = p;
@@ -581,7 +581,7 @@ static int svg_color(const char *value, const double current[3], double rgba[4])
     for (int i = 0; i < 3; i++) {
       const char *component = i == 0 ? buffer : i == 1 ? comma1 + 1 : comma2 + 1;
       char *stop = NULL;
-      double number = strtod(component, &stop);
+      double number = exr_strtod(component, &stop);
       if (stop == component) return -1;
       if (*stop == '%') { number = number*255.0/100.0; stop++; }
       while (*stop && svg_space((unsigned char)*stop)) stop++;
