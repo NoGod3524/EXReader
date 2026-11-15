@@ -6,7 +6,7 @@ import sys
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from check_dfinal_c_artifacts import check_ctest, unique_member
+from check_dfinal_c_artifacts import check_ctest, check_roles, unique_member
 
 REPORT = ('<testsuite tests="2" failures="0" skipped="0">'
           '<testcase name="one" status="run"/><testcase name="two" status="run"/>'
@@ -15,6 +15,14 @@ REPORT = ('<testsuite tests="2" failures="0" skipped="0">'
 
 def main():
     assert check_ctest(REPORT, ['one', 'two'])['passed'] == 2
+    check_roles(['models', 'android-arm64-v8a', 'iphoneos-arm64'])
+    for roles in (['models', 'iphoneos-arm64'], ['models', 'iphoneos-arm64', 'iphoneos-arm64'],
+                  ['models', 'android-arm64-v8a', 'unrelated-platform']):
+        try:
+            check_roles(roles)
+        except AssertionError:
+            continue
+        raise AssertionError(('accepted missing or duplicate artifact role', roles))
     cases = [
         (REPORT.replace('tests="2"', 'tests="3"'), ['one', 'two']),
         (REPORT.replace('failures="0"', 'failures="1"'), ['one', 'two']),
@@ -45,7 +53,7 @@ def main():
             except AssertionError:
                 continue
             raise AssertionError(('accepted missing or ambiguous archive member', suffix))
-    print('DFINAL-C evidence checker: 1 positive, 14 negative checks passed')
+    print('DFINAL-C evidence checker: 2 positive, 17 negative checks passed')
 
 
 if __name__ == '__main__':

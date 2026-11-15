@@ -37,6 +37,10 @@ def check_ctest(report, expected=None):
     return {'passed': len(names), 'failed': 0, 'skipped': 0, 'names': names}
 
 
+def check_roles(roles):
+    assert len(roles) == 3 and set(roles) == {'models', 'android-arm64-v8a', 'iphoneos-arm64'}, roles
+
+
 def check_android_host(archive, source, run):
     manifest = json.loads(unique_member(archive, '/host-manifest.json'))
     assert manifest['source'] == source and manifest['run'] == str(run)
@@ -84,7 +88,7 @@ def main():
     assert run['status'] == 'completed' and run['conclusion'] == 'success', run['conclusion']
     assert len(jobs['jobs']) == 3 and all(j['conclusion'] == 'success' for j in jobs['jobs'])
     assert len(artifacts['artifacts']) == 3
-    rows = []
+    rows, roles = [], []
     for artifact in artifacts['artifacts']:
         assert not artifact['expired'] and artifact['workflow_run']['head_sha'] == run['head_sha']
         blob = api(f"actions/artifacts/{artifact['id']}/zip")
@@ -98,6 +102,9 @@ def main():
                 manifest = json.loads(archive.read(manifests[0]))
                 assert manifest['source'] == run['head_sha'] and manifest['run'] == str(args.run)
                 assert manifest['tier'] == 'sdk-build-only' and not manifest['physical_device_verified']
+                assert not manifest['host_deployed'] and manifest['files']
+                assert any(name.endswith('.a') for name in manifest['files'])
+                roles.append(manifest['target'])
                 prefix = manifests[0].removesuffix('mobile-evidence/manifest.json') + 'mobile-stage/'
                 for name, expected in manifest['files'].items():
                     assert hashlib.sha256(archive.read(prefix + name)).hexdigest() == expected, name
@@ -107,6 +114,7 @@ def main():
                     host = check_android_host(archive, run['head_sha'], args.run)
                     (args.output / 'android-host-manifest.json').write_text(json.dumps(host, indent=2), encoding='utf-8')
             else:
+                roles.append('models')
                 names = [n for n in archive.namelist() if n.endswith('/results/result.json')]
                 assert len(names) == 1
                 result = json.loads(archive.read(names[0]))
@@ -118,7 +126,9 @@ def main():
                     inventory = json.loads(unique_member(archive, '/ctest-inventory.json'))
                     expected = [test['name'] for test in inventory['tests']]
                 ctest = check_ctest(unique_member(archive, '/ctest-full.xml'), expected)
-                models = check_ctest(unique_member(archive, '/model-tests.xml'))
+                model_names = ['dfinal-c-annotation-exchange-model', 'dfinal-c-installed-sdk-version-guard',
+                               'dfinal-c-product-catalog-upgrade'] if args.require_current_evidence else None
+                models = check_ctest(unique_member(archive, '/model-tests.xml'), model_names)
                 assert {'dfinal-c-annotation-exchange-model', 'dfinal-c-installed-sdk-version-guard'} <= set(models['names'])
                 assert unique_member(archive, '/source.txt').decode().strip() == run['head_sha']
                 summary = {'source': run['head_sha'], 'full_ctest': ctest, 'model_ctest': models}
@@ -127,6 +137,7 @@ def main():
                 (args.output / 'model-result.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
             rows.append({'id': artifact['id'], 'name': artifact['name'], 'bytes': len(blob),
                          'zip_sha256': digest, 'checked_files_or_model_assertions': count})
+    check_roles(roles)
     result = {'run': args.run, 'source': run['head_sha'], 'jobs_passed': 3, 'artifacts': rows, 'passed': True}
     (args.output / 'verified.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
     print(json.dumps(result, indent=2))
