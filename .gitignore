@@ -12,3 +12,7 @@ playwright-report/
 __pycache__/
 # Downloaded compatibility corpus (tools/fetch_corpus.py)
 tests/corpus/
+
+# Ad-hoc agent/run output belongs in evidence/, not the repository root.
+/*-OUT*.txt
+/OUT*.txt

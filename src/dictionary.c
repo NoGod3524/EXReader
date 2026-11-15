@@ -266,6 +266,7 @@ exr_status exr_dictionary_open(const char *path,exr_dictionary **out,exr_error *
     if(status!=EXR_OK && (status!=EXR_IO || d->info.synwordcount))goto fail;
     if(status==EXR_OK) {
       size_t at=0,n=(size_t)d->info.synwordcount;
+      if(d->info.synwordcount>size/6) {status=EXR_FORMAT;goto fail;}
       d->synonyms=calloc(n?n:1,sizeof(*d->synonyms));if(!d->synonyms){status=EXR_MEMORY;goto fail;}
       for(size_t i=0;i<n;i++) {
         char *zero=memchr(d->syn+at,0,size-at);status=EXR_FORMAT;
