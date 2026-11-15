@@ -377,6 +377,28 @@ def normalized_notes(rows):
     return sorted((row.get('id', ''), row.get('quote', ''), row.get('comment', '')) for row in rows)
 
 
+def check_note_jump(added, jumped, created_notes, jumped_notes):
+    # A reflow note belongs to its stored chapter-local range. select_all
+    # selects the whole part, so its start can precede the creation page.
+    require(len(created_notes) == len(jumped_notes) == 1, 'expected one positive annotation')
+    note, restored = created_notes[0], jumped_notes[0]
+    require(all(note[key] == restored[key] for key in ('id', 'storage', 'part', 'path', 'start', 'end')),
+            'positive annotation identity or stored range changed')
+    require(note['storage'] == 'epub_notes' and note['id'] not in ('', '0'), 'missing stored EPUB annotation')
+    require(added['book_id'] == jumped['book_id'] and added['book_id'] not in ('', '0') and
+            added['part'] == jumped['part'] == note['part'] and
+            added['part_path'] == jumped['part_path'] == note['path'] and bool(note['path']),
+            'positive annotation returned to a different book or chapter')
+    start, end = int(note['start']), int(note['end'])
+    offset, length = int(jumped['offset']), int(jumped['range_len'])
+    require(0 <= start < end and 0 <= offset <= start < offset + length and
+            0 <= int(jumped['page']) < int(jumped['page_count']),
+            'positive annotation target page does not contain its stored start')
+    require(jumped['selection_active'] == '1' and
+            int(jumped['selection_start']) == start and int(jumped['selection_end']) == end,
+            'positive annotation selection differs from its exact stored range')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--package', type=Path, required=True)
@@ -579,10 +601,11 @@ def main():
     if state('A', 'note_deleted').get('notes') != '1':
         errors.append('reflow annotation deletion was not persisted')
     added, jumped = state('A', 'note_added'), state('A', 'after_note_jump')
-    if any(added.get(key) != jumped.get(key) for key in ('book_id', 'part', 'page', 'offset', 'page_text_fnv')) or \
-            jumped.get('selection_active') != '1' or jumped.get('selection_start') != added.get('offset') or \
-            int(jumped.get('selection_end', '-1')) != int(added.get('offset', '-2')) + int(added.get('range_len', '-3')):
-        errors.append('positive annotation did not return to its exact chapter/page/range')
+    try:
+        check_note_jump(added, jumped, notes.get('A', {}).get('note_added', []),
+                        notes.get('A', {}).get('after_note_jump', []))
+    except (ValueError, KeyError, TypeError) as error:
+        errors.append('positive annotation did not return to its exact chapter/page/range: ' + str(error))
     # The original 158 actions now exercise the normal default bounded EPUB
     # import/reader, rather than obtaining credit from a legacy memory import.
     for phase, name in [('A', 'epub_open'), ('A', 'final'), ('B', 'restored'),
