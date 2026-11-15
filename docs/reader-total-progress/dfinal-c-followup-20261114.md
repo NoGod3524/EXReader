@@ -227,7 +227,8 @@ tests/check_reading_release.py unchanged
 ```
 
 状态计数仍为99 verified / 0 partial / 9 pending，没有加分。
-[源码范围核对](../../evidence/dfinal-c-followup-20261114/source-scope-check.txt)确认SDK源树未改，产品/测试/工具/宿主/工作流代码与受测cdf0204d一致；其后提交只补文档、台账说明和原始证据。
+[源码范围核对](../../evidence/dfinal-c-followup-20261114/source-scope-check.txt)确认SDK源树未改，产品/测试/工具/宿主/工作流代码与受测cdf0204d一致；其后提交只补文档、台账说明、原始证据和本目录的证据字节保留规则。
+沿用仓库既有 `.gitattributes` 规则，为本证据目录设置 `-text -whitespace`；真实逐文件核对60份证据与暂存区字节完全一致，保留CRLF和原始行尾空格。源码空白检查继续启用，完整diff检查exit0。
 
 ### prepush
 
