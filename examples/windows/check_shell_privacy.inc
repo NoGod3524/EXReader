@@ -1,6 +1,33 @@
 /* SPDX-License-Identifier: MIT */
 /* Production atomic writer failure/cleanup and abrupt-process residue probe. */
 #include <sddl.h>
+static void privacy_assert_credential_acl(const wchar_t *path) {
+  DWORD needed=0;GetFileSecurityW(path,OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,NULL,0,&needed);
+  assert(needed);PSECURITY_DESCRIPTOR sd=malloc(needed);assert(sd);
+  assert(GetFileSecurityW(path,OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,sd,needed,&needed));
+  SECURITY_DESCRIPTOR_CONTROL control=0;DWORD revision=0;
+  assert(GetSecurityDescriptorControl(sd,&control,&revision) && (control&SE_DACL_PROTECTED));
+  PACL dacl=NULL;BOOL present=FALSE,defaulted=FALSE;
+  assert(GetSecurityDescriptorDacl(sd,&present,&dacl,&defaulted) && present && dacl && dacl->AceCount==2);
+  HANDLE token=NULL;assert(OpenProcessToken(GetCurrentProcess(),TOKEN_QUERY,&token));
+  needed=0;GetTokenInformation(token,TokenUser,NULL,0,&needed);
+  TOKEN_USER *user=malloc(needed);assert(user && GetTokenInformation(token,TokenUser,user,needed,&needed));
+  BYTE system[SECURITY_MAX_SID_SIZE];DWORD system_size=sizeof(system);
+  assert(CreateWellKnownSid(WinLocalSystemSid,NULL,system,&system_size));
+  int users=0,systems=0;
+  for(DWORD i=0;i<dacl->AceCount;i++) {
+    ACCESS_ALLOWED_ACE *ace=NULL;assert(GetAce(dacl,i,(void **)&ace));
+    assert(ace->Header.AceType==ACCESS_ALLOWED_ACE_TYPE && !(ace->Header.AceFlags&INHERITED_ACE));
+    assert(ace->Mask==FILE_ALL_ACCESS);
+    if(EqualSid(&ace->SidStart,user->User.Sid)) users++;
+    else {assert(EqualSid(&ace->SidStart,system));systems++;}
+  }
+  assert(users==1 && systems==1);free(user);CloseHandle(token);
+  LPWSTR sddl=NULL;assert(ConvertSecurityDescriptorToStringSecurityDescriptorW(sd,SDDL_REVISION_1,
+    OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,&sddl,NULL));
+  char *acl=host_utf8(sddl);assert(acl);printf("PRIVACY sync.cred protected current-user/SYSTEM owner/DACL=%s\n",acl);
+  free(acl);LocalFree(sddl);free(sd);
+}
 static void test_privacy(void) {
   wchar_t root[HOST_PATH],path[HOST_PATH],temp[HOST_PATH],base[HOST_PATH];
   assert(GetTempPathW(HOST_PATH,base));
@@ -8,20 +35,31 @@ static void test_privacy(void) {
   assert(CreateDirectoryW(root,NULL));path_join(path,HOST_PATH,root,L"state.json");
   wcscpy(g.data_dir,root);sy_default_paths();
   assert(sy_cred_save("audit-user","audit-only-password"));
-  DWORD needed=0;GetFileSecurityW(sy_cred_file,OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,NULL,0,&needed);
-  assert(needed);PSECURITY_DESCRIPTOR sd=malloc(needed);assert(sd);
-  assert(GetFileSecurityW(sy_cred_file,OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,sd,needed,&needed));
-  LPWSTR sddl=NULL;assert(ConvertSecurityDescriptorToStringSecurityDescriptorW(sd,SDDL_REVISION_1,
-    OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,&sddl,NULL));
-  char *acl=host_utf8(sddl);assert(acl);printf("PRIVACY sync.cred DPAPI current-user; actual inherited owner/DACL=%s\n",acl);
-  free(acl);LocalFree(sddl);free(sd);sy_cred_delete();
+  privacy_assert_credential_acl(sy_cred_file);
+  assert(sy_cred_save("audit-user-2","replacement-password"));
+  privacy_assert_credential_acl(sy_cred_file);
+  assert(sy_cred_load() && !strcmp(sy_user,"audit-user-2") && !strcmp(sy_pass,"replacement-password"));
+  wchar_t cred_temp[HOST_PATH],sentinel[HOST_PATH];swprintf(cred_temp,HOST_PATH,L"%ls.tmp",sy_cred_file);
+  path_join(sentinel,HOST_PATH,root,L"sentinel");assert(sy_write(sentinel,"keep",4));
+  assert(CreateHardLinkW(cred_temp,sentinel,NULL));assert(!sy_cred_save("changed","must-not-publish"));
+  size_t n=0;char *b=sy_read(sentinel,&n);assert(b && n==4 && !memcmp(b,"keep",4));free(b);
+  assert(DeleteFileW(cred_temp));assert(DeleteFileW(sentinel));
+  assert(CreateDirectoryW(cred_temp,NULL));assert(!sy_cred_save("changed","must-not-publish"));
+  assert(RemoveDirectoryW(cred_temp));
+  HANDLE locked=CreateFileW(sy_cred_file,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
+  assert(locked!=INVALID_HANDLE_VALUE && !sy_cred_save("changed","must-not-publish"));
+  assert(GetFileAttributesW(cred_temp)==INVALID_FILE_ATTRIBUTES);assert(CloseHandle(locked));
+  assert(sy_cred_load() && !strcmp(sy_user,"audit-user-2") && !strcmp(sy_pass,"replacement-password"));
+  privacy_assert_credential_acl(sy_cred_file);
+  puts("PRIVACY private credential replacement: hard-link/directory collision refused; failed publish preserved old blob and removed owned .tmp");
+  sy_cred_delete();
   assert(GetFileAttributesW(sy_cred_file)==INVALID_FILE_ATTRIBUTES);
   swprintf(temp,HOST_PATH,L"%ls.tmp",path);
   assert(sy_write(path,"old",3));assert(GetFileAttributesW(temp)==INVALID_FILE_ATTRIBUTES);
   HANDLE held=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,0,NULL);
   assert(held!=INVALID_HANDLE_VALUE);assert(!sy_write(path,"new",3));
   assert(GetFileAttributesW(temp)==INVALID_FILE_ATTRIBUTES);assert(CloseHandle(held));
-  size_t n=0;char *b=sy_read(path,&n);assert(b && n==3 && !memcmp(b,"old",3));free(b);
+  b=sy_read(path,&n);assert(b && n==3 && !memcmp(b,"old",3));free(b);
   puts("PRIVACY atomic publish failure: original preserved; .tmp absent");
   wchar_t exe[HOST_PATH],command[HOST_PATH*3];assert(GetModuleFileNameW(NULL,exe,HOST_PATH));
   swprintf(command,HOST_PATH*3,L"\"%ls\" --privacy-crash \"%ls\"",exe,temp);

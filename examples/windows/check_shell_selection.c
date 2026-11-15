@@ -115,7 +115,11 @@ static void test_keyboard(void) {
   select_drive_key(VK_ESCAPE, 0, 0); assert(!select_valid && !g.selection.active && !select_drag);
   for (int i = 0; i < 3; i++) {
     select_drive_key('A', 0, 1); assert(select_range.start.offset == 0 && select_range.end.offset > g.frame.range_end);
+    const char *sentinel = "keyboard copy sentinel";
+    assert(clipboard_set(sentinel, strlen(sentinel)));
+    DWORD sequence = GetClipboardSequenceNumber();
     select_drive_key('C', 0, 1); assert(clipboard_contains("Alpha"));
+    assert(GetClipboardSequenceNumber() != sequence);
     select_drive_key(VK_ESCAPE, 0, 0); assert(!g.selection.active);
   }
   HMENU menu = select_context_menu(); assert(GetMenuItemCount(menu) == 13);
