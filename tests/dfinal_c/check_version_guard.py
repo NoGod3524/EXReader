@@ -50,8 +50,8 @@ set_target_properties(guard_probe PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/prefix/lib/probe.a"
   INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/prefix/include")
 _exr_raw_guard_target(guard_probe "${CMAKE_CURRENT_SOURCE_DIR}/prefix/lib/cmake/Test"
-  exr/base.h EXR_VERSION "{current}" FALSE)
-''', encoding='utf-8')
+  exr/base.h EXR_VERSION "@EXR_EXPECTED_VERSION@" FALSE)
+'''.replace('@EXR_EXPECTED_VERSION@', current), encoding='utf-8')
             run = subprocess.run(['cmake', '-S', str(source), '-B', str(source / 'build'),
                                   '-DCMAKE_PREFIX_PATH=' + args.prefixes], capture_output=True, text=True)
             if (run.returncode == 0) != accepted or (not accepted and 'header version mismatch' not in run.stdout + run.stderr):
@@ -62,4 +62,5 @@ _exr_raw_guard_target(guard_probe "${CMAKE_CURRENT_SOURCE_DIR}/prefix/lib/cmake/
 
 if __name__ == '__main__':
     main()
+
 
