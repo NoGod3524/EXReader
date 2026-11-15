@@ -247,6 +247,8 @@ static void drive_state(const char *name) {
       detail_add(row, sizeof(row), "kind", "reflow"); detail_add(row, sizeof(row), "storage", "epub_notes");
       detail_add(row, sizeof(row), "path", note->location.path);
       snprintf(number, sizeof(number), "%llu", (unsigned long long)note->location.part); detail_add(row, sizeof(row), "part", number);
+      snprintf(number, sizeof(number), "%llu", (unsigned long long)note->location.selector.start); detail_add(row, sizeof(row), "start", number);
+      snprintf(number, sizeof(number), "%llu", (unsigned long long)note->location.selector.end); detail_add(row, sizeof(row), "end", number);
       snprintf(number, sizeof(number), "%llu", (unsigned long long)note->location.selector.start); detail_add(row, sizeof(row), "page", number);
     } else {
       const exr_note *note = &g.reflow_notes[i];
