@@ -6,18 +6,33 @@ import subprocess
 import tempfile
 
 
+def sdk_version():
+    """Current SDK version from the single authoritative source."""
+    import re
+    source = (Path(__file__).resolve().parents[2] / 'cmake/versions.cmake').read_text(encoding='utf-8')
+    return re.search(r'set\(EXR_SDK_VERSION\s+([0-9.]+)\)', source)[1]
+
+
+def drifted(version):
+    """A version that differs from the current one, built without a bare literal."""
+    major, minor, patch = (int(part) for part in version.split('.'))
+    return f'{major}.{minor}.{patch - 1}' if patch else f'{major}.{minor - 1}.0'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--prefixes', required=True)
     args = parser.parse_args()
+    current = sdk_version()
+    other = drifted(current)
     with tempfile.TemporaryDirectory(prefix='raw-version-guard-') as directory:
         root = Path(directory)
         for name, base, version, accepted in [
-            ('old-literal', '#define EXR_VERSION "3.42.0"\n', None, True),
-            ('current-alias', '#include <exr/version.h>\n#define EXR_VERSION EXR_SDK_VERSION\n', '3.42.0', True),
-            ('wrong-version', '#include <exr/version.h>\n#define EXR_VERSION EXR_SDK_VERSION\n', '3.41.0', False),
+            ('old-literal', f'#define EXR_VERSION "{current}"\n', None, True),
+            ('current-alias', '#include <exr/version.h>\n#define EXR_VERSION EXR_SDK_VERSION\n', current, True),
+            ('wrong-version', '#include <exr/version.h>\n#define EXR_VERSION EXR_SDK_VERSION\n', other, False),
             ('missing-version', '#include <exr/version.h>\n#define EXR_VERSION EXR_SDK_VERSION\n', None, False),
-            ('missing-include', '#define EXR_VERSION EXR_SDK_VERSION\n', '3.42.0', False),
+            ('missing-include', '#define EXR_VERSION EXR_SDK_VERSION\n', current, False),
         ]:
             source = root / name
             prefix = source / 'prefix'
@@ -35,7 +50,7 @@ set_target_properties(guard_probe PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/prefix/lib/probe.a"
   INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/prefix/include")
 _exr_raw_guard_target(guard_probe "${CMAKE_CURRENT_SOURCE_DIR}/prefix/lib/cmake/Test"
-  exr/base.h EXR_VERSION "3.42.0" FALSE)
+  exr/base.h EXR_VERSION "{current}" FALSE)
 ''', encoding='utf-8')
             run = subprocess.run(['cmake', '-S', str(source), '-B', str(source / 'build'),
                                   '-DCMAKE_PREFIX_PATH=' + args.prefixes], capture_output=True, text=True)
@@ -47,3 +62,4 @@ _exr_raw_guard_target(guard_probe "${CMAKE_CURRENT_SOURCE_DIR}/prefix/lib/cmake/
 
 if __name__ == '__main__':
     main()
+
