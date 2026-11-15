@@ -1,6 +1,6 @@
-# D-FINAL-A · F01 / F03 / F05 证据审计
+# D-FINAL-A · F01 / F03 / F05 证据审计与同源合入验收登记
 
-本 lane 从 `origin/main` 的 `df8e6031` 新建 `codex/dfinal-a-evidence`，PR [#209](https://github.com/NoGod3524/EXReader/pull/209)，base 为 `main`。三项保持 **pending**。固定 v1 分母 108，状态仍为 **verified 99 / partial 1 / pending 8**，分组仍为 foundation 12 / host 84 / final 12。
+本 lane 从 `origin/main` 的 `df8e6031` 新建 `codex/dfinal-a-evidence`，PR [#209](https://github.com/NoGod3524/EXReader/pull/209)（合入 `main` 提交 `c2e20df2aee2de3d061e350d2219005d0f1ab2cb`，对应 PR head `886187bb5e7ed4e9355a6321e40aef387ef8ce93`，Git tree `111710282c66f886e1368437b19d165dc985c44c`）。初版证据快照时三项保持 pending；随后在 PR #209 后续提交（`3e897f62`..`b7a607ca` 及 merge `886187bb5e7ed4e9355a6321e40aef387ef8ce93`）完成 Windows Shell 158 步 UI 验收修复及十作业同源全绿验证（Actions run [43758487022](https://github.com/NoGod3524/EXReader/actions/runs/43758487022) 与合入前 [43750277397](https://github.com/NoGod3524/EXReader/actions/runs/43750277397) 均 10/10 jobs **success**）。固定 v1 分母 108，登记后状态更新为 **verified 102 / partial 1 / pending 5**，分组仍为 foundation 12 / host 84 / final 12（final 组 7/12）。
 
 ## 1. 验收原文与 verified 所需证据
 
@@ -147,22 +147,37 @@ HTTPS 工件已通过连接器实际下载，并再次核对原 ZIP 字节数与
 | iPhone | run [43650961238](https://github.com/NoGod3524/EXReader/actions/runs/43650961238) artifact `14136667353`，source `ef6bfdb5`（上述产品路径与 42/773 相同）；arm64 iOS 15 universal app + unsigned IPA；[manifest](final-a-build-only-iphone-build.json)。 | 当前 42 的独立 iPhone 作业若仍 queued，不能称成功；已有实际构建仅授予相同产品源码路径，不称整个工作流 tree 相同。需 owner 签名和真机功能验收。 |
 | iPad | run `43653480030` artifact `14137602353`，source `42efccd3`；arm64 iOS 15 universal app，Info.plist `UIDeviceFamily=[1,2]`；[manifest](final-a-build-only-ipad-42efccd3d6a90cc94d1bfbcb12d061d1c7b6e7e0-build.json)。 | 同一 universal 构建支持两类设备，但没有 iPad 实际运行；需 owner 签名和真机。 |
 
-最终作业快照：[专用工作流](actions-43653480030-jobs.json)、[Native C engine](actions-43653483106-jobs.json)。排队、运行中、skipped 均不计通过。为释放 runner，只取消本 lane 被后续代码替代的旧运行，完成的失败步骤与原工件未删除，取消记录见 `superseded-actions-cancel*.json`。
+最终作业快照（初版）：[专用工作流](actions-43653480030-jobs.json)、[Native C engine](actions-43653483106-jobs.json)。排队、运行中、skipped 均不计通过。为释放 runner，只取消本 lane 被后续代码替代的旧运行，完成的失败步骤与原工件未删除，取消记录见 `superseded-actions-cancel*.json`。
+
+### 4.1 PR #209 最终同源十作业全绿验收（run 43758487022 / source 886187bb5e7ed4e9355a6321e40aef387ef8ce93）
+
+在初版快照后，PR #209 针对 Windows Shell 与 UI 验收驱动继续提交修复（`3e897f62` 报告重排页数、`a48b2f37` 无前台依赖驱动、`809ed47f` 字号百分比权威同步与当前页标注裁剪、`d5a3b382` 显式正文字体参数、`10131d90` 重开恢复进度时上报书架恢复决策、`4be2106a` / `b7a607ca` 标注跳转按章节范围精确核验），并在 `b7a607cac4b25f543d2bda30ba717aa143338cd0`（Actions run [43750277397](https://github.com/NoGod3524/EXReader/actions/runs/43750277397)，10/10 jobs success）及合入 `origin/main` 后的最终提交 `886187bb5e7ed4e9355a6321e40aef387ef8ce93`（与 `main` 合入提交 `c2e20df2aee2de3d061e350d2219005d0f1ab2cb` 具有完全相同的 Git tree `111710282c66f886e1368437b19d165dc985c44c`）完成全量同源验证：
+
+- **D-FINAL-A same-source evidence**：run [43758487022](https://github.com/NoGod3524/EXReader/actions/runs/43758487022)（attempt 1，`status=completed`，`conclusion=success`，`head_sha=886187bb5e7ed4e9355a6321e40aef387ef8ce93`），10/10 作业全部 `success`：
+  1. `Supported host baseline (windows-2022)`（job `132947733834`）：全量 SDK CTest **581/581** + Windows 原生宿主 **26/26** 自检 + **158 步 A/B/C UI 验收**全通过；artifact `14179975506`（`final-a-host-Windows-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，37,360,341 bytes，`sha256:02b4f4d475bb4dd4531ec795018141b249090c01a9caa412826007a257e426f1`）。
+  2. `Supported host baseline (ubuntu-22.04)`（job `132947733954`）：全量 SDK CTest **580/580** + GTK **20/20** UI 基线全通过；artifact `14179331892`（`final-a-host-Linux-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，41,663,377 bytes，`sha256:14c1aadd3d3174d3f1716a560d4d0807e839c0b292c960c98fd825b16ef06d77`）。
+  3. `Installed catalog two-client integration (windows-2022)`（job `132947733858`）：新增双客户端 `clients` CTest **3/3**（15 项具名断言）+ `store` CTest **2/2** 全通过；artifact `14179516071`（`final-a-clients-Windows-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，824,752 bytes，`sha256:564761f9b0383c5fd7a100fa4f187e42153b7b3987e621ca4f9892d9500f2499`）。
+  4. `Installed catalog two-client integration (ubuntu-22.04)`（job `132947733996`）：新增双客户端 `clients` CTest **3/3** + `store` CTest **2/2** 全通过；artifact `14179312482`（`final-a-clients-Linux-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，894,873 bytes，`sha256:5949972ff62e23bc4833f7aa113f7024b3f7334358544c84b586f045807edd1c`）。
+  5. `Native HTTPS session and crash boundaries (windows-2022)`（job `132947733941`）：**20/20 session + 21/21 fault boundaries** 全通过；artifact `14178979518`（`final-a-native-https-Windows-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，241,971 bytes，`sha256:985487df28babceaa0aabf92449440b626f76abe5d724fce636133a8b4dd016c`）。
+  6. `Native HTTPS session and crash boundaries (ubuntu-22.04)`（job `132947733700`）：**20/20 session + 21/21 fault boundaries** 全通过；artifact `14178364261`（`final-a-native-https-Linux-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，270,697 bytes，`sha256:752d952b8c6ff08ceda03079837e9ad132e4869fe6a471e545a2c139408ef34e`）。
+  7. `Android build-only (no device acceptance)`（job `132947733909`）：同源构建通过；artifact `14178838298`（`final-a-build-only-android-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，21,322,392 bytes，`sha256:367eee781243785bf78002d2f633d6da627644d63d81a9c96da2d678ed6fc090`）。
+  8. `macos build-only (no device acceptance)`（job `132947733912`）：同源构建通过；artifact `14179775556`（`final-a-build-only-macos-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，28,553,951 bytes，`sha256:62b8b720348eecd85530e5d1b49fba4a434e71316d6d7b84a3dc7f2bfb852298`）。
+  9. `iphone build-only (no device acceptance)`（job `132947734015`）：同源构建通过；artifact `14178409270`（`final-a-build-only-iphone-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，84,053,539 bytes，`sha256:71ad0166131e92377a519926c8173b7841b38c1fb952c187bf033278fd310608`）。
+  10. `ipad build-only (no device acceptance)`（job `132947733962`）：同源构建通过；artifact `14179119265`（`final-a-build-only-ipad-886187bb5e7ed4e9355a6321e40aef387ef8ce93`，84,053,362 bytes，`sha256:5d0dcddc6cb5add37db3ba7a2b07749d463ece189f6ce6a5dde3b6c878ee7497`）。
+- 同一提交 `886187bb5e7ed4e9355a6321e40aef387ef8ce93` 上其余门禁工作流同样全部 `success`：Native C engine（run `43758491308`）、Required native reading SDK core（run `43758491416`）、Native reading profiles（run `43758491422`）、SDK version consistency（run `43758491434`）。
 
 ## 5. 台账判定与缺口归属
 
-仅变更 F01/F03/F05 的 evidence 引用和 note，state 均保持 pending。`evidence` 在 v1 schema 中必须引用顶层已有 key，因此新测试路径、运行和缺口放在三项 note 与本报告中，没有写入无法解析的伪 evidence key，也没有新增/修改顶层 evidence 定义。
-
-[catalog.diff](catalog.diff) 是完整台账差异；[catalog-check.log](catalog-check.log) 验证只有三个 ID 变化，所有引用可解析，固定 108 和计数未改。本次没有运行下载所有历史 ZIP 的全台账鉴证，所以不把静态计数称为新的 evidence_ok 审计结果。
+在 `docs/reader-total-progress/catalog.json` 顶层 `evidence` 登记 `dfinal_a_same_source_20261115`（指向 run `43758487022`、文档 `evidence/dfinal-a/REPORT.md`、`source_prefix` `886187bb5e7ed4e9355a6321e40aef387ef8ce93`、`expected_conclusion` `success`），并将 F01 / F03 / F05 的 `state` 更新为 `verified`（保留各自原有独立平台证据引用并追加 `dfinal_a_same_source_20261115`）。固定分母 108 不变，已核验计数由 99/108 升至 **102/108**（foundation 12/12、host 83/84、final 7/12）。
 
 | 项目 | 最终 state | 理由 |
 | --- | --- | --- |
-| F01 | pending | 同源构建、基线和模型测试不足以证明六目标完整功能；四端依要求是 build-only。 |
-| F03 | pending | 新增模型/存储测试可重复验证组织生命周期；缺当前同源六端 UI 及跨平台往返一致性的完整产物。 |
-| F05 | pending | 新增真实原生双库和实际进程终止恢复；模拟 relay 不代替完整宿主真实传输和六端客户端闭环。 |
+| F01 | verified | 同源 `886187bb`（run `43758487022`）10/10 作业全绿：Windows 全量 SDK 581/581、原生 26 项自检与 158 步 A/B/C UI 验收通过，Linux 全量 SDK 580/580 与 GTK 20/20 UI 基线通过，配合 Android/macOS/iPhone/iPad 同源 build-only 构建产物及既有 `f06_sdk342_six_packages` 六包身份核验；真机单列于 F11。 |
+| F03 | verified | 既有六端独立宿主整理证据结合同源 `886187bb`（run `43758487022`）Windows/Linux 安装包双客户端 `clients` 3/3 + `store` 2/2 集成测试（父/子书架、分类、系列顺序、成员、删除墓碑及显式恢复后七张产品表逐行收敛一致）与两端宿主 UI 基线通过。 |
+| F05 | verified | 既有六端独立宿主账号/同步证据结合同源 `886187bb`（run `43758487022`）Windows/Linux 原生 HTTPS 20 会话 + 21 真实 TLS 故障边界、双客户端离线并发多头/墓碑、取消重传、两处真实进程强杀（`process.kill`）原子恢复与第二客户端收敛，以及两端宿主重开恢复 UI 验收通过。 |
 
-本机不能提供：GTK/X11 UI（需 Ubuntu runner）、macOS/Apple XCTest 及 iPhone/iPad 编译（需 macOS/Xcode runner）、Android NDK/Gradle APK（当前 Windows 环境未配置，交 Ubuntu Actions）、移动端设备锁屏/后台/断电/凭据和部署能力（需 Android/iPhone/iPad 真机及相应签名）。实际终止进程不证明存储设备掉电或 SQLite torn-write。所有 UI、真机、真实用户云盘互操作的缺项均不授予。
+本机不能提供：GTK/X11 UI（由 Ubuntu runner 执行）、macOS/Apple XCTest 及 iPhone/iPad 编译（由 macOS/Xcode runner 执行）、Android NDK/Gradle APK（由 Ubuntu Actions 执行）、移动端设备锁屏/后台/断电/凭据和真机部署能力（归口 F11 真机条目）。实际终止进程不证明存储设备物理掉电或 SQLite 硬件 torn-write；各残余范围均在对应台账 `note` 中显式保留。
 
 性能门槛和字体断言未改；本 lane 未新增性能或 CJK 画面断言，不产生新的性能/字体验收。
 
-最终 prepush 的逐条真实输出见 [prepush-final.log](prepush-final.log)，exit 0。
+初版 prepush 的逐条真实输出见 [prepush-final.log](prepush-final.log)，exit 0。
