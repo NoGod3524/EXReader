@@ -239,12 +239,14 @@ def render_script(template, package, fixtures):
                     .replace('@@FIXTURES@@', str(fixtures)))
 
 
-def run_phase(exe, script, output, phase, data, package, timeout):
+def run_phase(exe, script, output, phase, data, package, timeout, offscreen=False):
     evidence = output / phase
     evidence.mkdir(parents=True, exist_ok=True)
     command = [str(exe), '--drive', str(script), '--evidence', str(evidence),
                '--data', str(data), '--library', str(data / 'library.sqlite'),
                '--phase', str(PHASES.index(phase) + 1)]
+    if offscreen:
+        command.append('--offscreen')
     env = dict(os.environ)
     env.setdefault('EXREADER_HOST_ACCEPTANCE', '1')
     creationflags = 0
@@ -385,6 +387,7 @@ def main():
     parser.add_argument('--consumer-binary', type=Path, required=True)
     parser.add_argument('--static-link-map', type=Path, help='Explicit lightweight static SDK provider map; default shared runtime checks remain unchanged')
     parser.add_argument('--timeout', type=float, default=420)
+    parser.add_argument('--offscreen', action='store_true', help='drive the host without foreground windows (local diagnosis only)')
     args = parser.parse_args()
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -428,7 +431,7 @@ def main():
         except (OSError, ValueError) as error:
             errors.append(str(error))
             break
-        code, elapsed, pid = run_phase(exe, scripts[phase], output, phase, data, package, args.timeout)
+        code, elapsed, pid = run_phase(exe, scripts[phase], output, phase, data, package, args.timeout, args.offscreen)
         runs[phase] = {'exit_code': code, 'elapsed_seconds': round(elapsed, 3), 'pid': pid}
         log_path = output / phase / 'drive.log'
         print('PHASE %s exit=%s elapsed=%.2fs log=%s' % (phase, code, elapsed, log_path.exists()),
@@ -700,3 +703,5 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
