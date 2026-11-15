@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(DFinalCModels LANGUAGES C CXX)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(EXReaderProductCatalog 0.1.0 EXACT CONFIG REQUIRED)
 # Reuse the installed consumer of the exact raw3 APIs called by HostWave3.swift.
 add_subdirectory(../reader_next_c06/consumer consumer)
 enable_testing()
