@@ -2881,6 +2881,7 @@ static exr_status job_open(host_job *job) {
       if(status==EXR_OK && shelf_found) {
         status=shell_align_anchor(&session,shelf_offset,&job->frame,&control,&error);
         job->shelf_restored=1;job->target_offset=shelf_offset;
+        copy_wstring(job->message, 512, L"已按保存的阅读位置恢复到上次位置。");
       }
 #else
       (void)shelf_offset;(void)shelf_found;
@@ -6667,6 +6668,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   LocalFree(argv);
   return (int)result;
 }
+
 
 
 
