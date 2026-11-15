@@ -141,13 +141,13 @@ def build_product(stage, build, abi='x86_64'):
               '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
               '-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + str(stage),
               '-DREADER_PRODUCT_PREFIX=' + str(stage)]
-    for name, source, target in (
-            ('catalog', 'apps/reader/store/native', 'reader_catalog'),
-            ('revisions', 'apps/reader/revisions', 'reader_revisions'),
-            ('commands', 'apps/reader/commands', 'reader_commands')):
+    for name, source in (
+            ('catalog', 'apps/reader/store/native'),
+            ('revisions', 'apps/reader/revisions'),
+            ('commands', 'apps/reader/commands')):
         location = build / name
         run([cmake, '-S', ROOT / source, '-B', location, *common])
-        run([cmake, '--build', location, '--parallel', '4', '--target', target, '--verbose'])
+        run([cmake, '--build', location, '--parallel', '4', '--verbose'])
         run([cmake, '--install', location])
 
 
