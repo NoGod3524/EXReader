@@ -11,8 +11,20 @@ python tests/reader_perf_windows/render_budget.py --binary build/audit-msvc/exre
 
 Use the three originals listed in `render-corpus.json`. Their source URLs are
 provenance; Gutenberg may regenerate EPUB files. A changed SHA-256 must fail,
-not silently replace the frozen original. The pg10 `EXR_LIMIT` failure is kept
-as a missing sample and makes the complete command exit 1.
+not silently replace the frozen original. For a new runner, fetch the frozen
+corpus with `python tests/reader_perf_windows/render_budget.py --fetch-corpus
+--manifest tests/reader_perf_windows/render-corpus.json --corpus build/frozen-books`.
+A regenerated upstream book fails the hash check; no alternate URL or replacement
+book is silently accepted.
+
+The real-book path now uses the production `import_bounded_epub`, SDK source,
+`shell_epub_source` presentation wrapper and `bounded_pager`. Each book's fixed
+spine path is part of the manifest and is checked against the process output.
+The previous whole-document `exr_document_open` path rejected pg10 with
+`EXR_LIMIT`; those archived failures remain valid for that older load path.
+The bounded-part workload is different and must not be compared numerically to
+the archived whole-document baseline. Import and first bounded bitmap are included
+in setup time; only alternating pages 0/1 of the fixed spine part are sampled.
 
 The supplied font is hashed. Use an installed host font for the real-book run;
 the tiny SDK fixture font is suitable for the CTest pipeline check only. The

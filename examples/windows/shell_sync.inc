@@ -22,6 +22,7 @@
 #include <winhttp.h>
 #include <wincrypt.h>
 #include <sddl.h>
+#include <aclapi.h>
 
 enum { SY_OK=0,SY_AUTH,SY_NOTFOUND,SY_TIMEOUT,SY_OFFLINE,SY_SERVER,SY_CONFLICT,SY_LOCAL,SY_CONFIG,SY_TLS,SY_UNSUPPORTED };
 #define SY_MAX_BYTES (32u*1024u*1024u)
@@ -76,6 +77,9 @@ static char *sy_read(const wchar_t *path,size_t *size) {
   }
   CloseHandle(f);return b;
 }
+#ifdef EXR_READER_SYNC_TEST_DRIVERS
+static HANDLE sy_test_after_flush_event;
+#endif
 static int sy_write_file(const wchar_t *path,const void *bytes,size_t size,SECURITY_ATTRIBUTES *security) {
   wchar_t temp[HOST_PATH];
   if(wcslen(path)+4>=HOST_PATH || size>MAXDWORD) return 0;
@@ -86,6 +90,11 @@ static int sy_write_file(const wchar_t *path,const void *bytes,size_t size,SECUR
   DWORD wrote=0;int ok=0;
   if(f==INVALID_HANDLE_VALUE) return 0;
   ok=WriteFile(f,bytes,(DWORD)size,&wrote,NULL) && wrote==size && FlushFileBuffers(f);
+#ifdef EXR_READER_SYNC_TEST_DRIVERS
+  if(ok && security && sy_test_after_flush_event) {
+    SetEvent(sy_test_after_flush_event);Sleep(INFINITE); /* Parent terminates this test process. */
+  }
+#endif
   if(!CloseHandle(f)) ok=0;
   if(ok) ok=MoveFileExW(temp,path,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH)!=0;
   if(!ok) DeleteFileW(temp);
@@ -103,7 +112,7 @@ static int sy_write_private(const wchar_t *path,const void *bytes,size_t size) {
   if(!GetTokenInformation(token,TokenUser,user,needed,&needed) ||
      !ConvertSidToStringSidW(user->User.Sid,&sid)) goto done;
   wchar_t sddl[256];
-  if(swprintf(sddl,256,L"D:P(A;;FA;;;SY)(A;;FA;;;%ls)",sid)<0 ||
+  if(swprintf(sddl,256,L"O:%lsD:P(A;;FA;;;SY)(A;;FA;;;%ls)",sid,sid)<0 ||
      !ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl,SDDL_REVISION_1,&descriptor,NULL)) goto done;
   SECURITY_ATTRIBUTES security={sizeof(security),descriptor,FALSE};
   ok=sy_write_file(path,bytes,size,&security);
@@ -111,6 +120,43 @@ done:
   if(descriptor) LocalFree(descriptor);
   if(sid) LocalFree(sid);
   free(user);CloseHandle(token);return ok;
+}
+/* Recover only our private credential stage, never arbitrary .tmp files.
+   Exclusive access and handle-based deletion keep validation and deletion on
+   the same object; a live writer, reparse point or hard link is left alone. */
+static int sy_cred_recover_temp(void) {
+  wchar_t path[HOST_PATH];
+  if(wcslen(sy_cred_file)+4>=HOST_PATH) return 0;
+  swprintf(path,HOST_PATH,L"%ls.tmp",sy_cred_file);
+  HANDLE file=CreateFileW(path,DELETE|READ_CONTROL|FILE_READ_ATTRIBUTES,0,NULL,OPEN_EXISTING,
+    FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_BACKUP_SEMANTICS,NULL);
+  if(file==INVALID_HANDLE_VALUE) return GetLastError()==ERROR_FILE_NOT_FOUND;
+  BY_HANDLE_FILE_INFORMATION info;PSECURITY_DESCRIPTOR sd=NULL;PSID owner=NULL;
+  PACL dacl=NULL;HANDLE token=NULL;TOKEN_USER *user=NULL;DWORD needed=0;int ok=0;
+  if(!GetFileInformationByHandle(file,&info) || info.nNumberOfLinks!=1 ||
+     (info.dwFileAttributes&(FILE_ATTRIBUTE_REPARSE_POINT|FILE_ATTRIBUTE_DIRECTORY))) goto done;
+  if(GetSecurityInfo(file,SE_FILE_OBJECT,OWNER_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+      &owner,NULL,&dacl,NULL,&sd)!=ERROR_SUCCESS || !owner || !dacl || dacl->AceCount!=2) goto done;
+  SECURITY_DESCRIPTOR_CONTROL control;DWORD revision;
+  if(!GetSecurityDescriptorControl(sd,&control,&revision) || !(control&SE_DACL_PROTECTED) ||
+     !OpenProcessToken(GetCurrentProcess(),TOKEN_QUERY,&token)) goto done;
+  GetTokenInformation(token,TokenUser,NULL,0,&needed);
+  if(!needed || !(user=malloc(needed)) || !GetTokenInformation(token,TokenUser,user,needed,&needed) ||
+     !EqualSid(owner,user->User.Sid)) goto done;
+  BYTE system[SECURITY_MAX_SID_SIZE];DWORD system_size=sizeof(system);int users=0,systems=0;
+  if(!CreateWellKnownSid(WinLocalSystemSid,NULL,system,&system_size)) goto done;
+  for(DWORD i=0;i<dacl->AceCount;i++) {
+    ACCESS_ALLOWED_ACE *ace=NULL;
+    if(!GetAce(dacl,i,(void **)&ace) || ace->Header.AceType!=ACCESS_ALLOWED_ACE_TYPE ||
+       ace->Header.AceFlags || ace->Mask!=FILE_ALL_ACCESS) goto done;
+    if(EqualSid(&ace->SidStart,user->User.Sid)) users++;
+    else if(EqualSid(&ace->SidStart,system)) systems++;
+    else goto done;
+  }
+  if(users==1 && systems==1) {FILE_DISPOSITION_INFO disposition={TRUE};
+    ok=SetFileInformationByHandle(file,FileDispositionInfo,&disposition,sizeof(disposition))!=0;}
+done:
+  free(user);if(token)CloseHandle(token);if(sd)LocalFree(sd);CloseHandle(file);return ok;
 }
 static void sy_status_set(sy_status *s,int code,const char *format,...) {
   va_list ap;va_start(ap,format);s->code=code;vsnprintf(s->text,sizeof(s->text),format,ap);va_end(ap);
@@ -952,7 +998,7 @@ static inline int sy_sync_now(sy_status *out) {
   int code=run.status.code;sy_run_free(&run);return code;
 }
 static void sy_init(void) {
-  sy_default_paths();sy_config_load();sy_cred_load();
+  sy_default_paths();sy_cred_recover_temp();sy_config_load();sy_cred_load();
 }
 
 /* ---- worker + UI ---------------------------------------------------- */
