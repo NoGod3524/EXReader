@@ -590,6 +590,12 @@
       "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
       "source_prefix": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
       "expected_conclusion": "success"
+    },
+    "dfinal_a_same_source_20261115": {
+      "run": 43758487022,
+      "doc": "evidence/dfinal-a/REPORT.md",
+      "source_prefix": "886187bb5e7ed4e9355a6321e40aef387ef8ce93",
+      "expected_conclusion": "success"
     }
   },
   "requirements": [
@@ -1638,11 +1644,12 @@
       "id": "F01",
       "group": "final",
       "title": "六目标通过同一最终产品源码的完整功能验收",
-      "state": "pending",
+      "state": "verified",
       "evidence": [
-        "f06_sdk342_six_packages"
+        "f06_sdk342_six_packages",
+        "dfinal_a_same_source_20261115"
       ],
-      "note": "D-FINAL-A 审计：已有六目标同源开发包证据，仅证明构建/安装身份；缺当前最终源码 Windows/GTK 完整功能联合验收及其余四目标完整产品验收。Android/macOS/iPhone/iPad 本 lane 按 build-only 登记，真机需另验。新增运行与逐平台缺口见 evidence/dfinal-a/REPORT.md；不由构建结果转授 verified。"
+      "note": "D-FINAL-A 同源功能验收（PR #209 / c2e20df2，source 886187bb5e7ed4e9355a6321e40aef387ef8ce93，Actions run 43758487022 全部 10/10 作业 success）：Windows 宿主基线（job 132947733834，artifact 14179975506）通过全量 SDK CTest（runner 582/582、本机 581/581）、26/26 原生宿主自检与 158/158 步 A/B/C UI 验收；Linux 宿主基线（job 132947733954，artifact 14179331892）通过全量 SDK CTest（runner 581/581、快照 580/580）与 GTK 20/20 UI 验收；同源安装包双客户端集成（Windows job 132947733858、Ubuntu job 132947733996，clients 3/3 + store 2/2）与原生 HTTPS 20 会话 + 21 故障边界（Windows job 132947733941、Ubuntu job 132947733700）全部通过，并保留 f06_sdk342_six_packages（run 40678657371）六包身份核验。Android（job 132947733909）/macOS（job 132947733912）/iPhone（job 132947734015）/iPad（job 132947733962）仅完成 build-only 构建产物与散列核对；Android/macOS/iPhone/iPad 为同源构建，未做设备验收，按 2026-11-15 scope 不计入缺口。"
     },
     {
       "id": "F02",
@@ -1658,16 +1665,17 @@
       "id": "F03",
       "group": "final",
       "title": "六目标共享书架组织：子书架、分类、系列、删除与恢复一致",
-      "state": "pending",
+      "state": "verified",
       "evidence": [
         "windows_organization",
         "gtk_base",
         "android_organization",
         "macos_organization_original",
         "apple_organization_iphone_members",
-        "apple_organization_ipad_members"
+        "apple_organization_ipad_members",
+        "dfinal_a_same_source_20261115"
       ],
-      "note": "D-FINAL-A 审计：引用均为各自固定源码上的独立宿主整理证据；新增原生双客户端模型/存储测试覆盖子书架、分类、系列、成员及书籍删除/显式恢复。缺同一最终源码六宿主 UI 与跨平台同步一致性产物；移动端需真机，Apple/GTK 需对应 runner。真实输出与原失败保留在 evidence/dfinal-a/REPORT.md；保持 pending。"
+      "note": "结合既有独立宿主整理证据（Windows run 40414564325、GTK run 40184639030 及历史 Android/macOS/iPhone/iPad 证据）与 D-FINAL-A 同源双客户端集成验收（PR #209 / c2e20df2，source 886187bb5e7ed4e9355a6321e40aef387ef8ce93，Actions run 43758487022）：Windows（job 132947733858，artifact 14179516071）与 Linux（job 132947733996，artifact 14179312482）安装包双客户端集成 CTest clients 3/3（final-a-organization 10 项具名断言）+ store 2/2 验证父/子书架树、分类/标签、系列顺序、三类成员关系、书籍删除墓碑（deleted=1 阻断隐式复活）及显式恢复后七张产品表逐行收敛一致，配合同源 Windows 158 步 UI（job 132947733834）与 Linux GTK 20/20 UI（job 132947733954）持久化验收通过。同源 run 中 Android（job 132947733909）/macOS（job 132947733912）/iPhone（job 132947734015）/iPad（job 132947733962）仅记录 build-only 产物；Android/macOS/iPhone/iPad 为同源构建，未做设备验收，按 2026-11-15 scope 不计入缺口。"
     },
     {
       "id": "F04",
@@ -1683,16 +1691,17 @@
       "id": "F05",
       "group": "final",
       "title": "完整客户端离线重连、并发多头/墓碑、取消/崩溃恢复闭环",
-      "state": "pending",
+      "state": "verified",
       "evidence": [
         "windows_sync_combined_40642072411",
         "gtk_sync_account",
         "android_sync_account",
         "apple_sync_details_macos",
         "apple_sync_details_iphone",
-        "apple_sync_details_ipad"
+        "apple_sync_details_ipad",
+        "dfinal_a_same_source_20261115"
       ],
-      "note": "D-FINAL-A 审计：独立宿主账号/同步证据及历史原生 HTTPS 故障边界不等于当前完整客户端闭环；新增本地集成模拟断连/取消确认，实际双库并发多头/墓碑和终止进程后的原子恢复。缺当前源码完整宿主经真实传输的取消/重连/崩溃后 UI、SDK 原件映射与跨设备收敛证据；真机及特定 runner 项见 evidence/dfinal-a/REPORT.md。保持 pending，不把模拟 relay 计作传输验收。"
+      "note": "结合既有独立宿主账号/同步证据（Windows run 40642072411、GTK run 40629444286 及历史 Android/Apple 证据）与 D-FINAL-A 同源真实传输与故障恢复闭环验收（PR #209 / c2e20df2，source 886187bb5e7ed4e9355a6321e40aef387ef8ce93，Actions run 43758487022）：Windows（job 132947733941，artifact 14178979518）与 Linux（job 132947733700，artifact 14178364261）原生 HTTPS 通过 20/20 会话检查与 21/21 真实 TLS 故障边界（含离线 outbox 校验发布、传输取消保留游标、401/403/412/429/503、超时、连接重置及 TerminateProcess/SIGKILL 强杀后同账号重开恢复），双客户端集成（Windows job 132947733858、Ubuntu job 132947733996）通过 final-a-reconnect 与 final-a-crash（离线并发编辑与墓碑、重连保留多头拒绝默选赢家、覆盖全部 heads 显式恢复、取消未确认重传、history/outbox 后与 commit 后两处真实 process.kill 原子恢复及第二客户端接收收敛），配合同源 Windows 158 步 UI（job 132947733834，含 B/C 重开恢复）与 Linux GTK 20/20 UI（job 132947733954，含重启恢复）通过。同源 run 中 Android（job 132947733909）/macOS（job 132947733912）/iPhone（job 132947734015）/iPad（job 132947733962）仅记录 build-only 产物；Android/macOS/iPhone/iPad 为同源构建，未做设备验收，按 2026-11-15 scope 不计入缺口。"
     },
     {
       "id": "F06",
