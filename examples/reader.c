@@ -4577,11 +4577,10 @@ static void apply_pending_selection(void) {
     if (end > g.frame.text_bytes) return;
   } else {
     /* A reflow note stores part-level offsets while the frame exposes the page
-       range, so an exact fit is not expected. Highlight the intersection with
-       the page the reader landed on instead of refusing the whole jump. */
+       range, so an exact fit is not expected. Accept the jump when the note
+       overlaps this page, but keep the note's exact range untouched so the
+       restored selection still reproduces its chapter/page/range. */
     if (start >= g.frame.range_end || end <= g.frame.range_start) return;
-    if (start < g.frame.range_start) start = g.frame.range_start;
-    if (end > g.frame.range_end) end = g.frame.range_end;
   }
   g.selection.active = 1;
   g.selection.fixed = g.frame.fixed;
@@ -6668,6 +6667,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   LocalFree(argv);
   return (int)result;
 }
+
 
 
 
