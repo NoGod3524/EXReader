@@ -1642,7 +1642,7 @@
       "evidence": [
         "f06_sdk342_six_packages"
       ],
-      "note": "D-FINAL-A 审计：已有六目标同源开发包证据，仅证明构建/安装身份；缺当前最终源码 Windows/GTK 完整功能联合验收及其余四目标完整产品验收。Android/macOS/iPhone/iPad 本 lane 按 build-only 登记，真机需另验。新增运行与逐平台缺口见 evidence/dfinal-a/REPORT.md；不由构建结果转授 verified。"
+      "note": "Argon 台账复核（evidence/dfinal-a/REPORT.md:11,30,101,131,139–162；.github/workflows/reader-final-a.yml:74–154）：f06_sdk342_six_packages（run 40678657371，source 8f8acf32）仅验证六包构建/安装入口身份（full_behavioral_regression=false）；D-FINAL-A 候选快照 run 43653480030（source 42efccd3）Windows 旧 A/B/C UI 失败，后续修复后 PR #209 同源 run 43758487022（source 886187bb，与 main c2e20df2 同 tree）虽通过 Windows（SDK CTest 581/581、26 项自检与 A/B/C UI，job 132947733834）与 Linux GTK（SDK CTest 580/580、20/20 基线 UI，job 132947733954），但 Android（job 132947733909，tests/reader_final_a/build_android.py:32 scope=build-only, device_tests_run=false）、macOS（job 132947733912，run 43653483106）、iPhone（job 132947734015，run 43650961238）与 iPad（job 132947733962）四端均仅为 build-only（no device acceptance），未启动应用或执行功能验收。构建通过不等于六目标完整功能验收；仍缺同一最终源码下 Android/macOS/iPhone/iPad 四目标完整功能验收运行报告、六端全功能联合验收产物及移动端真机验收，保持 pending。"
     },
     {
       "id": "F02",
@@ -1667,7 +1667,7 @@
         "apple_organization_iphone_members",
         "apple_organization_ipad_members"
       ],
-      "note": "D-FINAL-A 审计：引用均为各自固定源码上的独立宿主整理证据；新增原生双客户端模型/存储测试覆盖子书架、分类、系列、成员及书籍删除/显式恢复。缺同一最终源码六宿主 UI 与跨平台同步一致性产物；移动端需真机，Apple/GTK 需对应 runner。真实输出与原失败保留在 evidence/dfinal-a/REPORT.md；保持 pending。"
+      "note": "Argon 台账复核（evidence/dfinal-a/REPORT.md:12,31–35,59–60,73–92,158–162；tests/reader_final_a/check_clients.py:1,54–61,80–135）：所引六项证据分属不同历史提交的独立单宿主测试（Windows run 40414564325@0b54a15e、GTK run 40184639030@d05946f0、Android run 40059870895@3f50a165、macOS run 40635727935@716c1409、iPhone/iPad run 40911140164@b259db57），且后续跨端尝试 run 41679502785（@a375fd9b）Windows 作业 failure 且无 Android 作业；D-FINAL-A 新增 final-a-organization（run 43654524720@773cd788、run 43758487022@886187bb jobs 132947733858/132947733996）仅为命令行 final-a-consumer 对本地双 SQLite 库的模型/存储测试（Python 内存 relay，无宿主 UI、无真实网络传输），而同 run 中 Android/macOS/iPhone/iPad 仅为 build-only。单元测试/存储集成通过不等于六宿主 UI 与跨平台同步验收；仍缺同一最终源码六目标宿主 UI 的子书架、分类/标签、系列顺序、删除墓碑与显式恢复全流程及跨平台同步一致性产物（含移动端真机与对应 runner 验证），保持 pending。"
     },
     {
       "id": "F04",
@@ -1692,7 +1692,7 @@
         "apple_sync_details_iphone",
         "apple_sync_details_ipad"
       ],
-      "note": "D-FINAL-A 审计：独立宿主账号/同步证据及历史原生 HTTPS 故障边界不等于当前完整客户端闭环；新增本地集成模拟断连/取消确认，实际双库并发多头/墓碑和终止进程后的原子恢复。缺当前源码完整宿主经真实传输的取消/重连/崩溃后 UI、SDK 原件映射与跨设备收敛证据；真机及特定 runner 项见 evidence/dfinal-a/REPORT.md。保持 pending，不把模拟 relay 计作传输验收。"
+      "note": "Argon 台账复核（evidence/dfinal-a/REPORT.md:13,36–45,61–62,84–92,158–162；tests/reader_final_a/check_clients.py:1,138–210）：所引六端证据为不同历史源码的受限单宿主账号/状态检查（Windows run 40642072411@42445abd、GTK run 40629444286@6b2e3a2d、Android run 40630302205@c33455a9、Apple run 40914421686/audit 40920468235@6c7d043d），后续 GTK 完整 F05 尝试 run 41629004820（@834aac8a）cleanup guard 失败（accepted/fullF05/delete_detail=false）且 run 41679586829（@0be9b393）仅 dry-run 通过、5 个原生作业 skipped；D-FINAL-A 重跑的 20 项 session + 21 项 HTTPS 故障边界（run 43646633278@f530de56、run 43653480030@42efccd3、run 43758487022@886187bb jobs 132947733941/132947733700）仅为 Windows/Linux 模块 CLI 消费者（session-consumer/resilience-consumer），新增 final-a-reconnect 与 final-a-crash（run 43654524720@773cd788、run 43758487022@886187bb）亦仅为 CLI consumer 配合模拟文件 relay（无真实 TLS/WebDAV 传输取消、无 SDK 原书映射、无宿主 UI），且其余四端仅 build-only。仍缺当前共同源码完整客户端经真实传输在离线重连、并发多头/墓碑、传输取消及进程崩溃恢复后的原书/SDK 映射、元数据与宿主 UI 闭环及多设备收敛产物，保持 pending。"
     },
     {
       "id": "F06",
