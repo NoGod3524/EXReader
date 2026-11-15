@@ -1,12 +1,15 @@
 name: Reader F08 F09 F10 feasible audit
 on:
   push:
-    branches: [codex/dfinal-b-f08-f10-audit, codex/dfinal-b-evidence-followup]
+    branches: [codex/dfinal-b-f08-f10-audit, codex/dfinal-b-evidence-followup, codex/dfinal-b-budget-security-20261114]
     paths:
       - '.github/workflows/reader-final-b-audit.yml'
       - 'examples/windows/check_shell_budget.inc'
       - 'examples/windows/check_shell_privacy.inc'
+      - 'examples/windows/check_shell_dictionary.inc'
+      - 'examples/windows/shell_dictionary.inc'
       - 'examples/windows/check_shell_selection.c'
+      - 'examples/windows/check_sync.c'
       - 'examples/windows/shell_drive_test.inc'
       - 'examples/reader.c'
       - 'examples/windows/shell_sync.inc'
@@ -65,7 +68,19 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-control|render-budget-report|selection-(render-budget|sync|keyboard))' *> new-checks.txt
+          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-(control|shell)|render-budget-report|selection-(render-budget|sync|keyboard|dictionary-storage))' *> new-checks.txt
+          exit $LASTEXITCODE
+      - name: Fetch frozen original books
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python tests/reader_perf_windows/render_budget.py --fetch-corpus --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books *> f08-fetch.txt
+          exit $LASTEXITCODE
+      - name: Measure fixed original book workload
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python tests/reader_perf_windows/render_budget.py --binary build/audit/exreader-shell-selection-test.exe --font C:/Windows/Fonts/segoeui.ttf --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books --out f08-realbooks.json --repeats 3 *> f08-realbooks.txt
           exit $LASTEXITCODE
       - uses: actions/upload-artifact@v4
         if: always()
@@ -77,5 +92,8 @@ jobs:
             ctest.txt
             ctest.xml
             new-checks.txt
+            f08-fetch.txt
+            f08-realbooks.txt
+            f08-realbooks.json
             build/audit/control-inventory.json
           if-no-files-found: error
