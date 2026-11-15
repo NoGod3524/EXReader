@@ -4912,6 +4912,16 @@ static inline void add_note(void) {
   job->book_id = g.current.id; job->target_page = g.selection.page; job->note_fixed = g.frame.fixed;
   job->target_part = g.frame.part;
   selection_bounds(&job->note_start, &job->note_end);
+  /* A reflow selection can span the whole part (select-all), but an annotation
+     must anchor to the text the reader actually saw. Clip the stored range to
+     the current page so jumping back reproduces that page and range. */
+  if (!g.frame.fixed && g.session.bounded && g.frame.valid) {
+    if (job->note_end <= g.frame.range_start || job->note_start >= g.frame.range_end) {
+      job_release(job); set_status(L"所选文字不在当前页，未添加标注。"); return;
+    }
+    if (job->note_start < g.frame.range_start) job->note_start = g.frame.range_start;
+    if (job->note_end > g.frame.range_end) job->note_end = g.frame.range_end;
+  }
   job->comment = host_strdup(comment);
   if (!job->comment || (!job->note_fixed && !g.session.bounded && exr_anchor_create(g.session.document, job->note_start, job->note_end,
                                                                &job->anchor, &error) != EXR_OK)) {
@@ -6667,6 +6677,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
   LocalFree(argv);
   return (int)result;
 }
+
 
 
 
