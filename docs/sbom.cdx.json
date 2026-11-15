@@ -1,0 +1,1914 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-11-15T00:00:00Z",
+    "tools": [
+      {
+        "vendor": "EXReader",
+        "name": "tools/generate_package_sbom.py",
+        "version": "3.42.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "bom-ref": "pkg:generic/exreader-distribution@3.42.0",
+      "name": "EXReader Distribution",
+      "version": "3.42.0",
+      "purl": "pkg:generic/exreader-distribution@3.42.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "exr:sdk_version",
+        "value": "3.42.0"
+      },
+      {
+        "name": "exr:abi_version",
+        "value": "1"
+      },
+      {
+        "name": "exr:cmake_targets",
+        "value": "exreader,exr_core,exr_base,exr_text,exr_doc,exr_formats,exr_pdf,exr_layout,exr_render,exr_audio,exr_library,exr_textindex,exr_graphics,exr_pdf_edit"
+      },
+      {
+        "name": "exr:user_guide",
+        "value": "docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md"
+      },
+      {
+        "name": "exr:user_guide_sha256",
+        "value": "f0b7debf67c7985b6816e0ebdb858f93374d6f968e445604a01ca2fb804c092b"
+      },
+      {
+        "name": "exr:license_file",
+        "value": "LICENSE"
+      },
+      {
+        "name": "exr:license_sha256",
+        "value": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+      },
+      {
+        "name": "exr:third_party_notices",
+        "value": "THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "name": "exr:third_party_notices_sha256",
+        "value": "459be995165743d141ed3c1adae6bbfade0d308f78b1d4a3e1c839ac24ff94db"
+      },
+      {
+        "name": "exr:hyph_license",
+        "value": "data/hyph-en-us.LICENSE.txt"
+      },
+      {
+        "name": "exr:hyph_license_sha256",
+        "value": "a46abf434994db0013f62b9e0a19b3bcf6bdab234de8e2a68bef39ec5758e83a"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exr-core@3.40.0",
+      "name": "exr_core",
+      "version": "3.40.0",
+      "purl": "pkg:generic/exr-core@3.40.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "927283b6ec31dbf2c495a88725fc98ed7af75879cdaa3502d5f54e5144679990"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-module"
+        },
+        {
+          "name": "exr:source",
+          "value": "include/exr/core.h"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exr-pdf@3.38.3",
+      "name": "exr_pdf",
+      "version": "3.38.3",
+      "purl": "pkg:generic/exr-pdf@3.38.3",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "dd2540233115102ccf8595c6b35d6fce05e01a7fcaac2709b0cfd9d4d8b01556"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-module"
+        },
+        {
+          "name": "exr:source",
+          "value": "include/exr/pdf.h"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exr-library@3.34.0",
+      "name": "exr_library",
+      "version": "3.34.0",
+      "purl": "pkg:generic/exr-library@3.34.0",
+      "scope": "required",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b131f24db63b71385a74c5b5a9713cad7b39d6ab321191364da3cc312a130f95"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-module"
+        },
+        {
+          "name": "exr:source",
+          "value": "include/exr/library.h"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exr-audio@3.33.0",
+      "name": "exr_audio",
+      "version": "3.33.0",
+      "purl": "pkg:generic/exr-audio@3.33.0",
+      "scope": "optional",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cac99ff20ece707958be51ac5c8f0d6d96eef15adb4e368ba4104cc9bcb4a201"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-module"
+        },
+        {
+          "name": "exr:source",
+          "value": "include/exr/audio.h"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exr-textindex@3.33.0",
+      "name": "exr_textindex",
+      "version": "3.33.0",
+      "purl": "pkg:generic/exr-textindex@3.33.0",
+      "scope": "optional",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d0f51a23480542adc4865601ca5bf5ece26ab334a20efc7cc0fe71aa748c5e79"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-module"
+        },
+        {
+          "name": "exr:source",
+          "value": "include/exr/textindex.h"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exr-pdf-edit@3.33.0",
+      "name": "exr_pdf_edit",
+      "version": "3.33.0",
+      "purl": "pkg:generic/exr-pdf-edit@3.33.0",
+      "scope": "optional",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1865e5a4a2c5dca06b9e3d7cb5f5f7b1267f74301676af79adc6f8f4d5ebc0e1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-module"
+        },
+        {
+          "name": "exr:source",
+          "value": "include/exr/pdf_edit.h"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "false"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader@3.42.0",
+      "name": "EXReader (first party)",
+      "version": "3.42.0",
+      "purl": "pkg:generic/exreader@3.42.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": ""
+        },
+        {
+          "name": "exr:linkage",
+          "value": "EXReader component archives"
+        },
+        {
+          "name": "exr:source",
+          "value": "repository"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/freetype@VER-2-15-0",
+      "name": "FreeType",
+      "version": "VER-2-15-0",
+      "purl": "pkg:generic/freetype@VER-2-15-0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "FTL OR GPL-2.0-only; FTL selected in THIRD_PARTY_NOTICES.md"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": ""
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/freetype/freetype/tar.gz/refs/tags/VER-2-15-0"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "87c7f1f8699b91e89f773f7dcfa505b044e1dae67f62a55d4e29c3afdcac4fb8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/expat@R_2_9_0",
+      "name": "Expat",
+      "version": "R_2_9_0",
+      "purl": "pkg:generic/expat@R_2_9_0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": ""
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/libexpat/libexpat/tar.gz/refs/tags/R_2_9_0"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6e8ce7b52ebbaa423c59becc7cf1e6875c42e49228c062ac8123c10e700cec27"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/miniz@3.1.2",
+      "name": "miniz",
+      "version": "3.1.2",
+      "purl": "pkg:generic/miniz@3.1.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": ""
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/stb@commit%202c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "name": "stb_image",
+      "version": "commit 2c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "purl": "pkg:generic/stb@commit%202c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "MIT OR public domain; MIT selected in THIRD_PARTY_NOTICES.md"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": ""
+        },
+        {
+          "name": "exr:linkage",
+          "value": "header compiled into exr_graphics from a patched private copy"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/nothings/stb/tar.gz/2c980bb59875b0d32144a71867fbdebb2f77cd20"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/libwebp@v1.5.0",
+      "name": "libwebp",
+      "version": "v1.5.0",
+      "purl": "pkg:generic/libwebp@v1.5.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_IMAGE_WEBP"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archives"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/webmproject/libwebp/tar.gz/refs/tags/v1.5.0"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/zlib@v1.3.1",
+      "name": "zlib",
+      "version": "v1.3.1",
+      "purl": "pkg:generic/zlib@v1.3.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Zlib"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_IMAGE_TIFF"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.3.1"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/libtiff@v4.7.0",
+      "name": "libtiff",
+      "version": "v4.7.0",
+      "purl": "pkg:generic/libtiff@v4.7.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "libtiff"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_IMAGE_TIFF"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/libsdl-org/libtiff/tar.gz/refs/tags/v4.7.0"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8f568a0dfac2e514074b04d7368c22e8afc1009af29780762a2536fd4d111e16"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/libaom@commit%20af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "name": "libaom",
+      "version": "commit af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "purl": "pkg:generic/libaom@commit%20af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "BSD-2-Clause AND AOM Patent License 1.0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_IMAGE_AVIF"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive (decoder only)"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/arthenica/libaom/tar.gz/af3dc9aadc793c1b00edc003e3fc19a44fdeb574"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a606215ed62ee1aaffc1360867c637b0ccafbc1a0c1c8430e2412257b8baa62a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/libavif@v1.2.0",
+      "name": "libavif",
+      "version": "v1.2.0",
+      "purl": "pkg:generic/libavif@v1.2.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "BSD-2-Clause"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_IMAGE_AVIF"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/AOMediaCodec/libavif/tar.gz/refs/tags/v1.2.0"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2182f4900d1a9617cee89746922a58dd825f2a3547f23907b8d78dc3685f7d8c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/mbedtls@mbedtls-3.6.7",
+      "name": "Mbed TLS crypto subset",
+      "version": "mbedtls-3.6.7",
+      "purl": "pkg:generic/mbedtls@mbedtls-3.6.7",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected in THIRD_PARTY_NOTICES.md"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_CRYPTO"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "seven upstream sources in exr_crypto; ARC4 adapted from mbedtls-2.28.10 into src/pdf_crypto.c"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/Mbed-TLS/mbedtls/tar.gz/refs/tags/mbedtls-3.6.7"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "807f0a1cc7c63b571180e9efeb6236b677e550869eb0442ace33aa9c69055fcc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/openjpeg@2.5.4",
+      "name": "OpenJPEG",
+      "version": "2.5.4",
+      "purl": "pkg:generic/openjpeg@2.5.4",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "BSD-2-Clause"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_JPX"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "22 fixed upstream C library sources in the private static exr_jpx archive; thread stubs"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/lcms@lcms2.19.1",
+      "name": "LittleCMS",
+      "version": "lcms2.19.1",
+      "purl": "pkg:generic/lcms@lcms2.19.1",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_ICC"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "upstream src/cms*.c in exr_lcms"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/mm2/Little-CMS/tar.gz/refs/tags/lcms2.19.1"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/sqlite@3.54.0",
+      "name": "SQLite amalgamation",
+      "version": "3.54.0",
+      "purl": "pkg:generic/sqlite@3.54.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Public domain"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_LIBRARY|EXR_BUILD_TEXT_INDEX"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/minimp3@commit%20ea99364f61c14656440e8d77e9c233ccf3124633",
+      "name": "minimp3",
+      "version": "commit ea99364f61c14656440e8d77e9c233ccf3124633",
+      "purl": "pkg:generic/minimp3@commit%20ea99364f61c14656440e8d77e9c233ccf3124633",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "CC0-1.0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_AUDIO&EXR_ENABLE_MP3"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "header compiled into exr_audio"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/lieff/minimp3/tar.gz/ea99364f61c14656440e8d77e9c233ccf3124633"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/faad2@commit%20521d105979795b887ea11e1f36565e97a8fbfc53",
+      "name": "FAAD2",
+      "version": "commit 521d105979795b887ea11e1f36565e97a8fbfc53",
+      "purl": "pkg:generic/faad2@commit%20521d105979795b887ea11e1f36565e97a8fbfc53",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "GPL-2.0-or-later"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_AUDIO&EXR_ENABLE_AAC"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "private static archive"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://codeload.github.com/knik0/faad2/tar.gz/521d105979795b887ea11e1f36565e97a8fbfc53"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9284bd9c5ef998f636b233055f4d988aadf0d5a97acdb3109bcb9d4e3c7cfdd8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/unicode@17.0.0%20and%203.2",
+      "name": "Unicode Character Database derived tables",
+      "version": "17.0.0 and 3.2",
+      "purl": "pkg:generic/unicode@17.0.0%20and%203.2",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Unicode-3.0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": ""
+        },
+        {
+          "name": "exr:linkage",
+          "value": "generated C tables in core and PDF sources"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://www.unicode.org/Public/ (pinned by tools/generate_*.py)"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/argyll-cmyk@repository%20data",
+      "name": "Argyll fallback CMYK profile",
+      "version": "repository data",
+      "purl": "pkg:generic/argyll-cmyk@repository%20data",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Public domain"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_ICC"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "embedded generated header in exr_graphics"
+        },
+        {
+          "name": "exr:source",
+          "value": "src/profiles/default_cmyk.icc.zlib"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/adobe-glyph-list@agl-aglfn%20commit%204036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "name": "Adobe Glyph List and ITC Zapf Dingbats Glyph List",
+      "version": "agl-aglfn commit 4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "purl": "pkg:generic/adobe-glyph-list@agl-aglfn%20commit%204036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_PDF"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "facts in src/pdf_font_data.h"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://github.com/adobe-type-tools/agl-aglfn/tree/4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c85f2b0da9de3e0a96cb42594708d19f7696945bb185cfd98c262f8f2d6f3aa7"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/pdfjs-data@pdf.js%20commit%2081525fd446779f0a29003cf06e3ba33751954826",
+      "name": "PDF.js encoding and metric facts",
+      "version": "pdf.js commit 81525fd446779f0a29003cf06e3ba33751954826",
+      "purl": "pkg:generic/pdfjs-data@pdf.js%20commit%2081525fd446779f0a29003cf06e3ba33751954826",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_PDF"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "facts in src/pdf_font_data.h"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://github.com/mozilla/pdf.js/tree/81525fd446779f0a29003cf06e3ba33751954826/src/core"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8d1fb64269e430755e4f12c2eb113d71b4b2a33ad11db0069e09ebb47415ca53"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/pdf-calculator-names@PDF%2032000-1%20table%2042",
+      "name": "PostScript calculator operator names",
+      "version": "PDF 32000-1 table 42",
+      "purl": "pkg:generic/pdf-calculator-names@PDF%2032000-1%20table%2042",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "Adobe permission notice"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": "EXR_ENABLE_PDF"
+        },
+        {
+          "name": "exr:linkage",
+          "value": "operator names in src/pdf_calculator.c"
+        },
+        {
+          "name": "exr:source",
+          "value": "THIRD_PARTY_NOTICES.md"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/noto-test-fonts@tests%2Ffixtures%2Fwp7",
+      "name": "Noto Sans script test fonts (notice only)",
+      "version": "tests/fixtures/wp7",
+      "purl": "pkg:generic/noto-test-fonts@tests%2Ffixtures%2Fwp7",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "OFL-1.1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "sdk-dependency"
+        },
+        {
+          "name": "exr:when",
+          "value": ""
+        },
+        {
+          "name": "exr:linkage",
+          "value": "none; fonts are not installed"
+        },
+        {
+          "name": "exr:source",
+          "value": "licenses/noto-sans-test-fonts.txt"
+        },
+        {
+          "name": "exr:active_in_reading_profile",
+          "value": "true"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "754f0e221aa7d5a915489f3bf1f20fe53ddc35ab2834a4d91656d78f9622de70"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-catalog@0.1.0",
+      "name": "EXReader product catalog",
+      "version": "0.1.0",
+      "purl": "pkg:generic/exreader-pkg-catalog@0.1.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderProductCatalog"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/store/native"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_catalog,reader_catalog_sqlite"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-revisions@0.4.0",
+      "name": "EXReader revision store",
+      "version": "0.4.0",
+      "purl": "pkg:generic/exreader-pkg-revisions@0.4.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderRevisions"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/revisions"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_revisions,reader_revision_hash"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-commands@0.2.0",
+      "name": "EXReader typed book commands",
+      "version": "0.2.0",
+      "purl": "pkg:generic/exreader-pkg-commands@0.2.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderCommands"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/commands"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_commands"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-desktop-metadata@0.2.0",
+      "name": "EXReader desktop metadata",
+      "version": "0.2.0",
+      "purl": "pkg:generic/exreader-pkg-desktop-metadata@0.2.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderDesktopMetadata"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/desktop-metadata"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_desktop_metadata"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-webdav@0.2.0",
+      "name": "EXReader WebDAV transport",
+      "version": "0.2.0",
+      "purl": "pkg:generic/exreader-pkg-webdav@0.2.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderWebDAV"
+        },
+        {
+          "name": "exr:source",
+          "value": "extras/webdav"
+        },
+        {
+          "name": "exr:archives",
+          "value": "exr_webdav"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-session@0.2.0",
+      "name": "EXReader account session",
+      "version": "0.2.0",
+      "purl": "pkg:generic/exreader-pkg-session@0.2.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderSession"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/session"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_session"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-sync@0.2.0",
+      "name": "EXReader synchronisation",
+      "version": "0.2.0",
+      "purl": "pkg:generic/exreader-pkg-sync@0.2.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderSync"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/sync"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_sync"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-credentials@0.1.0",
+      "name": "EXReader credential storage",
+      "version": "0.1.0",
+      "purl": "pkg:generic/exreader-pkg-credentials@0.1.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderCredentials"
+        },
+        {
+          "name": "exr:source",
+          "value": "extras/credentials"
+        },
+        {
+          "name": "exr:archives",
+          "value": "exr_credentials"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-reading-state@0.2.0",
+      "name": "EXReader reading state",
+      "version": "0.2.0",
+      "purl": "pkg:generic/exreader-pkg-reading-state@0.2.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderReadingState"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/reading-state"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_reading_state"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-search@0.1.0",
+      "name": "EXReader in-book search",
+      "version": "0.1.0",
+      "purl": "pkg:generic/exreader-pkg-search@0.1.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderSearch"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/search"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_search"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-preferences@0.1.0",
+      "name": "EXReader preferences",
+      "version": "0.1.0",
+      "purl": "pkg:generic/exreader-pkg-preferences@0.1.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderPreferences"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/preferences"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_preferences"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-batch-import@0.1.0",
+      "name": "EXReader batch import",
+      "version": "0.1.0",
+      "purl": "pkg:generic/exreader-pkg-batch-import@0.1.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderBatchImport"
+        },
+        {
+          "name": "exr:source",
+          "value": "apps/reader/batch-import"
+        },
+        {
+          "name": "exr:archives",
+          "value": "reader_batch_import"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:generic/exreader-pkg-sideload@0.1.0",
+      "name": "EXReader sideload and export",
+      "version": "0.1.0",
+      "purl": "pkg:generic/exreader-pkg-sideload@0.1.0",
+      "scope": "optional",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "product-package"
+        },
+        {
+          "name": "exr:cmake_project",
+          "value": "EXReaderSideload"
+        },
+        {
+          "name": "exr:source",
+          "value": "extras/sideload"
+        },
+        {
+          "name": "exr:archives",
+          "value": "exr_sideload"
+        }
+      ]
+    },
+    {
+      "type": "data",
+      "bom-ref": "pkg:generic/hyph-en-us@1996-03-01",
+      "name": "Liang TeX English Hyphenation Patterns (hyph-en-us)",
+      "version": "1996-03-01",
+      "purl": "pkg:generic/hyph-en-us@1996-03-01",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "LPPL-1.0+"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "embedded-data"
+        },
+        {
+          "name": "exr:source",
+          "value": "data/hyph-en-us.pat.txt"
+        },
+        {
+          "name": "exr:license_path",
+          "value": "data/hyph-en-us.LICENSE.txt"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0f57318b878b132547ae92db39a6e1d1cf2a05d9008874955d6ecb910007a463"
+        }
+      ]
+    },
+    {
+      "type": "data",
+      "bom-ref": "pkg:generic/noto-sans-cjk-host-font@NotoSansCJKsc-Regular",
+      "name": "Noto Sans CJK SC Regular Host UI Font (Reader.otf)",
+      "version": "NotoSansCJKsc-Regular",
+      "purl": "pkg:generic/noto-sans-cjk-host-font@NotoSansCJKsc-Regular",
+      "scope": "required",
+      "licenses": [
+        {
+          "expression": "OFL-1.1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "exr:category",
+          "value": "host-bundle-font"
+        },
+        {
+          "name": "exr:source",
+          "value": "https://github.com/notofonts/noto-cjk"
+        },
+        {
+          "name": "exr:license_path",
+          "value": "OFL.txt"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:generic/exreader-distribution@3.42.0",
+      "dependsOn": [
+        "pkg:generic/exr-core@3.40.0",
+        "pkg:generic/exr-pdf@3.38.3",
+        "pkg:generic/exr-library@3.34.0",
+        "pkg:generic/exr-audio@3.33.0",
+        "pkg:generic/exr-textindex@3.33.0",
+        "pkg:generic/exr-pdf-edit@3.33.0",
+        "pkg:generic/exreader@3.42.0",
+        "pkg:generic/freetype@VER-2-15-0",
+        "pkg:generic/expat@R_2_9_0",
+        "pkg:generic/miniz@3.1.2",
+        "pkg:generic/stb@commit%202c980bb59875b0d32144a71867fbdebb2f77cd20",
+        "pkg:generic/libwebp@v1.5.0",
+        "pkg:generic/zlib@v1.3.1",
+        "pkg:generic/libtiff@v4.7.0",
+        "pkg:generic/libaom@commit%20af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+        "pkg:generic/libavif@v1.2.0",
+        "pkg:generic/mbedtls@mbedtls-3.6.7",
+        "pkg:generic/openjpeg@2.5.4",
+        "pkg:generic/lcms@lcms2.19.1",
+        "pkg:generic/sqlite@3.54.0",
+        "pkg:generic/minimp3@commit%20ea99364f61c14656440e8d77e9c233ccf3124633",
+        "pkg:generic/faad2@commit%20521d105979795b887ea11e1f36565e97a8fbfc53",
+        "pkg:generic/unicode@17.0.0%20and%203.2",
+        "pkg:generic/argyll-cmyk@repository%20data",
+        "pkg:generic/adobe-glyph-list@agl-aglfn%20commit%204036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+        "pkg:generic/pdfjs-data@pdf.js%20commit%2081525fd446779f0a29003cf06e3ba33751954826",
+        "pkg:generic/pdf-calculator-names@PDF%2032000-1%20table%2042",
+        "pkg:generic/noto-test-fonts@tests%2Ffixtures%2Fwp7",
+        "pkg:generic/exreader-pkg-catalog@0.1.0",
+        "pkg:generic/exreader-pkg-revisions@0.4.0",
+        "pkg:generic/exreader-pkg-commands@0.2.0",
+        "pkg:generic/exreader-pkg-desktop-metadata@0.2.0",
+        "pkg:generic/exreader-pkg-webdav@0.2.0",
+        "pkg:generic/exreader-pkg-session@0.2.0",
+        "pkg:generic/exreader-pkg-sync@0.2.0",
+        "pkg:generic/exreader-pkg-credentials@0.1.0",
+        "pkg:generic/exreader-pkg-reading-state@0.2.0",
+        "pkg:generic/exreader-pkg-search@0.1.0",
+        "pkg:generic/exreader-pkg-preferences@0.1.0",
+        "pkg:generic/exreader-pkg-batch-import@0.1.0",
+        "pkg:generic/exreader-pkg-sideload@0.1.0",
+        "pkg:generic/hyph-en-us@1996-03-01",
+        "pkg:generic/noto-sans-cjk-host-font@NotoSansCJKsc-Regular"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exr-core@3.40.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/exr-pdf@3.38.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/exr-library@3.34.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/exr-audio@3.33.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/exr-textindex@3.33.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/exr-pdf-edit@3.33.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/exreader@3.42.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/freetype@VER-2-15-0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/expat@R_2_9_0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/miniz@3.1.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/stb@commit%202c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/libwebp@v1.5.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/zlib@v1.3.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/libtiff@v4.7.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/libaom@commit%20af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/libavif@v1.2.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/mbedtls@mbedtls-3.6.7",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/openjpeg@2.5.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/lcms@lcms2.19.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/sqlite@3.54.0",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/minimp3@commit%20ea99364f61c14656440e8d77e9c233ccf3124633",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/faad2@commit%20521d105979795b887ea11e1f36565e97a8fbfc53",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/unicode@17.0.0%20and%203.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/argyll-cmyk@repository%20data",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/adobe-glyph-list@agl-aglfn%20commit%204036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/pdfjs-data@pdf.js%20commit%2081525fd446779f0a29003cf06e3ba33751954826",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/pdf-calculator-names@PDF%2032000-1%20table%2042",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/noto-test-fonts@tests%2Ffixtures%2Fwp7",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-catalog@0.1.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-revisions@0.4.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-commands@0.2.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-desktop-metadata@0.2.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-webdav@0.2.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-session@0.2.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-sync@0.2.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-credentials@0.1.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-reading-state@0.2.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-search@0.1.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-preferences@0.1.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-batch-import@0.1.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/exreader-pkg-sideload@0.1.0",
+      "dependsOn": [
+        "pkg:generic/exreader@3.42.0"
+      ]
+    },
+    {
+      "ref": "pkg:generic/hyph-en-us@1996-03-01",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:generic/noto-sans-cjk-host-font@NotoSansCJKsc-Regular",
+      "dependsOn": []
+    }
+  ]
+}

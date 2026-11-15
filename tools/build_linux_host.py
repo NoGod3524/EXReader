@@ -54,7 +54,11 @@ def main():
         shutil.copyfile(assets/name, payload/name)
     for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
         shutil.copyfile(ROOT/name, payload/name)
+    shutil.copyfile(ROOT/'docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md', payload/'READER-INSTALL-UPGRADE-IMPORT-SYNC.md')
+    shutil.copyfile(ROOT/'docs/sbom.cdx.json', payload/'sbom.cdx.json')
+    shutil.copyfile(ROOT/'docs/sbom.spdx.json', payload/'sbom.spdx.json')
     shutil.copytree(args.sdk/'share/exreader/licenses', payload/'licenses')
+    shutil.copyfile(ROOT/'data/hyph-en-us.LICENSE.txt', payload/'licenses/hyph-en-us.LICENSE.txt')
     source = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
     manifest = {'schema': 1, 'source_sha': source, 'sdk_version': identity.split()[0], 'abi': int(identity.split()[1]),
                 'gtk_version': subprocess.check_output(['pkg-config', '--modversion', 'gtk+-3.0'], text=True).strip(),

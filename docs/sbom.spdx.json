@@ -1,0 +1,1456 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "EXReader-Distribution-3.42.0",
+  "documentNamespace": "https://exreader.invalid/spdx/exreader-distribution-3.42.0",
+  "creationInfo": {
+    "created": "2026-11-15T00:00:00Z",
+    "creators": [
+      "Tool: exreader-generate-package-sbom-1.0",
+      "Organization: EXReader"
+    ],
+    "licenseListVersion": "3.23"
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-exreader-distribution",
+      "name": "exreader-distribution",
+      "versionInfo": "3.42.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": true,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "Copyright (c) 2026 EXReader Contributors",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-distribution@3.42.0"
+        }
+      ],
+      "packageVerificationCode": {
+        "packageVerificationCodeValue": "091ba7b6b2203d0715b2bd5b1731a939f096c5ea"
+      },
+      "hasFiles": [
+        "SPDXRef-File-LICENSE",
+        "SPDXRef-File-THIRD-PARTY-NOTICES.md",
+        "SPDXRef-File-docs-READER-INSTALL-UPGRADE-IMPORT-SYNC.md",
+        "SPDXRef-File-docs-READING-LICENSES.md",
+        "SPDXRef-File-docs-READING-LICENSE-REVIEW.md",
+        "SPDXRef-File-docs-READER-DISTRIBUTION-INVENTORY.md",
+        "SPDXRef-File-data-hyph-en-us.LICENSE.txt",
+        "SPDXRef-File-data-hyph-en-us.pat.txt",
+        "SPDXRef-File-licenses-adobe-glyph-list.txt",
+        "SPDXRef-File-licenses-default-cmyk-profile.txt",
+        "SPDXRef-File-licenses-faad2-notice.txt",
+        "SPDXRef-File-licenses-noto-sans-test-fonts.txt",
+        "SPDXRef-File-licenses-pdfjs.txt",
+        "SPDXRef-File-licenses-sqlite-public-domain.txt",
+        "SPDXRef-File-tests-fixtures-unicode-LICENSE.txt"
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Module-exr-core",
+      "name": "exr_core",
+      "versionInfo": "3.40.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "927283b6ec31dbf2c495a88725fc98ed7af75879cdaa3502d5f54e5144679990"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exr-core@3.40.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Module-exr-pdf",
+      "name": "exr_pdf",
+      "versionInfo": "3.38.3",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "dd2540233115102ccf8595c6b35d6fce05e01a7fcaac2709b0cfd9d4d8b01556"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exr-pdf@3.38.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Module-exr-library",
+      "name": "exr_library",
+      "versionInfo": "3.34.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b131f24db63b71385a74c5b5a9713cad7b39d6ab321191364da3cc312a130f95"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exr-library@3.34.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Module-exr-audio",
+      "name": "exr_audio",
+      "versionInfo": "3.33.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cac99ff20ece707958be51ac5c8f0d6d96eef15adb4e368ba4104cc9bcb4a201"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exr-audio@3.33.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Module-exr-textindex",
+      "name": "exr_textindex",
+      "versionInfo": "3.33.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d0f51a23480542adc4865601ca5bf5ece26ab334a20efc7cc0fe71aa748c5e79"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exr-textindex@3.33.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Module-exr-pdf-edit",
+      "name": "exr_pdf_edit",
+      "versionInfo": "3.33.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1865e5a4a2c5dca06b9e3d7cb5f5f7b1267f74301676af79adc6f8f4d5ebc0e1"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exr-pdf-edit@3.33.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-exreader",
+      "name": "EXReader (first party)",
+      "versionInfo": "3.42.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader@3.42.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-freetype",
+      "name": "FreeType",
+      "versionInfo": "VER-2-15-0",
+      "downloadLocation": "https://codeload.github.com/freetype/freetype/tar.gz/refs/tags/VER-2-15-0",
+      "filesAnalyzed": false,
+      "licenseConcluded": "FTL OR GPL-2.0-only; FTL selected in THIRD_PARTY_NOTICES.md",
+      "licenseDeclared": "FTL OR GPL-2.0-only; FTL selected in THIRD_PARTY_NOTICES.md",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/freetype@VER-2-15-0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "87c7f1f8699b91e89f773f7dcfa505b044e1dae67f62a55d4e29c3afdcac4fb8"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-expat",
+      "name": "Expat",
+      "versionInfo": "R_2_9_0",
+      "downloadLocation": "https://codeload.github.com/libexpat/libexpat/tar.gz/refs/tags/R_2_9_0",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/expat@R_2_9_0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6e8ce7b52ebbaa423c59becc7cf1e6875c42e49228c062ac8123c10e700cec27"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-miniz",
+      "name": "miniz",
+      "versionInfo": "3.1.2",
+      "downloadLocation": "https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/miniz@3.1.2"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-stb",
+      "name": "stb_image",
+      "versionInfo": "commit 2c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "downloadLocation": "https://codeload.github.com/nothings/stb/tar.gz/2c980bb59875b0d32144a71867fbdebb2f77cd20",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT OR public domain; MIT selected in THIRD_PARTY_NOTICES.md",
+      "licenseDeclared": "MIT OR public domain; MIT selected in THIRD_PARTY_NOTICES.md",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/stb@commit%202c980bb59875b0d32144a71867fbdebb2f77cd20"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9a955b1b49a4410088a2e0ee2a9c057c3c907d0c1d75454144cb980aca0ba515"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-libwebp",
+      "name": "libwebp",
+      "versionInfo": "v1.5.0",
+      "downloadLocation": "https://codeload.github.com/webmproject/libwebp/tar.gz/refs/tags/v1.5.0",
+      "filesAnalyzed": false,
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "BSD-3-Clause",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/libwebp@v1.5.0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-zlib",
+      "name": "zlib",
+      "versionInfo": "v1.3.1",
+      "downloadLocation": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.3.1",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Zlib",
+      "licenseDeclared": "Zlib",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/zlib@v1.3.1"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-libtiff",
+      "name": "libtiff",
+      "versionInfo": "v4.7.0",
+      "downloadLocation": "https://codeload.github.com/libsdl-org/libtiff/tar.gz/refs/tags/v4.7.0",
+      "filesAnalyzed": false,
+      "licenseConcluded": "libtiff",
+      "licenseDeclared": "libtiff",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/libtiff@v4.7.0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8f568a0dfac2e514074b04d7368c22e8afc1009af29780762a2536fd4d111e16"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-libaom",
+      "name": "libaom",
+      "versionInfo": "commit af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "downloadLocation": "https://codeload.github.com/arthenica/libaom/tar.gz/af3dc9aadc793c1b00edc003e3fc19a44fdeb574",
+      "filesAnalyzed": false,
+      "licenseConcluded": "BSD-2-Clause AND AOM Patent License 1.0",
+      "licenseDeclared": "BSD-2-Clause AND AOM Patent License 1.0",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/libaom@commit%20af3dc9aadc793c1b00edc003e3fc19a44fdeb574"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a606215ed62ee1aaffc1360867c637b0ccafbc1a0c1c8430e2412257b8baa62a"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-libavif",
+      "name": "libavif",
+      "versionInfo": "v1.2.0",
+      "downloadLocation": "https://codeload.github.com/AOMediaCodec/libavif/tar.gz/refs/tags/v1.2.0",
+      "filesAnalyzed": false,
+      "licenseConcluded": "BSD-2-Clause",
+      "licenseDeclared": "BSD-2-Clause",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/libavif@v1.2.0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2182f4900d1a9617cee89746922a58dd825f2a3547f23907b8d78dc3685f7d8c"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-mbedtls",
+      "name": "Mbed TLS crypto subset",
+      "versionInfo": "mbedtls-3.6.7",
+      "downloadLocation": "https://codeload.github.com/Mbed-TLS/mbedtls/tar.gz/refs/tags/mbedtls-3.6.7",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected in THIRD_PARTY_NOTICES.md",
+      "licenseDeclared": "Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected in THIRD_PARTY_NOTICES.md",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/mbedtls@mbedtls-3.6.7"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "807f0a1cc7c63b571180e9efeb6236b677e550869eb0442ace33aa9c69055fcc"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-openjpeg",
+      "name": "OpenJPEG",
+      "versionInfo": "2.5.4",
+      "downloadLocation": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4",
+      "filesAnalyzed": false,
+      "licenseConcluded": "BSD-2-Clause",
+      "licenseDeclared": "BSD-2-Clause",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/openjpeg@2.5.4"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-lcms",
+      "name": "LittleCMS",
+      "versionInfo": "lcms2.19.1",
+      "downloadLocation": "https://codeload.github.com/mm2/Little-CMS/tar.gz/refs/tags/lcms2.19.1",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/lcms@lcms2.19.1"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-sqlite",
+      "name": "SQLite amalgamation",
+      "versionInfo": "3.54.0",
+      "downloadLocation": "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Public domain",
+      "licenseDeclared": "Public domain",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/sqlite@3.54.0"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-minimp3",
+      "name": "minimp3",
+      "versionInfo": "commit ea99364f61c14656440e8d77e9c233ccf3124633",
+      "downloadLocation": "https://codeload.github.com/lieff/minimp3/tar.gz/ea99364f61c14656440e8d77e9c233ccf3124633",
+      "filesAnalyzed": false,
+      "licenseConcluded": "CC0-1.0",
+      "licenseDeclared": "CC0-1.0",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/minimp3@commit%20ea99364f61c14656440e8d77e9c233ccf3124633"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-faad2",
+      "name": "FAAD2",
+      "versionInfo": "commit 521d105979795b887ea11e1f36565e97a8fbfc53",
+      "downloadLocation": "https://codeload.github.com/knik0/faad2/tar.gz/521d105979795b887ea11e1f36565e97a8fbfc53",
+      "filesAnalyzed": false,
+      "licenseConcluded": "GPL-2.0-or-later",
+      "licenseDeclared": "GPL-2.0-or-later",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/faad2@commit%20521d105979795b887ea11e1f36565e97a8fbfc53"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9284bd9c5ef998f636b233055f4d988aadf0d5a97acdb3109bcb9d4e3c7cfdd8"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-unicode",
+      "name": "Unicode Character Database derived tables",
+      "versionInfo": "17.0.0 and 3.2",
+      "downloadLocation": "https://www.unicode.org/Public/ (pinned by tools/generate_*.py)",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Unicode-3.0",
+      "licenseDeclared": "Unicode-3.0",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/unicode@17.0.0%20and%203.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-argyll-cmyk",
+      "name": "Argyll fallback CMYK profile",
+      "versionInfo": "repository data",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Public domain",
+      "licenseDeclared": "Public domain",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/argyll-cmyk@repository%20data"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-adobe-glyph-list",
+      "name": "Adobe Glyph List and ITC Zapf Dingbats Glyph List",
+      "versionInfo": "agl-aglfn commit 4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "downloadLocation": "https://github.com/adobe-type-tools/agl-aglfn/tree/4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6",
+      "filesAnalyzed": false,
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "BSD-3-Clause",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/adobe-glyph-list@agl-aglfn%20commit%204036a9ca80a62f64f9de4f7321a9a045ad0ecfd6"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-pdfjs-data",
+      "name": "PDF.js encoding and metric facts",
+      "versionInfo": "pdf.js commit 81525fd446779f0a29003cf06e3ba33751954826",
+      "downloadLocation": "https://github.com/mozilla/pdf.js/tree/81525fd446779f0a29003cf06e3ba33751954826/src/core",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/pdfjs-data@pdf.js%20commit%2081525fd446779f0a29003cf06e3ba33751954826"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-pdf-calculator-names",
+      "name": "PostScript calculator operator names",
+      "versionInfo": "PDF 32000-1 table 42",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Adobe permission notice",
+      "licenseDeclared": "Adobe permission notice",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/pdf-calculator-names@PDF%2032000-1%20table%2042"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Component-noto-test-fonts",
+      "name": "Noto Sans script test fonts (notice only)",
+      "versionInfo": "tests/fixtures/wp7",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "OFL-1.1",
+      "licenseDeclared": "OFL-1.1",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/noto-test-fonts@tests%2Ffixtures%2Fwp7"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-catalog",
+      "name": "EXReader product catalog",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-catalog@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-revisions",
+      "name": "EXReader revision store",
+      "versionInfo": "0.4.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-revisions@0.4.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-commands",
+      "name": "EXReader typed book commands",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-commands@0.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-desktop-metadata",
+      "name": "EXReader desktop metadata",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-desktop-metadata@0.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-webdav",
+      "name": "EXReader WebDAV transport",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-webdav@0.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-session",
+      "name": "EXReader account session",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-session@0.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-sync",
+      "name": "EXReader synchronisation",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-sync@0.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-credentials",
+      "name": "EXReader credential storage",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-credentials@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-reading-state",
+      "name": "EXReader reading state",
+      "versionInfo": "0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-reading-state@0.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-search",
+      "name": "EXReader in-book search",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-search@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-preferences",
+      "name": "EXReader preferences",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-preferences@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-batch-import",
+      "name": "EXReader batch import",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-batch-import@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ProductPkg-sideload",
+      "name": "EXReader sideload and export",
+      "versionInfo": "0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/exreader-pkg-sideload@0.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Asset-hyph-en-us",
+      "name": "Liang TeX English Hyphenation Patterns (hyph-en-us)",
+      "versionInfo": "1996-03-01",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "LPPL-1.0+",
+      "licenseDeclared": "LPPL-1.0+",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/hyph-en-us@1996-03-01"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0f57318b878b132547ae92db39a6e1d1cf2a05d9008874955d6ecb910007a463"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Asset-noto-sans-cjk-host-font",
+      "name": "Noto Sans CJK SC Regular Host UI Font (Reader.otf)",
+      "versionInfo": "NotoSansCJKsc-Regular",
+      "downloadLocation": "https://github.com/notofonts/noto-cjk",
+      "filesAnalyzed": false,
+      "licenseConcluded": "OFL-1.1",
+      "licenseDeclared": "OFL-1.1",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/noto-sans-cjk-host-font@NotoSansCJKsc-Regular"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "SPDXID": "SPDXRef-File-LICENSE",
+      "fileName": "LICENSE",
+      "licenseConcluded": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "6cdaf11b3566cc8022092e9bb78feda392187501"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "34c6961d28223ca0c421d729913f7ae1fd6d013c005286e7c1707b26986ddb0b"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-THIRD-PARTY-NOTICES.md",
+      "fileName": "THIRD_PARTY_NOTICES.md",
+      "licenseConcluded": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "2e4c1af5ea8df2bd5674b87440f64e794c42065e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "459be995165743d141ed3c1adae6bbfade0d308f78b1d4a3e1c839ac24ff94db"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-docs-READER-INSTALL-UPGRADE-IMPORT-SYNC.md",
+      "fileName": "docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md",
+      "licenseConcluded": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "9450c7204809d6998ebdf5cbfa71eaec16e0dffd"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f0b7debf67c7985b6816e0ebdb858f93374d6f968e445604a01ca2fb804c092b"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-docs-READING-LICENSES.md",
+      "fileName": "docs/READING-LICENSES.md",
+      "licenseConcluded": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "fedc86e0ab52e06f66d66d6e4173460bbc93fd7f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3debcfbd0cf02f3545a1809676a4066d5c5a4f8b32073830c142090f523e42ed"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-docs-READING-LICENSE-REVIEW.md",
+      "fileName": "docs/READING-LICENSE-REVIEW.md",
+      "licenseConcluded": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "befb801e75e02df825dc6625fe1deef3a19075f8"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f9e8df8b02773c04aca33d120e38037c44f5d04d349ff3ed759c183f9b0e65ef"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-docs-READER-DISTRIBUTION-INVENTORY.md",
+      "fileName": "docs/READER-DISTRIBUTION-INVENTORY.md",
+      "licenseConcluded": "MIT",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a25b594776f34ee78e8f24742c897ed83990415b"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3bf00f77e6bbec2279e98f0f692a905cd7e0af2908c2b99a71ca1ede134a29c4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-data-hyph-en-us.LICENSE.txt",
+      "fileName": "data/hyph-en-us.LICENSE.txt",
+      "licenseConcluded": "LPPL-1.0+",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "acbf9c5efb4d24cae39fc258ba556383ab06c55c"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a46abf434994db0013f62b9e0a19b3bcf6bdab234de8e2a68bef39ec5758e83a"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-data-hyph-en-us.pat.txt",
+      "fileName": "data/hyph-en-us.pat.txt",
+      "licenseConcluded": "LPPL-1.0+",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "e20cc7737cc49905c9175e162bcffdbb7e139cea"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0f57318b878b132547ae92db39a6e1d1cf2a05d9008874955d6ecb910007a463"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-licenses-adobe-glyph-list.txt",
+      "fileName": "licenses/adobe-glyph-list.txt",
+      "licenseConcluded": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "93b0734abcc7ba8259c8a9ee976a28cb0dc55ed3"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c85f2b0da9de3e0a96cb42594708d19f7696945bb185cfd98c262f8f2d6f3aa7"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-licenses-default-cmyk-profile.txt",
+      "fileName": "licenses/default-cmyk-profile.txt",
+      "licenseConcluded": "Public-Domain",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "2ba00d18e7de7a97c840d584354827e9747c0e2e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-licenses-faad2-notice.txt",
+      "fileName": "licenses/faad2-notice.txt",
+      "licenseConcluded": "GPL-2.0-or-later",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "1fcdee295da6859d3f36fe7de166ce6de36c0ca2"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f7a7eda5854c387fc25e0c6ad4c9fa22cad27d83b3bbfa283bc9ae42a9376e3c"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-licenses-noto-sans-test-fonts.txt",
+      "fileName": "licenses/noto-sans-test-fonts.txt",
+      "licenseConcluded": "OFL-1.1",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "92924941d8aae75a8b7f4ea910f0461916a47cbb"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "754f0e221aa7d5a915489f3bf1f20fe53ddc35ab2834a4d91656d78f9622de70"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-licenses-pdfjs.txt",
+      "fileName": "licenses/pdfjs.txt",
+      "licenseConcluded": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "eb1b4637c16969f955ff0e4693240fcd7f9b3684"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8d1fb64269e430755e4f12c2eb113d71b4b2a33ad11db0069e09ebb47415ca53"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-licenses-sqlite-public-domain.txt",
+      "fileName": "licenses/sqlite-public-domain.txt",
+      "licenseConcluded": "blessing",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "ce4a3a9155a22653f40bffacbe569f7dd5d3ccc0"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "abc1b93c15fe0a92ec55020569e10fb8206de2cf535c30e70f7f9d5428e20bcc"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-tests-fixtures-unicode-LICENSE.txt",
+      "fileName": "tests/fixtures/unicode/LICENSE.txt",
+      "licenseConcluded": "Unicode-3.0",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "6f9accb8d5c6d2c00712c4fbf85afa0911dffa15"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Package-exreader-distribution"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Module-exr-core"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Module-exr-pdf"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Module-exr-library"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Module-exr-audio"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Module-exr-textindex"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Module-exr-pdf-edit"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-exreader"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-freetype"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-expat"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-miniz"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-stb"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-libwebp"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-zlib"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-libtiff"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-libaom"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-libavif"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-mbedtls"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-openjpeg"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-lcms"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-sqlite"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-minimp3"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-faad2"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-unicode"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-argyll-cmyk"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-adobe-glyph-list"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-pdfjs-data"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-pdf-calculator-names"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Component-noto-test-fonts"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-catalog"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-revisions"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-commands"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-desktop-metadata"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-webdav"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-session"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-sync"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-credentials"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-reading-state"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-search"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-preferences"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-batch-import"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-ProductPkg-sideload"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Asset-hyph-en-us"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Asset-noto-sans-cjk-host-font"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-LICENSE"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-THIRD-PARTY-NOTICES.md"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-docs-READER-INSTALL-UPGRADE-IMPORT-SYNC.md"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-docs-READING-LICENSES.md"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-docs-READING-LICENSE-REVIEW.md"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-docs-READER-DISTRIBUTION-INVENTORY.md"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-data-hyph-en-us.LICENSE.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-data-hyph-en-us.pat.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-licenses-adobe-glyph-list.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-licenses-default-cmyk-profile.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-licenses-faad2-notice.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-licenses-noto-sans-test-fonts.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-licenses-pdfjs.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-licenses-sqlite-public-domain.txt"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-exreader-distribution",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-tests-fixtures-unicode-LICENSE.txt"
+    }
+  ]
+}
