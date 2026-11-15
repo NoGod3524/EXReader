@@ -13,6 +13,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 from urllib.parse import quote
@@ -95,7 +96,7 @@ def build_sdk(stage, build):
     return ndk
 
 
-def patch_android_libraries(stage):
+def patch_android_libraries(stage, abi='x86_64'):
     """Android installs unversioned runtimes. Keep a plain libexreader.so and
     only rename a versioned SONAME/NEEDED entry if another platform layout
     produced one."""
@@ -115,7 +116,7 @@ def patch_android_libraries(stage):
     needed = elf_dynamic(jni).get('needed') or []
     if 'libexreader.so.1' in needed:
         run([patchelf, '--replace-needed', 'libexreader.so.1', 'libexreader.so', jni])
-    target = ANDROID / 'app/src/main/jniLibs/x86_64'
+    target = ANDROID / ('app/src/main/jniLibs/' + abi)
     target.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(engine, target / 'libexreader.so')
     shutil.copyfile(jni, target / 'libexreader_jni.so')
@@ -131,17 +132,19 @@ def patch_android_libraries(stage):
     return target
 
 
-def build_product(stage, build):
+def build_product(stage, build, abi='x86_64'):
     """Cross-install public product packages, never Android system SQLite."""
     cmake = shutil.which('cmake')
     common = ['-G', 'Ninja', '-DCMAKE_TOOLCHAIN_FILE=' + str(ndk_home() / 'build/cmake/android.toolchain.cmake'),
-              '-DANDROID_ABI=x86_64', '-DANDROID_PLATFORM=android-' + str(MIN_SDK),
+              '-DANDROID_ABI=' + abi, '-DANDROID_PLATFORM=android-' + str(MIN_SDK),
               '-DANDROID_STL=c++_static', '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
               '-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH',
               '-DCMAKE_INSTALL_PREFIX=' + str(stage), '-DCMAKE_PREFIX_PATH=' + str(stage),
               '-DREADER_PRODUCT_PREFIX=' + str(stage)]
     for name, source, target in (
-            ('catalog', 'apps/reader/store/native', 'reader_catalog'),
+            # This installed export also contains original-import; its dependency
+            # closure builds the catalog and SQLite without building test programs.
+            ('catalog', 'apps/reader/store/native', 'reader_original_import'),
             ('revisions', 'apps/reader/revisions', 'reader_revisions'),
             ('commands', 'apps/reader/commands', 'reader_commands')):
         location = build / name
@@ -291,13 +294,13 @@ def write_fixtures(folder):
     return manifest
 
 
-def elf_check(path):
+def elf_check(path, abi='x86_64'):
     data = Path(path).read_bytes()
     if data[:4] != b'\x7fELF' or data[4] != 2 or data[5] != 1:
         raise SystemExit('not a 64-bit little-endian ELF: ' + str(path))
     machine = struct.unpack_from('<H', data, 18)[0]
-    if machine != 62:
-        raise SystemExit('expected x86_64 ELF, machine=%d: %s' % (machine, path))
+    if machine != {'x86_64': 62, 'arm64-v8a': 183}[abi]:
+        raise SystemExit('expected %s ELF, machine=%d: %s' % (abi, machine, path))
     phoff = struct.unpack_from('<Q', data, 32)[0]
     phentsize = struct.unpack_from('<H', data, 54)[0]
     phnum = struct.unpack_from('<H', data, 56)[0]
@@ -322,22 +325,23 @@ def elf_dynamic(path):
     return {'needed': needed, 'soname': soname.group(1) if soname else ''}
 
 
-def inspect_apk(apk):
+def inspect_apk(apk, abi='x86_64'):
     info = {}
     with zipfile.ZipFile(apk) as archive:
         names = [name for name in archive.namelist() if name.startswith('lib/')]
-        for required in ['lib/x86_64/libexreader_product.so', 'lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
-                         'lib/x86_64/libexreader_host.so']:
+        required_libraries = ['lib/%s/%s' % (abi, name) for name in (
+            'libexreader_product.so', 'libexreader.so', 'libexreader_jni.so', 'libexreader_host.so')]
+        for required in required_libraries:
             if required not in names:
                 raise SystemExit('APK is missing ' + required)
         if any(name.endswith('libexreader.so.1') for name in names):
             raise SystemExit('APK still contains the versioned engine name')
-        for name in ['lib/x86_64/libexreader_product.so', 'lib/x86_64/libexreader.so', 'lib/x86_64/libexreader_jni.so',
-                     'lib/x86_64/libexreader_host.so']:
-            target = Path('/tmp') / Path(name).name
-            target.write_bytes(archive.read(name))
-            entry = elf_check(target)
-            dynamic = elf_dynamic(target)
+        for name in required_libraries:
+            with tempfile.TemporaryDirectory(prefix='exreader-apk-') as directory:
+                target = Path(directory) / Path(name).name
+                target.write_bytes(archive.read(name))
+                entry = elf_check(target, abi)
+                dynamic = elf_dynamic(target)
             entry.update(dynamic)
             if name.endswith('/libexreader.so') and dynamic.get('soname') not in ('', 'libexreader.so'):
                 raise SystemExit('engine runtime still has a versioned soname')
