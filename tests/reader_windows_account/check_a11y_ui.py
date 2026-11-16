@@ -549,7 +549,11 @@ def main():
         record("outside_page_points_return_the_nearest_degenerate_text_range")
 
         # 13) one clean Tab cycle over every enabled stop
-        element(control(126)).SetFocus()
+        current_controls = inventory(host['window'], output / 'tab-controls.json')
+        expected_stops = {control(item['id']) for item in current_controls
+                          if item['visible'] and item['enabled'] and item['tab_stop']}
+        assert control(123) in expected_stops
+        element(control(123)).SetFocus()
         seen, order = set(), []
         for _ in range(120):
             current = focus_of(process.pid)
@@ -560,7 +564,7 @@ def main():
             tap(VK_TAB)
             time.sleep(0.05)
         print(json.dumps({"tab_stops": len(order)}, ensure_ascii=False), flush=True)
-        assert len(order) >= 18, len(order)
+        assert set(order) == expected_stops and len(order) == len(expected_stops), (order, expected_stops)
         assert focus_of(process.pid) == order[0], "the cycle did not close"
         record("tab_order_visits_every_enabled_stop_once_and_closes")
 

@@ -26,6 +26,8 @@ U.EnumChildWindows.argtypes = [W.HWND, ENUM, W.LPARAM]
 U.GetDlgCtrlID.argtypes = [W.HWND]
 U.GetParent.argtypes = [W.HWND]
 U.GetParent.restype = W.HWND
+U.GetWindowLongW.argtypes = [W.HWND, C.c_int]
+U.GetWindowLongW.restype = W.LONG
 
 
 class Keyboard(C.Structure):
@@ -97,11 +99,13 @@ def inventory(window, output):
         U.GetClassNameW(child, name, len(name))
         controls.append({'id': U.GetDlgCtrlID(child), 'class': name.value,
                          'visible': bool(U.IsWindowVisible(child)),
-                         'enabled': bool(U.IsWindowEnabled(child))})
+                         'enabled': bool(U.IsWindowEnabled(child)),
+                         'tab_stop': bool(U.GetWindowLongW(child, -16) & 0x10000)})
         return True
 
     U.EnumChildWindows(window, visit, 0)
     output.write_text(json.dumps(controls, indent=2) + '\n', encoding='utf-8')
+    return controls
 
 
 def filename_edit(dialog):
