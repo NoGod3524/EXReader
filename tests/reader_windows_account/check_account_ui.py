@@ -691,6 +691,9 @@ def main():
         repaired_title = sql('device-d', 'SELECT title FROM reader_books WHERE book_key=?',
                              ('epub:' + hashes['Account Epub.epub'],))[0][0]
         assert repaired_title == 'Epub Retitled Remotely', repaired_title
+        # The held writer lock can also refuse the automatic repair. The
+        # current native Refresh command explicitly retries it after release.
+        send(U.GetDlgItem(D.window, REFRESH), BM_CLICK)
         D.wait(lambda: len(sql('device-d', 'SELECT sdk_book_id FROM reader_local_books')) == 5, timeout=120)
         deadline = time.monotonic() + 120
         while not D.has_row(repaired_title):
