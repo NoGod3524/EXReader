@@ -101,8 +101,15 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          query session
-          "source_sha=$env:GITHUB_SHA" | Tee-Object identity.txt
+          # query.exe reports exit 1 on this runner even when it lists the sessions,
+          # so keep native propagation on for the rest of the step but read its status by hand.
+          $PSNativeCommandUseErrorActionPreference = $false
+          $sessions = & query.exe session 2>&1
+          $sessionExit = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          $sessions | Out-Host
+          "query_session_exit=$sessionExit" | Tee-Object identity.txt
+          "source_sha=$env:GITHUB_SHA" | Tee-Object identity.txt -Append
           "run=$env:GITHUB_RUN_ID/$env:GITHUB_RUN_ATTEMPT" | Tee-Object identity.txt -Append
           exit 0
       - name: Enter compiler environment
@@ -152,4 +159,5 @@ jobs:
             f09-keyboard.txt
             f09-keyboard/
           if-no-files-found: error
+
 
