@@ -1,0 +1,44 @@
+{
+  "run": 43889788329,
+  "source_sha": "443fbcd7879aeec6bbf05c2961487f25ab909c30",
+  "evidence_ok": true,
+  "conclusion": "success",
+  "acceptance_ok": true,
+  "artifact_digests_verified": true,
+  "artifacts": [
+    {
+      "id": 14236897137,
+      "name": "reader-windows-account-43889788329-1",
+      "size_in_bytes": 45438227,
+      "digest": "sha256:defa1df1299455a06d8b09082fd435b953086ebac7145c5dae288cdb2519c786",
+      "expires_at": "2027-02-14T14:49:19Z"
+    },
+    {
+      "id": 14235639805,
+      "name": "reader-windows-account-summary-43889788329-1",
+      "size_in_bytes": 793,
+      "digest": "sha256:f5cdcffa65f11f60de26642d9deb68199f3f3ae47fd71a1e610145a07b93d7fd",
+      "expires_at": "2027-02-14T14:49:19Z"
+    }
+  ],
+  "files": {
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-a11y/a11y-ui.json": "e5fcbc34f94bd5e7b4f27177fed931d1e0083fbf077305e535f94570c43c0463",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-a11y/control-inventory.json": "65eefbbd68162e7c2cac8080650abac46dff6ec9679372668b587568c6e0f1a5",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-a11y/tab-controls.json": "65eefbbd68162e7c2cac8080650abac46dff6ec9679372668b587568c6e0f1a5",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-logs/a11y-ui.log": "c47340b77736bc5422fd1bc73757c600c6df4e0d7d72a68a9749339fd283d523",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-logs/source-binding.txt": "ccb12dd85029809111fde2011fa4050441d185b9d731bf4a2f317e8131bf04f5",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-metadata-ui/metadata-ui.json": "d932dd00d5d3385e08c3f08e9395709f17977cccc805ecb1e25136b368c7949c",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-product10/product-result.json": "996155eee3d93f6fe157bbc13a2954e804cdc1d2129df191f975e21dafb3fdba",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-shelf-ui/shelf-result.json": "028674d589f5d14b44561aa73999580d4471f809b38a57778b01e18da4682f23",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-ui/account-ui.json": "4982162cbb56ae5ee92b101e6cc33058709ad7d2b8115e13c2f3af5794af5e24",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-ui158/A/01-epub-page1.png": "217c7acc2bc2efdc610e18c0579ed7f468fc8ec87c1fa890050e08e811e1d500",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-ui158/A/02-resized.png": "d8b3b97d48dd92a9c57c8a43eb5e95b7b928beb04659df10992a0594f168e170",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-ui158/summary.json": "7624876428b3522492aada19518d0c2fc89346fa74be8e3a3e1a0a1395d648de",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-ui158/wp13-windows-evidence.json": "e2f7d19eb89ba57af01da94c67a85765c621b3972ab59542fa45745cdb26bc90",
+    "evidence/ledger-f10-gaps-20261116/43889788329/account/account-worker5/worker-result.json": "0e915cad000f7fed5214700e653f89cb7942d2456cc52309717b2e0609787212",
+    "evidence/ledger-f10-gaps-20261116/43889788329/artifacts.json": "5f53c6b584cf005eeb9f58907c9d66b5c14514b7f6490d038d074713a93e8a71",
+    "evidence/ledger-f10-gaps-20261116/43889788329/jobs.json": "042f7b89b50fe4755a9b65a14251fd6bea862641f6b898b78f8024dd33078d29",
+    "evidence/ledger-f10-gaps-20261116/43889788329/run.json": "80242be9f9d3086bac9031ba59c2f360bdf3ead1520f991892f680c8a5a9bfa5",
+    "evidence/ledger-f10-gaps-20261116/43889788329/summary/verified.json": "6c1e00f4b2b9a4eec783ac679337eca2ecf656cafbd5192c66ac48784b6a48dd"
+  }
+}
