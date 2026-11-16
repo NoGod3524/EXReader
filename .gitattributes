@@ -26,5 +26,7 @@ evidence/dfinal-c-20261114/** -text -whitespace
 # Preserve the source-bound F08/F09 artifact bytes for hash verification.
 evidence/ledger-f08-f09-sol-20261116/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 
+# Preserve F10 original artifact bytes for audit hash replay.
+evidence/ledger-f10-fable-20261116/** -text -whitespace
 # Empty final TSV fields are part of the original keyboard observation data.
 evidence/ledger-f08-f09-sol-20261116/**/keys.tsv whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -1,12 +1,14 @@
 name: Ledger F10 verify (Win32 account host on this source)
 on:
   push:
-    branches: [codex/ledger-f8910-verify]
+    branches: [codex/ledger-f8910-verify, codex/ledger-f10-fable]
     paths:
       - 'apps/reader/**'
       - 'extras/**'
       - 'examples/reader.c'
+      - 'examples/windows/**'
       - 'tests/reader_windows_account/**'
+      - 'tests/reader_catalog/check_windows_product.py'
       - 'tests/windows_host/**'
       - '.github/workflows/ledger-f8910-winaccount.yml'
   workflow_dispatch:
@@ -97,11 +99,14 @@ jobs:
           test -f build/account-capture/reading-capture-link.map
       - name: Build the actual Win32 host with account integration from examples/reader.c
         run: |
-          cmake -S apps/reader/windows-account -B build/account-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" 2>&1 | tee build/account-logs/host-configure.log
+          # The UI suites below replay --drive scripts, which exist only in a
+          # test-driver build; the product default stays OFF.
+          cmake -S apps/reader/windows-account -B build/account-host -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_READER_TEST_DRIVERS=ON -DEXR_SDK="$WS/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" 2>&1 | tee build/account-logs/host-configure.log
           cmake --build build/account-host --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
           test -f build/account-host/EXReaderProduct.exe
           test -f build/account-host/EXReaderShelfReview.exe
           test -f build/account-host/windows-host.map
+          grep -F 'EXR_READER_TEST_DRIVERS:BOOL=ON' build/account-host/CMakeCache.txt | tee build/account-logs/host-test-drivers.txt
       - name: Package the lightweight static product and generate fixtures
         run: |
           python3 tools/build_windows_host.py --sdk build/reading-library/stage --binary build/account-host/EXReaderProduct.exe --output build/account-package --static-reading

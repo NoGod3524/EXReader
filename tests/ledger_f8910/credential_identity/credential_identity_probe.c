@@ -2,8 +2,11 @@
 /* F10 Windows credential identity probe against the installed
    EXReaderCredentials package (the module windows_accounts.inc uses).
 
-   unavailable   run inside a network logon session (WinRM as the probe
-                 account). Credential Manager has no credential set there,
+   network-unavailable
+                 impersonate a LOGON32_LOGON_NETWORK token of EXR_F10_USER
+                 and run unavailable checks (no WinRM or child process).
+   unavailable   run with an effective network logon token.
+                 Credential Manager has no credential set there,
                  so put/get/delete must report EXR_CRED_UNAVAILABLE, and the
                  raw platform error must be ERROR_NO_SUCH_LOGON_SESSION.
    isolation     run as the runner account with EXR_F10_USER and
@@ -94,7 +97,7 @@ static exr_credentials_status get_status(exr_credentials_store *store, const cha
 static int run_unavailable(void) {
   char sid[200];
   ULONG type = effective_logon(sid);
-  check("process_runs_in_network_logon_session", type == Network, "LogonType=%lu (3=Network) user=%s",
+  check("effective_token_is_network_logon", type == Network, "LogonType=%lu (3=Network) user=%s",
         (unsigned long)type, sid);
   char raw[] = "probe";
   CREDENTIALW probe;
@@ -199,10 +202,31 @@ static int run_isolation(void) {
   return finish("isolation");
 }
 
+/* Run the checks with a real network-logon token on this thread. Hosted
+   runners cannot assign a primary token; impersonation needs no child process. */
+static int run_network_unavailable(void) {
+  wchar_t user[128], password[256];
+  HANDLE token = NULL;
+  if (!GetEnvironmentVariableW(L"EXR_F10_USER", user, 128) ||
+      !GetEnvironmentVariableW(L"EXR_F10_PASSWORD", password, 256)) return 2;
+  BOOL logged = LogonUserW(user, L".", password, LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT, &token);
+  DWORD error = logged ? 0 : GetLastError();
+  SecureZeroMemory(password, sizeof password);
+  check("network_logon", logged, "LogonUserW error=%lu", (unsigned long)error);
+  if (!logged) return finish("unavailable");
+  BOOL impersonated = ImpersonateLoggedOnUser(token);
+  check("network_token_impersonated", impersonated, "ImpersonateLoggedOnUser=%d", (int)impersonated);
+  int code = impersonated ? run_unavailable() : finish("unavailable");
+  if (impersonated && !RevertToSelf()) code = 1;
+  CloseHandle(token);
+  return code;
+}
+
 int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   if (argc == 2 && !strcmp(argv[1], "unavailable")) return run_unavailable();
   if (argc == 2 && !strcmp(argv[1], "isolation")) return run_isolation();
-  fputs("usage: credential-identity-probe unavailable|isolation\n", stderr);
+  if (argc == 2 && !strcmp(argv[1], "network-unavailable")) return run_network_unavailable();
+  fputs("usage: credential-identity-probe unavailable|isolation|network-unavailable\n", stderr);
   return 2;
 }
