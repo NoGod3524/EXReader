@@ -107,13 +107,20 @@ jobs:
             --attempt "$GITHUB_RUN_ATTEMPT"
       - name: Boundary fixtures (separate, never counted as real)
         if: always()
-        continue-on-error: true
         shell: bash
         run: |
-          ${{ matrix.python }} tests/reader_real_corpus/make_boundary.py \
-            --consumer "${{ matrix.consumer }}" \
-            --font "${{ matrix.font }}" \
-            --out build/reader-boundary.json
+          set -euo pipefail
+          # Boundary fixtures are diagnostics, not acceptance input: run them after
+          # the real batch and record the outcome instead of swallowing a failure.
+          if ! ${{ matrix.python }} tests/reader_real_corpus/make_boundary.py \
+              --consumer "${{ matrix.consumer }}" \
+              --font "${{ matrix.font }}" \
+              --out build/reader-boundary.json; then
+            echo "boundary_status=failed" >> "$GITHUB_ENV"
+            echo "::warning title=Boundary fixtures::synthetic boundary measurement failed (kept out of the real batch)"
+            exit 0
+          fi
+          echo "boundary_status=passed" >> "$GITHUB_ENV"
       - name: Preserve inputs, outputs and per-operation evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -142,12 +149,18 @@ jobs:
           pattern: reader-real-corpus-*
           path: build/artifacts
       - name: Strict cross-platform aggregate
+        shell: bash
         run: |
-          set -eu
+          set -euo pipefail
           win=$(find build/artifacts -path '*windows-latest*/summary.json' -print -quit)
           linux=$(find build/artifacts -path '*ubuntu-22.04*/summary.json' -print -quit)
-          test -n "$win"
-          test -n "$linux"
+          # A missing summary means the platform never uploaded; say which one and
+          # where it was looked for instead of failing on a bare test -n.
+          if [[ -z "$win" || -z "$linux" ]]; then
+            printf 'expected=both platform summaries; actual=windows:%s linux:%s; candidates=%s\n' \
+              "${win:-<empty>}" "${linux:-<empty>}" "build/artifacts/*/{windows-latest,ubuntu-22.04}/summary.json" >&2
+            exit 1
+          fi
           python3 tests/reader_real_corpus/run_acceptance.py aggregate --summaries "$win" "$linux" --out build/aggregate.json
       - uses: actions/upload-artifact@v4
         if: always()
