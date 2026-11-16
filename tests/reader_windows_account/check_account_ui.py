@@ -936,6 +936,7 @@ def main():
             return int(found.group(1))
         assert counter('并发版本') == 1 and counter('缺祖先') == 1 and counter('墓碑') == 1, detail
         assert counter('待依赖') == 0, detail
+        assert counter('等待原件') == 0, 'a tombstone must not request another original: ' + detail
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (txt_key,)) == \
             [(txt_title, 0)], 'a concurrent metadata head must not be projected'
         assert sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (epub_key,)) == [(epub_title,)]

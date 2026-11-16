@@ -589,6 +589,19 @@ static int acct_cloud_visit(void *context, const reader_catalog_row *row) {
 }
 static exr_status acct_import_one(host_job *job, const acct_book *book) {
   acct_owner *o = &acct.owner;
+  /* Retained catalog metadata is not permission to download a deleted or
+     unresolved book. Consult history again before importing its original. */
+  reader_revisions *store = NULL; reader_revision_error revision_error = {0};
+  reader_revision_selection selection = {0}; char *wire = NULL; size_t wire_bytes = 0;
+  char *product_path = host_utf8(g.product_path);
+  reader_revision_status selected = product_path ? reader_revisions_open(product_path,&store,&revision_error) : READER_REV_ARGUMENT;
+  free(product_path);
+  if(selected == READER_REV_OK)
+    selected = reader_revision_selected(store,"book",book->key,&wire,&wire_bytes,NULL,&selection,&revision_error);
+  reader_revision_bytes_free(wire);
+  if(store) reader_revisions_close(&store,&revision_error);
+  if(selected == READER_REV_UNSAFE || (selected == READER_REV_OK && selection.graph.deleted)) return EXR_OK;
+  if(selected != READER_REV_OK) { o->import_failed++; return EXR_OK; }
   const char *colon = strchr(book->key, ':');
   if (!colon || strlen(colon + 1) != 64 || (size_t)(colon - book->key) > 4) { o->import_failed++; return EXR_OK; }
   char hash[65]; snprintf(hash, sizeof(hash), "%s", colon + 1);
