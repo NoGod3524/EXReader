@@ -107,7 +107,7 @@ static int de_draw_item(const DRAWITEMSTRUCT *item);
 #endif
 
 enum {
-  IDC_DELETE_BUTTON = 104,
+  IDC_OPEN_BUTTON = 103, IDC_DELETE_BUTTON = 104,
   IDC_SHELF_LABEL = 118, IDC_BOOKS, IDC_NOTES_LABEL, IDC_NOTES, IDC_NOTE_EDIT,
   IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS, IDC_SHELF_SEARCH, IDC_SHELF_REFRESH,
   IDC_METADATA_BUTTON, IDC_METADATA_TITLE, IDC_METADATA_AUTHOR, IDC_METADATA_FAVORITE,
@@ -324,7 +324,7 @@ typedef struct { char *key,*sort_title;uint64_t ordinal; } host_shelf_cursor;
 #endif
 
 typedef struct {
-  HWND window, page, books, notes, note_edit, status, page_label, delete_button;
+  HWND window, page, books, notes, note_edit, status, page_label, open_button, delete_button;
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   HWND import_button; /* optional cloud-import context anchor */
 #endif
@@ -3769,6 +3769,7 @@ static void create_controls(HWND parent) {
   records.button=make_button(parent,IDC_RECORDS,L"阅读记录(&L)");
 #endif
 #ifndef EXR_READER_WINDOWS_SHELL
+  g.open_button = make_button(parent, IDC_OPEN_BUTTON, L"打开(&O)");
   g.delete_button = make_button(parent, IDC_DELETE_BUTTON, L"移除本机副本(&D)");
 #endif
   g.shelf_label = make_static(parent, IDC_SHELF_LABEL, L"书架");
@@ -3839,7 +3840,8 @@ static void layout_controls(void) {
   int sidebar = max(240,min(320,area.right / 3)), width = sidebar - 24;
   int notes_y = 110 + (area.bottom - 240) / 2;
   MoveWindow(g.shelf_label,12,10,width,20,TRUE);
-  MoveWindow(g.delete_button,12,34,width,26,TRUE);
+  MoveWindow(g.open_button,12,34,72,26,TRUE);
+  MoveWindow(g.delete_button,92,34,width-80,26,TRUE);
 #ifdef EXR_READER_PRODUCT_CATALOG
   MoveWindow(g.shelf_search_label,12,66,52,22,TRUE);
   MoveWindow(g.shelf_search,66,64,width-54,24,TRUE);
@@ -5308,6 +5310,8 @@ static void host_update_controls(void) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   EnableWindow(g.account_button,!g.closing && !g.metadata_running && !g.metadata_dialog);
 #endif
+  EnableWindow(g.open_button,!g.closing && !g.pending &&
+    (!g.job || g.job->kind==JOB_PRODUCT_SHELF) && g.shelf_count>0);
   EnableWindow(g.delete_button,!busy && !g.closing && g.shelf_count>0);
   /* A command that just disabled itself must not take keyboard focus with it. */
   host_a11y_focus_guard(focused);
@@ -5735,7 +5739,7 @@ static void host_command(int id) {
 #ifdef EXR_READER_WINDOWS_SHELL
   if(de_active() && !de_exit())return;
 #endif
-  if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT && id != IDC_DELETE_BUTTON
+  if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT && id != IDC_OPEN_BUTTON && id != IDC_DELETE_BUTTON
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
 #endif
@@ -5796,7 +5800,7 @@ static void host_command(int id) {
           L"移除本机副本",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)==IDYES) delete_selected_book();
       break;
     case HOST_CMD_IMPORT: import_path(NULL, 1); break;
-    case HOST_CMD_OPEN: open_selected_book(); break;
+    case IDC_OPEN_BUTTON: case HOST_CMD_OPEN: open_selected_book(); break;
   }
 }
 
