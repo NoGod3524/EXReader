@@ -1,7 +1,7 @@
 name: Ledger F08 F09 F10 verify (Linux GTK)
 on:
   push:
-    branches: [codex/ledger-f8910-verify]
+    branches: [codex/ledger-f8910-verify, codex/ledger-f08-f09-sol]
     paths:
       - 'examples/linux/**'
       - 'apps/reader/desktop/**'
@@ -10,6 +10,7 @@ on:
       - 'tests/reader_a11y_gtk/**'
       - 'tests/linux_host/**'
       - 'tests/ledger_f8910/**'
+      - 'tests/reader_perf_gtk/**'
       - '.github/workflows/ledger-f8910-linux.yml'
   workflow_dispatch:
 permissions:
@@ -168,6 +169,29 @@ jobs:
           ctest --test-dir build/account-desktop --output-on-failure --no-tests=error --timeout 180 -E gtk-startup-scavenge --output-junit "$PWD/build/account-logs/desktop-tests.xml"
           python3 -m py_compile tests/linux_host/check_account_ui.py
           python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.42.0 --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
+      - name: F08 fixed 2202-book shelf and GDK frame clock relative budgets
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          cmake -S tests/reader_perf_gtk -B build/f08-seed -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_SDK_VERSION=3.42.0
+          cmake --build build/f08-seed --parallel 4
+          xvfb-run -a -s '-screen 0 1440x900x24' dbus-run-session -- bash -euc '
+            openbox > build/account-logs/f08-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm" EXIT
+            sleep 1
+            python3 tests/reader_perf_gtk/sample.py --fixed-shelf --payload build/account-package/EXReader-Linux --seed build/f08-seed/seed_library --output build/f08-evidence
+          ' 2>&1 | tee build/account-logs/f08-shelf.log
+      - name: Preserve F08 samples before the remaining host audits
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-f08-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-evidence/
+            build/account-logs/f08-shelf.log
+            build/account-logs/source-binding.txt
+          if-no-files-found: error
       - name: F10 GTK startup scavenger and desktop CTest (verbose)
         if: ${{ !cancelled() && steps.host.outcome == 'success' }}
         run: |
@@ -213,6 +237,16 @@ jobs:
               print('%-5s %-12s %s' % ('PASS' if entry['pass'] else 'FAIL', entry['severity'], entry['name']))
           PY
           python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json --require-accepted
+      - name: Preserve F09 accessibility evidence before the account audit
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-f09-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-evidence/
+            build/a11y-logs/
+            build/account-logs/source-binding.txt
+          if-no-files-found: error
       - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
         if: ${{ !cancelled() && steps.host.outcome == 'success' }}
         run: |
@@ -230,6 +264,7 @@ jobs:
           path: |
             build/account-logs/
             build/a11y-evidence/
+            build/f08-evidence/
             build/a11y-logs/
             build/account-ui/
             build/account-desktop/Testing/Temporary/LastTest.log

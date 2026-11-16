@@ -184,13 +184,15 @@ def main():
             current = focus_snapshot()
         return current
 
-    def traverse(count):
+    def traverse(count, complete_cycle=False):
         sequence = []
         previous = ''
         for _ in range(count):
             host.key('Tab')
             current = wait_focus_change(previous)
             sequence.append(current)
+            if complete_cycle and len(sequence) > 1 and current['path'] == sequence[0]['path']:
+                break
             previous = current['path']
         return sequence
 
@@ -783,7 +785,7 @@ def main():
         dump_tree('06-reader')
         shot('06-reader')
 
-        sequence = traverse(14)
+        sequence = traverse(64, complete_cycle=True)
         reached = [entry['name'] for entry in sequence]
         audit.check('reader_tab_order_reaches_panels',
                     contract.NAMES['page_text'] in reached
@@ -791,7 +793,7 @@ def main():
                     expected='Tab reaches the selectable page text and the comment entry',
                     actual={'sequence': reached}, element='window/%s' % contract.WINDOW_TITLE,
                     severity='advisory',
-                    reproduction=['open a book', 'press Tab 14 times and read the focus'],
+                    reproduction=['open a book', 'press Tab through a complete focus cycle (up to 64 stops)'],
                     fix='none when the panels are reachable')
 
     def phase_annotations():
@@ -844,10 +846,7 @@ def main():
                 break
             time.sleep(0.2)
         events = recorder.since(mark)
-        name_events = [event for event in events
-                       if event['type'].startswith('object:property-change')
-                       and event['detail1'] == 'accessible-name'
-                       and event.get('source_name') == after_text]
+        name_events = [event for event in events if contract.status_name_event(event, after_text)]
         same_element = (before is not None and after is not None
                         and a11y.path_of(after) == a11y.path_of(before))
         evaluated = before is not None and bool(recorder.items)

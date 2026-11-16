@@ -13,6 +13,7 @@ import json
 import math
 import os
 import shutil
+import statistics
 import sys
 from pathlib import Path
 
@@ -26,8 +27,8 @@ LIMITATIONS = [
     'receiver-owner files are unchanged by this package.',
     'Latency starts just before xdotool starts and ends at the host observation write; the '
     'injection command overhead is measured separately and is included in every sample.',
-    'The frozen host exposes a monotonic painted_generation counter, not per-frame frame-clock '
-    'timestamps, so no frame interval, frame-time percentile or dropped-frame count is claimed.',
+    'Opt-in GDK update/after-paint traces measure frame phases and clock intervals; '
+    'runner 无物理显示器 vsync，以 GDK frame clock 时间戳替代. No dropped-frame count is claimed.',
     'Screenshots and AT-SPI are not used for any latency; screenshots are not collected at all.',
     'The X server, window manager, screen and window size are fixed for this run only; absolute '
     'values are not comparable to other runners, other GTK themes or other machines.',
@@ -57,6 +58,78 @@ def nearest_rank(values, fraction):
     ordered = sorted(values)
     rank = max(1, math.ceil(fraction * len(ordered)))
     return ordered[rank - 1]
+
+
+def frame_metrics(rows):
+    """Update-to-after-paint duration and consecutive GDK clock intervals."""
+    if len(rows) < 2:
+        raise ValueError('missing per-frame GDK samples')
+    durations, intervals = [], []
+    for index, row in enumerate(rows):
+        if any(type(row.get(key)) is not int for key in
+               ('frame', 'frame_time_us', 'update_us', 'after_paint_us')):
+            raise ValueError('invalid frame record')
+        duration = row['after_paint_us'] - row['update_us']
+        if duration < 0:
+            raise ValueError('negative frame duration')
+        durations.append(duration / 1000)
+        if index:
+            previous = rows[index - 1]
+            interval = row['frame_time_us'] - previous['frame_time_us']
+            if row['frame'] != previous['frame'] + 1 or interval <= 0:
+                raise ValueError('missing or non-monotonic GDK frame')
+            intervals.append(interval / 1000)
+    result = {'count': len(rows)}
+    for name, values in [('frame', durations), ('interval', intervals)]:
+        for label, fraction in [('p50', .5), ('p95', .95)]:
+            result[name + '_' + label + '_ms'] = nearest_rank(values, fraction)
+    return result
+
+
+def summarize_fixed_shelf(output):
+    document = json.loads((output / 'fixed-shelf.json').read_text())
+    launches = document['launches']
+    limits = {'load_ms': 2.5, 'first_interactive_ms': 2.5, 'scroll_p50_ms': 2.5,
+              'scroll_p95_ms': 2.5, 'rss_kb': 1.25, 'frame_p50_ms': 2.5,
+              'frame_p95_ms': 2.5, 'interval_p50_ms': 2.5, 'interval_p95_ms': 2.5}
+    errors = []
+    for row in launches:
+        try:
+            frames = [json.loads(line) for line in (output / row['trace']).read_text().splitlines()]
+            row.update(frame_metrics(frames))
+            values = row['scroll_samples_ms']
+            if (row['exit'] != 0 or len(values) != 128 or not row['scrolled']
+                    or any(not math.isfinite(x) or x <= 0 for x in values)):
+                raise ValueError('incomplete shelf scroll workload')
+            row['scroll_p50_ms'] = nearest_rank(values, .5)
+            row['scroll_p95_ms'] = nearest_rank(values, .95)
+            if any(not math.isfinite(row[k]) or row[k] <= 0 for k in limits):
+                raise ValueError('missing or invalid shelf metric')
+        except (ValueError, KeyError, OSError) as error:
+            errors.append(str(error))
+    groups = {label: [row for row in launches if row['cohort'] == label]
+              for label in ('baseline', 'candidate')}
+    geometries = {(row.get('geometry', {}).get('WIDTH'), row.get('geometry', {}).get('HEIGHT'))
+                  for row in launches}
+    if len(geometries) != 1 or any(not w or not h for w, h in geometries):
+        errors.append('shelf window geometry changed or was not observed')
+    if document['books'] != 2202 or any(len(rows) != 3 for rows in groups.values()):
+        errors.append('expected fixed 2202 books and three AB/BA process pairs')
+    ratios = {}
+    if not errors:
+        for key, limit in limits.items():
+            ratios[key] = statistics.median(row[key] for row in groups['candidate']) / statistics.median(
+                row[key] for row in groups['baseline'])
+            if ratios[key] >= limit:
+                errors.append(key + ' relative budget exceeded')
+    result = dict(document, launches=launches, accepted=not errors, errors=errors,
+                  comparison='same-binary AB/BA repeatability on one runner; not a historical regression comparison',
+                  limits=limits, ratios=ratios,
+                  grants={'frame_clock_interval': not errors, 'frame_time_percentiles': not errors},
+                  vsync='runner 无物理显示器 vsync，以 GDK frame clock 时间戳替代')
+    (output / 'fixed-shelf-summary.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return not errors
 
 
 def aggregate(rows):
@@ -288,6 +361,13 @@ def main():
     paint = {'total': sum(row.get('paint_count') or 0 for row in launches),
              'per_launch': {row['launch']: row.get('paint_count') for row in launches},
              'offsets_ms': {row['launch']: row.get('paint_offsets_ms') for row in launches}}
+    frames = {}
+    for row in launches:
+        try:
+            frames[row['launch']] = frame_metrics(row.get('frames', []))
+        except ValueError:
+            pass
+    frame_available = bool(launches) and len(frames) == len(launches)
 
     accepted = all(row['status'] == 'passed' for row in checks)
     covered = lambda name, expected_value: (coverage.get(name, {}).get('ok', 0) >= expected_value
@@ -308,8 +388,8 @@ def main():
             'import_resize_response', expected['import_resize_response']),
         'process_rss_high_water': rss_ok,
         'package_size': package_ok,
-        'frame_clock_interval': False,
-        'frame_time_percentiles': False,
+        'frame_clock_interval': frame_available,
+        'frame_time_percentiles': frame_available,
         'dropped_frame_accounting': False,
         'hard_cpu_or_memory_budget': False,
         'real_hardware_fluency': False,
@@ -326,7 +406,7 @@ def main():
                      'kinds': plan['kinds'], 'plan': plan['metrics']},
         'environment': environment, 'corpus': corpus, 'package': {
             'payload': payload, 'tarball': package},
-        'metrics': metrics, 'rss': rss, 'paint': paint, 'calibration': calibration,
+        'metrics': metrics, 'rss': rss, 'paint': paint, 'frames': frames, 'calibration': calibration,
         'guards': guards,
     }
     report = {
