@@ -1,0 +1,56 @@
+{
+  "run": 43868930952,
+  "source_sha": "ff9c470b9d3325f5ba99dc728549f43e6bf2038c",
+  "evidence_ok": true,
+  "conclusion": "failure",
+  "acceptance_ok": false,
+  "artifact_digests_verified": true,
+  "artifacts": [
+    {
+      "id": 14228390048,
+      "name": "reader-windows-account-summary-43868930952-1",
+      "size_in_bytes": 639,
+      "digest": "sha256:9c207704f1f65a7e3d2fef1c5734d923f02416f930b17060f4311cbd696885fb",
+      "expires_at": "2027-02-14T12:41:56Z"
+    },
+    {
+      "id": 14227576697,
+      "name": "reader-windows-account-43868930952-1",
+      "size_in_bytes": 44700844,
+      "digest": "sha256:7b7fc9e1fe358ffa4ceafa84027ebc7dd92117d415b2874cdf45064ef964401d",
+      "expires_at": "2027-02-14T12:41:56Z"
+    }
+  ],
+  "files": {
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-a11y/a11y-ui.json": "1c4db3fdeb25fc294d60c614f9c8d9e0a0aaecb5df16e7400dce07fce447934a",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-a11y/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-a11y/import-controls.json": "2f16f251a54d61ce3f3a2256439a1a52f7f201fc03fb456f1789dae3ede74af5",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-logs/a11y-ui.log": "4a50abf121cf6307899fe8c1d378899c82635f247b9c1b12a0a9fd60aa3b0a24",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-logs/source-binding.txt": "253c1f6a0ea4387743b5dc79620e390e23ee888db863a3b7646b68792d24b85b",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-metadata-ui/metadata-ui.json": "ab8ec1d1f5b41f39de3612fd49908dcc74455ca02e4f8318aa3920b20bd27d49",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-metadata-ui/profile/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-metadata-ui/profile/import-controls.json": "1c6a10c5dd59aa0340b8ce57bb5814ef993c174f6d9a5d95d4299f506aff2200",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-product10/product-result.json": "5d262f7c8487a78ed2129b2f03621f5feec281de92d8e5a17842c2b397771fb9",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-shelf-ui/profile/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-shelf-ui/profile/import-controls.json": "e1c4540fa8db2a46dfa13e8f4cebabf0c4e02dd005ec88549e8623385b7d55fb",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/account-ui.json": "34a4677e4e4c5a0042ddcc6f3e7d9d31cae33dd4a8e1ad1a66fa92ae9a5a0052",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-a/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-a/import-controls.json": "2f16f251a54d61ce3f3a2256439a1a52f7f201fc03fb456f1789dae3ede74af5",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-b/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-c/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-d/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-e/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-f/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-reading-a/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-reading-a/import-controls.json": "2f16f251a54d61ce3f3a2256439a1a52f7f201fc03fb456f1789dae3ede74af5",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui/device-reading-b/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-ui158/summary.json": "7624876428b3522492aada19518d0c2fc89346fa74be8e3a3e1a0a1395d648de",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-worker5/profile/control-inventory.json": "eadfee3479c336ca82bca143a49a300889f560d6772a3d564aa63e27c650d283",
+    "evidence/ledger-f10-ui32-20261116/43868930952/account/account-worker5/profile/import-controls.json": "24ba3579d73905a337cb5e14b4ad61fd25059fc13679ee8e924b592970c493be",
+    "evidence/ledger-f10-ui32-20261116/43868930952/artifacts.json": "a31028d8462ea698c26bfe4d437ed211fef278010d35c7b37f38804132517c77",
+    "evidence/ledger-f10-ui32-20261116/43868930952/failures.txt": "2a82d5c677ad776e9f2cc39e3b9c34083a8925a9fb9cebbf60713f084a44911c",
+    "evidence/ledger-f10-ui32-20261116/43868930952/jobs.json": "068d211c3487383b9e6319adc00fe8b201a193ca1dd183838b0cf9a1b1c94f07",
+    "evidence/ledger-f10-ui32-20261116/43868930952/run.json": "7dba29568d0c4e9eaf59c97ee1b5640f7a1cdb013fbd0599d68e09424bf0d698",
+    "evidence/ledger-f10-ui32-20261116/43868930952/summary/verified.json": "89d67876110386f234d5ac088325afa9cb2e743be6649314e8da948a34b29c28"
+  }
+}

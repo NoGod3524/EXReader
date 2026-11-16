@@ -456,9 +456,8 @@ def main():
 
     def import_paths(device, paths):
         for path in paths:
-            set_text(device.control('path'), str(path))
             seen = [device.status()]
-            send(device.control('import'), BM_CLICK, timeout=5000)
+            device.begin_import(path)
             end = time.monotonic() + 180
             while time.monotonic() < end:
                 status = device.status()
@@ -692,6 +691,9 @@ def main():
         repaired_title = sql('device-d', 'SELECT title FROM reader_books WHERE book_key=?',
                              ('epub:' + hashes['Account Epub.epub'],))[0][0]
         assert repaired_title == 'Epub Retitled Remotely', repaired_title
+        # The held writer lock can also refuse the automatic repair. The
+        # current native Refresh command explicitly retries it after release.
+        send(U.GetDlgItem(D.window, REFRESH), BM_CLICK)
         D.wait(lambda: len(sql('device-d', 'SELECT sdk_book_id FROM reader_local_books')) == 5, timeout=120)
         deadline = time.monotonic() + 120
         while not D.has_row(repaired_title):
@@ -878,7 +880,10 @@ def main():
         RB = new_device('device-reading-b', existing=True)
         dialog = RB.open_account()
         RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
-        RB.run_sync(dialog);RB.close_account(dialog)
+        RB.press(dialog, SYNC)
+        RB.wait_note(dialog, '接收尚未完成')
+        assert '等待原件 1' in RB.detail(dialog), RB.detail(dialog)
+        RB.close_account(dialog)
         RB.wait(lambda: sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (planted_key,)),
                 timeout=120)
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (planted_key,)) == \
@@ -920,7 +925,8 @@ def main():
         page_label = U.GetDlgItem(RB.window, 124)
         page_before = M.text(page_label)
         dialog = RB.open_account()
-        RB.run_sync(dialog)
+        RB.press(dialog, SYNC)
+        RB.wait_note(dialog, '接收尚未完成')
         detail = RB.detail(dialog)
         print(json.dumps({'planted_receive': detail}, ensure_ascii=False), flush=True)
 
@@ -928,7 +934,8 @@ def main():
             found = re.search(label + r' (\d+)', detail)
             assert found, (label, detail)
             return int(found.group(1))
-        assert counter('并发版本') == 1 and counter('待依赖') == 1 and counter('墓碑') == 1, detail
+        assert counter('并发版本') == 1 and counter('缺祖先') == 1 and counter('墓碑') == 1, detail
+        assert counter('待依赖') == 0, detail
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (txt_key,)) == \
             [(txt_title, 0)], 'a concurrent metadata head must not be projected'
         assert sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (epub_key,)) == [(epub_title,)]
@@ -978,6 +985,12 @@ def main():
         (output / 'account-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print(json.dumps({'accepted': True, 'count': len(checks)}), flush=True)
     finally:
+        if not (output / 'account-ui.json').exists():
+            report = {'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+                      'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'checks': checks, 'count': len(checks), 'error': str(sys.exc_info()[1]),
+                      'complete_product': False}
+            (output / 'account-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         for device in devices:
             if device.process.poll() is None:
                 if sys.exc_info()[0] is not None:
