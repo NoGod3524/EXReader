@@ -1,6 +1,57 @@
 /* SPDX-License-Identifier: MIT */
 /* Shelf metadata: shelf.json roundtrip, failed-write rollback, series order,
    tag filters, idle rule and reading streak, all through production code. */
+static void shelfmeta_expect_name(HWND control,const wchar_t *expected) {
+  HMODULE module=LoadLibraryW(L"oleacc.dll");assert(module);
+  typedef HRESULT (WINAPI *accessible_from_window)(HWND,DWORD,REFIID,void **);
+  accessible_from_window load=(accessible_from_window)(void (*)(void))GetProcAddress(module,"AccessibleObjectFromWindow");assert(load);
+  IAccessible *object=NULL;BSTR name=NULL;VARIANT child;VariantInit(&child);child.vt=VT_I4;child.lVal=CHILDID_SELF;
+  assert(SUCCEEDED(load(control,OBJID_CLIENT,&IID_IAccessible,(void **)&object)) && object);
+  assert(SUCCEEDED(object->lpVtbl->get_accName(object,child,&name)) && name && !wcscmp(name,expected));
+  SysFreeString(name);object->lpVtbl->Release(object);FreeLibrary(module);
+}
+static void shelfmeta_tab(int shift) {
+  BYTE keys[256];GetKeyboardState(keys);keys[VK_SHIFT]=shift ? 0x80:0;SetKeyboardState(keys);
+  SendMessageW(sm_view,WM_KEYDOWN,VK_TAB,0);
+  keys[VK_SHIFT]=0;SetKeyboardState(keys);
+}
+/* F09: the custom-drawn shelf exposed one Tab stop and no keyboard activation. */
+static void shelfmeta_keyboard(void) {
+  WNDCLASSW type={0};type.lpfnWndProc=sm_view_procedure;type.hInstance=GetModuleHandleW(NULL);
+  type.lpszClassName=L"EXReaderShelfMetaKeyboardTest";RegisterClassW(&type);
+  HWND host=CreateWindowExW(WS_EX_NOACTIVATE,L"STATIC",L"",WS_POPUP|WS_VISIBLE,-32000,-32000,900,700,NULL,NULL,NULL,NULL);assert(host);
+  sm_view=CreateWindowExW(0,type.lpszClassName,L"系列、标签与阅读统计",WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_VSCROLL,0,0,900,700,host,NULL,NULL,NULL);
+  assert(sm_view);sm_mode=0;sm_list=0;sm_filter=-1;sm_scroll=0;sm_key_kind=sm_key_arg=0;
+  RedrawWindow(sm_view,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
+  int stops=sm_hit_count;assert(stops>=6+6+2);
+  assert(SendMessageW(sm_view,WM_GETDLGCODE,VK_TAB,0)&DLGC_WANTTAB);
+  int kinds[512],args[512],books=0,toolbar=0,tags=0;
+  for(int i=0;i<stops;i++) {
+    shelfmeta_tab(0);int at=sm_key_index();assert(at>=0);kinds[i]=sm_hits[at].kind;args[i]=sm_hits[at].arg;
+    for(int j=0;j<i;j++) assert(kinds[j]!=kinds[i] || args[j]!=args[i]);
+    books+=kinds[i]==SM_HIT_BOOK;tags+=kinds[i]==SM_HIT_TAG;toolbar+=kinds[i]>=SM_HIT_GRID;
+  }
+  assert(books==6 && toolbar==6 && tags>=2 && books+toolbar+tags==stops);
+  shelfmeta_tab(0);assert(sm_key_kind==kinds[0] && sm_key_arg==args[0]); /* wraps */
+  shelfmeta_tab(1);assert(sm_key_kind==kinds[stops-1] && sm_key_arg==args[stops-1]); /* Shift+Tab */
+  while(!(sm_key_kind==SM_HIT_TAG && sm_key_arg==-2)) shelfmeta_tab(0);
+  shelfmeta_expect_name(sm_view,L"标签筛选：未分类");
+  SendMessageW(sm_view,WM_KEYDOWN,VK_RETURN,0);assert(sm_filter==-2);
+  shelfmeta_expect_name(sm_view,L"标签筛选：未分类（已选）");
+  while(!(sm_key_kind==SM_HIT_TAG && sm_key_arg==-1)) shelfmeta_tab(0);
+  SendMessageW(sm_view,WM_KEYDOWN,VK_SPACE,0);assert(sm_filter==-1);
+  while(sm_key_kind!=SM_HIT_LIST) shelfmeta_tab(0);
+  shelfmeta_expect_name(sm_view,L"列表视图");
+  SendMessageW(sm_view,WM_KEYDOWN,VK_RETURN,0);assert(sm_list==1);
+  RedrawWindow(sm_view,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);assert(sm_key_index()>=0 && sm_key_kind==SM_HIT_LIST);
+  while(sm_key_kind!=SM_HIT_BOOK) shelfmeta_tab(0);
+  wchar_t expected[320];sm_key_label(&sm_hits[sm_key_index()],expected,320);assert(!wcsncmp(expected,L"书籍：",3));
+  shelfmeta_expect_name(sm_view,expected);
+  while(sm_key_kind!=SM_HIT_GRID) shelfmeta_tab(0);
+  SendMessageW(sm_view,WM_KEYDOWN,VK_RETURN,0);assert(sm_list==0);
+  printf("SHELFMETA keyboard: %d stops (6 books, 6 toolbar, %d tag filters) in Tab order, wrap and Shift+Tab, Enter/Space activate filter/list/grid, IAccessible name follows focus PASS\n",stops,tags);
+  DestroyWindow(sm_view);sm_view=NULL;DestroyWindow(host);
+}
 static void test_shelfmeta(void) {
   wchar_t temp[HOST_PATH],path[HOST_PATH];GetTempPathW(HOST_PATH,temp);
   swprintf(path,HOST_PATH,L"%lsexreader-shelf-check-%lu.json",temp,(unsigned long)GetCurrentProcessId());
@@ -86,6 +137,7 @@ static void test_shelfmeta(void) {
   free(sm_entries);free(sm_days);sm_entries=items;sm_count=count;sm_days=days;sm_day_count=dc;
   assert(!sm_parse("{\"version\":2,\"books\":[]}",24));assert(!sm_parse("{broken",7));
   cv_text_free(&saved);cv_text_free(&again);
+  shelfmeta_keyboard();
   g.has_current=0;g.frame.valid=0;shelf_clear();exr_library_close(g.library);g.library=NULL;DeleteFileW(path);
   puts("SHELFMETA edits 6/6; series order 2x3; tag filters 4/4; rollback file-identical; idle 30 s cap; focus stop; streak 1/2/3/0; roundtrip byte-identical; version/malformed reject");
 }

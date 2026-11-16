@@ -48,6 +48,7 @@ static void sm_recent(void);
 typedef struct { RECT r; int kind,arg; } sm_hit;
 enum { SM_HIT_BOOK=1,SM_HIT_TAG,SM_HIT_GRID,SM_HIT_LIST,SM_HIT_STATS,SM_HIT_SHELF,SM_HIT_BACK,SM_HIT_SOURCES,SM_HIT_IMPORT };
 static sm_hit sm_hits[512]; static int sm_hit_count;
+static int sm_key_index(void);
 static char *sm_tags[256]; static int sm_tag_total;
 typedef struct { int book; HBITMAP bitmap; int w,h; char *path; } sm_cover_cache;
 static sm_cover_cache sm_covers[64]; static int sm_cover_count;
@@ -509,6 +510,11 @@ static void sm_paint(HWND window,HDC target) {
   SCROLLINFO scroll={sizeof(scroll),SIF_RANGE|SIF_PAGE|SIF_POS,0,max(0,sm_content_h-1),(UINT)page,pos,0};
   SetScrollInfo(window,SB_VERT,&scroll,TRUE);
   if(sm_scroll!=pos){sm_scroll=pos;InvalidateRect(window,NULL,FALSE);}
+  {int focus=GetFocus()==window ? sm_key_index():-1; /* keyboard focus ring (F09) */
+   if(focus>=0) {RECT ring=sm_hits[focus].r;InflateRect(&ring,shell_px(3,shell_dpi),shell_px(3,shell_dpi));
+     HPEN pen=CreatePen(PS_SOLID,max(2,shell_px(2,shell_dpi)),shell_colorref(shell_colors->accent));
+     HGDIOBJ old_pen=SelectObject(dc,pen),old_brush=SelectObject(dc,GetStockObject(NULL_BRUSH));
+     Rectangle(dc,ring.left,ring.top,ring.right,ring.bottom);SelectObject(dc,old_pen);SelectObject(dc,old_brush);DeleteObject(pen);}}
   BitBlt(target,0,0,client.right,client.bottom,dc,0,0,SRCCOPY);
   SelectObject(dc,old);DeleteObject(bitmap);DeleteDC(dc);
   DeleteObject(title);DeleteObject(ui);DeleteObject(small_font);DeleteObject(bold);DeleteObject(big);DeleteObject(sm_cover_font[0]);DeleteObject(sm_cover_font[1]);
@@ -737,6 +743,74 @@ static void sm_scroll_to(int position) {
   sm_scroll=max(0,min(range,position));
   SetScrollPos(sm_view,SB_VERT,sm_scroll,TRUE);InvalidateRect(sm_view,NULL,FALSE);
 }
+/* Keyboard model for the custom-drawn shelf (F09): every painted hit target is
+   a stop. Tab/Shift+Tab and the arrow keys move in visual order, Enter/Space
+   activate, the Apps key or Shift+F10 opens a book's menu. The view exposes
+   the focused item as its accessible name and draws a focus ring. Identity is
+   (kind,arg) so the stop survives repaints, scrolling and mode changes. */
+static int sm_key_kind,sm_key_arg;
+static int sm_key_index(void) {
+  for(int i=0;i<sm_hit_count;i++) if(sm_hits[i].kind==sm_key_kind && sm_hits[i].arg==sm_key_arg) return i;
+  return -1;
+}
+static int sm_key_order(int *order) {
+  int n=0;
+  for(int i=0;i<sm_hit_count;i++) order[n++]=i;
+  for(int i=1;i<n;i++) for(int j=i;j>0;j--) {
+    /* Group first (toolbar, tag filters, books): scrolling moves only books. */
+    const sm_hit *x=&sm_hits[order[j-1]],*y=&sm_hits[order[j]];
+    int group_a=x->kind>=SM_HIT_GRID ? 0:x->kind==SM_HIT_TAG ? 1:2,group_b=y->kind>=SM_HIT_GRID ? 0:y->kind==SM_HIT_TAG ? 1:2;
+    int row_a=x->r.top/shell_px(8,shell_dpi),row_b=y->r.top/shell_px(8,shell_dpi);
+    if(group_a<group_b || (group_a==group_b && (row_a<row_b || (row_a==row_b && x->r.left<=y->r.left)))) break;
+    int t=order[j-1];order[j-1]=order[j];order[j]=t;
+  }
+  return n;
+}
+static void sm_key_label(const sm_hit *h,wchar_t *out,size_t cap) {
+  static const wchar_t *fixed[]={L"",L"",L"",L"网格视图",L"列表视图",L"阅读统计",L"返回书架",L"返回阅读",L"书源",L"打开书籍"};
+  if(h->kind==SM_HIT_BOOK && h->arg>=0 && (size_t)h->arg<g.shelf_count) {
+    const char *title=sm_title((size_t)h->arg);wchar_t *w=host_wide(title,strlen(title));
+    swprintf(out,cap,L"书籍：%ls",w ? w:L"");free(w);
+  } else if(h->kind==SM_HIT_TAG) {
+    wchar_t *w=h->arg>=0 && h->arg<sm_tag_total ? host_wide(sm_tags[h->arg],strlen(sm_tags[h->arg])):NULL;
+    swprintf(out,cap,L"标签筛选：%ls%ls",h->arg==-1 ? L"全部":h->arg==-2 ? L"未分类":w ? w:L"",sm_filter==h->arg ? L"（已选）":L"");free(w);
+  } else swprintf(out,cap,L"%ls",h->kind>0 && h->kind<(int)(sizeof(fixed)/sizeof(*fixed)) ? fixed[h->kind]:L"");
+}
+static void sm_key_announce(void) {
+  int i=sm_key_index();wchar_t label[320];
+  if(i<0) swprintf(label,320,L"系列、标签与阅读统计");else sm_key_label(&sm_hits[i],label,320);
+  host_a11y_describe(sm_view,label,L"Tab 或方向键移动，Enter 激活，菜单键打开书籍菜单");
+  NotifyWinEvent(EVENT_OBJECT_NAMECHANGE,sm_view,OBJID_CLIENT,CHILDID_SELF);
+  if(GetFocus()==sm_view) NotifyWinEvent(EVENT_OBJECT_FOCUS,sm_view,OBJID_CLIENT,CHILDID_SELF);
+}
+static void sm_key_reveal(void) {
+  int i=sm_key_index();if(i<0) return;
+  RECT client,r=sm_hits[i].r;GetClientRect(sm_view,&client);
+  int top=r.top<shell_px(56,shell_dpi) && sm_hits[i].kind!=SM_HIT_BOOK && sm_hits[i].kind!=SM_HIT_TAG ? r.top:shell_px(104,shell_dpi);
+  if(sm_hits[i].kind==SM_HIT_BOOK || sm_hits[i].kind==SM_HIT_TAG) {
+    if(r.bottom>client.bottom) sm_scroll_to(sm_scroll+r.bottom-client.bottom+shell_px(8,shell_dpi));
+    else if(r.top<top) sm_scroll_to(sm_scroll-(top-r.top));
+  }
+  InvalidateRect(sm_view,NULL,FALSE);UpdateWindow(sm_view);
+}
+static void sm_key_move(int step) {
+  int order[512],n=sm_key_order(order);if(!n) return;
+  int at=-1,current=sm_key_index();
+  for(int i=0;i<n;i++) if(order[i]==current) at=i;
+  at=at<0 ? (step>0 ? 0:n-1):(at+step+n)%n;
+  sm_key_kind=sm_hits[order[at]].kind;sm_key_arg=sm_hits[order[at]].arg;
+  sm_key_reveal();sm_key_announce();
+}
+static void sm_key_activate(int menu) {
+  int i=sm_key_index();if(i<0) return;
+  RECT r=sm_hits[i].r;sm_hit h=sm_hits[i];
+  if(menu && h.kind!=SM_HIT_BOOK) return;
+  sm_click(i,menu,(r.left+r.right)/2,(r.top+r.bottom)/2);
+  if(sm_view && IsWindowVisible(sm_view)) {
+    UpdateWindow(sm_view);if(sm_key_index()<0) {sm_key_kind=h.kind;sm_key_arg=h.arg;}
+    sm_key_announce();
+  }
+}
 static LRESULT CALLBACK sm_view_procedure(HWND window,UINT message,WPARAM wp,LPARAM lp) {
   switch(message) {
     case WM_ERASEBKGND:return 1;
@@ -765,9 +839,19 @@ static LRESULT CALLBACK sm_view_procedure(HWND window,UINT message,WPARAM wp,LPA
       }
       sm_scroll_to(pos);return 0;
     }
+    case WM_GETDLGCODE:return DLGC_WANTARROWS|DLGC_WANTTAB|DLGC_WANTCHARS;
+    case WM_SETFOCUS:if(sm_key_index()<0) sm_key_move(1);else {InvalidateRect(window,NULL,FALSE);sm_key_announce();}return 0;
+    case WM_KILLFOCUS:InvalidateRect(window,NULL,FALSE);return 0;
+    case WM_CHAR:if(wp==VK_TAB || wp==VK_RETURN || wp==L' ') return 0;break;
     case WM_KEYDOWN:
       if(wp==VK_ESCAPE && g.has_current){sm_hide();return 0;}
+      if(wp==VK_TAB){sm_key_move(GetKeyState(VK_SHIFT)<0 ? -1:1);return 0;}
+      if(wp==VK_RIGHT || wp==VK_DOWN){sm_key_move(1);return 0;}
+      if(wp==VK_LEFT || wp==VK_UP){sm_key_move(-1);return 0;}
+      if(wp==VK_RETURN || wp==VK_SPACE){sm_key_activate(0);return 0;}
+      if(wp==VK_APPS || (wp==VK_F10 && GetKeyState(VK_SHIFT)<0)){sm_key_activate(1);return 0;}
       break;
+    case WM_SYSKEYDOWN:if(wp==VK_F10 && GetKeyState(VK_SHIFT)<0){sm_key_activate(1);return 0;}break;
   }
   return DefWindowProcW(window,message,wp,lp);
 }
