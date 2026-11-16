@@ -519,6 +519,7 @@ typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
 static void host_a11y_status_changed(void);
 /* Accessible name/help for a window-based control; a panel appearing or going away. */
 static void host_a11y_describe(HWND window, const wchar_t *name, const wchar_t *help);
+static inline void host_a11y_describe_child(HWND window, DWORD child, const wchar_t *name);
 static void host_a11y_panel_toggled(HWND panel, int shown);
 static void host_a11y_prepare_note(void);
 static inline void host_a11y_owner_enabled(int enabled);
@@ -4077,7 +4078,13 @@ static void compose_page_view(HWND window) {
 #ifdef EXR_READER_WINDOWS_SHELL
     if(shell_active) SetTextColor(dc,shell_colorref(shell_colors->text_secondary));else
 #endif
-    SetTextColor(dc, shell_contrast ? GetSysColor(COLOR_WINDOWTEXT) : RGB(90, 90, 90));
+    {
+      /* shell_contrast exists only in the shell build; the account/product
+         hosts read the same system high-contrast state directly. */
+      HIGHCONTRASTW high; memset(&high, 0, sizeof(high)); high.cbSize = sizeof(high);
+      int contrast = SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(high), &high, 0) && (high.dwFlags & HCF_HIGHCONTRASTON);
+      SetTextColor(dc, contrast ? GetSysColor(COLOR_WINDOWTEXT) : RGB(90, 90, 90));
+    }
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
 #ifdef EXR_READER_WINDOWS_SHELL

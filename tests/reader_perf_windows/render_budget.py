@@ -88,6 +88,61 @@ def compare(baseline, candidate, budgets=None):
             'passed': bool(ratios_ok and budgets_ok)}
 
 
+def shelf_metrics(stdout):
+    def one(pattern):
+        found = re.findall(pattern, stdout, re.M)
+        if len(found) != 1:
+            raise ValueError('missing or duplicate shelf telemetry: ' + pattern)
+        return found[0]
+    books = int(one(r'^SHELF-BUDGET corpus books=(\d+) '))
+    load, paint, interactive, hits, visible = map(float, one(
+        r'^SHELF-BUDGET shelf_load_ms=([\d.]+) first_paint_ms=([\d.]+) '
+        r'first_interactive_ms=([\d.]+) hits=(\d+) books=(\d+)'))
+    peak = int(one(r'^SHELF-BUDGET peak_working_set_bytes=(\d+)'))
+    if books != 2202 or visible != books or hits <= 0 or not 0 < load <= interactive or paint <= 0 or peak <= 0:
+        raise ValueError('invalid fixed shelf load, size or memory')
+    result = dict(books=books, shelf_load_ms=load, first_paint_ms=paint,
+                  first_interactive_ms=interactive, peak_working_set_bytes=peak)
+    for name, count in [('grid_move', 256), ('list_move', 128)]:
+        values = json.loads(one(r'^SHELF-BUDGET raw_' + name + r'_ms=(\[[^\n]+\])'))
+        p50, p95, maximum, scroll = map(float, one(
+            r'^SHELF-BUDGET ' + name + r' n=' + str(count) +
+            r' p50_ms=([\d.]+) p95_ms=([\d.]+) max_ms=([\d.]+) scrolled_to=(\d+)'))
+        if (len(values) != count or any(type(x) not in (int, float) or not math.isfinite(x) or x <= 0 for x in values)
+                or abs(statistics.median(values) - p50) > .000002
+                or abs(sorted(values)[math.ceil(.95 * count) - 1] - p95) > .000002
+                or abs(max(values) - maximum) > .000002 or scroll <= 0):
+            raise ValueError('incomplete or inconsistent shelf scroll samples')
+        result[name] = dict(samples_ms=values, p50_ms=p50, p95_ms=p95, scrolled_to=scroll)
+    result['passed'] = (interactive <= 2500 and peak <= 268435456 and
+                        all(result[name]['p50_ms'] <= 50 and result[name]['p95_ms'] <= 100
+                            for name in ('grid_move', 'list_move')))
+    return result
+
+
+def measure_shelf(args):
+    launches = []
+    for repeat in range(args.repeats):
+        run = subprocess.run([str(args.binary.resolve()), 'shelf-budget', str(args.font.resolve())],
+                             capture_output=True, text=True, timeout=180)
+        row = dict(repeat=repeat, exit=run.returncode, stdout=run.stdout, stderr=run.stderr)
+        try:
+            row['metrics'] = shelf_metrics(run.stdout)
+            if run.returncode != 0:
+                raise ValueError('shelf host failed')
+        except ValueError as error:
+            row['error'] = str(error)
+        launches.append(row)
+    accepted = all('error' not in row and row['metrics']['passed'] for row in launches)
+    result = dict(source_sha=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                  run_id=os.environ.get('GITHUB_RUN_ID'), attempt=os.environ.get('GITHUB_RUN_ATTEMPT'),
+                  binary=identity(args.binary), books=2202, launches=launches, accepted=accepted,
+                  memory='PeakWorkingSetSize; Windows RSS high-water mark')
+    args.out.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+    print(json.dumps(result, indent=2))
+    return int(not accepted)
+
+
 def fetch_corpus(manifest, directory):
     """Fetch provenance URLs, refusing regenerated upstream files."""
     directory.mkdir(parents=True, exist_ok=True)
@@ -181,6 +236,7 @@ def self_check():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--self-check', action='store_true')
+    parser.add_argument('--fixed-shelf', action='store_true')
     parser.add_argument('--fetch-corpus', action='store_true', help='Download manifest URLs with strict frozen SHA-256 checks, then exit')
     parser.add_argument('--binary', type=Path)
     parser.add_argument('--baseline-binary', type=Path)
@@ -194,6 +250,10 @@ def main():
     if args.self_check:
         self_check()
         return 0
+    if args.fixed_shelf:
+        if not all([args.binary, args.font, args.out]) or args.repeats < 3:
+            parser.error('--binary/--font/--out and repeats >=3 required for the fixed shelf')
+        return measure_shelf(args)
     if args.fetch_corpus:
         if not args.manifest or not args.corpus:
             parser.error('--manifest/--corpus required with --fetch-corpus')

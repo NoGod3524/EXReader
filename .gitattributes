@@ -23,4 +23,8 @@ evidence/dfinal-b-followup-20261114/** -text -whitespace
 evidence/dfinal-b-budget-security-20261114/** -text -whitespace
 # Preserve D-FINAL-C original Actions logs and extracted artifact bytes.
 evidence/dfinal-c-20261114/** -text -whitespace
+# Preserve the source-bound F08/F09 artifact bytes for hash verification.
+evidence/ledger-f08-f09-sol-20261116/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 
+# Empty final TSV fields are part of the original keyboard observation data.
+evidence/ledger-f08-f09-sol-20261116/**/keys.tsv whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

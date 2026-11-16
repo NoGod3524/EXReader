@@ -20,6 +20,7 @@
    Threading: sy_net_* only reads files and talks to the server, so it runs on a
    worker. sy_apply_* mutates local files and runs on the UI thread. */
 #include <winhttp.h>
+#include <wincred.h>
 #include <wincrypt.h>
 #include <sddl.h>
 #include <aclapi.h>
@@ -850,7 +851,53 @@ static int sy_apply(const sy_state *m,int *ui_changed) {
 }
 
 /* ---- config, credentials, queue ------------------------------------- */
+/* ---- credential store ---------------------------------------------------
+   Windows Credential Manager is the primary store; sync.cred (DPAPI, private
+   DACL) stays as the fallback for hosts where Credential Manager is unavailable
+   (ERROR_NOT_FOUND on read, or a failing CredWriteW). EXR_SYNC_CREDENTIAL_BACKEND
+   is a test hook: "dpapi" forces the fallback so the unavailable path can be
+   exercised instead of only assumed. */
+#define SY_CRED_TARGET L"EXReader/WebDAV"
+
+static int sy_cred_cm_write(const char *user,const char *pass) {
+  char blob[1100];int n=snprintf(blob,sizeof(blob),"EXRS1\n%s\n%s",user,pass);
+  if(n<=0 || n>=(int)sizeof(blob)) return 0;
+  CREDENTIALW cred;memset(&cred,0,sizeof(cred));
+  cred.Type=CRED_TYPE_GENERIC;
+  cred.TargetName=(LPWSTR)SY_CRED_TARGET;
+  cred.Persist=CRED_PERSIST_LOCAL_MACHINE;
+  cred.CredentialBlob=(LPBYTE)blob;
+  cred.CredentialBlobSize=(DWORD)n;
+  cred.Comment=(LPWSTR)L"EXReader WebDAV credentials";
+  int ok=CredWriteW(&cred,0)!=0;
+  SecureZeroMemory(blob,sizeof(blob));
+  return ok;
+}
+static int sy_cred_cm_read(char **user,char **pass) {
+  PCREDENTIALW cred=NULL;
+  if(!CredReadW(SY_CRED_TARGET,CRED_TYPE_GENERIC,0,&cred) || !cred) return 0;
+  int ok=0;
+  if(cred->CredentialBlobSize && cred->CredentialBlobSize<1100) {
+    char text[1100];DWORD n=cred->CredentialBlobSize;
+    memcpy(text,cred->CredentialBlob,n);text[n]=0;
+    char *u=strchr(text,'\n'),*p=u ? strchr(u+1,'\n'):NULL;
+    if(!strncmp(text,"EXRS1\n",6) && u && p) {
+      *p=0;*user=host_strdup(u+1);*pass=host_strdup(p+1);ok=*user && *pass;
+      if(!ok) {free(*user);free(*pass);*user=NULL;*pass=NULL;}
+    }
+    SecureZeroMemory(text,sizeof(text));
+  }
+  CredFree(cred);
+  return ok;
+}
+static void sy_cred_cm_delete(void) { CredDeleteW(SY_CRED_TARGET,CRED_TYPE_GENERIC,0); }
+static int sy_cred_cm_forced_off(void) {
+  const char *hook=getenv("EXR_SYNC_CREDENTIAL_BACKEND");
+  return hook && !_stricmp(hook,"dpapi");
+}
+
 static int sy_cred_save(const char *user,const char *pass) {
+  if(!sy_cred_cm_forced_off() && sy_cred_cm_write(user,pass)) return 1;
   char blob[1100];int n=snprintf(blob,sizeof(blob),"EXRS1\n%s\n%s",user,pass);
   if(n<=0 || n>=(int)sizeof(blob)) return 0;
   DATA_BLOB in={(DWORD)n,(BYTE *)blob},entropy={14,(BYTE *)"EXReader-sync1"},out={0};
@@ -859,6 +906,12 @@ static int sy_cred_save(const char *user,const char *pass) {
   SecureZeroMemory(blob,sizeof(blob));return ok;
 }
 static int sy_cred_load(void) {
+  if(!sy_cred_cm_forced_off()) {
+    char *cu=NULL,*cp=NULL;
+    if(sy_cred_cm_read(&cu,&cp)) {
+      sy_wipe(&sy_user);sy_wipe(&sy_pass);sy_user=cu;sy_pass=cp;return 1;
+    }
+  }
   size_t n=0;char *b=sy_read(sy_cred_file,&n);if(!b) return 0;
   DATA_BLOB in={(DWORD)n,(BYTE *)b},entropy={14,(BYTE *)"EXReader-sync1"},out={0};
   int ok=CryptUnprotectData(&in,NULL,&entropy,NULL,NULL,CRYPTPROTECT_UI_FORBIDDEN,&out)!=0;
@@ -875,7 +928,7 @@ static int sy_cred_load(void) {
   } else ok=0;
   SecureZeroMemory(out.pbData,out.cbData);LocalFree(out.pbData);return ok;
 }
-static void sy_cred_delete(void) {DeleteFileW(sy_cred_file);sy_wipe(&sy_user);sy_wipe(&sy_pass);}
+static void sy_cred_delete(void) {sy_cred_cm_delete();DeleteFileW(sy_cred_file);sy_wipe(&sy_user);sy_wipe(&sy_pass);}
 static void sy_new_device(void) {
   BYTE r[8];HCRYPTPROV p=0;
   if(CryptAcquireContextW(&p,NULL,NULL,PROV_RSA_AES,CRYPT_VERIFYCONTEXT)){CryptGenRandom(p,8,r);CryptReleaseContext(p,0);}
@@ -1218,3 +1271,5 @@ static void sy_boot(void) {
     SetTimer(g.window,0x5C01,3000,NULL); /* one pull shortly after start */
   }
 }
+
+

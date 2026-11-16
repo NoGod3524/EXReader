@@ -8,7 +8,6 @@ extents, plus the accessibility events the registry delivers.  It never reads
 SDK private data, product SQLite tables or application memory.
 """
 import re
-import threading
 import time
 
 import gi
@@ -34,9 +33,27 @@ EVENT_TYPES = (
 )
 
 
+_dispatching = False
+
+
+def pump_events():
+    """Keep libatspi proxy access and event callbacks on the audit thread."""
+    global _dispatching
+    if _dispatching:
+        return
+    _dispatching = True
+    try:
+        context = GLib.MainContext.default()
+        while context.pending():
+            context.iteration(False)
+    finally:
+        _dispatching = False
+
+
 def _safe(call, default=None):
     """Every proxy call can fail when the UI mutates under a walk."""
     try:
+        pump_events()
         return call()
     except Exception:
         return default
@@ -308,10 +325,7 @@ class Recorder:
 
     def __init__(self):
         self.items = []
-        self.lock = threading.Lock()
         self.listener = None
-        self.loop = None
-        self.thread = None
         self.registered = []
         self.rejected = []
         self.error = ''
@@ -326,12 +340,10 @@ class Recorder:
             if source is not None:
                 entry['source_role'] = role(source)
                 entry['source_name'] = name(source)
-            with self.lock:
-                self.items.append(entry)
+            self.items.append(entry)
         except Exception as exc:  # a malformed event must not stop the audit
-            with self.lock:
-                self.items.append({'t': round(time.monotonic(), 3), 'type': 'callback-error',
-                                   'detail1': repr(exc)})
+            self.items.append({'t': round(time.monotonic(), 3), 'type': 'callback-error',
+                               'detail1': repr(exc)})
 
     def start(self, event_types=EVENT_TYPES):
         self.cb = self._callback  # keep the bound callback alive for the listener
@@ -352,25 +364,22 @@ class Recorder:
                     self.rejected.append({'type': entry, 'error': repr(exc)})
             if ok and entry not in self.registered:
                 self.registered.append(entry)
-        self.loop = GLib.MainLoop()
-        self.thread = threading.Thread(target=self.loop.run, name='atspi-events', daemon=True)
-        self.thread.start()
+        pump_events()
         return bool(self.registered)
 
     def mark(self):
-        with self.lock:
-            return len(self.items)
+        pump_events()
+        return len(self.items)
 
     def since(self, mark):
-        with self.lock:
-            return list(self.items[mark:])
+        pump_events()
+        return list(self.items[mark:])
 
     def stop(self):
+        pump_events()
         if self.listener is not None:
             for entry in self.registered:
                 _safe(lambda: self.listener.deregister(entry))
-        if self.loop is not None:
-            _safe(lambda: self.loop.quit())
 
 
 def atspi_version():

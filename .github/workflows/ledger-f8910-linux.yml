@@ -1,0 +1,275 @@
+name: Ledger F08 F09 F10 verify (Linux GTK)
+on:
+  push:
+    branches: [codex/ledger-f8910-verify, codex/ledger-f08-f09-sol]
+    paths:
+      - 'examples/linux/**'
+      - 'apps/reader/desktop/**'
+      - 'extras/credentials/**'
+      - 'extras/webdav/**'
+      - 'tests/reader_a11y_gtk/**'
+      - 'tests/linux_host/**'
+      - 'tests/ledger_f8910/**'
+      - 'tests/reader_perf_gtk/**'
+      - '.github/workflows/ledger-f8910-linux.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ledger-f8910-linux-${{ github.ref }}
+  cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
+jobs:
+  gtk:
+    name: F09 AT-SPI audit + F10 Secret Service, temp recovery and public TLS on the GTK host (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record source identity
+        run: |
+          set -euo pipefail
+          mkdir -p build/account-logs
+          { echo "source_sha=$GITHUB_SHA"; echo "run_id=$GITHUB_RUN_ID"; echo "attempt=$GITHUB_RUN_ATTEMPT"; } | tee build/account-logs/source-binding.txt
+      - name: Install native GTK TLS XML and Secret Service dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev libgtk-3-dev libsecret-1-dev gnome-keyring libcurl4-openssl-dev libxml2-dev libssl-dev pkg-config at-spi2-core libatk-adaptor python3-gi gir1.2-atspi-2.0 xvfb openbox xdotool xclip x11-utils wmctrl imagemagick python3-pil xdg-desktop-portal xdg-desktop-portal-gtk gsettings-desktop-schemas dbus-x11
+      - name: Install reviewed J03 and rerun installed portable and GTK consumers
+        run: |
+          mkdir -p build/gtk-drop-j03
+          cmake -S extras/desktop-drop -B build/drop-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/build/drop-stage"
+          cmake --build build/drop-module --parallel 4
+          cmake --install build/drop-module
+          cmake -S extras/desktop-drop/examples -B build/drop-examples -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-examples --parallel 4
+          build/drop-examples/host-example-c | tee build/gtk-drop-j03/c.log
+          build/drop-examples/host-example-cxx | tee build/gtk-drop-j03/cxx.log
+          cmake -S tests/reader_desktop_drop -B build/drop-consumers -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/drop-stage"
+          cmake --build build/drop-consumers --parallel 4
+          build/drop-consumers/drop-check | tee build/gtk-drop-j03/portable.log
+          build/drop-consumers/drop-consumer-cxx | tee build/gtk-drop-j03/installed-cxx.log
+          xvfb-run -a build/drop-consumers/drop-probe | tee build/gtk-drop-j03/gtk.log
+      - name: Build installed product metadata and account modules with one product provider
+        run: |
+          mkdir -p build/account-logs
+          prefix="$PWD/build/account-stage"
+          echo "ACCOUNT_PREFIX=$prefix" >> "$GITHUB_ENV"
+          cmake -S apps/reader/store/native -B build/account-product -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-product --parallel 4
+          ctest --test-dir build/account-product --output-on-failure --no-tests=error --timeout 180
+          cmake --install build/account-product
+          cmake -S extras/webdav -B build/account-dav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-dav --parallel 4
+          cmake --install build/account-dav
+          cmake -S apps/reader/revisions -B build/account-revisions -G Ninja -DCMAKE_BUILD_TYPE=Release -DREADER_PRODUCT_PREFIX="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-revisions --parallel 4
+          cmake --install build/account-revisions
+          for module in commands desktop-metadata sync session; do
+            cmake -S "apps/reader/$module" -B "build/account-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_INSTALL_PREFIX="$prefix"
+            cmake --build "build/account-$module" --parallel 4
+            cmake --install "build/account-$module"
+          done
+          cmake -S extras/credentials -B build/account-credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix"
+          cmake --build build/account-credentials --parallel 4
+          cmake --install build/account-credentials
+          cmake -S tests/reader_commands/consumer -B build/account-command-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-command-consumer --parallel 4
+          cmake -S tests/reader_metadata/consumer -B build/account-metadata-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-metadata-consumer --parallel 4
+          cmake -S tests/reader_revisions/consumer -B build/account-revision-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build/account-revision-consumer --parallel 4
+      - name: Install fixed new SDK candidate and public original export module
+        run: |
+          cmake --preset reading-library 2>&1 | tee build/account-logs/sdk-configure.log
+          cmake --build --preset reading-library 2>&1 | tee build/account-logs/sdk-build.log
+          cmake --install build/reading-library 2>&1 | tee build/account-logs/sdk-install.log
+          cmake -S extras/sideload -B build/account-sideload -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/account-sideload --parallel 4
+          cmake --install build/account-sideload
+      - name: Install fixed batch importer and retain original installed consumers and review regressions
+        run: |
+          cmake -S apps/reader/batch-import -B build/gtk-batch-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-batch-module --parallel 4
+          cmake --install build/gtk-batch-module
+          cmake -S tests/reader_batch_import/consumer -B build/gtk-batch-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-batch-consumer --parallel 4
+          python3 tests/reader_batch_import/make_fixtures.py --fixtures tests/fixtures --out build/gtk-batch-original-fixtures
+          python3 tests/reader_batch_import/check_batch_import.py --probe build/gtk-batch-consumer/batch-probe --cxx build/gtk-batch-consumer/batch-cpp-consumer --fixtures build/gtk-batch-original-fixtures --staging build/gtk-batch-staging --work build/gtk-batch-original-work --output build/gtk-batch-original
+          python3 tests/reader_batch_import/check_review.py --probe build/gtk-batch-consumer/batch-review-probe --original-probe build/gtk-batch-consumer/batch-probe --work build/gtk-batch-review-work --output build/gtk-batch-review
+      - name: Install public reading adapter and real-capture fixture consumers
+        run: |
+          cmake -S apps/reader/reading-state -B build/account-reading-state -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/account-reading-state --parallel 4
+          cmake --install build/account-reading-state
+          cmake -S tests/reader_reading_v2/consumer -B build/account-reading-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/account-reading-probe --parallel 4
+          cmake -S tests/reader_gtk_receive -B build/account-inspect -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DCMAKE_PREFIX_PATH="$PWD/build/reading-library/stage"
+          cmake --build build/account-inspect --parallel 4
+          python3 tests/reader_reading_state/make_fixtures.py build/account-receive-fixtures
+          python3 -m py_compile tests/linux_host/check_account_ui.py tests/linux_host/receive_checks.py
+      - name: Install fixed G03 G04 and rerun their original public consumers
+        run: |
+          for module in reading-commands annotation-view; do
+            cmake -S "apps/reader/$module" -B "build/records-$module" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+            cmake --build "build/records-$module" --parallel 4
+            cmake --install "build/records-$module"
+          done
+          for package in reader_reading_commands reader_annotation_view; do
+            cmake -S "tests/$package/consumer" -B "build/records-$package-consumer" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+            cmake --build "build/records-$package-consumer" --parallel 4
+          done
+          python3 tests/reader_reading_commands/make_fixtures.py build/records-command-fixtures
+          python3 tests/reader_reading_commands/check_reading_commands.py --probe build/records-reader_reading_commands-consumer/reading-commands-probe --c-consumer build/records-reader_reading_commands-consumer/reading-commands-c-consumer --fixtures build/records-command-fixtures --font tests/fixtures/fonts/primary.ttf --output build/records-commands-installed --link-map build/records-reader_reading_commands-consumer/reading-commands-link.map
+          python3 tests/reader_annotation_view/check_annotation_view.py --probe build/records-reader_annotation_view-consumer/annotation-view-probe --c-consumer build/records-reader_annotation_view-consumer/annotation-view-c-consumer --output build/records-view-installed --link-map build/records-reader_annotation_view-consumer/annotation-view-link.map
+      - name: Install unchanged F3 and run all twenty installed package checks
+        run: |
+          cmake -S apps/reader/preferences -B build/preferences-package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/preferences-package --parallel 4
+          cmake --install build/preferences-package
+          cmake -S tests/reader_preferences/consumer -B build/preferences-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX" -DEXR_PREFERENCES_SOURCE="$PWD/apps/reader/preferences/src" -DEXR_PREFERENCES_INCLUDE="$PWD/apps/reader/preferences/include"
+          cmake --build build/preferences-consumer --parallel 4
+          python3 tests/reader_preferences/make_preferences_fixtures.py build/preferences-fixtures
+          python3 tests/reader_preferences/check_preferences.py --consumer build/preferences-consumer/preferences-c-consumer --cpp build/preferences-consumer/preferences-cpp-consumer --worker build/preferences-consumer/preferences-worker --fixtures build/preferences-fixtures --installed "$ACCOUNT_PREFIX" --output build/preferences-installed-check --platform Linux
+          cmake -S tests/reader_gtk_preferences -B build/preferences-host-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
+          cmake --build build/preferences-host-consumer --parallel 4
+      - name: Install unchanged Search and rerun its public installed consumers
+        run: |
+          cmake -S apps/reader/search -B build/gtk-search-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-search-module --parallel 4
+          cmake --install build/gtk-search-module
+          cmake -S tests/reader_search/consumer -B build/gtk-search-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-search-consumer --parallel 4
+          python3 tests/reader_search/make_search_fixtures.py build/gtk-search-fixtures
+          python3 tests/reader_gtk_search/make_inputs.py build/gtk-search-fixtures
+          python3 tests/reader_search/check_search.py --probe build/gtk-search-consumer/search-probe --c-consumer build/gtk-search-consumer/search-c-consumer --fixtures build/gtk-search-fixtures --font tests/fixtures/fonts/primary.ttf --installed "$ACCOUNT_PREFIX" --output build/gtk-search-installed
+      - name: Install fixed F2 and rerun all original public consumers
+        run: |
+          cmake -S apps/reader/navigation -B build/gtk-navigation-module -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_SDK="$PWD/build/reading-library/stage" -DCMAKE_INSTALL_PREFIX="$ACCOUNT_PREFIX"
+          cmake --build build/gtk-navigation-module --parallel 4
+          cmake --install build/gtk-navigation-module
+          cmake -S tests/reader_navigation/consumer -B build/gtk-navigation-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage"
+          cmake --build build/gtk-navigation-consumer --parallel 4
+          python3 tests/reader_navigation/make_navigation_fixtures.py build/gtk-navigation-fixtures
+          python3 tests/reader_navigation/check_navigation.py --probe build/gtk-navigation-consumer/navigation-probe --c-consumer build/gtk-navigation-consumer/navigation-c-consumer --fixtures build/gtk-navigation-fixtures --installed "$ACCOUNT_PREFIX" --output build/gtk-navigation-installed
+      - name: Build actual GTK host with optional navigation and retained installed integrations
+        id: host
+        run: |
+          cmake -S apps/reader/desktop -B build/account-desktop -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK_VERSION=3.42.0 -DEXR_READER_PAGE_BACKGROUND=ON -DEXR_SDK="$PWD/build/reading-library/stage" -DREADER_METADATA_PREFIX="$ACCOUNT_PREFIX" -DREADER_ACCOUNT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_BATCH_IMPORT=ON -DEXR_READER_GTK_DROP_IMPORT=ON -DREADER_DESKTOP_DROP_PREFIX="$PWD/build/drop-stage" -DREADER_BATCH_IMPORT_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_ACCOUNT=ON -DEXR_READER_GTK_PREFERENCES=ON -DREADER_PREFERENCES_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_SEARCH=ON -DREADER_SEARCH_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_GTK_READING_RECORDS=ON -DREADER_READING_RECORDS_PREFIX="$ACCOUNT_PREFIX" -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX;$PWD/build/reading-library/stage" -DEXR_READER_GTK_NAVIGATION=ON -DREADER_NAVIGATION_PREFIX="$ACCOUNT_PREFIX" -DEXR_READER_FIXTURES="$PWD/tests/fixtures" -DEXR_READER_BUILD_GTK=ON -DEXR_LINUX_REVIEW_TESTS=ON -DEXR_LINUX_FIXED_TESTS=ON 2>&1 | tee build/account-logs/host-configure.log
+          cmake --build build/account-desktop --parallel 4 --verbose 2>&1 | tee build/account-logs/host-build.log
+          python3 tests/reader_gtk_receive/check_link.py --map build/account-desktop/gtk-account-host.map --binary build/account-desktop/gtk-host/exreader-linux --output build/account-logs/host-link.json
+          nm --defined-only build/account-desktop/gtk-host/exreader-linux > build/account-logs/navigation-provider-symbols.txt
+          test "$(awk '$3=="reader_navigation_open_publication" {n++} END {print n+0}' build/account-logs/navigation-provider-symbols.txt)" = 1
+          test "$(awk '$3=="exr_version" {n++} END {print n+0}' build/account-logs/navigation-provider-symbols.txt)" = 1
+          grep -F "$ACCOUNT_PREFIX/lib/libreader_navigation.a" build/account-desktop/gtk-account-host.map > build/account-logs/navigation-provider-map.txt
+          ctest --test-dir build/account-desktop --output-on-failure --no-tests=error --timeout 180 -E gtk-startup-scavenge --output-junit "$PWD/build/account-logs/desktop-tests.xml"
+          python3 -m py_compile tests/linux_host/check_account_ui.py
+          python3 tools/build_linux_host.py --sdk build/reading-library/stage --sdk-version 3.42.0 --binary build/account-desktop/gtk-host/exreader-linux --output build/account-package
+      - name: F08 fixed 2202-book shelf and GDK frame clock relative budgets
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          cmake -S tests/reader_perf_gtk -B build/f08-seed -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/reading-library/stage" -DEXR_SDK_VERSION=3.42.0
+          cmake --build build/f08-seed --parallel 4
+          xvfb-run -a -s '-screen 0 1440x900x24' dbus-run-session -- bash -euc '
+            openbox > build/account-logs/f08-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm" EXIT
+            sleep 1
+            python3 tests/reader_perf_gtk/sample.py --fixed-shelf --payload build/account-package/EXReader-Linux --seed build/f08-seed/seed_library --output build/f08-evidence
+          ' 2>&1 | tee build/account-logs/f08-shelf.log
+      - name: Preserve F08 samples before the remaining host audits
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-f08-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-evidence/
+            build/account-logs/f08-shelf.log
+            build/account-logs/source-binding.txt
+          if-no-files-found: error
+      - name: F10 GTK startup scavenger and desktop CTest (verbose)
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          ctest --test-dir build/account-desktop -V -R 'gtk-startup-scavenge' 2>&1 | tee build/account-logs/startup-scavenge.txt
+      - name: F10 public-PKI TLS through the installed WebDAV client (libcurl, system trust store)
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          cmake -S tests/ledger_f8910/public_tls -B build/public-tls -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$ACCOUNT_PREFIX"
+          cmake --build build/public-tls --parallel 4
+          build/public-tls/public-tls-probe | tee build/account-logs/public-tls.json
+      - name: F09 audit shelf, import, organize, reading, annotation and account surfaces through AT-SPI
+        id: a11y
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/a11y-logs
+          xvfb-run -a -s '-screen 0 1440x1100x24' dbus-run-session -- bash -euc '
+            openbox > build/a11y-logs/openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm" EXIT
+            unset -v NO_AT_BRIDGE
+            unset -v GTK_MODULES
+            export GTK_A11Y=atspi
+            if ! gsettings set org.gnome.desktop.interface toolkit-accessibility true; then echo "diagnostic: gsettings toolkit-accessibility not writable"; fi
+            if ! gsettings set org.gnome.desktop.a11y.applications screen-reader-enabled true; then echo "diagnostic: gsettings screen-reader-enabled not writable"; fi
+            python3 tests/reader_a11y_gtk/audit_gtk_a11y.py --payload build/account-package/EXReader-Linux --output build/a11y-evidence
+          ' 2>&1 | tee build/a11y-logs/audit.log
+      - name: F09 validate the AT-SPI report and require acceptance
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json --self-test | tee build/a11y-logs/gate.log
+          python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json | tee -a build/a11y-logs/gate.log
+          python3 - <<'PY' | tee build/a11y-logs/summary.txt
+          import json
+          report = json.load(open('build/a11y-evidence/result.json'))
+          print('source', report['source_sha'], 'run', report['run_id'], 'attempt', report['attempt'])
+          print('audit_completed', report['audit_completed'], 'accessibility_accepted', report['accessibility_accepted'])
+          print('counts', json.dumps(report['counts']))
+          for entry in report['checks']:
+              print('%-5s %-12s %s' % ('PASS' if entry['pass'] else 'FAIL', entry['severity'], entry['name']))
+          PY
+          python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json --require-accepted
+      - name: Preserve F09 accessibility evidence before the account audit
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-f09-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-evidence/
+            build/a11y-logs/
+            build/account-logs/source-binding.txt
+          if-no-files-found: error
+      - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        run: |
+          xvfb-run -a -s '-screen 0 1440x3600x24' dbus-run-session -- bash -euc '
+            openbox >build/account-logs/account-openbox.log 2>&1 &
+            wm=$!
+            trap "kill $wm || true" EXIT
+            python3 tests/reader_gtk_preferences/retain_account.py --payload build/account-package/EXReader-Linux --metadata-consumer build/account-metadata-consumer/metadata-consumer --revision-consumer build/account-revision-consumer/revision-consumer --output build/account-ui --receive-fixtures build/account-receive-fixtures --reading-probe build/account-reading-probe/reading-v2-probe --inspect-consumer build/account-inspect/received-sdk-inspect
+          '
+      - name: Preserve source-bound evidence without credentials or TLS private keys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-f8910-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/account-logs/
+            build/a11y-evidence/
+            build/f08-evidence/
+            build/a11y-logs/
+            build/account-ui/
+            build/account-desktop/Testing/Temporary/LastTest.log
+            build/account-package/build.json
+            build/account-package/runtime-dependencies.txt
+            !build/**/*.key
+            !build/**/*.sqlite
+          if-no-files-found: error

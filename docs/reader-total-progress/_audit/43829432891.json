@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "run": 43829432891,
+  "attempt": 1,
+  "source_sha": "c6451161b7a17ca1a06cdd179004eeba4519d7bb",
+  "evidence_ok": true,
+  "scope": [
+    "F08 Windows fixed originals and 2202-book shelf",
+    "F09 Windows UIA names and keyboard reachability"
+  ],
+  "workflow_conclusion": "success",
+  "checks": {
+    "original_book_budget": true,
+    "fixed_shelf_budget": true,
+    "name_role": true,
+    "reachability": true,
+    "ctest": "602/602 passed"
+  },
+  "artifacts": [
+    {
+      "id": 14208771394,
+      "name": "ledger-f8910-checks-43829432891-1",
+      "size_in_bytes": 129327,
+      "digest": "sha256:8b8acc2d804b815f9e864080e67430b4b05e071f1330bbc20099f041e0246458"
+    },
+    {
+      "id": 14208147252,
+      "name": "ledger-f8910-keyboard-43829432891-1",
+      "size_in_bytes": 547477,
+      "digest": "sha256:9c04dda93b8f1f404d524b604946a2e16627f15c756616c378955006662ff167"
+    }
+  ],
+  "files": {
+    "evidence/ledger-f08-f09-sol-20261116/windows-budget/aggregate.json": {
+      "bytes": 744,
+      "sha256": "6e8e9c749b58609db1b83210f99993feeb443decf41978f63bd0842ef880f9d4"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-budget/ctest.txt": {
+      "bytes": 84127,
+      "sha256": "cf492931456a5db90de819c2768ea4501b6340856a3696aefe439500413fd589"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-budget/f08-realbooks.json": {
+      "bytes": 101348,
+      "sha256": "f30d4dd6226c5e2dfd61e2d7782a9a650f199e3ecdd468da5b28afbd4eed6874"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-budget/f08-shelf.json": {
+      "bytes": 39124,
+      "sha256": "efa1cb21e68c7f23f8e748b5521d5188012b68fefd9e20bfe88cb186883a63cd"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-budget/identity.txt": {
+      "bytes": 72,
+      "sha256": "040e00c207bd9b35261103147231db783832c853757fcef36cd0139dff203fb0"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-keyboard/all-controls.json": {
+      "bytes": 251387,
+      "sha256": "05a37f051989032a43502aa4bfd65340fd10db2035e48c82dd85fac084caf82f"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-keyboard/f09-reachability.json": {
+      "bytes": 10212,
+      "sha256": "0a01dc1fbef868b99b63bad9a6e4c513cbe516f814fc4bf35d9de21517523e0d"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-keyboard/identity.txt": {
+      "bytes": 94,
+      "sha256": "523bae09069835754cfcff323e0196df14b84662d58f97411297d1d2e0691e1d"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/windows-keyboard/key-trace.jsonl": {
+      "bytes": 583005,
+      "sha256": "5fc98062492edb7355c8f70633dc3f3647d30ac1fb435faf96bf096bdaef4505"
+    }
+  }
+}

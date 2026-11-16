@@ -200,6 +200,7 @@ static void test_generated(void) {
 #include "check_shell_shelf.inc"
 #include "check_shell_style.inc"
 #include "check_shell_shelfmeta.inc"
+#include "check_shell_shelf_budget.inc"
 #include "check_shell_dictionary.inc"
 #include "check_shell_budget.inc"
 int main(int argc, char **argv) {
@@ -220,6 +221,7 @@ int main(int argc, char **argv) {
   else if (!strcmp(argv[1], "annotations")) test_annotations();
   else if (!strcmp(argv[1], "style")) test_style();
   else if (!strcmp(argv[1], "shelfmeta")) test_shelfmeta();
+  else if (!strcmp(argv[1], "shelf-budget")) test_shelf_budget();
   else if (!strcmp(argv[1], "dictionary-storage")) test_dictionary_storage();
   else if (!strcmp(argv[1], "boundaries")) test_boundaries();
   else if (!strcmp(argv[1], "copy")) test_copy();
