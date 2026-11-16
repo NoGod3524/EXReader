@@ -761,11 +761,15 @@ class Sampler:
                 row = {'cohort': cohort, 'repeat': repeat, 'trace': str(trace.relative_to(self.output)),
                        'scroll_samples_ms': [], 'scrolled': False}
                 try:
+                    print('FIXED-SHELF starting %s repeat=%d' % (cohort, repeat), flush=True)
                     started = host.launch()
-                    _, event = self.await_state(host, watch, shelf_ready, 600, 0, '2202-book shelf')
+                    _, event = self.await_state(host, watch, shelf_ready, 120, 0, '2202-book shelf')
                     row['load_ms'] = (event['at'] - started) * 1000
                     self.start_host(host)
-                    host.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
+                    # The integrated toolbar imposes a native minimum width. Record
+                    # and gate its actual geometry rather than blocking xdotool
+                    # waiting for an impossible resize below that minimum.
+                    row['geometry'] = host.geometry()
                     since = watch.mark()
                     host.press('F2')
                     _, event = self.await_state(host, watch, lambda s: bool(s['shelf'].get('selected_key')),
@@ -785,6 +789,7 @@ class Sampler:
                 except (SampleError, OSError, subprocess.SubprocessError) as error:
                     row['error'] = str(error)
                 finally:
+                    row['last_state'] = watch.latest()
                     row['exit'] = host.close()
                     host.close_log()
                     watch.close()
@@ -794,6 +799,9 @@ class Sampler:
                                 'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'launches': launches,
                                 'environment': self.environment}
                     (self.output / 'fixed-shelf.json').write_text(json.dumps(document, indent=2) + '\n')
+                    print('FIXED-SHELF completed ' + json.dumps(row), flush=True)
+                if row.get('error'):
+                    return  # Missing cohorts remain a failed coverage check in the summary.
 
     def run(self):
         self.output.mkdir(parents=True)
