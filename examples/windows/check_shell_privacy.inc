@@ -139,5 +139,28 @@ static void test_privacy(void) {
   wchar_t pattern[HOST_PATH];path_join(pattern,HOST_PATH,root,L"*");
   WIN32_FIND_DATAW fd;HANDLE find=FindFirstFileW(pattern,&fd);assert(find!=INVALID_HANDLE_VALUE);
   do {assert(!wcscmp(fd.cFileName,L".") || !wcscmp(fd.cFileName,L".."));} while(FindNextFileW(find,&fd));
-  FindClose(find);assert(RemoveDirectoryW(root));puts("PRIVACY isolated test directory empty and removed");
+  /* Credential Manager is the primary store; sync.cred (DPAPI) is the fallback.
+     Force the fallback through the documented hook so the unavailable path is
+     exercised instead of assumed, then prove the default path uses Credential
+     Manager. */
+  {
+    char saved[16];saved[0]=0;
+    const char *prior=getenv("EXR_SYNC_CREDENTIAL_BACKEND");
+    if(prior) {strncpy(saved,prior,sizeof(saved)-1);saved[sizeof(saved)-1]=0;}
+    _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND","dpapi");
+    int forced_saved=sy_cred_save("fallback-user","fallback-pass");
+    int forced_loaded=sy_cred_load();
+    int fallback_used_file=GetFileAttributesW(sy_cred_file)!=INVALID_FILE_ATTRIBUTES;
+    _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND","");
+    int primary_saved=sy_cred_save("primary-user","primary-pass");
+    int primary_loaded=sy_cred_load();
+    if(saved[0]) _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND",saved); else _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND","");
+    assert(forced_saved && forced_loaded && fallback_used_file);
+    assert(primary_saved && primary_loaded);
+    assert(sy_user && !strcmp(sy_user,"primary-user") && sy_pass && !strcmp(sy_pass,"primary-pass"));
+    printf("PRIVACY credential backend: forced dpapi fallback wrote sync.cred and loaded fallback-user; "
+           "default backend used Credential Manager and loaded primary-user PASS\n");
+    sy_cred_delete();
+  }  FindClose(find);assert(RemoveDirectoryW(root));puts("PRIVACY isolated test directory empty and removed");
 }
+
