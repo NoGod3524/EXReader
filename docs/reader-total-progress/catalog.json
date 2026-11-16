@@ -608,6 +608,12 @@
       "doc": "docs/READER-DISTRIBUTION-INVENTORY.md",
       "source_prefix": "93d2ad0db2d75af50eddc0843a4da9c7090a15aa",
       "expected_conclusion": "success"
+    },
+    "ledger_f08_f09_f10_final_20261115": {
+      "run": 43784359983,
+      "doc": "evidence/ledger-f08-f09-f10-final-20261115/README.md",
+      "source_prefix": "abecdad0f26c6454363f014a0cd70650200b10f9",
+      "expected_conclusion": "success"
     }
   },
   "requirements": [
@@ -1739,30 +1745,35 @@
       "id": "F08",
       "group": "final",
       "title": "固定书库/平台的产品帧时间、内存及可交互预算获真实验收",
-      "state": "pending",
-      "evidence": [],
-      "note": "evidence/dfinal-b-budget-security-20261114/F08.md：固定三原书及正文spine，基准复用生产有界EPUB入口，保留独立进程64样本、p50/p95、峰值内存和同机相对比值；历史整本展开EXR_LIMIT保留。缺六端固定规模完整产品书架的呈现帧、首次可交互及同源设备/runner冻结预算，保持pending；本轮真实输出见REPORT.md。｜r2逐条缺口（evidence/ledger-f08-f09-f10-r2-20261115/README.md）：已达成=Windows runner run43677041326/source d2b0be6b宿主render路径三原书各192样本p50/p95（pg1 0.389750/0.458400ms、pg10 0.366000/0.370800ms、pg11 0.416400/0.478400ms），本轮由F08-recompute.txt按actions/f08-realbooks.json原始样本复算一致；缺①Windows产品呈现帧p50/p95（同JSON display_present_frame=missing，需在examples/windows/shell_d2d.cpp Present处打点，属产品改动）②Windows首次可交互（first_interactive=missing）③Windows固定规模书架负载与冻结预算（accepted=false）④Linux GTK同类呈现帧/首次交互/预算（docs/validation/reader-perf-gtk.json frame_time_percentiles=false）；其余四端为同源构建，未做设备验收，按scope不计入缺口。state未改：R3要求审计反写。"
+      "state": "partial",
+      "evidence": [
+        "ledger_f08_f09_f10_final_20261115"
+      ],
+      "note": "partial（evidence/ledger-f08-f09-f10-final-20261115/README.md，Actions run43784359983/source abecdad0，windows-2022，CTest 601/601）：修复shell_d2d.cpp编译中断；Windows三本冻结原书各3独立进程×64样本，经F08-summary.py按原始样本复算一致：render p50/p95 pg1 0.400/0.498、pg10 0.376/0.381、pg11 0.475/0.577ms；D2D呈现帧（compose+paint+shell_paint EndDraw QPC计时+GdiFlush，离屏popup HWND，非可见显示器vsync）p50/p95 0.143/0.194、0.140/0.150、0.147/0.196ms；首次可交互（进程内冷打开有界EPUB→首帧呈现→键盘选择往返）24.6/158.0/19.2ms；峰值工作集24.7/30.8/21.8MB；固定预算（render-corpus.json：首次交互2500ms、p50 50ms、p95 100ms、峰值256MiB）全部通过，accepted=true。缺①Linux GTK帧时间百分位（reader-perf-gtk.json frame_time_percentiles=false；GTK首次交互/RSS有run40086971620但无硬预算）②固定规模大书架负载③显示器vsync时间戳。其余四端为同源构建，未做设备验收，按scope不计入缺口。"
     },
     {
       "id": "F09",
       "group": "final",
       "title": "默认简洁且完整功能可达，六端完整键盘/可访问性与读屏证据分列",
-      "state": "pending",
-      "evidence": [],
-      "note": "evidence/dfinal-b-budget-security-20261114/F09.md：补共享控件名称和原生IAccessible断言，UIA名称/角色失败或子进程异常均传播失败，扩展词典/生词本/WebDAV及原生/helper/绘制目标清单。缺六端全部功能/控件完整键盘、未测面板和独立读屏实录，iPhone/iPad/Android需真机，保持pending；本轮实际缺名与焦点结果分列。｜r2逐条缺口（evidence/ledger-f08-f09-f10-r2-20261115/README.md）：读屏录像按scope排除。已达成=Windows runner run43769173285/source 84b8e3e7（产品源码同main c2e20df2）真实SendInput、单次前台激活，382次焦点观测，closed/search/settings/toc/dictionary-settings实测到达5/9/39/5/4个控件，名字/角色在这五面通过（F09-runner-summary.txt）；本机同源尝试前台被拒、键盘0（F09-keyboard.txt）。缺①键盘陷阱：examples/windows/shell_dictionary.inc:434只读多行EDIT「词典加载状态」吞Tab，连续117次Tab/Shift+Tab不离开，813「生词本」(:435)不可达，采集exit1（产品缺陷待修；:391、:459同样式未测）②vocabulary/webdav-account/shelf三面因此未采集③toc目录列表与章节项、search上一处/下一处、settings阅读设置/▾不在已测Tab序列④Linux GTK完整键盘焦点顺序与a11y控件清单同类证据；其余四端为同源构建，未做设备验收，按scope不计入缺口。state未改：R3要求审计反写。"
+      "state": "partial",
+      "evidence": [
+        "ledger_f08_f09_f10_final_20261115"
+      ],
+      "note": "partial（evidence/ledger-f08-f09-f10-final-20261115/README.md，Actions run43784359983/source abecdad0）：修复两处真实键盘缺陷——①shell_dictionary.inc只读多行EDIT吞Tab（WM_GETDLGCODE去除WANTALLKEYS/WANTTAB，词典/生词本/同步状态与脚注正文），②书架自绘视图「系列、标签与阅读统计」仅鼠标可用（shell_shelfmeta.inc：Tab/方向键/Enter/Space/菜单键、焦点环、可访问名随焦点）；回归check_shell_dictionary.inc（原生EDIT负例）与check_shell_shelfmeta.inc（17个停靠点）。runner真实SendInput、单次前台激活、507次焦点观测，8面全部采集audit_completed=true：生词本可达；书架由run43783330321连续61次停在同一元素变为10个不同停靠点循环（F09-shelf-cycle-*.txt）。缺①name_role_passed=false：生词本「按书筛选」组合框系统UIA内部TextControl无名（非独立Tab停靠点，未改）②toc目录列表/章节项、search上一处/下一处、settings阅读设置/▾不在实测Tab序列③书架项以视图名暴露、非独立UIA子元素④Linux GTK AT-SPI审计run40082300842仍有6项阻塞发现accessibility_accepted=false。读屏录像按scope排除；其余四端为同源构建，未做设备验收，按scope不计入缺口。"
     },
     {
       "id": "F10",
       "group": "final",
       "title": "全链路隐私/凭据/文件稳定性/临时文件清理的真实安全出口",
-      "state": "pending",
+      "state": "partial",
       "evidence": [
         "credentials",
         "sideload",
         "batch",
-        "sync"
+        "sync",
+        "ledger_f08_f09_f10_final_20261115"
       ],
-      "note": "evidence/dfinal-b-budget-security-20261114/F10.md：evidence仅为历史组件引用。Windows私有凭据显式TokenUser owner，真实强杀生产writer后由同步惰性初始化按独占句柄验证并回收私有stage，保留旧凭据与活writer/硬链接/目录/宽权限拒绝。缺Credential Manager/会话回退、旧owner/ACL迁移、跨用户、普通.tmp/.part恢复及六端安全链路验收，保持pending。｜r2逐条缺口（evidence/ledger-f08-f09-f10-r2-20261115/README.md）：Credential Manager已实现且有测试，不是未实现：extras/credentials/src/windows.c:50-71，apps/reader/desktop/windows_accounts.inc:158/256/275，tests/reader_windows_account/check_account_ui.py:516/562/625/630/746在run40118190108/source 4e2dad0b通过（保存、仅会话、重开加载、忘记删除、无明文）。缺①UNAVAILABLE回退未能真实触发（check_account_ui.py:971；strict_contract.py:22-24）②windows_accounts.inc在4e2dad0b后有4个提交，main未同源重跑③examples/windows/shell_sync.inc:17,853仍用DPAPI sync.cred，未接Credential Manager④跨用户未测⑤普通.tmp中断残留（dfinal-b F10-tests.txt「startup scavenger MISSING」），OPDS .part恢复未测⑥TLS仅loopback测试CA，跨源未测⑦Linux GTK Secret Service回退/临时文件/TLS同类证据；其余四端为同源构建，未做设备验收，按scope不计入缺口。state未改：R3要求审计反写。"
+      "note": "partial（evidence/ledger-f08-f09-f10-final-20261115/README.md，Actions run43784359983/source abecdad0）：实现启动清理sy_startup_scavenge（shell_sync.inc，reader.c在settings_load前调用）：仅扫描产品目录（data_dir、annotations、sync的*.tmp与opds-downloads/*.part，不递归），拒绝活写入者/重解析点/目录/硬链接与sync.cred.tmp，按已验证句柄删除；windows-privacy-cleanup以真实子进程写入后ExitProcess(77)留下state.json.tmp与book.epub.part，启动清理removed=2 kept=3、原文件保留、写入者释放后下次启动清除。既有TokenUser owner/保护DACL、强杀凭据stage回收、DPAPI往返与篡改拒绝同套通过；Credential Manager实现与测试见run40118190108。缺①Credential Manager UNAVAILABLE回退未能真实触发②windows_accounts.inc未在main同源重跑③examples/windows壳WebDAV仍用DPAPI sync.cred（当前用户+私有DACL）而非Credential Manager④跨用户未测⑤TLS仅loopback测试CA⑥Linux GTK Secret Service回退/临时文件恢复/TLS。其余四端为同源构建，未做设备验收，按scope不计入缺口。"
     },
     {
       "id": "F11",
