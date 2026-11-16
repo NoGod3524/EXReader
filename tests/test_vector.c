@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "exreader.h"
 #include "../src/vector_internal.h"
+#include "../src/pixels_internal.h"
 static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
@@ -217,9 +218,88 @@ static void rectangle_fill_equivalence(void) {
   }
   free(clips[0].pixels); free(clips[1].pixels);
 }
+/* Integer arithmetic on an eighth-pixel grid is an independent area oracle;
+   unlike the scanline reference it includes edges between the four samples. */
+static unsigned overlap_eighths(int pixel_index,int first,int last) {
+  int low=pixel_index*8>first ? pixel_index*8 : first;
+  int high=(pixel_index+1)*8<last ? (pixel_index+1)*8 : last;
+  return high>low ? (unsigned)(high-low) : 0;
+}
+static void rectangle_area(void) {
+  const int boxes[][4]={{8,8,56,56},{9,11,54,51},{-11,-9,35,41},
+                       {18,19,21,22},{7,7,9,9},{-8,1,3,5}};
+  const uint32_t colors[]={0x123456ff,0xed5b2780,0x49a2ef00};
+  const double inks[4]={.2,.4,.1,.3};
+  exr_bitmap clip=bitmap(1,0); size_t box,work=0; unsigned i,channels,reverse,kind,mode,mask,color;
+  for(i=0;i<64;i++) clip.pixels[i]=(unsigned char)(i*73);
+  clip.pixels[3]=255;
+  for(box=0;box<sizeof(boxes)/sizeof(*boxes);box++) for(channels=1;channels<=4;channels+=3)
+    for(reverse=0;reverse<2;reverse++) for(kind=0;kind<4;kind++)
+    for(mode=0;mode<=EXR_BLEND_LUMINOSITY;mode++) for(mask=0;mask<2;mask++) for(color=0;color<3;color++) {
+      exr_vector_edge edges[4]; exr_bitmap actual=bitmap(channels,128),reference=bitmap(channels,128);
+      exr_composite_state state={0}; const exr_bitmap *mask_bitmap=mask ? &clip : NULL;
+      exr_composite_state *s=kind>=2 ? &state : NULL;
+      unsigned x,y;
+      if(kind==0 && mode!=EXR_BLEND_NORMAL) { free(actual.pixels); free(reference.pixels); continue; }
+      state.soft_mask=clip.pixels; state.soft_mask_width=state.soft_mask_height=8; state.gray=kind==2;
+      rectangle(edges,boxes[box][0]/8.,boxes[box][1]/8.,boxes[box][2]/8.,boxes[box][3]/8.,(int)reverse);
+      work=0;
+      if(kind==3) OK(exr_vector_fill_blend_cmyk(&actual,edges,4,reverse ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO,
+                        inks,(colors[color]&255)/255.,mask_bitmap,(exr_blend_mode)mode,s,&work,NULL,&error));
+      else OK(exr_vector_fill_blend(&actual,edges,4,reverse ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO,
+                        colors[color],mask_bitmap,(exr_blend_mode)mode,s,&work,NULL,&error));
+      for(y=0;y<8;y++) for(x=0;x<8;x++) {
+        unsigned alpha=(overlap_eighths((int)x,boxes[box][0],boxes[box][2])*
+                        overlap_eighths((int)y,boxes[box][1],boxes[box][3])*255+32)/64;
+        if(mask) alpha=(alpha*clip.pixels[y*8+x]+127)/255;
+        if(!alpha) continue;
+        if(kind==3) exr_pixel_composite_cmyk(&reference,(int)x,(int)y,inks,(colors[color]&255)/255.,alpha,(exr_blend_mode)mode,s);
+        else if(s) exr_pixel_composite(&reference,(int)x,(int)y,colors[color],alpha,(exr_blend_mode)mode,s);
+        else if(mode==EXR_BLEND_NORMAL) exr_pixel(&reference,(int)x,(int)y,colors[color],alpha);
+        else exr_pixel_blend(&reference,(int)x,(int)y,colors[color],alpha,(exr_blend_mode)mode);
+      }
+      CHECK(!memcmp(actual.pixels,reference.pixels,(size_t)actual.stride*actual.height));
+      free(actual.pixels); free(reference.pixels);
+    }
+  { exr_vector_edge edges[4]; exr_bitmap image=bitmap(1,0);
+    rectangle(edges,1.0002,.9998,6.9998,7.0002,0);
+    work=0; OK(exr_vector_fill(&image,edges,4,EXR_VECTOR_NONZERO,0xffffffff,NULL,&work,NULL,&error));
+    CHECK(pixel(&image,1,1,0)==255 && pixel(&image,6,6,0)==255 && pixel(&image,0,1,0)==0 && pixel(&image,1,7,0)==0);
+    /* Sub-epsilon transform residuals qualify; a visible slant must not. */
+    rectangle(edges,1.125,1.125,6.75,6.75,0); edges[0].y1+=1e-10; edges[1].y0+=1e-10;
+    memset(image.pixels,0,64); work=0;
+    OK(exr_vector_fill(&image,edges,4,EXR_VECTOR_NONZERO,0xffffffff,NULL,&work,NULL,&error));
+    CHECK(pixel(&image,2,1,0)==223);
+    edges[0].y1+=1e-4; edges[1].y0+=1e-4;
+    memset(image.pixels,0,64); work=0;
+    OK(exr_vector_fill(&image,edges,4,EXR_VECTOR_NONZERO,0xffffffff,NULL,&work,NULL,&error));
+    CHECK(pixel(&image,2,1,0)==191);
+    free(image.pixels);
+  }
+  /* Coincident contours keep analytic coverage, nonzero winding and even-odd
+     cancellation, including reversed contours used by annotation appearances. */
+  { unsigned repeats,pattern,rule;
+    for(repeats=1;repeats<=3;repeats++) for(pattern=0;pattern<3;pattern++) for(rule=0;rule<2;rule++) {
+      exr_vector_edge edges[12]; exr_bitmap actual=bitmap(1,0),reference=bitmap(1,0);
+      int winding=0; unsigned x,y,filled;
+      for(i=0;i<repeats;i++) {
+        unsigned reversed=pattern==2 || (pattern==1 && (i&1)); winding+=reversed ? -1 : 1;
+        rectangle(edges+i*4,1.125,1.375,6.75,6.375,(int)reversed);
+      }
+      filled=rule ? repeats%2 : winding!=0; work=0;
+      OK(exr_vector_fill(&actual,edges,repeats*4,rule ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO,
+                         0xffffffff,NULL,&work,NULL,&error));
+      if(filled) for(y=0;y<8;y++) for(x=0;x<8;x++)
+        reference.pixels[y*8+x]=(unsigned char)((overlap_eighths((int)x,9,54)*overlap_eighths((int)y,11,51)*255+32)/64);
+      CHECK(!memcmp(actual.pixels,reference.pixels,64));
+      free(actual.pixels); free(reference.pixels);
+    }
+  }
+  free(clip.pixels);
+}
 int main(void) {
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); strokes(); dashes(); rectangle_fill_equivalence(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  curves(); strokes(); dashes(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);
