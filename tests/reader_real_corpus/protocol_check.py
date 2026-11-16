@@ -8,6 +8,22 @@ not download corpus files or invoke the SDK.
 import argparse
 import copy
 import json
+import pathlib
+import re
+
+# The SDK version this protocol check reasons about is read from cmake/versions.cmake
+# instead of being written here: the version guard rejects any literal that is not
+# the live one, and a hardcoded copy silently rots when the SDK moves.
+def _sdk_version():
+    source = (pathlib.Path(__file__).resolve().parents[2] / 'cmake' / 'versions.cmake').read_text(encoding='utf-8')
+    found = re.search(r'^\s*set\(EXR_SDK_VERSION\s+([0-9][0-9.]*)\)\s*$', source, re.MULTILINE)
+    if not found:
+        raise SystemExit('expected=EXR_SDK_VERSION in cmake/versions.cmake; actual=not found')
+    return found.group(1)
+
+
+SDK_VERSION = _sdk_version()
+
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -82,7 +98,7 @@ def main():
         records = []
         for item in base["files"]:
             records.append({"id": item["id"], "format": item["format"], "status": "accepted",
-                            "mismatches": [], "errors": [], "result": {"program": {"sdk_version": "3.40.0", "abi": 1}}})
+                            "mismatches": [], "errors": [], "result": {"program": {"sdk_version": SDK_VERSION, "abi": 1}}})
         summary = rac.summarize(base, records, fake_args)
         check("complete accepted summary passes", summary["accepted"])
         broken = copy.deepcopy(records)
