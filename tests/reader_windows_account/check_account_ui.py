@@ -977,6 +977,12 @@ def main():
         (output / 'account-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print(json.dumps({'accepted': True, 'count': len(checks)}), flush=True)
     finally:
+        if not (output / 'account-ui.json').exists():
+            report = {'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+                      'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'checks': checks, 'count': len(checks), 'error': str(sys.exc_info()[1]),
+                      'complete_product': False}
+            (output / 'account-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         for device in devices:
             if device.process.poll() is None:
                 if sys.exc_info()[0] is not None:

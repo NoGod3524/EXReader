@@ -19,7 +19,7 @@ import time
 import uiautomation as auto
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'windows_host' / 'worker_review'))
-from native_ui import file_dialog
+from native_ui import file_dialog, inventory
 
 USER32 = C.WinDLL("user32", use_last_error=True)
 KERNEL = C.WinDLL("kernel32", use_last_error=True)
@@ -246,6 +246,7 @@ def main():
                 return host["window"]
             return 0
         wait(find_window, 30, "host window")
+        inventory(host['window'], output / 'control-inventory.json')
 
         def foreground():
             for _ in range(40):
@@ -639,6 +640,13 @@ def main():
         if failures:
             raise SystemExit("native accessibility checks failed")
     finally:
+        if not (output / 'a11y-ui.json').exists():
+            report = {'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+                      'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'checks': checks, 'count': len(checks), 'failures': failures,
+                      'error': str(sys.exc_info()[1]), 'transport': 'sendinput+uia',
+                      'screen_reader_verified': False, 'complete_product': False}
+            (output / 'a11y-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         if process.poll() is None:
             USER32.PostMessageW(host["window"], 0x0010, 0, 0)
             try:

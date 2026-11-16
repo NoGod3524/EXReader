@@ -2,6 +2,7 @@
 """Public keyboard/file-picker actions shared by the retained Win32 suites."""
 import ctypes as C
 from ctypes import wintypes as W
+import json
 import time
 
 U = C.WinDLL('user32', use_last_error=True)
@@ -21,6 +22,8 @@ U.SendMessageW.argtypes = [W.HWND, W.UINT, W.WPARAM, W.LPARAM]
 U.SendMessageW.restype = W.LPARAM
 ENUM = C.WINFUNCTYPE(W.BOOL, W.HWND, W.LPARAM)
 U.EnumWindows.argtypes = [ENUM, W.LPARAM]
+U.EnumChildWindows.argtypes = [W.HWND, ENUM, W.LPARAM]
+U.GetDlgCtrlID.argtypes = [W.HWND]
 
 
 class Keyboard(C.Structure):
@@ -81,6 +84,22 @@ def tap(vk, modifiers=()):
 def page_key(window, vk, modifiers=()):
     focus(window, U.GetDlgItem(window, 123))
     tap(vk, modifiers)
+
+
+def inventory(window, output):
+    controls = []
+
+    @ENUM
+    def visit(child, unused):
+        name = C.create_unicode_buffer(100)
+        U.GetClassNameW(child, name, len(name))
+        controls.append({'id': U.GetDlgCtrlID(child), 'class': name.value,
+                         'visible': bool(U.IsWindowVisible(child)),
+                         'enabled': bool(U.IsWindowEnabled(child))})
+        return True
+
+    U.EnumChildWindows(window, visit, 0)
+    output.write_text(json.dumps(controls, indent=2) + '\n', encoding='utf-8')
 
 
 def file_dialog(pid):
