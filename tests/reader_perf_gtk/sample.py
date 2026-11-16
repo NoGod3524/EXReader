@@ -242,6 +242,10 @@ class Sampler:
             'LC_ALL': 'C.UTF-8',
             'GDK_BACKEND': 'x11',
         }
+        # xvfb-run creates a private authorization cookie; the launched GTK
+        # process needs that path even though its HOME is isolated for evidence.
+        if os.environ.get('XAUTHORITY'):
+            host_environment['XAUTHORITY'] = os.environ['XAUTHORITY']
         for name, mode in (('HOME', 0o755), ('XDG_RUNTIME_DIR', 0o700), ('XDG_CACHE_HOME', 0o755),
                            ('XDG_CONFIG_HOME', 0o755)):
             Path(host_environment[name]).mkdir(parents=True, exist_ok=True)
