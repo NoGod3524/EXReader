@@ -29,6 +29,21 @@ static int worker_generation;
 static gboolean busy,saving,save_failed,closing,close_after_save;
 static gboolean choosing_file;
 static gboolean profile_writable;
+/* Opt-in CI trace: GDK clock times are a virtual-display proxy, not physical vsync. */
+static FILE *frame_trace;
+static gint64 frame_update_us;
+static void frame_updated(GdkFrameClock *clock,gpointer unused) {
+  (void)clock;(void)unused;frame_update_us=g_get_monotonic_time();
+}
+static void frame_after_paint(GdkFrameClock *clock,gpointer unused) {
+  (void)unused;
+  if(!frame_trace || !frame_update_us) return;
+  fprintf(frame_trace,"{\"frame\":%"G_GINT64_FORMAT",\"frame_time_us\":%"G_GINT64_FORMAT
+    ",\"update_us\":%"G_GINT64_FORMAT",\"after_paint_us\":%"G_GINT64_FORMAT"}\n",
+    gdk_frame_clock_get_frame_counter(clock),gdk_frame_clock_get_frame_time(clock),
+    frame_update_us,g_get_monotonic_time());
+  fflush(frame_trace);frame_update_us=0;
+}
 #ifdef EXR_READER_DROP_IMPORT_UI
 static void file_input_paste(GtkWidget *,gpointer);
 static void file_input_attach(GtkWidget *);
@@ -1116,7 +1131,8 @@ static void selection_changed(GtkTextBuffer *buffer,GtkTextIter *iter,GtkTextMar
 static GtkWidget *scroll(GtkWidget *child) {
   GtkWidget *s=gtk_scrolled_window_new(NULL,NULL);gtk_container_add(GTK_CONTAINER(s),child);
   const char *name=atk_object_get_name(gtk_widget_get_accessible(child));
-  atk_object_set_name(gtk_widget_get_accessible(s),name && name[0] ? name:"Reading content");return s;
+  char *caption=g_strdup_printf("%s scroll area",name && name[0] ? name:"Reading content");
+  atk_object_set_name(gtk_widget_get_accessible(s),caption);g_free(caption);return s;
 }
 
 int main(int argc,char **argv) {
@@ -1341,6 +1357,15 @@ int main(int argc,char **argv) {
   g_signal_connect(stack,"notify::visible-child",G_CALLBACK(compact_stack_changed),NULL);
 #endif
   gtk_widget_show_all(window);gtk_window_present(GTK_WINDOW(window));queue=g_async_queue_new();
+  const char *trace_path=g_getenv("EXR_FRAME_TRACE");
+  if(trace_path && trace_path[0]) {
+    frame_trace=fopen(trace_path,"w");
+    if(!frame_trace) { g_printerr("Could not open frame trace\n");return 2; }
+    GdkFrameClock *clock=gtk_widget_get_frame_clock(window);
+    g_signal_connect(clock,"update",G_CALLBACK(frame_updated),NULL);
+    g_signal_connect(clock,"after-paint",G_CALLBACK(frame_after_paint),NULL);
+    gdk_frame_clock_begin_updating(clock);
+  }
 #ifdef EXR_READER_GTK_COMPACT
   compact_sync();
 #ifdef EXR_READER_PRODUCT_CATALOG
@@ -1356,6 +1381,7 @@ int main(int argc,char **argv) {
   thread=g_thread_new("reading",work,font_path);submit(last ? READER_OPEN:READER_SHELF,last,NULL,font_size);
 #endif
   state();gtk_main();g_thread_join(thread);g_async_queue_unref(queue);
+  if(frame_trace) { fclose(frame_trace);frame_trace=NULL; }
 #ifdef EXR_READER_PREFERENCES_UI
   preferences_cleanup();
 #endif

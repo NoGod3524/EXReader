@@ -1,7 +1,7 @@
 name: Ledger F08 F09 verify (Windows shell)
 on:
   push:
-    branches: [codex/ledger-f8910-verify]
+    branches: [codex/ledger-f8910-verify, codex/ledger-f08-f09-sol]
     paths:
       - 'examples/reader.c'
       - 'examples/windows/**'
@@ -40,6 +40,7 @@ jobs:
           & cmd.exe /c $wrapper | ForEach-Object {
             if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
+          exit 0
       - name: Configure and compile
         run: |
           $ErrorActionPreference = 'Stop'
@@ -81,12 +82,8 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          foreach ($i in 1..3) {
-            "--- process $i ---" | Out-File f08-shelf.txt -Append -Encoding utf8
-            & build/audit/exreader-shell-selection-test.exe shelf-budget C:/Windows/Fonts/segoeui.ttf *>> f08-shelf.txt
-          }
-          Select-String -Path f08-shelf.txt -Pattern 'SHELF-BUDGET (shelf_load|grid_move|list_move|peak|budgets|last_book)' | ForEach-Object { $_.Line }
-          exit 0
+          python tests/reader_perf_windows/render_budget.py --fixed-shelf --binary build/audit/exreader-shell-selection-test.exe --font C:/Windows/Fonts/segoeui.ttf --out f08-shelf.json --repeats 3 *> f08-shelf.txt
+          exit $LASTEXITCODE
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -102,6 +99,7 @@ jobs:
             f08-realbooks.txt
             f08-realbooks.json
             f08-shelf.txt
+            f08-shelf.json
             build/audit/control-inventory.json
           if-no-files-found: error
   keyboard:
@@ -142,6 +140,7 @@ jobs:
           & cmd.exe /c $wrapper | ForEach-Object {
             if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
           }
+          exit 0
       - name: Build the current production shell (EXReaderAudit)
         run: |
           $ErrorActionPreference = 'Stop'
@@ -149,6 +148,7 @@ jobs:
           cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=ON "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
           cmake --build build/audit --parallel 4 --target EXReaderAudit *> build.txt
           Get-FileHash build/audit/EXReaderAudit.exe | Format-List | Tee-Object binary.txt
+          exit 0
       - name: Fetch the frozen original books
         run: |
           $ErrorActionPreference = 'Stop'
@@ -157,6 +157,7 @@ jobs:
           Copy-Item evidence/dfinal-b-budget-security-20261114/frozen-books/*.epub build/f08-books/
           python tests/reader_perf_windows/render_budget.py --fetch-corpus --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books *> fetch.txt
           python -m pip install --disable-pip-version-check "uiautomation==2.0.29" *> pip.txt
+          exit 0
       - name: Collect shell UIA and real SendInput keyboard focus order (one foreground activation)
         run: |
           $ErrorActionPreference = 'Stop'

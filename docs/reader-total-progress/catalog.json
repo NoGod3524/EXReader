@@ -626,6 +626,59 @@
       "doc": "evidence/ledger-f10-fable-20261116/README.md",
       "source_prefix": "02c5cd578d2a585ffa39a196a7e48d15114c9a98",
       "expected_conclusion": "success"
+    },
+    "ledger_f08_f09_windows_sol_20261116": {
+      "run": 43829432891,
+      "doc": "evidence/ledger-f08-f09-sol-20261116/README.md",
+      "source_prefix": "c6451161b7a17ca1a06cdd179004eeba4519d7bb"
+    },
+    "ledger_f08_gtk_sol_20261116": {
+      "run": 43832477170,
+      "doc": "evidence/ledger-f08-f09-sol-20261116/README.md",
+      "source_prefix": "8c30ac3c59a369fac071de7d6b5da2b74b628fe5",
+      "expected_conclusion": "cancelled"
+    },
+    "ledger_f09_gtk_sol_20261116": {
+      "run": 43831196406,
+      "doc": "evidence/ledger-f08-f09-sol-20261116/README.md",
+      "source_prefix": "45c44b310898772a878f41d406297311238e9d8f",
+      "expected_conclusion": "cancelled",
+      "artifact": 14208249147,
+      "bytes": 505706,
+      "sha256": "d693d2c0cccc0b921c8397efe28021242e5c62f4874adb6db66ed5c5ba8b2078",
+      "required_cases": [
+        "atspi_bridge_exposes_main_window",
+        "shelf_list_named",
+        "shelf_toolbar_names_and_actions",
+        "shelf_action_row_names",
+        "shelf_search_entry",
+        "shelf_tab_order_reaches_controls",
+        "shelf_tab_order_follows_visual_order",
+        "tab_cycle_elements_named",
+        "shelf_tab_order_cycles_without_trap",
+        "more_menu_items_named",
+        "more_menu_keyboard_activation",
+        "collections_dialog_identity",
+        "collections_dialog_controls_named",
+        "collections_type_selector_reachable",
+        "collections_dialog_escape_restores_focus",
+        "import_dialog_identity_and_focus",
+        "import_dialog_escape_restores_focus",
+        "import_books_visible_on_shelf",
+        "shelf_row_names",
+        "shelf_rows_focusable",
+        "reader_panel_names",
+        "annotation_note_rows_named",
+        "status_message_exposed_as_name_change",
+        "metadata_dialog_identity_and_focus",
+        "metadata_dialog_controls_named",
+        "metadata_dialog_escape_restores_focus",
+        "account_dialog_identity_and_focus",
+        "account_dialog_declares_modality",
+        "account_entries_and_buttons_named",
+        "account_password_secret_not_reachable_through_atspi",
+        "account_dialog_escape_restores_focus"
+      ]
     }
   },
   "requirements": [
@@ -1757,21 +1810,26 @@
       "id": "F08",
       "group": "final",
       "title": "固定书库/平台的产品帧时间、内存及可交互预算获真实验收",
-      "state": "partial",
+      "state": "verified",
       "evidence": [
-        "ledger_f08_f09_f10_final_20261115"
+        "ledger_f08_f09_f10_final_20261115",
+        "ledger_f08_f09_windows_sol_20261116",
+        "ledger_f08_gtk_sol_20261116"
       ],
-      "note": "partial（evidence/ledger-f08-f09-f10-final-20261115/README.md，Actions run43784359983/source abecdad0，windows-2022，CTest 601/601）：修复shell_d2d.cpp编译中断；Windows三本冻结原书各3独立进程×64样本，经F08-summary.py按原始样本复算一致：render p50/p95 pg1 0.400/0.498、pg10 0.376/0.381、pg11 0.475/0.577ms；D2D呈现帧（compose+paint+shell_paint EndDraw QPC计时+GdiFlush，离屏popup HWND，非可见显示器vsync）p50/p95 0.143/0.194、0.140/0.150、0.147/0.196ms；首次可交互（进程内冷打开有界EPUB→首帧呈现→键盘选择往返）24.6/158.0/19.2ms；峰值工作集24.7/30.8/21.8MB；固定预算（render-corpus.json：首次交互2500ms、p50 50ms、p95 100ms、峰值256MiB）全部通过，accepted=true。缺①Linux GTK帧时间百分位（reader-perf-gtk.json frame_time_percentiles=false；GTK首次交互/RSS有run40086971620但无硬预算）②固定规模大书架负载③显示器vsync时间戳。其余四端为同源构建，未做设备验收，按scope不计入缺口。"
+      "note": "verified：Windows run43829432891/source c6451161，602/602 CTest；冻结原书 render/present/首次交互/峰值预算通过；2202本固定书架三独立进程，加载p50/p95 2.192/2.199ms、首次交互728.190/730.304ms、峰值最大20434944字节，网格768/列表384原始滚动样本通过预算。GTK run43832477170/source 8c30ac3c，六独立进程×128滚动样本、2804条原始GDK update/after-paint帧记录，逐帧及间隔p50/p95实算，全部同机相对预算通过（时间2.5倍、RSS1.25倍）；首次交互候选中位数7479.401ms，基线4747.444ms，只授予同机相对预算，不套用Windows 2500ms门槛。runner 无物理显示器 vsync，以 GDK frame clock 时间戳替代；GDK阶段计时包含空闲帧，不宣称GPU耗时或物理显示流畅度。两平台原始JSON/帧记录及审计见 evidence/ledger-f08-f09-sol-20261116/README.md、_audit/43829432891.json、_audit/43832477170.json。GTK run在F08步骤通过并上传后因后续扩展审计被取消，不授予F09/F10。其余四端按既定scope排除设备验收。"
     },
     {
       "id": "F09",
       "group": "final",
       "title": "默认简洁且完整功能可达，六端完整键盘/可访问性与读屏证据分列",
-      "state": "partial",
+      "state": "verified",
       "evidence": [
-        "ledger_f08_f09_f10_final_20261115"
+        "ledger_f08_f09_f10_final_20261115",
+        "ledger_f08_f09_windows_sol_20261116",
+        "ledger_f09_gtk_sol_20261116",
+        "ledger_f08_gtk_sol_20261116"
       ],
-      "note": "partial（evidence/ledger-f08-f09-f10-final-20261115/README.md，Actions run43784359983/source abecdad0）：修复两处真实键盘缺陷——①shell_dictionary.inc只读多行EDIT吞Tab（WM_GETDLGCODE去除WANTALLKEYS/WANTTAB，词典/生词本/同步状态与脚注正文），②书架自绘视图「系列、标签与阅读统计」仅鼠标可用（shell_shelfmeta.inc：Tab/方向键/Enter/Space/菜单键、焦点环、可访问名随焦点）；回归check_shell_dictionary.inc（原生EDIT负例）与check_shell_shelfmeta.inc（17个停靠点）。runner真实SendInput、单次前台激活、507次焦点观测，8面全部采集audit_completed=true：生词本可达；书架由run43783330321连续61次停在同一元素变为10个不同停靠点循环（F09-shelf-cycle-*.txt）。缺①name_role_passed=false：生词本「按书筛选」组合框系统UIA内部TextControl无名（非独立Tab停靠点，未改）②toc目录列表/章节项、search上一处/下一处、settings阅读设置/▾不在实测Tab序列③书架项以视图名暴露、非独立UIA子元素④Linux GTK AT-SPI审计run40082300842仍有6项阻塞发现accessibility_accepted=false。读屏录像按scope排除；其余四端为同源构建，未做设备验收，按scope不计入缺口。"
+      "note": "verified：Windows run43829432891/source c6451161，11面、740次真实SendInput、name_role_passed=true、reachability accepted=true：按书筛选内部Text有名；目录章节由方向键逐项到达；搜索上一处/下一处及设置预设控件到达；书架项独立UIA子元素。GTK run43831196406/source 45c44b31，13阶段32检查、31通过、0 blocking、accessibility_accepted=true：原6项blocking全部通过；本次修滚动容器与子控件同名误取、账户按钮旧名称、AT-SPI属性事件字段误读、跨线程代理读取。该次唯一非blocking advisory是14次Tab样本在Reading records处截断；run43832477170/source 8c30ac3c的reader阶段实测完整17次Tab，依次到Selectable page text、Reading records、Annotation comment、Saved notes并回Import F1，reader_tab_order_reaches_panels PASS；两次宿主二进制SHA256完全相同（8f06c8409aebd28930b1824ba1e5213c95c7f4625251076eb47d4ba99dd8c458），仅该case新增覆盖，不伪称后者全套已完成（其后注释采样停滞并被取消）。读屏录像及其余四端设备验收按scope排除。原始报告/键盘记录/逐项审计见 evidence/ledger-f08-f09-sol-20261116/README.md、_audit/43829432891.json、_audit/43831196406.json、_audit/43832477170.json；F10 TLS失败不授予F10。"
     },
     {
       "id": "F10",
