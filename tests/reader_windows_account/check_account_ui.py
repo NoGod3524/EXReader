@@ -456,9 +456,8 @@ def main():
 
     def import_paths(device, paths):
         for path in paths:
-            set_text(device.control('path'), str(path))
             seen = [device.status()]
-            send(device.control('import'), BM_CLICK, timeout=5000)
+            device.begin_import(path)
             end = time.monotonic() + 180
             while time.monotonic() < end:
                 status = device.status()

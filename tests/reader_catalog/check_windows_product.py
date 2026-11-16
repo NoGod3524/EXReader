@@ -147,12 +147,14 @@ def main():
                 def visit(hwnd, unused):
                     pid = wintypes.DWORD()
                     user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-                    if pid.value == owner.pid and user32.IsWindowVisible(hwnd) and user32.GetDlgItem(hwnd, 117):
+                    if pid.value == owner.pid and user32.IsWindowVisible(hwnd) and user32.GetDlgItem(hwnd, 127):
                         windows.append(hwnd)
                     return True
 
                 user32.EnumWindows(visit, 0)
-                if windows and not user32.IsWindowEnabled(user32.GetDlgItem(windows[0], 117)):
+                # Refresh is disabled for the entire worker/pending chain. The
+                # removed cancel button used the inverse enabled state.
+                if windows and user32.IsWindowEnabled(user32.GetDlgItem(windows[0], 127)):
                     label = ctypes.create_unicode_buffer(512)
                     result = ctypes.c_size_t()
                     replied = user32.SendMessageTimeoutW(user32.GetDlgItem(windows[0], 124), 0x000D,

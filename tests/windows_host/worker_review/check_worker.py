@@ -15,6 +15,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from make_fixtures import epub
+from native_ui import begin_import, page_key
 
 U, K = C.WinDLL('user32', use_last_error=True), C.WinDLL('kernel32', use_last_error=True)
 U.GetDlgItem.argtypes = [W.HWND, C.c_int]
@@ -108,7 +109,17 @@ class App:
         return U.GetDlgItem(self.window, IDS[name])
 
     def click(self, name, timeout=2000):
-        send(self.control(name), 0xF5, timeout=timeout)  # BM_CLICK
+        window = self.control(name)
+        if window:
+            send(window, 0xF5, timeout=timeout)  # BM_CLICK
+            return
+        # Current product commands live on the page; legacy review binaries
+        # above still exercise their original real buttons.
+        keys = {'open': (ord('O'), (0x11,)), 'select': (ord('A'), (0x11,)),
+                'copy': (ord('C'), (0x11,)), 'previous': (0x21, ()),
+                'next': (0x22, ()), 'cancel': (0x1B, ())}
+        assert name in keys, 'No current native UI equivalent for command: ' + name
+        page_key(self.window, *keys[name])
 
     def wait_idle(self):
         self.wait(lambda: self.q(14) == 0)
@@ -128,9 +139,15 @@ class App:
         raise AssertionError('Expected book row missing: '+title)
 
     def import_file(self, path):
-        set_text(self.control('path'), str(path))
-        self.click('import')
+        self.begin_import(path)
         self.wait_idle()
+
+    def begin_import(self, path):
+        if self.control('path') and self.control('import'):
+            set_text(self.control('path'), str(path))
+            self.click('import')
+        else:
+            begin_import(self.window, self.process.pid, path)
 
     def open(self, title, wait=True):
         send(self.control('books'), 0x186, self.row(title))
