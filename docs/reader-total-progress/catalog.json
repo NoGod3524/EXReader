@@ -679,6 +679,11 @@
         "account_password_secret_not_reachable_through_atspi",
         "account_dialog_escape_restores_focus"
       ]
+    },
+    "ledger_f10_gaps_20261116": {
+      "run": 43889788329,
+      "doc": "evidence/ledger-f10-gaps-20261116/README.md",
+      "source_prefix": "443fbcd7879aeec6bbf05c2961487f25ab909c30"
     }
   },
   "requirements": [
@@ -1835,7 +1840,7 @@
       "id": "F10",
       "group": "final",
       "title": "全链路隐私/凭据/文件稳定性/临时文件清理的真实安全出口",
-      "state": "partial",
+      "state": "verified",
       "evidence": [
         "credentials",
         "sideload",
@@ -1843,9 +1848,10 @@
         "sync",
         "ledger_f08_f09_f10_final_20261115",
         "ledger_f10_identity_20261116",
-        "ledger_f10_gtk_20261116"
+        "ledger_f10_gtk_20261116",
+        "ledger_f10_gaps_20261116"
       ],
-      "note": "partial（evidence/ledger-f10-fable-20261116/README.md）：Windows身份/TLS run43831439309、Linux GTK run43831439414均成功，source 02c5cd57。①LogonUserW+LoadUserProfile+线程模拟实测跨用户CM记录不可见、私有DACL拒绝sync.cred读取、DPAPI不可解；②真实network token触发CM错误1312，模块put/get/delete均UNAVAILABLE，壳在DPAPI也不可用时安全拒绝且无凭据残留；另以dpapi钩子实测回退文件保存/加载及默认CM保存/加载，含强杀stage和启动清理；③Windows壳/模块及Linux模块均以非loopback地址+DNS SAN测试私有CA未信任拒绝、信任后成功、主机名不匹配拒绝，另公共PKI七案例通过；④GTK真实Secret Service保存/加载/删除、锁定不可用、session-only重启隔离等48检查及临时文件恢复通过。⑤原生UI迁移与完整重跑见evidence/ledger-f10-ui32-20261116/README.md：101/102改为Ctrl+I系统选取器，117就绪观察改为刷新127，取消改为原生Close并重启核对已接受书籍；打开/选择/复制/翻页走现有键盘入口，metadata精确控件清单、Tab全量覆盖、映射修复与当前接收状态/缺祖先计数均已迁移。run43868930952/source ff9c470b真实编译、UI158、product10及metadata18通过；windows_accounts完成29/32，a11y完成2/24，严格summary拒绝。剩余：账号第30项墓碑行(title,deleted)保留断言失败，第31/32项未到达；worker第5项过滤中打开断言、书架删除入口缺失、评论框Shift+Tab焦点返回失败；其余a11y检查未到达。完整报告、失败栈及核对ZIP摘要的_audit/43868930952.json已保留。其余四端按既定scope为同源构建，未做设备验收。"
+      "note": "verified（evidence/ledger-f10-gaps-20261116/README.md）：保留已有 Windows 身份隔离、Credential Manager/DPAPI 不可用与回退、私有/公共 TLS、临时文件恢复和 GTK Secret Service 证据。四个剩余产品缺口已闭合：非 shell profile 的隐藏评论框恢复为可见原生 Tab 停靠点；原生打开103/移除本机副本104具备助记键、确认与既有本机移除语义；收到的书籍墓碑只作为显式历史呈现，不投影覆盖保留行，也不隐式重导入；过滤期间打开进入既有中断/重试队列。run43889788329/source443fbcd7 成功：UI158、product10、worker5、shelf13、metadata18、account32、a11y24 及严格同源 summary 全过；下载 ZIP 长度和 SHA-256 与 API 一致，_audit/43889788329.json evidence_ok=true。metadata 精确控件集合因新增103/104由14项增为16项，保留精确相等与全部18项行为检查；既有数据/头集合断言未放宽。此前 run43887968876 四处缺口套件已过，但旧 inventory 使 metadata/summary 拒绝，失败记录保留。F11 与 H.ipad.annotation_exchange 仍按既定 scope pending；不宣称六端统一产品或屏幕阅读器播报验收。"
     },
     {
       "id": "F11",

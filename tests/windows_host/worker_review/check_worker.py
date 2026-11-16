@@ -111,6 +111,24 @@ class App:
 
     def click(self, name, timeout=2000):
         window = self.control(name)
+        if window and name == 'delete':
+            # The native local-removal command confirms before deleting the copy.
+            assert U.PostMessageW(window, 0xF5, 0, 0)
+            def confirmation():
+                found = []
+                @ENUM
+                def visit(dialog, unused):
+                    pid = W.DWORD()
+                    U.GetWindowThreadProcessId(dialog, C.byref(pid))
+                    if pid.value == self.process.pid and U.GetDlgItem(dialog, 6) and U.GetDlgItem(dialog, 7):
+                        found.append(dialog)
+                    return True
+                U.EnumWindows(visit, 0)
+                return found[0] if found else None
+            dialog = self.wait(confirmation)
+            assert U.PostMessageW(U.GetDlgItem(dialog, 6), 0xF5, 0, 0)
+            self.wait(lambda: not confirmation())
+            return
         if window:
             send(window, 0xF5, timeout=timeout)  # BM_CLICK
             return

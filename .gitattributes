@@ -32,3 +32,6 @@ evidence/ledger-f10-fable-20261116/** -text -whitespace
 evidence/ledger-f10-ui32-20261116/** -text -whitespace
 # Empty final TSV fields are part of the original keyboard observation data.
 evidence/ledger-f08-f09-sol-20261116/**/keys.tsv whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Preserve F10 gap evidence bytes, including original Windows line endings.
+evidence/ledger-f10-gaps-20261116/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

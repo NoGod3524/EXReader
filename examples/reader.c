@@ -107,6 +107,7 @@ static int de_draw_item(const DRAWITEMSTRUCT *item);
 #endif
 
 enum {
+  IDC_OPEN_BUTTON = 103, IDC_DELETE_BUTTON = 104,
   IDC_SHELF_LABEL = 118, IDC_BOOKS, IDC_NOTES_LABEL, IDC_NOTES, IDC_NOTE_EDIT,
   IDC_PAGE, IDC_PAGE_LABEL, IDC_STATUS, IDC_SHELF_SEARCH, IDC_SHELF_REFRESH,
   IDC_METADATA_BUTTON, IDC_METADATA_TITLE, IDC_METADATA_AUTHOR, IDC_METADATA_FAVORITE,
@@ -323,7 +324,7 @@ typedef struct { char *key,*sort_title;uint64_t ordinal; } host_shelf_cursor;
 #endif
 
 typedef struct {
-  HWND window, page, books, notes, note_edit, status, page_label;
+  HWND window, page, books, notes, note_edit, status, page_label, open_button, delete_button;
 #ifdef EXR_READER_WINDOWS_IMPORT_ORGANIZE
   HWND import_button; /* optional cloud-import context anchor */
 #endif
@@ -3767,6 +3768,10 @@ static void create_controls(HWND parent) {
 #ifdef EXR_READER_WINDOWS_RECORDS
   records.button=make_button(parent,IDC_RECORDS,L"阅读记录(&L)");
 #endif
+#ifndef EXR_READER_WINDOWS_SHELL
+  g.open_button = make_button(parent, IDC_OPEN_BUTTON, L"打开(&O)");
+  g.delete_button = make_button(parent, IDC_DELETE_BUTTON, L"移除本机副本(&D)");
+#endif
   g.shelf_label = make_static(parent, IDC_SHELF_LABEL, L"书架");
   g.books = CreateWindowExW(WS_EX_CLIENTEDGE, L"LISTBOX", L"书架",
                             WS_CHILD | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT,
@@ -3831,8 +3836,34 @@ static void layout_controls(void) {
   shell_layout();
 #else
   RECT area; GetClientRect(g.window, &area);
-  MoveWindow(g.page, 0, 0, area.right, area.bottom, TRUE);
-  ShowWindow(g.page, SW_SHOWNA);
+  /* Native catalog profile: every keyboard stop must also be a visible surface. */
+  int sidebar = max(240,min(320,area.right / 3)), width = sidebar - 24;
+  int notes_y = 110 + (area.bottom - 240) / 2;
+  MoveWindow(g.shelf_label,12,10,width,20,TRUE);
+  MoveWindow(g.open_button,12,34,72,26,TRUE);
+  MoveWindow(g.delete_button,92,34,width-80,26,TRUE);
+#ifdef EXR_READER_PRODUCT_CATALOG
+  MoveWindow(g.shelf_search_label,12,66,52,22,TRUE);
+  MoveWindow(g.shelf_search,66,64,width-54,24,TRUE);
+  MoveWindow(g.shelf_refresh,12,92,64,26,TRUE);
+  ShowWindow(g.shelf_search,SW_SHOWNA);
+#ifdef EXR_READER_DESKTOP_METADATA
+  MoveWindow(g.metadata_button,80,92,64,26,TRUE);
+#endif
+#ifdef EXR_READER_WINDOWS_ACCOUNT
+  MoveWindow(g.account_button,148,92,width-136,26,TRUE);
+#endif
+#endif
+  MoveWindow(g.books,12,124,width,notes_y-132,TRUE);
+  MoveWindow(g.notes_label,12,notes_y,width,20,TRUE);
+  MoveWindow(g.notes,12,notes_y+24,width,area.bottom-notes_y-160,TRUE);
+  MoveWindow(g.note_edit_label,12,area.bottom-130,width,20,TRUE);
+  MoveWindow(g.note_edit,12,area.bottom-106,width,70,TRUE);
+  MoveWindow(g.page,sidebar,34,area.right-sidebar-12,area.bottom-70,TRUE);
+  MoveWindow(g.page_label,sidebar,10,area.right-sidebar-12,20,TRUE);
+  MoveWindow(g.status,12,area.bottom-26,area.right-24,22,TRUE);
+  ShowWindow(g.books,SW_SHOWNA);ShowWindow(g.notes,SW_SHOWNA);
+  ShowWindow(g.note_edit,SW_SHOWNA);ShowWindow(g.page,SW_SHOWNA);
 #endif
 }
 static int compute_view(void);
@@ -4390,6 +4421,10 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
       break;
     case WM_KEYDOWN:
       host_probe_log("key",(double)wparam);
+      /* Opening a selected book may supersede a background shelf query. */
+      if (wparam == 'O' && (GetKeyState(VK_CONTROL) & 0x8000)) {
+        host_command(HOST_CMD_OPEN); return 0;
+      }
       if ((g.job && g.job->kind!=JOB_PREFETCH) || g.pending) return 0;
       switch (wparam) {
 #ifdef EXR_READER_WINDOWS_PREFERENCES
@@ -4422,9 +4457,6 @@ static LRESULT CALLBACK page_procedure(HWND window, UINT message, WPARAM wparam,
           break;
         case 'C':
           if (GetKeyState(VK_CONTROL) & 0x8000) { copy_quote(); return 0; }
-          break;
-        case 'O':
-          if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(HOST_CMD_OPEN); return 0; }
           break;
         case 'I':
           if (GetKeyState(VK_CONTROL) & 0x8000) { host_command(HOST_CMD_IMPORT); return 0; }
@@ -5278,6 +5310,9 @@ static void host_update_controls(void) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
   EnableWindow(g.account_button,!g.closing && !g.metadata_running && !g.metadata_dialog);
 #endif
+  EnableWindow(g.open_button,!g.closing && !g.pending &&
+    (!g.job || g.job->kind==JOB_PRODUCT_SHELF) && g.shelf_count>0);
+  EnableWindow(g.delete_button,!busy && !g.closing && g.shelf_count>0);
   /* A command that just disabled itself must not take keyboard focus with it. */
   host_a11y_focus_guard(focused);
   /* A modal dialog owns the keyboard: keep the truthful blocked state. */
@@ -5704,7 +5739,7 @@ static void host_command(int id) {
 #ifdef EXR_READER_WINDOWS_SHELL
   if(de_active() && !de_exit())return;
 #endif
-  if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT
+  if (g.session.txt && id != HOST_CMD_OPEN && id != HOST_CMD_IMPORT && id != IDC_OPEN_BUTTON && id != IDC_DELETE_BUTTON
 #ifdef EXR_READER_WINDOWS_ACCOUNT
       && id != IDC_ACCOUNT_BUTTON
 #endif
@@ -5759,8 +5794,13 @@ static void host_command(int id) {
 #ifdef EXR_READER_WINDOWS_ACCOUNT
     case IDC_ACCOUNT_BUTTON: acct_open_dialog();break;
 #endif
+    case IDC_DELETE_BUTTON:
+      if(g.job || g.pending || g.closing) break;
+      if(MessageBoxW(g.window,L"移除这本书的本机副本及本机标注？云端书目和修订历史将保留，可重新下载原书。",
+          L"移除本机副本",MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2)==IDYES) delete_selected_book();
+      break;
     case HOST_CMD_IMPORT: import_path(NULL, 1); break;
-    case HOST_CMD_OPEN: open_selected_book(); break;
+    case IDC_OPEN_BUTTON: case HOST_CMD_OPEN: open_selected_book(); break;
   }
 }
 
