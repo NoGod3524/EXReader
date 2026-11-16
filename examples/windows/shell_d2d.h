@@ -88,6 +88,8 @@ HRESULT shell_d2d_text(shell_d2d *shell, int style, const wchar_t *text, float x
 /* S_FALSE: the device was lost and the target dropped; draw the frame again. */
 HRESULT shell_d2d_end(shell_d2d *shell);
 unsigned shell_d2d_recreated(const shell_d2d *shell);
+double shell_d2d_last_present_ms(const shell_d2d *shell);
+uint64_t shell_d2d_present_count(const shell_d2d *shell);
 
 /* Paints a rounded icon button into box on dc, centred in the box. */
 HRESULT shell_d2d_icon_button(shell_d2d *shell, HDC dc, const RECT *box, wchar_t glyph,

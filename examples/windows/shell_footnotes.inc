@@ -1,5 +1,22 @@
 /* SPDX-License-Identifier: MIT */
 /* A horizontal native text control, independent of the book's writing mode. */
+/* Read-only multiline EDITs answer WM_GETDLGCODE with DLGC_WANTALLKEYS, so
+   IsDialogMessage hands them Tab and focus never leaves (F09 keyboard trap).
+   Keep arrows/selection for scrolling and copying; give Tab back to the dialog. */
+static WNDPROC shell_readonly_edit_base;
+static LRESULT CALLBACK shell_readonly_edit_procedure(HWND window,UINT message,WPARAM wp,LPARAM lp) {
+  LRESULT result=CallWindowProcW(shell_readonly_edit_base,window,message,wp,lp);
+  if(message==WM_GETDLGCODE)result&=~(LRESULT)(DLGC_WANTALLKEYS|DLGC_WANTTAB|DLGC_WANTMESSAGE);
+  return result;
+}
+static HWND shell_readonly_edit_release_tab(HWND edit) {
+  if(!edit)return NULL;
+  WNDPROC base=(WNDPROC)GetWindowLongPtrW(edit,GWLP_WNDPROC);
+  if(base==shell_readonly_edit_procedure)return edit;
+  if(!shell_readonly_edit_base)shell_readonly_edit_base=base;
+  if(base==shell_readonly_edit_base)SetWindowLongPtrW(edit,GWLP_WNDPROC,(LONG_PTR)shell_readonly_edit_procedure);
+  return edit;
+}
 static HWND footnote_panel,footnote_text;
 static HFONT footnote_font;
 static size_t footnote_index=SIZE_MAX;
@@ -41,6 +58,7 @@ static int shell_footnote_open(size_t index,int x,int y) {
       0,0,0,0,g.window,NULL,type.hInstance,NULL);
     footnote_text=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL,
       0,0,0,0,footnote_panel,(HMENU)1,type.hInstance,NULL);
+    shell_readonly_edit_release_tab(footnote_text);
     SendMessageW(footnote_text,EM_SETLIMITTEXT,16*1024*1024,0);
   }
   if(!footnote_panel || !footnote_text)return 0;
