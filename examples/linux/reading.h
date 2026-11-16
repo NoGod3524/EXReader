@@ -20,6 +20,9 @@
 /* Private GTK host messages. SDK handles stay on one worker; results own their
    page bytes and list strings and contain no borrowed layout pointers. */
 typedef struct linux_reader linux_reader;
+/* Interrupted private stages removed/kept by the startup cleanup that runs in
+   linux_reader_open once the exclusive library lock is held (product catalog). */
+typedef struct { unsigned removed, kept; } linux_scavenge_counts;
 typedef enum { READER_SHELF, READER_OPEN, READER_IMPORT, READER_NEXT,
   READER_PREVIOUS, READER_FONT, READER_NOTE_ADD, READER_NOTE_REMOVE,
   READER_NOTE_JUMP, READER_COMMIT, READER_ZOOM, READER_SHELF_QUERY,
@@ -241,6 +244,7 @@ typedef struct {
 exr_status linux_reader_open(const char *database,const char *font,const exr_control *control,
                             linux_reader **out,exr_error *error);
 void linux_reader_close(linux_reader *reader);
+linux_scavenge_counts linux_reader_scavenged(const linux_reader *reader); /* product catalog builds */
 void linux_reader_execute(linux_reader *reader,const reader_command *command,reader_result *result);
 void reader_result_free(reader_result *result);
 void reader_secret_free(char *value);

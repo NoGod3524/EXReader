@@ -4077,7 +4077,13 @@ static void compose_page_view(HWND window) {
 #ifdef EXR_READER_WINDOWS_SHELL
     if(shell_active) SetTextColor(dc,shell_colorref(shell_colors->text_secondary));else
 #endif
-    SetTextColor(dc, shell_contrast ? GetSysColor(COLOR_WINDOWTEXT) : RGB(90, 90, 90));
+    {
+      /* shell_contrast exists only in the shell build; the account/product
+         hosts read the same system high-contrast state directly. */
+      HIGHCONTRASTW high; memset(&high, 0, sizeof(high)); high.cbSize = sizeof(high);
+      int contrast = SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(high), &high, 0) && (high.dwFlags & HCF_HIGHCONTRASTON);
+      SetTextColor(dc, contrast ? GetSysColor(COLOR_WINDOWTEXT) : RGB(90, 90, 90));
+    }
     DrawTextW(dc, hint, -1, &text, DT_CENTER | DT_VCENTER | DT_WORDBREAK);
   }
 #ifdef EXR_READER_WINDOWS_SHELL

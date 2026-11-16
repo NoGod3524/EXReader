@@ -1,0 +1,162 @@
+name: Ledger F10 verify (Windows credential identity and public TLS)
+on:
+  push:
+    branches: [codex/ledger-f8910-verify]
+    paths:
+      - 'examples/reader.c'
+      - 'examples/windows/**'
+      - 'extras/credentials/**'
+      - 'extras/webdav/**'
+      - 'tests/ledger_f8910/**'
+      - '.github/workflows/ledger-f8910-f10-identity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ledger-f8910-f10-identity-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+  F10_ROOT: C:\exr-f10
+jobs:
+  identity:
+    name: F10 Credential Manager UNAVAILABLE, cross-user isolation and public TLS (windows-2022)
+    runs-on: windows-2022
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record source identity
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          New-Item -ItemType Directory -Force f10 | Out-Null
+          "source_sha=$env:GITHUB_SHA" | Tee-Object f10/identity.txt
+          "run=$env:GITHUB_RUN_ID/$env:GITHUB_RUN_ATTEMPT" | Tee-Object f10/identity.txt -Append
+          "runner_user=$env:USERNAME computer=$env:COMPUTERNAME" | Tee-Object f10/identity.txt -Append
+          exit 0
+      - name: Enter compiler environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
+          $wrapper = Join-Path $env:RUNNER_TEMP 'f10-vcvars.bat'
+          Set-Content $wrapper ('@call "' + $bat + '" >nul' + "`r`n@set")
+          & cmd.exe /c $wrapper | ForEach-Object {
+            if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+          exit 0
+      - name: Build the shell check_sync, the credentials and WebDAV modules and both probes
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $prefix = "$env:GITHUB_WORKSPACE/build/f10-stage" -replace '\\','/'
+          cmake -S . -B build/shell -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=ON "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> f10/shell-configure.txt
+          cmake --build build/shell --parallel 4 --target check_sync *> f10/shell-build.txt
+          cmake -S extras/credentials -B build/credentials -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl "-DCMAKE_INSTALL_PREFIX=$prefix" *> f10/credentials-build.txt
+          cmake --build build/credentials --parallel 4 *>> f10/credentials-build.txt
+          cmake --install build/credentials *>> f10/credentials-build.txt
+          cmake -S extras/webdav -B build/webdav -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl "-DCMAKE_INSTALL_PREFIX=$prefix" *> f10/webdav-build.txt
+          cmake --build build/webdav --parallel 4 *>> f10/webdav-build.txt
+          cmake --install build/webdav *>> f10/webdav-build.txt
+          cmake -S tests/ledger_f8910/credential_identity -B build/credential-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl "-DCMAKE_PREFIX_PATH=$prefix" *> f10/probe-build.txt
+          cmake --build build/credential-probe *>> f10/probe-build.txt
+          cmake -S tests/ledger_f8910/public_tls -B build/tls-probe -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl "-DCMAKE_PREFIX_PATH=$prefix" *>> f10/probe-build.txt
+          cmake --build build/tls-probe *>> f10/probe-build.txt
+          New-Item -ItemType Directory -Force "$env:F10_ROOT/bin" | Out-Null
+          Copy-Item build/shell/check_sync.exe, build/credential-probe/credential-identity-probe.exe, build/tls-probe/public-tls-probe.exe "$env:F10_ROOT/bin/"
+          Get-FileHash "$env:F10_ROOT/bin/*.exe" | Format-Table -AutoSize | Out-String -Width 300 | Tee-Object f10/binaries.txt
+          exit 0
+      - name: Create a disposable non-admin local account and enable loopback WinRM
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $user = 'exrf10probe'
+          $password = 'Aa1!' + [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(18))
+          "::add-mask::$password"
+          $secure = ConvertTo-SecureString $password -AsPlainText -Force
+          New-LocalUser -Name $user -Password $secure -AccountNeverExpires -PasswordNeverExpires -Description 'EXReader F10 probe' | Out-Null
+          Add-LocalGroupMember -Group 'Remote Management Users' -Member $user
+          $admins = @(Get-LocalGroupMember -Group 'Administrators' | ForEach-Object Name)
+          "probe_user=$user in_administrators=$([bool]($admins -match "\\$user$"))" | Tee-Object f10/account.txt
+          Enable-PSRemoting -Force -SkipNetworkProfileCheck *> f10/winrm.txt
+          Set-Item WSMan:\localhost\Client\TrustedHosts -Value 'localhost' -Force
+          icacls $env:F10_ROOT /grant "${user}:(OI)(CI)F" *>> f10/account.txt
+          "F10_USER=$user" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "F10_PASSWORD=$password" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          exit 0
+      - name: Public TLS through the shell WinHTTP path and the installed WebDAV client
+        if: ${{ !cancelled() }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # Each probe reports its own checks; read both codes, then gate on them.
+          $PSNativeCommandUseErrorActionPreference = $false
+          & "$env:F10_ROOT/bin/check_sync.exe" --f10-public-tls *> f10/shell-public-tls.txt
+          $shell = $LASTEXITCODE
+          & "$env:F10_ROOT/bin/public-tls-probe.exe" *> f10/webdav-public-tls.json
+          $module = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          Get-Content f10/shell-public-tls.txt, f10/webdav-public-tls.json
+          "shell_exit=$shell module_exit=$module" | Tee-Object f10/public-tls-exit.txt
+          if ($shell -ne 0 -or $module -ne 0) { exit 1 }
+          exit 0
+      - name: Cross-user isolation of Credential Manager, private sync.cred and DPAPI
+        if: ${{ !cancelled() }}
+        env:
+          EXR_F10_USER: ${{ env.F10_USER }}
+          EXR_F10_PASSWORD: ${{ env.F10_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $PSNativeCommandUseErrorActionPreference = $false
+          & "$env:F10_ROOT/bin/check_sync.exe" --f10-cross-user *> f10/shell-cross-user.txt
+          $shell = $LASTEXITCODE
+          & "$env:F10_ROOT/bin/credential-identity-probe.exe" isolation *> f10/module-cross-user.txt
+          $module = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          Get-Content f10/shell-cross-user.txt, f10/module-cross-user.txt
+          "shell_exit=$shell module_exit=$module" | Tee-Object f10/cross-user-exit.txt
+          if ($shell -ne 0 -or $module -ne 0) { exit 1 }
+          exit 0
+      - name: Real Credential Manager UNAVAILABLE inside a WinRM network logon session
+        if: ${{ !cancelled() }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $secure = ConvertTo-SecureString $env:F10_PASSWORD -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential("$env:COMPUTERNAME\$env:F10_USER", $secure)
+          New-Item -ItemType Directory -Force "$env:F10_ROOT/unavailable" | Out-Null
+          $remote = {
+            param($bin, $data)
+            $shellOut = & "$bin\check_sync.exe" --f10-unavailable $data 2>&1 | Out-String
+            $shellExit = $LASTEXITCODE
+            $moduleOut = & "$bin\credential-identity-probe.exe" unavailable 2>&1 | Out-String
+            $moduleExit = $LASTEXITCODE
+            [pscustomobject]@{ whoami = (whoami); shell = $shellOut; shell_exit = $shellExit; module = $moduleOut; module_exit = $moduleExit }
+          }
+          $result = Invoke-Command -ComputerName localhost -Credential $credential -ScriptBlock $remote -ArgumentList "$env:F10_ROOT\bin", "$env:F10_ROOT\unavailable"
+          "remote_whoami=$($result.whoami)" | Tee-Object f10/unavailable-session.txt
+          $result.shell | Tee-Object f10/shell-unavailable.txt
+          $result.module | Tee-Object f10/module-unavailable.txt
+          "shell_exit=$($result.shell_exit) module_exit=$($result.module_exit)" | Tee-Object f10/unavailable-exit.txt
+          if ($result.shell_exit -ne 0 -or $result.module_exit -ne 0) { exit 1 }
+          exit 0
+      - name: Remove the disposable account
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if (Get-LocalUser -Name 'exrf10probe' -ErrorAction SilentlyContinue) { Remove-LocalUser -Name 'exrf10probe' }
+          'probe account removed' | Tee-Object f10/cleanup.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ledger-f8910-f10-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: f10/
+          if-no-files-found: error
