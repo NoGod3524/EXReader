@@ -28,6 +28,27 @@ class KeyboardTransport(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 ui.tap(ord('I'), (0x11,))
 
+    def test_filename_locator_excludes_the_search_edit(self):
+        for modern in (True, False):
+            classes = {1: '#32770', 2: 'FloatNotifySink' if modern else 'ComboBoxEx32',
+                       3: 'ComboBox', 4: 'Edit', 5: 'Edit'}
+            ids = {1: 0, 2: 0 if modern else 1148, 3: 1001, 4: 1001, 5: 1001}
+            parents = {2: 1, 3: 2, 4: 3, 5: 1}
+
+            def enumerate_children(dialog, callback, unused):
+                for child in parents:
+                    callback(child, 0)
+
+            def class_name(window, buffer, size):
+                buffer.value = classes.get(window, '')
+                return len(buffer.value)
+
+            with patch.multiple(ui.U, EnumChildWindows=enumerate_children,
+                                GetClassNameW=class_name, GetParent=lambda w: parents.get(w, 0),
+                                GetDlgCtrlID=lambda w: ids.get(w, 0),
+                                IsWindowVisible=lambda w: True, IsWindowEnabled=lambda w: True):
+                self.assertEqual(ui.filename_edit(1), 4)
+
 
 if __name__ == '__main__':
     unittest.main()

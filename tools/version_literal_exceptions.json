@@ -9776,7 +9776,7 @@
   },
   {
     "file": "tests/reader_windows_account/check_account_ui.py",
-    "line": 544,
+    "line": 543,
     "literal": "3.40.0",
     "line_sha256": "6f2fb8e52db5b50b42701fc471fef4b81e4ac0c2aa10b6cd458ee5c9b2a3548b",
     "purpose": "frozen_baseline",
