@@ -109,6 +109,10 @@ def summarize_fixed_shelf(output):
             errors.append(str(error))
     groups = {label: [row for row in launches if row['cohort'] == label]
               for label in ('baseline', 'candidate')}
+    geometries = {(row.get('geometry', {}).get('WIDTH'), row.get('geometry', {}).get('HEIGHT'))
+                  for row in launches}
+    if len(geometries) != 1 or any(not w or not h for w, h in geometries):
+        errors.append('shelf window geometry changed or was not observed')
     if document['books'] != 2202 or any(len(rows) != 3 for rows in groups.values()):
         errors.append('expected fixed 2202 books and three AB/BA process pairs')
     ratios = {}
