@@ -15,7 +15,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from make_fixtures import epub
-from native_ui import begin_import, page_key
+from native_ui import begin_import, page_key, inventory
 
 U, K = C.WinDLL('user32', use_last_error=True), C.WinDLL('kernel32', use_last_error=True)
 U.GetDlgItem.argtypes = [W.HWND, C.c_int]
@@ -83,6 +83,7 @@ class App:
             return self.window
         try:
             self.wait(found)
+            inventory(self.window, profile / 'control-inventory.json')
             self.wait_idle()
         except Exception:
             self.process.kill(); self.process.wait(); self.log.close()
