@@ -306,6 +306,8 @@ static HWND dict_control(HWND parent,const wchar_t *type,const wchar_t *label,in
     else if(id>=1000 && id<1064)name=L"词典释义";
   }
   if(name)host_a11y_describe(control,name,NULL);
+  if(control && !wcscmp(type,L"EDIT") && (style&(ES_MULTILINE|ES_READONLY))==(ES_MULTILINE|ES_READONLY))
+    shell_readonly_edit_release_tab(control);
   SendMessageW(control,WM_SETFONT,(WPARAM)dict_font,TRUE);return control;
 }
 static void dict_place(HWND parent,int id,int x,int y,int width,int height) {

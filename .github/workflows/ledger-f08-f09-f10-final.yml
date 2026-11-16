@@ -1,0 +1,177 @@
+name: Ledger F08 F09 F10 Windows evidence
+on:
+  push:
+    branches: [codex/ledger-f08-f09-f10-final]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PYTHONUTF8: '1'
+  PYTHONIOENCODING: utf-8
+jobs:
+  checks:
+    name: F08 budget + F09 tab release + F10 scavenger (windows-2022)
+    runs-on: windows-2022
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Enter compiler environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
+          $wrapper = Join-Path $env:RUNNER_TEMP 'final-vcvars.bat'
+          Set-Content $wrapper ('@call "' + $bat + '" >nul' + "`r`n@set")
+          & cmd.exe /c $wrapper | ForEach-Object {
+            if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+      - name: Configure and compile
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          "source_sha=$env:GITHUB_SHA" | Tee-Object identity.txt
+          "run=$env:GITHUB_RUN_ID/$env:GITHUB_RUN_ATTEMPT" | Tee-Object identity.txt -Append
+          cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=ON "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
+          cmake --build build/audit --parallel 4 *> build.txt
+          exit $LASTEXITCODE
+      - name: Run full CTest except release and doc coverage
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          ctest --test-dir build/audit --parallel 4 --output-on-failure --no-tests=error -E 'sdk-release|sdk-doc-coverage' --output-junit "$env:GITHUB_WORKSPACE/ctest.xml" *> ctest.txt
+          exit $LASTEXITCODE
+      - name: Record F08/F09/F10 checks verbosely
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          ctest --test-dir build/audit -V -R 'windows-(privacy-cleanup|a11y-(control|shell)|render-budget-report|selection-(render-budget|sync|keyboard|dictionary-storage))' *> new-checks.txt
+          exit $LASTEXITCODE
+      - name: Fetch frozen original books
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # Gutenberg regenerated pg11 upstream; seed the tracked frozen originals (hash-verified below).
+          New-Item -ItemType Directory -Force build/f08-books | Out-Null
+          Copy-Item evidence/dfinal-b-budget-security-20261114/frozen-books/*.epub build/f08-books/
+          python tests/reader_perf_windows/render_budget.py --fetch-corpus --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books *> f08-fetch.txt
+          exit $LASTEXITCODE
+      - name: Measure fixed original books (render, present, first interactive, fixed budgets)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          python tests/reader_perf_windows/render_budget.py --binary build/audit/exreader-shell-selection-test.exe --font C:/Windows/Fonts/segoeui.ttf --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books --out f08-realbooks.json --repeats 3 *> f08-realbooks.txt
+          exit $LASTEXITCODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ledger-final-checks-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            identity.txt
+            configure.txt
+            build.txt
+            ctest.txt
+            ctest.xml
+            new-checks.txt
+            f08-fetch.txt
+            f08-realbooks.txt
+            f08-realbooks.json
+            build/audit/control-inventory.json
+          if-no-files-found: error
+  keyboard:
+    name: F09 shell keyboard focus order, one activation (windows-2022)
+    runs-on: windows-2022
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Report the runner desktop
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # query.exe reports exit 1 on this runner even when it lists the sessions,
+          # so keep native propagation on for the rest of the step but read its status by hand.
+          $PSNativeCommandUseErrorActionPreference = $false
+          $sessions = & query.exe session 2>&1
+          $sessionExit = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          $sessions | Out-Host
+          "query_session_exit=$sessionExit" | Tee-Object identity.txt
+          "source_sha=$env:GITHUB_SHA" | Tee-Object identity.txt -Append
+          "run=$env:GITHUB_RUN_ID/$env:GITHUB_RUN_ATTEMPT" | Tee-Object identity.txt -Append
+          exit 0
+      - name: Enter compiler environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
+          $wrapper = Join-Path $env:RUNNER_TEMP 'f09-vcvars.bat'
+          Set-Content $wrapper ('@call "' + $bat + '" >nul' + "`r`n@set")
+          & cmd.exe /c $wrapper | ForEach-Object {
+            if ($_ -match '^(PATH|INCLUDE|LIB|LIBPATH)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File $env:GITHUB_ENV -Append -Encoding utf8 }
+          }
+      - name: Build the current production shell (EXReaderAudit)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          cmake -S . -B build/audit -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DEXR_BUILD_TESTS=ON -DEXR_BUILD_JNI=OFF -DEXR_BUILD_FUZZ=OFF -DEXR_ENABLE_MP3=OFF -DEXR_ENABLE_AAC=OFF -DEXR_ENABLE_ICC=OFF -DEXR_ENABLE_IMAGE_WEBP=OFF -DEXR_ENABLE_IMAGE_TIFF=OFF -DEXR_ENABLE_IMAGE_AVIF=OFF -DEXR_ENABLE_PDF_CRYPTO=ON "-DCMAKE_PROJECT_EXReader_INCLUDE=$env:GITHUB_WORKSPACE/examples/windows/selection_tests.cmake" *> configure.txt
+          cmake --build build/audit --parallel 4 --target EXReaderAudit *> build.txt
+          Get-FileHash build/audit/EXReaderAudit.exe | Format-List | Tee-Object binary.txt
+      - name: Fetch the frozen original books
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          New-Item -ItemType Directory -Force build/f08-books | Out-Null
+          Copy-Item evidence/dfinal-b-budget-security-20261114/frozen-books/*.epub build/f08-books/
+          python tests/reader_perf_windows/render_budget.py --fetch-corpus --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books *> fetch.txt
+          python -m pip install --disable-pip-version-check "uiautomation==2.0.29" *> pip.txt
+      - name: Collect shell UIA and real SendInput keyboard focus order (one foreground activation)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # The collector reports its own status through the evidence directory; a non-zero
+          # exit still ships usable output on this runner, so read the code by hand and gate
+          # on the evidence itself instead of on the exit status.
+          $PSNativeCommandUseErrorActionPreference = $false
+          python evidence/ledger-f08-f09-f10-r2-20261115/F09-keyboard-single-activation.py --binary build/audit/EXReaderAudit.exe --book build/f08-books/pg11.epub --font C:/Windows/Fonts/segoeui.ttf --output f09-keyboard --extended *> f09-keyboard.txt
+          $collectExit = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          "exit=$collectExit" | Tee-Object f09-keyboard.txt -Append
+          Get-Content f09-keyboard.txt
+          # Leave $LASTEXITCODE from the collector behind: the step must report this gate, not that exit.
+          if (-not (Test-Path f09-keyboard/all-controls.json)) {
+            Write-Error "keyboard collector produced no control inventory (exit=$collectExit)"
+            exit 1
+          }
+          Write-Host "keyboard evidence present (collector exit=$collectExit)"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ledger-final-keyboard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            identity.txt
+            configure.txt
+            build.txt
+            binary.txt
+            fetch.txt
+            f09-keyboard.txt
+            f09-keyboard/
+          if-no-files-found: error
+
+
+
+
