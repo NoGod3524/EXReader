@@ -22,8 +22,8 @@ static void json_string(const char *s) {
   putchar('"');
   for (; *s; s++) {
     unsigned char c = (unsigned char)*s;
-    if (c == '"' || c == '\') printf("\%c", c);
-    else if (c < 0x20) printf("\u%04x", c);
+    if (c == '"' || c == '\\') printf("\\%c", c);
+    else if (c < 0x20) printf("\\u%04x", c);
     else putchar(c);
   }
   putchar('"');
