@@ -29,25 +29,6 @@ static void privacy_assert_credential_acl(const wchar_t *path) {
   char *acl=host_utf8(sddl);assert(acl);printf("PRIVACY sync.cred protected current-user/SYSTEM owner/DACL=%s\n",acl);
   free(acl);LocalFree(sddl);free(sd);
 }
-/* Preserve any real Credential Manager record a developer machine holds. */
-typedef struct { int present; DWORD size; BYTE blob[1100]; } f10_saved_cm;
-static void f10_cm_backup(f10_saved_cm *saved) {
-  PCREDENTIALW cred=NULL;memset(saved,0,sizeof(*saved));
-  if(CredReadW(SY_CRED_TARGET,CRED_TYPE_GENERIC,0,&cred)) {
-    if(cred->CredentialBlobSize<=sizeof(saved->blob)) {saved->present=1;saved->size=cred->CredentialBlobSize;memcpy(saved->blob,cred->CredentialBlob,saved->size);}
-    SecureZeroMemory(cred->CredentialBlob,cred->CredentialBlobSize);CredFree(cred);
-  }
-}
-static void f10_cm_restore(f10_saved_cm *saved) {
-  if(!saved->present) {sy_cred_cm_delete();return;}
-  CREDENTIALW cred;memset(&cred,0,sizeof(cred));cred.Type=CRED_TYPE_GENERIC;cred.TargetName=(LPWSTR)SY_CRED_TARGET;
-  cred.Persist=CRED_PERSIST_LOCAL_MACHINE;cred.CredentialBlob=saved->blob;cred.CredentialBlobSize=saved->size;
-  cred.Comment=(LPWSTR)L"EXReader WebDAV credentials";CredWriteW(&cred,0);SecureZeroMemory(saved->blob,sizeof(saved->blob));
-}
-static void privacy_backend(const char *value) {
-  _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND",value);
-  SetEnvironmentVariableA("EXR_SYNC_CREDENTIAL_BACKEND",value[0] ? value:NULL); /* children inherit it */
-}
 static void test_privacy(void) {
   /* The sync.cred owner/DACL, stage-recovery and crash checks below are about the
      DPAPI fallback file, so pin that backend (children inherit it); the backend

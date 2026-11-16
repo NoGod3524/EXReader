@@ -457,6 +457,17 @@ static void vocab_open(void) {
   if(!vocab_panel) {
     vocab_panel=dict_card_create(L"生词本");
     dict_control(vocab_panel,L"COMBOBOX",L"按书筛选",DICT_FILTER,CBS_DROPDOWNLIST|WS_VSCROLL);
+    {
+      /* F09: the drop-down list combo box exposes its selection text and its
+         drop-down list as separate UIA elements; the system proxy leaves both
+         unnamed, so name them after the filter they belong to. */
+      HWND filter=GetDlgItem(vocab_panel,DICT_FILTER);COMBOBOXINFO info;memset(&info,0,sizeof(info));info.cbSize=sizeof(info);
+      host_a11y_describe_child(filter,1,L"按书筛选：当前书籍");
+      if(GetComboBoxInfo(filter,&info)) {
+        if(info.hwndItem && info.hwndItem!=filter) host_a11y_describe(info.hwndItem,L"按书筛选：当前书籍",NULL);
+        if(info.hwndList) host_a11y_describe(info.hwndList,L"按书筛选：书籍列表",NULL);
+      }
+    }
     dict_control(vocab_panel,L"LISTBOX",L"生词列表",DICT_LIST,LBS_NOTIFY|WS_VSCROLL);
     dict_control(vocab_panel,L"EDIT",L"",DICT_STATUS,ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL);
     dict_control(vocab_panel,L"BUTTON",L"导出 CSV",DICT_EXPORT,BS_OWNERDRAW);

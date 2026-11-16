@@ -68,6 +68,14 @@ static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small_font,HFONT bo
     }
     if(!sm_list) {
       int cx=pad+col*(card+gap);RECT cover={cx,y,cx+card,y+cover_h};
+      /* Large libraries: lay out and register every card, draw only those that
+         intersect the visible band (F08 fixed-scale shelf). */
+      RECT whole={cx,y,cx+card,cover.bottom+shell_px(46,shell_dpi)};
+      if(whole.bottom<top || whole.top>client.bottom) {
+        sm_add_hit(whole,SM_HIT_BOOK,s);
+        if(++col==columns){col=0;y+=cover_h+shell_px(64,shell_dpi);}
+        continue;
+      }
       RECT frame=cover;InflateRect(&frame,shell_px(4,shell_dpi),shell_px(4,shell_dpi));
       if(sm_hot==s)sm_round(dc,&frame,shell_colors->surface2,shell_colors->accent,shell_px(9,shell_dpi));
       sm_draw_cover(dc,cover,s,e);
@@ -83,6 +91,7 @@ static void sm_paint_shelf(HDC dc,RECT client,HFONT ui,HFONT small_font,HFONT bo
       if(++col==columns){col=0;y+=cover_h+shell_px(64,shell_dpi);}
     } else {
       int row=shell_px(64,shell_dpi);RECT r={pad,y,client.right-pad,y+row-shell_px(6,shell_dpi)};
+      if(r.bottom<top || r.top>client.bottom) {sm_add_hit(r,SM_HIT_BOOK,s);y+=row;continue;}
       sm_round(dc,&r,sm_hot==s ? shell_colors->surface2:shell_colors->layer_float,shell_colors->surface3,shell_px(9,shell_dpi));
       RECT cover={r.left+shell_px(10,shell_dpi),r.top+shell_px(5,shell_dpi),r.left+shell_px(46,shell_dpi),r.bottom-shell_px(5,shell_dpi)};
       sm_draw_cover(dc,cover,s,e);
