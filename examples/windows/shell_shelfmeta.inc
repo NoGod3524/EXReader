@@ -47,8 +47,11 @@ static void sm_hide(void);
 static void sm_recent(void);
 typedef struct { RECT r; int kind,arg; } sm_hit;
 enum { SM_HIT_BOOK=1,SM_HIT_TAG,SM_HIT_GRID,SM_HIT_LIST,SM_HIT_STATS,SM_HIT_SHELF,SM_HIT_BACK,SM_HIT_SOURCES,SM_HIT_IMPORT };
-static sm_hit sm_hits[512]; static int sm_hit_count;
+/* Every painted target is a hit and a keyboard stop; a large library has thousands,
+   so the list grows with the shelf (sm_order_buf is the shared keyboard-order scratch). */
+static sm_hit *sm_hits; static int sm_hit_count,sm_hit_capacity; static int *sm_order_buf;
 static int sm_key_index(void);
+static LONG sm_acc_child_of_hit(int hit);
 static char *sm_tags[256]; static int sm_tag_total;
 typedef struct { int book; HBITMAP bitmap; int w,h; char *path; } sm_cover_cache;
 static sm_cover_cache sm_covers[64]; static int sm_cover_count;
@@ -104,9 +107,26 @@ static const char *sm_id_sha(int64_t id) {
   sm_ids=next;sm_ids[sm_id_count].id=id;memcpy(sm_ids[sm_id_count].sha,sha,65);
   return sm_ids[sm_id_count++].sha;
 }
+/* Memo of shelf index -> entry. Every paint, filter, tag count and order
+   comparison asks this per book; the two linear lookups behind it made one
+   repaint of a 2202-book shelf O(n^2) (F08 fixed-scale shelf). A memo hit is
+   valid only while the shelf row keeps its id and the entry keeps its
+   content identity, so replaced shelves and entry tables fall back to the
+   lookup. */
+typedef struct { int64_t id; int entry; char sha[65]; } sm_memo;
+static sm_memo *sm_memos; static size_t sm_memo_count;
 static int sm_book_entry(size_t shelf) {
   if(shelf>=g.shelf_count)return -1;
-  const char *sha=sm_id_sha(g.shelf[shelf].id);return sha ? sm_get(sha):-1;
+  if(sm_memo_count<g.shelf_count) {
+    sm_memo *grown=realloc(sm_memos,g.shelf_count*sizeof(*grown));
+    if(grown) {memset(grown+sm_memo_count,0,(g.shelf_count-sm_memo_count)*sizeof(*grown));sm_memos=grown;sm_memo_count=g.shelf_count;}
+  }
+  sm_memo *memo=shelf<sm_memo_count ? &sm_memos[shelf]:NULL;
+  if(memo && memo->id && memo->id==g.shelf[shelf].id && memo->entry>=0 && memo->entry<sm_count &&
+     !strcmp(sm_entries[memo->entry].sha,memo->sha)) return memo->entry;
+  const char *sha=sm_id_sha(g.shelf[shelf].id);int e=sha ? sm_get(sha):-1;
+  if(memo && e>=0) {memo->id=g.shelf[shelf].id;memo->entry=e;memcpy(memo->sha,sha,65);}
+  return e;
 }
 static const char *sm_title(size_t shelf) {
   int e=sm_book_entry(shelf);
@@ -399,7 +419,16 @@ static void sm_round(HDC dc,const RECT *r,uint32_t fill,uint32_t line,int radius
   HGDIOBJ ob=SelectObject(dc,b),op=SelectObject(dc,p);RoundRect(dc,r->left,r->top,r->right,r->bottom,radius,radius);
   SelectObject(dc,ob);SelectObject(dc,op);DeleteObject(b);DeleteObject(p);
 }
-static void sm_add_hit(RECT r,int kind,int arg) { if(sm_hit_count<512)sm_hits[sm_hit_count++]=(sm_hit){r,kind,arg}; }
+static void sm_add_hit(RECT r,int kind,int arg) {
+  if(sm_hit_count==sm_hit_capacity) {
+    int capacity=sm_hit_capacity ? sm_hit_capacity*2:512;
+    sm_hit *hits=realloc(sm_hits,(size_t)capacity*sizeof(*hits));if(!hits) return;
+    sm_hits=hits;
+    int *order=realloc(sm_order_buf,(size_t)capacity*sizeof(*order));if(!order) return;
+    sm_order_buf=order;sm_hit_capacity=capacity;
+  }
+  sm_hits[sm_hit_count++]=(sm_hit){r,kind,arg};
+}
 static int sm_chip(HDC dc,int x,int y,const wchar_t *label,int on,int kind,int arg) {
   SIZE size;GetTextExtentPoint32W(dc,label,(int)wcslen(label),&size);
   RECT r={x,y,x+size.cx+shell_px(24,shell_dpi),y+shell_px(30,shell_dpi)};
@@ -753,18 +782,21 @@ static int sm_key_index(void) {
   for(int i=0;i<sm_hit_count;i++) if(sm_hits[i].kind==sm_key_kind && sm_hits[i].arg==sm_key_arg) return i;
   return -1;
 }
+static int sm_key_compare(const void *a,const void *b) {
+  /* Group first (toolbar, tag filters, books): scrolling moves only books. Then
+     visual row and column; the paint index keeps the order total and stable. */
+  int i=*(const int *)a,j=*(const int *)b;const sm_hit *x=&sm_hits[i],*y=&sm_hits[j];
+  int group_a=x->kind>=SM_HIT_GRID ? 0:x->kind==SM_HIT_TAG ? 1:2,group_b=y->kind>=SM_HIT_GRID ? 0:y->kind==SM_HIT_TAG ? 1:2;
+  int row_a=x->r.top/shell_px(8,shell_dpi),row_b=y->r.top/shell_px(8,shell_dpi);
+  if(group_a!=group_b) return group_a<group_b ? -1:1;
+  if(row_a!=row_b) return row_a<row_b ? -1:1;
+  if(x->r.left!=y->r.left) return x->r.left<y->r.left ? -1:1;
+  return (i>j)-(i<j);
+}
 static int sm_key_order(int *order) {
-  int n=0;
-  for(int i=0;i<sm_hit_count;i++) order[n++]=i;
-  for(int i=1;i<n;i++) for(int j=i;j>0;j--) {
-    /* Group first (toolbar, tag filters, books): scrolling moves only books. */
-    const sm_hit *x=&sm_hits[order[j-1]],*y=&sm_hits[order[j]];
-    int group_a=x->kind>=SM_HIT_GRID ? 0:x->kind==SM_HIT_TAG ? 1:2,group_b=y->kind>=SM_HIT_GRID ? 0:y->kind==SM_HIT_TAG ? 1:2;
-    int row_a=x->r.top/shell_px(8,shell_dpi),row_b=y->r.top/shell_px(8,shell_dpi);
-    if(group_a<group_b || (group_a==group_b && (row_a<row_b || (row_a==row_b && x->r.left<=y->r.left)))) break;
-    int t=order[j-1];order[j-1]=order[j];order[j]=t;
-  }
-  return n;
+  for(int i=0;i<sm_hit_count;i++) order[i]=i;
+  if(sm_hit_count>1) qsort(order,(size_t)sm_hit_count,sizeof(*order),sm_key_compare);
+  return sm_hit_count;
 }
 static void sm_key_label(const sm_hit *h,wchar_t *out,size_t cap) {
   static const wchar_t *fixed[]={L"",L"",L"",L"网格视图",L"列表视图",L"阅读统计",L"返回书架",L"返回阅读",L"书源",L"打开书籍"};
@@ -781,7 +813,8 @@ static void sm_key_announce(void) {
   if(i<0) swprintf(label,320,L"系列、标签与阅读统计");else sm_key_label(&sm_hits[i],label,320);
   host_a11y_describe(sm_view,label,L"Tab 或方向键移动，Enter 激活，菜单键打开书籍菜单");
   NotifyWinEvent(EVENT_OBJECT_NAMECHANGE,sm_view,OBJID_CLIENT,CHILDID_SELF);
-  if(GetFocus()==sm_view) NotifyWinEvent(EVENT_OBJECT_FOCUS,sm_view,OBJID_CLIENT,CHILDID_SELF);
+  /* Focus lands on the stop's own MSAA child (shell_shelfmeta_a11y.inc). */
+  if(GetFocus()==sm_view) NotifyWinEvent(EVENT_OBJECT_FOCUS,sm_view,OBJID_CLIENT,i>=0 ? sm_acc_child_of_hit(i):CHILDID_SELF);
 }
 static void sm_key_reveal(void) {
   int i=sm_key_index();if(i<0) return;
@@ -794,7 +827,7 @@ static void sm_key_reveal(void) {
   InvalidateRect(sm_view,NULL,FALSE);UpdateWindow(sm_view);
 }
 static void sm_key_move(int step) {
-  int order[512],n=sm_key_order(order);if(!n) return;
+  int *order=sm_order_buf,n=sm_key_order(order);if(!n) return;
   int at=-1,current=sm_key_index();
   for(int i=0;i<n;i++) if(order[i]==current) at=i;
   at=at<0 ? (step>0 ? 0:n-1):(at+step+n)%n;
@@ -811,8 +844,10 @@ static void sm_key_activate(int menu) {
     sm_key_announce();
   }
 }
+#include "shell_shelfmeta_a11y.inc"
 static LRESULT CALLBACK sm_view_procedure(HWND window,UINT message,WPARAM wp,LPARAM lp) {
   switch(message) {
+    case WM_GETOBJECT: {LRESULT object=sm_acc_object(window,wp,lp);if(object) return object;break;}
     case WM_ERASEBKGND:return 1;
     case WM_PAINT:{PAINTSTRUCT ps;HDC dc=BeginPaint(window,&ps);sm_paint(window,dc);EndPaint(window,&ps);return 0;}
     case WM_PRINTCLIENT:sm_paint(window,(HDC)wp);return 0;

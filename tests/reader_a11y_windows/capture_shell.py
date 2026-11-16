@@ -60,6 +60,9 @@ def main():
     parser.add_argument('--output', type=Path)
     parser.add_argument('--extended', action='store_true',
                         help='also collect dictionary settings, vocabulary and WebDAV account panels')
+    parser.add_argument('--reach', action='store_true',
+                        help='also drive conditional controls into reach: a real search with results, '
+                             'a saved style preset and arrow keys through the table of contents')
     parser.add_argument('--uia-only', action='store_true',
                         help='collect owned UIA InvokePattern surfaces without keyboard input')
     args = parser.parse_args()
@@ -82,6 +85,8 @@ def main():
     expected = ['closed', 'search', 'settings', 'toc', 'shelf']
     if args.extended:
         expected += ['dictionary-settings', 'vocabulary', 'webdav-account']
+    if args.reach:
+        expected += ['search-results', 'settings-preset', 'toc-arrows']
 
     def press(key, modifiers=()):
         foreground = w32.foreground()
@@ -92,12 +97,14 @@ def main():
             'transport': keyboard.transport, 'key': key, 'modifiers': list(modifiers),
             'element': uia.focused()})
 
-    def snapshot(label, steps):
+    def snapshot(label, steps, extra=()):
         tree = uia.dump(hwnd, max_depth=20, max_nodes=5000, max_children=500)
         evidence.write_json(output / ('uia-' + label + '.json'), tree)
         captures[label] = audit(tree)
         start = len(trace.events)
         if keyboard:
+            for key, modifiers in extra:
+                press(key, modifiers)
             for _ in range(steps):
                 press('tab')
             for _ in range(steps):
@@ -158,12 +165,27 @@ def main():
         snapshot('closed', 12)
         activate(162) if args.uia_only else press(0x46, ('ctrl',))
         snapshot('search', 20)
+        if args.reach and not args.uia_only:
+            # Focus is back in the query field after the balanced walk: type a
+            # query with matches so the previous/next result buttons enable.
+            for virtual_key in (0x41, 0x4C, 0x49, 0x43, 0x45):  # a l i c e
+                press(virtual_key)
+            press('enter')
+            time.sleep(1.5)
+            snapshot('search-results', 24)
         activate(205) if args.uia_only else press('escape')
         activate(161)
         snapshot('settings', 60)
+        if args.reach and not args.uia_only:
+            activate(1841)  # 保存为预设: a saved preset enables the preset list button
+            time.sleep(.5)
+            snapshot('settings-preset', 62)
         activate(161) if args.uia_only else press('escape')
         activate(160)
         snapshot('toc', 16)
+        if args.reach and not args.uia_only:
+            # One Tab stop for the list; chapters are reached with the arrow keys.
+            snapshot('toc-arrows', 0, [('down', ())] * 24 + [('home', ()), ('end', ()), ('up', ())])
         activate(160) if args.uia_only else press('escape')
         if args.extended:
             activate(161)

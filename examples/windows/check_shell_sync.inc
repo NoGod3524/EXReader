@@ -108,7 +108,30 @@ static void syt_scan_for(const wchar_t *dir,const char *needle,int *hits,int *fi
   FindClose(h);
 }
 
+/* Preserve any real Credential Manager record a developer machine holds. */
+typedef struct { int present; DWORD size; BYTE blob[1100]; } f10_saved_cm;
+static void f10_cm_backup(f10_saved_cm *saved) {
+  PCREDENTIALW cred=NULL;memset(saved,0,sizeof(*saved));
+  if(CredReadW(SY_CRED_TARGET,CRED_TYPE_GENERIC,0,&cred)) {
+    if(cred->CredentialBlobSize<=sizeof(saved->blob)) {saved->present=1;saved->size=cred->CredentialBlobSize;memcpy(saved->blob,cred->CredentialBlob,saved->size);}
+    SecureZeroMemory(cred->CredentialBlob,cred->CredentialBlobSize);CredFree(cred);
+  }
+}
+static void f10_cm_restore(f10_saved_cm *saved) {
+  if(!saved->present) {sy_cred_cm_delete();return;}
+  CREDENTIALW cred;memset(&cred,0,sizeof(cred));cred.Type=CRED_TYPE_GENERIC;cred.TargetName=(LPWSTR)SY_CRED_TARGET;
+  cred.Persist=CRED_PERSIST_LOCAL_MACHINE;cred.CredentialBlob=saved->blob;cred.CredentialBlobSize=saved->size;
+  cred.Comment=(LPWSTR)L"EXReader WebDAV credentials";CredWriteW(&cred,0);SecureZeroMemory(saved->blob,sizeof(saved->blob));
+}
+static void privacy_backend(const char *value) {
+  _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND",value);
+  SetEnvironmentVariableA("EXR_SYNC_CREDENTIAL_BACKEND",value[0] ? value:NULL); /* children inherit it */
+}
 static void test_sync(void) {
+  /* This suite covers the DPAPI sync.cred file (encrypted at rest, tamper
+     rejection); pin that backend and leave any real Credential Manager record
+     exactly as it was. The Credential Manager path is test_privacy's. */
+  f10_saved_cm saved_cm;f10_cm_backup(&saved_cm);privacy_backend("dpapi");
   wchar_t temp[HOST_PATH];GetTempPathW(HOST_PATH,temp);
   swprintf(syt_root,HOST_PATH,L"%lsexreader-sync-check-%lu",temp,(unsigned long)GetCurrentProcessId());
   assert(ensure_directory(syt_root));
@@ -305,4 +328,5 @@ static void test_sync(void) {
   mock_reset();
   sy_queue_clear();free(sy_url);sy_url=NULL;
   WSACleanup();
+  privacy_backend("");f10_cm_restore(&saved_cm);
 }

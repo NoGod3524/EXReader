@@ -519,6 +519,7 @@ typedef exr_status (*host_progress_fn)(void *context, unsigned percent);
 static void host_a11y_status_changed(void);
 /* Accessible name/help for a window-based control; a panel appearing or going away. */
 static void host_a11y_describe(HWND window, const wchar_t *name, const wchar_t *help);
+static inline void host_a11y_describe_child(HWND window, DWORD child, const wchar_t *name);
 static void host_a11y_panel_toggled(HWND panel, int shown);
 static void host_a11y_prepare_note(void);
 static inline void host_a11y_owner_enabled(int enabled);

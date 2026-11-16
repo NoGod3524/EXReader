@@ -84,7 +84,7 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
     if(TEST native-docx-footnotes-ui)
       set_tests_properties(native-docx-footnotes-ui PROPERTIES RUN_SERIAL TRUE)
     endif()
-    foreach(group boundaries copy keyboard raster generated annotations shelf style shelfmeta dictionary-storage render-budget)
+    foreach(group boundaries copy keyboard raster generated annotations shelf style shelfmeta shelf-budget dictionary-storage render-budget)
       add_test(NAME windows-selection-${group} COMMAND exreader-shell-selection-test ${group}
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf")
       set_tests_properties(windows-selection-${group} PROPERTIES RUN_SERIAL TRUE)
