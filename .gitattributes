@@ -24,3 +24,5 @@ evidence/dfinal-b-budget-security-20261114/** -text -whitespace
 # Preserve D-FINAL-C original Actions logs and extracted artifact bytes.
 evidence/dfinal-c-20261114/** -text -whitespace
 
+# Preserve F10 original artifact bytes for audit hash replay.
+evidence/ledger-f10-fable-20261116/** -text -whitespace
