@@ -542,6 +542,9 @@ static exr_status acct_project_step(host_job *job) {
       if (row->kind == READER_SELECTION_CONCURRENT) { o->concurrent++; continue; }
       if (row->kind == READER_SELECTION_PENDING_PARENTS) { o->pending_parents++; continue; }
       if (row->kind != READER_SELECTION_SAFE) { o->blocked++; continue; }
+      /* Received deletions remain explicit history. Removing a local original is
+         a separate user action; receipt must not hide or resurrect that copy. */
+      if (row->deleted) { o->tombstones++; continue; }
       char *title = NULL, *sort = NULL; reader_revision_error local = {0};
       if (!row->deleted) {
         if (reader_revision_book_title(store, row->revision, &title, &local) != READER_REV_OK) { o->project_failed++; continue; }
