@@ -151,10 +151,13 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           "exit=$collectExit" | Tee-Object f09-keyboard.txt -Append
           Get-Content f09-keyboard.txt
+          # Leave $LASTEXITCODE from the collector behind: the step must report this gate, not that exit.
           if (-not (Test-Path f09-keyboard/all-controls.json)) {
             Write-Error "keyboard collector produced no control inventory (exit=$collectExit)"
+            exit 1
           }
           Write-Host "keyboard evidence present (collector exit=$collectExit)"
+          exit 0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -168,6 +171,7 @@ jobs:
             f09-keyboard.txt
             f09-keyboard/
           if-no-files-found: error
+
 
 
 
