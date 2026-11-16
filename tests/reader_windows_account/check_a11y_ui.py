@@ -19,7 +19,7 @@ import time
 import uiautomation as auto
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'windows_host' / 'worker_review'))
-from native_ui import file_dialog, inventory
+from native_ui import file_dialog, filename_edit, inventory
 
 USER32 = C.WinDLL("user32", use_last_error=True)
 KERNEL = C.WinDLL("kernel32", use_last_error=True)
@@ -212,7 +212,8 @@ def main():
         wait(lambda: focus_of(process.pid) == control(123), 10, 'import shortcut focus')
         tap(ord('I'), (VK_CONTROL,))
         dialog = wait(lambda: file_dialog(process.pid), 30, 'native import file picker')
-        filename = USER32.GetDlgItem(dialog, 0x480)  # OPENFILENAME edt1
+        inventory(dialog, output / 'import-controls.json')
+        filename = wait(lambda: filename_edit(dialog), 30, 'native filename edit')
         element(filename).SetFocus()
         wait(lambda: focus_of(process.pid) == filename, 10, 'filename focus')
         text = C.create_unicode_buffer(str(path))

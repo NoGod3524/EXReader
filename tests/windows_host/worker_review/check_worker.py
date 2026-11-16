@@ -148,7 +148,7 @@ class App:
             set_text(self.control('path'), str(path))
             self.click('import')
         else:
-            begin_import(self.window, self.process.pid, path)
+            begin_import(self.window, self.process.pid, path, self.profile / 'import-controls.json')
 
     def open(self, title, wait=True):
         send(self.control('books'), 0x186, self.row(title))
