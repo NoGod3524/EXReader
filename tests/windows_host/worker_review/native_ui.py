@@ -24,6 +24,8 @@ ENUM = C.WINFUNCTYPE(W.BOOL, W.HWND, W.LPARAM)
 U.EnumWindows.argtypes = [ENUM, W.LPARAM]
 U.EnumChildWindows.argtypes = [W.HWND, ENUM, W.LPARAM]
 U.GetDlgCtrlID.argtypes = [W.HWND]
+U.GetParent.argtypes = [W.HWND]
+U.GetParent.restype = W.HWND
 
 
 class Keyboard(C.Structure):
@@ -102,6 +104,25 @@ def inventory(window, output):
     output.write_text(json.dumps(controls, indent=2) + '\n', encoding='utf-8')
 
 
+def filename_edit(dialog):
+    found = []
+
+    @ENUM
+    def visit(child, unused):
+        name = C.create_unicode_buffer(100)
+        U.GetClassNameW(child, name, len(name))
+        identifier = U.GetDlgCtrlID(child)
+        # Classic edt1, or the Explorer picker filename combo (cmb13)
+        # whose actual editable child has ID 1001.
+        if name.value.lower() == 'edit' and (identifier == 0x480 or
+                (identifier == 1001 and U.GetDlgCtrlID(U.GetParent(child)) == 0x47C)):
+            found.append(child)
+        return True
+
+    U.EnumChildWindows(dialog, visit, 0)
+    return found[-1] if found else 0
+
+
 def file_dialog(pid):
     found = []
 
@@ -112,8 +133,7 @@ def file_dialog(pid):
         name = C.create_unicode_buffer(100)
         U.GetClassNameW(window, name, len(name))
         if owner.value == pid and name.value == '#32770' and U.IsWindowVisible(window):
-            # edt1 is the documented filename edit in OPENFILENAME's template.
-            if U.GetDlgItem(window, 0x480):
+            if U.GetDlgItem(window, 1) and U.GetDlgItem(window, 2):
                 found.append(window)
         return True
 
@@ -121,11 +141,13 @@ def file_dialog(pid):
     return found[-1] if found else 0
 
 
-def begin_import(window, pid, path):
+def begin_import(window, pid, path, output=None):
     wait(lambda: U.IsWindowEnabled(U.GetDlgItem(window, 127)), 120, 'import ready')
     page_key(window, ord('I'), (0x11,))
     dialog = wait(lambda: file_dialog(pid), what='native import file picker')
-    edit = U.GetDlgItem(dialog, 0x480)
+    if output:
+        inventory(dialog, output)
+    edit = wait(lambda: filename_edit(dialog), what='native filename edit')
     text = C.create_unicode_buffer(str(path))
     assert U.SendMessageW(edit, 0xC, 0, C.addressof(text)), 'filename edit rejected path'
     # Submit with a real keyboard event; a synchronous click would block in the modal loop.
