@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "run": 43832477170,
+  "attempt": 1,
+  "source_sha": "8c30ac3c59a369fac071de7d6b5da2b74b628fe5",
+  "evidence_ok": true,
+  "scope": [
+    "F08 GTK fixed 2202-book shelf and per-frame GDK clock",
+    "F09 GTK reader Tab cycle supplementary case only; identical host binary to accepted run43831196406"
+  ],
+  "workflow_conclusion": "cancelled",
+  "checks": {
+    "accepted": true,
+    "fresh_processes": 6,
+    "scroll_samples": 768,
+    "gdk_frames": 2804,
+    "relative_budgets": {
+      "load_ms": 1.5838504494574863,
+      "first_interactive_ms": 1.5754585795999716,
+      "scroll_p50_ms": 0.9659921216804659,
+      "scroll_p95_ms": 0.4682495481091802,
+      "rss_kb": 0.9519572953736655,
+      "frame_p50_ms": 1.0,
+      "frame_p95_ms": 0.9307228915662651,
+      "interval_p50_ms": 1.0,
+      "interval_p95_ms": 1.0
+    },
+    "limits": {
+      "load_ms": 2.5,
+      "first_interactive_ms": 2.5,
+      "scroll_p50_ms": 2.5,
+      "scroll_p95_ms": 2.5,
+      "rss_kb": 1.25,
+      "frame_p50_ms": 2.5,
+      "frame_p95_ms": 2.5,
+      "interval_p50_ms": 2.5,
+      "interval_p95_ms": 2.5
+    },
+    "reader_tab_order_reaches_panels": true,
+    "reader_cycle_tab_observations": 17,
+    "host_binary_sha256": "8f06c8409aebd28930b1824ba1e5213c95c7f4625251076eb47d4ba99dd8c458",
+    "full_f09_audit_completed": false
+  },
+  "excluded": [
+    "Full F09 rerun was cancelled during later annotation sampling; acceptance comes from run43831196406",
+    "F10 public TLS failed",
+    "physical display vsync"
+  ],
+  "artifacts": [
+    {
+      "id": 14210192429,
+      "name": "ledger-f8910-gtk-43832477170-1",
+      "size_in_bytes": 504153,
+      "digest": "sha256:21e51b6f5f34266b6a5470930f663618bab9cbd2153408c5a1e5ae407a9c6fe5"
+    },
+    {
+      "id": 14209421972,
+      "name": "ledger-f08-gtk-43832477170-1",
+      "size_in_bytes": 2638053,
+      "digest": "sha256:c26cb0bf160a006a606a85a6dec937d2d1aa7a4075712a91ad26a99b85bedfda"
+    }
+  ],
+  "files": {
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/baseline-0/frames.jsonl": {
+      "bytes": 54358,
+      "sha256": "ef5228b044f704052ab471f1e93fb751c535a6572bdc63b8d6151852051c2a0e"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/baseline-1/frames.jsonl": {
+      "bytes": 26590,
+      "sha256": "36532836b815adf67ed02e9e36ad40d6af85e5c8680c95d99ef65d59213c807b"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/baseline-2/frames.jsonl": {
+      "bytes": 34155,
+      "sha256": "ff1889adb25054aa247eb372ae29c201fbe88e0aca941114d11c532330f2ea37"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/candidate-0/frames.jsonl": {
+      "bytes": 45458,
+      "sha256": "c49eec647724014dad2fb8edc42206cc911eea169d8dc161c72718bf955b594c"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/candidate-1/frames.jsonl": {
+      "bytes": 56761,
+      "sha256": "50e8d59ad0bcd3f627828e685aeb361a43e7c3d75c2317923dbe43b5bc91deaa"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/candidate-2/frames.jsonl": {
+      "bytes": 31574,
+      "sha256": "4a50433a429f593be16771f8c9e8ae01aa8fdd9ad7b4b5170fd12b5620d1977e"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/corpus.json": {
+      "bytes": 262734,
+      "sha256": "f992e58badb1fc2df0b1cdb4aaa6f30cf43133d9b0c7afecc35aad3bc5721fdf"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/environment.json": {
+      "bytes": 3544,
+      "sha256": "2ab891c8056418de3da7f9816791ebe6114b3700cb4d5213625a4c45ffc7c735"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/fixed-shelf-summary.json": {
+      "bytes": 39442,
+      "sha256": "6ba0c952dca622ad1f4b933ebb08588e513715b37f7143833cfacce55513e509"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/fixed-shelf.json": {
+      "bytes": 37169,
+      "sha256": "27325b210b216b3b31a6f749100b07c1d16139b07f5ce830c0897a852e892b47"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/package-build.json": {
+      "bytes": 3286,
+      "sha256": "e90870e1368ecb4c2a31fd44f57ecb6648e8a79c573a423706774d18fb2bfd91"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f08-final/runtime-dependencies.txt": {
+      "bytes": 7835,
+      "sha256": "45ed1a5aee15d92771e7857ad048c02f3353e6406a2ee748f0b7566c39ec29b8"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-reader-cycle/audit.txt": {
+      "bytes": 4789,
+      "sha256": "8cbac44747ae1d385b6754b42a4a18af77040044fb8b5d4de002c1855dbd6a40"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-reader-cycle/reader-tree.json": {
+      "bytes": 26785,
+      "sha256": "f14afddae5a442afbeed28a2db6305d73a1fd476fdf620d052c50613be344f6f"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-reader-cycle/keys.tsv": {
+      "bytes": 2689,
+      "sha256": "e5fe03a108d37f9b696298e70c29dc811624555edaa4c75624a0b8d35673653d"
+    }
+  }
+}
