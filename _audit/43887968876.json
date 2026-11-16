@@ -1,0 +1,42 @@
+{
+  "run": 43887968876,
+  "source_sha": "d856cb1d985a812d1440ad93d3e7d620cf4da701",
+  "evidence_ok": true,
+  "conclusion": "failure",
+  "acceptance_ok": false,
+  "artifact_digests_verified": true,
+  "artifacts": [
+    {
+      "id": 14236941305,
+      "name": "reader-windows-account-summary-43887968876-1",
+      "size_in_bytes": 864,
+      "digest": "sha256:cd91cd4208a258e249ceb83e2e9e5296d8139453951e8f3dea1e1ecdf1c96a2b",
+      "expires_at": "2027-02-14T14:39:08Z"
+    },
+    {
+      "id": 14236461346,
+      "name": "reader-windows-account-43887968876-1",
+      "size_in_bytes": 45307956,
+      "digest": "sha256:af4a183cb5e7bf3faf469cf02fe5d08ecf33e0e4255d78566e7f7474d6382305",
+      "expires_at": "2027-02-14T14:39:08Z"
+    }
+  ],
+  "files": {
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-a11y/a11y-ui.json": "3eca6f9b7f21ff5e26cdb5762afd9d26a05d317bede959fe11ac21dd13d6784d",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-a11y/control-inventory.json": "65eefbbd68162e7c2cac8080650abac46dff6ec9679372668b587568c6e0f1a5",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-a11y/tab-controls.json": "65eefbbd68162e7c2cac8080650abac46dff6ec9679372668b587568c6e0f1a5",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-logs/a11y-ui.log": "441c7845be3cddacbae6724b131c692c232458f8193776141a7f3f873ea14819",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-logs/source-binding.txt": "2c3488f5efa15bef732bb84d8b95c0174a9c1641659406c72f65323c322e9d6c",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-product10/product-result.json": "f684e046463e8309d6e9cb66aed0063d97b1dfe1f2ef2dcaa81a69bfc9359efb",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-shelf-ui/shelf-result.json": "d067d0958c87f9f6848d586dfc94ab1483977121e3a8c0f5e3e9d2c1456d1054",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-ui/account-ui.json": "2abeb3ec3a683a58a0c8fbcd8924f05688f799516d7a8fd4a8ccd3a3072e7586",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-ui158/summary.json": "7624876428b3522492aada19518d0c2fc89346fa74be8e3a3e1a0a1395d648de",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-ui158/wp13-windows-evidence.json": "5c0b6fadeb0b8fd337312440744b7dc5a0373d70c4880da9b80408dc5246117e",
+    "evidence/ledger-f10-gaps-20261116/43887968876/account/account-worker5/worker-result.json": "fc299a71d6f45a4341c2f2d47a39d1c091bed55fb36d0ca774348f64c3cb22e7",
+    "evidence/ledger-f10-gaps-20261116/43887968876/artifacts.json": "766ef04115dd68f96fc215a63f0ce9ca14b9959684ab4b19afaf8fa3fcc0f38f",
+    "evidence/ledger-f10-gaps-20261116/43887968876/jobs.json": "5df5b1fecd8b3211cb306cfaf70436811d2acf99f9cc7d2e2bac6919b5b73a68",
+    "evidence/ledger-f10-gaps-20261116/43887968876/metadata-inventory-failure.txt": "20cdaa9dbe0b3ab4cabd671b9c3416dfb51b4703053677ecb975887653742029",
+    "evidence/ledger-f10-gaps-20261116/43887968876/run.json": "b65f431c4ccd9518335d749abb9be106e0a122762dd162de7b92cc53682c77d3",
+    "evidence/ledger-f10-gaps-20261116/43887968876/summary/verified.json": "ce76266165a509e8d912fe5a0e28a51e3c16ae71dd3602e786dba99aacd88ccd"
+  }
+}

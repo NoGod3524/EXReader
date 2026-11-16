@@ -104,16 +104,39 @@ class CollectorProtocol(unittest.TestCase):
         with network([error(403, url=main), response(b'rights', mirror)]) as (opened, slept),                 redirect_stdout(io.StringIO()) as printed:
             self.assertEqual(collect.fetch_license(main, 8), (b'rights', mirror))
             self.assertEqual([call.args[0].full_url for call in opened.call_args_list], [main, mirror])
-            self.assertEqual(json.loads(printed.getvalue())['license_mirror']['mirror'], mirror)
+            self.assertEqual(json.loads(printed.getvalue())['gutenberg_mirror']['mirror'], mirror)
 
-    def test_license_mirror_is_only_for_gutenberg_403(self):
+    def test_license_mirror_covers_gutenberg_403_and_503_only(self):
         gutenberg = 'https://www.gutenberg.org/cache/epub/11/pg11.rdf'
-        for url, failure in ((URL, error(403)), (gutenberg, error(404, url=gutenberg)),
-                             (gutenberg, error(503, url=gutenberg))):
+        mirror = 'https://gutenberg.pglaf.org/cache/epub/11/pg11.rdf'
+        # 503 means the whole site is down, not that the record is wrong, so the
+        # mirror has to cover it too; a 404 still proves the record itself is gone.
+        for code in (403, 503):
+            with self.subTest(code=code), network([error(code, url=gutenberg), response(b'rights', mirror)]) as (opened, slept), \
+                    redirect_stdout(io.StringIO()):
+                self.assertEqual(collect.fetch_license(gutenberg, 8), (b'rights', mirror))
+                self.assertEqual([call.args[0].full_url for call in opened.call_args_list], [gutenberg, mirror])
+        for url, failure in ((URL, error(403)), (gutenberg, error(404, url=gutenberg))):
             with self.subTest(url=url, code=failure.code), network([failure]) as (opened, slept):
                 with self.assertRaises(urllib.error.HTTPError):
                     collect.fetch_license(url, 8)
                 self.assertEqual(opened.call_count, 1)
+
+    def test_document_503_uses_foundation_mirror(self):
+        main = 'https://www.gutenberg.org/cache/epub/11/pg11.epub'
+        mirror = 'https://gutenberg.pglaf.org/cache/epub/11/pg11.epub'
+        with network([error(503, url=main), response(b'book', mirror)]) as (opened, slept), \
+                redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(collect.fetch_document(main, 8), (b'book', mirror))
+            self.assertEqual([call.args[0].full_url for call in opened.call_args_list], [main, mirror])
+            self.assertEqual(json.loads(printed.getvalue())['gutenberg_mirror']['reason'], 'document')
+
+    def test_document_404_is_not_mirrored(self):
+        main = 'https://www.gutenberg.org/cache/epub/11/pg11.epub'
+        with network([error(404, url=main)]) as (opened, slept):
+            with self.assertRaises(urllib.error.HTTPError):
+                collect.fetch_document(main, 8)
+            self.assertEqual(opened.call_count, 1)
 
     def test_license_mirror_failure_is_reported(self):
         main = 'https://www.gutenberg.org/cache/epub/11/pg11.rdf'

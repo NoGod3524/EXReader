@@ -1,7 +1,7 @@
 name: Ledger F10 verify (Win32 account host on this source)
 on:
   push:
-    branches: [codex/ledger-f8910-verify, codex/ledger-f10-fable]
+    branches: [codex/ledger-f8910-verify, codex/ledger-f10-fable, codex/ledger-f10-gaps]
     paths:
       - 'apps/reader/**'
       - 'extras/**'
