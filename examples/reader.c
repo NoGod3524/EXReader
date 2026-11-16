@@ -6589,6 +6589,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR command, int sh
     }
   }
 #endif
+#ifdef EXR_READER_WINDOWS_SHELL
+  sy_startup_scavenge(); /* F10: remove interrupted .tmp/.part stages before any reader. */
+#endif
   settings_load();
   InitializeCriticalSection(&g.library_lock);
   {

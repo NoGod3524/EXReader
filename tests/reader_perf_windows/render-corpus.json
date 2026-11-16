@@ -19,5 +19,13 @@
       "source": "https://www.gutenberg.org/cache/epub/11/pg11-images-3.epub",
       "sha256": "4f81245d31380ac1d6eafb9a321e3691369bc70985736ae4bccf849a4f784036"
     }
-  ]
+  ],
+  "budgets": {
+    "first_interactive_ms": 2500.0,
+    "render_p50_ms": 50.0,
+    "render_p95_ms": 100.0,
+    "present_p50_ms": 50.0,
+    "present_p95_ms": 100.0,
+    "peak_working_set_bytes": 268435456
+  }
 }

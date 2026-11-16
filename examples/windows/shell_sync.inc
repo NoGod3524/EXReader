@@ -997,6 +997,56 @@ static inline int sy_sync_now(sy_status *out) {
   if(out) *out=run.status;
   int code=run.status.code;sy_run_free(&run);return code;
 }
+/* Startup scavenger (F10). Every product writer stages "<target>.tmp" (atomic
+   JSON writers) or "<target>.part" (OPDS download) and renames on success, so
+   a leftover stage is never the authoritative copy: it is crash residue. Only
+   the product's own directories are scanned, only one name suffix each, never
+   recursively. A stage held by a live writer (exclusive open fails), a
+   reparse point, a directory or a hard-linked file is left untouched; deletion
+   uses the validated handle, so the checked object is the deleted object.
+   sync.cred.tmp keeps its stricter owner/DACL recovery (sy_cred_recover_temp). */
+typedef struct { unsigned removed,kept; } sy_scavenge_counts;
+static void sy_scavenge_file(const wchar_t *path,sy_scavenge_counts *counts) {
+  HANDLE file=CreateFileW(path,DELETE|FILE_READ_ATTRIBUTES,0,NULL,OPEN_EXISTING,
+    FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_BACKUP_SEMANTICS,NULL);
+  if(file==INVALID_HANDLE_VALUE) {if(GetLastError()!=ERROR_FILE_NOT_FOUND)counts->kept++;return;}
+  BY_HANDLE_FILE_INFORMATION info;FILE_DISPOSITION_INFO disposition={TRUE};
+  if(GetFileInformationByHandle(file,&info) && info.nNumberOfLinks==1 &&
+     !(info.dwFileAttributes&(FILE_ATTRIBUTE_REPARSE_POINT|FILE_ATTRIBUTE_DIRECTORY)) &&
+     SetFileInformationByHandle(file,FileDispositionInfo,&disposition,sizeof(disposition))) counts->removed++;
+  else counts->kept++;
+  CloseHandle(file);
+}
+static void sy_scavenge_dir(const wchar_t *dir,const wchar_t *suffix,sy_scavenge_counts *counts) {
+  wchar_t pattern[HOST_PATH],path[HOST_PATH];WIN32_FIND_DATAW found;
+  if(!dir[0] || wcslen(dir)+wcslen(suffix)+3>=HOST_PATH) return;
+  swprintf(pattern,HOST_PATH,L"%ls\\*%ls",dir,suffix);
+  HANDLE find=FindFirstFileW(pattern,&found);
+  if(find==INVALID_HANDLE_VALUE) return;
+  do {
+    size_t n=wcslen(found.cFileName),m=wcslen(suffix);
+    /* FindFirstFile also matches 8.3 aliases; require the real long name to end in suffix. */
+    if(n<=m || _wcsicmp(found.cFileName+n-m,suffix) || !_wcsicmp(found.cFileName,L"sync.cred.tmp")) continue;
+    path_join(path,HOST_PATH,dir,found.cFileName);sy_scavenge_file(path,counts);
+  } while(FindNextFileW(find,&found));
+  FindClose(find);
+}
+static sy_scavenge_counts sy_startup_scavenge(void) {
+  sy_scavenge_counts counts={0,0};wchar_t path[HOST_PATH],downloads[HOST_PATH];
+  sy_default_paths();
+  sy_scavenge_dir(g.data_dir,L".tmp",&counts);     /* shelf/vocab/recent/sync.json */
+  sy_scavenge_dir(sy_annot_dir,L".tmp",&counts);   /* annotations/<sha>.json */
+  sy_scavenge_dir(sy_sync_dir,L".tmp",&counts);    /* sync/<sha>.base.json */
+  path_join(downloads,HOST_PATH,g.data_dir,L"opds-downloads");
+  sy_scavenge_dir(downloads,L".part",&counts);     /* onet_download stage */
+  /* EXREADER_SHELF_PATH may put shelf.json outside data_dir: its exact stage only. */
+  path_join(path,HOST_PATH,g.data_dir,L"shelf.json");
+  if(_wcsicmp(path,sy_shelf_file) && wcslen(sy_shelf_file)+4<HOST_PATH) {
+    swprintf(path,HOST_PATH,L"%ls.tmp",sy_shelf_file);sy_scavenge_file(path,&counts);
+  }
+  sy_cred_recover_temp();
+  return counts;
+}
 static void sy_init(void) {
   sy_default_paths();sy_cred_recover_temp();sy_config_load();sy_cred_load();
 }

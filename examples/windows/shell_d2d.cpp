@@ -37,6 +37,8 @@ struct shell_d2d {
   std::map<unsigned,toc_row_cache> toc_rows;
   HDC toc_row_dc;
   unsigned toc_tick;
+  double last_present_ms;
+  uint64_t present_count;
 
 };
 
@@ -201,7 +203,14 @@ extern "C" HRESULT shell_d2d_text(shell_d2d *shell, int style, const wchar_t *te
 }
 
 extern "C" HRESULT shell_d2d_end(shell_d2d *shell) {
+  LARGE_INTEGER freq = {}, t0 = {}, t1 = {};
+  QueryPerformanceFrequency(&freq);
+  QueryPerformanceCounter(&t0);
   HRESULT hr = shell->target->EndDraw();
+  QueryPerformanceCounter(&t1);
+  if (freq.QuadPart > 0)
+    shell->last_present_ms = (double)(t1.QuadPart - t0.QuadPart) * 1000.0 / (double)freq.QuadPart;
+  if (SUCCEEDED(hr)) shell->present_count++;
   if (hr != D2DERR_RECREATE_TARGET) return hr;
   drop_target(shell);
   shell->recreated++;
@@ -210,6 +219,14 @@ extern "C" HRESULT shell_d2d_end(shell_d2d *shell) {
 
 extern "C" unsigned shell_d2d_recreated(const shell_d2d *shell) {
   return shell->recreated;
+}
+
+extern "C" double shell_d2d_last_present_ms(const shell_d2d *shell) {
+  return shell ? shell->last_present_ms : 0.0;
+}
+
+extern "C" uint64_t shell_d2d_present_count(const shell_d2d *shell) {
+  return shell ? shell->present_count : 0;
 }
 
 extern "C" HRESULT shell_d2d_icon_button(shell_d2d *shell, HDC dc, const RECT *box, wchar_t glyph,
