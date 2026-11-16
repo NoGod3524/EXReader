@@ -70,6 +70,7 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
     /* Preserve the integer rectangle's bulk stores for every fully covered span. */
     if(!mask && bitmap->channels==1) memset(pixel,gray,(size_t)(right-left));
     else if(!mask && color==0xffffffffu) memset(pixel,255,(size_t)(right-left)*bitmap->channels);
+    else if(!mask) for(x=left;x<right;x++,pixel+=4) memcpy(pixel,rgba,4);
     else for(x=left;x<right;x++,pixel+=bitmap->channels) {
       unsigned alpha=mask ? mask[x] : 255;
       if(alpha==255) {

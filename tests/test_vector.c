@@ -297,7 +297,64 @@ static void rectangle_area(void) {
   }
   free(clip.pixels);
 }
+static void composite_rows(void) {
+  /* Every source/destination alpha pair, padded/unaligned rows and an offset
+     destination. The existing integer pixel compositor is the pixel oracle. */
+  exr_bitmap source={256,256,1027,NULL,4},target={260,260,1043,NULL,4},expected,clip={260,260,263,NULL,1};
+  size_t bytes=(size_t)target.stride*target.height,x,y,work,want;unsigned test;
+  float unused=0;exr_composite_state isolated={0},flags={0};
+  source.pixels=malloc((size_t)source.stride*source.height);target.pixels=malloc(bytes);clip.pixels=malloc((size_t)clip.stride*clip.height);
+  expected=target;expected.pixels=malloc(bytes);CHECK(source.pixels && target.pixels && clip.pixels && expected.pixels);
+  isolated.isolated=1;isolated.pixels=&unused;isolated.left=3;isolated.top=1;isolated.right=253;isolated.bottom=255;
+  flags.alpha_flags=EXR_ALPHA_CONSTANT_SHAPE|EXR_ALPHA_IMAGE_SHAPE;
+  for(test=0;test<8;test++) {
+    const exr_composite_state *state=test==5 ? &isolated : NULL;
+    size_t left=state ? state->left : 0,top=state ? state->top : 0,right=state ? state->right : 256,bottom=state ? state->bottom : 256;
+    double opacity=test==7 ? .37 : 1;
+    memset(source.pixels,0xa5,(size_t)source.stride*source.height);memset(target.pixels,0x5a,bytes);memset(clip.pixels,255,(size_t)clip.stride*clip.height);
+    for(y=0;y<256;y++) for(x=0;x<256;x++) {
+      unsigned char *s=source.pixels+y*source.stride+x*4,*d=target.pixels+(y+2)*target.stride+(x+2)*4;
+      s[0]=(unsigned char)(x*73+y*19);s[1]=(unsigned char)(x*11+y*53);s[2]=(unsigned char)(x*37+y*7);
+      s[3]=(unsigned char)(test==1 ? 255 : test==2 && y%3!=2 ? (y%3 ? 0 : 255) : x);
+      d[0]=(unsigned char)(x*13+y*23);d[1]=(unsigned char)(x*59+y*3);d[2]=(unsigned char)(x*17+y*31);d[3]=(unsigned char)y;
+      if(test==4 && y%2) clip.pixels[(y+2)*clip.stride+x+2]=(unsigned char)(x*29);
+    }
+    memcpy(expected.pixels,target.pixels,bytes);want=(right-left)*(bottom-top);
+    for(y=top;y<bottom;y++) for(x=left;x<right;x++) {
+      const unsigned char *s=source.pixels+y*source.stride+x*4;
+      unsigned a=(unsigned)floor(s[3]*opacity+.5),coverage=test==3 || test==4 ? clip.pixels[(y+2)*clip.stride+x+2] : 255;
+      uint32_t color=((uint32_t)s[0]<<24)|((uint32_t)s[1]<<16)|((uint32_t)s[2]<<8)|a;
+      if(a && coverage) { want++;exr_pixel(&expected,(int)x+2,(int)y+2,color,coverage); }
+    }
+    work=0;OK(exr_composite_frame(&target,&source,opacity,EXR_BLEND_NORMAL,test==3 || test==4 ? &clip : NULL,
+      test==6 ? &flags : NULL,state,2,2,&work,NULL,&error));
+    CHECK(work==want);CHECK(!memcmp(target.pixels,expected.pixels,bytes));
+  }
+  for(test=0;test<4;test++) {
+    unsigned calls=0;exr_control control={0};size_t active=test%2 ? 256 : 255;
+    const size_t limit=(size_t)256*1024*1024;
+    memset(target.pixels,0x5a,bytes);
+    for(y=0;y<256;y++) for(x=0;x<256;x++) {
+      unsigned char *s=source.pixels+y*source.stride+x*4;
+      s[0]=21;s[1]=93;s[2]=187;s[3]=(unsigned char)(test%2 ? 255 : x);
+    }
+    memcpy(expected.pixels,target.pixels,bytes);
+    /* Budget exhaustion after the first row and ten painted pixels of row 2;
+       cancellation on the third poll leaves exactly the first row painted. */
+    for(y=0;y<(test<2 ? 2u : 1u);y++) for(x=0;x<(y ? (test%2 ? 10u : 11u) : 256u);x++) {
+      const unsigned char *s=source.pixels+y*source.stride+x*4;
+      exr_pixel(&expected,(int)x+2,(int)y+2,0x155dbb00u|s[3],255);
+    }
+    control.cancelled=cancel;control.context=&calls;
+    work=test<2 ? limit-256-active-256-10 : 0;
+    CHECK(exr_composite_frame(&target,&source,1,EXR_BLEND_NORMAL,NULL,NULL,NULL,2,2,&work,test<2 ? NULL : &control,&error)==(test<2 ? EXR_LIMIT : EXR_CANCELLED));
+    CHECK(work==(test<2 ? limit : 256+active));CHECK(!memcmp(target.pixels,expected.pixels,bytes));
+    if(test>=2) CHECK(calls==3);
+  }
+  free(source.pixels);free(target.pixels);free(expected.pixels);free(clip.pixels);
+}
 int main(void) {
+  composite_rows();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
   curves(); strokes(); dashes(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));

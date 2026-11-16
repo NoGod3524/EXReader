@@ -347,6 +347,10 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
   const exr_bitmap *clip,exr_composite_state *target_state,const exr_composite_state *source_state,
   int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
   size_t y,x,left=0,top=0,right=source->width,bottom=source->height;unsigned cost=mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64;
+  int plain=opacity==1 && mode==EXR_BLEND_NORMAL && source->channels==4 && target->channels==4 &&
+    (!target_state || (!target_state->pixels && !target_state->soft_mask && !target_state->shape &&
+      !target_state->knockout && !target_state->gray && !target_state->cmyk_pixels)) &&
+    (!source_state || (!source_state->cmyk_pixels && !source_state->shape && (!source_state->pixels || source_state->isolated)));
   if(source_state && source_state->cmyk_pixels)
     return frame_cmyk(target,source,opacity,mode,clip,target_state,source_state,origin_x,origin_y,work,control,e);
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -355,6 +359,29 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     size_t ty=y+(size_t)origin_y;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,right-left)) return exr_fail(e,EXR_LIMIT,"Layer composite work budget exceeded");
+    if(plain) {
+      const unsigned char *mask=clip ? clip->pixels+ty*clip->stride+(size_t)origin_x : NULL;
+      unsigned covered=255;
+      for(x=left;mask && x<right;x++) covered&=mask[x];
+      /* Reserve the maximum blend charge. Near the limit, retain the generic
+         loop's partial-row writes and exact failure point. */
+      if(covered==255 && exr_vector_work(work,right-left)) {
+        const unsigned char *row=source->pixels+y*source->stride+left*4,*p=row;
+        unsigned char *q=target->pixels+ty*target->stride+(left+(size_t)origin_x)*4;
+        unsigned alpha=255;
+        for(x=left;x<right;x++,p+=4) alpha&=p[3];
+        /* An opaque source replaces even a transparent destination exactly. */
+        if(alpha==255) memcpy(q,row,(right-left)*4);
+        else for(x=left,p=row;x<right;x++,p+=4,q+=4) {
+          if(p[3]==255) memcpy(q,p,4);
+          else if(p[3]) {
+            uint32_t color=((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3];
+            exr_pixel(target,(int)(x+(size_t)origin_x),(int)ty,color,255);
+          } else (*work)--; /* Transparent pixels incur only the row scan. */
+        }
+        continue;
+      }
+    }
     for(x=left;x<right;x++) {
       size_t tx=x+(size_t)origin_x;
       unsigned char gray_pixel[4];const unsigned char *p=source->pixels+y*source->stride+x*4;
@@ -365,7 +392,7 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         object_opacity*=mask/255.;
       }
       if(target_state && (target_state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE)) shape*=object_opacity;
-      a=(unsigned)floor(p[3]*object_opacity+.5);
+      a=plain ? p[3] : (unsigned)floor(p[3]*object_opacity+.5);
       if(!coverage || !shape) continue;
       if(target_state && target_state->cmyk_pixels) {
         /* An isolated RGB child converts only its finished colour, preserving
