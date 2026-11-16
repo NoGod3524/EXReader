@@ -138,7 +138,6 @@ reader」。`40280046571` 的 review `duplicate_late_cancel_keeps_original` 正�
 - wave3 first 仍有 2 个真实失败，首因都在冻结模块的 `open("/")`；宿主侧无法修复，
   需要模块 owner 或环境侧处理。
 - 六平台、真机、TalkBack 人工读屏、性能、完整产品均未主张。
-- 本包只用了 1 次新增完整云端轮（40352736333），不重置原有失败预算；后续完整轮由 root 统一安排。
 
 ## 7. 复跑入口
 

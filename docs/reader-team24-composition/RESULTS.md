@@ -1,0 +1,1070 @@
+# Native reader composition results
+
+Status: assembling; no combined-source acceptance granted.
+
+Base: `d263ce5228838ac90c0a0dc13a5193d4a7739681`.
+## Already staged inputs
+
+| Input | Exact source | Adopted paths |
+| --- | --- | --- |
+| SDK format candidate | `9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09` | `src/rtf.c`, `src/cbz.c` |
+| Cloud same-open-file candidate | `c92a2e06a73d5813e86537e5a5f4a8e76a32bbcd` | cloud-import implementation, its two regression scripts, workflow and PLAN |
+| Delivery assembly and diagnostics | `eb23d0f563ba08a22f2af80b6a9f89f8c14b68d0` | explicit 21 paths in inputs.json; original S20 entry unchanged |
+| Public pure capture candidate | `a911cd0e8405a362dae1bb489190de02c4c81d51` | reading-state CMake, implementation, new capability header; focused installed validation pending |
+| Apple feature host candidate | `d9ca5805952f8069ecbdb7a724af43662d9b0a6e` | exact 21 Apple owner paths in inputs.json; full native review validation pending |
+
+These inputs retain their original records. SDK format acceptance belongs to
+`8015c576` / run `40244430230`; ordinary cloud regression belongs to
+`3584390d` / run `40273482304`. Neither proves this new combined source.
+D13 race acceptance remains false; no blocked race experiment is retried.
+
+Initial composition admission `d14fd5babc1f2c16b14b641a7100e556c09de34d` /
+run `40279362653`, attempt 1 passed the six negative-control tests and exact
+Git tree admission in Actions. This is source-only evidence before delivery
+adoption. It grants no build, GUI, package or performance acceptance.
+Delivery summary repair `a41bcf2f` / `40278164857` passed its protocol-only
+check. Its complete business source remains separately `5527e604`; Android
+walkthrough failed 3/45 and Apple ZIP binary binding is limited as documented.
+
+### Android profile admission
+
+The adopted S20 `mobile.py` is retained as its historical explicit four-feature
+adapter. It hardcodes selector bytes OFF and installs only six modules; do not
+use that builder for the new raw0.2 five-feature Android host. The Android
+team's actual full workflow installs the raw family ON and its complete module
+list, including annotation import/export, jump history, font library,
+original export and sync-status view. Final composition must reuse that real
+build/profile and its Gradle flags, then pass the resulting payload through
+the shared assemble/unpack functions. Preserve source/SDK/module identities
+and runtime original-reading16/walkthrough45 checks. Do not claim that the
+historical adapter's four-feature build covers the new host.
+
+### Apple production profile
+
+Root owns the optional `--wave3` addition to the canonical Apple product/host
+builders and Swift dependency flags. Default behavior remains OFF. Opt-in
+requires the explicit independent raw product family, installs all six feature
+archives with the two required enable options, checks actual installed outputs,
+and adds Swift/Clang WAVE3 flags plus the reviewed bridge include. It does not
+define HOST_REVIEW, IMPORT_REVIEW or READING_REVIEW. Both product and host
+manifests record whether this profile is enabled.
+
+This build configuration is pending actual Apple compilation after platform
+source adoption. Actions syntax admission is not a native build or GUI grant.
+Keep the current team's separately built review apps under their own evidence.
+
+The composition workflow's explicit `production_apple` dispatch builds the
+current SDK and independent complete raw products, compiles the actual canonical
+host with wave3/page-theme enabled and review entry points absent, then uses
+the shared assemble/unpack contract and original native startup self-check on
+the unpacked binary. macOS and simulator builds run independently. Simulator
+delivery is checked on both iPhone and iPad; this is not physical-device or
+full-feature GUI acceptance.
+
+Public pure capture installed acceptance now passed: run `40348964690`,
+attempt 1, tested source `347165fe601f1bdb0cd3bb1da4c672f696195a4e`,
+unchanged production capability `a911cd0e8405a362dae1bb489190de02c4c81d51`.
+Linux, Windows, macOS consumers and strict original ZIP/program binding all
+succeeded. Earlier two failed consumer runs remain historical. Windows has
+been released to its approved combined host round `40350379758`.
+
+## Core binding and provider status
+
+S18 passed its focused three-platform program/archive/header/report identity
+and original 9+3+3 semantic mutations in `40350033756` / attempt 1. The same
+run's S19 failed because its caller used a display label instead of the public
+session account UUID contract. Caller fix `8a58c537880f3b20ff0d1c2c56af9f1e573aae46`
+does not alter production contracts. Root reviewed that exact diff and started
+one S19-only round `40352943800` / attempt 1 at source
+`ad9cb9f5131301fbf93695f82db49ece573b6fc9`. S18 is skipped in this dispatch;
+the previous S19 failure remains. No S19 success is granted while it is pending.
+
+## First production-profile Apple round
+
+Source `48b5001a1cada4db9749fb13d51a832c0df2cd93`, run `40350945698`,
+attempt 1: macOS completed native build, archive, fresh unpack and 21 actual
+startup checks successfully. Simulator was still running at this observation;
+no combined three-target success is granted here. Full feature GUI remains
+separately pending.
+
+The actual Mac linker logs also exposed SDK/product objects defaulting to
+macOS 15 while the canonical host targets 12. Root corrected both SDK and
+product CMake deployment targets to 12.0 for the next production source. The
+successful first program is retained under its original source; it does not
+prove this deployment correction or runtime compatibility on macOS 12.
+
+## Final combined validation
+
+Use a separate composition entry and source guard. Original S20 and team
+exclusive/frozen guards stay unchanged and cannot grant this composition.
+Bind actual SDK/module sources, installed capabilities and all six real host
+builds to one immutable candidate. Reuse existing full host drivers and package
+assembly; keep every failed operation in the final matrix. Verify archive and
+actual program identities separately. Apple test-host business evidence must
+say whether it executed the delivered binary or a separate same-source host.
+
+Build, test, fixture generation, screenshots, benchmark and artifact parsing
+remain Actions-only. No default-branch update, PR, tag or Release is authorized
+by this composition. Physical devices, screen readers and performance grants
+require their own actual evidence; package counts do not establish completion.
+
+## Current root follow-up
+S19 same-source installed native business/provider round 40364729547/1, source 18558686f4a820c40a339256c4554708ae04327c: all three platform jobs and strict original-ZIP/program identity aggregation passed. Earlier failed/cancelled rounds remain recorded in the core branch; this does not grant full product UI or six-platform delivery.
+Apple input now pins d684ed369fbd8357d5430f9e4286694a47ef3399, adding first-open verified book identity before read-only annotation preview. Source attachment remains unchanged; actual original bytes are verified before the first history bootstrap, and existing verified history avoids an extra export. This candidate needs new native compilation/startup and real feature validation. Other Apple font/search/theme failures remain open. The next production run also covers the previously unvalidated macOS deployment-target correction, without claiming execution on macOS 12.
+
+
+Production round 40367589904/1, source 7840f6a2e0ff7c76cae6416d13c819bb7d6fc2ea, succeeded for macOS and the iPhone/iPad simulator targets: each actual packaged/unpacked production program passed the original 21 native startup checks. This round compiles the verified-original bootstrap and the explicit macOS 12 build target; it does not run macOS 12 or claim the full feature GUI. Apple feature-owner availability and isolated original-control fixtures are later candidates on the Apple branch and are not covered by this production proof.
+
+
+GTK raw static review at 022e66dd: the independent records_resolve callback returns EXR_OK only after public FOUND; reflow/EPUB history is encoded as its actual v2 capture while fixed pages use the dedicated v3 entry. Installed family/capability/origin checks remain explicit and the legacy OFF branch is retained. This is source review only; the GTK candidate remains outside this composition until its native/backend/GUI evidence is reviewed.
+
+
+## Accepted Windows input admitted
+Windows raw Wave3 input pins 0d2903e62fdb0f1979f50722c3c972bf586ae085; only its two close-out docs differ from tested source f92d1bb9a40dd05ec6b8603172091648e4575b98. Run 40375338225/1 passed all 16 native feature cases on the unpacked original EXE, compact22, retained26 and archive/program authentication. The input owns exactly the changed Windows host/driver paths; the public codec remains the separate existing core-owned input. This root composition still requires its own combined native replay. Fixed progress newly counts only annotation exchange and original export; direct host font lease lifetime and the complete account cancel/retry matrix remain partial.
+
+
+## Windows on the composed source
+
+Run [40379950209 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40379950209)
+tested composition source `11042994df180754a11e6d5f828df4277e839c3d`.
+Source admission, actual Windows job `121773295179`, and same-run identity job
+`121776171215` all succeeded. The packaged and unpacked Windows program passed
+16 native feature UI cases, compact22, retained26 before and after extraction,
+and the raw owner checks. The authentication job verified the report, packaged
+ZIP and actual EXE identity from this run. This grants the tested Windows profile
+only; it does not grant the other five targets or six-target same-source release.
+
+Original full evidence artifact `12676649644`: 249350042 bytes, SHA-256
+`df98abc29fe4c008edf2511d076d6318bb6fdc9529522fbd59054d50ba695a70`.
+Identity artifact `12678477144`: 1153 bytes, SHA-256
+`d2e399773b0781d5824ea33a7444f27ce381ebb6042fade6f77bb70812131528`.
+Both expire 2027-01-24T18:41:23Z. The subsequent `3f91c82f` workflow change
+reduces uploaded intermediates while retaining the original diagnostic paths;
+that later source has not itself repeated the Windows run.
+
+## Content-bound cloud import candidate
+
+Source `ccb1dd27f4e179799aec7c32522eb7f06dc32c85` is admitted as an
+independent input; the prior cloud pinned-file test and documentation remain
+attributed to `c92a2e06`. Run
+[40381046417 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40381046417)
+passed the original ordinary regressions on Windows/macOS/Linux SDK 3.40 and
+Linux SDK 3.41, plus the separately enabled content-bound candidate and same-run
+evidence job. The old cloud package remains the default. A host must explicitly
+build and link `EXReaderCloudImportContentBound` to use the new content binding;
+source admission does not mean any host has switched to it or passed a combined
+product run. The candidate binds downloaded content to the first readback, not
+file object identity; race safety, path cleanup, mobile profiles and D13 remain
+unaccepted. See `docs/reader-cloud-content-binding.md` for the full boundary.
+
+### Windows opt-in integration
+
+The two Windows integration/build files are pinned to adapter source `96ae2866` and extend the prior
+Windows input. The default Wave3 host continues to select the legacy cloud
+package; the explicit `EXR_READER_WINDOWS_CLOUD_CONTENT_BOUND` option selects
+the separate installed content-bound target. The composition Windows workflow
+builds that optional package and requests the option, requires the observed
+transfer symbol in the linked host map, and retains all original Windows UI,
+owner, package and identity checks. The final job requires this marker as well.
+These new source and workflow changes still need their own Windows run. The map
+binds the implementation to the program, but does not itself exercise a native
+cloud picker or establish the blocked path-replacement race result.
+
+## Product performance observation tools
+
+The independent input `88ee2178` preserves the original frozen performance
+workflows and checks. Its new composition-specific workflows record actual
+source, component trees and program identities without claiming that observed
+numbers satisfy a product budget. Lightweight protocol run `40383580356/1`,
+source `be53824393b3621a233181dfe01d7094dd20ed65`, checked workflow, paths,
+parser and synthetic identity protocol only. The immediately following commit
+adds that evidence to the documentation; no full build or observation of the
+newly separated entry has yet been run. Earlier desktop measurements and their
+program hashes are historical evidence documented in `READER-PRODUCT-PERFORMANCE.md`;
+final package matching, frame measurements, mobile devices and F08 remain open.
+
+Composition source `b67e429f243fcb969dfba05350f12778b53a9f55` also passed
+lightweight entry protocol run `40383921001/1`. This validates the new tool
+protocol on the combined tree, without running product performance samples or
+changing the historical frozen gates.
+
+Windows opt-in run [40383119619 / attempt 1](https://github.com/NoGod3524/EXReader/actions/runs/40383119619)
+validated composition source `96ae2866ba86f4607c20204caa8c69a5aabde8e8`.
+Source admission, Windows job `121784391074` and authentication job
+`121787767831` all succeeded. The same retained26, compact22, raw-owner and
+16 extracted-program UI checks passed. The Windows link map contains
+`exr_webdav_download_observed`, confirming the candidate implementation is
+linked. Both the inner delivery ZIP/program and the actual outer artifact bytes
+and digest were bound to this run. Artifact `12680315131` is 19,287,962 bytes,
+SHA-256 `67d3470285ca3b750274e859892f7ce9219e9280b2407084a59338fc5bbc1366`;
+authentication artifact `12679508681` is 1,152 bytes, SHA-256
+`31775b39955c34cc73e01c1be3f19c41831bfc09cd5121f223ff14a756d5e548`.
+Both expire 2027-01-24T19:02:24Z. The test proves the linked candidate and
+retained UI checks, not a real cloud-import UI exchange, path-race safety, or
+six-platform delivery. Subsequent composition commits only pin or add other
+inputs and documentation; they require their own combined product replay.
+
+The composition source `7eaa048c` has SDK `src` tree
+`001bd8d0baa49ecde6fae82d799bafd0b007030f` and `include` tree
+`2a81956f632c2bc2769d06692a80b5ac9bb22b8c`, identical to the adopted format
+candidate `9d3a3f8bfa06c099ebba0d9e1ba613d276c3af09`. The separately tested
+18-document candidate round `40244430230/1` is retained under its original
+source and identity. Tree equality is evidence of unchanged SDK source, not a
+substitute for running the complete final product and corpus on one source.
+
+## GTK raw host input
+
+Source `77d4c5ec055d463c818b26414f34b15fc9bf01ad` is the tested
+`af87ba8db0c43f4fcf878983eaa2290e7889b0ee` plus its handoff document. Its
+three shared pure-capture files match the already admitted core input byte for
+byte and remain owned by that input. Run `40385003502/1` passed the installed
+raw family, real owner checks and legacy configure/link. The same source's
+[40385948659/1](https://github.com/NoGod3524/EXReader/actions/runs/40385948659)
+passed 10 actual GUI cases and same-run identity authentication. Artifact
+`12680198656` is 93,760,657 bytes, SHA-256
+`6a8fbff67acd1caf3136ba9c96fee373f89e8ca1bc21243eeeed3c8b4cb69e52`;
+identity artifact `12681373580` is 1,958 bytes, SHA-256
+`fe1e166b2dfa9e7440711851dd9b76a2a036f9aee95387f2e4572929b95b9aec`.
+Both expire 2027-01-24T19:21:05Z. Original navigation and batch-import suites
+were not run in this GUI round; they remain separate unresolved regressions.
+Source admission is not a combined-product acceptance.
+
+### GTK retained navigation and folder import
+
+The independent regression workflow from source
+`4380c6162cb36426537664997108a5d51031da8a` passed
+[40390254271/1](https://github.com/NoGod3524/EXReader/actions/runs/40390254271).
+The packaged raw GTK host passed the original navigation scope 29/29 and folder
+import scope 27/27; the folder backend passed 684 checks and four owner-fault
+scenarios. The navigation report retains `accepted=false` for its broader scope;
+only `navigation_scope_passed=true` is granted. The original failed
+`40389691572` remains recorded. Artifact `12683042045` is 51,801,039 bytes,
+SHA-256 `7ba2606f9f0159271ff8fe1534241bd5039036bfd03db504efa40af21540d1b0`,
+expires 2027-01-24T19:50:04Z.
+
+The combined revisions source was then exercised in
+[40392202392/1](https://github.com/NoGod3524/EXReader/actions/runs/40392202392)
+at `684610f2e6ef5369c48870c59b37926d490c614c`: the same scoped navigation
+29/29 and folder 27/27, 684 backend checks and four owner-fault cases passed.
+The wider navigation `accepted` field remains false. Artifact `12684499172`
+is 51,800,903 bytes, SHA-256
+`7e66a222e542d31ac92df96dded3c0a78b140de765f227bc096610e55cd40392`,
+expires 2027-01-24T20:03:15Z. This is a same-source GTK regression, not the
+complete six-platform final run.
+
+## Windows cloud UI verification input
+
+The four independent verification files are pinned to source
+`0dd5a62603cbf4d90b28a5819bc54ab2bf0c26ba`. Run
+[40386732358/1](https://github.com/NoGod3524/EXReader/actions/runs/40386732358)
+passed its Windows build, native UI checks and same-run artifact authentication.
+The checks used an HTTPS WebDAV service on the Actions host and an independent
+installed SDK consumer to read the nine imported originals, including after
+failure and cancellation. This is ordinary-flow evidence for that source; it
+does not establish a real provider exchange, path-race safety or final combined
+product acceptance. The combined source must be run again.
+
+Combined-source run [40389325623/1](https://github.com/NoGod3524/EXReader/actions/runs/40389325623)
+passed on source `f61cf77d60fcf43187eb543a78e15b768c69c283`: the Windows
+job and the independent artifact verifier both succeeded. Twenty checks covered
+the native account and cloud picker against the runner's HTTPS WebDAV service,
+nine format imports and public SDK original readback, including readback after
+failure and cancellation. The authenticated artifact `12682194200` is 51,757,265
+bytes, SHA-256 `de7e395f17557ed7789a0de7bef4da6fb8bd1b101945df43434bf7addc0ca522`;
+summary artifact `12680869868` is 3,469 bytes, SHA-256
+`f5766e8ad65aefff68774a0d93fb10c9fd4daa3e9c64b23edfa06d3a22b17883`.
+Both expire 2027-01-24T19:43:49Z. This proves ordinary-flow behavior for the
+tested source and service; real cloud-provider behavior, D13 race safety and
+future final-source acceptance remain separate.
+
+After the shared organization module was admitted, the same ordinary-flow
+workflow passed again in [40392307765/1](https://github.com/NoGod3524/EXReader/actions/runs/40392307765)
+on composition source `684610f2e6ef5369c48870c59b37926d490c614c`. Both
+the Windows job and same-run artifact verifier succeeded, with the 20 named
+checks and original readback passing. Artifact `12684797885` is 51,775,398
+bytes, SHA-256 `0178a9dea2aca2da553110adb1f9dbcb6d9e77dbfb823dd16b4362c62f79947f`;
+summary artifact `12685546075` is 3,478 bytes, SHA-256
+`498403293d19c3ef47346762c940bfe6bee18a4204d36bb9e4b3df2b560548f3`.
+Both expire 2027-01-24T20:03:59Z. Real cloud-provider behavior, path-race
+safety and final product acceptance are not inferred from this local test service.
+
+## Composition performance dispatch
+
+The composition workflow exposes `observe_performance` to call the existing
+Windows and GTK observation workflows after the exact source guard. These calls
+preserve the independent sampling and artifact checks; their host configurations
+and resulting program hashes must still be compared with the final product. A
+completed observation is not a frozen-budget or full-product acceptance.
+
+[40389751881/1](https://github.com/NoGod3524/EXReader/actions/runs/40389751881)
+ran both composition observation workflows on source
+`af4eb73c74bd7b497b532fd33403cdaa87efb47a`. The source guard, Windows
+observation, GTK 32-launch observation and GTK artifact verification all
+succeeded. Windows reported `performance_accepted=false`; the GTK report
+records 520 observations and 32 launches. These are measured limited host
+configurations, not the final complete product or an accepted performance
+budget. Windows sample artifact `12682886311` has SHA-256
+`6c6beadb5a162f35b67e27bbf9dc269fdc823cac8b38ef8aad3761e2158b4388`;
+GTK sample artifact `12683961005` has SHA-256
+`11af3f0a7bb5c9a65a8ae8ab3104ead967004744ce1193ac6bed8ba0a670c62d`.
+Both expire 2027-01-24T19:46:39Z.
+
+## Android to GTK real-service evidence
+
+Independent source `034a4a38d3818f1b24889aeeb04d6f3167ef4095` completed
+[40388334083/1](https://github.com/NoGod3524/EXReader/actions/runs/40388334083).
+The actual Android activity uploaded to the runner's Apache WebDAV service;
+the actual GTK program synchronized, received and opened four books. Independent
+[40390426526/1](https://github.com/NoGod3524/EXReader/actions/runs/40390426526)
+authenticated the original ZIP, APK and SDK, GTK executable and received product
+database; it checked 19 exact revisions, four book mappings and 11 FOUND
+resolutions against the captured positions. Original artifact `12681039806`
+is 25,164,497 bytes, SHA-256
+`98a216c7203c2965218449ac26deae046c5a9452f7683960cdddb76367bb9cb7`.
+The original report's `desktop_receiver=false` is an obsolete incorrect field;
+the independent verifier checked the actual receive evidence separately.
+This is one-way evidence on that independent source, not acceptance of the
+composition source, reverse exchange, organization, physical devices or F02-F05.
+
+[40391241316/1](https://github.com/NoGod3524/EXReader/actions/runs/40391241316)
+independently authenticated the same original run and used an installed public SDK
+inspector built from its exact source to read the GTK receiver's four SDK originals.
+TXT, EPUB, PDF and CBZ were byte-for-byte equal to the Android originals. The
+verification artifact `12683890627` is 592 bytes, SHA-256
+`f22802647b2382ca2bc02533da185f82b9a26ce8ffb6bf88c434550e0a0d9a39` and
+expires 2027-01-24T19:56:43Z. This strengthens original-byte evidence only;
+the independent run's one-way scope and remaining integration gaps are unchanged.
+
+Independent source `9ea6d1d56d6d38942cc996734776f865d0a18681` then ran
+[40390699668/1](https://github.com/NoGod3524/EXReader/actions/runs/40390699668);
+[40392496386/1](https://github.com/NoGod3524/EXReader/actions/runs/40392496386)
+independently authenticated its original artifact, actual programs, network
+requests, retained revision bytes and public SDK readback. Android to GTK
+covered four exact originals and 11 FOUND reading-record positions. GTK to
+Android covered two TXT point anchors (progress and bookmark), both FOUND with
+matching ranges. Original artifact `12685855227` has SHA-256
+`5083ece4c791a4bff28bb218e89f8d27ef248ee615727805189076180f8369b4`;
+authentication artifact `12686025698` has SHA-256
+`0736793d2da263baaac2115ab1df5e986be7382e0fe477019108c65d940c0416`.
+This establishes the stated two-app paths on this independent source and an
+Android API 34 simulator, not reverse highlighting, reverse other formats,
+organization, physical-device behavior, the final composition or F02-F05.
+
+## Shared organization projection input
+
+Source `a67fe8c6c094c4bb59ffc94f4a84c90261d5e722` adds bounded,
+per-kind projection pages for shelf, tag, series and membership using the
+existing safe-head selection and transactional expected-head checks. It leaves
+history and outbox unchanged and reports unresolved or changed heads rather than
+choosing conflicts. [40390641129/1](https://github.com/NoGod3524/EXReader/actions/runs/40390641129)
+passed installed consumers in Linux legacy and raw modes and the original legacy
+projection regression. The checks cover dependencies, hierarchy, paging,
+memberships, deletion/restore, missing ancestors, conflicts and storage failure.
+The head-change branch lacks deterministic concurrent injection. No host invokes
+the new API yet; a source admission or this Linux test cannot establish user-visible
+organization sync or cross-device acceptance. Rebuild the combined source and
+independently integrate each host with explicit dependency ordering.
+
+Combined-source [40390918264/1](https://github.com/NoGod3524/EXReader/actions/runs/40390918264),
+source `fba9a21f25e6669614eae76ef22a3f81b3995886`, also passed both Linux
+consumer configurations and the original legacy projection regression. Its
+legacy artifact `12683195878` has SHA-256
+`7af280d97cc9c92ebb60183c27c493a361b73d3bd5c2d12d7a9bd59eaa5ccb4f`;
+raw artifact `12682386557` has SHA-256
+`61898382064402dc9d2f3125dbbd385a9a0785d65cedeca02d14c59843500681`.
+Both expire 2027-01-24T19:54:34Z. Windows/macOS builds and actual host adoption
+remain to be verified.
+
+The composition workflow's `verify_organization_desktop` input runs the same
+installed product/revisions consumer on Windows and macOS in legacy and raw
+configurations, retaining the original legacy projection regression. This is a
+module compatibility check; actual host and cross-device behavior remain separate.
+
+In [40391312081/1](https://github.com/NoGod3524/EXReader/actions/runs/40391312081),
+source `1db1599c72349431e6817a3b5a6b4d310f8a5976`, Windows and macOS
+legacy/raw configurations all completed successfully, including the original
+legacy projection regression on both systems. The artifact digests are:
+Windows OFF `92f3900de421e454d1ca1498a2de41896aba6dfb26bfc3595a2bd4e4f748fc67`
+(ID `12682636767`), Windows ON
+`6e1929afff99d862e334b25941a74ebff5879e1fab01a5b65023dba75d826e6f`
+(ID `12683116383`), macOS OFF
+`b0912282c4da8078089667dc41b4b4201c29d06d453c0f3bd280b9a6e6b94cc7`
+(ID `12686281588`) and macOS ON
+`a2f32515290af0a5803746bdfc63bf0e64e40a0b9481549a51a7673138930c8b`
+(ID `12685606289`); all expire 2027-01-24T19:57:13Z. These are module
+checks, not host integration or cross-device acceptance.
+
+## Apple UI retry resource handling
+
+In [40385755134/1](https://github.com/NoGod3524/EXReader/actions/runs/40385755134),
+source `0d256c14a76fa795772f10d618fdf0200569cbe0`, the macOS native UI job
+failed; original artifact `12682307446` remains available with SHA-256
+`ab2259ca5109e7680225b2ff9a9c2a479fbba61e60c0495382bd907b274c488b`.
+The iPhone and iPad jobs were cancelled while running to free macOS runners for
+the superseding retry; their results are incomplete. The retained macOS failure
+is not converted to a pass. Later Apple source and GUI results require their own
+same-run verification before admission.
+
+## GTK organization host candidate
+
+Independent candidate `0e97877f29dc1c763b2e45111625d9a1393861d2` completed
+[40394887452/1](https://github.com/NoGod3524/EXReader/actions/runs/40394887452),
+job `121825182796`. Its same-source packaged GTK host passed the new 47-check
+account/receive suite and the unchanged 46-check baseline suite. The workflow
+verified both reports' source, run, attempt and packaged executable identity,
+and checked the prior run's corresponding reports and identity in Actions.
+The fixed business suite and targeted G13 AT-SPI regressions also completed.
+Artifact `12686612528` is 40,449,434 bytes, SHA-256
+`c0bcf8912ba563a7d47b0e4407706c369b8d43e59e60d0d00d35989adb1a1cb5`,
+expires 2027-01-24T20:21:23Z. The previous `deb2b907` round's fixed-business
+failure remains in its own record. Reverse-ordered eight-level shelves and the
+10,000-item pause boundary need additional validation; this candidate is not yet
+adopted into the composition, and neither this run nor source adoption proves
+cross-device organization synchronization or final six-target acceptance.
+
+## Expanded GTK to Android reading records
+
+Independent source `77a10aa4c3ce35bffa58e9b39d8fa3ca5e776b85` completed
+[40396989966/1](https://github.com/NoGod3524/EXReader/actions/runs/40396989966).
+The actual GTK interface created progress and bookmark records for TXT, EPUB,
+PDF and CBZ, plus non-empty highlights for TXT, EPUB and PDF. The Android API 34
+x86_64 simulator received the 11 records through the runner's Apache WebDAV
+service, and the installed public SDK resolved each captured selector. CBZ has
+no text selection in this scenario; no CBZ highlight is claimed. The reverse
+records and original-byte readback were independently checked in Actions by
+[40398960306/1](https://github.com/NoGod3524/EXReader/actions/runs/40398960306),
+which built its SDK inspector from the exact tested source.
+Original artifact `12687597145` is 25,190,947 bytes, SHA-256
+`4fe574873bd472188b9f8162429a3a94ef4a20a0ba28f0554afde24fdfa9d2ab`;
+authentication artifact `12686729837` is 1,309 bytes, SHA-256
+`4c42321d68f7d7638e46562aea3dece7977baf27f4d0c925e7555344345cdf64`.
+This is an independently tested source, not current composition acceptance; it
+does not establish synchronized organization, physical devices, other Apple or
+Windows clients, real provider behavior or final six-target acceptance.
+
+## Windows first-mapping startup observation
+
+[40399615507/1](https://github.com/NoGod3524/EXReader/actions/runs/40399615507)
+observed the exact packaged Windows EXE from source
+`77a54227a78b0160e98609032e7ceef87fb29d00`, built in `40397287811`, using
+observer source `9c386e0533cd6ded8699eec7f72d46a88642ce9c`. Eight profiles were
+created from the same 2,202-book SDK seed without existing product catalogs.
+For the four launches without catalog polling, the window appeared at a median
+24.704 ms and the shelf became interactive at a median 5,215.902 ms. This is
+initial product mapping, not an established measurement of a fully mapped
+profile, rendering frame time or an approved performance threshold. Three of
+four polled launches observed all 2,202 mappings shortly before the shelf became
+interactive; polling can contend with writes and does not isolate the cost of
+individual repair operations. Results were independently inspected in Actions
+[40399864380/1](https://github.com/NoGod3524/EXReader/actions/runs/40399864380).
+The source artifact `12688386499` SHA-256 is
+`a98b0160d27bf6820931f20ed4206bb00b0c5c29fe21484ba7aef324fa27158d`.
+The product source remains independent; a valid optimization needs same-source
+comparison and the original mapping, cancellation and recovery regressions.
+
+The later candidate `3047fcb4ed470f6ae276f94f7e45c4adb7ab1a69` completed
+[40397260554/1](https://github.com/NoGod3524/EXReader/actions/runs/40397260554),
+job `121833453729`. It passed the added 48-check GTK receive/account suite,
+including the actual UI's reverse-key eight-level shelf, the original 46-check
+suite, same-program/source identity checks, fixed business regressions and
+G13. Artifact `12689280904` is 40,449,485 bytes, SHA-256
+`9d1c01d40289ebeddc1a4e2e5a67238dea2df12417d9eb27b75a19bbd983f75d`.
+The 10,000-item pause boundary is not claimed as directly tested. Seven exact
+candidate paths are adopted; three are transferred from the earlier GTK host
+input, while its other owned paths remain unchanged. This admission is not a
+combined-source build or an acceptance of cross-device organization sync.
+
+## Independent full desktop performance observations
+
+Independent source `7aab6e559d17e730067594ee7da5189bf00f6dd8` produced
+packaged-host measurements in separate runs on Windows
+[40399315487/1](https://github.com/NoGod3524/EXReader/actions/runs/40399315487)
+and GTK [40399315293/1](https://github.com/NoGod3524/EXReader/actions/runs/40399315293).
+Their original artifacts were authenticated in Actions
+[40400845380/1](https://github.com/NoGod3524/EXReader/actions/runs/40400845380)
+and [40400658924/1](https://github.com/NoGod3524/EXReader/actions/runs/40400658924),
+respectively. Windows artifact `12688856368` SHA-256 is
+`7d4b5189a6fabdda7f03a1a8fadb8aed0bff806dc11a4555a3f7d20f5838b008`;
+GTK artifact `12687543841` SHA-256 is
+`51fb1c413e2c4d2ff380c4634f04c33668a4b7633f6256888b38a3d4597dc7c3`.
+The Windows first-mapping and prepared-catalog groups each had 12 starts;
+interactive shelf p95 was 6,247.520 ms and 189.788 ms respectively. The old
+prepared-catalog measurement did not independently count all local mappings.
+GTK covered 32 starts and 520 planned UI observations; its first 50-row shelf
+p95 was 445.247 ms and page input-to-first-draw p95 was 94.145 ms. Its 3,940
+GDK after-paint events include idle intervals and probe overhead, not display
+presentation timing or a direct dropped-frame count. These are cloud samples,
+not approved performance budgets, physical-device results, final composition
+acceptance or six-platform performance evidence. The Windows 16 MiB TXT import
+measurement remained skipped after an import rejection; it is not a pass.
+
+## Public SDK multiline TXT limit diagnosis
+
+The full Windows host's original approximately 16 MiB multiline TXT was
+rejected with `EXR_LIMIT` and no imported catalog entry. Independent public SDK
+probe [40401376637/1](https://github.com/NoGod3524/EXReader/actions/runs/40401376637),
+test source `9e74ab6da3ef05312bf9fede58dfcb713e4adcb4`, verified that its SDK
+source tree matches the earlier full-host source. Inputs of 64-byte nonempty
+lines succeeded at 131,070 and 131,071 lines and returned `EXR_LIMIT` at
+131,072 lines. A larger 17,010,000-byte input with 10,000 lines succeeded.
+This controlled result matches the existing 262,144 model-node limit with two
+root nodes and two nodes per nonempty line. It does not prove other texts cannot
+hit separate limits. The original long-line-count import remains unaccepted;
+public paragraph and text nodes are observable and cannot simply be merged as a
+compatible fix. No SDK limit, memory budget, ABI or existing acceptance changed.
+The Actions artifact `12688139192` is 14,969 bytes, SHA-256
+`e1e711b8f5919e14a5cb651d6117383d585679653897caf078b1c37008b68496`.
+
+## Composed GTK organization regression
+
+The adopted candidate was rebuilt on composition source
+`dc8d725acd7a06e152224f607bb41d7259915d9c` in
+[40400540730/1](https://github.com/NoGod3524/EXReader/actions/runs/40400540730).
+Job `121844923357` passed the new 48-check and unchanged 46-check account/receive
+suites, source/run and packaged-executable identity checks, fixed business
+regressions, and the targeted G13 AT-SPI checks. The Actions artifact
+`12689188509` is 40,451,315 bytes with SHA-256
+`8648fbbf319cd23b37ec3c97157566927cba04389ea59d5c54e54a2d536e7eba`,
+and expires 2027-01-24T20:59:50Z. The following commits through this evidence
+record are documentation-only. This is GTK same-source regression evidence,
+not proof of the untested 10,000-item boundary, full screen-reader support,
+real-provider behavior, cross-device organization or six-platform acceptance.
+
+## Android organization integration: retained full-run failure
+
+Independent source `dd39df6f360ebbbfcea58a1eac6f237f914d5d15` completed
+[40399032843/1](https://github.com/NoGod3524/EXReader/actions/runs/40399032843)
+with failure. The organization step succeeded, but the original C11 navigation
+and reading suites and the unchanged original sync UI step failed. Retained
+failure details include the multi-item FOUND preview, navigation cancel/close/
+retry, and the original sync test's strict SDK 3.40 identity assertion against
+this 3.41 host; the original reading suite has no complete pass claimed here.
+The original test and failure remain intact. A later independent combination
+separately builds the unchanged original and a strictly 3.41-adapted driver;
+it requires its own actual results and cannot inherit this run's partial pass.
+Artifact `12689139156` is 122,663,856 bytes, SHA-256
+`9afafeb4905022b131562dbba18c0250296127439095ab128f7ee6bfd045ac2b`,
+and expires 2027-01-24T20:49:19Z. This failed source is not admitted as an
+Android or cross-device product acceptance.
+
+## Isolated GTK organization boundary probe
+
+Independent test source `6fd3143b0380b890900867324b2b3ed91aec0f8d` completed
+[40401002281/1](https://github.com/NoGod3524/EXReader/actions/runs/40401002281),
+job `121846504558`. The normal build retained the 48-check candidate, original
+46 checks, fixed business suites and targeted G13; its executable SHA-256 was
+`eb14023075c1def770a6dc7426a4f596363ab4c4f47c605475e6f9929c17a79e`, matching
+the earlier independent 3047 candidate. A distinct test-only executable with a
+three-item budget exercised actual GTK owner pause and continuation; ordered
+keys were checked for no skipped or repeated items within each scan pass. A
+controlled revision update after page selection was applied using a second
+public revision connection: the stale head was not projected, and a fresh scan
+projected the newer state. Test-only hooks and the test executable are not
+adopted into the production composition. This validates the small-budget state
+machine and head fence under the test conditions, not 10,000-item scale,
+physical-device behavior or the blocked D13 path-replacement scenario.
+Artifact `12690226085` is 40,733,017 bytes, SHA-256
+`4e2d3aea5246db20bb951dd41fef696335d708b74a7d4d205afa86f2032578ac`,
+and expires 2027-01-24T21:02:56Z.
+
+## Independent Windows organization host result
+
+Independent source `9333dcb6130f499977057f8214e0cf48381b1c02` completed
+[40402629336/1](https://github.com/NoGod3524/EXReader/actions/runs/40402629336).
+The Windows host and same-run artifact verifier jobs both succeeded. The
+workflow exercised two actual Windows host profiles against its local HTTPS
+WebDAV service, including hierarchy, memberships, unresolved history, deletion
+and explicit restore, edit-intent blocking, cancellation/resumption, mapping
+recovery and public SDK original readback; it also retained the native cloud
+import regression. The verifier checks source/run/attempt, packaged executable,
+installed cloud dependencies, reported checks and the original bytes in Actions.
+Artifact `12690006415` is 54,319,758 bytes, SHA-256
+`867909ff96666a97150e8feb09d4ce992bf4cce63f38468289b12dd76099214b`;
+summary artifact `12688569685` is 4,493 bytes, SHA-256
+`f30f3d2c7f2142bd820ba7ebcb730189584cdc0d202e0b2c5d2d5048dc502d66`.
+Both expire 2027-01-24T21:14:14Z. This remains independent source evidence;
+it does not establish a real provider, physical second device, final composed
+source or other-platform organization sync. A later status-text correction
+requires its own source-bound validation before admission.
+
+## Windows organization host source admission
+
+Candidate `1be614da31240ee588d519024586bb494a4d4604` completed
+[40402982430/1](https://github.com/NoGod3524/EXReader/actions/runs/40402982430):
+Windows host job `121853397544` and independent artifact verification job
+`121857541514` both succeeded. This retains the cloud import regression and
+checks organization, conflict/dependency reporting, delete/restore, edit-intent
+blocking, cancellation/resumption and original-byte readback as described for
+the previous candidate. The two host profiles used the same local HTTPS test
+service. Artifact `12690565682` is 54,319,823 bytes, SHA-256
+`2a257c48a490fa5f58a2b5c846447215f4bf98a102c19806e2ac12d74eb4871b`;
+summary `12691140138` is 4,501 bytes, SHA-256
+`24b808a223763b1f3cc9b0036fe7dd44d6b29f6d5d4e973d3a7e21794f0f6309`.
+Both expire 2027-01-24T21:16:38Z. Eight exact candidate paths are admitted;
+source admission does not establish the resulting combined-source regression,
+other platforms, a physical second device or a production WebDAV provider.
+
+## Full desktop cold and prepared startup observations
+
+Independent full-product source `f140a1cdeeb06c7fe0607eb1478d3bdf73351443`
+completed Windows [40400107428/1](https://github.com/NoGod3524/EXReader/actions/runs/40400107428)
+and GTK [40400107395/1](https://github.com/NoGod3524/EXReader/actions/runs/40400107395).
+Original artifacts were verified by [40401592846/1](https://github.com/NoGod3524/EXReader/actions/runs/40401592846).
+Windows artifact `12687589690` SHA-256 is
+`994b28d8f2dc0bd6e119dbd9b1277d7d8a20d596fa6599a651081c7712132193`;
+GTK artifact `12689061371` SHA-256 is
+`c048a4ff10885fb174a6678fbd3a645d496a00c99b93fc5d54bec89ab9061d97`.
+
+On the Windows Actions runner, twelve starts that first created product mappings
+had a 5.56 s p95 to interactive first view; twelve starts reusing a catalog after
+checking 2,202 valid local mappings had a 195 ms p95. Disk cache and cloud load
+were not controlled. The long wait overlapped catalog mapping population but
+these measurements do not identify a specific cause. GTK ran under Xvfb: 32
+starts and 520 UI samples were collected, together with 4,088 instrumented GDK
+after-paint signals. Those signals include idle intervals and probe overhead;
+they are not a measured display-frame or dropped-frame rate. These observations
+are not a product performance budget, physical-device result, or evidence for
+current composition source `39625ec7c7de7731016199a460ba09c315dadebf`.
+
+## Composed Windows organization regression
+
+Composition source `39625ec7c7de7731016199a460ba09c315dadebf` completed
+[40404471141/1](https://github.com/NoGod3524/EXReader/actions/runs/40404471141).
+Windows job `121858545084` and same-run verifier `121862934133` succeeded.
+The packaged host SHA-256 was
+`4ebb470e172140880812a7b5a66ad214b0ae95b626d6455ed73311eb42ef8211`.
+The run retained the composed host, packaged and extracted UI regressions,
+independent native cloud import with nine formats and original readback, and
+two actual Windows host profiles synchronizing organization against the local
+HTTPS fixture. The verifier checked the same-run source, executable and library
+identities, reports, original bytes and artifact digest in Actions.
+
+Artifact `12691656457` is 54,319,668 bytes, SHA-256
+`96d23e847772487786a8df88b0a4c5b46f0502dd8079b8896f032fbfa7ccd4dc`;
+summary `12690807460` is 4,508 bytes, SHA-256
+`9d789594cf8263dcc85d9aeebe7ab701eb86e90d6b6febedf456a03016725303`.
+Both expire 2027-01-24T21:27:13Z. Commits after this source through this record
+change documentation only. This is not Windows-to-GTK, physical-device, real
+provider or six-platform same-source acceptance.
+
+## Windows organization UI: remaining group browsing gap
+
+The composed Windows organizer can select existing groups and change membership;
+its shelf query in `apps/reader/desktop/windows_catalog.inc` still calls
+`reader_catalog_local_page` for the whole local shelf. It does not pass a selected
+shelf, tag or series to `reader_catalog_group_books_page`. The organizer's book
+snapshot is also limited to the currently cached shelf window (at most 150),
+not a complete group browser. A separate candidate adds group creation and
+recovery, but its cloud run is still pending and it does not implement browsing
+members by group. Windows organization remains partial until a native group
+browser, bounded paging and real host validation are delivered.
+
+## Windows group creation: independent candidate
+
+Independent source `b908ce3896814e61634ea3b3f812e4575db2d833` completed
+[40405711500/1](https://github.com/NoGod3524/EXReader/actions/runs/40405711500):
+Windows job `121862799643` and the same-run evidence verifier `121868376064`
+passed. The actual host created a shelf, child shelf, tag and series; empty and
+257-character names were refused; those groups reached a second Windows profile
+through the test HTTPS service. Existing composed host and cloud-import checks
+were retained. Artifact `12691073556` is 55,087,629 bytes with SHA-256
+`bc4a3519b7357ae40b29da8cf5e27f1769b8aa136703520486d3689c7088d806`;
+summary `12690864597` is 4,565 bytes with SHA-256
+`c2b78a449325f3ad1160ce79ca158194f85912c79437b1c9a3b436f1783a03c8`.
+Both expire 2027-01-24T21:36:01Z. This independent source is not yet admitted to
+composition. A later fix for a 256-scalar display truncation and the group
+browser require their own same-source runs; neither inherits this result.
+
+## Windows group creation source admission
+
+Candidate `c4f0e9c950fcfbfae2c0973604cd37689a26573d` passed
+[40406526589/1](https://github.com/NoGod3524/EXReader/actions/runs/40406526589),
+including the prior native host and cloud regressions. The same run exercised
+explicit recovery of a staged group intent, refusal of empty/oversize names,
+creation of a shelf, nested shelf, tag and series, a 256-scalar Unicode name, and
+synchronization to a second Windows host profile. The verifier job checked the
+same run's executable, installed libraries, reports and original bytes.
+Artifact `12692700047` is 55,924,359 bytes, SHA-256
+`8ecc5b4e21b59d3ebac7c6835944e7f8ae338c6c29439f61528eb0ac0f6ce0ce`;
+summary `12691569205` is 4,580 bytes, SHA-256
+`e49da28abd83523aa0e86b5b2ea089ad94299c72c71dd396538bec9a2a3602a6`.
+Both expire 2027-01-24T21:41:57Z. Six exact paths are admitted; ownership of the
+workflow and two test files transfers from the previous Windows organization
+input. This is source admission, not a pass of the resulting combined source.
+It does not cover the separate group browser, physical devices or six targets.
+
+## Independent Android host result with book identity repair
+
+Independent source `2bb0c9e1fec118ca9e49b7530b205d5fcb3aed3b` completed
+[40404143400/1](https://github.com/NoGod3524/EXReader/actions/runs/40404143400)
+on the API 34 x86_64 emulator. The original artifact `12690229796` is
+143,504,785 bytes, SHA-256
+`b973e986d169979c70fe7a35e1d32856eb7e7ec08762a75a5cf1d4cee684860d`,
+and expires 2027-01-24T21:24:55Z. Independent Actions audit
+[40408150390/1](https://github.com/NoGod3524/EXReader/actions/runs/40408150390),
+audit source `3ed0f6d21e2f0bd21e53f26ad9e8884f3dd21930`, checked the recorded
+run identity and the generated and device-pulled APK bytes; both SHA-256 were
+`5aafe17c22328d857e5004956c26e700584e12139e3afd2a9964ab36bbff6020`.
+Wave3 reported 20/20, navigation 18/18 and reading 19/19; walkthrough, review
+and bounded suites each exited successfully. The earlier source
+`105058673032112b01651632b72eae53902e5f16` and run `40400268625` remain
+failed because the old reading fixture attempted a stale bootstrap head.
+The corrected fixture uses the actual current head and preserves the stale-head
+protection. These are independent-host results, not proof for the separate
+Android organization combination, a physical device or six targets.
+
+## Composed Windows group creation regression
+
+Composition source `ebf3ebf1890494dad06176e64a41aee6aa0e8b94` completed
+[40408344617/1](https://github.com/NoGod3524/EXReader/actions/runs/40408344617).
+Windows host job `121871833551` and same-run verifier `121877593117` succeeded,
+including retained host/cloud checks and actual group creation, recovery,
+Unicode boundary and second-profile synchronization. Original artifact
+`12692951277` is 55,930,595 bytes, SHA-256
+`1a8ab26934f1875853511691caeadf67c5553b9de8fce41316d16f06410594e6`;
+summary `12692911501` is 4,585 bytes, SHA-256
+`273862280809e311b05ed32a896af65167f347c3773ddb302d9a94eaf388521c`.
+Both expire 2027-01-24T21:55:14Z. Subsequent composition commits through this
+record only change documentation. This does not grant group browsing, physical
+or cross-platform devices, real providers, or six-target acceptance.
+
+The independent group-browser run [40407251603/1](https://github.com/NoGod3524/EXReader/actions/runs/40407251603)
+failed after its tag filter and group search checks because its test reporter
+was called without a required argument. Independent run
+[40407588078/1](https://github.com/NoGod3524/EXReader/actions/runs/40407588078)
+retains the same reporter failure and a separate timeout waiting for the first
+50 rows of the seeded 2,202-book test profile. The former is fixed on the
+candidate branch; the latter remains under diagnosis, with additional UI,
+catalog and log observations requested in the next Actions run. Neither failed
+run grants the group browser or its 170-member paging checks.
+
+## Android composition dependency boundary
+
+Android organization source `51ee764e434678f8f15cc35f7f4996243b934a45`
+combines the independently passing `2bb0c9e1` host with an organization owner.
+The composition checkout is not identical to this source: its admitted SDK
+CBZ/RTF candidates and shared font, original-export and reading-state trees
+must not be replaced by the older Android tree. The tested organization JNI
+uses raw 0.2 revisions, the organization projection API, the same product
+catalog/SQLite, raw session/sync and the Android organization intent journal.
+Its six host integration paths need explicit reconciliation against the current
+composition. The independent Android workflow does not enable the composition
+pure-capture candidate; the combined build must explicitly install/enable and
+verify that capability, run the original source guard and preserve the 3.40
+original test result separately from the strict 3.41 adapter. A completed
+independent run cannot establish any of those combined-source checks.
+
+The isolated preserved-package diagnostics retained failures
+[40410804502](https://github.com/NoGod3524/EXReader/actions/runs/40410804502)
+and [40411045197](https://github.com/NoGod3524/EXReader/actions/runs/40411045197).
+The first observed the correct descending group page after the driver read a
+transient list during refresh. The second recorded all 2,202 catalog mappings
+and an ordered first 100 visible cached rows: the host had prefetched a second
+50-row page, while the driver incorrectly required exactly 50. The next driver
+checks a stable ordered prefix and the existing 150-row cache cap, and still
+requires all 170 members in both directions and each group search. These
+observations do not replace the original failed runs or grant pagination.
+
+The follow-up preserved-package diagnostic
+[40411586178/1](https://github.com/NoGod3524/EXReader/actions/runs/40411586178)
+passed its seven browsing checks: shelf, tag and series each visited 170 seeded
+members forward and backward with the 150-row cache bound and literal search,
+then returned to all books. The driver source was
+`570852bcdc6902faf72a10442fed0c37b8424eb1`. The actual host was the retained
+program from the failed `40407588078/1` build, source
+`a7fbe0e102d966a559184289b4cdeba17681f9d0`, SHA-256
+`1588efb255fb465e4db8e242e4102670230403fce0a3a1ce9970da4c30e3f5f0`.
+That original run's artifact `12692206699` has SHA-256
+`4d7da5979697c81cbda974c2b8172aca637e8bb98105f3b727822236dee34432`.
+The diagnostic artifact `12693876568` has SHA-256
+`a6e6879aacbfdce97a714dcb185103250a9b2fd7142cdae598143ca290955417`.
+The memberships are isolated projected fixtures, not a sync test. This is
+bounded diagnostic evidence across two runs; the current candidate requires
+its own full same-source regression and artifact verification before admission.
+
+## Windows group browser on the composed source
+
+The independent browser source `570852bcdc6902faf72a10442fed0c37b8424eb1`
+completed [40411767307/1](https://github.com/NoGod3524/EXReader/actions/runs/40411767307):
+both the Windows job and its same-run artifact verifier passed. Artifact
+`12692164884` is 59,292,242 bytes, SHA-256
+`ee0e219a0c522339fd70370b5ea3734a7a58af7c6962cd92b078df999fad93be`;
+summary `12693099511` is 4,631 bytes, SHA-256
+`c0077417360436eb081401a1a55200b2f61590dc69b0e5e0bf7283db654f6143`.
+
+Composition source `0749579f2f9398ee543d2aec6a1f766fec8940ed` separately
+completed [40412385121/1](https://github.com/NoGod3524/EXReader/actions/runs/40412385121).
+The Windows job and same-run verifier passed. The verifier checked the actual
+host and seed identities, all 2,202 mappings, three groups of 170 seeded
+members, forward and reverse paging, search, the 150-row cache bound, return
+to all books, and retained host and HTTPS cloud regressions. The composed host
+SHA-256 was `445a390311fbe02f27240830a4058ec6749ba48d03e750182cbe95fd88e39452`.
+Artifact `12694004036` is 59,298,348 bytes, SHA-256
+`d71252bf367c8e7289af6f18f5bbda93049a151857c4281ec86cc8ec366fa42f`;
+summary `12694745818` is 4,639 bytes, SHA-256
+`9084e0c85ffb7d59b8aaf7166342e98071b3b5238fee2025fd68105b8fdb6a31`.
+Both expire 2027-01-24T22:26:01Z. Group paging memberships are fixture-seeded;
+the separate HTTPS checks do not turn this into cross-platform synchronization
+or physical-device acceptance. The ten exact candidate paths are now admitted.
+
+The follow-up source `0b54a15ee9b96a6a4f51beb3600eda72e57594c8` passed
+[40414564325/1](https://github.com/NoGod3524/EXReader/actions/runs/40414564325),
+including the unchanged retained checks and same-run artifact verifier. Real
+Windows controls added and removed a book in a shelf, series and tag; the
+second Windows host received each addition and removal through the HTTPS
+fixture. The source and actual program identities were checked with the
+results. Artifact `12695193238` is 59,422,061 bytes, SHA-256
+`9a3433ed9e8c38e9ad5a5942cb33d09954e3cd043af0b1e9cbd12ce1abe26520`;
+summary `12694693655` is 4,661 bytes, SHA-256
+`6134611b17ae41b9e3431d59f4a8a4f6d57fda4136784cd356d3085b648278b6`.
+Both expire 2027-01-24T22:43:08Z. This exercises two isolated Windows
+profiles, not six devices or a third-party provider.
+
+## Android shared-module desktop and frozen-SDK evidence
+
+Source `532b9f0dd6ce3e2ee94ec7b002e57f8a43a3bce9` passed six
+font-library and original-export jobs on Windows, Linux and macOS in
+[40413221092/1](https://github.com/NoGod3524/EXReader/actions/runs/40413221092).
+The font harness pins the Android candidate module and the composed SDK; the
+existing export cases run against the composed SDK. The separate source
+`c9e4b3ac1634748179ae33cba48a0b20df950a22` passed the original
+Linux frozen SDK 3.40 export and preloaded-provider controls in
+[40413886507/1](https://github.com/NoGod3524/EXReader/actions/runs/40413886507).
+
+Independent cloud audit
+[40414457834/1](https://github.com/NoGod3524/EXReader/actions/runs/40414457834),
+audit source `9b18b53320adbb2516aa5453ab3e3df80b860072`, checked each
+run, job, unexpired ZIP, byte length and GitHub SHA-256; it checked report
+identity and required cases and recomputed the desktop report's binary hashes.
+The frozen report did not record a binary hash: the audit recorded the C
+consumer's actual hash without claiming a report comparison. Audit artifact
+`12694079691` is 1,929 bytes, SHA-256
+`e41845b6454474e4baa4f1cfc97f176088a41b716c7dff0fa50f6fc14eed04a6`,
+expiring 2027-01-24T22:42:14Z. These are two different tested sources; neither
+is a same-source product-wide acceptance. The full Windows/Android combination
+has its own pending runs.
+
+An Android 3.40 legacy-host candidate
+`5ea83c21396fd6966abb350e26a1adb2f85a63b1` failed
+[40414918550/1](https://github.com/NoGod3524/EXReader/actions/runs/40414918550)
+before host tests: its CMake required an exact 3.41 SDK while the installed
+frozen package reported 3.40.0. Candidate
+`4d0d9d549f8412f3453b1e5a87485f5ae80bbe65` adds an explicit exact SDK
+selection with 3.41 as the default and rejects 3.41-only flags for 3.40.
+It has separate pending 3.40 and 3.41 host runs, respectively
+[40415252185/1](https://github.com/NoGod3524/EXReader/actions/runs/40415252185)
+and [40415259935/1](https://github.com/NoGod3524/EXReader/actions/runs/40415259935).
+The original failed result is retained; neither compatibility mode is accepted
+until its own run and evidence are checked.
+
+The 3.40 rerun `40415252185/1` built the frozen SDK and the combination
+host and passed the four version/feature refusal checks, but the original
+17-case ProductOwnerTest reported four failures before HostSyncTest was
+executed. Cloud-only inspection
+[40416663153/1](https://github.com/NoGod3524/EXReader/actions/runs/40416663153)
+authenticated original artifact `12695457660` (102,578,860 bytes,
+SHA-256 `704f92e9a7dc737d725a16b78e18da6f0fe392b67b83716999cd7b0cf2fbdc87`)
+and preserved the original instrumentation output. The failures are
+`membershipNeedsExplicitBookBootstrap`,
+`publicSdkBootstrapKeepsCurrentProductTitle`,
+`shelfAndSeriesMembershipOrder`, and
+`missingAndDeletedDependenciesRefused`. The old fixture calls
+`finalizeImport` before expecting no book revision or explicitly bootstrapping;
+the current host's `finalizeImport` now establishes the original book revision.
+This source-level contract mismatch needs a review of both the original command
+boundary and the new automatic-bootstrap behavior; no case has been granted by
+the failed run. The 3.41 run remains separate.
+
+An independently identified 3.40 owner investigation at source
+`3e51b5a6cf59cfc5a4c032b497c6e86cbf40f118` completed
+[40417367269/1](https://github.com/NoGod3524/EXReader/actions/runs/40417367269)
+with overall **failure**: the unchanged original owner runner again failed its
+17-test assertion, so its original step stopped before HostSync. The same run
+then executed a separately generated runner that retains the no-bootstrap
+boundary through manual catalog attach, exercises the current head explicitly,
+and adds automatic-bootstrap/idempotence coverage. Its 18-case runner and
+separate original HostSync UI sequence passed; the latter reported 16 checks
+over four phases. These results do not convert the original failure into a pass.
+The run uploaded artifact `12697280724` (108,135,836 bytes, reported SHA-256
+`1c2f4dd5c985e435b74cac7096a8ac41b38c756da07110187de0b2a4949d42de`);
+cloud-only audit [40418892684/1](https://github.com/NoGod3524/EXReader/actions/runs/40418892684),
+source `2d0ad4f8`, checked the run and artifact identity, downloaded the ZIP,
+verified its full byte count and SHA-256, and read the original instrumentation,
+adapted report, and host UI report. It confirmed the same four original failed
+case names, 18 adapted cases, and 16 host UI checks across four phases.
+This is an API-34 x86_64 emulator investigation on the stated source, not a
+physical-device or final combined-source acceptance.
+
+The subsequent version-parameterized test candidate
+`3dd099b882749ed2bb5a1a31ef7db6af6164d931` ran the same 3.40 investigation
+in [40420011207/1](https://github.com/NoGod3524/EXReader/actions/runs/40420011207).
+Its overall result remains failure because the unchanged original owner runner
+failed; the separately adapted owner suite and four-phase, 16-check host sync
+runner passed. [40421339472/1](https://github.com/NoGod3524/EXReader/actions/runs/40421339472)
+authenticated artifact `12696409010` (108,143,179 bytes, SHA-256
+`56b5c50d3deefe922a32e359dc37b6bad9b04ebbce845f4f4bb0416ebf4cd08e`),
+confirmed the original four failures and checked that all four host sync phases
+reported the explicit expected SDK version `3.40.0`. This does not change the
+original failure or grant the separately running 3.41 candidate.
+
+The separate 3.41 run [40415259935/1](https://github.com/NoGod3524/EXReader/actions/runs/40415259935)
+at `4d0d9d549f8412f3453b1e5a87485f5ae80bbe65` completed with overall
+**failure**. Its original navigation/reading suite and organization sync step
+passed; the unchanged HostSync test failed its `explicit_receive_preserves_sdk_and_product`
+case at the `same shared public SDK provider` assertion. The source of that
+assertion requires SDK `3.40.0`, while this run deliberately uses `3.41.0`.
+The separately generated 3.41 runner changes the runner/class names and that
+exact version expectation, retaining the remaining provider checks; its four
+phases and 16 UI checks passed. The original result is not reclassified.
+Cloud audit [40419212533/1](https://github.com/NoGod3524/EXReader/actions/runs/40419212533)
+at `39894597` authenticated and read the original report, adapted report and
+adapter provenance from artifact `12697245942` (130,101,080 bytes, SHA-256
+`72db46a5a11470909b3e898415ed1a9e74a2198ea31176de312b1887aacdd245`).
+This emulator evidence is not the final combined-source or physical-device gate.
+
+Source `715fc865a9f063ae453c4d97e44f927772139fc3` then passed all six
+desktop jobs in [40413780626/1](https://github.com/NoGod3524/EXReader/actions/runs/40413780626).
+Its additional Linux export test confirmed an injected publication I/O failure
+was reached exactly once and reported no commit or pending cleanup.
+The expanded cloud audit
+[40414632862/1](https://github.com/NoGod3524/EXReader/actions/runs/40414632862),
+source `c2fb0f5357d4f4cfe94487a466a97ad244b71a13`, authenticated all six
+ZIPs, original report identities and named checks, desktop binaries, the
+fault receipt and its one-byte hit marker. Audit artifact `12694406592`
+is 2,737 bytes, SHA-256
+`0ce371bc6adaa31db76e847952829cc56824be00d1a3d0e1b8443a0164b166a0`,
+expiring 2027-01-24T22:43:39Z. The frozen 3.40 run remains a distinct source.
+
+## Windows/Android combined candidate
+
+Candidate `9a8ae10c726f4cc1745cae734c2f1baabd9b3e96` retains the Windows
+group browser and stages the Android organization host and shared module
+changes. Its source admission passed
+[40414183947/1](https://github.com/NoGod3524/EXReader/actions/runs/40414183947).
+The Windows retained host, HTTPS organization and bounded group browser checks
+and their same-run verifier passed
+[40414184017/1](https://github.com/NoGod3524/EXReader/actions/runs/40414184017).
+Artifact `12696060434` is 59,291,053 bytes, SHA-256
+`75672b44eb731f890230ca955b16eab4be0cd7295d4f1155a4728ab6fefb40b3`;
+summary `12696060479` is 4,629 bytes, SHA-256
+`5d8bf2981c4cb3006593816aebb3bb2eb26f426b9f186aecb08b8743fe03da14`.
+Both expire 2027-01-24T22:40:05Z. The candidate is not admitted to the shared
+branch while its Android and remaining combined-source evidence are pending.
+
+The subsequent Windows/Android plus fixed-volume WAL candidate
+`ede0107b10a181458cb9a503730323a643341854` has passed the Windows retained
+host, cloud import, two-host HTTPS organization, group browsing and same-run
+artifact verifier in [40418007038/1](https://github.com/NoGod3524/EXReader/actions/runs/40418007038).
+Windows artifact `12696831669` is 59,307,595 bytes, SHA-256
+`81c0693e83adea8b3b5a45088d33a049e4b5e3570dd26f840daef8bbc9c5a0b9`;
+summary `12696326986` is 5,014 bytes, SHA-256
+`5deb4abf49c7f719027bddd39201c40d39ecf47f834d07e19b5115fb23f87b82`.
+Both expire 2027-01-24T23:11:20Z. On that same source,
+[40418007043/1](https://github.com/NoGod3524/EXReader/actions/runs/40418007043)
+passed original catalog and cancellation checks and recovered a committed,
+nonempty WAL after forced process termination. The original fixed-path guard
+failure [40416990662/1](https://github.com/NoGod3524/EXReader/actions/runs/40416990662)
+is retained; a separate workflow admitted precisely pinned WAL files while
+keeping the other original source checks and business tests.
+Windows and macOS installed organization consumers passed four configurations
+in [40418056222/1](https://github.com/NoGod3524/EXReader/actions/runs/40418056222).
+On this same source, Linux retained navigation and folder import completed
+successfully in [40419483432/1](https://github.com/NoGod3524/EXReader/actions/runs/40419483432):
+the native navigation and folder backends reported 58 and 684 checks, and
+the GUI reports respectively stated navigation scope 29/29 and folder scope
+27/27. The navigation report's broader `accepted` field remains false; this
+does not grant a full Linux acceptance. Artifact `12696924935` is 51,814,021
+bytes, SHA-256 `d6e7e7ff174a10f452ba7d11dc87bd53aab54d75f51b934aceb4d8996496fbf6`,
+expiring 2027-01-24T23:24:00Z. Android checks on this source remain pending;
+none of these results grants six-platform delivery or physical-device acceptance.
+
+## Current Android 3.40 owner and host evidence
+
+The current-owner 3.40 source `57585506a297921246a6e9476de49464caef4982`
+completed [40423047854/1](https://github.com/NoGod3524/EXReader/actions/runs/40423047854)
+successfully on an API 34 x86_64 emulator. Cloud audit
+[40424840954/1](https://github.com/NoGod3524/EXReader/actions/runs/40424840954)
+authenticated artifact `12698607070` (108,013,392 bytes, SHA-256
+`25ae0dc0ab99e111ad7a86f79f9bb756f7880f41bb21a412c0e043e2158dcbec`)
+and its run, attempt and source. It checked the public SDK export report, the
+current original owner report (18 cases, no failures), 12 roundtrip checks,
+and all 16 passing host UI checks across the four original phases. This
+current runner includes the current automatic-import-bootstrap contract; it
+does not reclassify the earlier unchanged runner's four failures on earlier
+sources. This result is for the stated independent candidate and emulator,
+not the final composition source, a physical device, or six-platform delivery.
+
+## Windows and GTK host relay
+
+Independent source `62ea549b254c57403d6e218f8475d54985628540` passed all
+five jobs in [40423610797/1](https://github.com/NoGod3524/EXReader/actions/runs/40423610797),
+including the same-run verifier. The actual Windows host imported and uploaded
+an original; GTK read it, created a tag and membership, and uploaded another
+original; Windows read the GTK original, removed the membership in its UI,
+confirmed the receipt, and uploaded a new original; GTK then observed the
+removal and read back the new original through the public SDK. Retained GTK
+account checks and the Windows build checks also passed.
+
+The four phases use separate local TLS servers and transfer verified service
+state between runners; they do not establish behavior against one continuously
+running online service. The GTK host uses the legacy product family and Windows
+uses the raw family. Android, Apple, physical devices and final six-target
+acceptance remain outside this evidence. The same-run summary artifact
+`12698548702` has SHA-256
+`a7ba971a1cc509681ff3d0a7eef284ccfd77ccfeba723857f274a17d03687dd5`.
+Windows and GTK program SHA-256 values were respectively
+`e9dbdddc72614469d93dcc485b4051e07d4a83adb0a4f0c77dba3602810d03e8` and
+`eb14023075c1def770a6dc7426a4f596363ab4c4f47c605475e6f9929c17a79e`.
+The later combination candidate `e61b5eda` ran its own unchanged-scope relay
+against the newer composition in [40425627113/1](https://github.com/NoGod3524/EXReader/actions/runs/40425627113):
+Windows passed, but the GTK import chooser did not close, so the relay and
+same-run verifier failed or did not execute. The earlier independent pass is
+not transferred; the current-source failure remains under diagnosis.
+
+## Android 3.41 combined host evidence
+
+Candidate source `31d34f87b2013ef18201268b50db5b6b1ccafd71` passed
+[40422822774/1](https://github.com/NoGod3524/EXReader/actions/runs/40422822774).
+Independent cloud audit [40427114597/1](https://github.com/NoGod3524/EXReader/actions/runs/40427114597)
+authenticated original artifact `12699742758` (156,525,577 bytes, SHA-256
+`704fb5b0c696241589a8e4a3d78173a4352ba112154625bdbd985eeb3f07563f`),
+the source and run identity, and identical built and device-pulled host APKs
+(SHA-256 `3ad45f4408c7e733656796ca705971cf3d6339442e7f17d674edf74cdfeb1e32`).
+Original reports recorded 20 wave3, 18 navigation, 19 reading, 16 versioned
+host sync and 16 strict 3.41 adapter checks, all passing; the organization
+runner passed five checks. The same run also saved an exact original through
+the real Android system picker after killing and restarting the host process.
+The earlier `40420011803/1` reading-list failure remains preserved; the later
+pass does not identify its cause or prove every subsequent source. This is API
+34 x86_64 emulator evidence, not a physical-device or six-target grant.
+
+The reading-page-position candidate source
+`aa75071c626485f8b249d2f7deba09270f278e54` completed
+[40425282397/1](https://github.com/NoGod3524/EXReader/actions/runs/40425282397)
+successfully. Cloud audit [40428398755/1](https://github.com/NoGod3524/EXReader/actions/runs/40428398755)
+verified original artifact `12700567431` (156,501,578 bytes, SHA-256
+`abc9259567867ce05265f53bfbc64e344ed825a4ca18993ce0bba566f41437d1`),
+same-source reports and built/device-pulled host APK SHA-256
+`4844d916a6f9c5dc37c459e78cfc9da50d592513474a79c6fc8bfc24a265138c`.
+The 19 reading checks include scrolling the record list before pagination and
+requiring the new page to start at row zero; the named conflict-navigation
+check also passed. The same run retained 20 wave3, 18 navigation, both 16-check
+sync suites, five organization checks, and the real system picker kill/recovery.
+This verifies the scoped emulator candidate and does not establish the root
+cause of the earlier intermittent failure or grant final combined delivery.
+
+## Apple common-source preparation
+
+Apple candidate `937f61057b06c5c9de3b562046e52c91b5be62b9` is merged for
+source preparation, not accepted by this merge. Its original workflow and
+strict owner guard remain intact for the isolated candidate. The separate
+manual common-source Apple workflow runs that same guard against an exact
+isolated candidate checkout, then uses the existing composition source guard
+on the actual merged checkout and additionally requires the approved Apple
+shared checker blob. The composition guard checks registered input path
+identities and unregistered changes against the base; its explicit root-owned
+paths are not pinned by that guard. Thus the isolated frozen-tree/owner check
+does not certify the merged frozen tree, and common-source admission is not a
+substitute for it or for native acceptance. The copied build, native UI and
+ZIP authentication jobs must still run on the merged source. This preparation
+does not claim any run has passed or authorize a new run.

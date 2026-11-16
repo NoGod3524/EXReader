@@ -16,7 +16,7 @@
 | F09 | `docs/reader-total-progress/catalog.json:1712`：「默认简洁且完整功能可达，六端完整键盘/可访问性与读屏证据分列」 | 六端分别保留简洁默认入口和全部功能真实可达、每个交互控件的名称/角色/完整键盘焦点顺序，并独立登记真实读屏输出（`docs/READER-PRODUCT-PLAN.md:157`、`:191`–`:193`）。 |
 | F10 | `docs/reader-total-progress/catalog.json:1720`：「全链路隐私/凭据/文件稳定性/临时文件清理的真实安全出口」 | 六端宿主全链路验证平台安全存储及不可用时会话回退、凭据不进入日志/库/载荷、TLS/跨源隔离、稳定私有文件、原子发布和正常/失败/崩溃后的临时文件处置（`docs/READER-PRODUCT-PLAN.md:165`、`:168`、`:185`–`:187`）。 |
 
-已读 `docs/reader-total-progress/README.md`、`SESSION-CONTRACT.md`、`LEDGER-AUTHORITY.md`、C02 handoff 与上一轮 [REPORT.md](../dfinal-b-20261114/REPORT.md)。当前任务明确授权本机测试、三项台账更新及 main-base 分支交付；其余历史限制和未验证范围继续保留。
+已读 `docs/reader-total-progress/README.md`、`LEDGER-AUTHORITY.md`、C02 handoff 与上一轮 [REPORT.md](../dfinal-b-20261114/REPORT.md)。当前任务明确授权本机测试、三项台账更新及 main-base 分支交付；其余历史限制和未验证范围继续保留。
 
 ## F08
 
@@ -104,7 +104,7 @@ exit=0
 | 已有证据 / 测试名 | 该记录最近实际结果 | 边界 |
 | --- | --- | --- |
 | `docs/validation/reader-credentials.json`；`tests/reader_credentials/consumer/suite.c` | run `40057087875` success；Windows24/Linux34/macOS29/iOS simulator23/Android emulator46 checks | 独立凭据模块；安全存储不可用、锁屏/故障和实际壳接入缺口保留。 |
-| `docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md:257` | component seal 82 cases / 880 assertions / 38 negatives | 原文明确不授予 full_F10。 |
+| `docs/reader-total-progress/webdav-suite-results.md` | component seal 82 cases / 880 assertions / 38 negatives | 原文明确不授予 full_F10。 |
 | `examples/windows/check_shell_sync.inc`；`windows-selection-sync` | 上一轮本机/Actions 通过；本轮再次保留 15 scenarios 的真实网络、落盘扫描、DPAPI 篡改拒绝与删除检查 | 不替代完整 TLS/跨用户和六端宿主链路。 |
 | `check_shell_privacy.inc`；`windows-privacy-cleanup` | 上一轮测试观察到继承 DACL 与 exit77 侧文件残留；本轮增加真实生产修复和负例 | 正常测试目录自清理不等于产品启动清扫。 |
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Check repository paths and heading anchors in the eight reading overview docs."""
+"""Check repository paths and heading anchors in the reading overview docs."""
 import json
 import os
 from pathlib import Path
@@ -10,7 +10,7 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = ['README.md'] + ['docs/' + name + '.md' for name in (
-    'PROJECT_OVERVIEW', 'CORE-ROADMAP', 'WORK-QUEUE-2026-10-22', 'COMPETITIVE',
+    'PROJECT_OVERVIEW', 'CORE-ROADMAP', 'COMPETITIVE',
     'VERSIONING', 'ARCHITECTURE', 'PROJECT_STUDY')]
 
 

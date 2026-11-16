@@ -123,7 +123,10 @@ def main():
     parser.add_argument('--run', type=Path)
     parser.add_argument('--matrix', type=Path)
     args = parser.parse_args()
-    reference = {'books': [inspect(b) for b in read_json(args.manifest)['books']]}
+    books = read_json(args.manifest)['books']
+    for book in books:
+        book['path'] = str(args.manifest.parent / book['path'])
+    reference = {'books': [inspect(book) for book in books]}
     write_json(args.output, reference)
     if args.run and args.matrix:
         args.matrix.write_text(matrix(read_json(args.run), reference), encoding='utf-8')

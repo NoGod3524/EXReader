@@ -20,7 +20,7 @@ ENVIRONMENT = ('PATH', 'CC', 'CXX', 'CFLAGS', 'CXXFLAGS', 'CPPFLAGS', 'LDFLAGS',
 # Run reports and GitHub configuration are not build/package inputs. Excluding the
 # manifest itself avoids a self-referential hash. All other tracked + unignored
 # source files are hashed, including packaging scripts and installed documentation.
-EXCLUDED = ('evidence/', 'docs/ui/evidence/', 'archive/', '.github/', 'tools/release/build_manifest.json')
+EXCLUDED = ('evidence/', 'docs/ui/evidence/', 'archive/', '.github/')
 
 
 def is_source_input(name):
@@ -34,6 +34,21 @@ def output(command, cwd=None):
 
 def write_json(path, value):
     Path(path).write_bytes((json.dumps(value, indent=2, sort_keys=True) + '\n').encode('utf-8'))
+
+
+def publication_manifest(raw):
+    manifest = json.loads(raw)
+    return {
+        'schema': 1,
+        'input_manifest_sha256': hashlib.sha256(raw).hexdigest(),
+        'source': {key: manifest['source'][key] for key in ('revision', 'git_tree', 'tree')},
+        'compiler': {
+            language: {key: details[key] for key in ('id', 'version', 'sha256')}
+            for language, details in manifest['compiler'].items()
+        },
+        'cmake': {key: manifest['cmake'][key] for key in ('version', 'sha256')},
+        'package': {'source_date_epoch': manifest['package']['source_date_epoch']},
+    }
 
 
 def fingerprint(root, names):
@@ -159,7 +174,8 @@ def main():
     parser.add_argument('--source', type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument('--build-dir', type=Path)
     parser.add_argument('--configure-args', type=Path, help='JSON array of the actual CMake configure arguments')
-    parser.add_argument('--output', type=Path, default=Path(__file__).with_name('build_manifest.json'))
+    parser.add_argument('--output', type=Path, help='local manifest, defaults to BUILD_DIR/build_manifest.local.json')
+    parser.add_argument('--public-output', type=Path, help='write release provenance to a separate file')
     parser.add_argument('--check', type=Path, help='verify inputs of an existing manifest')
     args = parser.parse_args()
     try:
@@ -172,8 +188,13 @@ def main():
             configure_args = json.loads(args.configure_args.read_text(encoding='utf-8'))
             if not isinstance(configure_args, list) or not all(isinstance(a, str) for a in configure_args):
                 raise ValueError('configure arguments must be an array of strings')
-            write_json(args.output, capture(args.source.resolve(), args.build_dir.resolve(), configure_args))
-            print('Wrote ' + str(args.output))
+            local_output = args.output or args.build_dir / 'build_manifest.local.json'
+            if args.public_output and args.public_output.resolve() == local_output.resolve():
+                parser.error('--output and --public-output require separate files')
+            write_json(local_output, capture(args.source.resolve(), args.build_dir.resolve(), configure_args))
+            if args.public_output:
+                write_json(args.public_output, publication_manifest(local_output.read_bytes()))
+            print('Wrote ' + str(local_output))
     except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as error:
         print(f'FAIL: {error}', file=sys.stderr)
         return 1

@@ -67,7 +67,7 @@ Android 的 `ANDROID_OWNERSHIP_HEAD` 固定到 A 的受测源码，只作为宿�
 
 ## 下一轮 Apple/Android 集成（原候选，已被本轮取代）
 
-> 本节保留历史候选与失败记录；当前交付身份以 `docs/handoffs/2026-10-22-parallel-index.md`、`docs/handoffs/2026-10-22-A-android.md`、`2026-10-22-B-acroform-corpus.md` 与上面阶段一记录为准。
+> 本节保留历史候选与失败记录。受测源码、验证范围及最终状态见本页的联合验收记录。
 
 
 Apple 审计候选 `e0f162af1fad68353b91f5f595867c4bccd2da81` 的 run `39801977033` 未通过，尚未合入本分支。macOS/iPhone 各 12 个 UI 用例/61 步、SDK 21 项、会话 18 项及三平台原 21 项自检通过；iPad 有三项 UI 失败，严格汇总拒绝验收。固定完整门槛仍为各平台 12 个 UI 用例/61 步/46 份附件、各 21 项原自检、21 项 SDK 及 18 项会话回归。保留本轮与前轮失败证据，后续候选不得拼接通过项。

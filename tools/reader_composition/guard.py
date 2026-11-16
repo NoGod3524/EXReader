@@ -9,7 +9,7 @@ import subprocess
 MANIFEST = 'docs/reader-team24-composition/inputs.json'
 ROOT_PATHS = frozenset((
     MANIFEST,
-    'docs/reader-team24-composition/PLAN.md',
+    'docs/reader-team24-composition/RESULTS.md',
     'tools/reader_composition/guard.py',
     'tools/reader_composition/apple_build.py',
     'tools/reader_composition/total_progress.py',

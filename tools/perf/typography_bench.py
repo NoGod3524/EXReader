@@ -22,11 +22,7 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = Path('<workspaces>')
-FONTS = {'serif': Path('C:/Windows/Fonts/NotoSerifSC-VF.ttf'),
-         'sans': BASE / 'exr-demo-2a/Reader.otf',
-         'simsun': Path('C:/Windows/Fonts/simsun.ttc')}
-BOOK = BASE / 'exr-cjk-corpus/hongloumeng-24264.epub'
+FONT_NAMES = ('serif', 'sans', 'simsun')
 VIEWPORTS = [(1242, 711), (1552, 928)]
 LINE_HEIGHTS = [1.60, 1.75, 1.90]
 
@@ -203,12 +199,13 @@ def launch(args, profile, script, folder, font, height, capture=False):
 
 
 def run(args):
+    fonts = {'serif': args.serif_font, 'sans': args.sans_font, 'simsun': args.simsun_font}
     args.output.mkdir(parents=True, exist_ok=True)
     build_info = json.loads((args.work/'build.json').read_text(encoding='utf-8'))
     assert sha(args.work/'TypographyBench.exe') == build_info['exe']['sha256']
     assert sha(args.work/'libexreader.dll') == build_info['dll']['sha256']
     write_json(args.output/'protocol.json', dict(created_utc=datetime.now(timezone.utc).isoformat(),
-        build=build_info, fonts={k: identity(v) for k,v in FONTS.items()}, book=identity(BOOK),
+        build=build_info, fonts={k: identity(v) for k,v in fonts.items()}, book=identity(args.book),
         capture=identity(args.capture), collector=identity(__file__), font_px=18, typography_dpi=96, repeats=3, turns_per_repeat=20,
         percentiles='nearest rank: sorted[ceil(q*n)-1]', dispersion='100*(max-min)/median, per metric',
         unacceptable_p95_ms=100, severe_p95_ms=200, seed=20261107,
@@ -218,9 +215,9 @@ def run(args):
         first_screen='first render_ms after book_open_begin; startup and full book open also retained'))
     seed = args.work/'seed-profile'
     if not (seed/'library.sqlite').exists():
-        launch(args, seed, ['delay|0', 'import|'+str(BOOK), 'wait_idle', 'quit'],
-               args.work/'seed-evidence', FONTS['sans'], 1.75)
-    configs = list(itertools.product(FONTS, LINE_HEIGHTS, VIEWPORTS))
+        launch(args, seed, ['delay|0', 'import|'+str(args.book), 'wait_idle', 'quit'],
+               args.work/'seed-evidence', fonts['sans'], 1.75)
+    configs = list(itertools.product(FONT_NAMES, LINE_HEIGHTS, VIEWPORTS))
     results = []
     for repeat in range(1,4):
         order = configs.copy()
@@ -243,7 +240,7 @@ def run(args):
             script += ['probe_mark|keys_end', 'typography_count', 'shell_measure|layout',
                        'probe_mark|capture_ready', 'probe_wait|10000' if repeat==1 else 'probe_wait|0', 'quit']
             print('RUN', key, flush=True)
-            launch(args, profile, script, folder, FONTS[font], height, capture=repeat==1)
+            launch(args, profile, script, folder, fonts[font], height, capture=repeat==1)
             layout = json.loads((folder/'layout.json').read_text(encoding='utf-8'))
             assert layout['client']==[width, view_height] and layout['dpi']==96
             assert layout['font']==18 and abs(layout['line_height']-height)<.00001
@@ -275,7 +272,7 @@ def summarize(args):
     summaries=[]
     measured=['open_including_font_ms','font_load_ms','first_screen_render_ms','page_turn_p50_ms',
               'page_turn_p95_ms','turn_raster_p95_ms','peak_working_set_mib','peak_commit_mib','total_pages']
-    for font, height, (width, view_height) in itertools.product(FONTS, LINE_HEIGHTS, VIEWPORTS):
+    for font, height, (width, view_height) in itertools.product(FONT_NAMES, LINE_HEIGHTS, VIEWPORTS):
         group=[r for r in records if (r['font'],r['line_height'],r['client_width'],r['client_height'])==
                (font,height,width,view_height)]
         assert len(group)==3
@@ -317,9 +314,16 @@ if __name__=='__main__':
     parser.add_argument('--work', type=Path)
     parser.add_argument('--sdk-build', type=Path)
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--capture', type=Path)
+    parser.add_argument('--capture', type=Path, default=ROOT / 'ops/capture_window.py')
+    system_fonts = Path(os.environ.get('SystemRoot', 'C:/Windows')) / 'Fonts'
+    parser.add_argument('--serif-font', type=Path, default=system_fonts / 'NotoSerifSC-VF.ttf')
+    parser.add_argument('--simsun-font', type=Path, default=system_fonts / 'simsun.ttc')
+    parser.add_argument('--sans-font', type=Path)
+    parser.add_argument('--book', type=Path)
     args=parser.parse_args()
-    for name in ('work','sdk_build','output','capture'):
+    if args.command == 'run' and (args.sans_font is None or args.book is None):
+        parser.error('run requires --sans-font and --book')
+    for name in ('work','sdk_build','output','capture','serif_font','sans_font','simsun_font','book'):
         value=getattr(args,name)
         if value is not None: setattr(args,name,value.resolve())
     if args.command=='selfcheck': selfcheck()

@@ -19,7 +19,7 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
       examples/windows/shell_speech.cpp)
     target_compile_features(check_shell_editor_e2e PRIVATE cxx_std_17)
     target_compile_definitions(check_shell_editor_e2e PRIVATE EXR_READER_WINDOWS_SHELL=1
-      EXR_E2E_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/docx-real/codex/05-table-multi-paragraph.docx")
+      EXR_E2E_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/docx-real/synthetic/05-table-multi-paragraph.docx")
     target_include_directories(check_shell_editor_e2e PRIVATE include)
     target_link_libraries(check_shell_editor_e2e PRIVATE exreader miniz expat d2d1 dwrite
       gdi32 comdlg32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32)

@@ -2,7 +2,6 @@
 
 本轮从 `origin/main` 的 `df8e60313e8107ce083572039460de3a0149845e` 建立
 `codex/dfinal-c-evidence`；PR base 为 `main`。当前用户明确授权三项台账更新、本地构建与 Actions，
-取代 SESSION-CONTRACT.md:6 和产品计划:160 的历史只读/仅 Actions 限制。
 分母固定 108，不接管其他 105 项；本地日志标记为本地，不能转授 Actions 或真机。
 
 ## 逐字验收文本与 verified 门槛

@@ -107,7 +107,7 @@ R1分支 `codex/r1-reading-core` 从 S=`686ce2fe` 追加阅读 preset、安装�
 
 主要证据见 [冻结 SDK 记录](validation/2026-10-22-reliability-cloud.json)、
 [表格间距](WP5_BORDER_SPACING.md)、[AcroForm](WP9_ACROFORM.md)、[Apple 审计](WP13-APPLE-REVIEW.md)，
-Android/OPDS 独立候选的完整身份见 [总 handoff](handoffs/2026-10-22-after-deadline.md)。
+Android 与 OPDS 的独立验证见 [Android 审计](WP13-ANDROID-REVIEW.md)和 [OPDS](WP15-OPDS.md)。
 
 最新 A/B 固定交付、云端核对和 C 接续要求见 [A/B 到齐登记](https://github.com/NoGod3524/EXReader/blob/8c25d2f67c5846b548a2aafa0060f06036c1d364/docs/handoffs/2026-10-22-AB-delivered.md)。
 
@@ -152,9 +152,9 @@ FAAD2 默认关闭，阅读 preset 也不链接它；只有显式 `EXR_ENABLE_AA
 
 | 包 | 独立职责 | 汇合依赖 |
 | --- | --- | --- |
-| [A：Android 修复](handoffs/2026-10-22-A-android.md) | 声明范围独立验收通过，交付 `31b36f30`；已纳入 S 并复验 | 已收口，支持边界保留 |
-| [B：AcroForm 语料](handoffs/2026-10-22-B-acroform-corpus.md) | 独立文件出口通过，交付 `97e33452`；已纳入 S 并复验 | 已收口，可选编辑支持边界保留 |
-| [C：SDK 集成](handoffs/2026-10-22-C-integration.md) | 阶段一至四完成；K2、H、S 及 12 组/35 作业严格汇总均已登记 | 联合验收通过；完整发布制度和性能路线另行推进 |
+| [A：Android 修复](WP13-ANDROID-REVIEW.md) | 声明范围独立验收通过，交付 `31b36f30`；已纳入 S 并复验 | 已收口，支持边界保留 |
+| [B：AcroForm 语料](WP9_ACROFORM.md) | 独立文件出口通过，交付 `97e33452`；已纳入 S 并复验 | 已收口，可选编辑支持边界保留 |
+| [C：SDK 集成](PARALLEL-INTEGRATION.md) | 阶段一至四完成；K2、H、S 及 12 组/35 作业严格汇总均已登记 | 联合验收通过；完整发布制度和性能路线另行推进 |
 
 C 已合入固定交付，重验并冻结 K2=`d46ff370`，冻结非 OPDS 祖先 H=`d10fa590` 后完成 OPDS 合入。
 最终 S 的 12 组/35 上游作业全部成功，汇总 run `39850404743` 的 protocol、baseline、summarize 也全部成功。
@@ -163,7 +163,7 @@ C 已合入固定交付，重验并冻结 K2=`d46ff370`，冻结非 OPDS 祖先 
 
 三包是当前功能与集成子任务，不替代上述五项质量目标。C 直接覆盖 SDK 基线与联合验证，B 覆盖表单专项输入；
 EPUB/PDF 历史失败闭环、通用差分门禁和完整发布制度尚未成为这三包中可独立验收的完整任务。
-下一版执行 [原生阅读核心路线](CORE-ROADMAP.md)；其余十五项能力见 [历史工作清单](WORK-QUEUE-2026-10-22.md)，
+下一版执行 [原生阅读核心路线](CORE-ROADMAP.md)。其余能力
 按需积压，不全部列入下一核心版本。A/B/C 等待条件已满足，R1–R6 已在 `codex/r1-reading-core` 启动，
 实际进展见 [原生阅读核心当前进展](#原生阅读核心当前进展)。
 

@@ -15,7 +15,6 @@ WP16对冻结SDK源码 `635225fe6ceb7759a948a1d8cede0ab18ea1cee9` 的五项登�
 长测与最终严格汇总、归档均由GitHub Actions云端执行，本地常驻轮询已按用户要求停止。
 本次修正证据见 `docs/validation/2026-10-21-png-reliability.json`，最终98作业/99工件云端记录见 `docs/validation/2026-10-22-reliability-cloud.json`。
 后续独立开发分为五个外派包（迁移、OPDS、Windows、Apple、Android）及四个内部包（Linux、OCR、发行文档审计、兼容语料），
-分支、文件归属与完整交付要求见 `docs/handoffs/parallel-2026-10-21/README.md`。
 这些新包在独立分支进行；其构建与测试仅在GitHub云端执行，不自动继承本次冻结源码的长测结论。
 下列旧批次数字与未完成记录按当时源码保留。
 

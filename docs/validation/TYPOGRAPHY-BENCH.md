@@ -161,9 +161,9 @@
 
 ```powershell
 python -X utf8 tools/perf/typography_bench.py selfcheck
-python -X utf8 tools/perf/typography_bench.py build --work <workspaces>/typo-bench-work-20261107 --sdk-build <workspaces>/cjk-justify-20261106/build
-python -X utf8 tools/perf/typography_bench.py run --work <workspaces>/typo-bench-work-20261107 --output evidence/typography-bench-20261107 --capture <workspace>/ops/capture_window.py
+python -X utf8 tools/perf/typography_bench.py build --work build/typography --sdk-build build/sdk
+python -X utf8 tools/perf/typography_bench.py run --work build/typography --output build/typography-results --sans-font "$readerFont" --book "$sourceBook"
 python -X utf8 tools/perf/typography_report.py
 ```
 
-重测使用新的 work/output 目录；已有 result.json 的轮次会续跑，未完成目录需先归档。excluded-attempt.json 记录最初中断轮次；该轮全部排除，不参与上述统计。
+运行前为 `$readerFont` 和 `$sourceBook` 指定与报告输入哈希相符的字体和 EPUB。重测使用新的 work/output 目录；已有 result.json 的轮次会续跑，未完成目录需先归档。excluded-attempt.json 记录最初中断轮次；该轮全部排除，不参与上述统计。

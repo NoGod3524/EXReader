@@ -106,8 +106,26 @@ def main():
              {'RUNNER_OS': 'Windows', 'RUNNER_ARCH': 'X64'}, 1000, 'Windows', 'X64')
         assert verify(candidate) == 3
         checks.append('candidate-automatically-includes-checksums')
-        from build_manifest import fingerprint, source_inputs, tree
+        from build_manifest import fingerprint, publication_manifest, source_inputs, tree
         from reproduce import package
+        private_path = 'C:/Users/build-user/work'
+        local_manifest = {
+            'source': {'directory': private_path, 'revision': 'a' * 40,
+                       'git_tree': 'b' * 40, 'tree': {'files': 1, 'sha256': 'c' * 64}},
+            'compiler': {'C': {'id': 'MSVC', 'version': '19', 'sha256': 'd' * 64,
+                               'path': private_path}},
+            'cmake': {'version': 'cmake version 3.30.0', 'sha256': 'e' * 64, 'path': private_path},
+            'build': {'directory': private_path, 'configure_arguments': [private_path]},
+            'environment': {'PATH': private_path},
+            'package': {'source_date_epoch': 1000},
+        }
+        captured = root / 'build_manifest.local.json'
+        captured.write_bytes(json.dumps(local_manifest).encode('utf-8'))
+        public = publication_manifest(captured.read_bytes())
+        assert private_path not in json.dumps(public)
+        assert public['source']['revision'] == local_manifest['source']['revision']
+        assert public['input_manifest_sha256'] == digest(captured)
+        checks.append('published-provenance-omits-local-build-inputs')
         snapshot = tree(stage)
         first, second = root / 'first.tar.gz', root / 'second.tar.gz'
         package(stage, first, 1000)

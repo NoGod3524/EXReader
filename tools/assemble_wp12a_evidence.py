@@ -19,7 +19,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     parser.add_argument("--build", required=True)
-    parser.add_argument("--large", default=r"<home>\exr-wp12a-evidence")
+    parser.add_argument("--large", default="build/wp12a-media")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
     fixtures = os.path.join(args.root, "tests", "fixtures", "images", "MANIFEST.json")

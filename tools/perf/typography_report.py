@@ -304,8 +304,8 @@ def main():
         '相对 protocol.json 中构建源码 revision 的受保护目录 diff 为空，未手动触发 CI、未取消 workflow。', '',
         '## 复现', '', '```powershell',
         'python -X utf8 tools/perf/typography_bench.py selfcheck',
-        'python -X utf8 tools/perf/typography_bench.py build --work <workspaces>/typo-bench-work-20261107 --sdk-build <workspaces>/cjk-justify-20261106/build',
-        'python -X utf8 tools/perf/typography_bench.py run --work <workspaces>/typo-bench-work-20261107 --output evidence/typography-bench-20261107 --capture <workspace>/ops/capture_window.py',
+        'python -X utf8 tools/perf/typography_bench.py build --work build/typography --sdk-build build/sdk',
+        'python -X utf8 tools/perf/typography_bench.py run --work build/typography --output build/typography-results --sans-font "$readerFont" --book "$sourceBook"',
         'python -X utf8 tools/perf/typography_report.py', '```', '',
         '重测使用新的 work/output 目录；已有 result.json 的轮次会续跑，未完成目录需先归档。'
         'excluded-attempt.json 记录最初中断轮次；该轮全部排除，不参与上述统计。', '']

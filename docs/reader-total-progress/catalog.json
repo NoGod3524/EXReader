@@ -22,7 +22,7 @@
     },
     "sdk_formats": {
       "run": 40244430230,
-      "doc": "docs/reader-team24-composition/PLAN.md",
+      "doc": "docs/reader-team24-composition/RESULTS.md",
       "source_prefix": "8015c576"
     },
     "packages": {
@@ -57,7 +57,7 @@
     },
     "pure_codec": {
       "run": 40348964690,
-      "doc": "docs/reader-team24-composition/PLAN.md",
+      "doc": "docs/reader-team24-composition/RESULTS.md",
       "source_prefix": "347165fe"
     },
     "preferences": {
@@ -87,7 +87,7 @@
     },
     "windows_organization": {
       "run": 40414564325,
-      "doc": "docs/reader-team24-composition/PLAN.md",
+      "doc": "docs/reader-team24-composition/RESULTS.md",
       "source_prefix": "0b54a15e"
     },
     "gtk_base": {
@@ -566,7 +566,7 @@
     },
     "apple_annotation_iphone_independent_review_20261031": {
       "run": 41170540560,
-      "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
+      "doc": "docs/reader-total-progress/webdav-suite-results.md",
       "source_prefix": "94fb236a4a2da87dfbaf4f1dd2a47885d615a230",
       "expected_conclusion": "failure",
       "artifact": 13031773957,
@@ -581,13 +581,13 @@
     },
     "f04_six_host_independent_review_20261101": {
       "run": 41306566948,
-      "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
+      "doc": "docs/reader-total-progress/webdav-suite-results.md",
       "source_prefix": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
       "expected_conclusion": "success"
     },
     "f02_original_transfer_independent_review_20261101": {
       "run": 41306566948,
-      "doc": "docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md",
+      "doc": "docs/reader-total-progress/webdav-suite-results.md",
       "source_prefix": "ec11cf862ca3b44483d7e8c4726ae748ab438337",
       "expected_conclusion": "success"
     },

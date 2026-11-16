@@ -59,4 +59,3 @@ PDF/随机跳页性能基线、真实 EPUB/PDF 故障、跨平台 profile、硬�
 
 主线处理构建契约、性能采样判定、书库有界来源及进度/标注语义。
 独立的 Windows/macOS 构建验证和文档同步另交 handoff；不同时修改同一工作树或核心源码。
-两份可直接交出的任务见 [handoff 索引](handoffs/reading-simple-index.md)。

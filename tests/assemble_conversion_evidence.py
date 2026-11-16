@@ -37,11 +37,13 @@ def main():
     parser.add_argument("--matrix", required=True)
     parser.add_argument("--cli", required=True)
     parser.add_argument("--benchmark", required=True)
+    parser.add_argument("--gcc-build", type=Path)
     parser.add_argument("--msvc-matrix")
     parser.add_argument("--source-commit")
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
     repo = Path(args.repo)
+    gcc_build = args.gcc_build or repo / "build/wp12-lite-gcc"
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     commit = args.source_commit or git(repo, "rev-parse", "HEAD")
@@ -138,24 +140,24 @@ def main():
     builds = {
         "schema": 1, "package": "WP12-lite", "kind": "builds",
         "environment": environment,
-        "gcc": {"build": "<home>/exr-wp12-lite-gcc", "config": "Release/Ninja",
-                "tool_sha256": sha256(Path("<home>/exr-wp12-lite-gcc/exreader-convert.exe"))
-                if Path("<home>/exr-wp12-lite-gcc/exreader-convert.exe").exists() else "",
-                "runtime_sha256": sha256(Path("<home>/exr-wp12-lite-gcc/libexreader.dll"))
-                if Path("<home>/exr-wp12-lite-gcc/libexreader.dll").exists() else "",
+        "gcc": {"build": gcc_build.name, "config": "Release/Ninja",
+                "tool_sha256": sha256(gcc_build / "exreader-convert.exe")
+                if (gcc_build / "exreader-convert.exe").exists() else "",
+                "runtime_sha256": sha256(gcc_build / "libexreader.dll")
+                if (gcc_build / "libexreader.dll").exists() else "",
                 "ctest": {"expected": 149, "actual": 149, "passed": 149,
-                          "failed": 0, "log": "<home>/exr-wp12-lite-full-ctest.log",
-                          "final_log": "<home>/exr-wp12-lite-final-ctest-43bd475.log"}},
-        "msvc": {"build": "<home>/exr-wp12-lite-msvc", "config": "Release/x64",
+                          "failed": 0, "log": "exr-wp12-lite-full-ctest.log",
+                          "final_log": "exr-wp12-lite-final-ctest-43bd475.log"}},
+        "msvc": {"build": "exr-wp12-lite-msvc", "config": "Release/x64",
                  "matrix": msvc,
                  "cli_scenarios": "37/37 passed",
-                 "cli_evidence": "<home>/exr-wp12-lite-cli-scenarios-msvc.json"},
-        "install_default": {"prefix": "<home>/exr-wp12-lite-stage",
-                            "consumer": "<home>/exr-wp12-lite-consumer",
+                 "cli_evidence": "exr-wp12-lite-cli-scenarios-msvc.json"},
+        "install_default": {"prefix": "exr-wp12-lite-stage",
+                            "consumer": "exr-wp12-lite-consumer",
                             "ctest": "5/5 passed", "includes_installed_convert": True},
-        "install_trimmed": {"prefix": "<home>/exr-wp12-lite-stage-trim",
-                            "build": "<home>/exr-wp12-lite-trim",
-                            "consumer": "<home>/exr-wp12-lite-consumer-trim",
+        "install_trimmed": {"prefix": "exr-wp12-lite-stage-trim",
+                            "build": "exr-wp12-lite-trim",
+                            "consumer": "exr-wp12-lite-consumer-trim",
                             "options": {"EXR_BUILD_TOOLS": False, "EXR_ENABLE_PDF": False,
                                         "EXR_ENABLE_PDF_EDIT": False, "EXR_ENABLE_AUDIO": False,
                                         "EXR_ENABLE_LIBRARY": False, "EXR_BUILD_TEXT_INDEX": False,
@@ -169,11 +171,11 @@ def main():
         json.dumps(builds, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     baseline = {
         "schema": 1, "package": "WP12-lite", "kind": "baseline",
-        "source_commit": "45e21b3", "worktree": "<home>/exr-wp12-lite-baseline-src",
-        "build": "<home>/exr-wp12-lite-baseline-gcc",
+        "source_commit": "45e21b3", "worktree": "exr-wp12-lite-baseline-src",
+        "build": "exr-wp12-lite-baseline-gcc",
         "tests": {"expected": 4, "actual": 4, "passed": 4, "failed": 0,
                   "names": ["native-core", "native-export-xml", "native-export-html", "native-export-epub"],
-                  "log": "<home>/exr-wp12-lite-baseline-ctest.log"},
+                  "log": "exr-wp12-lite-baseline-ctest.log"},
         "note": "An earlier regex also selected an unbuilt component test; the exact export/core subset is recorded here.",
     }
     (out / "wp12-lite-baseline.json").write_text(

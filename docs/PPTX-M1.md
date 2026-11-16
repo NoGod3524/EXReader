@@ -134,7 +134,7 @@ Total Test time (real) = 418.90 sec
 exit 0
 ```
 
-已登记到 `tests/fixtures/docx-real/codex/register.cmake` 的 Linux/GNU ASan
+已登记到 `tests/fixtures/docx-real/synthetic/register.cmake` 的 Linux/GNU ASan
 ctypes 预载正则。测试本身仅依赖 Python 标准库，生成夹具才需要 python-pptx。
 
 完整本地日志：`build/pptx-m1/pptx-ctest.log`、`ctest-all.log` 和
@@ -145,7 +145,6 @@ ctypes 预载正则。测试本身仅依赖 Python 标准库，生成夹具才�
 - Release 全功能构建 exit 0，PPTX 编译采用 `-Wall -Wextra -Wpedantic -Werror`。
 - `check_sdk_docs.py --binary build/pptx-m1/libexreader.dll` exit 0：482/482 公开函数，覆盖率 100%，DLL 缺失/额外导出均为空。现有固定版式 API 的六标签文档已更新。
 - `check_layers.py build/pptx-m1` exit 0：129 个对象，0 个新逆向引用，0 个逆向 include。新源文件按当前 CMake 清单机制登记在 `tools/layers.json`；没有新增头文件。
-- 共用 `<verification-workspace>/ops/prepush-check.ps1 -Worktree <本工作树>` 检查通过；当前仓库的 ops 目录未包含该脚本。
 - `src/docx.c`、`tests/check_reading_release.py`、`tools/version_literal_exceptions.json` 未修改。全程使用命令行，无 GUI/SendInput。
 
 ## M2 可复用接口与需要延伸的位置

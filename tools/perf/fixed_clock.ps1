@@ -1,6 +1,6 @@
 param([Parameter(Mandatory)][string]$Output, [int]$Cpu = 2, [int]$Runs = 5,
     [string]$Build = 'evidence/perf-gate-20261107/build',
-    [string]$Font = '<home>/exr-deps/reader-font/Reader.otf',
+    [Parameter(Mandatory)][string]$Font,
     [double]$IdleCpuMax = 5, [double]$IdleTimeout = 15)
 $ErrorActionPreference = 'Stop'
 if (Test-Path -LiteralPath $Output) { throw 'Refusing to overwrite a session' }

@@ -85,4 +85,4 @@ python tests/benchmark_font_manager.py "$fontBuild/exreader-font-manager-probe.e
 python evidence/font-manager-20261107/verify.py $fontBuild <workspaces>/exr-cjk-corpus/hongloumeng-24264.epub build/font-manager-acceptance
 ```
 
-受保护源/头/测试夹具与必要构建清单变更已登记到 [R-PROTECTED-TREES.md](../ci-packaging-20261103/R-PROTECTED-TREES.md)。`examples/`、`.github/` 没有本分支改动。未手动触发 CI、未取消 workflow run。步骤记录逐步追加到 [FONT-OUT3.txt](../../FONT-OUT3.txt)。
+受保护源/头/测试夹具与必要构建清单变更已登记到 [R-PROTECTED-TREES.md](../ci-packaging-20261103/R-PROTECTED-TREES.md)。`examples/`、`.github/` 没有本分支改动。未手动触发 CI、未取消 workflow run。

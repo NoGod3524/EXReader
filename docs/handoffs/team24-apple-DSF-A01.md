@@ -2,6 +2,7 @@
 
 工作树：`<home>/exreader-team24-20261026/dsf-apple`。分支：`codex/dsf-apple-ui-close`。起点：`8ebef083aa17272c5019c8f778c03ace78e9ea96`。本轮唯一受测源码：`d9ca5805952f8069ecbdb7a724af43662d9b0a6e`。
 
+本次在 `tools/check_apple_product.py` 与验证驱动中显式指定了解码方式，并更新了入口校验与工作流调用。共享检查器的修复来自 `9979001fba4df9fceaed3ffc89d6d9e0bcc16337`。
 
 ## 一次完整三目标验收（唯一一轮）
 

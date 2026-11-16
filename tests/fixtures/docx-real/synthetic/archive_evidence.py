@@ -92,7 +92,7 @@ def main():
         final = [after['matrices'][mode][i]['passed'] for mode in ('noop', 'edited')]
         extra = after['edit_side_effects'][i]
         assert extra['id'] == item['id']
-        lines.append(f'| [{item["id"]} · {item["label"]}](../tests/fixtures/docx-real/codex/{item["path"]}) | {item["bytes"]:,} | {row[0]}/18 · {row[1]}/18 | {final[0]}/18 · {final[1]}/18 | {len(extra["additional_main_changes"])} |')
+        lines.append(f'| [{item["id"]} · {item["label"]}](../tests/fixtures/docx-real/synthetic/{item["path"]}) | {item["bytes"]:,} | {row[0]}/18 · {row[1]}/18 | {final[0]}/18 · {final[1]}/18 | {len(extra["additional_main_changes"])} |')
     lines += ['', '全部小于 60 KiB；最小／最大分别为 ' + str(min(v['bytes'] for v in manifest['documents'])) + '／' + str(max(v['bytes'] for v in manifest['documents'])) + ' 字节。每份都混合正文、表格、图片、脚注、页眉页脚、域、编号、样式和主题。重复表头夹具有 89 行；每页重编号脚注夹具含两个脚注和显式换页；PNG 为原创 160×96 三条形图。', '',
         '## ZIP 容器仍有变化', '',
         'OOXML 部件字节保留与 ZIP 容器原样复制分开统计。[逐夹具 ZIP 审计](docx-real/zip-container.json) 同时记录修前、修后两条路径的容器哈希、条目顺序、时间戳、属性和其它元数据变化。此项保留在明确放弃清单，未计入 18 项通过率。', '',
@@ -126,7 +126,7 @@ def main():
         '- [精确 #125 对照构建](docx-real/control-build.json)、[文字阶段构建](docx-real/stage-text-build.json)、[段落阶段构建](docx-real/stage-paragraph-build.json)：122 个复用产品源文件均核对 Git 原文字节，模型和 IO 重编译，使用原公开头及相同依赖。',
         '- [完整 CTest](docx-real/ctest.txt)、[最终构建](docx-real/build-final.txt)、[配置及测试登记](docx-real/configure-final.txt)、[分层检查](docx-real/layers.txt)。',
         '- [19 本逐页哈希](docx-real/realbooks.json.gz)、[冻结基线差异](docx-real/realbooks.diff.json)。每本输入先核对 manifest SHA-256，再完整渲染各页；原书不入库。',
-        '- [生成、矩阵、CTest、对照构建命令](../tests/fixtures/docx-real/codex/README.md)；[明确放弃与保守行为](DOCX-LIMITS.md)。', '',
+        '- [生成、矩阵、CTest、对照构建命令](../tests/fixtures/docx-real/synthetic/README.md)；[明确放弃与保守行为](DOCX-LIMITS.md)。', '',
         '字节相同指解压后的 OPC 部件。写出会重建 ZIP 容器，其整体 SHA-256 不作为相等条件。保留域、浮动图和组合图形的源数据不代表 core 能重新求值或排版这些 Word 结构。', '']
     (ROOT / 'docs/DOCX-REAL-RESULTS.md').write_text('\n'.join(lines), encoding='utf-8')
     summary = dict(matrices_before=before['summary'], matrices_after=after['summary'], ctest=int(total[1]),
