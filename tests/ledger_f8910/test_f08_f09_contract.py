@@ -1,8 +1,11 @@
 """Stdlib checks for missing frame evidence, shelf telemetry, and AT-SPI events."""
 import importlib.util
 import json
+import sys
+from types import SimpleNamespace
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -20,6 +23,25 @@ a11y = module('tests/reader_a11y_gtk/expectations.py')
 
 
 class Contract(unittest.TestCase):
+    def test_atspi_dispatch(self):
+        queued = []
+        context = SimpleNamespace(pending=lambda: bool(queued),
+                                  iteration=lambda blocking: queued.pop(0)())
+        glib = SimpleNamespace(MainContext=SimpleNamespace(default=lambda: context))
+        gi = SimpleNamespace(require_version=lambda *args: None)
+        with patch.dict(sys.modules, {'gi': gi, 'gi.repository': SimpleNamespace(Atspi=SimpleNamespace(), GLib=glib)}):
+            client = module('tests/reader_a11y_gtk/atspi_client.py')
+        recorder = client.Recorder()
+        source = SimpleNamespace(get_role_name=lambda: 'label', get_name=lambda: 'Failed')
+        event = SimpleNamespace(type='object:property-change:accessible-name', detail1=0, detail2=0, source=source)
+        queued.append(lambda: recorder._callback(event))
+        # A callback queries its source through _safe; dispatch must not recurse.
+        self.assertEqual(recorder.mark(), 1)
+        queued.append(lambda: recorder._callback(event))
+        self.assertEqual(recorder.since(1)[0]['source_name'], 'Failed')
+        self.assertFalse(queued)
+        self.assertFalse(client._dispatching)
+
     def test_frames(self):
         rows = [dict(frame=i, frame_time_us=i * 16000, update_us=i * 16000,
                      after_paint_us=i * 16000 + 1000) for i in range(4)]

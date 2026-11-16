@@ -182,6 +182,16 @@ jobs:
             sleep 1
             python3 tests/reader_perf_gtk/sample.py --fixed-shelf --payload build/account-package/EXReader-Linux --seed build/f08-seed/seed_library --output build/f08-evidence
           ' 2>&1 | tee build/account-logs/f08-shelf.log
+      - name: Preserve F08 samples before the remaining host audits
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-f08-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/f08-evidence/
+            build/account-logs/f08-shelf.log
+            build/account-logs/source-binding.txt
+          if-no-files-found: error
       - name: F10 GTK startup scavenger and desktop CTest (verbose)
         if: ${{ !cancelled() && steps.host.outcome == 'success' }}
         run: |
@@ -227,6 +237,16 @@ jobs:
               print('%-5s %-12s %s' % ('PASS' if entry['pass'] else 'FAIL', entry['severity'], entry['name']))
           PY
           python3 tests/reader_a11y_gtk/check_a11y_report.py --report build/a11y-evidence/result.json --require-accepted
+      - name: Preserve F09 accessibility evidence before the account audit
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ledger-f09-gtk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build/a11y-evidence/
+            build/a11y-logs/
+            build/account-logs/source-binding.txt
+          if-no-files-found: error
       - name: Real GTK secure save load delete unavailable session-only full library scan cancel retry and shutdown
         if: ${{ !cancelled() && steps.host.outcome == 'success' }}
         run: |
