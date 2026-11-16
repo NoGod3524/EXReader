@@ -42,9 +42,9 @@ def text(window):
 
 class MetadataApp(App):
     def wait_idle(self):
-        self.wait(lambda: U.IsWindowEnabled(self.control('import')), timeout=90)
+        self.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(self.window, 127)), timeout=90)
         time.sleep(.15)
-        self.wait(lambda: U.IsWindowEnabled(self.control('import')), timeout=90)
+        self.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(self.window, 127)), timeout=90)
 
     def dialog(self, recovery=False):
         def find():
