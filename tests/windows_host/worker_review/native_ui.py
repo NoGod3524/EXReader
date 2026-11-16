@@ -107,20 +107,32 @@ def inventory(window, output):
 def filename_edit(dialog):
     found = []
 
+    def class_of(window):
+        name = C.create_unicode_buffer(100)
+        U.GetClassNameW(window, name, len(name))
+        return name.value
+
     @ENUM
     def visit(child, unused):
-        name = C.create_unicode_buffer(100)
-        U.GetClassNameW(child, name, len(name))
-        identifier = U.GetDlgCtrlID(child)
-        # Classic edt1, or the Explorer picker filename combo (cmb13)
-        # whose actual editable child has ID 1001.
-        if name.value.lower() == 'edit' and (identifier == 0x480 or
-                (identifier == 1001 and U.GetDlgCtrlID(U.GetParent(child)) == 0x47C)):
-            found.append(child)
+        if class_of(child) == 'Edit' and U.IsWindowVisible(child) and U.IsWindowEnabled(child):
+            parent = U.GetParent(child)
+            # Same Windows-2022 locator as reader_wave3_c09/check_ui.py:
+            # modern Edit 1001 / ComboBox / FloatNotifySink, or edt1/cmb13.
+            if (U.GetDlgCtrlID(child) == 1001 and class_of(parent) == 'ComboBox' and
+                    class_of(U.GetParent(parent)) == 'FloatNotifySink'):
+                found.append(child)
+            else:
+                ancestor = child
+                while ancestor and ancestor != dialog:
+                    if U.GetDlgCtrlID(ancestor) in (1152, 1148):
+                        found.append(child)
+                        break
+                    ancestor = U.GetParent(ancestor)
         return True
 
     U.EnumChildWindows(dialog, visit, 0)
-    return found[-1] if found else 0
+    assert len(found) <= 1, 'ambiguous native filename edit'
+    return found[0] if found else 0
 
 
 def file_dialog(pid):
