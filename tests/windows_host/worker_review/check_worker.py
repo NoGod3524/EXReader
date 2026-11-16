@@ -118,7 +118,7 @@ class App:
         # above still exercise their original real buttons.
         keys = {'open': (ord('O'), (0x11,)), 'select': (ord('A'), (0x11,)),
                 'copy': (ord('C'), (0x11,)), 'previous': (0x21, ()),
-                'next': (0x22, ()), 'cancel': (0x1B, ())}
+                'next': (0x22, ())}
         assert name in keys, 'No current native UI equivalent for command: ' + name
         page_key(self.window, *keys[name])
 
