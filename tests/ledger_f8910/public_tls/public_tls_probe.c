@@ -5,6 +5,9 @@
    handshake and return an HTTP status; badssl.com origins with an expired,
    wrong-host, self-signed or untrusted-root certificate must be refused as
    EXR_DAV_TLS before any HTTP status exists. No credential is configured.
+   With arguments the cases come from the command line instead, as
+   accept=URL / refuse=URL; tests/ledger_f8910/private_tls uses that to drive
+   the same client against a private-CA origin on a non-loopback address.
    Output: one JSON object on stdout; exit 0 only when every case matches. */
 #include <stdio.h>
 #include <string.h>
@@ -29,8 +32,8 @@ static void json_string(const char *s) {
   putchar('"');
 }
 
-int main(void) {
-  static const tls_case cases[] = {
+int main(int argc, char **argv) {
+  static const tls_case public_cases[] = {
     {"https://www.github.com/", 0, "public CA chain, valid host"},
     {"https://example.com/", 0, "public CA chain, valid host"},
     {"https://badssl.com/", 0, "public CA chain on the negative-test origin itself"},
@@ -39,8 +42,23 @@ int main(void) {
     {"https://self-signed.badssl.com/", 1, "self-signed certificate"},
     {"https://untrusted-root.badssl.com/", 1, "chain to a root absent from the platform store"},
   };
-  size_t count = sizeof(cases) / sizeof(cases[0]), passed = 0;
-  printf("{\"probe\":\"public-tls\",\"client\":\"EXReaderWebDAV %s\",\"cases\":[", EXR_WEBDAV_VERSION);
+  tls_case argument_cases[16];
+  const tls_case *cases = public_cases;
+  size_t count = sizeof(public_cases) / sizeof(public_cases[0]), passed = 0;
+  if (argc > 1) {
+    if (argc - 1 > (int)(sizeof(argument_cases) / sizeof(argument_cases[0]))) return 2;
+    for (int i = 1; i < argc; i++) {
+      int refuse = !strncmp(argv[i], "refuse=", 7);
+      if (!refuse && strncmp(argv[i], "accept=", 7)) { fputs("usage: public-tls-probe [accept=URL|refuse=URL]...\n", stderr); return 2; }
+      argument_cases[i - 1].url = argv[i] + 7;
+      argument_cases[i - 1].expect_tls_refusal = refuse;
+      argument_cases[i - 1].why = "command line";
+    }
+    cases = argument_cases;
+    count = (size_t)argc - 1;
+  }
+  printf("{\"probe\":\"%s\",", argc > 1 ? "argument-tls" : "public-tls");
+  printf("\"client\":\"EXReaderWebDAV %s\",\"cases\":[", EXR_WEBDAV_VERSION);
   for (size_t i = 0; i < count; i++) {
     exr_webdav_config config;
     exr_webdav_client *client = NULL;
@@ -60,10 +78,14 @@ int main(void) {
       exr_webdav_listing_free(&listing);
       exr_webdav_free(client);
     }
-    /* A handshake that completed yields an HTTP status (or a WebDAV listing);
-       a refused certificate yields TLS with no status. */
-    int handshake_completed = created == EXR_DAV_OK && listed != EXR_DAV_TLS && listed != EXR_DAV_IO &&
-                              (listed == EXR_DAV_OK || error.http_status > 0);
+    /* A refused certificate yields TLS with no HTTP status. Every status
+       below is only produced from a response received over a completed
+       handshake: a listing, an HTTP error, an authentication challenge, a
+       body the client rejected, or a redirect it refused to follow (the
+       client never follows redirects, e.g. www.github.com -> github.com). */
+    int handshake_completed = created == EXR_DAV_OK &&
+                              (listed == EXR_DAV_OK || listed == EXR_DAV_REDIRECT || listed == EXR_DAV_FORMAT ||
+                               ((listed == EXR_DAV_HTTP || listed == EXR_DAV_AUTH) && error.http_status > 0));
     int refused = created == EXR_DAV_OK && listed == EXR_DAV_TLS && error.http_status == 0;
     int pass = cases[i].expect_tls_refusal ? refused : handshake_completed;
     passed += pass != 0;

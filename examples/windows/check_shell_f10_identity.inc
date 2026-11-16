@@ -4,7 +4,8 @@
    CTest: they need a second local account and public network access.
 
    --f10-unavailable DIR   run by a process that lives in a network logon
-                           session (WinRM as the probe account). Credential
+                           session (credential-identity-probe run-as-network
+                           starts it with the probe account's token). Credential
                            Manager has no credential set there, so CredWriteW
                            fails for real; the shell must fall back to its
                            DPAPI file (or refuse) without writing a CM record.
@@ -15,7 +16,8 @@
                            unreadable to that account.
    --f10-public-tls        the shell's own WinHTTP request (sy_http_once) and
                            error classification (sy_explain) against public
-                           origins, with no credential loaded. */
+                           origins, with no credential loaded.
+   --f10-tls CASE...       the same request for accept=URL / refuse=URL cases. */
 #include <stdarg.h>
 #include <ntsecapi.h>
 #include <userenv.h>
@@ -163,6 +165,16 @@ static int test_f10_cross_user(void) {
   return f10_finish("cross-user");
 }
 
+/* One request through the shell's own WinHTTP path with no credential loaded. */
+static void f10_tls_case(const char *url,int refuse) {
+  sy_target t;assert(sy_target_parse(url,&t) && t.secure);
+  sy_resp r;int ok=sy_http_once(&t,L"PROPFIND","","",0,L"Depth: 0\r\n",&r);
+  sy_status s;memset(&s,0,sizeof(s));int code=sy_explain(&r,"probe",&s);
+  int pass=refuse ? (!ok && code==SY_TLS):(ok && r.status>0);
+  char name[160];snprintf(name,sizeof(name),"%s %s",refuse ? "refuse":"accept",url);
+  f10_check(name,pass,"http_status=%d winhttp_error=%lu class=%s",r.status,(unsigned long)r.werr,code==SY_TLS ? "SY_TLS":"other");
+  sy_resp_free(&r);
+}
 static int test_f10_public_tls(void) {
   static const struct { const char *url; int refuse; } cases[]={
     {"https://www.github.com/",0},{"https://example.com/",0},{"https://badssl.com/",0},
@@ -170,14 +182,17 @@ static int test_f10_public_tls(void) {
     {"https://self-signed.badssl.com/",1},{"https://untrusted-root.badssl.com/",1},
   };
   sy_wipe(&sy_user);sy_wipe(&sy_pass); /* never send an Authorization header to a public origin */
-  for(size_t i=0;i<sizeof(cases)/sizeof(cases[0]);i++) {
-    sy_target t;assert(sy_target_parse(cases[i].url,&t) && t.secure);
-    sy_resp r;int ok=sy_http_once(&t,L"PROPFIND","","",0,L"Depth: 0\r\n",&r);
-    sy_status s;memset(&s,0,sizeof(s));int code=sy_explain(&r,"probe",&s);
-    int pass=cases[i].refuse ? (!ok && code==SY_TLS):(ok && r.status>0);
-    char name[96];snprintf(name,sizeof(name),"%s %s",cases[i].refuse ? "refuse":"accept",cases[i].url);
-    f10_check(name,pass,"http_status=%d winhttp_error=%lu class=%s",r.status,(unsigned long)r.werr,code==SY_TLS ? "SY_TLS":"other");
-    sy_resp_free(&r);
-  }
+  for(size_t i=0;i<sizeof(cases)/sizeof(cases[0]);i++) f10_tls_case(cases[i].url,cases[i].refuse);
   return f10_finish("public-tls");
+}
+/* --f10-tls accept=URL|refuse=URL ...: the same request against origins named
+   by tests/ledger_f8910/private_tls (private CA, non-loopback address). */
+static int test_f10_tls(int count,char **cases) {
+  sy_wipe(&sy_user);sy_wipe(&sy_pass);
+  for(int i=0;i<count;i++) {
+    int refuse=!strncmp(cases[i],"refuse=",7);
+    if(!refuse && strncmp(cases[i],"accept=",7)) {fputs("usage: check_sync --f10-tls accept=URL|refuse=URL ...\n",stderr);return 2;}
+    f10_tls_case(cases[i]+7,refuse);
+  }
+  return f10_finish("tls");
 }
