@@ -24,6 +24,7 @@ jobs:
       - name: Enter compiler environment
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
           $wrapper = Join-Path $env:RUNNER_TEMP 'final-vcvars.bat'
@@ -98,6 +99,8 @@ jobs:
           python-version: '3.12'
       - name: Report the runner desktop
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           query session
           "source_sha=$env:GITHUB_SHA" | Tee-Object identity.txt
           "run=$env:GITHUB_RUN_ID/$env:GITHUB_RUN_ATTEMPT" | Tee-Object identity.txt -Append
@@ -105,6 +108,7 @@ jobs:
       - name: Enter compiler environment
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $bat = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
           $wrapper = Join-Path $env:RUNNER_TEMP 'f09-vcvars.bat'
@@ -129,6 +133,8 @@ jobs:
           python -m pip install --disable-pip-version-check "uiautomation==2.0.29" *> pip.txt
       - name: Collect shell UIA and real SendInput keyboard focus order (one foreground activation)
         run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           python evidence/ledger-f08-f09-f10-r2-20261115/F09-keyboard-single-activation.py --binary build/audit/EXReaderAudit.exe --book build/f08-books/pg11.epub --font C:/Windows/Fonts/segoeui.ttf --output f09-keyboard --extended *> f09-keyboard.txt
           "exit=$LASTEXITCODE" | Tee-Object f09-keyboard.txt -Append
           Get-Content f09-keyboard.txt
@@ -146,3 +152,4 @@ jobs:
             f09-keyboard.txt
             f09-keyboard/
           if-no-files-found: error
+
