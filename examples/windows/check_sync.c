@@ -31,6 +31,7 @@ int main(int argc,char **argv) {
   if(argc==3 && !strcmp(argv[1],"--f10-unavailable")) return test_f10_unavailable(argv[2]);
   if(argc==2 && !strcmp(argv[1],"--f10-cross-user")) return test_f10_cross_user();
   if(argc==2 && !strcmp(argv[1],"--f10-public-tls")) return test_f10_public_tls();
+  if(argc>2 && !strcmp(argv[1],"--f10-tls")) return test_f10_tls(argc-2,argv+2);
   /* shelf_load refreshes covers under the same lock as the native host. */
   InitializeCriticalSection(&g.library_lock);
   test_sync();

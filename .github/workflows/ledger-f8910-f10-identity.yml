@@ -1,7 +1,7 @@
 name: Ledger F10 verify (Windows credential identity and public TLS)
 on:
   push:
-    branches: [codex/ledger-f8910-verify]
+    branches: [codex/ledger-f8910-verify, codex/ledger-f10-fable]
     paths:
       - 'examples/reader.c'
       - 'examples/windows/**'
@@ -21,7 +21,7 @@ env:
   F10_ROOT: C:\exr-f10
 jobs:
   identity:
-    name: F10 Credential Manager UNAVAILABLE, cross-user isolation and public TLS (windows-2022)
+    name: F10 Credential Manager UNAVAILABLE, cross-user isolation, public and private-CA TLS (windows-2022)
     runs-on: windows-2022
     timeout-minutes: 60
     defaults:
@@ -69,9 +69,13 @@ jobs:
           cmake --build build/tls-probe *>> f10/probe-build.txt
           New-Item -ItemType Directory -Force "$env:F10_ROOT/bin" | Out-Null
           Copy-Item build/shell/check_sync.exe, build/credential-probe/credential-identity-probe.exe, build/tls-probe/public-tls-probe.exe "$env:F10_ROOT/bin/"
+          # check_sync.exe links the SDK DLLs of its build tree; without them it exits 0xC0000135.
+          Get-ChildItem build/shell -Recurse -Filter *.dll | ForEach-Object { Copy-Item $_.FullName "$env:F10_ROOT/bin/" -Force }
+          Get-ChildItem "$env:F10_ROOT/bin" | Select-Object Name, Length | Format-Table -AutoSize | Out-String -Width 200 | Tee-Object f10/bin-listing.txt
+          dumpbin /dependents "$env:F10_ROOT/bin/check_sync.exe" *> f10/check_sync-dependents.txt
           Get-FileHash "$env:F10_ROOT/bin/*.exe" | Format-Table -AutoSize | Out-String -Width 300 | Tee-Object f10/binaries.txt
           exit 0
-      - name: Create a disposable non-admin local account and enable loopback WinRM
+      - name: Create a disposable non-admin local account
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
@@ -80,11 +84,11 @@ jobs:
           "::add-mask::$password"
           $secure = ConvertTo-SecureString $password -AsPlainText -Force
           New-LocalUser -Name $user -Password $secure -AccountNeverExpires -PasswordNeverExpires -Description 'EXReader F10 probe' | Out-Null
-          Add-LocalGroupMember -Group 'Remote Management Users' -Member $user
           $admins = @(Get-LocalGroupMember -Group 'Administrators' | ForEach-Object Name)
           "probe_user=$user in_administrators=$([bool]($admins -match "\\$user$"))" | Tee-Object f10/account.txt
-          Enable-PSRemoting -Force -SkipNetworkProfileCheck *> f10/winrm.txt
-          Set-Item WSMan:\localhost\Client\TrustedHosts -Value 'localhost' -Force
+          # Hosted runners have no usable WinRM listener (WSMan cannot launch a host
+          # process), so nothing here depends on it: the probes reach the second
+          # identity with LogonUserW.
           icacls $env:F10_ROOT /grant "${user}:(OI)(CI)F" *>> f10/account.txt
           "F10_USER=$user" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           "F10_PASSWORD=$password" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
@@ -105,6 +109,34 @@ jobs:
           "shell_exit=$shell module_exit=$module" | Tee-Object f10/public-tls-exit.txt
           if ($shell -ne 0 -or $module -ne 0) { exit 1 }
           exit 0
+      - name: Private-CA TLS on a non-loopback address (untrusted, trusted, wrong name) through both clients
+        if: ${{ !cancelled() }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # The harness gates on its own checks and writes result.json either way.
+          $PSNativeCommandUseErrorActionPreference = $false
+          python tests/ledger_f8910/private_tls/check_private_tls.py --output f10/private-tls --secrets "$env:RUNNER_TEMP/f10-private-tls" "--probe=shell,$env:F10_ROOT/bin/check_sync.exe,--f10-tls" "--probe=module,$env:F10_ROOT/bin/public-tls-probe.exe" *> f10/private-tls.txt
+          $code = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          Get-Content f10/private-tls.txt
+          "private_tls_exit=$code" | Tee-Object f10/private-tls-exit.txt
+          if ($code -ne 0 -or -not (Test-Path f10/private-tls/result.json)) { exit 1 }
+          exit 0
+      - name: Forced DPAPI fallback, private sync.cred DACL and stage recovery (check_sync --privacy)
+        if: ${{ !cancelled() }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $PSNativeCommandUseErrorActionPreference = $false
+          & "$env:F10_ROOT/bin/check_sync.exe" --privacy *> f10/shell-privacy.txt
+          $code = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          Get-Content f10/shell-privacy.txt
+          $fallback = @(Select-String -Path f10/shell-privacy.txt -SimpleMatch 'forced dpapi fallback wrote sync.cred and loaded fallback-user; default backend used Credential Manager and loaded primary-user PASS').Count
+          "privacy_exit=$code forced_fallback_lines=$fallback" | Tee-Object f10/privacy-exit.txt
+          if ($code -ne 0 -or $fallback -ne 1) { exit 1 }
+          exit 0
       - name: Cross-user isolation of Credential Manager, private sync.cred and DPAPI
         if: ${{ !cancelled() }}
         env:
@@ -123,28 +155,26 @@ jobs:
           "shell_exit=$shell module_exit=$module" | Tee-Object f10/cross-user-exit.txt
           if ($shell -ne 0 -or $module -ne 0) { exit 1 }
           exit 0
-      - name: Real Credential Manager UNAVAILABLE inside a WinRM network logon session
+      - name: Real Credential Manager UNAVAILABLE in a network logon session (LogonUserW type 3, no WinRM)
         if: ${{ !cancelled() }}
+        env:
+          EXR_F10_USER: ${{ env.F10_USER }}
+          EXR_F10_PASSWORD: ${{ env.F10_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
-          $secure = ConvertTo-SecureString $env:F10_PASSWORD -AsPlainText -Force
-          $credential = New-Object System.Management.Automation.PSCredential("$env:COMPUTERNAME\$env:F10_USER", $secure)
           New-Item -ItemType Directory -Force "$env:F10_ROOT/unavailable" | Out-Null
-          $remote = {
-            param($bin, $data)
-            $shellOut = & "$bin\check_sync.exe" --f10-unavailable $data 2>&1 | Out-String
-            $shellExit = $LASTEXITCODE
-            $moduleOut = & "$bin\credential-identity-probe.exe" unavailable 2>&1 | Out-String
-            $moduleExit = $LASTEXITCODE
-            [pscustomobject]@{ whoami = (whoami); shell = $shellOut; shell_exit = $shellExit; module = $moduleOut; module_exit = $moduleExit }
-          }
-          $result = Invoke-Command -ComputerName localhost -Credential $credential -ScriptBlock $remote -ArgumentList "$env:F10_ROOT\bin", "$env:F10_ROOT\unavailable"
-          "remote_whoami=$($result.whoami)" | Tee-Object f10/unavailable-session.txt
-          $result.shell | Tee-Object f10/shell-unavailable.txt
-          $result.module | Tee-Object f10/module-unavailable.txt
-          "shell_exit=$($result.shell_exit) module_exit=$($result.module_exit)" | Tee-Object f10/unavailable-exit.txt
-          if ($result.shell_exit -ne 0 -or $result.module_exit -ne 0) { exit 1 }
+          $bin = "$env:F10_ROOT\bin"
+          # Each child reports its own checks; read both codes, then gate on them.
+          $PSNativeCommandUseErrorActionPreference = $false
+          & "$bin\credential-identity-probe.exe" run-as-network "$bin\check_sync.exe" --f10-unavailable "$env:F10_ROOT\unavailable" *> f10/shell-unavailable.txt
+          $shell = $LASTEXITCODE
+          & "$bin\credential-identity-probe.exe" run-as-network "$bin\credential-identity-probe.exe" unavailable *> f10/module-unavailable.txt
+          $module = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          Get-Content f10/shell-unavailable.txt, f10/module-unavailable.txt
+          "shell_exit=$shell module_exit=$module" | Tee-Object f10/unavailable-exit.txt
+          if ($shell -ne 0 -or $module -ne 0) { exit 1 }
           exit 0
       - name: Remove the disposable account
         if: always()
