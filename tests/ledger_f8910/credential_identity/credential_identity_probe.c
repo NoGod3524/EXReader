@@ -2,11 +2,10 @@
 /* F10 Windows credential identity probe against the installed
    EXReaderCredentials package (the module windows_accounts.inc uses).
 
-   run-as-network EXE [ARG...]
-                 start EXE with a LOGON32_LOGON_NETWORK primary token of the
-                 EXR_F10_USER account and return its exit code (hosted
-                 runners have no usable WinRM listener).
-   unavailable   run inside a network logon session (through run-as-network).
+   network-unavailable
+                 impersonate a LOGON32_LOGON_NETWORK token of EXR_F10_USER
+                 and run unavailable checks (no WinRM or child process).
+   unavailable   run with an effective network logon token.
                  Credential Manager has no credential set there,
                  so put/get/delete must report EXR_CRED_UNAVAILABLE, and the
                  raw platform error must be ERROR_NO_SUCH_LOGON_SESSION.
@@ -21,7 +20,6 @@
 #include <ntsecapi.h>
 #include <sddl.h>
 #include <userenv.h>
-#include <shellapi.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,7 +97,7 @@ static exr_credentials_status get_status(exr_credentials_store *store, const cha
 static int run_unavailable(void) {
   char sid[200];
   ULONG type = effective_logon(sid);
-  check("process_runs_in_network_logon_session", type == Network, "LogonType=%lu (3=Network) user=%s",
+  check("effective_token_is_network_logon", type == Network, "LogonType=%lu (3=Network) user=%s",
         (unsigned long)type, sid);
   char raw[] = "probe";
   CREDENTIALW probe;
@@ -204,109 +202,31 @@ static int run_isolation(void) {
   return finish("isolation");
 }
 
-/* run-as-network EXE [ARG...]: start EXE as a process whose primary token is
-   a fresh network logon (LOGON32_LOGON_NETWORK, type 3) of the second local
-   account. That is the session kind Credential Manager refuses to serve, and
-   it needs no WinRM listener. The child shares this process's stdout. */
-static int quote_argument(wchar_t *out, size_t capacity, size_t *used, const wchar_t *argument) {
-  size_t n = *used;
-  if (n + 3 >= capacity) return 0;
-  if (n) out[n++] = L' ';
-  out[n++] = L'"';
-  for (const wchar_t *c = argument; *c; c++) {
-    if (*c == L'"') return 0; /* the probes take plain paths and words only */
-    if (n + 3 >= capacity) return 0;
-    out[n++] = *c;
-  }
-  if (out[n - 1] == L'\\') out[n++] = L'\\';
-  out[n++] = L'"';
-  out[n] = 0;
-  *used = n;
-  return 1;
-}
-
-static void enable_privilege(const wchar_t *name) {
+/* Run the checks with a real network-logon token on this thread. Hosted
+   runners cannot assign a primary token; impersonation needs no child process. */
+static int run_network_unavailable(void) {
+  wchar_t user[128], password[256];
   HANDLE token = NULL;
-  TOKEN_PRIVILEGES privileges;
-  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token)) return;
-  privileges.PrivilegeCount = 1;
-  privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-  if (LookupPrivilegeValueW(NULL, name, &privileges.Privileges[0].Luid))
-    AdjustTokenPrivileges(token, FALSE, &privileges, 0, NULL, NULL);
-  CloseHandle(token);
-}
-
-static int run_as_network(int argc, wchar_t **argv) {
-  wchar_t user[128], password[256], command[4096];
-  size_t used = 0;
-  if (!GetEnvironmentVariableW(L"EXR_F10_USER", user, 128) || !GetEnvironmentVariableW(L"EXR_F10_PASSWORD", password, 256)) {
-    fputs("EXR_F10_USER/EXR_F10_PASSWORD required\n", stderr);
-    return 2;
-  }
-  for (int i = 0; i < argc; i++)
-    if (!quote_argument(command, sizeof command / sizeof command[0], &used, argv[i])) { fputs("unsupported argument\n", stderr); return 2; }
-  HANDLE logon = NULL, primary = NULL;
-  BOOL logged = LogonUserW(user, L".", password, LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT, &logon);
-  DWORD logon_error = logged ? 0 : GetLastError();
+  if (!GetEnvironmentVariableW(L"EXR_F10_USER", user, 128) ||
+      !GetEnvironmentVariableW(L"EXR_F10_PASSWORD", password, 256)) return 2;
+  BOOL logged = LogonUserW(user, L".", password, LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT, &token);
+  DWORD error = logged ? 0 : GetLastError();
   SecureZeroMemory(password, sizeof password);
-  /* The child must not inherit the secret that created it. */
-  SetEnvironmentVariableW(L"EXR_F10_PASSWORD", NULL);
-  printf("F10LAUNCH {\"step\":\"network_logon\",\"ok\":%s,\"error\":%lu}\n", logged ? "true" : "false", (unsigned long)logon_error);
-  if (!logged) return 3;
-  BOOL duplicated = DuplicateTokenEx(logon, MAXIMUM_ALLOWED, NULL, SecurityImpersonation, TokenPrimary, &primary);
-  DWORD duplicate_error = duplicated ? 0 : GetLastError();
-  printf("F10LAUNCH {\"step\":\"primary_token\",\"ok\":%s,\"error\":%lu}\n", duplicated ? "true" : "false", (unsigned long)duplicate_error);
-  if (!duplicated) { CloseHandle(logon); return 3; }
-  STARTUPINFOW startup;
-  PROCESS_INFORMATION process;
-  memset(&startup, 0, sizeof startup);
-  memset(&process, 0, sizeof process);
-  startup.cb = sizeof startup;
-  startup.lpDesktop = (LPWSTR)L""; /* a window station of the new logon session, not ours */
-  startup.dwFlags = STARTF_USESTDHANDLES;
-  startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-  startup.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-  startup.hStdError = GetStdHandle(STD_OUTPUT_HANDLE);
-  SetHandleInformation(startup.hStdOutput, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
-  enable_privilege(L"SeAssignPrimaryTokenPrivilege");
-  enable_privilege(L"SeIncreaseQuotaPrivilege");
-  enable_privilege(L"SeImpersonatePrivilege");
-  const char *api = "CreateProcessAsUserW";
-  DWORD as_user_error = 0, with_token_error = 0;
-  BOOL created = CreateProcessAsUserW(primary, NULL, command, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &startup, &process);
-  if (!created) {
-    as_user_error = GetLastError();
-    api = "CreateProcessWithTokenW";
-    created = CreateProcessWithTokenW(primary, 0, NULL, command, CREATE_NO_WINDOW, NULL, NULL, &startup, &process);
-    if (!created) with_token_error = GetLastError();
-  }
-  printf("F10LAUNCH {\"step\":\"create_process\",\"ok\":%s,\"api\":\"%s\",\"as_user_error\":%lu,\"with_token_error\":%lu}\n",
-         created ? "true" : "false", api, (unsigned long)as_user_error, (unsigned long)with_token_error);
-  DWORD code = 3;
-  if (created) {
-    DWORD waited = WaitForSingleObject(process.hProcess, 120000);
-    if (waited != WAIT_OBJECT_0) { TerminateProcess(process.hProcess, 3); WaitForSingleObject(process.hProcess, 5000); }
-    else GetExitCodeProcess(process.hProcess, &code);
-    printf("F10LAUNCH {\"step\":\"child_exit\",\"ok\":%s,\"code\":%ld,\"timed_out\":%s}\n", code == 0 ? "true" : "false",
-           (long)code, waited == WAIT_OBJECT_0 ? "false" : "true");
-    CloseHandle(process.hThread);
-    CloseHandle(process.hProcess);
-  }
-  CloseHandle(primary);
-  CloseHandle(logon);
-  return (int)code;
+  check("network_logon", logged, "LogonUserW error=%lu", (unsigned long)error);
+  if (!logged) return finish("unavailable");
+  BOOL impersonated = ImpersonateLoggedOnUser(token);
+  check("network_token_impersonated", impersonated, "ImpersonateLoggedOnUser=%d", (int)impersonated);
+  int code = impersonated ? run_unavailable() : finish("unavailable");
+  if (impersonated && !RevertToSelf()) code = 1;
+  CloseHandle(token);
+  return code;
 }
 
 int main(int argc, char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
   if (argc == 2 && !strcmp(argv[1], "unavailable")) return run_unavailable();
   if (argc == 2 && !strcmp(argv[1], "isolation")) return run_isolation();
-  if (argc > 2 && !strcmp(argv[1], "run-as-network")) {
-    int wide_count = 0;
-    wchar_t **wide = CommandLineToArgvW(GetCommandLineW(), &wide_count);
-    if (!wide || wide_count != argc) return 2;
-    return run_as_network(wide_count - 2, wide + 2);
-  }
-  fputs("usage: credential-identity-probe unavailable|isolation|run-as-network EXE [ARG...]\n", stderr);
+  if (argc == 2 && !strcmp(argv[1], "network-unavailable")) return run_network_unavailable();
+  fputs("usage: credential-identity-probe unavailable|isolation|network-unavailable\n", stderr);
   return 2;
 }

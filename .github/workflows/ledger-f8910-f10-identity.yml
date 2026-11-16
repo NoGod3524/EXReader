@@ -155,7 +155,7 @@ jobs:
           "shell_exit=$shell module_exit=$module" | Tee-Object f10/cross-user-exit.txt
           if ($shell -ne 0 -or $module -ne 0) { exit 1 }
           exit 0
-      - name: Real Credential Manager UNAVAILABLE in a network logon session (LogonUserW type 3, no WinRM)
+      - name: Real Credential Manager UNAVAILABLE with a network logon token (LogonUserW type 3, no WinRM)
         if: ${{ !cancelled() }}
         env:
           EXR_F10_USER: ${{ env.F10_USER }}
@@ -165,11 +165,11 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           New-Item -ItemType Directory -Force "$env:F10_ROOT/unavailable" | Out-Null
           $bin = "$env:F10_ROOT\bin"
-          # Each child reports its own checks; read both codes, then gate on them.
+          # Each probe impersonates its own network token; gate on both exit codes.
           $PSNativeCommandUseErrorActionPreference = $false
-          & "$bin\credential-identity-probe.exe" run-as-network "$bin\check_sync.exe" --f10-unavailable "$env:F10_ROOT\unavailable" *> f10/shell-unavailable.txt
+          & "$bin\check_sync.exe" --f10-network-unavailable "$env:F10_ROOT\unavailable" *> f10/shell-unavailable.txt
           $shell = $LASTEXITCODE
-          & "$bin\credential-identity-probe.exe" run-as-network "$bin\credential-identity-probe.exe" unavailable *> f10/module-unavailable.txt
+          & "$bin\credential-identity-probe.exe" network-unavailable *> f10/module-unavailable.txt
           $module = $LASTEXITCODE
           $PSNativeCommandUseErrorActionPreference = $true
           Get-Content f10/shell-unavailable.txt, f10/module-unavailable.txt

@@ -3,9 +3,8 @@
    are run explicitly by the ledger workflow on a disposable runner, never by
    CTest: they need a second local account and public network access.
 
-   --f10-unavailable DIR   run by a process that lives in a network logon
-                           session (credential-identity-probe run-as-network
-                           starts it with the probe account's token). Credential
+   --f10-unavailable DIR   run with an impersonated network logon
+                           token created by LogonUserW. Credential
                            Manager has no credential set there, so CredWriteW
                            fails for real; the shell must fall back to its
                            DPAPI file (or refuse) without writing a CM record.
@@ -63,7 +62,7 @@ static int f10_cm_read_raw(DWORD *error) {
 
 static int test_f10_unavailable(const char *directory) {
   char sid[200];ULONG type=f10_logon_type(sid);
-  f10_check("process_runs_in_network_logon_session",type==Network,"LogonType=%lu (3=Network) user=%s",(unsigned long)type,sid);
+  f10_check("effective_token_is_network_logon",type==Network,"LogonType=%lu (3=Network) user=%s",(unsigned long)type,sid);
   /* The real platform refusal, observed before any product code runs. */
   char blob[]="probe";CREDENTIALW probe;memset(&probe,0,sizeof(probe));
   probe.Type=CRED_TYPE_GENERIC;probe.TargetName=(LPWSTR)L"EXReader/ledger-f10-unavailable-probe";
@@ -98,6 +97,21 @@ static int test_f10_unavailable(const char *directory) {
   f10_check("cleanup_left_no_credential",GetFileAttributesW(sy_cred_file)==INVALID_FILE_ATTRIBUTES && !f10_cm_read_raw(&read_error),
             "sync.cred and CM record absent after sy_cred_delete");
   return f10_finish("unavailable");
+}
+
+static int test_f10_network_unavailable(const char *directory) {
+  wchar_t user[128],password[256];HANDLE token=NULL;
+  if(!GetEnvironmentVariableW(L"EXR_F10_USER",user,128) ||
+     !GetEnvironmentVariableW(L"EXR_F10_PASSWORD",password,256)) return 2;
+  BOOL logged=LogonUserW(user,L".",password,LOGON32_LOGON_NETWORK,LOGON32_PROVIDER_DEFAULT,&token);
+  DWORD error=logged ? 0:GetLastError();SecureZeroMemory(password,sizeof(password));
+  f10_check("network_logon",logged,"LogonUserW error=%lu",(unsigned long)error);
+  if(!logged) return f10_finish("unavailable");
+  BOOL impersonated=ImpersonateLoggedOnUser(token);
+  f10_check("network_token_impersonated",impersonated,"ImpersonateLoggedOnUser=%d",(int)impersonated);
+  int code=impersonated ? test_f10_unavailable(directory):f10_finish("unavailable");
+  if(impersonated && !RevertToSelf()) code=1;
+  CloseHandle(token);return code;
 }
 
 static int test_f10_cross_user(void) {
