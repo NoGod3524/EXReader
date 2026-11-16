@@ -95,9 +95,47 @@ static void test_privacy(void) {
   CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
   assert(GetFileAttributesW(temp)!=INVALID_FILE_ATTRIBUTES);
   b=sy_read(path,&n);assert(b && n==3 && !memcmp(b,"old",3));free(b);
-  puts("PRIVACY abrupt exit=77: original preserved; .tmp remains (startup scavenger MISSING)");
-  /* Test owns this directory. Cleanup does not imply product crash recovery. */
-  assert(DeleteFileW(temp));assert(DeleteFileW(path));
+  puts("PRIVACY abrupt exit=77: original preserved; .tmp residue present before startup");
+  /* OPDS stage: the same real abrupt exit, into the product download folder. */
+  wchar_t downloads[HOST_PATH],book[HOST_PATH],part[HOST_PATH];
+  path_join(downloads,HOST_PATH,root,L"opds-downloads");assert(CreateDirectoryW(downloads,NULL));
+  path_join(book,HOST_PATH,downloads,L"book.epub");swprintf(part,HOST_PATH,L"%ls.part",book);
+  swprintf(command,HOST_PATH*3,L"\"%ls\" --privacy-crash \"%ls\"",exe,part);
+  memset(&si,0,sizeof(si));memset(&pi,0,sizeof(pi));si.cb=sizeof(si);
+  assert(CreateProcessW(NULL,command,NULL,NULL,FALSE,CREATE_NO_WINDOW,NULL,NULL,&si,&pi));
+  assert(WaitForSingleObject(pi.hProcess,10000)==WAIT_OBJECT_0);
+  code=0;assert(GetExitCodeProcess(pi.hProcess,&code) && code==77);CloseHandle(pi.hThread);CloseHandle(pi.hProcess);
+  assert(GetFileAttributesW(part)!=INVALID_FILE_ATTRIBUTES);
+  /* Negative cases the scavenger must leave alone. */
+  wchar_t live[HOST_PATH],linked[HOST_PATH],link_target[HOST_PATH],folder[HOST_PATH],other[HOST_PATH],nested_dir[HOST_PATH],nested[HOST_PATH],cred_stage[HOST_PATH];
+  path_join(live,HOST_PATH,root,L"vocab.json.tmp");
+  HANDLE writer=CreateFileW(live,GENERIC_WRITE,0,NULL,CREATE_NEW,0,NULL);assert(writer!=INVALID_HANDLE_VALUE);
+  path_join(link_target,HOST_PATH,root,L"keep.bin");assert(sy_write(link_target,"keep",4));
+  path_join(linked,HOST_PATH,root,L"recent-books.json.tmp");assert(CreateHardLinkW(linked,link_target,NULL));
+  path_join(folder,HOST_PATH,root,L"shelf.json.tmp");assert(CreateDirectoryW(folder,NULL));
+  path_join(other,HOST_PATH,root,L"notes.tmpx");assert(sy_write(other,"x",1));
+  path_join(nested_dir,HOST_PATH,root,L"nested");assert(CreateDirectoryW(nested_dir,NULL));
+  path_join(nested,HOST_PATH,nested_dir,L"deep.json.tmp");assert(sy_write(nested,"x",1)); /* publishes deep.json.tmp itself */
+  swprintf(cred_stage,HOST_PATH,L"%ls.tmp",sy_cred_file);assert(sy_write(cred_stage,"unowned-stage",13));
+  wchar_t annotations[HOST_PATH];path_join(annotations,HOST_PATH,root,L"annotations"); /* never the real profile */
+  assert(SetEnvironmentVariableW(L"EXREADER_ANNOTATIONS_DIR",annotations));
+  sy_scavenge_counts swept=sy_startup_scavenge(); /* production startup entry */
+  assert(GetFileAttributesW(temp)==INVALID_FILE_ATTRIBUTES && GetFileAttributesW(part)==INVALID_FILE_ATTRIBUTES);
+  b=sy_read(path,&n);assert(b && n==3 && !memcmp(b,"old",3));free(b);
+  assert(GetFileAttributesW(live)!=INVALID_FILE_ATTRIBUTES);
+  assert(GetFileAttributesW(linked)!=INVALID_FILE_ATTRIBUTES);
+  b=sy_read(link_target,&n);assert(b && n==4 && !memcmp(b,"keep",4));free(b);
+  assert(GetFileAttributesW(folder)!=INVALID_FILE_ATTRIBUTES && (GetFileAttributesW(folder)&FILE_ATTRIBUTE_DIRECTORY));
+  assert(GetFileAttributesW(other)!=INVALID_FILE_ATTRIBUTES && GetFileAttributesW(nested)!=INVALID_FILE_ATTRIBUTES);
+  assert(GetFileAttributesW(cred_stage)!=INVALID_FILE_ATTRIBUTES);
+  assert(swept.removed==2 && swept.kept==3);
+  printf("PRIVACY startup scavenger removed=%u kept=%u: abrupt-exit state.json.tmp and opds-downloads/book.epub.part removed, original preserved; live writer, hard link, directory, non-suffix, nested and unowned sync.cred.tmp kept\n",swept.removed,swept.kept);
+  assert(CloseHandle(writer));swept=sy_startup_scavenge();
+  assert(GetFileAttributesW(live)==INVALID_FILE_ATTRIBUTES && swept.removed==1);
+  puts("PRIVACY startup scavenger: stage released by its writer is removed on the next startup");
+  assert(DeleteFileW(linked));assert(DeleteFileW(link_target));assert(RemoveDirectoryW(folder));assert(DeleteFileW(other));
+  assert(DeleteFileW(nested));assert(RemoveDirectoryW(nested_dir));assert(DeleteFileW(cred_stage));assert(RemoveDirectoryW(downloads));
+  assert(DeleteFileW(path));SetEnvironmentVariableW(L"EXREADER_ANNOTATIONS_DIR",NULL);sy_default_paths();
   wchar_t pattern[HOST_PATH];path_join(pattern,HOST_PATH,root,L"*");
   WIN32_FIND_DATAW fd;HANDLE find=FindFirstFileW(pattern,&fd);assert(find!=INVALID_HANDLE_VALUE);
   do {assert(!wcscmp(fd.cFileName,L".") || !wcscmp(fd.cFileName,L".."));} while(FindNextFileW(find,&fd));

@@ -9,7 +9,34 @@ static void dictionary_expect_name(HWND control,const wchar_t *expected) {
   assert(SUCCEEDED(object->lpVtbl->get_accName(object,child,&name)) && name && !wcscmp(name,expected));
   SysFreeString(name);object->lpVtbl->Release(object);FreeLibrary(module);
 }
+static void dictionary_expect_tab_release(void) {
+  /* F09: a read-only multiline EDIT must not keep Tab (shell_dictionary.inc DICT_STATUS trap). */
+  HWND card=CreateWindowExW(WS_EX_CONTROLPARENT|WS_EX_NOACTIVATE,L"STATIC",L"Dictionary tab test",WS_POPUP|WS_VISIBLE,-32000,-32000,400,300,NULL,NULL,NULL,NULL);assert(card);
+  HWND raw=CreateWindowExW(0,L"EDIT",L"",WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_MULTILINE|ES_READONLY|WS_VSCROLL,0,0,100,40,card,(HMENU)(INT_PTR)900,NULL,NULL);assert(raw);
+  MSG tab={0};tab.hwnd=raw;tab.message=WM_KEYDOWN;tab.wParam=VK_TAB;
+  LRESULT before=SendMessageW(raw,WM_GETDLGCODE,VK_TAB,(LPARAM)&tab);
+  assert(before&(DLGC_WANTALLKEYS|DLGC_WANTTAB|DLGC_WANTMESSAGE)); /* negative control: stock EDIT traps Tab */
+  DestroyWindow(raw);
+  const DWORD styles[]={ES_MULTILINE|ES_READONLY|WS_VSCROLL,ES_MULTILINE|ES_READONLY|ES_AUTOVSCROLL|WS_VSCROLL};
+  for(size_t i=0;i<sizeof(styles)/sizeof(*styles);i++) {
+    HWND edit=dict_control(card,L"EDIT",L"",DICT_STATUS,styles[i]);assert(edit);MoveWindow(edit,0,0,100,40,FALSE);
+    HWND after_edit=dict_control(card,L"BUTTON",L"生词本",DICT_VOCAB,BS_PUSHBUTTON);assert(after_edit);MoveWindow(after_edit,0,50,100,30,FALSE);
+    tab.hwnd=edit;LRESULT code=SendMessageW(edit,WM_GETDLGCODE,VK_TAB,(LPARAM)&tab);
+    assert(!(code&(DLGC_WANTALLKEYS|DLGC_WANTTAB|DLGC_WANTMESSAGE)) && (code&DLGC_WANTARROWS));
+    assert(GetNextDlgTabItem(card,edit,FALSE)==after_edit && GetNextDlgTabItem(card,after_edit,TRUE)==edit);
+    SetFocus(edit);
+    if(GetFocus()==edit) {
+      MSG key=tab;key.hwnd=edit;assert(IsDialogMessageW(card,&key));assert(GetFocus()==after_edit);
+      printf("DICTIONARY tab release style=%lu: WM_GETDLGCODE=0x%lx, IsDialogMessage Tab moved focus edit->生词本 PASS\n",(unsigned long)styles[i],(unsigned long)code);
+    } else {
+      printf("DICTIONARY tab release style=%lu: WM_GETDLGCODE=0x%lx, dialog tab order edit<->生词本 PASS (no thread focus; IsDialogMessage step not run)\n",(unsigned long)styles[i],(unsigned long)code);
+    }
+    DestroyWindow(after_edit);DestroyWindow(edit);
+  }
+  DestroyWindow(card);
+}
 static void test_dictionary_storage(void) {
+  dictionary_expect_tab_release();
   HWND panel=CreateWindowW(L"STATIC",L"Dictionary naming test",WS_CHILD,0,0,100,100,g.window,NULL,NULL,NULL);assert(panel);
   const struct {const wchar_t *type,*label;int id;DWORD style;const wchar_t *name;} naming[]={
     {L"LISTBOX",L"词典目录（查询顺序）",DICT_PATHS,0,L"词典目录（查询顺序）"},
