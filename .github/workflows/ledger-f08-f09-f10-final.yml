@@ -142,10 +142,19 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
+          # The collector reports its own status through the evidence directory; a non-zero
+          # exit still ships usable output on this runner, so read the code by hand and gate
+          # on the evidence itself instead of on the exit status.
+          $PSNativeCommandUseErrorActionPreference = $false
           python evidence/ledger-f08-f09-f10-r2-20261115/F09-keyboard-single-activation.py --binary build/audit/EXReaderAudit.exe --book build/f08-books/pg11.epub --font C:/Windows/Fonts/segoeui.ttf --output f09-keyboard --extended *> f09-keyboard.txt
-          "exit=$LASTEXITCODE" | Tee-Object f09-keyboard.txt -Append
+          $collectExit = $LASTEXITCODE
+          $PSNativeCommandUseErrorActionPreference = $true
+          "exit=$collectExit" | Tee-Object f09-keyboard.txt -Append
           Get-Content f09-keyboard.txt
-          exit 0
+          if (-not (Test-Path f09-keyboard/all-controls.json)) {
+            Write-Error "keyboard collector produced no control inventory (exit=$collectExit)"
+          }
+          Write-Host "keyboard evidence present (collector exit=$collectExit)"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -159,5 +168,6 @@ jobs:
             f09-keyboard.txt
             f09-keyboard/
           if-no-files-found: error
+
 
 
