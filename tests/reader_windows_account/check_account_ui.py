@@ -922,7 +922,8 @@ def main():
         page_label = U.GetDlgItem(RB.window, 124)
         page_before = M.text(page_label)
         dialog = RB.open_account()
-        RB.run_sync(dialog)
+        RB.press(dialog, SYNC)
+        RB.wait_note(dialog, '接收尚未完成')
         detail = RB.detail(dialog)
         print(json.dumps({'planted_receive': detail}, ensure_ascii=False), flush=True)
 
