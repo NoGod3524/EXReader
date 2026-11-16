@@ -8,6 +8,7 @@ on:
       - 'examples/reader.c'
       - 'examples/windows/**'
       - 'tests/reader_windows_account/**'
+      - 'tests/reader_catalog/check_windows_product.py'
       - 'tests/windows_host/**'
       - '.github/workflows/ledger-f8910-winaccount.yml'
   workflow_dispatch:
