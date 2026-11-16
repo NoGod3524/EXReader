@@ -880,7 +880,10 @@ def main():
         RB = new_device('device-reading-b', existing=True)
         dialog = RB.open_account()
         RB.fill(dialog, reading_root, user, password, False);RB.apply(dialog, '仅本次会话')
-        RB.run_sync(dialog);RB.close_account(dialog)
+        RB.press(dialog, SYNC)
+        RB.wait_note(dialog, '接收尚未完成')
+        assert '等待原件 1' in RB.detail(dialog), RB.detail(dialog)
+        RB.close_account(dialog)
         RB.wait(lambda: sql('device-reading-b', 'SELECT title FROM reader_books WHERE book_key=?', (planted_key,)),
                 timeout=120)
         assert sql('device-reading-b', 'SELECT title,deleted FROM reader_books WHERE book_key=?', (planted_key,)) == \
