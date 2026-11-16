@@ -29,7 +29,30 @@ static void privacy_assert_credential_acl(const wchar_t *path) {
   char *acl=host_utf8(sddl);assert(acl);printf("PRIVACY sync.cred protected current-user/SYSTEM owner/DACL=%s\n",acl);
   free(acl);LocalFree(sddl);free(sd);
 }
+/* Preserve any real Credential Manager record a developer machine holds. */
+typedef struct { int present; DWORD size; BYTE blob[1100]; } f10_saved_cm;
+static void f10_cm_backup(f10_saved_cm *saved) {
+  PCREDENTIALW cred=NULL;memset(saved,0,sizeof(*saved));
+  if(CredReadW(SY_CRED_TARGET,CRED_TYPE_GENERIC,0,&cred)) {
+    if(cred->CredentialBlobSize<=sizeof(saved->blob)) {saved->present=1;saved->size=cred->CredentialBlobSize;memcpy(saved->blob,cred->CredentialBlob,saved->size);}
+    SecureZeroMemory(cred->CredentialBlob,cred->CredentialBlobSize);CredFree(cred);
+  }
+}
+static void f10_cm_restore(f10_saved_cm *saved) {
+  if(!saved->present) {sy_cred_cm_delete();return;}
+  CREDENTIALW cred;memset(&cred,0,sizeof(cred));cred.Type=CRED_TYPE_GENERIC;cred.TargetName=(LPWSTR)SY_CRED_TARGET;
+  cred.Persist=CRED_PERSIST_LOCAL_MACHINE;cred.CredentialBlob=saved->blob;cred.CredentialBlobSize=saved->size;
+  cred.Comment=(LPWSTR)L"EXReader WebDAV credentials";CredWriteW(&cred,0);SecureZeroMemory(saved->blob,sizeof(saved->blob));
+}
+static void privacy_backend(const char *value) {
+  _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND",value);
+  SetEnvironmentVariableA("EXR_SYNC_CREDENTIAL_BACKEND",value[0] ? value:NULL); /* children inherit it */
+}
 static void test_privacy(void) {
+  /* The sync.cred owner/DACL, stage-recovery and crash checks below are about the
+     DPAPI fallback file, so pin that backend (children inherit it); the backend
+     section at the end exercises Credential Manager and restores any real record. */
+  f10_saved_cm saved_cm;f10_cm_backup(&saved_cm);privacy_backend("dpapi");
   wchar_t root[HOST_PATH],path[HOST_PATH],temp[HOST_PATH],base[HOST_PATH];
   assert(GetTempPathW(HOST_PATH,base));
   swprintf(root,HOST_PATH,L"%lsexreader-privacy-%lu",base,(unsigned long)GetCurrentProcessId());
@@ -144,23 +167,21 @@ static void test_privacy(void) {
      exercised instead of assumed, then prove the default path uses Credential
      Manager. */
   {
-    char saved[16];saved[0]=0;
-    const char *prior=getenv("EXR_SYNC_CREDENTIAL_BACKEND");
-    if(prior) {strncpy(saved,prior,sizeof(saved)-1);saved[sizeof(saved)-1]=0;}
-    _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND","dpapi");
+    privacy_backend("dpapi");
     int forced_saved=sy_cred_save("fallback-user","fallback-pass");
     int forced_loaded=sy_cred_load();
     int fallback_used_file=GetFileAttributesW(sy_cred_file)!=INVALID_FILE_ATTRIBUTES;
-    _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND","");
+    privacy_backend("");
     int primary_saved=sy_cred_save("primary-user","primary-pass");
     int primary_loaded=sy_cred_load();
-    if(saved[0]) _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND",saved); else _putenv_s("EXR_SYNC_CREDENTIAL_BACKEND","");
     assert(forced_saved && forced_loaded && fallback_used_file);
     assert(primary_saved && primary_loaded);
     assert(sy_user && !strcmp(sy_user,"primary-user") && sy_pass && !strcmp(sy_pass,"primary-pass"));
     printf("PRIVACY credential backend: forced dpapi fallback wrote sync.cred and loaded fallback-user; "
            "default backend used Credential Manager and loaded primary-user PASS\n");
     sy_cred_delete();
-  }  FindClose(find);assert(RemoveDirectoryW(root));puts("PRIVACY isolated test directory empty and removed");
+    f10_cm_restore(&saved_cm);
+  }
+  FindClose(find);assert(RemoveDirectoryW(root));puts("PRIVACY isolated test directory empty and removed");
 }
 

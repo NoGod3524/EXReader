@@ -8,6 +8,7 @@
 #include <assert.h>
 #include "check_shell_sync.inc"
 #include "check_shell_privacy.inc"
+#include "check_shell_f10_identity.inc"
 
 int main(int argc,char **argv) {
   setvbuf(stdout, NULL, _IONBF, 0);
@@ -27,6 +28,9 @@ int main(int argc,char **argv) {
     ExitProcess(77);
   }
   if(argc==2 && !strcmp(argv[1],"--privacy")) {test_privacy();return 0;}
+  if(argc==3 && !strcmp(argv[1],"--f10-unavailable")) return test_f10_unavailable(argv[2]);
+  if(argc==2 && !strcmp(argv[1],"--f10-cross-user")) return test_f10_cross_user();
+  if(argc==2 && !strcmp(argv[1],"--f10-public-tls")) return test_f10_public_tls();
   /* shelf_load refreshes covers under the same lock as the native host. */
   InitializeCriticalSection(&g.library_lock);
   test_sync();

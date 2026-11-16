@@ -45,7 +45,8 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
     target_compile_features(check_sync PRIVATE cxx_std_17)
     target_include_directories(check_sync PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(check_sync PRIVATE exreader miniz expat d2d1 dwrite
-      gdi32 comdlg32 comctl32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32)
+      gdi32 comdlg32 comctl32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32
+      secur32 userenv)
     if(MSVC)
       target_compile_options(check_sync PRIVATE /UNDEBUG /utf-8)
     else()

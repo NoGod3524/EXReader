@@ -23,8 +23,10 @@
 #endif
 #ifdef EXR_READER_PRODUCT_CATALOG
 #include "catalog_sdk.h"
+#include <dirent.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
@@ -122,6 +124,7 @@ struct linux_reader {
   reader_catalog *catalog;
   char *catalog_path;
   int catalog_lock;
+  linux_scavenge_counts scavenged;
 #endif
 #ifdef EXR_READER_DESKTOP_METADATA
   reader_metadata_owner *metadata;
@@ -251,6 +254,60 @@ void reader_result_free(reader_result *result) {
   for(i=0;i<result->note_count;i++) free(result->notes[i].text);
   free(result->notes);memset(result,0,sizeof(*result));
 }
+#ifdef EXR_READER_PRODUCT_CATALOG
+/* Startup cleanup of interrupted private stages. Runs only after this process
+   holds the exclusive library lock, so no other instance can own a live stage
+   here. Only the exact names the host writers create are considered:
+     <home>/account.ini.tmp-XXXXXX                  (accounts_bind)
+     <home>/<catalog>.reading.pending.XXXXXX        (records_pending_write)
+     <home>/sync-work|sync-originals/.exr-webdav-<32 hex>.tmp (WebDAV downloads)
+   It never recurses, and keeps symlinks, directories (batch staging), hard
+   links and files owned by another user. Deletion is relative to the opened
+   private directory. */
+static int scavenge_random6(const char *s) {
+  for(int i=0;i<6;i++) if(!((s[i]>='0' && s[i]<='9') || (s[i]>='a' && s[i]<='z') || (s[i]>='A' && s[i]<='Z'))) return 0;
+  return s[6]==0;
+}
+static int scavenge_match(const char *name,const char *catalog_base,int webdav) {
+  if(webdav) {
+    static const char prefix[]=".exr-webdav-";size_t n=strlen(name);
+    if(n!=sizeof(prefix)-1+32+4 || strncmp(name,prefix,sizeof(prefix)-1) || strcmp(name+n-4,".tmp")) return 0;
+    for(size_t i=sizeof(prefix)-1;i<n-4;i++) if(!((name[i]>='0' && name[i]<='9') || (name[i]>='a' && name[i]<='f'))) return 0;
+    return 1;
+  }
+  static const char account[]="account.ini.tmp-";
+  if(!strncmp(name,account,sizeof(account)-1)) return scavenge_random6(name+sizeof(account)-1);
+  size_t base=strlen(catalog_base);static const char pending[]=".reading.pending.";
+  return !strncmp(name,catalog_base,base) && !strncmp(name+base,pending,sizeof(pending)-1) &&
+         scavenge_random6(name+base+sizeof(pending)-1);
+}
+static void scavenge_directory(const char *path,const char *catalog_base,int webdav,linux_scavenge_counts *counts) {
+  int directory=open(path,O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW);if(directory<0) return;
+  DIR *listing=fdopendir(directory);if(!listing) { close(directory);return; }
+  struct dirent *entry;
+  while((entry=readdir(listing))) {
+    if(!scavenge_match(entry->d_name,catalog_base,webdav)) continue;
+    struct stat info;
+    if(fstatat(directory,entry->d_name,&info,AT_SYMLINK_NOFOLLOW) || !S_ISREG(info.st_mode) ||
+       info.st_nlink!=1 || info.st_uid!=geteuid()) { counts->kept++;continue; }
+    if(!unlinkat(directory,entry->d_name,0)) counts->removed++; else counts->kept++;
+  }
+  closedir(listing);
+}
+static linux_scavenge_counts startup_scavenge(const char *catalog_path) {
+  linux_scavenge_counts counts={0,0};
+  char *copy=strdup(catalog_path),*slash=copy ? strrchr(copy,'/'):NULL;
+  if(!copy) return counts;
+  const char *base=slash ? slash+1:copy;char home[4096];
+  if(slash) { *slash=0;snprintf(home,sizeof(home),"%s",copy[0] ? copy:"/"); } else snprintf(home,sizeof(home),".");
+  scavenge_directory(home,base,0,&counts);
+  char sub[4200];
+  snprintf(sub,sizeof(sub),"%s/sync-work",home);scavenge_directory(sub,base,1,&counts);
+  snprintf(sub,sizeof(sub),"%s/sync-originals",home);scavenge_directory(sub,base,1,&counts);
+  free(copy);return counts;
+}
+linux_scavenge_counts linux_reader_scavenged(const linux_reader *reader) { return reader->scavenged; }
+#endif
 exr_status linux_reader_open(const char *database,const char *font,const exr_control *control,
                             linux_reader **out,exr_error *error) {
   linux_reader *reader=calloc(1,sizeof(*reader));exr_status status;
@@ -268,6 +325,7 @@ exr_status linux_reader_open(const char *database,const char *font,const exr_con
     if(error) { error->code=EXR_IO;snprintf(error->message,sizeof(error->message),"This local library is already in use or cannot be locked"); }
     linux_reader_close(reader);return EXR_IO;
   }
+  reader->scavenged=startup_scavenge(reader->catalog_path);
 #endif
   if(control) reader->control=*control;
   status=exr_library_open(database,&reader->library,error);
