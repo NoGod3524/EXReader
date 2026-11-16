@@ -142,7 +142,8 @@ def main():
 
     try:
         app = launch()
-        current_ids = {118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 137, 150, 151}
+        # Native open/local-removal commands are part of this product profile.
+        current_ids = {103, 104, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 137, 150, 151}
         observed = json.loads((profile / 'control-inventory.json').read_text(encoding='utf-8'))
         assert {item['id'] for item in observed} == current_ids, observed
         assert all(U.GetDlgItem(app.window, identifier) for identifier in current_ids)
