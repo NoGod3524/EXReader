@@ -1287,6 +1287,15 @@ static void host_a11y_describe(HWND window, const wchar_t *name, const wchar_t *
   if (name) host_a11y_props->lpVtbl->SetHwndPropStr(host_a11y_props, window, OBJID_CLIENT, CHILDID_SELF, host_a11y_prop_name, name);
   if (help) host_a11y_props->lpVtbl->SetHwndPropStr(host_a11y_props, window, OBJID_CLIENT, CHILDID_SELF, host_a11y_prop_help, help);
 }
+/* Name one simple child of a system control's client object (for example the
+   selection text of a drop-down list combo box, which the system proxy leaves
+   unnamed). */
+static inline void host_a11y_describe_child(HWND window, DWORD child, const wchar_t *name) {
+  if (!window || !name) return;
+  host_a11y_describe(window, NULL, NULL);
+  if (host_a11y_props)
+    host_a11y_props->lpVtbl->SetHwndPropStr(host_a11y_props, window, OBJID_CLIENT, child, host_a11y_prop_name, name);
+}
 
 /* ---- keyboard continuity ------------------------------------------------ */
 /* A command that disables itself while it holds focus must hand focus on. */

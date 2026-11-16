@@ -30,6 +30,10 @@ static void privacy_assert_credential_acl(const wchar_t *path) {
   free(acl);LocalFree(sddl);free(sd);
 }
 static void test_privacy(void) {
+  /* The sync.cred owner/DACL, stage-recovery and crash checks below are about the
+     DPAPI fallback file, so pin that backend (children inherit it); the backend
+     section at the end exercises Credential Manager and restores any real record. */
+  f10_saved_cm saved_cm;f10_cm_backup(&saved_cm);privacy_backend("dpapi");
   wchar_t root[HOST_PATH],path[HOST_PATH],temp[HOST_PATH],base[HOST_PATH];
   assert(GetTempPathW(HOST_PATH,base));
   swprintf(root,HOST_PATH,L"%lsexreader-privacy-%lu",base,(unsigned long)GetCurrentProcessId());
@@ -139,5 +143,26 @@ static void test_privacy(void) {
   wchar_t pattern[HOST_PATH];path_join(pattern,HOST_PATH,root,L"*");
   WIN32_FIND_DATAW fd;HANDLE find=FindFirstFileW(pattern,&fd);assert(find!=INVALID_HANDLE_VALUE);
   do {assert(!wcscmp(fd.cFileName,L".") || !wcscmp(fd.cFileName,L".."));} while(FindNextFileW(find,&fd));
+  /* Credential Manager is the primary store; sync.cred (DPAPI) is the fallback.
+     Force the fallback through the documented hook so the unavailable path is
+     exercised instead of assumed, then prove the default path uses Credential
+     Manager. */
+  {
+    privacy_backend("dpapi");
+    int forced_saved=sy_cred_save("fallback-user","fallback-pass");
+    int forced_loaded=sy_cred_load();
+    int fallback_used_file=GetFileAttributesW(sy_cred_file)!=INVALID_FILE_ATTRIBUTES;
+    privacy_backend("");
+    int primary_saved=sy_cred_save("primary-user","primary-pass");
+    int primary_loaded=sy_cred_load();
+    assert(forced_saved && forced_loaded && fallback_used_file);
+    assert(primary_saved && primary_loaded);
+    assert(sy_user && !strcmp(sy_user,"primary-user") && sy_pass && !strcmp(sy_pass,"primary-pass"));
+    printf("PRIVACY credential backend: forced dpapi fallback wrote sync.cred and loaded fallback-user; "
+           "default backend used Credential Manager and loaded primary-user PASS\n");
+    sy_cred_delete();
+    f10_cm_restore(&saved_cm);
+  }
   FindClose(find);assert(RemoveDirectoryW(root));puts("PRIVACY isolated test directory empty and removed");
 }
+

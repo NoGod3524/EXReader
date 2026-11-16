@@ -45,7 +45,8 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
     target_compile_features(check_sync PRIVATE cxx_std_17)
     target_include_directories(check_sync PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(check_sync PRIVATE exreader miniz expat d2d1 dwrite
-      gdi32 comdlg32 comctl32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32)
+      gdi32 comdlg32 comctl32 shell32 ole32 oleaut32 uuid uiautomationcore advapi32 winhttp ws2_32 crypt32
+      secur32 userenv)
     if(MSVC)
       target_compile_options(check_sync PRIVATE /UNDEBUG /utf-8)
     else()
@@ -83,7 +84,7 @@ if(WIN32 AND PROJECT_NAME STREQUAL "EXReader")
     if(TEST native-docx-footnotes-ui)
       set_tests_properties(native-docx-footnotes-ui PROPERTIES RUN_SERIAL TRUE)
     endif()
-    foreach(group boundaries copy keyboard raster generated annotations shelf style shelfmeta dictionary-storage render-budget)
+    foreach(group boundaries copy keyboard raster generated annotations shelf style shelfmeta shelf-budget dictionary-storage render-budget)
       add_test(NAME windows-selection-${group} COMMAND exreader-shell-selection-test ${group}
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/fonts/primary.ttf")
       set_tests_properties(windows-selection-${group} PROPERTIES RUN_SERIAL TRUE)

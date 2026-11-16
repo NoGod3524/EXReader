@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "run": 43831196406,
+  "attempt": 1,
+  "source_sha": "45c44b310898772a878f41d406297311238e9d8f",
+  "evidence_ok": true,
+  "scope": [
+    "F09 GTK blocking accessibility acceptance"
+  ],
+  "workflow_conclusion": "cancelled",
+  "checks": {
+    "audit_completed": true,
+    "accessibility_accepted": true,
+    "passed": 31,
+    "failed_blocking": 0,
+    "failed_advisory": 1
+  },
+  "advisory": "reader_tab_order_reaches_panels: the legacy 14-Tab sample ends before the comment field; F11 comment focus remains verified by the annotation phase",
+  "excluded": [
+    "F08 is separately evidenced",
+    "F10 public TLS failed",
+    "reader Tab cycle beyond the 14-stop sample"
+  ],
+  "artifacts": [
+    {
+      "id": 14208249147,
+      "name": "ledger-f09-gtk-43831196406-1",
+      "size_in_bytes": 505706,
+      "digest": "sha256:d693d2c0cccc0b921c8397efe28021242e5c62f4874adb6db66ed5c5ba8b2078"
+    }
+  ],
+  "files": {
+    "evidence/ledger-f08-f09-sol-20261116/linux-f09/result.json": {
+      "bytes": 77381,
+      "sha256": "2ec122d395454e40ea2e1a09b719d75f3604e933db95f9f6f574d4443477b0f3"
+    },
+    "evidence/ledger-f08-f09-sol-20261116/linux-f09/keys.tsv": {
+      "bytes": 3286,
+      "sha256": "2388f405272e6a32c595bbe8e774862974d3bb166556755c2f59cdc6ff6d44f6"
+    }
+  }
+}

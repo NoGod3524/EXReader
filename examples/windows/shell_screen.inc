@@ -656,6 +656,7 @@ static void shell_a11y_names(void) {
   host_a11y_describe(shell_segments[2], L"跟随系统主题", L"界面颜色跟随 Windows 的深浅色设置");
   host_a11y_describe(style_preset, L"排版预设", L"输入名称保存，或从列表选择已有预设");
   host_a11y_describe(style_save, NULL, L"把当前排版保存为预设");
+  host_a11y_describe(style_presets, L"选择排版预设", L"打开已保存的排版预设列表；保存过预设后可用");
   host_a11y_describe(style_reset, NULL, L"恢复默认排版");
   host_a11y_describe(shell_tap_buttons[0], L"点击分区 20 / 60 / 20", L"左右各 20% 翻页，中间 60% 显示或隐藏工具栏");
   host_a11y_describe(shell_tap_buttons[1], L"点击分区 25 / 50 / 25", L"左右各 25% 翻页，中间 50% 显示或隐藏工具栏");

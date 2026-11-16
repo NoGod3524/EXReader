@@ -263,6 +263,12 @@ if(EXR_READER_BUILD_GTK)
   add_executable(reader-gtk-shelf-check ../../../tests/linux_host/shelf_backend.c)
   target_compile_options(reader-gtk-shelf-check PRIVATE -Wall -Wextra -Werror)
   target_link_libraries(reader-gtk-shelf-check PRIVATE exreader-linux-reading reader_catalog_sqlite)
+  # F10: startup cleanup of interrupted private stages after the library lock.
+  add_executable(reader-gtk-startup-scavenge ../../../tests/linux_host/startup_scavenge.c)
+  target_compile_options(reader-gtk-startup-scavenge PRIVATE -Wall -Wextra -Werror)
+  target_link_libraries(reader-gtk-startup-scavenge PRIVATE exreader-linux-reading reader_catalog_sqlite)
+  add_test(NAME gtk-startup-scavenge COMMAND reader-gtk-startup-scavenge
+    "${CMAKE_CURRENT_BINARY_DIR}/startup-scavenge" "${EXR_READER_FIXTURES}/fonts/primary.ttf")
   if(EXR_READER_GTK_RAW3)
     if(NOT EXR_READER_GTK_ACCOUNT OR NOT EXR_READER_GTK_READING_RECORDS OR EXR_SDK_VERSION VERSION_LESS "3.41.0")
       message(FATAL_ERROR "GTK raw3 requires explicit SDK3.41 and complete account/records integration")

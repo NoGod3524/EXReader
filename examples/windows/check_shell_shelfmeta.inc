@@ -10,6 +10,40 @@ static void shelfmeta_expect_name(HWND control,const wchar_t *expected) {
   assert(SUCCEEDED(object->lpVtbl->get_accName(object,child,&name)) && name && !wcscmp(name,expected));
   SysFreeString(name);object->lpVtbl->Release(object);FreeLibrary(module);
 }
+/* F09: every stop is its own MSAA child (UIA element through the MSAA bridge). */
+static void shelfmeta_expect_children(int stops,const wchar_t *focused_label) {
+  HMODULE module=LoadLibraryW(L"oleacc.dll");assert(module);
+  typedef HRESULT (WINAPI *accessible_from_window)(HWND,DWORD,REFIID,void **);
+  accessible_from_window load=(accessible_from_window)(void (*)(void))GetProcAddress(module,"AccessibleObjectFromWindow");assert(load);
+  IAccessible *object=NULL;assert(SUCCEEDED(load(sm_view,OBJID_CLIENT,&IID_IAccessible,(void **)&object)) && object);
+  long count=0;assert(SUCCEEDED(object->lpVtbl->get_accChildCount(object,&count)) && count==stops);
+  int order[512],n=sm_key_order(order);assert(n==stops);
+  int books=0;
+  for(long id=1;id<=count;id++) {
+    VARIANT child;VariantInit(&child);child.vt=VT_I4;child.lVal=id;
+    BSTR name=NULL;VARIANT role,state;VariantInit(&role);VariantInit(&state);IDispatch *dispatch=(IDispatch *)1;
+    assert(object->lpVtbl->get_accChild(object,child,&dispatch)==S_FALSE && !dispatch); /* simple element */
+    assert(SUCCEEDED(object->lpVtbl->get_accName(object,child,&name)) && name && name[0]);
+    wchar_t expected[320];sm_key_label(&sm_hits[order[id-1]],expected,320);assert(!wcscmp(name,expected));
+    assert(SUCCEEDED(object->lpVtbl->get_accRole(object,child,&role)) && role.vt==VT_I4);
+    int kind=sm_hits[order[id-1]].kind;
+    assert(role.lVal==(kind==SM_HIT_BOOK ? ROLE_SYSTEM_LISTITEM:kind==SM_HIT_TAG ? ROLE_SYSTEM_RADIOBUTTON:ROLE_SYSTEM_PUSHBUTTON));
+    books+=role.lVal==ROLE_SYSTEM_LISTITEM;
+    assert(SUCCEEDED(object->lpVtbl->get_accState(object,child,&state)) && state.vt==VT_I4 && (state.lVal&STATE_SYSTEM_FOCUSABLE));
+    long x=0,y=0,w=0,h=0;assert(SUCCEEDED(object->lpVtbl->accLocation(object,&x,&y,&w,&h,child)) && w>0 && h>0);
+    VARIANT hit;VariantInit(&hit);
+    assert(SUCCEEDED(object->lpVtbl->accHitTest(object,x+w/2,y+h/2,&hit)) && hit.vt==VT_I4 && hit.lVal==id);
+    SysFreeString(name);
+  }
+  VARIANT self,first,next;VariantInit(&self);VariantInit(&first);VariantInit(&next);self.vt=VT_I4;self.lVal=CHILDID_SELF;
+  assert(object->lpVtbl->accNavigate(object,NAVDIR_FIRSTCHILD,self,&first)==S_OK && first.vt==VT_I4 && first.lVal==1);
+  assert(object->lpVtbl->accNavigate(object,NAVDIR_NEXT,first,&next)==S_OK && next.vt==VT_I4 && next.lVal==2);
+  VARIANT selected;VariantInit(&selected);BSTR name=NULL;
+  assert(object->lpVtbl->get_accSelection(object,&selected)==S_OK && selected.vt==VT_I4 && selected.lVal>0);
+  assert(SUCCEEDED(object->lpVtbl->get_accName(object,selected,&name)) && !wcscmp(name,focused_label));
+  SysFreeString(name);object->lpVtbl->Release(object);FreeLibrary(module);
+  printf("SHELFMETA MSAA children: %ld simple elements (%d list items) with names, roles, focusable state, bounds, hit test, navigation and the focused stop as selection PASS\n",count,books);
+}
 static void shelfmeta_tab(int shift) {
   BYTE keys[256];GetKeyboardState(keys);keys[VK_SHIFT]=shift ? 0x80:0;SetKeyboardState(keys);
   SendMessageW(sm_view,WM_KEYDOWN,VK_TAB,0);
@@ -47,6 +81,7 @@ static void shelfmeta_keyboard(void) {
   while(sm_key_kind!=SM_HIT_BOOK) shelfmeta_tab(0);
   wchar_t expected[320];sm_key_label(&sm_hits[sm_key_index()],expected,320);assert(!wcsncmp(expected,L"书籍：",3));
   shelfmeta_expect_name(sm_view,expected);
+  RedrawWindow(sm_view,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);shelfmeta_expect_children(sm_hit_count,expected);
   while(sm_key_kind!=SM_HIT_GRID) shelfmeta_tab(0);
   SendMessageW(sm_view,WM_KEYDOWN,VK_RETURN,0);assert(sm_list==0);
   printf("SHELFMETA keyboard: %d stops (6 books, 6 toolbar, %d tag filters) in Tab order, wrap and Shift+Tab, Enter/Space activate filter/list/grid, IAccessible name follows focus PASS\n",stops,tags);
