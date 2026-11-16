@@ -73,25 +73,37 @@ def fetch(url, limit):
             time.sleep(delay)
 
 
-# Since 2026-11-15 www.gutenberg.org answers GitHub-hosted runners with 403.
-# The Project Gutenberg Literary Archive Foundation mirror serves the same
-# current /cache/epub/<n>/pg<n>.rdf rights records; required license terms are
-# still checked, and retrieved_license_url records which host answered.
-LICENSE_MIRRORS = {'https://www.gutenberg.org/cache/epub/': 'https://gutenberg.pglaf.org/cache/epub/'}
+# www.gutenberg.org has answered GitHub-hosted runners with 403 since 2026-11-15
+# and with whole-site 503 during outages. The Project Gutenberg Literary Archive
+# Foundation mirror serves the same /cache/epub/<n>/ files. Content identity is
+# unaffected: frozen mode still requires the fetched bytes to match the pinned
+# sha256/size below, so a mirror that disagrees is rejected rather than accepted,
+# and retrieved_url records which host actually answered.
+GUTENBERG_MIRRORS = {'https://www.gutenberg.org/cache/epub/': 'https://gutenberg.pglaf.org/cache/epub/'}
+MIRROR_STATUSES = frozenset({403, 503})
 
 
-def fetch_license(url, limit):
+def fetch_mirrored(url, limit, reason):
     try:
         return fetch(url, limit)
     except urllib.error.HTTPError as error:
-        mirror = next((target + url[len(prefix):] for prefix, target in LICENSE_MIRRORS.items()
+        mirror = next((target + url[len(prefix):] for prefix, target in GUTENBERG_MIRRORS.items()
                        if url.startswith(prefix)), None)
-        if error.code != 403 or mirror is None:
+        if error.code not in MIRROR_STATUSES or mirror is None:
             raise
         error.close()
-        print(json.dumps({'license_mirror': {'url': url, 'status': 403, 'mirror': mirror}}), flush=True)
+        print(json.dumps({'gutenberg_mirror': {'url': url, 'status': error.code,
+                                               'mirror': mirror, 'reason': reason}}), flush=True)
         time.sleep(0.5)
         return fetch(mirror, limit)
+
+
+def fetch_document(url, limit):
+    return fetch_mirrored(url, limit, 'document')
+
+
+def fetch_license(url, limit):
+    return fetch_mirrored(url, limit, 'license')
 
 
 def structure(path, entry):
@@ -156,7 +168,7 @@ def main():
                 entry['input_origin'] = dict(origins[entry['path']], artifact_id=registry['artifact_id'])
             else:
                 time.sleep(0.5)
-                data, final_url = fetch(entry['source_url'], entry['limits']['download_bytes'])
+                data, final_url = fetch_document(entry['source_url'], entry['limits']['download_bytes'])
             observed = {'sha256': sha(data), 'size': len(data), 'final_url': final_url}
             if a.mode != 'discover' and (sha(data) != entry['sha256'] or len(data) != entry['size']):
                 raise ValueError('Frozen source identity changed')
