@@ -111,7 +111,7 @@ SDK/PDF补丁版本3.38.1、核心3.37.1，ABI1/schema6；版本声明更新后�
 
 先读本文，然后读 [FUZZING.md](FUZZING.md)、[HANDOFF.md](HANDOFF.md)、
 [NATIVE_VALIDATION.md](NATIVE_VALIDATION.md)。
-旧的 [TEST-DRIVER-HANDOFF.md](TEST-DRIVER-HANDOFF.md) 顶部已注明完成；下方保留的旧卡点是历史现场，不要重新按未完成任务执行。
+测试驱动修复及验证见 [原生验证记录](NATIVE_VALIDATION.md)。
 
 ## 2. 已提交基线，不要重做
 

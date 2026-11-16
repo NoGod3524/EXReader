@@ -69,4 +69,4 @@ done:
   printf("VISUAL_BOOK {\"parts\":%zu,\"pages\":%zu,\"middle_page\":%zu,\"status\":%d,\"success\":%s}\n",parts,total,middle,(int)s,rc==0 ? "true":"false");fflush(stdout);
   free(metrics);exr_layout_free(page);exr_pager_free(pager);exr_document_free(doc);exr_publication_free(publication);exr_font_free(font);return rc;
 }
-#include "<workspace>/examples/entry.h"
+#include "../../examples/entry.h"

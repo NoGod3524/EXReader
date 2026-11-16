@@ -24,7 +24,6 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-BASELINE = Path(r"<workspaces>\exr-cjk-corpus\tangshi300-52323.epub")
 BASELINE_SHA256 = "a01c08ffa644c02b1e4cfb3bbf70594b765d98f92769ca75da0a4826f5c4c945"
 PER_CATEGORY = 128
 TIMEOUT = 3
@@ -339,7 +338,7 @@ def write_report(args, metadata, records, minimized):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--baseline", type=Path, default=BASELINE)
+    parser.add_argument("--baseline", type=Path, required=True)
     parser.add_argument("--engine", type=Path, required=True)
     parser.add_argument("--font", type=Path, default=ROOT / "tests/fixtures/fonts/primary.ttf")
     parser.add_argument("--output", type=Path, default=ROOT / "evidence/malformed-input-20261107")

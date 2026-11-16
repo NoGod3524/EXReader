@@ -453,6 +453,7 @@ def main():
     parser.add_argument('--fixtures', type=Path, default=ROOT / 'tests' / 'fixtures' / 'docx-real' / 'argon')
     parser.add_argument('--output-json', type=Path)
     parser.add_argument('--before-json', type=Path, help='Optional pre-fix baseline JSON for before/after table')
+    parser.add_argument('--runtime-dir', type=Path, help='Directory containing dependent Windows DLLs')
     parser.add_argument('--write-matrices', action='store_true', help='Write MATRIX-A.md and MATRIX-B.md')
     parser.add_argument('--strict', action='store_true', help='Exit non-zero if any metric fails in A or B')
     args = parser.parse_args()
@@ -460,9 +461,8 @@ def main():
     manifest = json.loads((args.fixtures / 'manifest.json').read_text(encoding='utf-8'))
     if hasattr(os, 'add_dll_directory'):
         os.add_dll_directory(str(args.library.resolve().parent))
-        mingw_bin = Path(r'<app-data>\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin')
-        if mingw_bin.is_dir():
-            os.add_dll_directory(str(mingw_bin))
+        if args.runtime_dir:
+            os.add_dll_directory(str(args.runtime_dir.resolve()))
     api = API(args.library.resolve())
     reader = Engine(args.library.resolve())
 

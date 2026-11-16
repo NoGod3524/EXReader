@@ -74,4 +74,4 @@ done:
   printf("SAMPLE_BOOK {\"pages\":%zu,\"parts\":%zu,\"render_calls\":%zu,\"failed_renders\":%zu,\"status\":%d}\n",total,parts,calls,failed,(int)status);fflush(stdout);
   free(counts);exr_layout_free(page);exr_pager_free(pager);exr_document_free(doc);exr_publication_free(pub);exr_fixed_free(fixed);exr_font_free(font);return rc;
 }
-#include "<workspace>/examples/entry.h"
+#include "../../examples/entry.h"

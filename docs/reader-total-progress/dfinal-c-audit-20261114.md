@@ -4,7 +4,6 @@
 `codex/dfinal-c-audit-20261114` 独立工作树，PR base 为 `main`。原工作树和未跟踪文件保留。
 工作期间 main 接纳 PR #213 后，已通过 merge f6f6f885 纳入 `38a7031827d5664fd4dd6e8166c9135a7d829355`；
 最终受测源码是 `17e0d988ac5d8c9db62402be9d7dfb2b51b745c5`。PR diff不含该main更新本身。
-用户本轮明确授权 Windows 本机检查、Actions 构建、三项台账更新；历史 SESSION-CONTRACT 的只读/仅 Actions 约束不覆盖本轮授权。
 不修改 `tests/check_reading_release.py`，不变更分母、分组或其他105项。
 
 ## 1. 原文与 verified 需要的证据

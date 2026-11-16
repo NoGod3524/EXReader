@@ -15,7 +15,7 @@ catalog v1 没有 `acceptance` 字段。以下逐字引用实际 `title`，与 s
 | F09 | `docs/reader-total-progress/catalog.json:1712`：「默认简洁且完整功能可达，六端完整键盘/可访问性与读屏证据分列」 | 六目标分别保留默认入口与全部功能的真实可达流程、完整控件名称/角色/键盘焦点顺序，并把读屏实际语音结果独立登记（`docs/READER-PRODUCT-PLAN.md:157`、`:191`、`:192`、`:193`）。 |
 | F10 | `docs/reader-total-progress/catalog.json:1720`：「全链路隐私/凭据/文件稳定性/临时文件清理的真实安全出口」 | 对六目标宿主全链路验证安全存储/不可用时会话回退、日志/书库/载荷无凭据、TLS与跨源隔离、稳定私有文件、原子发布及正常/失败/崩溃后的临时文件处置（`docs/READER-PRODUCT-PLAN.md:165`、`:168`、`:185`、`:186`、`:187`）。 |
 
-已读既有台账记录：`docs/reader-total-progress/README.md`、`SESSION-CONTRACT.md`、`LEDGER-AUTHORITY.md`、`EXREADER_C02_WEBDAV_HANDOFF_20261031.md` 与 `f06-sdk342-six-packages.md`。其中 SESSION-CONTRACT 第 4–7 行登记六端产品部分移交、v1 只读与本地结果须注明 Actions 未验；C02 第 257 行明确 F10 的 82 cases / 880 assertions / 38 negatives 不等于 full_F10。当前用户明确授权本 lane 本机测试、三项台账更新和 main 分支交付，按本次范围执行，历史记录原样保留。
+历史组件验证覆盖 82 个用例、880 项断言和 38 项负向测试。完整 F10 的补充验证见下文。
 
 ## F08
 
@@ -74,7 +74,7 @@ catalog v1 没有 `acceptance` 字段。以下逐字引用实际 `title`，与 s
 | 文件 / 测试 | 存档运行结果 | 边界 |
 | --- | --- | --- |
 | `docs/validation/reader-credentials.json`；`tests/reader_credentials/consumer/suite.c` | run `40057087875` success；Windows 24 checks，Linux 34 checks；Apple/Android 原生存储分别留档 | 独立可选凭据模块，不覆盖实际壳；Windows unavailable 场景仍 pending。 |
-| `docs/reader-total-progress/EXREADER_C02_WEBDAV_HANDOFF_20261031.md:257` | F10 component seal `4db961144b00c9004e2775b9e1e57e6ea7a31cb7`，82 cases / 880 assertions / 38 negatives | 记录明确不授予完整 F10。 |
+| `docs/reader-total-progress/webdav-suite-results.md` | F10 component seal `4db961144b00c9004e2775b9e1e57e6ea7a31cb7`，82 cases / 880 assertions / 38 negatives | 记录明确不授予完整 F10。 |
 | `examples/windows/check_shell_sync.inc`；`windows-selection-sync` | 历史 headless C2 留档；本轮全量 CTest 与 `new-checks.txt` 已实际复跑通过 | 真 TCP/WinHTTP、密文落盘、日志/库文件扫描、篡改拒绝、删除；不覆盖跨用户读取与完整 TLS。 |
 
 凭据与文件路径审计：

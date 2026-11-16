@@ -63,7 +63,7 @@ def drawing(rid='image1', width=123456, height=234567):
 
 
 def main(library):
-    registration = (Path(__file__).parent / 'fixtures/docx-real/codex/register.cmake').read_text()
+    registration = (Path(__file__).parent / 'fixtures/docx-real/synthetic/register.cmake').read_text()
     preload_pattern = re.search(r'if\(test MATCHES "([^"]+)"', registration)[1]
     assert re.search(preload_pattern, 'native-docx-edit-e5')
     assert 'LD_PRELOAD=path_list_prepend:${asan_runtime}' in registration

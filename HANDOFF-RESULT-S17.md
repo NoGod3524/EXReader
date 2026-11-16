@@ -96,7 +96,6 @@ size/digest/source 绑定**没有**被本包认证；没有 `reader-next-s17-sum
 - macOS、Debug 配置未跑；真实 Windows/GTK/Apple/Android 宿主未接线（`actual_hosts=false`），
   物理设备、完整产品均未验证；
 - 本包无 SDK patch、无 schema/wire/anchor 改动、未改 root 宿主、旧裁判、其他包或冻结树；
-- 未开 PR、未打 tag/Release，未使用额外 agent，未使用 cpuse。
 
 ## 7. 复现
 

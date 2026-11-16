@@ -70,7 +70,7 @@ def sha256(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", default=r"<home>\exr-wp12a-evidence\large")
+    parser.add_argument("--output", default="build/wp12a-media/large")
     parser.add_argument("--size", type=int, default=1024 * 1024 * 1024)
     args = parser.parse_args()
     os.makedirs(args.output, exist_ok=True)

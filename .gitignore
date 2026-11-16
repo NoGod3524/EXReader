@@ -10,9 +10,11 @@ test-results/
 playwright-report/
 *.log
 __pycache__/
+build_manifest.local.json
+/tools/release/build_manifest.json
 # Downloaded compatibility corpus (tools/fetch_corpus.py)
 tests/corpus/
 
-# Ad-hoc agent/run output belongs in evidence/, not the repository root.
+# Temporary build and test output
 /*-OUT*.txt
 /OUT*.txt

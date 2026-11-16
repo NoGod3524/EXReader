@@ -109,7 +109,7 @@ static exr_status render_fixed(exr_fixed_document *document,size_t page,double s
 #define exr_fixed_pages fixed_pages
 #define exr_render_page_color render_color
 #define exr_fixed_render render_fixed
-#include "<workspace>/tools/check_document.c"
+#include "../check_document.c"
 
 #undef main
 int main(void) { atexit(probe_report);return original_check_document_main(); }

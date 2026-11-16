@@ -215,11 +215,11 @@ outside that measurement.
 
 ```sh
 python tools/release/build_manifest.py --build-dir build/sdk --configure-args build/configure-args.json
-python tools/release/build_manifest.py --check tools/release/build_manifest.json
-python tools/release/reproduce.py --manifest tools/release/build_manifest.json --output build/repro-proof --jobs 4
+python tools/release/build_manifest.py --check build/sdk/build_manifest.local.json
+python tools/release/reproduce.py --manifest build/sdk/build_manifest.local.json --output build/repro-proof --jobs 4
 ```
 
-`build_manifest.json` records source revision/tree plus working-tree override
+`build/sdk/build_manifest.local.json` records source revision/tree plus working-tree override
 hashes, an actual source fingerprint, compiler identity/version/binary hash,
 CMake version/binary hash, Ninja/linker/archiver hashes, host and Python versions,
 the full CMake cache, configure arguments, relevant environment, generated input
@@ -228,6 +228,11 @@ actual source-tree hash**. A local source override is not claimed to have been
 validated by the upstream archive hash. Expat, FreeType and miniz are mandatory.
 Feature-off dependencies are not silently treated as built features; consult
 the recorded `EXR_*` cache values for the measured configuration.
+
+The file contains local paths and environment variables. Keep it in the build
+directory. Reproduction copies the source and tool fingerprints and the local
+manifest digest into the packaged `build_manifest.json`. For a separate release
+job, use `--public-output` to write that record directly.
 
 Tree fingerprints sort relative paths and hash `8-byte big-endian UTF-8 path
 length + path + raw file SHA256` for every file. Dependency/generated trees omit

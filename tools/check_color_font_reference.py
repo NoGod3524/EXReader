@@ -21,7 +21,6 @@ from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parents[1]
 FONTS = ROOT / 'tests/fixtures/fonts'
-CHROME = Path(r'<home>/.cache/puppeteer/chrome/win64-152.0.7977.42/chrome-win64/chrome.exe')
 CELL = 320
 COLS = 6
 # The grid's text layer clips the left overhang of this shear; capture it alone.
@@ -292,7 +291,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path)
     parser.add_argument('--renderer', type=Path, required=True)
-    parser.add_argument('--chrome', type=Path, default=CHROME)
+    parser.add_argument('--chrome', type=Path, required=True)
     parser.add_argument('--fonts', type=Path, default=FONTS)
     args = parser.parse_args()
     CHROME = args.chrome.absolute()

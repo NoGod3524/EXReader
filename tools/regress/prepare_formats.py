@@ -52,9 +52,10 @@ def main():
     ]:
         url = releases + name + '.epub'
         add(name, download(name + '.epub', url), category, url, policy)
-    for book in read_json(Path(__file__).with_name('corpus.json'))['books']:
+    corpus = Path(__file__).with_name('corpus.json')
+    for book in read_json(corpus)['books']:
         if book['id'] in ('between-the-world-and-me', 'the-house-on-mango-street'):
-            add(book['id'], Path(book['path']), 'EPUB-reflow', 'existing 19-book corpus')
+            add(book['id'], corpus.parent / book['path'], 'EPUB-reflow', 'existing 19-book corpus')
     for id, source in [('pdf-text-malcolm', args.text_pdf),
                        ('pdf-text-statistics', args.second_text_pdf),
                        ('pdf-scan-malcolm', args.scan_pdf),

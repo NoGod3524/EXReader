@@ -10,7 +10,7 @@ steps:
   - name: Record build inputs and verify every release artifact
     shell: bash
     run: |
-      python tools/release/build_manifest.py --build-dir "$BUILD_DIR" --configure-args build/configure-args.json --output "$CANDIDATE_DIR/build_manifest.json"
+      python tools/release/build_manifest.py --build-dir "$BUILD_DIR" --configure-args build/configure-args.json --public-output "$CANDIDATE_DIR/build_manifest.json"
       python tools/release/verify_artifacts.py "$CANDIDATE_DIR" --write
       python tools/release/verify_artifacts.py "$CANDIDATE_DIR"
   - name: Sign the checksum list

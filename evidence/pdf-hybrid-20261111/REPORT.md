@@ -108,7 +108,6 @@ Total Test time (real) = 2.39 sec
 - `tools/version_literal_exceptions.json` 未改；没有新增 `src/*.h`。
 - 本任务没有修改 `src/docx_*`、`src/export_text.c`，没有启动 GUI、SendInput 或修改系统设置。
 - 恢复时未提交的 `OUT2.txt` 已原样保存为 [recovered-OUT2.txt](recovered-OUT2.txt)。原文件与 `origin/main` 对齐，以消除无关日志的 add/add 冲突。
-- `CASCADE-CLAUDE-OUT.txt` 是先前会话的历史记录；完成状态以本报告及原始验收数据为准。
 
 复现：`python -X utf8 evidence/pdf-hybrid-20261111/verify.py`。该脚本使用现有 `build/h`、MinGW、NumPy、Pillow 和 PyMuPDF，所有基线编译产物写入忽略的 `build/hybrid-validation/`。
 

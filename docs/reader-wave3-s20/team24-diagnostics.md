@@ -11,6 +11,7 @@
 - `candidate_identity(manifest, unpack, report, *, source_sha, run_id, attempt, sdk_version)` 返回身份问题列表。三个记录必须同源码、同 SDK 版本、同目标、同 run/attempt；校验原 ZIP 的名字/大小/摘要与实际程序摘要分别一致。它不取代 ZIP 字节校验和平台业务验收。
 - `matrix_markdown(index)` 始终显示六目标，列出 ZIP 与程序摘要及未通过原因。输入是现有 summary 输出，缺失目标显示未通过。
 
+诊断协议测试的入口为 `python tests/reader_wave3_s20/test_diagnostics.py`。六目标的启动和业务界面另行验证。
 
 新完整轮次单列 source/run/attempt，不拼接旧源码通过结果。SDK 的基础来源与 extra prefix 来源由构建阶段记录，不能仅凭版本号推断二进制来源。真机和读屏尚未测试。
 

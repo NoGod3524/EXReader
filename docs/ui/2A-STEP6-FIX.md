@@ -64,7 +64,7 @@ python -X utf8 docs/ui/acceptance/capture_window.py <pid> <输出png>
 完整复跑：
 
 ```powershell
-./docs/ui/acceptance/build_real_exe.ps1
+./docs/ui/acceptance/build_real_exe.ps1 -SdkBuild build/sdk
 python -X utf8 docs/ui/acceptance/check_real_exe.py docs/ui/acceptance/.build-real-exe/EXReader-fix.exe <workspaces>/exr-demo-fix/EXReader-fix.exe <workspaces>/exr-cjk-corpus/hongloumeng-24264.epub <workspaces>/exr-demo-fix/Reader.otf tools_capture_window.py docs/ui/acceptance/.run-real-exe-native
 python -X utf8 docs/ui/acceptance/check_step5.py docs/ui/acceptance/.build-real-exe/EXReader-fix.exe <workspaces>/exr-demo-main/EXReader-main.exe <workspaces>/exr-demo-fix/Reader.otf docs/ui/evidence/2a-step4-20261106/Long-acceptance.epub docs/ui/acceptance/.run-real-exe-regression
 ```

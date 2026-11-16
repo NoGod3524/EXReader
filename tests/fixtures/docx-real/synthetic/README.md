@@ -5,9 +5,9 @@
 每份夹具组合正文、表格、PNG、脚注、页眉／页脚、域、样式、编号与主题；专门覆盖的 30 种结构见 manifest。重复表头用 89 行表格模拟实际跨页表格。结构特征、关系目标存在性及原创生成结果都由测试断言。
 
 ```powershell
-python tests/fixtures/docx-real/codex/generate.py --check
-python tests/fixtures/docx-real/codex/run_matrix.py --library build/native/libexreader.dll --output build/t1/after
-python tests/fixtures/docx-real/codex/oracle_mutations.py
+python tests/fixtures/docx-real/synthetic/generate.py --check
+python tests/fixtures/docx-real/synthetic/run_matrix.py --library build/native/libexreader.dll --output build/t1/after
+python tests/fixtures/docx-real/synthetic/oracle_mutations.py
 ```
 
 `run_matrix.py` 调用公开可编辑 DOCX ABI，没有调用文本导出器。无修改和改字两条路径使用独立模型，分开记录。改字目标所在段落包含相应的域／书签／锚点／节属性；表格夹具则改其邻近正文。先构造“仅替换唯一目标文字”的独立 expected.docx，逐项比对实际输出，记录允许的字符数变化和额外损失；不豁免整个段落，也不忽略主文档。
@@ -37,10 +37,10 @@ ctest --test-dir build/native --output-on-failure -j 2
 `build_control.py` 复用已有 MinGW 构建的依赖和未变化对象，逐文件验证其产品源码与指定 Git 提交一致；重编译原提交的模型、IO 和公开头，生成完全独立的对照 DLL。元数据包括源哈希和 DLL 哈希。
 
 ```powershell
-python tests/fixtures/docx-real/codex/build_control.py --build build/native --output build/t1/control
-python tests/fixtures/docx-real/codex/run_matrix.py --library build/t1/control/libexreader.dll --legacy-snapshot --output build/t1/before
-python tests/fixtures/docx-real/codex/regressions.py --library build/t1/control/libexreader.dll paragraph-markers
-python tests/fixtures/docx-real/codex/regressions.py --library build/native/libexreader.dll paragraph-markers
+python tests/fixtures/docx-real/synthetic/build_control.py --build build/native --output build/t1/control
+python tests/fixtures/docx-real/synthetic/run_matrix.py --library build/t1/control/libexreader.dll --legacy-snapshot --output build/t1/before
+python tests/fixtures/docx-real/synthetic/regressions.py --library build/t1/control/libexreader.dll paragraph-markers
+python tests/fixtures/docx-real/synthetic/regressions.py --library build/native/libexreader.dll paragraph-markers
 ```
 
 修前矩阵和针对性回归应返回非零。`--stage text` 重放仅增加文字命令的状态；`--stage paragraph` 再加入段落前导标记修复。两者仍应因尚未修复的节尾漂移返回失败。最终 CMake 构建包含全部修复。未改变同一断言的通过标准。

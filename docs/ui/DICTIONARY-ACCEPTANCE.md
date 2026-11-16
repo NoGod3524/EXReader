@@ -96,4 +96,3 @@ UI 验收目录用新的路径，避免旧生词本累计影响计数。公开�
 ![深色查词](evidence/dictionary-20261108/dictionary-dark.png)
 ![未收录与原文](evidence/dictionary-20261108/dictionary-missing.png)
 ![生词本](evidence/dictionary-20261108/vocabulary.png)
-![词典设置](evidence/dictionary-20261108/dictionary-settings.png)

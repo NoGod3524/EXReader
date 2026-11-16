@@ -6,7 +6,6 @@
 
 ## 构建与验收入口
 
-仅父代理提交功能分支后启动 `.github/workflows/team24-apple.yml`；新增完整轮次最多两次，attempt 重跑也计入。禁止本地构建、语法检查、测试、夹具生成、截图、工件下载、解包、解析。
 
 该工作流在 GitHub Actions 内执行：
 

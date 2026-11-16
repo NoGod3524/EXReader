@@ -25,14 +25,14 @@ manifest SHA256：`795c22af87d4a0f4f73251030ec478352fd4e2476bcf1dfd21c974e9f0829
 
 原始列表：[run-1-SHA256SUMS](run-1-SHA256SUMS)、[run-2-SHA256SUMS](run-2-SHA256SUMS)。
 完整安装文件对照与命令：[reproducibility.json](reproducibility.json)。
-两次编译/安装日志：`run-1-build.txt`、`run-1-install.txt`、`run-2-build.txt`、`run-2-install.txt`。
+两次编译及安装日志（工作目录已脱敏）：`run-1-build.txt`、`run-1-install.txt`、`run-2-build.txt`、`run-2-install.txt`。
 本机可下载的实际包和 DLL 保留在 `build/c4-archive-proof/run-1/artifacts/` 与 `run-2/artifacts/`。
 
 根因修复：DLL 使用 `--no-insert-timestamp`；GNU 静态归档使用 `ar qcD/qD` 与 `ranlib -D`；DLL 导入库通过 `objcopy --enable-deterministic-archives` 归一化元数据。本机 WinLibs 的 `ar` 默认模式为 U（真实时间戳），不能依赖工具链默认值。早期对照的 18 个归档仅成员头元数据不同；本报告保留的是修复后的完整两轮构建。参考 [GNU ar D 模式](https://sourceware.org/binutils/docs/binutils/ar-cmdline.html)。
 
 ## 构建输入
 
-[build_manifest.json](../../tools/release/build_manifest.json) 包含编译器/CMake 版本和二进制哈希、Ninja/链接器/归档器哈希、完整 CMake cache、实际 configure 参数、宿主/Python、相关环境变量、源码 revision/tree/改动哈希、生成头文件指纹、依赖来源与实际源码指纹、打包时间/格式/顺序。
+本次同机复现使用的本地构建清单包含编译器/CMake 版本和二进制哈希、Ninja/链接器/归档器哈希、完整 CMake cache、实际 configure 参数、宿主/Python、相关环境变量、源码 revision/tree/改动哈希、生成头文件指纹、依赖来源与实际源码指纹、打包时间/格式/顺序。
 源码内容指纹：`7b5e26b7d6e61376a4cbd8d10e56077b99dcf8ce615e05b5db1e8a4ffcfa6711`（5950 个文件）。
 
 | 依赖 | tag/commit | 上游归档 SHA256 | 本机实际源码树 SHA256 |

@@ -1,5 +1,5 @@
 param(
-  [string]$SdkBuild = '<workspaces>/cjk-justify-20261106/build',
+  [Parameter(Mandatory)][string]$SdkBuild,
   [string]$Out = "$PSScriptRoot/.build-real-exe"
 )
 $ErrorActionPreference = 'Stop'

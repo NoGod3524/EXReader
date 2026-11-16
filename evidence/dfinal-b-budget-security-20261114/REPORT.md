@@ -18,7 +18,7 @@ catalog v1 实际没有 `acceptance` 字段，下表逐字引用对应固定 `ti
 | F09 | `docs/reader-total-progress/catalog.json:1712`：「默认简洁且完整功能可达，六端完整键盘/可访问性与读屏证据分列」 | 六端分别证明默认入口简洁且全部功能实际可达，给出全部交互控件的名称、角色、真实键盘焦点顺序，并独立登记实际读屏输出（`docs/READER-PRODUCT-PLAN.md:157`、`:191`–`:193`）。 |
 | F10 | `docs/reader-total-progress/catalog.json:1720`：「全链路隐私/凭据/文件稳定性/临时文件清理的真实安全出口」 | 六端实际宿主分别证明平台安全存储及不可用时仅会话回退、日志/库/载荷不含凭据、TLS/跨源隔离、稳定私有文件、原子发布及正常/失败/崩溃后的临时文件处置（`docs/READER-PRODUCT-PLAN.md:165`、`:168`、`:185`–`:187`）。 |
 
-已读 `docs/reader-total-progress/README.md`、`SESSION-CONTRACT.md`、`LEDGER-AUTHORITY.md`、C02 handoff 中相关记录，以及前两轮 `evidence/dfinal-b-20261114/REPORT.md`、`evidence/dfinal-b-followup-20261114/REPORT.md`。本次用户明确授权本机测试、F08–F10实施、三项台账更新与main-base交付，按这一范围执行。
+已读 `docs/reader-total-progress/README.md`、`LEDGER-AUTHORITY.md`、C02 handoff 中相关记录，以及前两轮 `evidence/dfinal-b-20261114/REPORT.md`、`evidence/dfinal-b-followup-20261114/REPORT.md`。本次用户明确授权本机测试、F08–F10实施、三项台账更新与main-base交付，按这一范围执行。
 
 ## 三项证据审计表
 

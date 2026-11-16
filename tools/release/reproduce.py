@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tarfile
 
-from build_manifest import check, write_json
+from build_manifest import check, publication_manifest, write_json
 from verify_artifacts import digest, inventory, verify, write_sums
 
 
@@ -32,6 +32,7 @@ def run(manifest_path, destination, jobs):
     raw = manifest_path.read_bytes()
     manifest = json.loads(raw)
     check(manifest)
+    public_manifest = publication_manifest(raw)
     # A new evidence directory prevents mixing files from earlier measurements.
     destination.mkdir(parents=True, exist_ok=False)
     cmake = manifest['cmake']['path']
@@ -51,10 +52,10 @@ def run(manifest_path, destination, jobs):
         check(manifest)
         if manifest_path.read_bytes() != raw:
             raise ValueError('manifest changed during the build')
-        (stage / 'build_manifest.json').write_bytes(raw)
+        write_json(stage / 'build_manifest.json', public_manifest)
         write_sums(stage)
         verify(stage)
-        (artifacts / 'build_manifest.json').write_bytes(raw)
+        write_json(artifacts / 'build_manifest.json', public_manifest)
         for name, path in inventory(stage).items():
             if path.suffix.lower() == '.dll':
                 target = artifacts / name
@@ -71,7 +72,7 @@ def run(manifest_path, destination, jobs):
         write_json(destination / f'run-{number}.json', runs[-1])
         print(f'Run {number}: PASS ({verified} release files verified)', flush=True)
     same = runs[0]['artifact_sha256'] == runs[1]['artifact_sha256'] and runs[0]['stage_files'] == runs[1]['stage_files']
-    report = {'schema': 1, 'manifest_sha256': digest(manifest_path), 'identical': same,
+    report = {'schema': 1, 'manifest_sha256': public_manifest['input_manifest_sha256'], 'identical': same,
               'method': 'two --clean-first builds in the same configured directory, new install stages', 'runs': runs}
     write_json(destination / 'reproducibility.json', report)
     if not same:
@@ -81,7 +82,7 @@ def run(manifest_path, destination, jobs):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--manifest', type=Path, default=Path(__file__).with_name('build_manifest.json'))
+    parser.add_argument('--manifest', type=Path, required=True, help='local build manifest')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--jobs', type=int, default=4)
     args = parser.parse_args()
