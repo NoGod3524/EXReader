@@ -57,6 +57,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
+          # Gutenberg regenerated pg11 upstream; seed the tracked frozen originals (hash-verified below).
+          New-Item -ItemType Directory -Force build/f08-books | Out-Null
+          Copy-Item evidence/dfinal-b-budget-security-20261114/frozen-books/*.epub build/f08-books/
           python tests/reader_perf_windows/render_budget.py --fetch-corpus --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books *> f08-fetch.txt
           exit $LASTEXITCODE
       - name: Measure fixed original books (render, present, first interactive, fixed budgets)
@@ -120,6 +123,8 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $PSNativeCommandUseErrorActionPreference = $true
+          New-Item -ItemType Directory -Force build/f08-books | Out-Null
+          Copy-Item evidence/dfinal-b-budget-security-20261114/frozen-books/*.epub build/f08-books/
           python tests/reader_perf_windows/render_budget.py --fetch-corpus --manifest tests/reader_perf_windows/render-corpus.json --corpus build/f08-books *> fetch.txt
           python -m pip install --disable-pip-version-check "uiautomation==2.0.29" *> pip.txt
       - name: Collect shell UIA and real SendInput keyboard focus order (one foreground activation)
