@@ -248,6 +248,11 @@ def main():
             valid, message = render(data=text_ppt('A\U0001f600B'))
             assert 'surrogate' not in message.lower() and mask(valid)
             print('isolated low surrogate -> U+FFFD; valid surrogate pair accepted')
+            # PF bullet flags (hasBullet) + bulletChar=lone high surrogate + align.
+            lone = struct.pack('<IHI', 6, 0, 0x881) + struct.pack('<HHH', 1, 0xD800, 0)
+            image, _ = render(data=text_ppt(style=lone + cf(6)), warning='surrogate')
+            assert mask(image)
+            print('bulletChar=U+D800 -> U+FFFD bullet: status=0 visible text, surrogate warning')
             # Noncharacters force a long missing-glyph list on every host.
             missing = ''.join(chr(cp) for cp in range(0xFDD0, 0xFDF0)) + 'A'
             _, message = render(data=text_ppt(missing), warning='glyph', memory=True)

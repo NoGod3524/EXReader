@@ -1474,6 +1474,14 @@ if(EXR_BUILD_TESTS)
     target_compile_options(exreader-font-manager-test PRIVATE -Wall -Wextra -Wpedantic -Werror)
     target_compile_options(exreader-font-manager-probe PRIVATE -Wall -Wextra -Wpedantic -Werror)
   endif()
+  add_executable(exreader-font-shared-test tests/test_font_shared.c)
+  target_include_directories(exreader-font-shared-test PRIVATE src)
+  target_link_libraries(exreader-font-shared-test PRIVATE exr_pdf exr_core)
+  if(NOT MSVC)
+    target_compile_options(exreader-font-shared-test PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  endif()
+  add_test(NAME native-font-shared COMMAND exreader-font-shared-test
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/font_manager)
   foreach(group discovery selection cache integration)
     add_test(NAME native-font-manager-${group} COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/tests/check_font_manager.py

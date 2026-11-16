@@ -303,6 +303,17 @@ def main():
             _, values = render(data=presentation(table(spanning,declared_rows=200,row_values=[1]*200)),metadata=True)
             assert (values['table_0_rows'],values['table_0_columns'],values['table_0_cells'],values['table_0_merged'])==('200','1','1','1')
             print('fully_merged_rows=200 columns=1 cells=1 merged=1 status=0')
+            # A background-flagged cell is moved to the slide front; the table
+            # being built must shift with it instead of starting one shape early.
+            before = shape(rgb=(0, 0, 0), box=(10, 10, 20, 20), extra=textbox('P'))
+            children = cells(extra=textbox('A'))
+            child = struct.pack('<II', 1025, 0xA02)
+            second = children.index(child, children.index(child) + 1)
+            children = children[:second] + struct.pack('<II', 1025, 0xE02) + children[second + 8:]
+            _, values = render(data=presentation(before + table(children)), metadata=True)
+            assert values['table_0_shape_0_text'] == 'A', values
+            assert 'P' not in [v for k, v in values.items() if k.endswith('_text')], values
+            print('background cell before table range: table_0_shape_0_text=A preceding_shape_excluded=true')
         else:
             raise AssertionError(name)
     print(f'native-ppt-table-{name}: {checks} native opens/renders passed')

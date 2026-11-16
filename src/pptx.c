@@ -87,7 +87,8 @@ typedef struct {
   pptx_text_style default_text[9];
   exr_font_manager *font_manager;
   pptx_text_font *text_fonts;
-  size_t text_font_count,text_font_capacity,font_bytes,text_bytes;
+  size_t text_font_count,text_font_capacity,text_bytes;
+  exr_font_blob_cache font_files;
   size_t text_scale_warning,text_level_warning;
   size_t table_grid_warning,table_span_warning,table_row_warning,table_height_warning,table_style_warning;
   exr_buffer font_fallbacks,glyph_fallbacks;
@@ -122,6 +123,7 @@ static void release(void *context) {
   free(d->fallbacks.data);
   for(i=0;i<d->text_font_count;i++) exr_font_free(d->text_fonts[i].font);
   free(d->text_fonts);
+  exr_font_blob_cache_free(&d->font_files);
   exr_font_manager_free(d->font_manager);
   free(d->font_fallbacks.data);
   free(d->glyph_fallbacks.data);
@@ -1062,8 +1064,6 @@ static exr_status text_font(pptx_document *d,exr_document *model,exr_style *styl
   pptx_text_font key={0};
   size_t i,j,at;
   exr_status status;
-  exr_font_input inputs[32]={0};
-  unsigned char *bytes[32]={0};
   if(!d->font_manager) {
     exr_font_manager_options options={0};
     options.struct_size=sizeof(options); options.flags=EXR_FONT_MANAGER_PLATFORM_DIRECTORIES;
@@ -1120,18 +1120,7 @@ static exr_status text_font(pptx_document *d,exr_document *model,exr_style *styl
       !memcmp(key.faces,d->text_fonts[i].faces,key.count*sizeof(size_t))) {
     *out=d->text_fonts[i].font; return EXR_OK;
   }
-  status=EXR_OK;
-  for(i=0;i<key.count && status==EXR_OK;i++) {
-    exr_font_face_info info={0}; size_t size=0;
-    info.struct_size=sizeof(info);
-    status=exr_font_manager_face(d->font_manager,key.faces[i],&info,e);
-    if(status==EXR_OK) status=exr_read(info.path,&bytes[i],&size,e);
-    if(status==EXR_OK && size>EXR_FONT_MANAGER_MAX_BYTES-d->font_bytes)
-      status=exr_fail(e,EXR_LIMIT,"PPTX fonts exceed 256 MiB");
-    if(status==EXR_OK) { d->font_bytes+=size; inputs[i]=(exr_font_input){bytes[i],size,info.face_index}; }
-  }
-  if(status==EXR_OK) status=exr_font_create_managed(inputs,key.count,&key.font,e);
-  for(i=0;i<key.count;i++) free(bytes[i]);
+  status=exr_font_manager_shared_font(d->font_manager,&d->font_files,key.faces,key.count,&key.font,e);
   if(status!=EXR_OK) return status;
   if(!exr_grow((void **)&d->text_fonts,&d->text_font_capacity,d->text_font_count+1,sizeof(key))) {
     exr_font_free(key.font); return exr_fail(e,EXR_MEMORY,"PPTX font directory allocation failed");

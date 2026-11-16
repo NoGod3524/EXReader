@@ -4,6 +4,7 @@
 #include "base_internal.h"
 #include "exr/pdf.h"
 #include "exr/font_manager.h"
+#include "font_manager_internal.h"
 #define EXR_PPT_MAX_STREAM ((size_t)256 * 1024 * 1024)
 typedef struct {
   unsigned char *document,*summary,*pictures;
@@ -70,7 +71,8 @@ typedef struct {
   size_t text_runs,text_font_index,text_color_index,text_unicode,text_bytes_fallback,text_malformed;
   exr_font_manager *font_manager;
   exr_ppt_text_font *text_fonts;
-  size_t text_font_count,text_font_capacity,font_bytes,text_bytes;
+  size_t text_font_count,text_font_capacity,text_bytes;
+  exr_font_blob_cache font_files;
   exr_ppt_table *tables;
   size_t table_count,table_capacity,table_malformed,table_missing,table_merge,text_index;
   exr_buffer font_fallbacks,glyph_fallbacks;
