@@ -657,7 +657,7 @@ class Sampler:
         self.write_settings(profile, entry_book)
         watch = Watch(folder, 'state.ini')
         host = Host(self.binary, self.font, profile, folder,
-                    dict(self.environment['host_environment']), index)
+                    dict(self.environment['host_environment'], EXR_FRAME_TRACE=str(folder / 'frames.jsonl')), index)
         record = {'launch': index, 'kind': kind, 'entry': 'reader' if entry_book else 'shelf',
                   'profile': profile.name, 'cache': cache, 'entry_book': entry_book,
                   'state_file': str((folder / 'state.ini').relative_to(self.output)),
@@ -718,6 +718,8 @@ class Sampler:
                     seen = value
             record['paint_offsets_ms'] = paints
             record['paint_count'] = len(paints)
+            trace = folder / 'frames.jsonl'
+            record['frames'] = [json.loads(line) for line in trace.read_text().splitlines()] if trace.exists() else []
             if events:
                 record['final_state'] = events[-1]['state']
                 record['last_book'] = events[-1]['state']['host'].get('book', 0) or 0
@@ -739,6 +741,60 @@ class Sampler:
             self.launches.append(record)
 
     # ---- driver ------------------------------------------------------
+    def run_fixed_shelf(self):
+        self.output.mkdir(parents=True)
+        self.collect_environment()
+        self.seed()
+        launches = []
+        for repeat in range(3):
+            order = ('baseline', 'candidate') if repeat % 2 == 0 else ('candidate', 'baseline')
+            for cohort in order:
+                folder = self.output / ('%s-%d' % (cohort, repeat))
+                profile = folder / 'profile'
+                profile.mkdir(parents=True)
+                shutil.copyfile(self.profile / 'library.sqlite', profile / 'library.sqlite')
+                self.write_settings(profile, 0)
+                trace = folder / 'frames.jsonl'
+                environment = dict(self.environment['host_environment'], EXR_FRAME_TRACE=str(trace))
+                host = Host(self.binary, self.font, profile, folder, environment)
+                watch = Watch(folder, 'state.ini')
+                row = {'cohort': cohort, 'repeat': repeat, 'trace': str(trace.relative_to(self.output)),
+                       'scroll_samples_ms': [], 'scrolled': False}
+                try:
+                    started = host.launch()
+                    _, event = self.await_state(host, watch, shelf_ready, 600, 0, '2202-book shelf')
+                    row['load_ms'] = (event['at'] - started) * 1000
+                    self.start_host(host)
+                    host.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
+                    since = watch.mark()
+                    host.press('F2')
+                    _, event = self.await_state(host, watch, lambda s: bool(s['shelf'].get('selected_key')),
+                                               60, since, 'initial selection')
+                    initial_top = event['state']['host'].get('shelf_top_id')
+                    for slot in range(128):
+                        before = event['state']['shelf']['selected_key']
+                        since = watch.mark()
+                        stamp = host.press('Down')
+                        _, event = self.await_state(host, watch, lambda s: s['shelf'].get('selected_key')
+                                                   not in (None, '', before), 60, since, 'scroll selection')
+                        row['scroll_samples_ms'].append((event['at'] - stamp) * 1000)
+                        if slot == 0:
+                            row['first_interactive_ms'] = (event['at'] - started) * 1000
+                        row['scrolled'] |= event['state']['host'].get('shelf_top_id') != initial_top
+                    row['rss_kb'] = host.hwm_kb()
+                except (SampleError, OSError, subprocess.SubprocessError) as error:
+                    row['error'] = str(error)
+                finally:
+                    row['exit'] = host.close()
+                    host.close_log()
+                    watch.close()
+                    launches.append(row)
+                    document = {'books': self.corpus['books'], 'source_sha': os.environ['GITHUB_SHA'],
+                                'run_id': os.environ['GITHUB_RUN_ID'],
+                                'attempt': os.environ['GITHUB_RUN_ATTEMPT'], 'launches': launches,
+                                'environment': self.environment}
+                    (self.output / 'fixed-shelf.json').write_text(json.dumps(document, indent=2) + '\n')
+
     def run(self):
         self.output.mkdir(parents=True)
         (self.output / 'raw').mkdir(parents=True, exist_ok=True)
@@ -794,6 +850,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--launches', type=int, default=32)
     parser.add_argument('--tarball', type=Path)
+    parser.add_argument('--fixed-shelf', action='store_true')
     arguments = parser.parse_args()
     if os.environ.get('GITHUB_ACTIONS') != 'true':
         parser.error('Run the GTK performance sampler on a GitHub Actions Linux runner')
@@ -801,6 +858,10 @@ def main():
         parser.error('At least 30 independent launches are required')
     if arguments.output.exists():
         parser.error('Choose a new evidence directory')
+    if arguments.fixed_shelf:
+        from summarize import summarize_fixed_shelf
+        Sampler(arguments).run_fixed_shelf()
+        raise SystemExit(0 if summarize_fixed_shelf(arguments.output) else 1)
     Sampler(arguments).run()
 
 

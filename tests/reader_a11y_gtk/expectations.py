@@ -53,8 +53,14 @@ ACCOUNT_ENTRIES = {
 }
 ACCOUNT_RADIOS = ['Remember in system secure storage', 'Only for this app session']
 ACCOUNT_BUTTONS = ['Load saved', 'Apply credentials', 'Forget credentials',
-                   'Scan library', 'Cancel scan', 'Retry scan', 'Disconnect']
+                   'Sync library', 'Receive books', 'Cancel', 'Retry', 'Disconnect']
 ACCOUNT_DIALOG = 'Account and Sync'
+
+
+def status_name_event(event, message):
+    # AT-SPI puts the property in the event type; detail1/detail2 are integers.
+    return (event['type'] == 'object:property-change:accessible-name'
+            and event.get('source_name') == message)
 
 # metadata_ui.inc
 METADATA_DIALOG = 'Book details'

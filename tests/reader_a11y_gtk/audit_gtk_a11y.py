@@ -844,10 +844,7 @@ def main():
                 break
             time.sleep(0.2)
         events = recorder.since(mark)
-        name_events = [event for event in events
-                       if event['type'].startswith('object:property-change')
-                       and event['detail1'] == 'accessible-name'
-                       and event.get('source_name') == after_text]
+        name_events = [event for event in events if contract.status_name_event(event, after_text)]
         same_element = (before is not None and after is not None
                         and a11y.path_of(after) == a11y.path_of(before))
         evaluated = before is not None and bool(recorder.items)
