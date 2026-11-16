@@ -1,1 +1,0 @@
-line 261: !memcmp(actual.pixels,reference.pixels,(size_t)actual.stride*actual.height) (0: )
