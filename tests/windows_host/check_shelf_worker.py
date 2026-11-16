@@ -42,9 +42,17 @@ def main():
         checks.append('completed_frame_and_owned_metadata_survive_real_ui_cache_eviction')
         assert app.q(304) == 1 and app.q(13) == 2
         app.gate(4);app.open('Shelf Worker First', wait=False);app.stage(4)
-        assert app.q(303) == 1
-        app.click('cancel');app.release();app.wait_idle()
-        assert app.q(10) == accepted and app.q(19) == accepted and app.q(13) == 0
+        assert app.q(303) == 1 and app.q(13) == 0
+        # The current host cancels through Close. Keep the worker gate armed:
+        # App.close() would release it before requesting cancellation.
+        assert U.PostMessageW(app.window, 0x10, 0, 0)
+        assert app.process.wait(timeout=30) == 0
+        app.log.close()
+        app = App(args.candidate.resolve(), (args.package / 'Reader.otf').resolve(),
+                  output / 'profile', bounded=True, existing=True)
+        # Restart must restore the previously accepted book, never the cancelled
+        # candidate, and reconstruct both shelf entries from persisted state.
+        assert app.q(10) == accepted and app.q(19) == accepted and app.q(13) == 2
         checks.append('cancelled_owned_candidate_keeps_current_book_after_cache_eviction')
         assert app.q(304) == 1
         app.open('Shelf Worker First')

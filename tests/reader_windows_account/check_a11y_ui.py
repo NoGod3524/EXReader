@@ -18,6 +18,9 @@ import time
 
 import uiautomation as auto
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'windows_host' / 'worker_review'))
+from native_ui import file_dialog, filename_edit, inventory
+
 USER32 = C.WinDLL("user32", use_last_error=True)
 KERNEL = C.WinDLL("kernel32", use_last_error=True)
 
@@ -200,7 +203,30 @@ def main():
         return int(USER32.GetDlgItem(host["window"], identifier) or 0)
 
     def element(hwnd):
+        assert hwnd, 'expected an existing native control'
         return auto.ControlFromHandle(hwnd)
+
+    def keyboard_import(path, finished=True):
+        wait(lambda: USER32.IsWindowEnabled(control(127)), 120, 'import ready')
+        element(control(123)).SetFocus()
+        wait(lambda: focus_of(process.pid) == control(123), 10, 'import shortcut focus')
+        tap(ord('I'), (VK_CONTROL,))
+        dialog = wait(lambda: file_dialog(process.pid), 30, 'native import file picker')
+        inventory(dialog, output / 'import-controls.json')
+        filename = wait(lambda: filename_edit(dialog), 30, 'native filename edit')
+        element(filename).SetFocus()
+        wait(lambda: focus_of(process.pid) == filename, 10, 'filename focus')
+        text = C.create_unicode_buffer(str(path))
+        assert USER32.SendMessageW(filename, 0x000C, 0, C.addressof(text))
+        submit = USER32.GetDlgItem(dialog, 1)  # IDOK, native Open command
+        element(submit).SetFocus()
+        wait(lambda: focus_of(process.pid) == submit, 10, 'import confirmation focus')
+        assert element(submit).AccessKey, 'native import confirmation has no mnemonic'
+        tap(VK_SPACE)
+        wait(lambda: not file_dialog(process.pid), 30, 'file picker accepted source')
+        if finished:
+            wait(lambda: '已导入' in window_text(control(125)) and USER32.IsWindowEnabled(control(127)),
+                 180, 'import finished')
 
     log = (output / "host.log").open("wb")
     process = subprocess.Popen([str(args.candidate), "--font", str(args.package / "Reader.otf"),
@@ -221,6 +247,7 @@ def main():
                 return host["window"]
             return 0
         wait(find_window, 30, "host window")
+        inventory(host['window'], output / 'control-inventory.json')
 
         def foreground():
             for _ in range(40):
@@ -232,19 +259,14 @@ def main():
             return False
         assert foreground(), "the host never became the foreground window; SendInput would miss it"
         # A real import so the details command and the page have content.
-        text = C.create_unicode_buffer(str(source))
-        USER32.SendMessageW(control(101), 0x000C, 0, C.addressof(text))
-        element(control(102)).SetFocus()
-        wait(lambda: focus_of(process.pid) == control(102), 10, "import focus")
-        tap(VK_SPACE)
-        wait(lambda: "已导入" in window_text(control(125)), 180, "import finished")
+        keyboard_import(source)
         record("import_command_activates_from_the_keyboard")
 
         # Open it with the keyboard: select the only row, then activate 打开.
         USER32.SendMessageW(control(119), 0x0186, 0, 0)  # LB_SETCURSEL
-        element(control(103)).SetFocus()
-        wait(lambda: focus_of(process.pid) == control(103), 10, "open focus")
-        tap(VK_SPACE)
+        element(control(123)).SetFocus()
+        wait(lambda: focus_of(process.pid) == control(123), 10, "open shortcut focus")
+        tap(ord('O'), (VK_CONTROL,))
         wait(lambda: "已打开" in window_text(control(125)), 120, "book opened")
 
         # 1) accessible names on the two unlabeled editors
@@ -267,10 +289,13 @@ def main():
         record("comment_editor_releases_tab_and_shift_tab")
 
         # 3) import and refresh keep a defined focus stop when they disable themselves
-        for identifier, name in ((102, "import"), (127, "refresh")):
-            element(control(identifier)).SetFocus()
-            wait(lambda: focus_of(process.pid) == control(identifier), 10, name + " focus")
-            tap(VK_SPACE)
+        for identifier, name in ((123, "import"), (127, "refresh")):
+            if name == 'import':
+                keyboard_import(source, finished=False)
+            else:
+                element(control(identifier)).SetFocus()
+                wait(lambda: focus_of(process.pid) == control(identifier), 10, name + " focus")
+                tap(VK_SPACE)
             time.sleep(0.2)
             focused = focus_of(process.pid)
             print(json.dumps({"disabled_command": name, "focus_after": focused,
@@ -279,6 +304,7 @@ def main():
             assert focused, name + " focus dropped"
             assert USER32.GetParent(focused) == host["window"], name + " focus left the window"
             assert USER32.IsWindowEnabled(focused), name + " focus landed on a disabled stop"
+            wait(lambda: USER32.IsWindowEnabled(control(127)), 120, name + ' finished')
         record("import_and_refresh_commands_keep_a_defined_focus_stop")
 
         # 4) status changes raise a native change event
@@ -292,8 +318,8 @@ def main():
         handle = USER32.SetWinEventHook(0x800C, 0x800C, None, C.cast(hook, C.c_void_p), process.pid, 0, 0x0000)
         assert handle
         try:
-            element(control(107)).SetFocus()  # select-the-page command changes the status line
-            tap(VK_SPACE)
+            element(control(123)).SetFocus()  # Ctrl+A changes the status line
+            tap(ord('A'), (VK_CONTROL,))
             assert pump(20, lambda: bool(events)), "no native change event from the status line"
         finally:
             USER32.UnhookWinEvent(handle)
@@ -321,7 +347,8 @@ def main():
         wait(lambda: focus_of(process.pid) == control(128), 10, "details focus")
         tap(VK_SPACE)
         dialog = wait(lambda: dialog_of(process.pid), 30, "details dialog")
-        assert not element(control(102)).IsEnabled, "blocked import still reports enabled"
+        assert not element(control(123)).IsEnabled, "blocked import shortcut target still reports enabled"
+        assert not element(control(127)).IsEnabled, "blocked refresh still reports enabled"
         record("modal_background_commands_report_disabled_to_uia")
         tap(VK_ESCAPE)
         print(json.dumps({"details_after_escape": {"dialog": dialog_of(process.pid),
@@ -342,7 +369,10 @@ def main():
 
         # 7) mnemonics on the main commands
         keys = {}
-        for identifier in (102, 103, 104, 127, 128):
+        # Import confirmation's mnemonic was checked in the native picker;
+        # Keep the old open/delete mnemonic requirements strict until the
+        # product exposes equivalent accessible commands. Missing HWNDs fail.
+        for identifier in (103, 104, 127, 128):
             keys[identifier] = element(control(identifier)).AccessKey or ""
         print(json.dumps({"access_keys": keys}, ensure_ascii=False), flush=True)
         assert all(keys.values()), keys
@@ -519,7 +549,11 @@ def main():
         record("outside_page_points_return_the_nearest_degenerate_text_range")
 
         # 13) one clean Tab cycle over every enabled stop
-        element(control(101)).SetFocus()
+        current_controls = inventory(host['window'], output / 'tab-controls.json')
+        expected_stops = {control(item['id']) for item in current_controls
+                          if item['visible'] and item['enabled'] and item['tab_stop']}
+        assert control(123) in expected_stops
+        element(control(123)).SetFocus()
         seen, order = set(), []
         for _ in range(120):
             current = focus_of(process.pid)
@@ -530,7 +564,7 @@ def main():
             tap(VK_TAB)
             time.sleep(0.05)
         print(json.dumps({"tab_stops": len(order)}, ensure_ascii=False), flush=True)
-        assert len(order) >= 18, len(order)
+        assert set(order) == expected_stops and len(order) == len(expected_stops), (order, expected_stops)
         assert focus_of(process.pid) == order[0], "the cycle did not close"
         record("tab_order_visits_every_enabled_stop_once_and_closes")
 
@@ -554,19 +588,12 @@ def main():
         ):
             old = pattern.DocumentRange
             old_text = old.GetText(-1)
-            path = C.create_unicode_buffer(str((args.fixtures / filename).resolve()))
-            wait(lambda: USER32.IsWindowEnabled(control(102)), 120, filename + " import ready")
-            USER32.SendMessageW(control(101), 0x000C, 0, C.addressof(path))
-            element(control(102)).SetFocus()
-            wait(lambda: focus_of(process.pid) == control(102), 10, filename + " import focus")
-            tap(VK_SPACE)
-            wait(lambda: "已导入" in window_text(control(125)) and USER32.IsWindowEnabled(control(102)),
-                 120, filename + " imported")
+            keyboard_import((args.fixtures / filename).resolve())
             wait(lambda: row_with(title) is not None, 60, filename + " visible shelf row")
             USER32.SendMessageW(control(119), 0x0186, row_with(title), 0)
-            element(control(103)).SetFocus()
-            wait(lambda: focus_of(process.pid) == control(103), 10, filename + " open focus")
-            tap(VK_SPACE)
+            element(control(123)).SetFocus()
+            wait(lambda: focus_of(process.pid) == control(123), 10, filename + " open shortcut focus")
+            tap(ord('O'), (VK_CONTROL,))
 
             def loaded_range():
                 try:
@@ -618,6 +645,13 @@ def main():
         if failures:
             raise SystemExit("native accessibility checks failed")
     finally:
+        if not (output / 'a11y-ui.json').exists():
+            report = {'accepted': False, 'source_sha': os.environ['GITHUB_SHA'],
+                      'run_id': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                      'checks': checks, 'count': len(checks), 'failures': failures,
+                      'error': str(sys.exc_info()[1]), 'transport': 'sendinput+uia',
+                      'screen_reader_verified': False, 'complete_product': False}
+            (output / 'a11y-ui.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         if process.poll() is None:
             USER32.PostMessageW(host["window"], 0x0010, 0, 0)
             try:

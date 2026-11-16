@@ -26,9 +26,9 @@ class Product(App):
     def wait_idle(self):
         end = time.monotonic() + 60
         while time.monotonic() < end:
-            self.wait(lambda: U.IsWindowEnabled(self.control('import')))
+            self.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(self.window, 127)))
             time.sleep(.15)
-            if U.IsWindowEnabled(self.control('import')):
+            if U.IsWindowEnabled(U.GetDlgItem(self.window, 127)):
                 return
         raise TimeoutError('Actual product worker did not become idle')
 

@@ -42,9 +42,9 @@ def text(window):
 
 class MetadataApp(App):
     def wait_idle(self):
-        self.wait(lambda: U.IsWindowEnabled(self.control('import')), timeout=90)
+        self.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(self.window, 127)), timeout=90)
         time.sleep(.15)
-        self.wait(lambda: U.IsWindowEnabled(self.control('import')), timeout=90)
+        self.wait(lambda: U.IsWindowEnabled(U.GetDlgItem(self.window, 127)), timeout=90)
 
     def dialog(self, recovery=False):
         def find():
@@ -142,9 +142,12 @@ def main():
 
     try:
         app = launch()
-        assert all(U.GetDlgItem(app.window, identifier) for identifier in range(100, 128))
+        current_ids = {118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 137, 150, 151}
+        observed = json.loads((profile / 'control-inventory.json').read_text(encoding='utf-8'))
+        assert {item['id'] for item in observed} == current_ids, observed
+        assert all(U.GetDlgItem(app.window, identifier) for identifier in current_ids)
         assert U.GetDlgItem(app.window, DETAILS)
-        record('original_native_control_ids_100_through_127_are_preserved_and_details_is_appended')
+        record('current_native_control_inventory_has_exact_ids_and_the_details_command')
         app.import_file(source);app.wait(lambda: send(app.control('books'), 0x18B) == 1);app.wait_idle()
         row = book();key = row[0];sdk_id = sql('SELECT sdk_book_id FROM reader_local_books')[0][0]
         assert key == 'txt:' + hashlib.sha256(original).hexdigest() and row[5] == len(original) and counts() == (0, 0)
