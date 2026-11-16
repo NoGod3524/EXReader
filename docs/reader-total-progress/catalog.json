@@ -615,6 +615,18 @@
       "source_prefix": "abecdad0f26c6454363f014a0cd70650200b10f9",
       "expected_conclusion": "success"
     },
+    "ledger_f10_identity_20261116": {
+      "run": 43831439309,
+      "doc": "evidence/ledger-f10-fable-20261116/README.md",
+      "source_prefix": "02c5cd578d2a585ffa39a196a7e48d15114c9a98",
+      "expected_conclusion": "success"
+    },
+    "ledger_f10_gtk_20261116": {
+      "run": 43831439414,
+      "doc": "evidence/ledger-f10-fable-20261116/README.md",
+      "source_prefix": "02c5cd578d2a585ffa39a196a7e48d15114c9a98",
+      "expected_conclusion": "success"
+    },
     "ledger_f08_f09_windows_sol_20261116": {
       "run": 43829432891,
       "doc": "evidence/ledger-f08-f09-sol-20261116/README.md",
@@ -1829,9 +1841,11 @@
         "sideload",
         "batch",
         "sync",
-        "ledger_f08_f09_f10_final_20261115"
+        "ledger_f08_f09_f10_final_20261115",
+        "ledger_f10_identity_20261116",
+        "ledger_f10_gtk_20261116"
       ],
-      "note": "partial（evidence/ledger-f08-f09-f10-final-20261115/README.md，Actions run43784359983/source abecdad0）：实现启动清理sy_startup_scavenge（shell_sync.inc，reader.c在settings_load前调用）：仅扫描产品目录（data_dir、annotations、sync的*.tmp与opds-downloads/*.part，不递归），拒绝活写入者/重解析点/目录/硬链接与sync.cred.tmp，按已验证句柄删除；windows-privacy-cleanup以真实子进程写入后ExitProcess(77)留下state.json.tmp与book.epub.part，启动清理removed=2 kept=3、原文件保留、写入者释放后下次启动清除。既有TokenUser owner/保护DACL、强杀凭据stage回收、DPAPI往返与篡改拒绝同套通过；Credential Manager实现与测试见run40118190108。缺①Credential Manager UNAVAILABLE回退未能真实触发②windows_accounts.inc未在main同源重跑③examples/windows壳WebDAV仍用DPAPI sync.cred（当前用户+私有DACL）而非Credential Manager④跨用户未测⑤TLS仅loopback测试CA⑥Linux GTK Secret Service回退/临时文件恢复/TLS。其余四端为同源构建，未做设备验收，按scope不计入缺口。"
+      "note": "partial（evidence/ledger-f10-fable-20261116/README.md）：Windows身份/TLS run43831439309、Linux GTK run43831439414均成功，source 02c5cd57。①LogonUserW+LoadUserProfile+线程模拟实测跨用户CM记录不可见、私有DACL拒绝sync.cred读取、DPAPI不可解；②真实network token触发CM错误1312，模块put/get/delete均UNAVAILABLE，壳在DPAPI也不可用时安全拒绝且无凭据残留；另以dpapi钩子实测回退文件保存/加载及默认CM保存/加载，含强杀stage和启动清理；③Windows壳/模块及Linux模块均以非loopback地址+DNS SAN测试私有CA未信任拒绝、信任后成功、主机名不匹配拒绝，另公共PKI七案例通过；④GTK真实Secret Service保存/加载/删除、锁定不可用、session-only重启隔离等48检查及临时文件恢复通过。⑤account host默认OFF的测试驱动选项已接通，CI显式ON，修复等待产品书架刷新后run43831953731/source dcff9964的158动作/8截图全过；该run随后在十项产品回归等待已删除的117号取消控件超时，后续保留测试亦引用已删除101/102号导入控件，32项windows_accounts真实UI套件与严格summary尚未通过，仍需迁移到当前原生UI后重跑。其余四端按既定scope为同源构建，未做设备验收。"
     },
     {
       "id": "F11",

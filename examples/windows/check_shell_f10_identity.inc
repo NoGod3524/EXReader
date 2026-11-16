@@ -3,8 +3,8 @@
    are run explicitly by the ledger workflow on a disposable runner, never by
    CTest: they need a second local account and public network access.
 
-   --f10-unavailable DIR   run by a process that lives in a network logon
-                           session (WinRM as the probe account). Credential
+   --f10-unavailable DIR   run with an impersonated network logon
+                           token created by LogonUserW. Credential
                            Manager has no credential set there, so CredWriteW
                            fails for real; the shell must fall back to its
                            DPAPI file (or refuse) without writing a CM record.
@@ -15,7 +15,8 @@
                            unreadable to that account.
    --f10-public-tls        the shell's own WinHTTP request (sy_http_once) and
                            error classification (sy_explain) against public
-                           origins, with no credential loaded. */
+                           origins, with no credential loaded.
+   --f10-tls CASE...       the same request for accept=URL / refuse=URL cases. */
 #include <stdarg.h>
 #include <ntsecapi.h>
 #include <userenv.h>
@@ -61,7 +62,7 @@ static int f10_cm_read_raw(DWORD *error) {
 
 static int test_f10_unavailable(const char *directory) {
   char sid[200];ULONG type=f10_logon_type(sid);
-  f10_check("process_runs_in_network_logon_session",type==Network,"LogonType=%lu (3=Network) user=%s",(unsigned long)type,sid);
+  f10_check("effective_token_is_network_logon",type==Network,"LogonType=%lu (3=Network) user=%s",(unsigned long)type,sid);
   /* The real platform refusal, observed before any product code runs. */
   char blob[]="probe";CREDENTIALW probe;memset(&probe,0,sizeof(probe));
   probe.Type=CRED_TYPE_GENERIC;probe.TargetName=(LPWSTR)L"EXReader/ledger-f10-unavailable-probe";
@@ -96,6 +97,21 @@ static int test_f10_unavailable(const char *directory) {
   f10_check("cleanup_left_no_credential",GetFileAttributesW(sy_cred_file)==INVALID_FILE_ATTRIBUTES && !f10_cm_read_raw(&read_error),
             "sync.cred and CM record absent after sy_cred_delete");
   return f10_finish("unavailable");
+}
+
+static int test_f10_network_unavailable(const char *directory) {
+  wchar_t user[128],password[256];HANDLE token=NULL;
+  if(!GetEnvironmentVariableW(L"EXR_F10_USER",user,128) ||
+     !GetEnvironmentVariableW(L"EXR_F10_PASSWORD",password,256)) return 2;
+  BOOL logged=LogonUserW(user,L".",password,LOGON32_LOGON_NETWORK,LOGON32_PROVIDER_DEFAULT,&token);
+  DWORD error=logged ? 0:GetLastError();SecureZeroMemory(password,sizeof(password));
+  f10_check("network_logon",logged,"LogonUserW error=%lu",(unsigned long)error);
+  if(!logged) return f10_finish("unavailable");
+  BOOL impersonated=ImpersonateLoggedOnUser(token);
+  f10_check("network_token_impersonated",impersonated,"ImpersonateLoggedOnUser=%d",(int)impersonated);
+  int code=impersonated ? test_f10_unavailable(directory):f10_finish("unavailable");
+  if(impersonated && !RevertToSelf()) code=1;
+  CloseHandle(token);return code;
 }
 
 static int test_f10_cross_user(void) {
@@ -163,6 +179,16 @@ static int test_f10_cross_user(void) {
   return f10_finish("cross-user");
 }
 
+/* One request through the shell's own WinHTTP path with no credential loaded. */
+static void f10_tls_case(const char *url,int refuse) {
+  sy_target t;assert(sy_target_parse(url,&t) && t.secure);
+  sy_resp r;int ok=sy_http_once(&t,L"PROPFIND","","",0,L"Depth: 0\r\n",&r);
+  sy_status s;memset(&s,0,sizeof(s));int code=sy_explain(&r,"probe",&s);
+  int pass=refuse ? (!ok && code==SY_TLS):(ok && r.status>0);
+  char name[160];snprintf(name,sizeof(name),"%s %s",refuse ? "refuse":"accept",url);
+  f10_check(name,pass,"http_status=%d winhttp_error=%lu class=%s",r.status,(unsigned long)r.werr,code==SY_TLS ? "SY_TLS":"other");
+  sy_resp_free(&r);
+}
 static int test_f10_public_tls(void) {
   static const struct { const char *url; int refuse; } cases[]={
     {"https://www.github.com/",0},{"https://example.com/",0},{"https://badssl.com/",0},
@@ -170,14 +196,17 @@ static int test_f10_public_tls(void) {
     {"https://self-signed.badssl.com/",1},{"https://untrusted-root.badssl.com/",1},
   };
   sy_wipe(&sy_user);sy_wipe(&sy_pass); /* never send an Authorization header to a public origin */
-  for(size_t i=0;i<sizeof(cases)/sizeof(cases[0]);i++) {
-    sy_target t;assert(sy_target_parse(cases[i].url,&t) && t.secure);
-    sy_resp r;int ok=sy_http_once(&t,L"PROPFIND","","",0,L"Depth: 0\r\n",&r);
-    sy_status s;memset(&s,0,sizeof(s));int code=sy_explain(&r,"probe",&s);
-    int pass=cases[i].refuse ? (!ok && code==SY_TLS):(ok && r.status>0);
-    char name[96];snprintf(name,sizeof(name),"%s %s",cases[i].refuse ? "refuse":"accept",cases[i].url);
-    f10_check(name,pass,"http_status=%d winhttp_error=%lu class=%s",r.status,(unsigned long)r.werr,code==SY_TLS ? "SY_TLS":"other");
-    sy_resp_free(&r);
-  }
+  for(size_t i=0;i<sizeof(cases)/sizeof(cases[0]);i++) f10_tls_case(cases[i].url,cases[i].refuse);
   return f10_finish("public-tls");
+}
+/* --f10-tls accept=URL|refuse=URL ...: the same request against origins named
+   by tests/ledger_f8910/private_tls (private CA, non-loopback address). */
+static int test_f10_tls(int count,char **cases) {
+  sy_wipe(&sy_user);sy_wipe(&sy_pass);
+  for(int i=0;i<count;i++) {
+    int refuse=!strncmp(cases[i],"refuse=",7);
+    if(!refuse && strncmp(cases[i],"accept=",7)) {fputs("usage: check_sync --f10-tls accept=URL|refuse=URL ...\n",stderr);return 2;}
+    f10_tls_case(cases[i]+7,refuse);
+  }
+  return f10_finish("tls");
 }

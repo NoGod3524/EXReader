@@ -47,7 +47,7 @@ def main():
         expected[kind + ':' + digest(path)] = (path.stat().st_size, mode)
     with sqlite3.connect(catalog) as db:
         assert db.execute('PRAGMA application_id').fetchone()[0] == 1163416144
-        assert db.execute('PRAGMA user_version').fetchone()[0] == 1
+        assert db.execute('PRAGMA user_version').fetchone()[0] == 3
         rows = db.execute('SELECT b.book_key,b.source_bytes,l.location_kind,l.sdk_book_id FROM reader_books b LEFT JOIN reader_local_books l USING(book_key)').fetchall()
         assert len(rows) == 3 and {key: (size, mode) for key, size, mode, _ in rows} == expected
         final_ids = {int(book['id']) for book in original['shelf']['C']['after_restart']}
@@ -87,7 +87,7 @@ def main():
                     process.kill()
                     process.wait(timeout=20)
         lines = (folder / 'drive.log').read_text(encoding='utf-8').splitlines()
-        assert fields(';'.join(lines[0].split('\t')[1:])) == {'phase': '4', 'engine': '3.40.0', 'pid': str(process.pid)}
+        assert fields(';'.join(lines[0].split('\t')[1:])) == {'phase': '4', 'engine': original['sdk_version'], 'pid': str(process.pid)}
         steps = [line.split('\t') for line in lines if line.startswith('STEP\t')]
         assert [(row[1], row[2], row[3]) for row in steps] == [('1', 'wait_idle', 'PASS'), ('2', 'state', 'PASS'), ('3', 'quit', 'PASS')]
         done = [line.split('\t') for line in lines if line.startswith('DONE\t')]

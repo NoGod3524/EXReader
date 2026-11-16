@@ -1200,6 +1200,10 @@ static void drive_tick(void) {
 #ifdef EXR_READER_WINDOWS_SHELL
           opds_busy || shell_layout_waiting || shell_animating || shell_search_pending || shell_search_thread || shell_search_jump_pending ||
 #endif
+#ifdef EXR_READER_PRODUCT_CATALOG
+          /* Product attach/delete schedules a shelf query after the worker completes. */
+          g.shelf_need_refresh ||
+#endif
           g.job || g.pending || host_probe_burst_left || wheel_delta<=-WHEEL_DELTA || wheel_delta>=WHEEL_DELTA) {
         if (GetTickCount() - drive_step_start > 120000) {
           drive_step_finish(0, "timeout waiting for task");

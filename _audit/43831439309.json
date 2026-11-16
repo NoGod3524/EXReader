@@ -1,0 +1,25 @@
+{
+  "run": 43831439309,
+  "source_sha": "02c5cd578d2a585ffa39a196a7e48d15114c9a98",
+  "evidence_ok": true,
+  "conclusion": "success",
+  "artifact_digests_verified": true,
+  "files": {
+    "evidence/ledger-f10-fable-20261116/43831439309/identity.txt": "c10e2afc39416f382c46527bc875810cb834fad3527a3a16291d5e85be87ab98",
+    "evidence/ledger-f10-fable-20261116/43831439309/module-cross-user.txt": "1c783dc1b75baa96931b7fa6c0a4e297fe7b5bbdecbba758c347a588c10fb717",
+    "evidence/ledger-f10-fable-20261116/43831439309/module-unavailable.txt": "49378f719bb7d061486498e852bd6cca9cc73f0d6d225c0c5a1e9f46804647cc",
+    "evidence/ledger-f10-fable-20261116/43831439309/private-tls/ca.crt": "59ee9e2d36458f96173b30e9d9e3ece7a9ed65e381d14d6722cedc439a106fef",
+    "evidence/ledger-f10-fable-20261116/43831439309/private-tls/result.json": "af4992b354f07ddfc0c6a54a3d77f1f6a525f0f693dc00188f3ae1c23c7f2231",
+    "evidence/ledger-f10-fable-20261116/43831439309/private-tls/server.crt": "dfddd5a4c12637c9070b17b3595cfaa48cf453de89804651aae6037a883840d4",
+    "evidence/ledger-f10-fable-20261116/43831439309/private-tls/trusted-module.txt": "c6da2e9b660a3a6136a492dcc73a54f5c63d7bda7bcc9c83c6b7a63d7e8316d0",
+    "evidence/ledger-f10-fable-20261116/43831439309/private-tls/trusted-shell.txt": "61f389d249e3406755587a3f61cd4031eed3f07bd4d1345f6161e44c19989a56",
+    "evidence/ledger-f10-fable-20261116/43831439309/private-tls/untrusted-module.txt": "96eecf8b56d475506949a03a00fc5b4e954c6fd031e3b3093c1489e2e313897c",
+    "evidence/ledger-f10-fable-20261116/43831439309/private-tls/untrusted-shell.txt": "247261f84e893d6eaf6a8dfa086664826ebe4e2762d4c34d194b3530405b9ef5",
+    "evidence/ledger-f10-fable-20261116/43831439309/public-tls-exit.txt": "9d41259c183eac4375e3e0e588c9173926565036ddc6467ff16355691eca28ea",
+    "evidence/ledger-f10-fable-20261116/43831439309/shell-cross-user.txt": "5577fb4b237fd677a58e34352e326edc518926153bc1bef47b67cc6bca0392af",
+    "evidence/ledger-f10-fable-20261116/43831439309/shell-public-tls.txt": "b94ee3e058f16285d9a3dbc8fb0a5edd1eb012121833b24c2fecfe286a62e599",
+    "evidence/ledger-f10-fable-20261116/43831439309/shell-privacy.txt": "32e4148799d4d9d60b40bbc0160f9a28e2c30d9592d7da7e72dde484fb79dc3f",
+    "evidence/ledger-f10-fable-20261116/43831439309/shell-unavailable.txt": "6d6821642fb87f49ac772a6dd84ccad0e27878e830173a96885486140f575fd6",
+    "evidence/ledger-f10-fable-20261116/43831439309/webdav-public-tls.json": "a7135109abd01e845fcd16a9a3ce531cdab8c708a8b1525242e0a871fca00624"
+  }
+}
