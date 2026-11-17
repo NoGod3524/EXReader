@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="(empty)"
+	tests="2"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname=""
+	time="0"
+	timestamp="2026-11-17T00:12:38"
+	>
+	<testcase name="native-glyph-atlas" classname="native-glyph-atlas" time="0.0447496" status="run">
+		<properties/>
+		<system-out>{"lru_entry_byte_bounds_and_key_isolation":true}
+</system-out>
+	</testcase>
+	<testcase name="native-pdf-glyph-atlas" classname="native-pdf-glyph-atlas" time="0.307818" status="run">
+		<properties/>
+		<system-out>{"compared_pixels":327680,"different_pixels":0,"hits":25401,"misses":199,"entries":199,"bytes_including_metadata":48432}
+</system-out>
+	</testcase>
+</testsuite>

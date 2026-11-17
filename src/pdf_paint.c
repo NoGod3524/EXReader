@@ -2,10 +2,13 @@
 #include "pdf_raster_internal.h"
 #include "pdf_face_internal.h"
 #include "icc_internal.h"
+#include "canvas_internal.h"
+#include "glyph_atlas_internal.h"
 #include <stdio.h>
 typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
 typedef struct { unsigned char *pixels;size_t bytes; } paint_mask;
 typedef struct {
+  exr_canvas *canvas;exr_glyph_atlas *atlas;unsigned host_cached;
   exr_draw_sink_ex sink; FT_Library library; exr_pdf_program_fn program; void *program_context; const exr_control *control; size_t *work;
   exr_icc *cmyk_profile;
   exr_pdf_file *file; /* mask rendering needs the object arena */
@@ -93,6 +96,60 @@ static exr_status state_event(void *context,exr_pdf_state_event event,exr_error 
   exr_draw_state state=event==EXR_PDF_SAVE ? EXR_DRAW_SAVE : event==EXR_PDF_RESTORE ? EXR_DRAW_RESTORE : event==EXR_PDF_BEGIN_TEXT ? EXR_DRAW_BEGIN_CLIP : EXR_DRAW_END_CLIP;
   return r->sink.base.state ? r->sink.base.state(r->sink.base.context,state,e) : EXR_OK;
 }
+static exr_status glyph_blit(pdf_painter *r,const exr_pdf_text_glyph *g,const exr_bitmap *mask,
+    int left,int top,size_t work,exr_error *e) {
+  return exr_canvas_glyph_blit(r->canvas,mask,left,top,rgba(r,&g->paint.fill,g->paint.intent),work,e);
+}
+static exr_status atlas_coverage(pdf_painter *r,const exr_pdf_text_glyph *g,size_t face,
+    exr_glyph_atlas *atlas,size_t pixels,int *handled,exr_error *e) {
+  exr_atlas_key key={0};exr_atlas_entry *entry;
+  exr_vector_segment *segments=NULL;exr_bitmap mask={0};size_t count=0,started;
+  int x,y,left,top;exr_status status;double size;
+  *handled=0;
+  /* No quantization of the actual outline transform. The extra exact values
+     prevent phase/size buckets from merging distinct PDF coverage masks. */
+  for(size_t j=0;j<6;j++) if(!isfinite(g->transform[j]) || fabs(g->transform[j])>1e7) return EXR_OK;
+  size=hypot(g->transform[2],g->transform[3])*1000*64;
+  key.size=(int64_t)floor(size+.5);
+  if(exr_pdf_font_description(g->font)->program) key.face=exr_pdf_font_identity(g->font);
+  else { key.face=face;key.scope=(uintptr_t)r;r->host_cached=1; }
+  key.flags=EXR_PDF_FILL;
+  memcpy(key.matrix,g->transform,sizeof(key.matrix));x=(int)floor(key.matrix[4]);y=(int)floor(key.matrix[5]);
+  key.matrix[4]-=x;key.matrix[5]-=y;
+  key.phase=(unsigned)(key.matrix[4]*4)|((unsigned)(key.matrix[5]*4)<<2);
+  key.character=g->character.cid;key.glyph=UINT32_MAX;
+  entry=exr_atlas_find(atlas,&key);
+  if(entry) { *handled=1;return glyph_blit(r,g,&entry->mask,entry->left+x,entry->top+y,entry->work,e); }
+  status=exr_pdf_face_glyph(r->fonts[face].face,&g->character,&key.glyph,e);if(status!=EXR_OK) return status;
+  started=r->canvas->work;
+  status=exr_pdf_face_outline(r->fonts[face].face,&g->character,&segments,&count,r->work,r->control,e);
+  if(status==EXR_OK) status=exr_canvas_glyph_mask(r->canvas,segments,count,g->transform,&mask,&left,&top,e);
+  free(segments);
+  if(status==EXR_UNSUPPORTED) return EXR_OK;
+  if(status!=EXR_OK) return status;
+  entry=exr_atlas_store(atlas,&key,&mask,left-x,top-y,r->canvas->work-started,pixels);
+  *handled=1;
+  status=glyph_blit(r,g,entry ? &entry->mask : &mask,left,top,0,e);
+  free(mask.pixels);return status;
+}
+static exr_status atlas_glyph(pdf_painter *r,const exr_pdf_text_glyph *g,size_t face,int *handled,exr_error *e) {
+  exr_glyph_atlas *atlas;paint_mask soft={0};size_t pixels;exr_status status;
+  *handled=0;
+  if(!r->canvas || r->canvas->cmyk_groups || g->paint.fill.space==EXR_PDF_DEVICE_CMYK ||
+      g->paint.stroke.space==EXR_PDF_DEVICE_CMYK) return EXR_OK;
+  atlas=exr_pdf_glyph_atlas(r->file);r->atlas=atlas;
+  if(!atlas) return EXR_OK;
+  pixels=r->canvas->canvas_width*r->canvas->canvas_height;exr_atlas_bound(atlas,pixels);
+  if(!atlas->entry_limit || !exr_atlas_budget(atlas,pixels)) return EXR_OK;
+  /* Soft-mask painting can recursively populate/evict this same document's
+     atlas. Finish all sink setup before borrowing an entry's bitmap. */
+  status=exr_sink_alpha_source(&r->sink,g->paint.alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0,e);
+  if(status==EXR_OK) status=blend_state(r,g->paint.blend,e);
+  if(status==EXR_OK) status=mask_begin(r,&g->paint,&soft,e);
+  if(status==EXR_OK) status=atlas_coverage(r,g,face,atlas,pixels,handled,e);
+  if(soft.pixels) status=mask_end(r,&soft,status,e);
+  return status;
+}
 static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_error *e) {
   pdf_painter *r=context; size_t i,count=0; exr_status status; exr_vector_segment *segments=NULL; unsigned flags=0,mode=g->rendering_mode;
   /* Type3 CharProcs are interpreted by the content walker with the same
@@ -113,6 +170,9 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
     r->fonts[i].key=g->font; r->font_count++; bytes=exr_pdf_face_memory(r->fonts[i].face);
     if(bytes>(size_t)32*1024*1024-r->font_bytes) return exr_fail(e,EXR_LIMIT,"PDF paint CID indexes exceed 32 MiB");
     r->font_bytes+=bytes;
+  }
+  if(flags==EXR_PDF_FILL) {
+    int handled;status=atlas_glyph(r,g,i,&handled,e);if(status!=EXR_OK || handled) return status;
   }
   status=exr_pdf_face_outline(r->fonts[i].face,&g->character,&segments,&count,r->work,r->control,e);
   if(status==EXR_OK) status=geometry(r,segments,count,g->transform,&g->paint,flags,EXR_VECTOR_NONZERO,1,e);
@@ -204,6 +264,7 @@ exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const 
   pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space,NULL,NULL}; size_t i,local_work=0,local_mask_bytes=0; exr_status status;
   if(!file) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint input");
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
+  r.canvas=exr_canvas_from_sink(&r.sink);
   if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state && !r.sink.image_cmyk && !r.sink.path_cmyk && !r.sink.shading && !r.sink.paint) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work; r.file=file;r.mask_bytes=mask_bytes ? mask_bytes : &local_mask_bytes;
@@ -214,6 +275,7 @@ exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const 
   while(r.group_depth) { exr_error cleanup={0};exr_status closed=end_layer_event(&r,0,&cleanup);if(status==EXR_OK && closed!=EXR_OK) { status=closed;if(e) *e=cleanup; } }
   for(i=0;i<r.font_count;i++) exr_pdf_face_close(r.fonts[i].face);
   if(status==EXR_OK) status=exr_icc_deferred_status(r.cmyk_profile,e);
+  if(r.host_cached && r.atlas) exr_atlas_clear_scope(r.atlas,(uintptr_t)&r);
   exr_icc_free(r.cmyk_profile);FT_Done_FreeType(r.library); return status;
 }
 

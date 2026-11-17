@@ -96,6 +96,10 @@ void exr_pdf_cmap_free(exr_pdf_cmap *map);
 exr_status exr_pdf_cmap_next(const exr_pdf_cmap *map,const unsigned char *data,size_t size,size_t *at,
                             exr_pdf_mapping *out,exr_error *error);
 typedef struct exr_pdf_font exr_pdf_font;
+struct exr_glyph_atlas;
+/* Document-owned coverage cache; no borrowed font/outline pointers escape. */
+struct exr_glyph_atlas *exr_pdf_glyph_atlas(exr_pdf_file *file);
+uint32_t exr_pdf_font_identity(const exr_pdf_font *font);
 typedef enum { EXR_PDF_TYPE1,EXR_PDF_TRUETYPE,EXR_PDF_CID_TYPE0,EXR_PDF_CID_TYPE2,EXR_PDF_TYPE3 } exr_pdf_font_kind;
 typedef struct {
   exr_pdf_font_kind kind; const char *base_name,*encoding_name,*program_type;

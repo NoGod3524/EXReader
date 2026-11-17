@@ -1,0 +1,133 @@
+{
+  "baseline_commit": "2b24c3ea87144e25b371d227340cd8bc80251bb1",
+  "benchmark": "tools/benchmark_pdf_rect.py",
+  "runs_per_capture": 5,
+  "timing_scope": "exr_fixed_render wall time; background load uncontrolled",
+  "pairs": [
+    {
+      "label": "initial",
+      "before_library_sha256": "64d59222c0823e33edb406c28e0f858d7b606134d576faed100ed73d344cdaf9",
+      "after_library_sha256": "0b09ea123f08281d877cbcafb78a80e706cfd5314ca3d6518b6ddb62d237a539",
+      "compared_pixels": 85056000,
+      "different_pixels": 0,
+      "max_channel_delta": 0,
+      "rgba_rmse": 0,
+      "results": [
+        {
+          "width": 600,
+          "dimensions": [
+            600,
+            338
+          ],
+          "before_render_p50_ms": 4.51755,
+          "after_render_p50_ms": 4.14665,
+          "before_open_p50_ms": 0.2732,
+          "after_open_p50_ms": 0.2437,
+          "render_change_percent": -8.210202432734548,
+          "before_render_ns_per_output_pixel": 22.275887573964496,
+          "after_render_ns_per_output_pixel": 20.44699211045365
+        },
+        {
+          "width": 1200,
+          "dimensions": [
+            1200,
+            675
+          ],
+          "before_render_p50_ms": 16.0914,
+          "after_render_p50_ms": 11.88325,
+          "before_open_p50_ms": 0.2338,
+          "after_open_p50_ms": 0.4489,
+          "render_change_percent": -26.151546788968016,
+          "before_render_ns_per_output_pixel": 19.865925925925925,
+          "after_render_ns_per_output_pixel": 14.67067901234568
+        },
+        {
+          "width": 2400,
+          "dimensions": [
+            2400,
+            1350
+          ],
+          "before_render_p50_ms": 62.63635,
+          "after_render_p50_ms": 55.1224,
+          "before_open_p50_ms": 0.3149,
+          "after_open_p50_ms": 0.3926,
+          "render_change_percent": -11.996149200903316,
+          "before_render_ns_per_output_pixel": 19.332206790123458,
+          "after_render_ns_per_output_pixel": 17.013086419753087
+        }
+      ]
+    }
+  ],
+  "protected_sources": {
+    "src/vector.c": {
+      "unchanged_from_HEAD": true,
+      "sha256": "332310aa1205e50dce0ba9bdd0e6315c994803d60e6efa282d7e79557c01a766"
+    },
+    "src/blend.c": {
+      "unchanged_from_HEAD": true,
+      "sha256": "1791987e97109760ee47c008d07d4699adc4eb2321ec7b3645c6c221dbafb4ee"
+    }
+  },
+  "ctest": {
+    "tests": 588,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "stress": {
+    "compared_pixels": 335872,
+    "different_pixels": 0,
+    "hits": 25401,
+    "misses": 839,
+    "entries": 0,
+    "bytes_including_metadata": 8272
+  },
+  "fixture_atlas_stats": [
+    {
+      "width": 600,
+      "pages": 20,
+      "first_round_hits": 525,
+      "first_round_misses": 46,
+      "second_round_hits": 571,
+      "second_round_misses": 0,
+      "entries": 46,
+      "bytes_including_metadata": 21136,
+      "evictions": 0
+    },
+    {
+      "width": 1200,
+      "pages": 20,
+      "first_round_hits": 525,
+      "first_round_misses": 46,
+      "second_round_hits": 571,
+      "second_round_misses": 0,
+      "entries": 46,
+      "bytes_including_metadata": 33260,
+      "evictions": 0
+    },
+    {
+      "width": 2400,
+      "pages": 20,
+      "first_round_hits": 525,
+      "first_round_misses": 46,
+      "second_round_hits": 571,
+      "second_round_misses": 0,
+      "entries": 46,
+      "bytes_including_metadata": 81364,
+      "evictions": 0
+    }
+  ],
+  "source_sha256": {
+    "CMakeLists.txt": "9fd2ed39c621d11c51e1a4306de32a2c696b835a924954eb230b122ac122af39",
+    "src/canvas.c": "6f712f676621a8901d8d59f834c3382d04170e2482eee8185f31071d914a60e8",
+    "src/canvas_internal.h": "3f128811278f08b8de50c03d205d25f48aa2e2a151ab34c49090aa6baca3ea1d",
+    "src/canvas_glyph.inc": "468c551911c82ec05ad4b9228d62301ee068b4497e5f86dbc577447446c71ff2",
+    "src/glyph_atlas_internal.h": "c09bb560d48125fc62dbffc0a8fe202798fa1b83e2d85dcbb962b1e12730801f",
+    "src/pdf_paint.c": "c3e42441fa8b8383e4da127633fc3ddcfbe6162aada1b0a620f15e305c1106cf",
+    "src/pdf_objects.c": "33389d7b0ce4ac9fd4564187bfb226773e85c2a3e62d57e7b8c03f9df8a9da80",
+    "src/pdf_font.c": "ec0bc4e94a155a240e2d8aac06b1dbaf2b220c03ae16e4a2be5f1e2a9ff3004e",
+    "src/pdf_internal.h": "b8d89f99863e1738ed0db2aa709d224f46bb99f56c2a5355cfda99a86110322f",
+    "tests/test_glyph_atlas.c": "f79437e3fe4eb024baf5c936cefd5e8e1dc97c5c0d1833b797f65f878c34a80e",
+    "tests/test_pdf_glyph_atlas.c": "0a498c55e54517bb0d12a3817c386d0acea868001f073ff95babdb1eadb3f9d8"
+  }
+}

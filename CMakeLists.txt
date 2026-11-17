@@ -1563,6 +1563,20 @@ endif()
 
 include(cmake/build_manifest.cmake)
 
+if(EXR_BUILD_TESTS AND EXR_ENABLE_PDF)
+  add_executable(exreader-glyph-atlas-test tests/test_glyph_atlas.c)
+  target_include_directories(exreader-glyph-atlas-test PRIVATE include)
+  add_test(NAME native-glyph-atlas COMMAND exreader-glyph-atlas-test)
+  add_executable(exreader-pdf-glyph-atlas-test tests/test_pdf_glyph_atlas.c)
+  target_link_libraries(exreader-pdf-glyph-atlas-test PRIVATE exr_pdf exr_core)
+  add_test(NAME native-pdf-glyph-atlas COMMAND exreader-pdf-glyph-atlas-test ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures)
+  if(NOT MSVC)
+    foreach(atlas_test exreader-glyph-atlas-test exreader-pdf-glyph-atlas-test)
+      target_compile_options(${atlas_test} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    endforeach()
+  endif()
+endif()
+
 if(EXR_FULL_TESTS AND Python3_Interpreter_FOUND AND NOT EXR_SANITIZE)
   foreach(group boundaries ruby images)
     add_test(NAME native-vertical-expand-${group} COMMAND ${Python3_EXECUTABLE}

@@ -3,6 +3,7 @@
 typedef struct { uint32_t first,last; size_t offset; unsigned constant; } width_range;
 typedef struct { width_range *ranges; size_t count,capacity; double *values; size_t value_count,value_capacity; unsigned dimension; } width_table;
 struct exr_pdf_font {
+  uint32_t dictionary; /* Stable face identity for document-owned coverage. */
   exr_pdf_font_info info; exr_pdf_cmap *unicode;
   const char *base_encoding;
   char *names[256]; double simple[256],default_width,default_vertical[2];
@@ -11,6 +12,7 @@ struct exr_pdf_font {
   uint32_t charprocs,resources; double matrix[6];
 };
 typedef struct { exr_pdf_file *file; const exr_control *control; exr_error error; } font_reader;
+uint32_t exr_pdf_font_identity(const exr_pdf_font *font) { return font->dictionary; }
 static int bad(font_reader *r,const char *message) { if(r->error.code==EXR_OK) exr_fail(&r->error,EXR_FORMAT,"%s",message); return 0; }
 static uint32_t resolve(font_reader *r,uint32_t id) {
   uint32_t out=EXR_PDF_NONE;
@@ -182,6 +184,7 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
   r.file=file; r.control=control; font=calloc(1,sizeof(*font)); if(!font) return exr_fail(error,EXR_MEMORY,"PDF font allocation failed");
   if(exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
   dict=resolve(&r,dict); v=exr_pdf_value_at(file,dict); if(!v || v->kind!=EXR_PDF_DICT) goto invalid;
+  font->dictionary=dict;
   subtype=get(&r,dict,"Subtype"); encoding=get(&r,dict,"Encoding"); metrics=dict; to_unicode=get(&r,dict,"ToUnicode");
   if(name_is(&r,subtype,"Type0")) {
     uint32_t descendants=get(&r,dict,"DescendantFonts"),first;

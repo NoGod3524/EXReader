@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
 #include "pdf_crypto.h"
+#include "glyph_atlas_internal.h"
 #include <miniz.h>
 #include <inttypes.h>
 #define PDF_MAX_OBJECTS 1048576u
@@ -9,6 +10,7 @@
 typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; uint32_t compressed_index; } pdf_xref;
 typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; uint32_t object; unsigned generation,unencrypted; } pdf_stream;
 struct exr_pdf_file {
+  exr_glyph_atlas *glyph_atlas;
   const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
   exr_pdf_value *values; size_t value_count,value_capacity;
   exr_buffer strings;
@@ -501,8 +503,13 @@ bad:
 }
 void exr_pdf_close(exr_pdf_file *f) {
   size_t i; if(!f) return;
+  if(f->glyph_atlas) { exr_atlas_clear(f->glyph_atlas);free(f->glyph_atlas); }
   for(i=0;i<f->stream_count;i++) { free(f->streams[i].decoded); free(f->streams[i].objects); free(f->streams[i].offsets); }
   free(f->streams); free(f->xref); free(f->values); free(f->strings.data); exr_pdf_secret_clear(&f->crypt,sizeof(f->crypt)); free(f);
+}
+exr_glyph_atlas *exr_pdf_glyph_atlas(exr_pdf_file *f) {
+  if(!f->glyph_atlas) f->glyph_atlas=calloc(1,sizeof(*f->glyph_atlas));
+  return f->glyph_atlas;
 }
 uint32_t exr_pdf_info(const exr_pdf_file *f) { return f ? f->info : EXR_PDF_NONE; }
 uint32_t exr_pdf_root(const exr_pdf_file *f) { return f ? f->root : EXR_PDF_NONE; }

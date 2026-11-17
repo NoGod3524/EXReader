@@ -30,6 +30,12 @@ struct exr_canvas {
 };
 /* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */
 exr_status exr_canvas_soft_mask(exr_canvas *canvas,const unsigned char *mask,size_t width,size_t height,exr_error *error);
+/* Internal PDF coverage fast path; custom draw sinks keep receiving outlines. */
+exr_canvas *exr_canvas_from_sink(const exr_draw_sink_ex *sink);
+exr_status exr_canvas_glyph_mask(exr_canvas *canvas,const exr_vector_segment *segments,size_t count,
+  const double matrix[6],exr_bitmap *mask,int *left,int *top,exr_error *error);
+exr_status exr_canvas_glyph_blit(exr_canvas *canvas,const exr_bitmap *mask,int left,int top,
+  uint32_t color,size_t cached_work,exr_error *error);
 /* Clip-union construction is internal until the generic scene API is settled. */
 void exr_canvas_union_abort(exr_canvas *canvas);
 exr_status exr_canvas_union_add(exr_canvas *canvas,const exr_path_segment *segments,size_t count,
