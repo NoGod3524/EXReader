@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "vector_internal.h"
 #include "pixels_internal.h"
+/* Samples and their weighted averages are nonnegative. Saturate before the
+   integer conversion; truncation after .5 preserves the existing rounding. */
+static unsigned sample_byte(double value) { return value>=255 ? 255u : (unsigned)(value+.5); }
 static int storage(const exr_bitmap *b) {
   return b && b->pixels && b->width && b->height && b->width<=16384 && b->height<=16384 &&
     (b->channels==1 || b->channels==4) && b->stride>=(size_t)b->width*b->channels && b->stride<=(size_t)64*1024*1024/b->height;
@@ -27,6 +30,26 @@ static void sample(const exr_bitmap *b,double u,double v,int interpolate,double 
   }
 }
 static void texture_sample(const exr_vector_texture *texture,double u,double v,double out[4],double *shape,unsigned flags) {
+  const exr_vector_texture *mask=texture->mask;
+  /* A nearest-sampled flat mask on the same grid uses the same source index.
+     Preserve the generic path's double arithmetic and shape ordering. */
+  if(mask && !texture->interpolate && !mask->interpolate && !mask->mask && !texture->has_matte &&
+      texture->bitmap.width==mask->bitmap.width && texture->bitmap.height==mask->bitmap.height) {
+    uint32_t x=(uint32_t)(u*texture->bitmap.width),y=(uint32_t)(v*texture->bitmap.height);
+    const unsigned char *p,*m;double a;unsigned k;
+    if(x>=texture->bitmap.width) x=texture->bitmap.width-1;
+    if(y>=texture->bitmap.height) y=texture->bitmap.height-1;
+    p=texture->bitmap.pixels+(size_t)y*texture->bitmap.stride+x*4;
+    m=mask->bitmap.pixels+(size_t)y*mask->bitmap.stride+x*4;
+    out[3]=p[3];for(k=0;k<3;k++) out[k]=p[k]*out[3];
+    if(shape) *shape=flags&EXR_ALPHA_IMAGE_SHAPE ? out[3]/255. : 1;
+    /* For an opaque 8-bit mask pixel, (channel*255)/255 is exactly channel. */
+    a=texture->mask_mode==1 ? (m[3]==255 ? m[0]/255. : ((double)m[0]*m[3]/255)/255) : m[3]/255.;
+    for(k=0;k<3;k++) out[k]*=a;
+    out[3]*=a;
+    if(shape && (texture->mask_mode==2 || (flags&EXR_ALPHA_CONSTANT_SHAPE))) *shape*=a;
+    return;
+  }
   unsigned k; sample(&texture->bitmap,u,v,(int)texture->interpolate,out);
   if(shape) *shape=flags&EXR_ALPHA_IMAGE_SHAPE ? out[3]/255. : 1;
   if(texture->mask) {
@@ -119,7 +142,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
           double cmyk[4];for(k=0;k<4;k++) cmyk[k]=source_alpha ? sums[k]/(255*sums[4]) : 0;
           exr_pixel_object_cmyk(target,x,y,cmyk,object_alpha,shape,mode,state);
         } else {
-          if(source_alpha) for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
+          if(source_alpha) for(k=0;k<3;k++) color|=(uint32_t)sample_byte(sums[k]/sums[3])<<(24-8*k);
           exr_pixel_object(target,x,y,color,object_alpha,shape,mode,state);
         }
         continue;
@@ -130,8 +153,8 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
         exr_pixel_composite_cmyk(target,x,y,cmyk,sums[4]*alpha/(4*255),coverage,mode,state);continue;
       }
       if(!sums[3]) continue;
-      for(k=0;k<3;k++) color|=(uint32_t)fmin(255,floor(sums[k]/sums[3]+.5))<<(24-8*k);
-      color|=(uint32_t)fmin(255,floor(sums[3]*alpha/4+.5)); if(state) exr_pixel_composite(target,x,y,color,coverage,mode,state);else if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage);else exr_pixel_blend(target,x,y,color,coverage,mode);
+      for(k=0;k<3;k++) color|=(uint32_t)sample_byte(sums[k]/sums[3])<<(24-8*k);
+      color|=(uint32_t)sample_byte(sums[3]*alpha/4); if(state) exr_pixel_composite(target,x,y,color,coverage,mode,state);else if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage);else exr_pixel_blend(target,x,y,color,coverage,mode);
     }
   }
   return exr_fail(e,EXR_OK,"");

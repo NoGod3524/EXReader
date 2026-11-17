@@ -85,7 +85,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   image_reader r={0}; uint32_t width,height,bits=1,id,key[2*EXR_PDF_MAX_COLORANTS]={0}; unsigned channels=1,k,indexed=0,color_key=0;
   int stencil=0,interpolate=0; double decode[2*EXR_PDF_MAX_COLORANTS]={0,1}; exr_pdf_colorspace *space=NULL;
   const unsigned char *bytes; unsigned char *jpx_samples=NULL; size_t size,row,y,x,local_work=0,owned=0,jpx_live=0; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
-  uint32_t mask=EXR_PDF_NONE; unsigned soft=0,entered=0,charged=0,matte=0; double matte_rgb[4]={0};
+  uint32_t mask=EXR_PDF_NONE; unsigned soft=0,entered=0,charged=0,matte=0,own_intent=0; double matte_rgb[4]={0};
   exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE; pixel_memo *memo=NULL;
   if(out) *out=NULL;
   if(inks) memset(inks,0,sizeof(*inks));
@@ -217,6 +217,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   { uint32_t ri=EXR_PDF_NONE;
     if(exr_pdf_resolve(file,exr_pdf_get(file,image,"Intent"),&ri,&r.error)!=EXR_OK) goto done;
     if(ri!=EXR_PDF_NONE && exr_pdf_value_at(file,ri)->kind!=EXR_PDF_NULL) {
+      own_intent=1;
       const char *names[4]={"Perceptual","RelativeColorimetric","Saturation","AbsoluteColorimetric"}; unsigned n;int found=0;
       for(n=0;n<4;n++) if(image_name_is(file,ri,names[n])) { intent=n;found=1;break; }
       if(!found) { exr_fail(&r.error,EXR_FORMAT,"Invalid PDF image rendering intent"); goto done; }
@@ -277,8 +278,12 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     pdf_texture *owned_texture=calloc(1,sizeof(*owned_texture));
     exr_vector_texture *texture=(exr_vector_texture *)owned_texture;
     if(!texture) { exr_fail(&r.error,EXR_MEMORY,"PDF image layer allocation failed"); goto done; }
-    owned_texture->refs=1;owned_texture->uncacheable=(matte ? 1u : 0u)|(channels*bits>64 ? 2u : 0u)|
-      (mask_texture ? ((pdf_texture *)mask_texture)->uncacheable : 0u);
+    /* Matte has already been reversed above using this object's decoded mask.
+       Stencils and contextual color conversion still depend on caller state. */
+    owned_texture->refs=1;owned_texture->uncacheable=(channels*bits>64 ? 2u : 0u)|
+      (!exr_pdf_colorspace_cacheable(space,(int)own_intent) ? 4u : 0u)|(stencil ? 8u : 0u)|
+      /* A child stencil is decoded with fixed white, independent of fill color. */
+      (mask_texture ? ((pdf_texture *)mask_texture)->uncacheable&~8u : 0u);
     texture->bitmap=bitmap; texture->mask=mask_texture; texture->interpolate=interpolate!=0;
     texture->mask_mode=soft ? 1 : 2; texture->has_matte=0;
     *kind=stencil ? 0 : exr_pdf_colorspace_device(space) ? (unsigned)exr_pdf_colorspace_device(space) : 5; *out=texture; memset(&bitmap,0,sizeof(bitmap)); mask_texture=NULL; charged=0;
@@ -300,7 +305,7 @@ exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resourc
   return exr_pdf_image_load_from(file,image,file,resources,color,1,out,work,control,e);
 }
 typedef struct {
-  uint32_t image,resources,color;unsigned intent,native;
+  uint32_t image,length;unsigned native;
   exr_vector_texture *texture;exr_bitmap inks;size_t bytes,work,used;
 } image_cache_entry;
 typedef struct {
@@ -367,6 +372,7 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   image_chain chain={0};unsigned kind=0;size_t local_work=0,before,i,bytes;exr_status status;
   double started=0;
   image_cache *cache=NULL;image_cache_entry *entry=NULL;
+  uint32_t length=0,length_id;const exr_pdf_value *length_value;
   if(out) *out=NULL;
   if(inks) memset(inks,0,sizeof(*inks));
   if(!file || !out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF image input/output");
@@ -376,11 +382,16 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   /* Inline operand arenas borrow a different resource file and are deliberately
      uncached. Parsed stream value IDs are unique and stable within this file. */
   if(file==resource_file) cache=cache_get(file);
+  if(cache) {
+    if(exr_pdf_resolve(file,exr_pdf_get(file,image,"Length"),&length_id,e)!=EXR_OK) return e ? e->code : EXR_FORMAT;
+    length_value=exr_pdf_value_at(file,length_id);
+    if(!length_value || length_value->kind!=EXR_PDF_INT || length_value->u.integer<0 || (uint64_t)length_value->u.integer>UINT32_MAX) cache=NULL;
+    else length=(uint32_t)length_value->u.integer;
+  }
   if(cache && cache->byte_limit && cache->entry_limit) {
     for(i=0;i<128;i++) {
       image_cache_entry *candidate=cache->entries+i;
-      if(candidate->texture && candidate->image==image && candidate->resources==resources &&
-         candidate->color==color && candidate->intent==intent && candidate->native==(inks!=NULL)) {
+      if(candidate->texture && candidate->image==image && candidate->length==length && candidate->native==(inks!=NULL)) {
         if(!exr_vector_work(work,candidate->work)) return exr_fail(e,EXR_LIMIT,"PDF image sample/function work exceeds budget");
         if(inks && !bitmap_copy(&candidate->inks,inks)) return exr_fail(e,EXR_MEMORY,"PDF cached ink allocation failed");
         candidate->used=++cache->clock;cache->stats.hits++;
@@ -396,8 +407,8 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   if(cache && cache->profile) cache->stats.decode_ms+=image_time_ms()-started;
   if(status==EXR_OK && cache) {
     unsigned skip=((pdf_texture *)*out)->uncacheable;
-    if(skip&1) cache->stats.matte_bypasses++;
     if(skip&2) cache->stats.wide_bypasses++;
+    if(skip&12) cache->stats.state_bypasses++;
   }
   if(status!=EXR_OK || !cache || !cache->byte_limit || !cache->entry_limit || ((pdf_texture *)*out)->uncacheable) return status;
   bytes=texture_bytes(*out)+(inks && inks->pixels ? (size_t)inks->stride*inks->height : 0);
@@ -409,7 +420,7 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   }
   for(i=0;i<128;i++) if(!cache->entries[i].texture) { entry=cache->entries+i;break; }
   if(inks && !bitmap_copy(inks,&entry->inks)) return status; /* optional cache */
-  entry->image=image;entry->resources=resources;entry->color=color;entry->intent=intent;entry->native=inks!=NULL;
+  entry->image=image;entry->length=length;entry->native=inks!=NULL;
   entry->texture=*out;((pdf_texture *)*out)->refs++;
   entry->bytes=bytes;entry->work=*work-before;entry->used=++cache->clock;
   cache->stats.bytes+=bytes;cache->stats.entries++;

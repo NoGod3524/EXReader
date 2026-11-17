@@ -33,10 +33,30 @@ static exr_status timed_image(void *context,const exr_image_layer *image,const d
 }
 static exr_status timed_clip(void *context,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,unsigned text,exr_error *error) {
   double started=now_ms();exr_status status=original_clip(context,segments,count,matrix,rule,text,error);
-  clip_ms+=now_ms()-started;clip_calls++;return status;
+  { double elapsed=now_ms()-started;
+    clip_ms+=elapsed;clip_calls++;
+    if(getenv("EXR_PDF_CLIP_TRACE")) {
+      size_t i;fprintf(stderr,"clip %zu ms %.6f count %zu text %u rule %u matrix",clip_calls,elapsed,count,text,(unsigned)rule);
+      if(matrix) for(i=0;i<6;i++) fprintf(stderr," %.9g",matrix[i]);
+      fprintf(stderr,"\n");
+      for(i=0;i<count;i++) fprintf(stderr,"  %u %.9g %.9g\n",(unsigned)segments[i].verb,segments[i].points[0].x,segments[i].points[0].y);
+    }
+  }
+  return status;
 }
 static void check(exr_status status,const exr_error *error) {
   if(status!=EXR_OK) { fprintf(stderr,"%d: %s\n",status,error->message);exit(1); }
+}
+static exr_status image_key(void *context,exr_pdf_file *file,uint32_t id,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *error) {
+  uint32_t value,object,generation,length;const exr_pdf_value *v;
+  (void)resource_file;(void)resources;(void)paint;
+  if(exr_pdf_resolve(file,id,&value,error)!=EXR_OK ||
+     exr_pdf_object_identity(file,value,&object,&generation,error)!=EXR_OK ||
+     exr_pdf_resolve(file,exr_pdf_get(file,value,"Length"),&length,error)!=EXR_OK) return error->code;
+  v=exr_pdf_value_at(file,length);
+  fprintf(stderr,"{\"page\":%zu,\"value_id\":%u,\"object\":%u,\"generation\":%u,\"length\":%lld}\n",
+    *(size_t *)context+1,value,object,generation,(long long)(v ? v->u.integer : -1));
+  return EXR_OK;
 }
 int main(int argc,char **argv) {
   FILE *input;long length;unsigned char *data;unsigned width,rounds,round;size_t count,page;
@@ -68,6 +88,10 @@ int main(int argc,char **argv) {
     original_clip=sink.base.clip;sink.base.clip=timed_clip;clip_ms=0;clip_calls=0;
     { exr_buffer content={0};
       check(exr_pdf_content(file,p->contents,&content,&error),&error);
+      if(!round && getenv("EXR_PDF_IMAGE_KEYS")) {
+        exr_pdf_draw_callbacks callbacks={0};callbacks.image=image_key;
+        check(exr_pdf_draw_ops(file,p->resources,content.data,content.size,view.matrix,&callbacks,&page,NULL,&error),&error);
+      }
       check(exr_pdf_paint_page_ex(file,p,content.data,content.size,view.matrix,&sink,NULL,NULL,NULL,NULL,&error),&error);
       free(content.data);
     }
@@ -76,9 +100,9 @@ int main(int argc,char **argv) {
     reuses=canvas->local_pool.reuses+exr_pdf_buffer_pool(file)->reuses;
     exr_pdf_image_cache_report(file,&after);
     exr_pdf_operation_end(file);exr_canvas_free(canvas);elapsed=now_ms()-started;
-    printf("{\"round\":%u,\"page\":%zu,\"width\":%u,\"ms\":%.6f,\"decode_ms\":%.6f,\"paint_image_ms\":%.6f,\"paint_image_calls\":%zu,\"clip_ms\":%.6f,\"clip_calls\":%zu,\"hits\":%zu,\"misses\":%zu,\"matte_bypasses\":%zu,\"wide_bypasses\":%zu,\"resident_bytes\":%zu,\"entries\":%zu,\"buffer_allocations\":%zu,\"buffer_reuses\":%zu}\n",
+    printf("{\"round\":%u,\"page\":%zu,\"width\":%u,\"ms\":%.6f,\"decode_ms\":%.6f,\"paint_image_ms\":%.6f,\"paint_image_calls\":%zu,\"clip_ms\":%.6f,\"clip_calls\":%zu,\"hits\":%zu,\"misses\":%zu,\"matte_bypasses\":%zu,\"wide_bypasses\":%zu,\"state_bypasses\":%zu,\"resident_bytes\":%zu,\"entries\":%zu,\"buffer_allocations\":%zu,\"buffer_reuses\":%zu}\n",
       round,page+1,width,elapsed,after.decode_ms-before.decode_ms,paint_image_ms,paint_image_calls,clip_ms,clip_calls,after.hits-before.hits,after.misses-before.misses,
-      after.matte_bypasses-before.matte_bypasses,after.wide_bypasses-before.wide_bypasses,after.bytes,after.entries,allocations,reuses);
+      after.matte_bypasses-before.matte_bypasses,after.wide_bypasses-before.wide_bypasses,after.state_bypasses-before.state_bypasses,after.bytes,after.entries,allocations,reuses);
     free(out.pixels);
   }
   free(pages);exr_pdf_close(file);free(data);return 0;

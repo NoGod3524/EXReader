@@ -14,6 +14,24 @@ static void rectangle(exr_vector_edge *edges,double left,double top,double right
   for(i=0;i<4;i++) { size_t a=reverse ? 3-i : i,b=reverse ? (6-i)%4 : (i+1)%4; edges[i]=(exr_vector_edge){x[a],y[a],x[b],y[b]}; }
 }
 static unsigned pixel(const exr_bitmap *out,unsigned x,unsigned y,unsigned channel) { return out->pixels[(size_t)y*out->stride+x*out->channels+channel]; }
+static void mask_fill_equivalence(void) {
+  exr_bitmap mask=bitmap(1,0),rgba=bitmap(4,0),clip=bitmap(1,0);
+  unsigned trial,i;size_t work;
+  for(trial=0;trial<100;trial++) {
+    double shift=(trial-50.)/97.;
+    exr_vector_edge edges[5]={{-1+shift,.1,5.7,1.3},{5.7,1.3,8.2,5.1},
+      {8.2,5.1,3.2+shift,7.9},{3.2+shift,7.9,.2,4.2},{.2,4.2,-1+shift,.1}};
+    for(i=0;i<64;i++) {
+      mask.pixels[i]=(unsigned char)(i*31+trial);
+      memset(rgba.pixels+4*i,mask.pixels[i],3);rgba.pixels[4*i+3]=255;
+      clip.pixels[i]=(unsigned char)(i*17+trial*3);
+    }
+    work=0;OK(exr_vector_fill(&mask,edges,5,EXR_VECTOR_EVENODD,0xffffffff,trial&1 ? &clip : NULL,&work,NULL,&error));
+    work=0;OK(exr_vector_fill(&rgba,edges,5,EXR_VECTOR_EVENODD,0xffffffff,trial&1 ? &clip : NULL,&work,NULL,&error));
+    for(i=0;i<64;i++) CHECK(mask.pixels[i]==rgba.pixels[4*i] && mask.pixels[i]==rgba.pixels[4*i+1] && mask.pixels[i]==rgba.pixels[4*i+2]);
+  }
+  free(mask.pixels);free(rgba.pixels);free(clip.pixels);
+}
 static int cancel(void *context) { unsigned *calls=context; return ++*calls>=3; }
 static double segment_distance(exr_vector_point p,exr_vector_point a,exr_vector_point b) {
   double length=hypot(b.x-a.x,b.y-a.y),left=hypot(p.x-a.x,p.y-a.y),right=hypot(p.x-b.x,p.y-b.y);
@@ -356,7 +374,7 @@ static void composite_rows(void) {
 int main(void) {
   composite_rows();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); strokes(); dashes(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  curves(); strokes(); dashes(); mask_fill_equivalence(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);

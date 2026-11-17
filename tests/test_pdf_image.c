@@ -81,6 +81,25 @@ static void affine(void) {
     color.has_matte=0; color.mask=&color; CHECK(exr_vector_texture_paint(&dst,&color,matrix,1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
     color.mask=&opacity; opacity.bitmap=dst; CHECK(exr_vector_texture_paint(&dst,&color,matrix,1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
   }
+  { unsigned char colors[16],masks[16],white[4]={255,255,255,255},reference[256],initial[256];unsigned trial,i;
+    exr_vector_texture color={0},opacity={0},unit={0};exr_bitmap other=dst;
+    color.bitmap=src;color.bitmap.width=color.bitmap.height=2;color.bitmap.stride=8;color.bitmap.pixels=colors;
+    opacity.bitmap=color.bitmap;opacity.bitmap.pixels=masks;color.mask=&opacity;
+    unit.bitmap=color.bitmap;unit.bitmap.width=unit.bitmap.height=1;unit.bitmap.stride=4;unit.bitmap.pixels=white;
+    other.pixels=reference;matrix[0]=6.5;matrix[1]=.3;matrix[2]=.25;matrix[3]=6.8;matrix[4]=-.2;matrix[5]=.1;
+    for(trial=0;trial<32;trial++) {
+      for(i=0;i<16;i++) { colors[i]=(unsigned char)(i*29+trial*17);masks[i]=(unsigned char)(i*41+trial*11); }
+      for(i=0;i<256;i++) initial[i]=(unsigned char)(i*13+trial);
+      memcpy(target,initial,256);memcpy(reference,initial,256);color.mask_mode=trial&1 ? 1 : 2;
+      opacity.mask=NULL;
+      OK(exr_vector_texture_paint(&dst,&color,matrix,.63,trial&2 ? &clip : NULL,NULL,NULL,&error));
+      /* An opaque identity child forces the generic sampler without changing
+         the mask samples, providing an independent path for comparison. */
+      opacity.mask=&unit;opacity.mask_mode=2;
+      OK(exr_vector_texture_paint(&other,&color,matrix,.63,trial&2 ? &clip : NULL,NULL,NULL,&error));
+      CHECK(!memcmp(target,reference,256));
+    }
+  }
 }
 static void jpeg_cases(const char *dir) {
   const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
@@ -192,16 +211,22 @@ static void cache_cases(const char *dir) {
   exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_release(c);
   exr_pdf_image_cache_limits(file,1024*1024,128);
   OK(exr_pdf_image_load(file,image(file,"Matte"),resources(file),0,&a,NULL,NULL,&error));
-  OK(exr_pdf_image_load(file,image(file,"Matte"),resources(file),0,&b,NULL,NULL,&error));CHECK(a!=b);
-  exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_cache_report(file,&stats);CHECK(!stats.entries);
+  exr_pdf_operation_end(file);
+  OK(exr_pdf_image_load_from(file,image(file,"Matte"),file,EXR_PDF_NONE,0xff00ffff,3,&b,NULL,NULL,&error));CHECK(a==b && a->mask && !a->has_matte);
+  exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_cache_report(file,&stats);CHECK(stats.entries==1 && !stats.matte_bypasses);
   OK(exr_pdf_image_load(file,image(file,"Stencil"),resources(file),0xff0000ff,&a,NULL,NULL,&error));
   OK(exr_pdf_image_load(file,image(file,"Stencil"),resources(file),0x00ff00ff,&b,NULL,NULL,&error));
   pixel(&a->bitmap,0,0,255,0,0,255);pixel(&b->bitmap,0,0,0,255,0,255);
   exr_pdf_image_release(a);exr_pdf_image_release(b);
+  /* Resource aliases must be resolved again in the caller's resource scope. */
+  OK(exr_pdf_image_load(file,image(file,"Alias"),resources(file),0,&a,NULL,NULL,&error));
+  OK(exr_pdf_image_load(file,image(file,"Alias"),resources(file),0,&b,NULL,NULL,&error));CHECK(a!=b);
+  exr_pdf_image_release(a);exr_pdf_image_release(b);b=NULL;
+  CHECK(exr_pdf_image_load_from(file,image(file,"Alias"),file,EXR_PDF_NONE,0,1,&b,NULL,NULL,&error)==EXR_FORMAT && !b);
   { exr_bitmap ink_a={0},ink_b={0};uint32_t id=image(file,"CMYK2"),res=resources(file);
     OK(exr_pdf_image_load_inks(file,id,file,res,0,1,&a,&ink_a,NULL,NULL,&error));
     OK(exr_pdf_image_load_inks(file,id,file,res,0,1,&b,&ink_b,NULL,NULL,&error));
-    CHECK(a==b && ink_a.pixels && ink_b.pixels && ink_a.pixels!=ink_b.pixels);
+    CHECK(a!=b && ink_a.pixels && ink_b.pixels && ink_a.pixels!=ink_b.pixels);
     CHECK(!memcmp(ink_a.pixels,ink_b.pixels,(size_t)ink_a.stride*ink_a.height));
     free(ink_a.pixels);free(ink_b.pixels);exr_pdf_image_release(a);exr_pdf_image_release(b);
     OK(exr_pdf_image_load_from(file,id,file,res,0,0,&a,NULL,NULL,&error));
@@ -209,7 +234,7 @@ static void cache_cases(const char *dir) {
     OK(exr_pdf_image_load_from(file,id,file,EXR_PDF_NONE,0,1,&c,NULL,NULL,&error));CHECK(c!=b);
     exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_release(c);
   }
-  { const char *content="q 4 0 0 4 0 0 cm /RGB Do Q q 4 0 0 4 4 4 cm /Soft Do Q q 0 1 0 rg 4 0 0 2 0 4 cm /Stencil Do Q";
+  { const char *content="q 4 0 0 4 0 0 cm /RGB Do Q q 4 0 0 4 4 4 cm /Soft Do Q q 0 1 0 rg 4 0 0 2 0 4 cm /Stencil Do Q q 2 0 0 2 4 0 cm /Matte Do Q";
     exr_bitmap baseline,warm,hit;
     exr_pdf_image_cache_limits(file,0,0);baseline=render(file,content);
     exr_pdf_image_cache_limits(file,1024*1024,128);warm=render(file,content);exr_pdf_image_cache_report(file,&before);

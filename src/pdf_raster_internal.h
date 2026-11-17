@@ -43,7 +43,7 @@ exr_status exr_pdf_image_load_from(exr_pdf_file *file,uint32_t image,exr_pdf_fil
                                exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *error);
 void exr_pdf_image_release(exr_vector_texture *texture);
 typedef struct {
-  size_t hits,misses,bytes,entries,evictions,matte_bypasses,wide_bypasses;
+  size_t hits,misses,bytes,entries,evictions,matte_bypasses,wide_bypasses,state_bypasses;
   double decode_ms; /* Opt-in EXR_PDF_IMAGE_PROFILE=1; includes inflate and masks. */
 } exr_pdf_image_cache_stats;
 /* Internal controls/probes; limits are per document, zero disables reuse. */

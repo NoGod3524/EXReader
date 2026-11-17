@@ -144,6 +144,8 @@ size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *space);
 unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *space);
 exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *space);
 int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *space);
+/* Object-only image reuse excludes resource lookup and inherited intent. */
+int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *space,int own_intent);
 #define EXR_PDF_MAX_COLORANTS 32u
 void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double *ranges);
 void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double *values);
