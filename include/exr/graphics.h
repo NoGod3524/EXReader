@@ -49,6 +49,8 @@ EXR_API exr_draw_style exr_draw_style_defaults(void);
    then returns that failure instead of exposing partial output. */
 EXR_API exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,exr_error *error);
 EXR_API void exr_canvas_free(exr_canvas *canvas);
+/* Live buffers plus scratch retained for reuse (released clip masks, group
+   buffers) until the canvas is freed. */
 EXR_API size_t exr_canvas_memory_size(const exr_canvas *canvas);
 EXR_API const exr_bitmap *exr_canvas_bitmap(const exr_canvas *canvas);
 EXR_API exr_status exr_canvas_take(exr_canvas *canvas,exr_bitmap *out,exr_error *error);

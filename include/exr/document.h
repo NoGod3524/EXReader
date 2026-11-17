@@ -228,7 +228,8 @@ EXR_API exr_status exr_fixed_load_annotations(exr_fixed_document *document,size_
 EXR_API void exr_page_annotations_free(exr_page_annotation *annotations,size_t count);
 EXR_API const char *exr_fixed_title(const exr_fixed_document *document);
 EXR_API const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *document,size_t *count);
-/* Owned directory/metadata bytes, excluding the provider's own payload. */
+/* Owned directory/metadata bytes plus render scratch retained between pages,
+   excluding the provider's own payload. */
 EXR_API size_t exr_fixed_memory_size(const exr_fixed_document *document);
 /* Loads an independent owned text snapshot only when requested. The same
    nonconcurrent/nonreentrant provider rule as draw applies. */

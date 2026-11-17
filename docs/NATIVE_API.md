@@ -621,7 +621,7 @@ input 必须清零并填写 struct_size；较大的结构仅在未知尾字节�
 - `exr_canvas_path` 接收 move/line/quad/cubic/close 段和仿射矩阵，支持 nonzero/evenodd 填充与虚线、端点、连接描边。用 `exr_draw_style_defaults()` 初始化样式；NULL 样式等同默认黑色填充。stroke_matrix 默认与路径矩阵相同；显式传入单位矩阵可形成不随路径缩放的描边。
 - `exr_canvas_clip` 与当前裁切区域相交。save/restore 保存裁切区域，样式按每次调用传入；最多 160 层，引用同一个不可变掩码时不复制像素。
 - `exr_canvas_image` 读取通用 exr_image_layer：RGBA 位图可拥有不同尺寸/插值方式的 opacity mask，mask_mode 使用 EXR_MASK_GRAY 或 EXR_MASK_ALPHA；支持预混合底色移除。图层最多 16 层，循环、目标别名和非法矩阵拒绝。
-- `exr_canvas_bitmap` 返回当前借用图像，`exr_canvas_take` 转移像素所有权，随后用 `exr_bitmap_free` 释放；取走后画布不再接受绘制。`exr_canvas_memory_size` 报告画布、拥有的像素和裁切掩码载荷，不含瞬时曲线/边数组或宿主图片。
+- `exr_canvas_bitmap` 返回当前借用图像，`exr_canvas_take` 转移像素所有权，随后用 `exr_bitmap_free` 释放；取走后画布不再接受绘制。`exr_canvas_memory_size` 报告画布、拥有的像素和裁切掩码载荷（含释放后留待复用的掩码），不含瞬时曲线/边数组或宿主图片。
 
 输出最多 64 MiB、边长最多 16384，单路径命令/边数限制沿用 C 矢量核，全部绘制共享 256M 工作预算和取消控制。任何失败的绘制都将画布置为失败状态，后续 take 返回首个失败，避免交付半张图片。PDF 路径、字形轮廓、图片和裁切已调用相同的通用画布；其字体/格式读取留在解析器一侧。
 
@@ -648,7 +648,7 @@ PDF 的私有格式适配器已改为输出这一协议：字体编号先转为�
 
 `exr_fixed_create` 接收通用页目录和按需 draw 回调，不要求来源是 PDF。`exr_fixed_input` 清零并设置 struct_size；成功时复制标题、页 ID/标签和 geometry，并接管 context 的 release 回调。失败时上下文仍由调用方管理。空 ID 自动生成为 page-1 等，有效 ID 必须唯一；目录顺序保持不变。页数最多 10000，单字符串最多 64 KiB，字符串载荷总计最多 8 MiB。未知扩展尾部只有全零时可兼容。
 
-标题和 `exr_fixed_pages` 返回的快照属于文档，可在创建后释放输入目录/字符串。`exr_fixed_memory_size` 仅统计拥有的目录及元数据，不假定提供者上下文的内部结构；释放文档时调用 release。创建和查询不会调用 draw，因此不会预先绘制全书。
+标题和 `exr_fixed_pages` 返回的快照属于文档，可在创建后释放输入目录/字符串。`exr_fixed_memory_size` 仅统计拥有的目录、元数据及跨页复用的渲染暂存缓冲（上限 64 MiB），不假定提供者上下文的内部结构；释放文档时调用 release。创建和查询不会调用 draw，因此不会预先绘制全书。
 
 `exr_fixed_draw(document, page, matrix, sink, control, error)` 按需调用该页提供者，矩阵 NULL 等同单位矩阵，不自动添加裁切或状态变化，适用于宿主自绘和内容检查。提供者须跳过未实现的 sink 回调。`exr_fixed_render` 则统一创建自然视口和页面裁切，接入 C 画布并返回独立图像；NULL 选项使用白底 RGBA，显式零背景使用透明 RGBA。无论提供者在何时失败，返回图像都保持为空。
 

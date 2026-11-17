@@ -124,6 +124,62 @@ static void ink_sample(const exr_vector_texture *source,const exr_bitmap *inks,d
   if(a) for(k=0;k<4;k++) out[k]*=rgba[3]/a;
   out[4]=rgba[3];
 }
+/* Axis-aligned, unmasked nearest-neighbor images without a composite state.
+   With inv[1] and inv[2] zero, u depends only on the column and v only on the
+   row, so the texel of every subsample is tabulated once with the generic
+   loop's expressions. Nearest sums are exact integers in the generic double
+   path, so integer accumulation followed by the same divisions is identical.
+   Returns 0 when the case does not apply; the generic loop then runs. */
+static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,const double inv[6],double alpha,
+                        const exr_bitmap *clip,exr_blend_mode mode,int x0,int y0,int x1,int y1,size_t cost,
+                        size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+  const exr_bitmap *b=&source->bitmap; size_t width=(size_t)(x1-x0),height=(size_t)(y1-y0),k; int32_t *columns,*rows; int x,y;
+  if(source->interpolate || source->mask || source->has_matte || target->channels!=4 || inv[1]!=0 || inv[2]!=0 || x1<=x0 || y1<=y0) return 0;
+  columns=malloc((2*width+2*height)*sizeof(*columns)); if(!columns) return 0;
+  rows=columns+2*width;
+  for(k=0;k<2*width;k++) {
+    double px=(x0+(int)(k>>1))+.25+.5*(double)(k&1),py=y0+.25,u=inv[0]*px+inv[2]*py+inv[4];
+    if(!isfinite(u)) { free(columns); return 0; }
+    if(u<0 || u>=1) columns[k]=-1;
+    else { uint32_t t=(uint32_t)(u*b->width); columns[k]=(int32_t)(t>=b->width ? b->width-1 : t)*4; }
+  }
+  for(k=0;k<2*height;k++) {
+    double px=x0+.25,py=(y0+(int)(k>>1))+.25+.5*(double)(k&1),v=inv[1]*px+inv[3]*py+inv[5];
+    if(!isfinite(v)) { free(columns); return 0; }
+    if(v<0 || v>=1) rows[k]=-1;
+    else { uint32_t t=(uint32_t)(v*b->height); rows[k]=(int32_t)(t>=b->height ? b->height-1 : t); }
+  }
+  for(y=y0;y<y1;y++) {
+    const int32_t *ry=rows+2*(size_t)(y-y0); const unsigned char *line[2];
+    const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    if(exr_control_cancel(control,e)!=EXR_OK) { free(columns); *result=EXR_CANCELLED; return 1; }
+    if(!exr_vector_work(work,width*cost)) { free(columns); *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded"); return 1; }
+    if(ry[0]<0 && ry[1]<0) continue;
+    for(k=0;k<2;k++) line[k]=ry[k]<0 ? NULL : b->pixels+(size_t)ry[k]*b->stride;
+    for(x=x0;x<x1;x++) {
+      const int32_t *cx=columns+2*(size_t)(x-x0); unsigned coverage=mask ? mask[x] : 255,sy,sx; uint32_t s[4]={0},color=0;
+      const unsigned char *first=NULL; int same=1;
+      if(!coverage) continue;
+      for(sy=0;sy<2;sy++) {
+        if(!line[sy]) continue;
+        for(sx=0;sx<2;sx++) {
+          const unsigned char *p; unsigned a;
+          if(cx[sx]<0) continue;
+          p=line[sy]+cx[sx]; a=p[3];
+          if(!first) first=p; else if(p!=first) same=0;
+          s[3]+=a; s[0]+=p[0]*a; s[1]+=p[1]*a; s[2]+=p[2]*a;
+        }
+      }
+      if(!s[3]) continue;
+      /* One texel: each quotient is that texel's integer channel exactly. */
+      if(same) color=((uint32_t)first[0]<<24)|((uint32_t)first[1]<<16)|((uint32_t)first[2]<<8);
+      else for(k=0;k<3;k++) color|=image_byte((double)s[k]/(double)s[3])<<(24-8*k);
+      color|=image_byte((double)s[3]*alpha/4);
+      if(mode==EXR_BLEND_NORMAL) exr_pixel(target,x,y,color,coverage); else exr_pixel_blend(target,x,y,color,coverage,mode);
+    }
+  }
+  free(columns); *result=exr_fail(e,EXR_OK,""); return 1;
+}
 exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_texture *source,const exr_bitmap *inks,const double m[6],double alpha,
                                      const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
   size_t local_work=0,i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
@@ -165,6 +221,9 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
     left=fmin(left,px); right=fmax(right,px); top=fmin(top,py); bottom=fmax(bottom,py);
   }
   x0=(int)fmax(0,floor(left)); x1=(int)fmin(target->width,ceil(right)); y0=(int)fmax(0,floor(top)); y1=(int)fmin(target->height,ceil(bottom));
+#ifndef EXR_PROFILE_IMAGE
+  { exr_status fast; if(!inks && !state && nearest_axis(target,source,inv,alpha,clip,mode,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast; }
+#endif
 #ifdef EXR_PROFILE_IMAGE
   memset(&image_profile,0,sizeof(image_profile));
   unsigned long long loop_start=image_tick();

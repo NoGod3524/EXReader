@@ -3,7 +3,8 @@
 #define EXR_CANVAS_INTERNAL_H
 #include "vector_internal.h"
 #include "buffer_pool_internal.h"
-typedef struct { exr_bitmap bitmap; size_t refs; } exr_clip_mask;
+/* Rows outside [dirty_top,dirty_bottom) are zero; recycling clears only the rest. */
+typedef struct { exr_bitmap bitmap; size_t refs; uint32_t dirty_top,dirty_bottom; } exr_clip_mask;
 typedef struct {
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
   int parent_offset_x,parent_offset_y;
@@ -29,6 +30,7 @@ struct exr_canvas {
   unsigned cmyk_groups; /* active group blends in DeviceCMYK */
   int offset_x,offset_y; /* canvas coordinate of the active working buffer's top-left */
   size_t canvas_width,canvas_height; /* device extent, independent of the active buffer */
+  exr_clip_mask *spare_masks[4]; /* released masks kept for reuse within this canvas */
 };
 exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_pool *pool,exr_canvas **out,exr_error *error);
 /* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */
