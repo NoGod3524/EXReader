@@ -179,6 +179,7 @@
   "headers": {
     "src/audio_internal.h": "audio",
     "src/base_internal.h": "base",
+    "src/buffer_pool_internal.h": "base",
     "src/bidi_data.h": "text",
     "src/bidi_internal.h": "text",
     "src/bmff_internal.h": "audio",
