@@ -121,7 +121,7 @@ static int solid_with_opaque_mask(const exr_bitmap *color,const exr_bitmap *mask
   }
   return 1;
 }
-static int nearest_axis(double coordinate,unsigned extent) {
+static int nearest_index(double coordinate,unsigned extent) {
   unsigned index;
   if(coordinate<0 || coordinate>=1) return -1;
   index=(unsigned)(coordinate*extent);
@@ -134,12 +134,12 @@ static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,con
   /* The cross terms are zero. Retain the general sampler's expression so
      multiply-add contraction cannot move a tap across a texel boundary. */
   for(int x=x0;x<x1;x++) {
-    columns[2*(x-x0)]=nearest_axis(inv[0]*(x+.25)+inv[2]*py0+inv[4],mask->width);
-    columns[2*(x-x0)+1]=nearest_axis(inv[0]*(x+.75)+inv[2]*py0+inv[4],mask->width);
+    columns[2*(x-x0)]=nearest_index(inv[0]*(x+.25)+inv[2]*py0+inv[4],mask->width);
+    columns[2*(x-x0)+1]=nearest_index(inv[0]*(x+.75)+inv[2]*py0+inv[4],mask->width);
   }
   for(int y=y0;y<y1;y++) {
-    int y_first=nearest_axis(inv[1]*px0+inv[3]*(y+.25)+inv[5],mask->height);
-    int y_second=nearest_axis(inv[1]*px0+inv[3]*(y+.75)+inv[5],mask->height);
+    int y_first=nearest_index(inv[1]*px0+inv[3]*(y+.25)+inv[5],mask->height);
+    int y_second=nearest_index(inv[1]*px0+inv[3]*(y+.75)+inv[5],mask->height);
     const unsigned char *first=y_first<0 ? NULL : mask->pixels+(size_t)y_first*mask->stride;
     const unsigned char *second=y_second<0 ? NULL : mask->pixels+(size_t)y_second*mask->stride;
     const unsigned char *coverage=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
