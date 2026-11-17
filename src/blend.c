@@ -373,6 +373,14 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         /* An opaque source replaces even a transparent destination exactly. */
         if(alpha==255) memcpy(q,row,(right-left)*4);
         else for(x=left,p=row;x<right;x++,p+=4,q+=4) {
+          if(!p[3]) {
+            /* Transparent runs, two pixels per test: same refund, no writes. */
+            static const unsigned char alphas[8]={0,0,0,255,0,0,0,255};uint64_t mask,pair;size_t run=1;
+            memcpy(&mask,alphas,8);
+            while(x+run+2<=right) { memcpy(&pair,p+run*4,8); if(pair&mask) break; run+=2; }
+            while(x+run<right && !p[run*4+3]) run++;
+            *work-=run; x+=run-1; p+=(run-1)*4; q+=(run-1)*4; continue;
+          }
           if(p[3]==255) memcpy(q,p,4);
           else if(p[3]) {
             uint32_t color=((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3];

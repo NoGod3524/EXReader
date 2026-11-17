@@ -42,7 +42,10 @@ static void clip_and_ownership(void) {
   clipped=exr_canvas_memory_size(c); CHECK(clipped>before && clipped-before>=64);
   for(i=0;i<120;i++) OK(exr_canvas_save(c,&error)); CHECK(exr_canvas_memory_size(c)==clipped);
   rectangle(rect,0,0,8,8); style.fill=0xff0000ff; OK(exr_canvas_path(c,rect,5,NULL,&style,&error));
-  for(i=0;i<121;i++) OK(exr_canvas_restore(c,&error)); CHECK(exr_canvas_memory_size(c)==before);
+  /* A released mask is retained (and counted) for reuse until the canvas is freed. */
+  for(i=0;i<121;i++) OK(exr_canvas_restore(c,&error)); CHECK(exr_canvas_memory_size(c)==clipped);
+  OK(exr_canvas_save(c,&error)); rectangle(rect,1,1,3,3); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  CHECK(exr_canvas_memory_size(c)==clipped); OK(exr_canvas_restore(c,&error)); CHECK(exr_canvas_memory_size(c)==clipped);
   rectangle(rect,6,6,1,1); style.fill=0x0000ffff; OK(exr_canvas_path(c,rect,5,NULL,&style,&error));
   pixel(exr_canvas_bitmap(c),2,2,255,0,0); pixel(exr_canvas_bitmap(c),0,0,255,255,255); pixel(exr_canvas_bitmap(c),6,6,0,0,255);
   OK(exr_canvas_take(c,&image,&error)); CHECK(!exr_canvas_bitmap(c)); exr_canvas_free(c); pixel(&image,2,2,255,0,0); exr_bitmap_free(&image); CHECK(!image.pixels);

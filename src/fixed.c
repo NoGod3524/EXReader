@@ -1,9 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #include "document_internal.h"
 #include "graphics_internal.h"
+#include "canvas_internal.h"
 struct exr_fixed_document {
   char *title; exr_fixed_page *pages; size_t count,bytes;
   exr_fixed_draw_ex_fn draw_ex;exr_fixed_draw_fn draw; exr_fixed_text_fn text; exr_fixed_metadata_fn metadata; exr_fixed_annotations_fn annotations; void *context; exr_context_release_fn release; unsigned busy;
+  /* Render scratch (group layers, composite state) reused across pages; renders
+     are serialized per document, so the pool needs no locking. */
+  exr_buffer_pool pool;
 };
 static exr_status copy_string(const char *source,size_t *bytes,const char **out,exr_error *e) {
   size_t n=0,at=0; uint32_t cp;
@@ -29,7 +33,7 @@ void exr_fixed_free(exr_fixed_document *d) {
   size_t i; if(!d) return;
   if(d->release) d->release(d->context);
   for(i=0;i<d->count;i++) { free((void *)d->pages[i].id); free((void *)d->pages[i].label); }
-  free(d->pages); free(d->title); free(d);
+  exr_buffer_pool_clear(&d->pool); free(d->pages); free(d->title); free(d);
 }
 exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **out,exr_error *e) {
   exr_fixed_input snapshot={0}; exr_fixed_document *d; exr_status status; size_t i,strings=0; const char *title=NULL; const char **ids=NULL;
@@ -58,6 +62,7 @@ exr_status exr_fixed_create(const exr_fixed_input *input,exr_fixed_document **ou
   if(!input->draw || (input->page_count && !input->pages)) return exr_fail(e,EXR_ARGUMENT,"Missing fixed page directory/provider");
   if(input->page_count>10000) return exr_fail(e,EXR_LIMIT,"Fixed document exceeds 10000 pages");
   d=calloc(1,sizeof(*d)); if(!d) return exr_fail(e,EXR_MEMORY,"Fixed document allocation failed");
+  { const char *enabled=getenv("EXR_BUFFER_POOL"); d->pool.disabled=enabled && !strcmp(enabled,"0"); }
   if(input->page_count) {
     d->pages=calloc(input->page_count,sizeof(*d->pages)); ids=calloc(input->page_count,sizeof(*ids));
     if(!d->pages || !ids) { status=exr_fail(e,EXR_MEMORY,"Fixed page directory allocation failed"); goto done; }
@@ -83,7 +88,7 @@ done:
 }
 const char *exr_fixed_title(const exr_fixed_document *d) { return d ? d->title : ""; }
 const exr_fixed_page *exr_fixed_pages(const exr_fixed_document *d,size_t *count) { if(count) *count=d ? d->count : 0; return d ? d->pages : NULL; }
-size_t exr_fixed_memory_size(const exr_fixed_document *d) { return d ? d->bytes : 0; }
+size_t exr_fixed_memory_size(const exr_fixed_document *d) { return d ? d->bytes+d->pool.bytes : 0; }
 static exr_status provider_end(exr_fixed_document *d,exr_status status,exr_error *local,exr_error *e) {
   d->busy=0;
   if(status!=EXR_OK) { local->code=status; if(!local->message[0]) exr_fail(local,status,"Fixed page provider failed"); if(e) *e=*local; return status; }
@@ -210,7 +215,7 @@ exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const
   status=exr_viewport_create(&d->pages[page].geometry,scale,&view,e); if(status!=EXR_OK) return status;
   if(view.width>16384 || view.height>16384) return exr_fail(e,EXR_LIMIT,"Fixed page bitmap dimensions exceed 16384");
   config.width=(uint32_t)ceil(view.width); config.height=(uint32_t)ceil(view.height);
-  status=exr_canvas_create(&config,&canvas,e); if(status!=EXR_OK) return status;
+  status=exr_canvas_create_pooled(&config,&d->pool,&canvas,e); if(status!=EXR_OK) return status;
   clip[0].verb=EXR_PATH_MOVE; clip[1].verb=EXR_PATH_LINE; clip[1].points[0]=(exr_path_point){view.width,0};
   clip[2].verb=EXR_PATH_LINE; clip[2].points[0]=(exr_path_point){view.width,view.height};
   clip[3].verb=EXR_PATH_LINE; clip[3].points[0]=(exr_path_point){0,view.height}; clip[4].verb=EXR_PATH_CLOSE;
