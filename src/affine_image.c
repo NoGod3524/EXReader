@@ -64,7 +64,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
   const exr_vector_texture *layers[16],*layer=source; size_t depth=0,cost=0;
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image blend mode");
   if(!storage(target) || !source || !m || !isfinite(alpha) || alpha<0 || alpha>1 ||
-     (clip && (!storage(clip) || clip->channels!=1 || clip->width!=target->width || clip->height!=target->height || overlap(target,clip))))
+     (clip && ((!exr_clip_rect(clip) && (!storage(clip) || clip->channels!=1 || overlap(target,clip))) || clip->width!=target->width || clip->height!=target->height)))
     return exr_fail(e,EXR_ARGUMENT,"Invalid affine image bitmap, alpha or clip");
   if(inks && (!storage(inks) || inks->channels!=4 || inks->width!=source->bitmap.width ||
       inks->height!=source->bitmap.height || overlap(target,inks) || source->has_matte))
@@ -96,11 +96,19 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
     left=fmin(left,px); right=fmax(right,px); top=fmin(top,py); bottom=fmax(bottom,py);
   }
   x0=(int)fmax(0,floor(left)); x1=(int)fmin(target->width,ceil(right)); y0=(int)fmax(0,floor(top)); y1=(int)fmin(target->height,ceil(bottom));
+  { const exr_clip_state *r=exr_clip_rect(clip);
+    if(r) {
+      if(r->kind==EXR_CLIP_NONE) return exr_fail(e,EXR_OK,"");
+      x0=x0>(int)r->left ? x0 : (int)r->left;x1=x1<(int)r->right ? x1 : (int)r->right;
+      y0=y0>(int)r->top ? y0 : (int)r->top;y1=y1<(int)r->bottom ? y1 : (int)r->bottom;
+      if(x0<x1 && y0<y1 && exr_clip_opaque(clip,(unsigned)x0,(unsigned)y0,(unsigned)x1,(unsigned)y1)) clip=NULL;
+    }
+  }
   for(y=y0;y<y1;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,(size_t)(x1>x0 ? x1-x0 : 0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
     for(x=x0;x<x1;x++) {
-      double sums[5]={0},shape_sum=0; unsigned sx,sy,k,coverage=clip ? clip->pixels[(size_t)y*clip->stride+(unsigned)x] : 255; uint32_t color=0;
+      double sums[5]={0},shape_sum=0; unsigned sx,sy,k,coverage=exr_clip_coverage(clip,(unsigned)x,(unsigned)y); uint32_t color=0;
       if(!coverage) continue;
       for(sy=0;sy<2;sy++) for(sx=0;sx<2;sx++) {
         double px=x+.25+.5*sx,py=y+.25+.5*sy,u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],s[5],sample_shape;

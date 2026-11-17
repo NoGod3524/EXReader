@@ -81,9 +81,8 @@ static void drawing_sink(void) {
 }
 static void failures(void) {
   exr_canvas *c=create(64); exr_path_segment rect[5]; exr_bitmap out; char message[256]; size_t i;
-  /* The first clip has to be a real sub-rectangle: a clip covering the whole canvas
-     allocates no mask at all, so it cannot consume the budget the second one exceeds. */
-  rectangle(rect,1,1,6,6); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error)); OK(exr_canvas_save(c,&error));
+  /* A non-rectangular clip still consumes the full mask budget. */
+  rectangle(rect,1,1,6,6); rect[2].points[0].x=5; OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error)); OK(exr_canvas_save(c,&error));
   CHECK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error)==EXR_LIMIT); snprintf(message,sizeof(message),"%s",error.message);
   CHECK(!exr_canvas_bitmap(c)); CHECK(exr_canvas_take(c,&out,&error)==EXR_LIMIT && !out.pixels && !strcmp(message,error.message)); exr_canvas_free(c);
   c=create(0); rect[0].points[0].x=NAN; CHECK(exr_canvas_path(c,rect,5,NULL,NULL,&error)==EXR_ARGUMENT); CHECK(exr_canvas_take(c,&out,&error)==EXR_ARGUMENT && !out.width); exr_canvas_free(c);
@@ -116,6 +115,77 @@ static void group_churn(void) {
   }
   exr_canvas_free(c);
 }
-int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }
+/* Two identical contours force MASK while retaining the rectangle rasterizer's
+   exact coverage. Compare RECT against that independent old mask path. */
+static void clip_rectangles(void) {
+  unsigned test,round;size_t i;
+  for(test=0;test<16;test++) {
+    exr_canvas *fast=create(0),*reference=create(0);exr_path_segment p[10],paint[5];
+    exr_draw_style style=exr_draw_style_defaults();
+    size_t before=exr_canvas_memory_size(fast);
+    for(round=0;round<3;round++) {
+      double x=round==0 ? .25 : round==1 ? 1.5 : (test&1 ? 7.5 : 1.5);
+      double y=(test&2) ? .125 : 1.,w=round==2 ? 2 : 5.25,h=(test&4) ? .375 : 5.5;
+      rectangle(p,x,y,w,h);memcpy(p+5,p,5*sizeof(*p));
+      OK(exr_canvas_clip(fast,p,5,NULL,EXR_FILL_NONZERO,&error));
+      OK(exr_canvas_clip(reference,p,10,NULL,EXR_FILL_NONZERO,&error));
+    }
+    CHECK(exr_canvas_memory_size(fast)<before+256);
+    if(test&4) {
+      exr_canvas *canvases[2]={fast,reference};unsigned k;
+      for(k=0;k<2;k++) {
+        exr_draw_sink sink={0};OK(exr_canvas_get_sink(canvases[k],&sink,&error));
+        OK(sink.state(sink.context,EXR_DRAW_BEGIN_CLIP,&error));rectangle(p,.5,.5,3,4);
+        OK(sink.clip(sink.context,p,5,NULL,EXR_FILL_NONZERO,1,&error));rectangle(p,4,1,2,3);
+        OK(sink.clip(sink.context,p,5,NULL,EXR_FILL_NONZERO,1,&error));
+        OK(sink.state(sink.context,EXR_DRAW_END_CLIP,&error));
+      }
+    }
+    /* A covering clip intersects the saved rectangle instead of clearing it. */
+    OK(exr_canvas_save(fast,&error));OK(exr_canvas_save(reference,&error));
+    rectangle(p,0,0,8,8);memcpy(p+5,p,5*sizeof(*p));
+    OK(exr_canvas_clip(fast,p,5,NULL,EXR_FILL_EVENODD,&error));
+    OK(exr_canvas_clip(reference,p,10,NULL,EXR_FILL_NONZERO,&error));
+    rectangle(paint,0,0,8,8);style.fill=0x2367a9c3;style.stroke=0x834521ab;
+    style.flags=(test&8) ? EXR_DRAW_FILL|EXR_DRAW_STROKE : EXR_DRAW_FILL;
+    OK(exr_canvas_path(fast,paint,5,NULL,&style,&error));OK(exr_canvas_path(reference,paint,5,NULL,&style,&error));
+    OK(exr_canvas_restore(fast,&error));OK(exr_canvas_restore(reference,&error));
+    { unsigned char rgba[4]={11,177,51,193};exr_image_layer image={0};const double matrix[6]={8,0,0,8,0,0};
+      image.bitmap.width=image.bitmap.height=1;image.bitmap.stride=image.bitmap.channels=4;image.bitmap.pixels=rgba;
+      OK(exr_canvas_image(fast,&image,matrix,.7,&error));OK(exr_canvas_image(reference,&image,matrix,.7,&error));
+    }
+    OK(exr_canvas_begin_layer(fast,.6,EXR_BLEND_NORMAL,&error));OK(exr_canvas_begin_layer(reference,.6,EXR_BLEND_NORMAL,&error));
+    style.flags=EXR_DRAW_FILL;style.fill=0x793ab1ff;
+    OK(exr_canvas_path(fast,paint,5,NULL,&style,&error));OK(exr_canvas_path(reference,paint,5,NULL,&style,&error));
+    OK(exr_canvas_end_layer(fast,1,&error));OK(exr_canvas_end_layer(reference,1,&error));
+    for(i=0;i<256;i++) CHECK(exr_canvas_bitmap(fast)->pixels[i]==exr_canvas_bitmap(reference)->pixels[i]);
+    exr_canvas_free(fast);exr_canvas_free(reference);
+  }
+  for(test=0;test<8;test++) {
+    exr_canvas *fast=create(0),*reference=create(0);exr_path_segment p[14],paint[5];size_t count=6;
+    rectangle(p,.125*test,.375,2.75,3.25);p[5]=p[4];p[4]=p[0];p[4].verb=EXR_PATH_LINE;
+    if(test&1) {
+      memmove(p+2,p+1,5*sizeof(*p));p[1]=p[0];p[1].verb=EXR_PATH_LINE;p[1].points[0].x+=1;count=7;
+    }
+    memcpy(p+count,p,count*sizeof(*p));
+    OK(exr_canvas_clip(fast,p,count,NULL,EXR_FILL_NONZERO,&error));
+    OK(exr_canvas_clip(reference,p,count*2,NULL,EXR_FILL_NONZERO,&error));
+    rectangle(paint,0,0,8,8);
+    OK(exr_canvas_path(fast,paint,5,NULL,NULL,&error));OK(exr_canvas_path(reference,paint,5,NULL,NULL,&error));
+    CHECK(!memcmp(exr_canvas_bitmap(fast)->pixels,exr_canvas_bitmap(reference)->pixels,256));
+    exr_canvas_free(fast);exr_canvas_free(reference);
+  }
+  { exr_canvas *c=create(1);exr_path_segment p[5];exr_draw_style style=exr_draw_style_defaults();
+    rectangle(p,1,1,2,2);OK(exr_canvas_clip(c,p,5,NULL,EXR_FILL_NONZERO,&error));
+    OK(exr_canvas_save(c,&error));rectangle(p,5,5,1,1);OK(exr_canvas_clip(c,p,5,NULL,EXR_FILL_NONZERO,&error));
+    /* Compound drawing would allocate two masks if the empty draw were entered. */
+    style.flags=EXR_DRAW_FILL|EXR_DRAW_STROKE;rectangle(p,0,0,8,8);
+    OK(exr_canvas_path(c,p,5,NULL,&style,&error));pixel(exr_canvas_bitmap(c),1,1,255,255,255);
+    OK(exr_canvas_restore(c,&error));style.flags=EXR_DRAW_FILL;
+    OK(exr_canvas_path(c,p,5,NULL,&style,&error));pixel(exr_canvas_bitmap(c),1,1,0,0,0);
+    exr_canvas_free(c);
+  }
+}
+int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); clip_rectangles(); printf("%u native canvas checks passed\n",checks); return 0; }
 
 

@@ -97,9 +97,11 @@ static void soft_mask_budget(void) {
   for(limit=64;limit<=68;limit+=4) {
     exr_canvas_config cfg={0};exr_canvas *c=NULL;exr_draw_sink_ex sink={0};
     unsigned char mask[64];double matrix[6]={.25,0,0,.25,2,2};size_t before;
+    exr_path_segment clip[5];memcpy(clip,rect,sizeof(clip));clip[2].points[0].x=7;
+    /* A trapezoid retains full-mask budget coverage after RECT optimization. */
     cfg.width=cfg.height=8;cfg.channels=4;cfg.mask_budget=limit;
     OK(exr_canvas_create(&cfg,&c,&error));
-    OK(exr_canvas_clip(c,rect,5,matrix,EXR_FILL_NONZERO,&error));
+    OK(exr_canvas_clip(c,clip,5,matrix,EXR_FILL_NONZERO,&error));
     OK(exr_canvas_begin_layer(c,1,EXR_BLEND_NORMAL,&error));
     before=exr_canvas_memory_size(c);sink.struct_size=sizeof(sink);
     OK(exr_canvas_get_sink_ex(c,&sink,&error));memset(mask,128,sizeof(mask));

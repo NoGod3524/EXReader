@@ -1,0 +1,24 @@
+{
+  "library": "build\\cliprect\\final\\libexreader.dll",
+  "input": "tests\\fixtures\\pdf-ppt\\deck.pdf",
+  "runs": 12,
+  "repeat": 2,
+  "idle_cpu_percent": 8.98,
+  "widths": {
+    "1200": {
+      "p50_ms_repeats": [
+        234.672,
+        237.511
+      ],
+      "p95_ms_repeats": [
+        246.655,
+        247.731
+      ],
+      "p50_ms_median": 237.511,
+      "p50_ms_best": 234.672,
+      "p95_ms_median": 247.731,
+      "spread_percent": 1.2,
+      "open_ms_median": 0.155
+    }
+  }
+}

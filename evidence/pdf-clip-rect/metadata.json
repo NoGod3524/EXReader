@@ -1,0 +1,16 @@
+{
+  "baseline_commit": "baf348d2d",
+  "baseline_dll_sha256": "55603eac5492fbe7e911b88fa8592a6854dc8c4ca07180b5a171a9cd10c0621e",
+  "final_dll_sha256": "e5c7b4bfabe7afe161e9baa7a6b7a711453ea5c8a684586c564f1b71d1f07138",
+  "fixture_sha256": {
+    "pdf-ppt/deck.pdf": "b1549f6bdb6c3d51c456e5222ba8efaa7487558e6d2ace106bdb4059d8ef2204",
+    "pdf-hybrid-real/pptx-20.pdf": "2bfb94aa6905f27915e309b3c820fef3ba13492dddedfb93d97a10e8d7679729"
+  },
+  "benchmark_script_sha256": "2aecfb83f1da1df8f76764f86ef55ebfc4239458d1e19e6b552951aedac9e566",
+  "compiler": "GCC 16.2.0, MinGW UCRT, Release -O3 -DNDEBUG -std=c11 -Wall -Wextra -Wpedantic -Werror",
+  "runs": 12,
+  "repeat": 2,
+  "warmup_rounds": 1,
+  "idle_threshold_percent": 15,
+  "ctest": "577/577, 76.68 seconds"
+}

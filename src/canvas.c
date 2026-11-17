@@ -31,7 +31,15 @@ static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
   mask=calloc(1,sizeof(*mask)); if(!mask) return exr_fail(e,EXR_MEMORY,"Canvas clip mask allocation failed");
   mask->bitmap=c->bitmap; mask->bitmap.channels=1; mask->bitmap.stride=c->bitmap.width; mask->bitmap.pixels=calloc(bytes,1);
   if(!mask->bitmap.pixels) { free(mask); return exr_fail(e,EXR_MEMORY,"Canvas clip pixel allocation failed"); }
-  mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
+  mask->refs=1; mask->kind=EXR_CLIP_MASK; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
+}
+/* Called only for a newly built, unshared mask. Empty masks become the same
+   constant-size NONE state as disjoint rectangle intersections. */
+static void collapse_empty_mask(exr_canvas *c,exr_clip_mask *mask) {
+  size_t i,bytes=(size_t)mask->bitmap.stride*mask->bitmap.height;
+  for(i=0;i<bytes;i++) if(mask->bitmap.pixels[i]) return;
+  free(mask->bitmap.pixels);mask->bitmap.pixels=NULL;mask->bitmap.stride=0;
+  mask->bitmap.channels=EXR_CLIP_PROCEDURAL;mask->kind=EXR_CLIP_NONE;c->mask_bytes-=bytes;
 }
 /* The soft mask rides on the composite state so every pixel writer applies it. */
 static exr_composite_state *masked_state(exr_canvas *c) {
@@ -185,6 +193,7 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
   double offset_matrix[6];const double *transform=transform_arg;exr_draw_style gray_style;
   exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=ready(c,e);
   if(status!=EXR_OK) return status;
+  if(exr_clip_empty(c->clip)) return finish(c,EXR_OK,e);
   if(!style) style=&defaults;
   if((cmyk_fill || cmyk_stroke) && c->gray_groups)
     return finish(c,exr_fail(e,EXR_UNSUPPORTED,"CMYK paints inside a DeviceGray group are not supported"),e);
@@ -246,6 +255,7 @@ exr_status exr_canvas_path_cmyk(exr_canvas *c,const exr_path_segment *segments,s
                                   const exr_draw_style *style,const double fill[4],const double stroke[4],exr_error *e) {
   exr_draw_style converted=exr_draw_style_defaults();unsigned k,target;
   exr_status status=ready(c,e);if(status!=EXR_OK) return status;
+  if(exr_clip_empty(c->clip)) return finish(c,EXR_OK,e);
   if(!fill || !stroke) return finish(c,exr_fail(e,EXR_ARGUMENT,"Missing CMYK paint components"),e);
   for(k=0;k<8;k++) { const double *v=k<4?fill:stroke; if(!isfinite(v[k&3]) || v[k&3]<0 || v[k&3]>1)
     return finish(c,exr_fail(e,EXR_ARGUMENT,"CMYK components must be finite and between 0 and 1"),e); }
@@ -263,40 +273,112 @@ exr_status exr_canvas_path_cmyk(exr_canvas *c,const exr_path_segment *segments,s
   }
   return path_impl(c,segments,count,matrix,style,fill,stroke,e);
 }
-/* A clip that covers the whole canvas is the identity: keeping it as a mask makes
-   every later draw read a full-page coverage buffer and disables the unmasked fast
-   paths, which is what a plain fixed-page render used to pay for. */
-static int covers_canvas(const exr_canvas *c,const exr_vector_polyline *path) {
-  const exr_vector_contour *contour; const exr_vector_point *p; double minx,miny,maxx,maxy,eps; size_t i;
-  if(!path || path->contour_count!=1 || !path->contours || !path->points) return 0;
-  contour=&path->contours[0];
-  if(contour->count<4 || contour->count>8 || contour->start>=path->point_count ||
-     contour->start+contour->count>path->point_count) return 0;
-  eps=1e-6*fmax(1.0,fmax((double)c->bitmap.width,(double)c->bitmap.height));
-  minx=maxx=path->points[contour->start].x; miny=maxy=path->points[contour->start].y;
-  for(i=0;i<contour->count;i++) {
-    p=&path->points[contour->start+i];
-    if(!isfinite(p->x) || !isfinite(p->y)) return 0;
-    if(p->x<minx) { minx=p->x; }
-    if(p->x>maxx) { maxx=p->x; }
-    if(p->y<miny) { miny=p->y; }
-    if(p->y>maxy) { maxy=p->y; }
+/* Match the rasterizer's rectangle test, including its tighter roundoff cap:
+   a merely near-axis polygon may have different scanline coverage. */
+static int rectangle_clip(const exr_canvas *c,const exr_vector_polyline *path,exr_clip_state *out) {
+  const exr_vector_point *p;size_t i,n;double x0,y0,x1,y1,eps;
+  unsigned sides=0,first=0,previous=0,turns=0;int analytic,direction=0;
+  if(path->contour_count!=1) return 0;
+  n=path->contours[0].count;p=path->points+path->contours[0].start;analytic=n==4;
+  if(n<4) return 0;
+  x0=x1=p[0].x;y0=y1=p[0].y;
+  for(i=1;i<n;i++) { x0=fmin(x0,p[i].x);x1=fmax(x1,p[i].x);y0=fmin(y0,p[i].y);y1=fmax(y1,p[i].y); }
+  if(x0==x1 || y0==y1) { out->kind=EXR_CLIP_NONE;return 1; }
+  eps=fmin(1e-6*fmax(c->bitmap.width,c->bitmap.height),
+    fmin(1e-6,1e-9*fmax(1,fmax(fmax(fabs(x0),fabs(x1)),fmax(fabs(y0),fabs(y1))))));
+  if(!analytic) eps=0; /* Extra vertices use the scanline rasterizer. */
+  for(i=0;i<n;i++) {
+    const exr_vector_point *a=&p[i],*b=&p[(i+1)%n];unsigned side=0;int dir;
+    if(!analytic && a->x==b->x && a->y==b->y) continue;
+    if(!analytic) {
+      if(a->x==b->x) side=a->x==x0 ? 1u : a->x==x1 ? 2u : 0u;
+      else if(a->y==b->y) side=a->y==y0 ? 4u : a->y==y1 ? 8u : 0u;
+    } else if(fabs(a->x-b->x)<=eps &&
+       ((fabs(a->y-y0)<=eps && fabs(b->y-y1)<=eps) || (fabs(a->y-y1)<=eps && fabs(b->y-y0)<=eps)))
+      side=fabs(a->x-x0)<=eps ? 1u : fabs(a->x-x1)<=eps ? 2u : 0u;
+    else if(fabs(a->y-b->y)<=eps &&
+       ((fabs(a->x-x0)<=eps && fabs(b->x-x1)<=eps) || (fabs(a->x-x1)<=eps && fabs(b->x-x0)<=eps)))
+      side=fabs(a->y-y0)<=eps ? 4u : fabs(a->y-y1)<=eps ? 8u : 0u;
+    if(!side || (analytic && (sides&side))) return 0;
+    dir=(side==1 ? b->y<a->y : side==2 ? b->y>a->y : side==4 ? b->x>a->x : b->x<a->x) ? 1 : -1;
+    if(direction && direction!=dir) return 0;
+    direction=dir;
+    if(!first) first=side;
+    if(previous && previous!=side) turns++;
+    previous=side;
+    sides|=side;
   }
-  if(fabs(minx)>eps || fabs(miny)>eps) return 0;
-  if(fabs(maxx-(double)c->bitmap.width)>eps || fabs(maxy-(double)c->bitmap.height)>eps) return 0;
-  for(i=0;i<contour->count;i++) {
-    p=&path->points[contour->start+i];
-    if((fabs(p->x-minx)>eps && fabs(p->x-maxx)>eps) || (fabs(p->y-miny)>eps && fabs(p->y-maxy)>eps)) return 0;
+  if(previous!=first) turns++;
+  if(sides!=15 || turns!=4) return 0;
+  out->kind=EXR_CLIP_RECT;
+  out->left=(uint32_t)fmax(0,fmin(c->bitmap.width,floor(x0)));
+  out->right=(uint32_t)fmax(0,fmin(c->bitmap.width,ceil(x1)));
+  out->top=(uint32_t)fmax(0,fmin(c->bitmap.height,floor(y0)));
+  out->bottom=(uint32_t)fmax(0,fmin(c->bitmap.height,ceil(y1)));
+  if(out->left>=out->right || out->top>=out->bottom) { out->kind=EXR_CLIP_NONE;return 1; }
+  for(i=0;i<9;i++) {
+    uint32_t x=i%3==0 ? out->left : i%3==2 ? out->right-1 : (out->left+1<out->right ? out->left+1 : out->left);
+    uint32_t y=i/3==0 ? out->top : i/3==2 ? out->bottom-1 : (out->top+1<out->bottom ? out->top+1 : out->top);
+    double w=fmin(x1,x+1.)-fmax(x0,x),h=fmin(y1,y+1.)-fmax(y0,y);
+    if(analytic) out->coverage[i]=(unsigned char)floor(fmax(0,w)*fmax(0,h)*255+.5);
+    else {
+      float coverage=0;unsigned sample;
+      for(sample=0;sample<4;sample++) {
+        double scan=y+(sample+.5)/4;
+        if(scan>=y0 && scan<y1) coverage+=(float)fmax(0,w);
+      }
+      out->coverage[i]=(unsigned char)fmin(255,floor(coverage*255/4+.5));
+    }
   }
   return 1;
+}
+static exr_status intersect_rectangle(exr_canvas *c,exr_clip_state *rect,int *handled,exr_error *e) {
+  const exr_clip_state *old=c->clip;exr_clip_state *next;unsigned i,any=0;
+  *handled=0;
+  if(rect->kind==EXR_CLIP_RECT && !rect->left && !rect->top &&
+     rect->right==c->bitmap.width && rect->bottom==c->bitmap.height) {
+    int opaque=1;for(i=0;i<9;i++) if(rect->coverage[i]!=255) opaque=0;
+    if(opaque) { *handled=1;return EXR_OK; }
+  }
+  if(old && old->kind==EXR_CLIP_MASK && rect->kind!=EXR_CLIP_NONE) return EXR_OK;
+  *handled=1;
+  if(old && old->kind==EXR_CLIP_NONE) return EXR_OK;
+  if(old && rect->kind!=EXR_CLIP_NONE) {
+    exr_clip_state original=*rect;
+    rect->left=rect->left>old->left ? rect->left : old->left;rect->right=rect->right<old->right ? rect->right : old->right;
+    rect->top=rect->top>old->top ? rect->top : old->top;rect->bottom=rect->bottom<old->bottom ? rect->bottom : old->bottom;
+    if(rect->left>=rect->right || rect->top>=rect->bottom) rect->kind=EXR_CLIP_NONE;
+    else for(i=0;i<9;i++) {
+      uint32_t x=i%3==0 ? rect->left : i%3==2 ? rect->right-1 : (rect->left+1<rect->right ? rect->left+1 : rect->left);
+      uint32_t y=i/3==0 ? rect->top : i/3==2 ? rect->bottom-1 : (rect->top+1<rect->bottom ? rect->top+1 : rect->top);
+      rect->coverage[i]=(unsigned char)((exr_clip_coverage(&original.bitmap,x,y)*exr_clip_coverage(&old->bitmap,x,y)+127)/255);
+    }
+  }
+  for(i=0;i<9;i++) any|=rect->coverage[i];
+  if(!any) rect->kind=EXR_CLIP_NONE;
+  next=malloc(sizeof(*next));if(!next) return exr_fail(e,EXR_MEMORY,"Canvas rectangle clip allocation failed");
+  *next=*rect;next->refs=1;c->mask_count++;unref(c,c->clip);c->clip=next;return EXR_OK;
+}
+static exr_status clip_finish(exr_canvas *c,exr_status status,int group,exr_error *e) {
+#ifdef EXR_CLIP_PROFILE
+  if(status==EXR_OK) fprintf(stderr,"EXR_CLIP %d\n",group ? EXR_CLIP_MASK : c->clip ? c->clip->kind : EXR_CLIP_RECT);
+#else
+  (void)group;
+#endif
+  return finish(c,status,e);
 }
 static exr_status clip_path(exr_canvas *c,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,int group,exr_error *e) {
   exr_vector_polyline flat={0}; exr_clip_mask *mask=NULL; exr_status status=ready(c,e);
   if(status!=EXR_OK) return status;
   { double local[6]; const double *use=shifted(c,matrix,local);
     status=exr_vector_flatten(segments,count,use,.125,&flat,&c->work,&c->control,e); }
-  if(status==EXR_OK && !group && covers_canvas(c,&flat)) {
-    unref(c,c->clip); c->clip=NULL; exr_vector_polyline_free(&flat); return finish(c,EXR_OK,e);
+  if(status==EXR_OK && !group) {
+    exr_clip_state rect={0};int handled=0;
+    rect.bitmap.width=c->bitmap.width;rect.bitmap.height=c->bitmap.height;rect.bitmap.channels=EXR_CLIP_PROCEDURAL;
+    if(rule!=EXR_FILL_NONZERO && rule!=EXR_FILL_EVENODD) status=exr_fail(e,EXR_ARGUMENT,"Invalid canvas clip rule");
+    else if(exr_clip_empty(c->clip)) handled=1;
+    else if(!flat.point_count || rectangle_clip(c,&flat,&rect)) status=intersect_rectangle(c,&rect,&handled,e);
+    if(status!=EXR_OK || handled) { exr_vector_polyline_free(&flat);return clip_finish(c,status,group,e); }
   }
   if(status==EXR_OK && group) {
     if(!c->group) status=new_mask(c,&c->group,e);
@@ -304,9 +386,9 @@ static exr_status clip_path(exr_canvas *c,const exr_path_segment *segments,size_
   } else if(status==EXR_OK) {
     status=new_mask(c,&mask,e);
     if(status==EXR_OK) status=fill(c,&flat,rule,0xffffffff,&mask->bitmap,c->clip,e);
-    if(status==EXR_OK) { unref(c,c->clip); c->clip=mask; mask=NULL; }
+    if(status==EXR_OK) { collapse_empty_mask(c,mask);unref(c,c->clip); c->clip=mask; mask=NULL; }
   }
-  unref(c,mask); exr_vector_polyline_free(&flat); return finish(c,status,e);
+  unref(c,mask); exr_vector_polyline_free(&flat); return clip_finish(c,status,group,e);
 }
 exr_status exr_canvas_clip(exr_canvas *c,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,exr_error *e) {
   return clip_path(c,segments,count,matrix,rule,0,e);
@@ -322,15 +404,16 @@ exr_status exr_canvas_union_commit(exr_canvas *c,exr_error *e) {
     if(!exr_vector_work(&c->work,c->bitmap.width)) return finish(c,exr_fail(e,EXR_LIMIT,"Canvas clip union work exceeds budget"),e);
     for(x=0;x<c->bitmap.width;x++) {
       unsigned char *p=c->group->bitmap.pixels+(size_t)y*c->group->bitmap.stride+x;
-      *p=(unsigned char)(((unsigned)*p*c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x]+127)/255);
+      *p=(unsigned char)(((unsigned)*p*exr_clip_coverage(&c->clip->bitmap,x,y)+127)/255);
     }
   }
-  if(c->group) { unref(c,c->clip); c->clip=c->group; c->group=NULL; }
+  if(c->group) { collapse_empty_mask(c,c->group);unref(c,c->clip); c->clip=c->group; c->group=NULL; }
   return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
   const double *use;double local[6];
   exr_status status=ready(c,e);if(status!=EXR_OK) return status;
+  if(exr_clip_empty(c->clip)) return finish(c,EXR_OK,e);
   use=shifted(c,matrix,local);
   status=exr_vector_texture_blend(&c->bitmap,image,use,alpha,c->clip ? &c->clip->bitmap : NULL,c->blend,masked_state(c),&c->work,&c->control,e);
   return finish(c,status,e);
@@ -338,6 +421,7 @@ exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const dou
 exr_status exr_canvas_image_cmyk(exr_canvas *c,const exr_image_layer *image,const exr_bitmap *inks,const double matrix[6],double alpha,exr_error *e) {
   const double *use;double local[6];exr_status status=ready(c,e);if(status!=EXR_OK) return status;
   if(!inks) return finish(c,exr_fail(e,EXR_ARGUMENT,"Missing native CMYK image samples"),e);
+  if(exr_clip_empty(c->clip)) return finish(c,EXR_OK,e);
   use=shifted(c,matrix,local);
   status=exr_vector_texture_blend_inks(&c->bitmap,image,inks,use,alpha,c->clip ? &c->clip->bitmap : NULL,
     c->blend,masked_state(c),&c->work,&c->control,e);
@@ -354,6 +438,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
     return finish(c,exr_fail(e,EXR_ARGUMENT,"Unsupported paint source extension"),e);
   source=*input;if(!source.sample) return finish(c,exr_fail(e,EXR_ARGUMENT,"Missing paint source sampler"),e);
   for(unsigned k=0;k<6;k++) if(!isfinite(m[k]) || fabs(m[k])>1e7) return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid paint source transform"),e);
+  if(exr_clip_empty(c->clip)) return finish(c,EXR_OK,e);
   state=masked_state(c);
   for(unsigned k=0;k<4;k++) scale=fmax(scale,fabs(m[k]));
   if(!scale) return finish(c,EXR_OK,e);
@@ -365,10 +450,13 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
   for(unsigned k=0;k<6;k++) if(!isfinite(inv[k])) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source inverse exceeds precision"),e);
   space=c->cmyk_groups ? EXR_GROUP_CMYK : EXR_GROUP_RGB;components=c->cmyk_groups ? 4 : 3;
   cost=32+(state ? 20+state->depth*4 : 0)+(c->blend==EXR_BLEND_NORMAL ? 16 : c->blend<EXR_BLEND_HUE ? 40 : 80);
-  for(unsigned y=0;y<c->bitmap.height;y++) {
+  for(unsigned y=c->clip && c->clip->kind==EXR_CLIP_RECT ? c->clip->top : 0;
+      y<(c->clip && c->clip->kind==EXR_CLIP_RECT ? c->clip->bottom : c->bitmap.height);y++) {
     unsigned first=0,last=c->bitmap.width;size_t active=c->bitmap.width;
     status=exr_control_cancel(&c->control,e);if(status!=EXR_OK) return finish(c,status,e);
-    if(c->clip) {
+    if(c->clip && c->clip->kind==EXR_CLIP_RECT) {
+      first=c->clip->left;last=c->clip->right;active=last-first;
+    } else if(c->clip) {
       const unsigned char *row=c->clip->bitmap.pixels+(size_t)y*c->clip->bitmap.stride;
       if(!exr_vector_work(&c->work,c->bitmap.width)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source clip scan exceeds work budget"),e);
       first=c->bitmap.width;last=0;active=0;
@@ -380,7 +468,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
     }
     if(!exr_vector_work(&c->work,active*cost+(c->clip ? last-first : 0))) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
     for(unsigned x=first;x<last;x++) {
-      unsigned coverage=c->clip ? c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x] : 255;
+      unsigned coverage=c->clip ? exr_clip_coverage(&c->clip->bitmap,x,y) : 255;
       double colors[4]={0},sum_alpha=0,sum_shape=0,object_alpha,object_shape;
       if(!coverage) continue;
       for(unsigned sy=0;sy<2;sy++) for(unsigned sx=0;sx<2;sx++) {
@@ -569,13 +657,19 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   if(cmyk && !c->cmyk_profile) { status=exr_icc_default_cmyk(&c->control,&c->cmyk_profile,e);if(status!=EXR_OK) return finish(c,status,e); }
   needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT) || cmyk || track_shape;
   region_width=c->bitmap.width;region_height=c->bitmap.height;
-  if(c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
+  if(c->clip && c->clip->kind!=EXR_CLIP_MASK && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
+    if(exr_clip_empty(c->clip)) region_width=region_height=1;
+    else if((size_t)(c->clip->right-c->clip->left)*(c->clip->bottom-c->clip->top)<=region_width*region_height/2) {
+      region_x=(int)c->clip->left;region_y=(int)c->clip->top;
+      region_width=c->clip->right-c->clip->left;region_height=c->clip->bottom-c->clip->top;
+    }
+  } else if(c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
     size_t x0=region_width,y0=region_height,x1=0,y1=0,xx,yy;
     for(yy=0;yy<region_height;yy++) {
       if(exr_control_cancel(&c->control,e)!=EXR_OK) return finish(c,EXR_CANCELLED,e);
       if(!exr_vector_work(&c->work,region_width)) return finish(c,exr_fail(e,EXR_LIMIT,"Group clip scan exceeds work budget"),e);
       for(xx=0;xx<region_width;xx++) {
-        if(!c->clip->bitmap.pixels[yy*c->clip->bitmap.stride+xx]) continue;
+        if(!exr_clip_coverage(&c->clip->bitmap,xx,yy)) continue;
         if(xx<x0) x0=xx;
         if(xx>=x1) x1=xx+1;
         if(yy<y0) y0=yy;
@@ -587,6 +681,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     }
     else if(x1==0 || y1==0) region_width=region_height=1;
   }
+  if(exr_clip_empty(c->clip)) region_width=region_height=1;
   count=region_width*region_height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4)+(cmyk ? count*6*sizeof(float) : 0)+
     (track_shape ? count*sizeof(float) : 0);
   if(c->layer_depth==32 || bytes>64*1024*1024 || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
@@ -635,6 +730,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   c->cmyk_groups=cmyk;
   layer.opacity=opacity;layer.blend=mode;layer.parent_blend=c->blend;c->layers[c->layer_depth++]=layer;c->layer_bytes+=bytes;
   c->bitmap=next;c->composite=state;c->clip=c->group=NULL;c->group_depth=0;c->blend=EXR_BLEND_NORMAL;memset(c->groups,0,sizeof(c->groups));
+  if(exr_clip_empty(layer.clip)) { c->clip=layer.clip;c->clip->refs++; }
   c->soft_mask=c->soft_mask_owned=NULL;c->soft_mask_width=c->soft_mask_height=0;
   c->offset_x=layer.parent_offset_x+region_x;c->offset_y=layer.parent_offset_y+region_y;
   /* Keep the inherited clip on the parent; group commit applies it once. */
@@ -657,7 +753,7 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   c->soft_mask_width=layer.soft_mask_width;c->soft_mask_height=layer.soft_mask_height;
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);
   c->layer_depth--;c->layer_bytes-=(size_t)source.stride*source.height+composite_size(&source,source_state);memset(c->layers+c->layer_depth,0,sizeof(*c->layers));
-  if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);
+  if(commit && status==EXR_OK && !exr_clip_empty(c->clip)) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);
   composite_free(source_state);free(source.pixels);for(i=c->depth;i<160;i++) c->saved_blend[i]=EXR_BLEND_NORMAL;
   return finish(c,status,e);
 }

@@ -1,0 +1,24 @@
+{
+  "library": "build\\cliprect\\baseline\\libexreader.dll",
+  "input": "tests\\fixtures\\pdf-hybrid-real\\pptx-20.pdf",
+  "runs": 12,
+  "repeat": 2,
+  "idle_cpu_percent": 3.11,
+  "widths": {
+    "1200": {
+      "p50_ms_repeats": [
+        3.495,
+        3.506
+      ],
+      "p95_ms_repeats": [
+        4.168,
+        4.2
+      ],
+      "p50_ms_median": 3.506,
+      "p50_ms_best": 3.495,
+      "p95_ms_median": 4.2,
+      "spread_percent": 0.3,
+      "open_ms_median": 0.102
+    }
+  }
+}

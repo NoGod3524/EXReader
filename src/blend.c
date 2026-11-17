@@ -286,6 +286,7 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
   size_t y,x,left=source_state->left,top=source_state->top,right=source_state->right,bottom=source_state->bottom;
   unsigned cost=mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64;
   int dst_cmyk=target_state && target_state->cmyk_pixels;
+  if(exr_clip_opaque(clip,left+(size_t)origin_x,top+(size_t)origin_y,right+(size_t)origin_x,bottom+(size_t)origin_y)) clip=NULL;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   for(y=top;y<bottom;y++) {
     size_t ty=y+(size_t)origin_y;
@@ -294,7 +295,7 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
     for(x=left;x<right;x++) {
       size_t tx=x+(size_t)origin_x;
       const float *q=source_state->cmyk_pixels+((size_t)y*source->width+x)*6;
-      double covered=clip ? clip->pixels[ty*clip->stride+tx]/255. : 1,base_alpha,alpha,src[4],back[5],out[5],obj;
+      double covered=exr_clip_coverage(clip,tx,ty)/255.,base_alpha,alpha,src[4],back[5],out[5],obj;
       double shape=source_state->shape ? source_state->shape[y*source->width+x] : 1,object_opacity=opacity;unsigned k;
       if(target_state && target_state->soft_mask) object_opacity*=
         tx<target_state->soft_mask_width && ty<target_state->soft_mask_height ? target_state->soft_mask[ty*target_state->soft_mask_width+tx]/255. : 0;
@@ -355,14 +356,14 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     return frame_cmyk(target,source,opacity,mode,clip,target_state,source_state,origin_x,origin_y,work,control,e);
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   if(source_state) { left=source_state->left;top=source_state->top;right=source_state->right;bottom=source_state->bottom; }
+  if(exr_clip_opaque(clip,left+(size_t)origin_x,top+(size_t)origin_y,right+(size_t)origin_x,bottom+(size_t)origin_y)) clip=NULL;
   for(y=top;y<bottom;y++) {
     size_t ty=y+(size_t)origin_y;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,right-left)) return exr_fail(e,EXR_LIMIT,"Layer composite work budget exceeded");
     if(plain) {
-      const unsigned char *mask=clip ? clip->pixels+ty*clip->stride+(size_t)origin_x : NULL;
       unsigned covered=255;
-      for(x=left;mask && x<right;x++) covered&=mask[x];
+      for(x=left;clip && x<right;x++) covered&=exr_clip_coverage(clip,x+(size_t)origin_x,ty);
       /* Reserve the maximum blend charge. Near the limit, retain the generic
          loop's partial-row writes and exact failure point. */
       if(covered==255 && exr_vector_work(work,right-left)) {
@@ -385,7 +386,7 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     for(x=left;x<right;x++) {
       size_t tx=x+(size_t)origin_x;
       unsigned char gray_pixel[4];const unsigned char *p=source->pixels+y*source->stride+x*4;
-      unsigned a,coverage=clip ? clip->pixels[ty*clip->stride+tx] : 255;uint32_t color;
+      unsigned a,coverage=exr_clip_coverage(clip,tx,ty);uint32_t color;
       double shape=source_state && source_state->shape ? source_state->shape[y*source->width+x] : 1,object_opacity=opacity;
       if(target_state && target_state->soft_mask) {
         unsigned mask=tx<target_state->soft_mask_width && ty<target_state->soft_mask_height ? target_state->soft_mask[ty*target_state->soft_mask_width+tx] : 0;
@@ -468,7 +469,7 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
     for(x=0;x<target->width;x++) {
       unsigned char *p=target->pixels+y*target->stride+x*target->channels,fp[4]={0},sp[4]={0};
-      double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
+      double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=exr_clip_coverage(clip,x,y)/255.;
       double fw,sw,bw,fa,sa,ba,a,m=1;unsigned channel;
       exr_bitmap first={1,1,target->channels,fp,target->channels},second={1,1,target->channels,sp,target->channels};
       if((fill_color&255) || (stroke_color&255) || !(state && (state->knockout || state->shape))) {
@@ -523,7 +524,7 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
     for(x=0;x<target->width;x++) {
-      double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
+      double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=exr_clip_coverage(clip,x,y)/255.;
       double fw,sw,bw,m=1,back[5],base[5],fr[5],sr[5],out[5],af=fill_alpha,as=stroke_alpha,opacity_mask,shape_mask=1;unsigned c;
       if(fill_alpha>0 || stroke_alpha>0 || !(state->knockout || state->shape)) {
         if(fill_alpha<=0) f=0;

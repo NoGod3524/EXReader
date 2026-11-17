@@ -1,0 +1,54 @@
+{
+  "library": "build\\cliprect\\final\\libexreader.dll",
+  "input": "tests\\fixtures\\pdf-hybrid-real\\pptx-20.pdf",
+  "runs": 12,
+  "repeat": 2,
+  "idle_cpu_percent": 7.51,
+  "widths": {
+    "600": {
+      "p50_ms_repeats": [
+        2.971,
+        2.985
+      ],
+      "p95_ms_repeats": [
+        3.562,
+        3.646
+      ],
+      "p50_ms_median": 2.985,
+      "p50_ms_best": 2.971,
+      "p95_ms_median": 3.646,
+      "spread_percent": 0.5,
+      "open_ms_median": 0.147
+    },
+    "1200": {
+      "p50_ms_repeats": [
+        3.471,
+        3.539
+      ],
+      "p95_ms_repeats": [
+        4.047,
+        4.258
+      ],
+      "p50_ms_median": 3.539,
+      "p50_ms_best": 3.471,
+      "p95_ms_median": 4.258,
+      "spread_percent": 2.0,
+      "open_ms_median": 0.117
+    },
+    "2400": {
+      "p50_ms_repeats": [
+        11.322,
+        11.369
+      ],
+      "p95_ms_repeats": [
+        12.182,
+        12.693
+      ],
+      "p50_ms_median": 11.369,
+      "p50_ms_best": 11.322,
+      "p95_ms_median": 12.693,
+      "spread_percent": 0.4,
+      "open_ms_median": 0.125
+    }
+  }
+}

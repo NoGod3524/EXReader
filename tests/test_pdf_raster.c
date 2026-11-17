@@ -44,9 +44,9 @@ static void clip_cases(exr_pdf_file *file,uint32_t resources) {
   for(i=0;i<120;i++) at+=(size_t)snprintf(content+at,sizeof(content)-at,"q ");
   at+=(size_t)snprintf(content+at,sizeof(content)-at,"0 g 0 0 12 12 re f ");
   for(i=0;i<120;i++) at+=(size_t)snprintf(content+at,sizeof(content)-at,"Q ");
-  b=render(file,resources,content,1,144); pixel(&b,1,1,0,0,0); free(b.pixels); /* 120 saves share one 144-byte mask. */
-  config.width=config.height=12; config.channels=1; config.background=0xffffffff; config.mask_budget=100; /* the inner 6x6 clip is 144 bytes, the page clip is free */
-  { const char *s="0 0 12 12 re W n q 0 0 6 6 re W n Q"; CHECK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels && !b.width); }
+  b=render(file,resources,content,1,144); pixel(&b,1,1,0,0,0); free(b.pixels); /* 120 saves share the unrestricted clip. */
+  config.width=config.height=12; config.channels=1; config.background=0xffffffff; config.mask_budget=100; /* A non-rectangular clip still needs a 144-byte mask. */
+  { const char *s="0 0 12 12 re W n q 0 0 m 6 0 l 5 6 l 0 6 l h W n Q"; CHECK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels && !b.width); }
 }
 static int cancelled(void *ctx) { (void)ctx; return 1; }
 typedef struct { size_t paths,clips,states,images; int stop; } inspection;
@@ -224,12 +224,11 @@ int main(int argc,char **argv) {
   }
   config.width=0; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
   config.width=12; control.cancelled=cancelled; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,&control,&b,&error)==EXR_CANCELLED && !b.pixels);
-  /* The initial clip must be a real sub-rectangle: a clip covering the whole canvas
-     allocates no mask, so it cannot be what exhausts the budget below. */
+  /* Initial rectangular clips also work below the full-page mask budget. */
   { double clip[4]={1,1,11,11}; config.initial_clip=clip;
     clip[0]=NAN; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
     clip[0]=13; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
-    clip[0]=0; config.mask_budget=143; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
+    clip[0]=0; config.mask_budget=1; OK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)); CHECK(b.pixels); free(b.pixels);
     config.initial_clip=NULL; config.mask_budget=0;
   }
   exr_pdf_close(file); free(data);

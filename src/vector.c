@@ -61,9 +61,15 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
                            const double *cmyk,double cmyk_alpha,const exr_bitmap *clip,
                            exr_blend_mode mode,exr_composite_state *state) {
   int x;
-  const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+  const unsigned char *mask=clip && !exr_clip_rect(clip) ? clip->pixels+(size_t)y*clip->stride : NULL;
+  const exr_clip_state *rect=exr_clip_rect(clip);
+  if(rect) {
+    if(rect->kind==EXR_CLIP_NONE || y<(int)rect->top || y>=(int)rect->bottom) return;
+    left=left>(int)rect->left ? left : (int)rect->left;
+    right=right<(int)rect->right ? right : (int)rect->right;
+  }
   if(!coverage || left>=right) return;
-  if(!cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 && coverage==255) {
+  if(!cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 && coverage==255 && !rect) {
     const unsigned char rgba[4]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
     const unsigned char gray=(unsigned char)((rgba[0]*77+rgba[1]*150+rgba[2]*29+128)>>8);
     unsigned char *pixel=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*bitmap->channels;
@@ -81,7 +87,7 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
     return;
   }
   for(x=left;x<right;x++) {
-    unsigned alpha=mask ? (coverage*mask[x]+127)/255 : coverage;
+    unsigned alpha=clip ? (coverage*exr_clip_coverage(clip,(unsigned)x,(unsigned)y)+127)/255 : coverage;
     if(!alpha) continue;
     if(cmyk) exr_pixel_composite_cmyk(bitmap,x,y,cmyk,cmyk_alpha,alpha,mode,state);
     else if(state) exr_pixel_composite(bitmap,x,y,color,alpha,mode,state);
@@ -98,7 +104,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   if(!storage(bitmap,1) && !storage(bitmap,4)) return exr_fail(error,EXR_ARGUMENT,"Invalid vector target bitmap storage");
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(error,EXR_ARGUMENT,"Invalid vector blend mode");
   if((count && !edges) || (rule!=EXR_VECTOR_NONZERO && rule!=EXR_VECTOR_EVENODD) ||
-     (clip && (!storage(clip,1) || clip->width!=bitmap->width || clip->height!=bitmap->height || overlaps(clip,bitmap))))
+     (clip && ((!exr_clip_rect(clip) && (!storage(clip,1) || overlaps(clip,bitmap))) || clip->width!=bitmap->width || clip->height!=bitmap->height)))
     return exr_fail(error,EXR_ARGUMENT,"Invalid vector edges, fill rule or clip bitmap");
   if(count>1048576) return exr_fail(error,EXR_LIMIT,"Vector edge count exceeds one million");
   if(!work) work=&local_work;
@@ -115,6 +121,16 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   if((!(cmyk ? cmyk_alpha>0 : (color&255)) && (!state || !(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) || high<=0 || low>=bitmap->height || low>=high || right_bound<=0 || left_bound>=bitmap->width || left_bound>=right_bound) return exr_fail(error,EXR_OK,"");
   top=(int)fmax(0,floor(low)); bottom=(int)fmin(bitmap->height,ceil(high));
   left=(int)fmax(0,floor(left_bound)); right=(int)fmin(bitmap->width,ceil(right_bound)); row_width=(uint32_t)(right-left);
+  { const exr_clip_state *r=exr_clip_rect(clip);
+    if(r) {
+      if(r->kind==EXR_CLIP_NONE) return exr_fail(error,EXR_OK,"");
+      top=top>(int)r->top ? top : (int)r->top;bottom=bottom<(int)r->bottom ? bottom : (int)r->bottom;
+      left=left>(int)r->left ? left : (int)r->left;right=right<(int)r->right ? right : (int)r->right;
+      if(left>=right || top>=bottom) return exr_fail(error,EXR_OK,"");
+      row_width=(uint32_t)(right-left);
+      if(exr_clip_opaque(clip,(unsigned)left,(unsigned)top,(unsigned)right,(unsigned)bottom)) clip=NULL;
+    }
+  }
   /* Exact rectangle/pixel intersection area: bulk interior, at most two edge
      pixels per row and two fractional rows. No crossings/coverage allocation. */
   if(axis_rectangles(edges,count,rule,left_bound,low,right_bound,high)) {
@@ -167,7 +183,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
     if(!exr_vector_work(work,(size_t)row_width*((state ? 20+state->depth*4 : 0)+(mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64)))) goto limit;
     for(x=0;x<row_width;x++) {
       unsigned alpha=(unsigned)fmin(255,floor(coverage[x]*255/4+.5));
-      if(clip) alpha=(alpha*clip->pixels[(size_t)y*clip->stride+(unsigned)left+x]+127)/255;
+      if(clip) alpha=(alpha*exr_clip_coverage(clip,(unsigned)left+x,(unsigned)y)+127)/255;
       if(alpha) {
         if(cmyk) exr_pixel_composite_cmyk(bitmap,left+(int)x,y,cmyk,cmyk_alpha,alpha,mode,state);
         else if(state) exr_pixel_composite(bitmap,left+(int)x,y,color,alpha,mode,state);
