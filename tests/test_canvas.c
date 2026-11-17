@@ -81,7 +81,9 @@ static void drawing_sink(void) {
 }
 static void failures(void) {
   exr_canvas *c=create(64); exr_path_segment rect[5]; exr_bitmap out; char message[256]; size_t i;
-  rectangle(rect,0,0,8,8); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error)); OK(exr_canvas_save(c,&error));
+  /* The first clip has to be a real sub-rectangle: a clip covering the whole canvas
+     allocates no mask at all, so it cannot consume the budget the second one exceeds. */
+  rectangle(rect,1,1,6,6); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error)); OK(exr_canvas_save(c,&error));
   CHECK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error)==EXR_LIMIT); snprintf(message,sizeof(message),"%s",error.message);
   CHECK(!exr_canvas_bitmap(c)); CHECK(exr_canvas_take(c,&out,&error)==EXR_LIMIT && !out.pixels && !strcmp(message,error.message)); exr_canvas_free(c);
   c=create(0); rect[0].points[0].x=NAN; CHECK(exr_canvas_path(c,rect,5,NULL,NULL,&error)==EXR_ARGUMENT); CHECK(exr_canvas_take(c,&out,&error)==EXR_ARGUMENT && !out.width); exr_canvas_free(c);
@@ -115,3 +117,5 @@ static void group_churn(void) {
   exr_canvas_free(c);
 }
 int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }
+
+

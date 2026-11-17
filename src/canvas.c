@@ -263,11 +263,41 @@ exr_status exr_canvas_path_cmyk(exr_canvas *c,const exr_path_segment *segments,s
   }
   return path_impl(c,segments,count,matrix,style,fill,stroke,e);
 }
+/* A clip that covers the whole canvas is the identity: keeping it as a mask makes
+   every later draw read a full-page coverage buffer and disables the unmasked fast
+   paths, which is what a plain fixed-page render used to pay for. */
+static int covers_canvas(const exr_canvas *c,const exr_vector_polyline *path) {
+  const exr_vector_contour *contour; const exr_vector_point *p; double minx,miny,maxx,maxy,eps; size_t i;
+  if(!path || path->contour_count!=1 || !path->contours || !path->points) return 0;
+  contour=&path->contours[0];
+  if(contour->count<4 || contour->count>8 || contour->start>=path->point_count ||
+     contour->start+contour->count>path->point_count) return 0;
+  eps=1e-6*fmax(1.0,fmax((double)c->bitmap.width,(double)c->bitmap.height));
+  minx=maxx=path->points[contour->start].x; miny=maxy=path->points[contour->start].y;
+  for(i=0;i<contour->count;i++) {
+    p=&path->points[contour->start+i];
+    if(!isfinite(p->x) || !isfinite(p->y)) return 0;
+    if(p->x<minx) { minx=p->x; }
+    if(p->x>maxx) { maxx=p->x; }
+    if(p->y<miny) { miny=p->y; }
+    if(p->y>maxy) { maxy=p->y; }
+  }
+  if(fabs(minx)>eps || fabs(miny)>eps) return 0;
+  if(fabs(maxx-(double)c->bitmap.width)>eps || fabs(maxy-(double)c->bitmap.height)>eps) return 0;
+  for(i=0;i<contour->count;i++) {
+    p=&path->points[contour->start+i];
+    if((fabs(p->x-minx)>eps && fabs(p->x-maxx)>eps) || (fabs(p->y-miny)>eps && fabs(p->y-maxy)>eps)) return 0;
+  }
+  return 1;
+}
 static exr_status clip_path(exr_canvas *c,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,int group,exr_error *e) {
   exr_vector_polyline flat={0}; exr_clip_mask *mask=NULL; exr_status status=ready(c,e);
   if(status!=EXR_OK) return status;
   { double local[6]; const double *use=shifted(c,matrix,local);
     status=exr_vector_flatten(segments,count,use,.125,&flat,&c->work,&c->control,e); }
+  if(status==EXR_OK && !group && covers_canvas(c,&flat)) {
+    unref(c,c->clip); c->clip=NULL; exr_vector_polyline_free(&flat); return finish(c,EXR_OK,e);
+  }
   if(status==EXR_OK && group) {
     if(!c->group) status=new_mask(c,&c->group,e);
     if(status==EXR_OK) status=fill(c,&flat,rule,0xffffffff,&c->group->bitmap,NULL,e);
