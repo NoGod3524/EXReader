@@ -103,6 +103,7 @@ typedef struct {
   size_t slide_first,table_first;
   double width,height;
   int in_table;
+  exr_ppt_table *pending_table; /* Table being built; not yet in drawing->tables. */
 } drawing_reader;
 typedef struct {
   unsigned type,flags,fill_type,fill_flags,line_flags,rotation;
@@ -322,7 +323,12 @@ static int text_pf(drawing_reader *r,size_t *at,size_t end,text_props *p) {
     if(!text_u16(r,at,end,&flags)) return 0;
     p->bullet_flags=(p->bullet_flags&~(mask&15))|(flags&mask&15);
   }
-  if(mask&0x80) { if(!text_u16(r,at,end,&n)) return 0;p->style.bullet=n; }
+  if(mask&0x80) {
+    if(!text_u16(r,at,end,&n)) return 0;
+    /* A lone UTF-16 surrogate is not a character; keep the paragraph. */
+    if(n>=0xd800 && n<=0xdfff) { n=0xfffd;r->drawing->text_unicode++; }
+    p->style.bullet=n;
+  }
   if(mask&0x10) { if(!text_u16(r,at,end,&n)) return 0;p->bullet_font=n; }
   if(mask&0x40) { if(!text_u16(r,at,end,&n)) return 0;p->bullet_size=n; }
   if(mask&0x20) { if(!text_u32(r,at,end,&color)) return 0;p->bullet_color=color; }
@@ -552,18 +558,25 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
   /* A malformed/short final run inherits the last usable style. Paragraphs
      follow the actual CRs, independent of corrupt style run boundaries. */
   start=0;
+  /* Paragraph starts only grow, so the TextSpecInfo level runs are consumed
+     once instead of being rescanned from the beginning for every paragraph. */
+  {
+  size_t level_cursor=levels_atom.payload,level_pos=0;unsigned run_level=0;int level_valid=0,level_done=0;
   for(i=0;i<=units;i++) if(i==units || (chars.end ? u16(r->data+atom.payload+2*i) : r->data[atom.payload+i])==13) {
     text_props p=levels[0],paragraph;size_t a=start;
     if((status=exr_control_cancel(r->control,e))!=EXR_OK) goto done;
     while(j+1<pc && start>=pf[j].end) j++;
     if(pc) p=pf[j].props;
     else if(levels_atom.end) {
-      size_t cursor=levels_atom.payload,pos=0;uint32_t count;unsigned level;
-      while(text_u32(r,&cursor,levels_atom.end,&count) && text_u16(r,&cursor,levels_atom.end,&level)) {
-        if(count>units+1-pos) count=(uint32_t)(units+1-pos);
-        pos+=count;if(start<pos) { p=levels[level<5 ? level : 4];break; }
-        if(pos==units+1) break;
+      while(start>=level_pos && !level_done) {
+        uint32_t count;unsigned level;
+        if(!text_u32(r,&level_cursor,levels_atom.end,&count) || !text_u16(r,&level_cursor,levels_atom.end,&level)) {
+          level_done=1;level_valid=0;break;
+        }
+        if(count>units+1-level_pos) count=(uint32_t)(units+1-level_pos);
+        level_pos+=count;run_level=level;level_valid=1;
       }
+      if(level_valid && start<level_pos) p=levels[run_level<5 ? run_level : 4];
     }
     paragraph=p;
     while(k+1<cc && start>=cf[k].end) k++;
@@ -580,6 +593,7 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
       text->runs[text->run_count++]=(exr_ppt_text_run){map[a],map[b],text_resolve(r,v)};a=b;
     }
     start=i+1;
+  }
   }
   total=text->length+2*text->run_count*sizeof(*text->runs)+2*text->paragraph_count*sizeof(*text->paragraphs);
   if(total>EXR_MAX_TEXT-r->drawing->text_bytes) { status=exr_fail(e,EXR_LIMIT,"PPT text exceeds 64 MiB");goto done; }
@@ -669,6 +683,7 @@ static exr_status emit_shape(drawing_reader *r,const art_shape *s,const transfor
     memmove(d->shapes+r->slide_first+1,d->shapes+r->slide_first,
       (d->count-r->slide_first)*sizeof(*d->shapes));
     for(i=r->table_first;i<d->table_count;i++) d->tables[i].first++;
+    if(r->pending_table) r->pending_table->first++;
     d->shapes[r->slide_first]=shape;
   } else d->shapes[d->count]=shape;
   d->count++;return EXR_OK;
@@ -720,7 +735,7 @@ static exr_status read_table(drawing_reader *r,size_t at,size_t end,const art_sh
   const transform *parent,const transform *t,exr_error *e) {
   table_cell *cells=NULL;size_t count=0,capacity=0,i,j,k,rectangles=0;
   unsigned nx=0,ny=0,*owners=NULL;double xs[201],ys[201];art_record a;
-  exr_ppt_drawing *d=r->drawing;exr_ppt_table table={0};exr_status status=EXR_OK;
+  exr_ppt_drawing *d=r->drawing;exr_ppt_table table={0},*pending=r->pending_table;exr_status status=EXR_OK;
   int previous=r->in_table,bad=group->table_bad;r->in_table=1;
   if(group->table_rows>200) { status=exr_fail(e,EXR_LIMIT,"PPT table exceeds 200 rows");goto done; }
   if(group->table_heights.end-group->table_heights.payload>=6) {
@@ -768,7 +783,7 @@ static exr_status read_table(drawing_reader *r,size_t at,size_t end,const art_sh
   if(ny-1!=group->table_rows) d->table_malformed++;
   owners=calloc((nx-1)*(ny-1),sizeof(*owners));
   if(!owners) { status=exr_fail(e,EXR_MEMORY,"PPT table grid allocation failed");goto done; }
-  table.first=d->count;table.rows=ny-1;table.columns=nx-1;
+  table.first=d->count;table.rows=ny-1;table.columns=nx-1;r->pending_table=&table;
   for(i=0;i<count;i++) {
     table_cell *c=&cells[i];art_shape *s=&c->shape;int conflict=0;
     status=exr_control_cancel(r->control,e);if(status!=EXR_OK) goto done;
@@ -797,7 +812,7 @@ static exr_status read_table(drawing_reader *r,size_t at,size_t end,const art_sh
   }
   d->tables[d->table_count++]=table;goto done;
 limit:status=exr_fail(e,EXR_LIMIT,"PPT table exceeds 200x200 or cell storage budget");
-done:r->in_table=previous;free(cells);free(owners);return status;
+done:r->in_table=previous;r->pending_table=pending;free(cells);free(owners);return status;
 }
 static exr_status art_walk(drawing_reader *r,size_t at,size_t end,unsigned depth,int in_group,transform t,exr_error *e) {
   art_record a;int group_header=1;
@@ -852,6 +867,40 @@ static exr_status art_walk(drawing_reader *r,size_t at,size_t end,unsigned depth
   }
   return EXR_OK;
 }
+typedef struct { uint32_t id; size_t offset,order; } master_ref;
+static int master_order(const void *a,const void *b) {
+  const master_ref *x=a,*y=b;
+  if(x->id!=y->id) return x->id<y->id ? -1 : 1;
+  return x->order<y->order ? -1 : x->order>y->order;
+}
+/* Collect MasterPersistAtom (instance=1 lists) once; a later entry for the
+   same masterId overrides an earlier one, as in a sequential scan. */
+static exr_status master_refs(drawing_reader *r,size_t doc,size_t doc_end,const uint32_t *persist,
+  master_ref **out,size_t *count,exr_error *e) {
+  size_t cursor=doc,capacity=0;art_record child;
+  *out=NULL;*count=0;
+  if(!persist) return EXR_OK;
+  while(art_next(r,&cursor,doc_end,&child)) if(child.type==RT_SLIDE_LIST && child.instance==1) {
+    size_t entry=child.payload;art_record ref;
+    while(art_next(r,&entry,child.end,&ref)) {
+      uint32_t id;
+      if((++r->records&1023)==1) { exr_status s=exr_control_cancel(r->control,e);if(s!=EXR_OK) return s; }
+      if(ref.type!=RT_SLIDE_PERSIST || ref.end-ref.payload<20) continue;
+      id=u32(r->data+ref.payload);
+      if(id>=(1u<<20) || !persist[id]) continue;
+      if(!exr_grow((void **)out,&capacity,*count+1,sizeof(**out)))
+        return exr_fail(e,EXR_MEMORY,"PPT master directory allocation failed");
+      (*out)[*count]=(master_ref){u32(r->data+ref.payload+12),persist[id],*count};(*count)++;
+    }
+  }
+  if(*count>1) qsort(*out,*count,sizeof(**out),master_order);
+  return EXR_OK;
+}
+static size_t master_find(const master_ref *refs,size_t count,uint32_t id) {
+  size_t lo=0,hi=count;
+  while(lo<hi) { size_t mid=lo+(hi-lo)/2; if(refs[mid].id<=id) lo=mid+1; else hi=mid; }
+  return lo && refs[lo-1].id==id ? refs[lo-1].offset : 0;
+}
 void exr_ppt_drawing_free(exr_ppt_drawing *d) {
   size_t i;for(i=0;i<d->blip_count;i++) exr_bitmap_free(&d->blips[i].bitmap);
   exr_ppt_text_free(d);
@@ -864,7 +913,7 @@ void exr_ppt_drawing_free(exr_ppt_drawing *d) {
 exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_info *info,const exr_control *control,exr_ppt_drawing *out,exr_error *e) {
   size_t size=streams->document_size;
   drawing_reader r={0};art_record a;size_t at=0,doc=0,doc_end=0,master=0,n=0,i;
-  size_t *physical=NULL,*outline=NULL;uint32_t *refs=NULL,*persist=NULL;exr_status status=EXR_OK;
+  size_t *physical=NULL,*outline=NULL,master_count=0;uint32_t *refs=NULL,*persist=NULL;master_ref *masters=NULL;exr_status status=EXR_OK;
   memset(out,0,sizeof(*out));r.data=streams->document;r.streams=streams;r.control=control;r.drawing=out;
   r.width=info->width;r.height=info->height;out->pages=info->pages;
   if(!out->pages) return EXR_OK;
@@ -897,6 +946,7 @@ exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_inf
   text_defaults(r.environment);
   status=text_resources(&r,doc,doc_end,0,e);if(status!=EXR_OK) goto done;
   for(i=0;i<9;i++) if(i!=4) memcpy(r.environment[i],r.environment[4],sizeof(r.environment[i]));
+  status=master_refs(&r,doc,doc_end,persist,&masters,&master_count,e);if(status!=EXR_OK) goto done;
   at=doc;n=0;
   while(art_next(&r,&at,doc_end,&a)) if(a.type==RT_SLIDE_LIST && a.instance==0) {
     size_t entry=a.payload;art_record ref;
@@ -923,14 +973,8 @@ exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_inf
     }
     /* MasterPersistAtom uses the same layout as SlidePersistAtom; the list's
        instance=1 selects masters, and masterId matches SlideAtom.masterIdRef. */
-    cursor=doc;
-    while(master_id && persist && art_next(&r,&cursor,doc_end,&child)) if(child.type==RT_SLIDE_LIST && child.instance==1) {
-      size_t entry=child.payload;art_record ref;
-      while(art_next(&r,&entry,child.end,&ref)) if(ref.type==RT_SLIDE_PERSIST && ref.end-ref.payload>=20 && u32(r.data+ref.payload+12)==master_id) {
-        uint32_t id=u32(r.data+ref.payload);
-        if(id<(1u<<20) && persist[id]) master_offset=persist[id];
-      }
-    }
+    status=exr_control_cancel(control,e);if(status!=EXR_OK) goto done;
+    if(master_id) { size_t found=master_find(masters,master_count,master_id);if(found) master_offset=found; }
     r.color_mask=0;
     memcpy(r.master_text,r.environment,sizeof(r.master_text));
     if(master_offset && master_offset<size) {
@@ -951,7 +995,7 @@ exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_inf
   }
 done:
   for(i=0;i<out->blip_count;i++) out->blips[i].encoded=NULL;
-  free(physical);free(refs);free(persist);free(outline);
+  free(physical);free(refs);free(persist);free(outline);free(masters);
   if(status!=EXR_OK) exr_ppt_drawing_free(out);
   return status;
 }

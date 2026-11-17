@@ -3,6 +3,7 @@
 #define EXR_FONT_MANAGER_INTERNAL_H
 #include "base_internal.h"
 #include "exr/font_manager.h"
+#include "exr/text.h"
 #define EXR_FM_MAX_FACES ((size_t)65536)
 #define EXR_FM_MAX_FILES ((size_t)200000)
 #define EXR_FM_MAX_DEPTH 8
@@ -64,4 +65,16 @@ void exr_fm_file_clear(exr_fm_file *file);
 /* Cache (font_cache.c). */
 exr_status exr_fm_cache_read(const char *path, exr_fm_files *out);
 exr_status exr_fm_cache_write(const char *path, const exr_fm_files *files, exr_error *error);
+/* Reference-counted font file bytes shared by several exr_font objects. */
+typedef struct exr_font_blob { size_t refs, size; unsigned char *data; } exr_font_blob;
+/* Takes ownership of data (malloc'd); NULL on allocation failure, data freed. */
+exr_font_blob *exr_font_blob_take(unsigned char *data, size_t size);
+void exr_font_blob_release(exr_font_blob *blob);
+/* Per-document cache of manager face files: each file is read and charged to
+   the EXR_FONT_MANAGER_MAX_BYTES budget once, however many fonts use it. */
+typedef struct { size_t face; exr_font_blob *blob; } exr_font_blob_entry;
+typedef struct { exr_font_blob_entry *items; size_t count, capacity, bytes; } exr_font_blob_cache;
+exr_status exr_font_manager_shared_font(const exr_font_manager *manager, exr_font_blob_cache *cache,
+                                        const size_t *faces, size_t count, exr_font **out, exr_error *error);
+void exr_font_blob_cache_free(exr_font_blob_cache *cache);
 #endif

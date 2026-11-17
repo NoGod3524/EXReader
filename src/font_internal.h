@@ -3,12 +3,14 @@
 #define EXR_FONT_INTERNAL_H
 #include "base_internal.h"
 #include "exr/text.h"
+#include "font_manager_internal.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_COLOR_H
 typedef struct {
   FT_Face face;
   unsigned char *bytes;
+  exr_font_blob *blob; /* When set, bytes is borrowed from this blob. */
   size_t bytes_size, scope;
   char family[128];
   unsigned style_flags;
@@ -52,6 +54,11 @@ void exr_font_ref(exr_font *font);
 #define EXR_FONT_MANAGER_MAX_BYTES (2 * EXR_MAX_INPUT)
 exr_status exr_font_create_managed(const exr_font_input *inputs, size_t count,
                                    exr_font **out, exr_error *error);
+/* Like exr_font_create_managed, but faces borrow (and reference) the blobs
+   instead of copying them, so one file is resident once per document. */
+exr_status exr_font_create_shared(exr_font_blob *const *blobs, const unsigned *face_index,
+                                  size_t count, exr_font **out, exr_error *error);
+
 FT_Error exr_font_face_open(FT_Library library,const void *data,size_t size,unsigned face_index,FT_Face *out);
 int exr_font_face_supported(FT_Face face);
 size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,

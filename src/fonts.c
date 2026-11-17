@@ -100,7 +100,7 @@ static int bitmap_metrics(exr_face *face) {
   }
   return 1;
 }
-static exr_status create_font(const exr_font_input *inputs,size_t count,int unicode,size_t limit,exr_font **out,exr_error *e) {
+static exr_status create_font(const exr_font_input *inputs,exr_font_blob *const *blobs,size_t count,int unicode,size_t limit,exr_font **out,exr_error *e) {
   exr_font *font;
   size_t i, total = 0;
   exr_status status = EXR_FONT;
@@ -134,13 +134,18 @@ static exr_status create_font(const exr_font_input *inputs,size_t count,int unic
     goto bad;
   for (i = 0; i < count; i++) {
     exr_face *face = &font->faces[i];
-    face->bytes = malloc(inputs[i].size);
-    if (!face->bytes) {
-      status = EXR_MEMORY;
-      message = "Font data allocation failed";
-      goto bad;
+    if (blobs) {
+      face->blob = blobs[i]; blobs[i]->refs++;
+      face->bytes = blobs[i]->data;
+    } else {
+      face->bytes = malloc(inputs[i].size);
+      if (!face->bytes) {
+        status = EXR_MEMORY;
+        message = "Font data allocation failed";
+        goto bad;
+      }
+      memcpy(face->bytes, inputs[i].data, inputs[i].size);
     }
-    memcpy(face->bytes, inputs[i].data, inputs[i].size);
     face->bytes_size = inputs[i].size;
     face->scope = SIZE_MAX;
     /* sbix images use the shared PNG/JPEG decoder; keep scalable text metrics. */
@@ -177,13 +182,32 @@ bad:
   return exr_fail(e, status, "%s", message);
 }
 exr_status exr_font_create(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
-  return create_font(inputs,count,1,EXR_MAX_INPUT,out,e);
+  return create_font(inputs,NULL,count,1,EXR_MAX_INPUT,out,e);
 }
 exr_status exr_font_create_glyphs(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
-  return create_font(inputs,count,0,EXR_MAX_INPUT,out,e);
+  return create_font(inputs,NULL,count,0,EXR_MAX_INPUT,out,e);
 }
 exr_status exr_font_create_managed(const exr_font_input *inputs,size_t count,exr_font **out,exr_error *e) {
-  return create_font(inputs,count,1,EXR_FONT_MANAGER_MAX_BYTES,out,e);
+  return create_font(inputs,NULL,count,1,EXR_FONT_MANAGER_MAX_BYTES,out,e);
+}
+exr_font_blob *exr_font_blob_take(unsigned char *data,size_t size) {
+  exr_font_blob *blob=malloc(sizeof(*blob));
+  if(!blob) { free(data); return NULL; }
+  blob->refs=1; blob->size=size; blob->data=data; return blob;
+}
+void exr_font_blob_release(exr_font_blob *blob) {
+  if(blob && !--blob->refs) { free(blob->data); free(blob); }
+}
+exr_status exr_font_create_shared(exr_font_blob *const *blobs,const unsigned *face_index,size_t count,exr_font **out,exr_error *e) {
+  exr_font_input inputs[32]; size_t i;
+  if(!blobs || !face_index || count>32) return exr_fail(e,EXR_ARGUMENT,"Invalid shared font inputs");
+  for(i=0;i<count;i++) {
+    if(!blobs[i]) return exr_fail(e,EXR_ARGUMENT,"Invalid shared font inputs");
+    inputs[i]=(exr_font_input){blobs[i]->data,blobs[i]->size,face_index[i]};
+  }
+  /* Shared blobs are already charged once by their owner; each font only
+     borrows them, so the per-font byte limit is not the residency limit. */
+  return create_font(inputs,blobs,count,1,SIZE_MAX,out,e);
 }
 exr_status exr_font_open(const char *path, exr_font **out, exr_error *e) {
   unsigned char *bytes = NULL;
@@ -231,7 +255,8 @@ void exr_font_free(exr_font *f) {
         FT_Done_Face(face->face);
       free(face->advances);
       free(face->measured);
-      free(face->bytes);
+      if (face->blob) exr_font_blob_release(face->blob);
+      else free(face->bytes);
     }
     if (f->library)
       FT_Done_FreeType(f->library);

@@ -377,6 +377,64 @@ exr_status exr_font_manager_face(const exr_font_manager *m, size_t index, exr_fo
   out->location = file->location; out->codepoints = f->codepoints;
   return exr_fail(e, EXR_OK, "");
 }
+void exr_font_blob_cache_free(exr_font_blob_cache *c) {
+  size_t i;
+  if (!c) return;
+  for (i = 0; i < c->count; i++) exr_font_blob_release(c->items[i].blob);
+  free(c->items); memset(c, 0, sizeof(*c));
+}
+static exr_status cached_blob(const exr_font_manager *m, exr_font_blob_cache *c, size_t face,
+                              exr_font_blob **out, unsigned *index, exr_error *e) {
+  exr_font_face_info info = {0};
+  unsigned char *bytes = NULL;
+  size_t i, size = 0;
+  exr_status status;
+  info.struct_size = sizeof(info);
+  status = exr_font_manager_face(m, face, &info, e);
+  if (status != EXR_OK) return status;
+  *index = info.face_index;
+  for (i = 0; i < c->count; i++) if (c->items[i].face == face) { *out = c->items[i].blob; return EXR_OK; }
+  /* Faces of one collection file share bytes too. */
+  for (i = 0; i < c->count; i++) {
+    exr_font_face_info other = {0};
+    other.struct_size = sizeof(other);
+    if (exr_font_manager_face(m, c->items[i].face, &other, NULL) == EXR_OK && !strcmp(other.path, info.path)) {
+      *out = c->items[i].blob;
+      break;
+    }
+  }
+  if (i == c->count) {
+    status = exr_read(info.path, &bytes, &size, e);
+    if (status != EXR_OK) return status;
+    if (size > EXR_FONT_MANAGER_MAX_BYTES - c->bytes) {
+      free(bytes);
+      return exr_fail(e, EXR_LIMIT, "Document fonts exceed %u MiB", (unsigned)(EXR_FONT_MANAGER_MAX_BYTES / (1024 * 1024)));
+    }
+    if (!(*out = exr_font_blob_take(bytes, size))) return exr_fail(e, EXR_MEMORY, "Font file allocation failed");
+    c->bytes += size;
+  } else (*out)->refs++;
+  if (!exr_grow((void **)&c->items, &c->capacity, c->count + 1, sizeof(*c->items))) {
+    if ((*out)->refs == 1) c->bytes -= (*out)->size;
+    exr_font_blob_release(*out);
+    return exr_fail(e, EXR_MEMORY, "Font file cache allocation failed");
+  }
+  c->items[c->count].face = face; c->items[c->count++].blob = *out;
+  return EXR_OK;
+}
+exr_status exr_font_manager_shared_font(const exr_font_manager *m, exr_font_blob_cache *c,
+                                        const size_t *faces, size_t count, exr_font **out, exr_error *e) {
+  exr_font_blob *blobs[32];
+  unsigned index[32];
+  size_t i;
+  exr_status status;
+  if (!m || !c || !faces || !out || !count || count > 32)
+    return exr_fail(e, EXR_ARGUMENT, "Invalid shared font request");
+  for (i = 0; i < count; i++) {
+    status = cached_blob(m, c, faces[i], &blobs[i], &index[i], e);
+    if (status != EXR_OK) return status;
+  }
+  return exr_font_create_shared(blobs, index, count, out, e);
+}
 static int covers(const exr_fm_face *f, uint32_t cp) {
   size_t lo = 0, hi = f->range_count;
   while (lo < hi) {
