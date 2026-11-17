@@ -39,9 +39,9 @@ jobs:
       - name: Enter MSVC x64 developer environment
         if: runner.os == 'Windows'
         shell: pwsh
-        shell: bash
         run: |
-          set -euo pipefail
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
           if (-not (Test-Path $bat)) { throw "vcvars64.bat not found under $vs" }

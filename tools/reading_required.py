@@ -13,7 +13,7 @@ from check_parallel_integration import fetch, pages, require, required_artifacts
 from measure_reading_core import sha256
 
 GROUPS = {'protocol', 'native', 'profiles', 'platforms', 'corpus', 'performance'}
-REGISTRATION = 'ea5c13e081cfba86d9f6dd759439894463e51126'
+REGISTRATION = 'e98c600cac2a8da07d0815b61cd852ca0a9f7fe3'
 MANIFEST = Path('tools/reading_corpus/real-v1.json')
 PACKAGE_ARCH = {'Linux': 'X64', 'Windows': 'X64', 'macOS': 'ARM64'}
 

@@ -1,0 +1,3 @@
+# Preserve generated build/test output without treating its spacing as source formatting.
+*.log -whitespace
+*.xml -whitespace
