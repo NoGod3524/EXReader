@@ -26,9 +26,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Verify accepted integration ancestor
+        shell: bash
         run: |
-          git fetch --no-tags origin 686ce2fe6c3463ef1b917569677ee9933e22faa9
-          git merge-base --is-ancestor 686ce2fe6c3463ef1b917569677ee9933e22faa9 HEAD
+          set -euo pipefail
+          git fetch --no-tags origin 120fdfab3d2c327d3807de383ed289c2bb0bcfe5
+          git merge-base --is-ancestor 120fdfab3d2c327d3807de383ed289c2bb0bcfe5 HEAD
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -37,7 +39,9 @@ jobs:
       - name: Enter MSVC x64 developer environment
         if: runner.os == 'Windows'
         shell: pwsh
+        shell: bash
         run: |
+          set -euo pipefail
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $bat = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
           if (-not (Test-Path $bat)) { throw "vcvars64.bat not found under $vs" }
@@ -47,12 +51,14 @@ jobs:
           "CC=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           "CXX=cl" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Record toolchain and workspace paths
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p "build/$PROFILE"
           log="build/$PROFILE/toolchain.txt"
           if [ "$RUNNER_OS" = Windows ]; then
             echo "WS=$(cygpath -m "$PWD")" >> "$GITHUB_ENV"; echo "EXE=.exe" >> "$GITHUB_ENV"
-            { echo "## cl"; (cl 2>&1 || true) | head -n 2; echo "## where"; where cl link dumpbin cmake ninja python || true
+            { echo "## cl"; cl_status=0; cl 2>&1 | head -n 2 || cl_status=$?; echo "cl exit=$cl_status (toolchain probe, not a build step)"; echo "## where"; where cl link dumpbin cmake ninja python || echo "where exit=$? (probe only)"
               echo "## VS"; echo "VSINSTALLDIR=$VSINSTALLDIR VCToolsVersion=$VCToolsVersion WindowsSDKVersion=$WindowsSDKVersion"; cmd //c ver; } > "$log" 2>&1
           else
             echo "WS=$PWD" >> "$GITHUB_ENV"; echo "EXE=" >> "$GITHUB_ENV"
@@ -66,12 +72,16 @@ jobs:
         run: cmake --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/configure.log"
       - name: Build and install selected components
         id: install
+        shell: bash
         run: |
+          set -euo pipefail
           cmake --build --preset "$PROFILE" 2>&1 | tee "build/$PROFILE/build.log"
           cmake --install "build/$PROFILE" 2>&1 | tee "build/$PROFILE/install.log"
       - name: Compile installed C consumers and C++ headers
         id: consumer
+        shell: bash
         run: |
+          set -euo pipefail
           library=OFF
           if [ "$PROFILE" = reading-library ]; then library=ON; fi
           cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY="$library" -DEXR_TEST_FONT="$WS/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$WS/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$WS/tests/fixtures" 2>&1 | tee "build/$PROFILE/consumer-configure.log"
@@ -79,7 +89,9 @@ jobs:
       - name: Declare and hash the exact consumer program set
         id: programs
         if: always() && steps.consumer.outcome == 'success'
+        shell: bash
         run: |
+          set -euo pipefail
           names="reading-document reading-benchmark components/core-consumer components/chapter-consumer components/convert-consumer"
           if [ "$PROFILE" = reading-library ]; then names="$names components/library-consumer reading-library-source reading-library-chapter-probe"; fi
           args=""; for name in $names; do args="$args --program build/reading-consumer/$name$EXE"; done
@@ -102,7 +114,9 @@ jobs:
       - name: Gate installed files, program identity, dependencies, executions and toolchain
         id: evidence
         if: always() && steps.install.outcome == 'success'
+        shell: bash
         run: |
+          set -euo pipefail
           probe_run=""
           if [ "$PROFILE" = reading-library ]; then probe_run="--run build/$PROFILE/library-probe-run.json"; fi
           python tools/reading_platform_evidence.py verify "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" build/reading-consumer "build/$PROFILE/platform-evidence.json" --platform "$RUNNER_OS" $PROGRAM_ARGS --snapshot "build/$PROFILE/program-snapshot.json" --ctest-tests "build/$PROFILE/ctest-tests.json" --ctest-junit "build/$PROFILE/consumer-tests.xml" --smoke-summary "build/$PROFILE/corpus/summary.json" --run "build/$PROFILE/benchmark-run.json" $probe_run --input tests/fixtures/fonts/primary.ttf --input tests/fixtures/fonts/colrv1.ttf --input tools/reading_core/smoke-manifest.json --input tests/fixtures/table-fragments-12.epub --toolchain "build/$PROFILE/toolchain.txt"
@@ -110,11 +124,15 @@ jobs:
         if: always() && steps.evidence.outcome == 'success'
         run: python tests/check_reading_platform_evidence.py "build/$PROFILE/platform-evidence.json" "build/$PROFILE/rejection-regression.json"
       - name: Require complete release license materials on this installed stage
+        shell: bash
         run: |
+          set -euo pipefail
           python tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
           python tests/check_reading_licenses.py
       - name: Execute the installed SDK identity and schema consumer
+        shell: bash
         run: |
+          set -euo pipefail
           library=OFF
           if [ "$PROFILE" = reading-library ]; then library=ON; fi
           cmake -S tests/reading_release -B build/release-identity -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$WS/build/$PROFILE/stage" -DEXR_RELEASE_LIBRARY="$library"
@@ -122,7 +140,9 @@ jobs:
           "build/release-identity/release-identity$EXE" "$WS/build/$PROFILE/release-schema.sqlite" > "build/$PROFILE/release-runtime.json"
           cat "build/$PROFILE/release-runtime.json"
       - name: Seal a native platform candidate without granting quality or publication
+        shell: bash
         run: |
+          set -euo pipefail
           database=""
           if [ "$PROFILE" = reading-library ]; then database="--database build/$PROFILE/release-schema.sqlite"; fi
           python tools/reading_release.py --profile "$PROFILE" --stage "build/$PROFILE/stage" --evidence "build/$PROFILE" --runtime "build/$PROFILE/release-runtime.json" $database --output "build/$PROFILE/release-candidate"
