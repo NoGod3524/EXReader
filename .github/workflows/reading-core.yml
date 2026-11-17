@@ -24,8 +24,8 @@ jobs:
           fetch-depth: 0
       - name: Verify accepted integration ancestor
         run: |
-          git fetch --no-tags origin 686ce2fe6c3463ef1b917569677ee9933e22faa9
-          git merge-base --is-ancestor 686ce2fe6c3463ef1b917569677ee9933e22faa9 HEAD
+          git fetch --no-tags origin 120fdfab3d2c327d3807de383ed289c2bb0bcfe5
+          git merge-base --is-ancestor 120fdfab3d2c327d3807de383ed289c2bb0bcfe5 HEAD
       - name: Configure explicit reading preset
         run: cmake --preset "$PROFILE"
       - name: Build and install selected components
