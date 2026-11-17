@@ -6,8 +6,9 @@
 #define PDF_MAX_OBJECTS 1048576u
 #define PDF_MAX_VALUES EXR_PDF_MAX_VALUES
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)
+#define PDF_RETAINED_STREAMS ((size_t)16*1024*1024)
 typedef struct { size_t offset; uint32_t value,revision; unsigned generation,type,state,seen; uint32_t compressed_index; } pdf_xref;
-typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; uint32_t object; unsigned generation,unencrypted; } pdf_stream;
+typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; uint32_t object; unsigned generation,unencrypted,retain; size_t cached; } pdf_stream;
 struct exr_pdf_file {
   const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
   exr_pdf_value *values; size_t value_count,value_capacity;
@@ -762,11 +763,13 @@ void exr_pdf_operation_end(exr_pdf_file *f) {
   /* Callers own any returned snapshots. Font programs/CID maps and recursive
      content walkers must be gone before invalidating these borrowed bytes.
      Object-stream indexes and parsed strings have separate owned storage. */
+  size_t kept=0;
   for(i=0;i<f->stream_count;i++) {
-    free(f->streams[i].decoded); f->streams[i].decoded=NULL;
-    f->streams[i].decoded_size=0; f->streams[i].ready=0;
+    pdf_stream *s=&f->streams[i];
+    if(s->ready && s->retain && s->cached<=PDF_RETAINED_STREAMS-kept) { kept+=s->cached; continue; }
+    free(s->decoded); s->decoded=NULL; s->decoded_size=0; s->cached=0; s->ready=0;
   }
-  f->decoded_bytes=0; f->decode_work=0; f->work=0; f->control=NULL;
+  f->decoded_bytes=kept; f->decode_work=0; f->work=0; f->control=NULL;
 }
 typedef struct { unsigned char *data; size_t size,capacity; } pdf_output;
 static int decode_work(exr_pdf_file *f,size_t amount) {
@@ -1114,7 +1117,7 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
   }
   if(f->error.code!=EXR_OK) goto done;
   if(current.capacity>EXR_MAX_INPUT-f->decoded_bytes) { failed(f,EXR_LIMIT,"PDF decoded stream cache budget exceeded"); goto done; }
-  f->streams[index].decoded=current.data; f->streams[index].decoded_size=input_size; f->streams[index].ready=1;
+  f->streams[index].decoded=current.data; f->streams[index].decoded_size=input_size; f->streams[index].cached=current.capacity; f->streams[index].ready=1;
   f->streams[index].codec=terminal; f->streams[index].parameters=terminal_parameters;
   if(source.inline_image) f->streams[index].size=encoded_size;
   f->decoded_bytes+=current.capacity; *data=current.data ? current.data : f->data+source.offset; *size=input_size;
@@ -1128,6 +1131,11 @@ done:
 }
 exr_status exr_pdf_stream_data(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,exr_error *e) {
   return stream_payload(f,id,data,size,0,NULL,NULL,e);
+}
+exr_status exr_pdf_stream_data_retained(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,exr_error *e) {
+  exr_status status=stream_payload(f,id,data,size,0,NULL,NULL,e);
+  if(status==EXR_OK) f->streams[f->values[resolve(f,id)].u.ref.object].retain=1;
+  return status;
 }
 exr_status exr_pdf_image_payload(exr_pdf_file *f,uint32_t id,const unsigned char **data,size_t *size,
                                   exr_pdf_stream_codec *codec,uint32_t *parameters,exr_error *e) {

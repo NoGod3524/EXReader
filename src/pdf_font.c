@@ -235,7 +235,7 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
     if(!widths(&r,get(&r,metrics,"W"),&font->widths,1) || !widths(&r,get(&r,metrics,"W2"),&font->vertical,3)) goto done;
     id=get(&r,metrics,"CIDToGIDMap");
     if(id!=EXR_PDF_NONE && !name_is(&r,id,"Identity")) {
-      if(font->info.kind!=EXR_PDF_CID_TYPE2 || exr_pdf_stream_data(file,id,&font->cid_glyphs,&font->cid_glyph_size,&r.error)!=EXR_OK) goto invalid;
+      if(font->info.kind!=EXR_PDF_CID_TYPE2 || exr_pdf_stream_data_retained(file,id,&font->cid_glyphs,&font->cid_glyph_size,&r.error)!=EXR_OK) goto invalid;
       if(font->cid_glyph_size%2 || font->cid_glyph_size>131072) goto invalid;
     }
   } else {
@@ -266,7 +266,7 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
       id=get(&r,descriptor,keys[i]); if(id==EXR_PDF_NONE) continue;
       if((i==0 && font->info.kind!=EXR_PDF_TYPE1) ||
          (i==1 && font->info.kind!=EXR_PDF_TRUETYPE && font->info.kind!=EXR_PDF_CID_TYPE2)) goto invalid;
-      if(found++ || exr_pdf_stream_data(file,id,&font->info.program,&font->info.program_size,&r.error)!=EXR_OK) goto invalid;
+      if(found++ || exr_pdf_stream_data_retained(file,id,&font->info.program,&font->info.program_size,&r.error)!=EXR_OK) goto invalid;
       if(!font->info.program_size) goto invalid;
       if(font->info.program_size>EXR_MAX_TEXT) { exr_fail(&r.error,EXR_LIMIT,"PDF embedded font exceeds 64 MiB"); goto done; }
       if(i==2) {
@@ -280,7 +280,7 @@ exr_status exr_pdf_font_open(exr_pdf_file *file,uint32_t dict,const exr_control 
   }
   if(to_unicode!=EXR_PDF_NONE) {
     const unsigned char *data; size_t size;
-    if(exr_pdf_stream_data(file,to_unicode,&data,&size,&r.error)!=EXR_OK ||
+    if(exr_pdf_stream_data_retained(file,to_unicode,&data,&size,&r.error)!=EXR_OK ||
        exr_pdf_cmap_parse_width(data,size,font->info.composite ? 2 : 1,control,&font->unicode,&r.error)!=EXR_OK) goto done;
   }
   if(r.error.code==EXR_OK && exr_control_cancel(control,&r.error)==EXR_OK) { *out=font; font=NULL; } goto done;
