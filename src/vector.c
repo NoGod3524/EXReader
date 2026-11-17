@@ -15,10 +15,14 @@ static int overlaps(const exr_bitmap *a,const exr_bitmap *b) {
   return first<=second ? second-first<(size_t)a->stride*a->height : first-second<(size_t)b->stride*b->height;
 }
 static void span(float *coverage,int origin,uint32_t width,double left,double right) {
-  int x,end;
+  int x,first,last;
   left=fmax(origin,left); right=fmin(origin+(double)width,right); if(right<=left) return;
-  end=(int)ceil(right);
-  for(x=(int)floor(left);x<end;x++) coverage[x-origin]+=(float)(fmin(right,x+1)-fmax(left,x));
+  first=(int)floor(left);last=(int)ceil(right)-1;
+  if(first==last) { coverage[first-origin]+=(float)(right-left);return; }
+  coverage[first-origin]+=(float)(first+1-left);
+  /* Interior pixels contribute exactly one sample; only endpoints need min/max. */
+  for(x=first+1;x<last;x++) coverage[x-origin]+=1.f;
+  coverage[last-origin]+=(float)(right-last);
 }
 static int axis_rectangle(const exr_vector_edge edges[4],double left,double top,double right,double bottom) {
   /* Tolerate transform roundoff, capped well below a pixel even at large coordinates. */
@@ -165,8 +169,22 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
       }
     }
     if(!exr_vector_work(work,(size_t)row_width*((state ? 20+state->depth*4 : 0)+(mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64)))) goto limit;
+    /* Clip masks paint opaque white into one channel. Keep the identical
+       source-over arithmetic in a row loop without per-pixel paint dispatch. */
+    if(bitmap->channels==1 && color==0xffffffffu && !cmyk && !state && mode==EXR_BLEND_NORMAL) {
+      unsigned char *target=bitmap->pixels+(size_t)y*bitmap->stride+left;
+      const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride+left : NULL;
+      for(x=0;x<row_width;x++) {
+        unsigned alpha=coverage[x]>=4 ? 255u : (unsigned)(coverage[x]*255/4+.5);
+        if(mask) alpha=(alpha*mask[x]+127)/255;
+        if(!target[x] || alpha==255) target[x]=(unsigned char)alpha;
+        else target[x]=(unsigned char)(target[x]+((255-target[x])*alpha+127)/255);
+      }
+      continue;
+    }
     for(x=0;x<row_width;x++) {
-      unsigned alpha=(unsigned)fmin(255,floor(coverage[x]*255/4+.5));
+      /* Coverage is nonnegative: truncation after adding .5 equals floor. */
+      unsigned alpha=coverage[x]>=4 ? 255u : (unsigned)(coverage[x]*255/4+.5);
       if(clip) alpha=(alpha*clip->pixels[(size_t)y*clip->stride+(unsigned)left+x]+127)/255;
       if(alpha) {
         if(cmyk) exr_pixel_composite_cmyk(bitmap,left+(int)x,y,cmyk,cmyk_alpha,alpha,mode,state);

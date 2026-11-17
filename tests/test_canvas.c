@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "exreader.h"
+#include "../src/canvas_internal.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,11 +97,10 @@ static void failures(void) {
   }
   CHECK(!exr_canvas_memory_size(NULL) && !exr_canvas_bitmap(NULL)); exr_canvas_free(NULL);
 }
-/* Work package 3: a region-sized group must release its working buffers on every
-   commit and on every discard, so a long-lived canvas does not grow. */
+/* Repeated commit/discard reaches a bounded scratch-buffer steady state. */
 static void group_churn(void) {
   exr_canvas_config config={0}; exr_canvas *c=NULL; exr_path_segment clip[5],paint[5];
-  exr_draw_style style=exr_draw_style_defaults(); size_t baseline=0,i;
+  exr_draw_style style=exr_draw_style_defaults(); size_t baseline=0,allocations=0,i;
   config.width=256; config.height=64; config.background=0xffffffff;
   OK(exr_canvas_create(&config,&c,&error));
   rectangle(clip,32,16,32,32);
@@ -112,8 +112,16 @@ static void group_churn(void) {
     style.fill=0x3366ccffu; style.flags=EXR_DRAW_FILL;
     OK(exr_canvas_path(c,paint,5,NULL,&style,&error));
     OK(exr_canvas_end_layer(c,i%2,&error));
-    OK(exr_canvas_memory_size(c)==baseline);
+    if(!i) { baseline=exr_canvas_memory_size(c);allocations=c->pool->allocations; }
+    else { CHECK(exr_canvas_memory_size(c)==baseline);CHECK(c->pool->allocations==allocations && c->pool->reuses>0); }
   }
+  exr_canvas_free(c);
+  /* A discarded painted buffer must be cleared before an empty group reuses it. */
+  c=create(0);rectangle(paint,0,0,8,8);style.fill=0xff0000ff;
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED,&error));
+  OK(exr_canvas_path(c,paint,5,NULL,&style,&error));OK(exr_canvas_end_layer(c,0,&error));
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED,&error));
+  OK(exr_canvas_end_layer(c,1,&error));pixel(exr_canvas_bitmap(c),4,4,255,255,255);
   exr_canvas_free(c);
 }
 int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }

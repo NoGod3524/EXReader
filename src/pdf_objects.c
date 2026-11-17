@@ -22,6 +22,8 @@ struct exr_pdf_file {
   const exr_control *control;
   size_t *decode_budget;
   exr_error error;
+  void *image_cache;void (*image_cache_free)(void *);
+  exr_buffer_pool buffer_pool;
 };
 typedef struct { exr_pdf_file *file; const unsigned char *data; size_t size,at; } parser;
 static int failed(exr_pdf_file *f,exr_status status,const char *message) {
@@ -501,6 +503,8 @@ bad:
 }
 void exr_pdf_close(exr_pdf_file *f) {
   size_t i; if(!f) return;
+  if(f->image_cache_free) f->image_cache_free(f->image_cache);
+  exr_buffer_pool_clear(&f->buffer_pool);
   for(i=0;i<f->stream_count;i++) { free(f->streams[i].decoded); free(f->streams[i].objects); free(f->streams[i].offsets); }
   free(f->streams); free(f->xref); free(f->values); free(f->strings.data); exr_pdf_secret_clear(&f->crypt,sizeof(f->crypt)); free(f);
 }
@@ -743,8 +747,18 @@ exr_status exr_pdf_open_password(const void *data,size_t size,const void *passwo
 }
 void exr_pdf_crypt_snapshot(const exr_pdf_file *f,exr_pdf_crypt *out) { *out=f->crypt; }
 void exr_pdf_control(exr_pdf_file *f,const exr_control *control) { if(f) f->control=control; }
+void **exr_pdf_image_cache_slot(exr_pdf_file *f,void (*release)(void *)) {
+  if(!f) return NULL;
+  f->image_cache_free=release;return &f->image_cache;
+}
+exr_buffer_pool *exr_pdf_buffer_pool(exr_pdf_file *f) {
+  if(f) { const char *enabled=getenv("EXR_BUFFER_POOL");f->buffer_pool.disabled=enabled && !strcmp(enabled,"0"); }
+  return f ? &f->buffer_pool : NULL;
+}
 void exr_pdf_operation_end(exr_pdf_file *f) {
   size_t i; if(!f) return;
+  exr_buffer_pool_clear(&f->buffer_pool);
+  f->buffer_pool.allocations=f->buffer_pool.reuses=0;
   /* Callers own any returned snapshots. Font programs/CID maps and recursive
      content walkers must be gone before invalidating these borrowed bytes.
      Object-stream indexes and parsed strings have separate owned storage. */

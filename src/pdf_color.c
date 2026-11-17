@@ -4,7 +4,7 @@
 #include "icc_internal.h"
 typedef enum { SPACE_GRAY,SPACE_RGB,SPACE_CMYK,SPACE_CALGRAY,SPACE_CALRGB,SPACE_LAB,SPACE_INDEXED,SPACE_ICC,SPACE_TINT,SPACE_ALL } space_kind;
 struct exr_pdf_colorspace {
-  space_kind kind; unsigned components,high; int no_paint;
+  space_kind kind; unsigned components,high; int no_paint,resource_dependent;
   double ranges[2*EXR_PDF_MAX_COLORANTS],gamma[3],matrix[9],transform[9],offset[3];
   unsigned char palette[1024];
   struct exr_pdf_colorspace *alternate;
@@ -13,7 +13,7 @@ struct exr_pdf_colorspace {
 };
 typedef struct {
   exr_pdf_file *resources_file; uint32_t resources;
-  const exr_control *control; exr_error *error;
+  const exr_control *control; exr_error *error; int used_resources;
   struct { exr_pdf_file *file; uint32_t value; } active[16];
 } color_reader;
 static int name_is(exr_pdf_file *file,uint32_t id,const char *name) {
@@ -147,6 +147,7 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
   if(v->kind==EXR_PDF_NAME) {
     const unsigned char *bytes; size_t n; char key[128]; uint32_t spaces;
     bytes=exr_pdf_bytes(file,id,&n); if(!n || n>=sizeof(key) || memchr(bytes,0,n)) goto bad;
+    r->used_resources=1;
     memcpy(key,bytes,n); key[n]=0; spaces=get(r,r->resources_file,r->resources,"ColorSpace"); value=get(r,r->resources_file,spaces,key);
     if(r->error->code!=EXR_OK) goto bad;
     return open_space(r,r->resources_file,value,depth+1,out);
@@ -280,7 +281,15 @@ exr_status exr_pdf_colorspace_open(exr_pdf_file *file,uint32_t value,exr_pdf_fil
   if(out) *out=NULL;
   if(!file || !resource_file || !out) return exr_fail(error,EXR_ARGUMENT,"Missing PDF color space input/output");
   r.resources_file=resource_file; r.resources=resources; r.control=control; r.error=error ? error : &local; memset(r.error,0,sizeof(*r.error));
-  status=open_space(&r,file,value,0,out); return status==EXR_OK ? exr_fail(error,EXR_OK,"") : status;
+  status=open_space(&r,file,value,0,out);
+  if(status==EXR_OK) (*out)->resource_dependent=r.used_resources;
+  return status==EXR_OK ? exr_fail(error,EXR_OK,"") : status;
+}
+int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *s,int own_intent) {
+  if(!s) return 1;
+  if(s->resource_dependent) return 0;
+  if(!own_intent && (s->kind==SPACE_CMYK || s->kind==SPACE_ICC)) return 0;
+  return s->kind!=SPACE_TINT || exr_pdf_colorspace_cacheable(s->alternate,own_intent);
 }
 void exr_pdf_colorspace_free(exr_pdf_colorspace *s) { if(s) { exr_pdf_colorspace_free(s->alternate); exr_pdf_function_free(s->function); exr_icc_free(s->icc); free(s); } }
 size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *s) { return s ? sizeof(*s)+exr_pdf_colorspace_memory(s->alternate)+exr_pdf_function_memory(s->function)+exr_icc_memory(s->icc) : 0; }

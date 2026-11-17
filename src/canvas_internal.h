@@ -2,6 +2,7 @@
 #ifndef EXR_CANVAS_INTERNAL_H
 #define EXR_CANVAS_INTERNAL_H
 #include "vector_internal.h"
+#include "buffer_pool_internal.h"
 typedef struct { exr_bitmap bitmap; size_t refs; } exr_clip_mask;
 typedef struct {
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
@@ -14,6 +15,7 @@ typedef struct {
   size_t soft_mask_width,soft_mask_height;
 } exr_canvas_layer;
 struct exr_canvas {
+  exr_buffer_pool local_pool,*pool;
   struct exr_icc *cmyk_profile;
   exr_bitmap bitmap;exr_composite_state *composite; exr_control control; exr_error failure;
   exr_clip_mask *clip,*saved[160],*group,*groups[64];
@@ -28,6 +30,7 @@ struct exr_canvas {
   int offset_x,offset_y; /* canvas coordinate of the active working buffer's top-left */
   size_t canvas_width,canvas_height; /* device extent, independent of the active buffer */
 };
+exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_pool *pool,exr_canvas **out,exr_error *error);
 /* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */
 exr_status exr_canvas_soft_mask(exr_canvas *canvas,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 /* Clip-union construction is internal until the generic scene API is settled. */
