@@ -1,0 +1,3 @@
+{"scenario":"full-canvas","status":6,"calls":22364160,"charged_work":268369920,"cpu_ms":1548.000000,"pixel_hash":"9f970139dd772383"}
+{"scenario":"tiny-clip-with-hole","status":0,"calls":48,"charged_work":608,"cpu_ms":4.000000,"pixel_hash":"861f4780274ac3cb"}
+283 procedural paint checks passed

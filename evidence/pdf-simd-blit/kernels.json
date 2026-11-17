@@ -1,0 +1,87 @@
+{
+  "scope": "Hot-cache rectangle spans; 1200 pixels, 20000 repetitions, seven samples; ns per visited span pixel",
+  "cpu_affinity": 1,
+  "priority": "high",
+  "variants": {
+    "baseline": {
+      "opaque_colour": {
+        "samples_ns_per_pixel": [
+          0.056829166667,
+          0.063620833333,
+          0.056583333333,
+          0.063304166667,
+          0.056195833333,
+          0.057983333333,
+          0.055833333333
+        ],
+        "p50_ns_per_pixel": 0.056829166667
+      },
+      "alpha_128_opaque_destination": {
+        "samples_ns_per_pixel": [
+          1.812816666667,
+          1.767083333333,
+          1.772720833333,
+          1.759979166667,
+          1.769379166667,
+          1.755333333333,
+          1.788791666667
+        ],
+        "p50_ns_per_pixel": 1.769379166667
+      },
+      "alpha_128_constant_clip_128": {
+        "samples_ns_per_pixel": [
+          3.16785,
+          3.2537875,
+          3.2023625,
+          3.195158333333,
+          3.161670833333,
+          3.169970833333,
+          3.221925
+        ],
+        "p50_ns_per_pixel": 3.195158333333
+      },
+      "vector_sha256": "332310aa1205e50dce0ba9bdd0e6315c994803d60e6efa282d7e79557c01a766",
+      "binary_sha256": "43a325dc626a545bb2fd0af656ee0b6c4a07febab7b838dc550c9f6d24906e5d"
+    },
+    "all": {
+      "opaque_colour": {
+        "samples_ns_per_pixel": [
+          0.061716666667,
+          0.056670833333,
+          0.0581875,
+          0.0562375,
+          0.058383333333,
+          0.056279166667,
+          0.0559625
+        ],
+        "p50_ns_per_pixel": 0.056670833333
+      },
+      "alpha_128_opaque_destination": {
+        "samples_ns_per_pixel": [
+          0.4162125,
+          0.411320833333,
+          0.4132125,
+          0.405416666667,
+          0.429141666667,
+          0.41445,
+          0.406641666667
+        ],
+        "p50_ns_per_pixel": 0.4132125
+      },
+      "alpha_128_constant_clip_128": {
+        "samples_ns_per_pixel": [
+          0.717508333333,
+          0.696416666667,
+          0.696229166667,
+          0.692945833333,
+          0.695104166667,
+          0.694025,
+          0.695625
+        ],
+        "p50_ns_per_pixel": 0.695625
+      },
+      "vector_sha256": "1542b8efc4ccda79517d7209be075fe678ebe18006a9d085b3d6acf05c8bfd40",
+      "binary_sha256": "f3379db4a5d1d5574c5e84d4e07aa2aa6c61dbb35441dfa3499b778452b4e8d1"
+    }
+  }
+}

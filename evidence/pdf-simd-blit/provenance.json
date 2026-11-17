@@ -1,0 +1,46 @@
+{
+  "timestamp_utc": "2026-11-17T05:27:28.591995+00:00",
+  "baseline_commit": "2b24c3ea87144e25b371d227340cd8bc80251bb1",
+  "branch": "perf/pdf-simd-blit",
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "source_sha256": {
+    "src/vector.c": "1542b8efc4ccda79517d7209be075fe678ebe18006a9d085b3d6acf05c8bfd40",
+    "src/blend.c": "39aea086a6fef1be8ac58f544b836fd94fae0a5767371de30fa85af01f6693cd",
+    "src/canvas.c": "13479fcc0986ba2d2aeac653f058abfe1e24660bba424b44154ac0b6c4da1a1e",
+    "src/affine_image.c": "da75ee350e64a55bdd015f8509e472e273f00aa872aee697b6fa94205c4b872f",
+    "src/graphics_internal.h": "d418f08c7f8a9a4afbee4bada7e9adce989e93c1238b0fd97be6904d726993d5",
+    "src/canvas_internal.h": "840a65c81feccb848312ef3f25af5c0d069cd58e4647a8a49ce5ede2e3d9968b",
+    "src/pixels_internal.h": "99524d70009fe69c20cb9ad5fce6a55e206da35430f7aef57aa1be221f1df818",
+    "tests/test_vector.c": "94a29b6c119b29c4f388fdaa25f984570bd71bf4de93c385fe1d0e8f470aced6",
+    "tests/test_paint_source.c": "4e111957c1bd275fd38b533032a8bc39276be0c05a4b19af143a2a0319c9e4fa",
+    "tools/benchmark_pdf_rect.py": "2b55c4eff9b1dc3b8ec00da59aa66443f559aad26a11c1b6e1fc98f192ec521b",
+    "tools/profile_pdf_spans.py": "6ee84c9e3c2031e090d7bff5600b9dd7bf70e70b8e726fbd91b9f28509fb4875",
+    "tools/benchmark_pdf_span_kernels.py": "ae38f75c7f7c07f25854e2f247c37d36ae752aab0efaec6c8fa51525c85b5b57"
+  },
+  "original_baseline_dll_sha256": "04e28289fdd0173a7f4251fc3feeef9cf78ee396968dc2b21a8608e86d2ccda4",
+  "scope": "Items 1 and 3 only; fonts.c and font_outline.c unchanged",
+  "tested_execution_paths": [
+    "Windows x86_64 SSE2",
+    "Windows x86_64 scalar fallback (-U__SSE2__ -fno-tree-vectorize)"
+  ],
+  "neon_execution_tested": false,
+  "acceptance_process_controls": {
+    "cpu_affinity_mask": 1,
+    "priority": "high"
+  },
+  "external_load": "Concurrent unrelated builds; no global scheduling or power settings changed",
+  "pixel_dimensions": {
+    "600": [
+      600,
+      338
+    ],
+    "1200": [
+      1200,
+      675
+    ],
+    "2400": [
+      2400,
+      1350
+    ]
+  }
+}

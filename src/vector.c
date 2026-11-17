@@ -2,6 +2,11 @@
 #include "vector_internal.h"
 #include "pixels_internal.h"
 #include <float.h>
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP>=2)
+#include <emmintrin.h>
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
+#include <arm_neon.h>
+#endif
 typedef struct { double x; int winding; } crossing;
 static int compare_crossing(const void *a,const void *b) {
   const crossing *x=a,*y=b; return x->x<y->x ? -1 : x->x>y->x;
@@ -63,6 +68,15 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
   int x;
   const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
   if(!coverage || left>=right) return;
+  if(mask && !cmyk && !state && mode==EXR_BLEND_NORMAL) {
+    /* A clip often contains long constant spans, including fully clipped rows. */
+    for(x=left;x<right;) {
+      int start=x;unsigned value=mask[x++];
+      while(x<right && mask[x]==value) x++;
+      if(value) rectangle_span(bitmap,start,x,y,(coverage*value+127)/255,color,NULL,0,NULL,mode,NULL);
+    }
+    return;
+  }
   if(!cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 && coverage==255) {
     const unsigned char rgba[4]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
     const unsigned char gray=(unsigned char)((rgba[0]*77+rgba[1]*150+rgba[2]*29+128)>>8);
@@ -70,7 +84,23 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
     /* Preserve the integer rectangle's bulk stores for every fully covered span. */
     if(!mask && bitmap->channels==1) memset(pixel,gray,(size_t)(right-left));
     else if(!mask && color==0xffffffffu) memset(pixel,255,(size_t)(right-left)*bitmap->channels);
-    else if(!mask) for(x=left;x<right;x++,pixel+=4) memcpy(pixel,rgba,4);
+    else if(!mask) {
+      x=left;
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP>=2)
+      uint32_t packed;__m128i value;
+      memcpy(&packed,rgba,4);value=_mm_set1_epi32((int)packed);
+      /* Pixel-aligned rows can reach a 16-byte boundary with scalar stores.
+         Arbitrary external strides retain unaligned vector stores. */
+      if(!((uintptr_t)pixel&3)) {
+        for(;x<right && ((uintptr_t)pixel&15);x++,pixel+=4) memcpy(pixel,rgba,4);
+        for(;x+4<=right;x+=4,pixel+=16) _mm_store_si128((__m128i *)pixel,value);
+      } else for(;x+4<=right;x+=4,pixel+=16) _mm_storeu_si128((__m128i *)pixel,value);
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
+      uint32_t packed;memcpy(&packed,rgba,4);
+      for(;x+4<=right;x+=4,pixel+=16) vst1q_u8(pixel,vreinterpretq_u8_u32(vdupq_n_u32(packed)));
+#endif
+      for(;x<right;x++,pixel+=4) memcpy(pixel,rgba,4);
+    }
     else for(x=left;x<right;x++,pixel+=bitmap->channels) {
       unsigned alpha=mask ? mask[x] : 255;
       if(alpha==255) {
@@ -79,6 +109,9 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
       } else if(alpha) exr_pixel(bitmap,x,y,color,alpha);
     }
     return;
+  }
+  if(!mask && !cmyk && !state && mode==EXR_BLEND_NORMAL) {
+    exr_pixel_span(bitmap,left,right,y,color,coverage);return;
   }
   for(x=left;x<right;x++) {
     unsigned alpha=mask ? (coverage*mask[x]+127)/255 : coverage;
@@ -114,7 +147,18 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   status=exr_control_cancel(control,error); if(status!=EXR_OK) return status;
   if((!(cmyk ? cmyk_alpha>0 : (color&255)) && (!state || !(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) || high<=0 || low>=bitmap->height || low>=high || right_bound<=0 || left_bound>=bitmap->width || left_bound>=right_bound) return exr_fail(error,EXR_OK,"");
   top=(int)fmax(0,floor(low)); bottom=(int)fmin(bitmap->height,ceil(high));
-  left=(int)fmax(0,floor(left_bound)); right=(int)fmin(bitmap->width,ceil(right_bound)); row_width=(uint32_t)(right-left);
+  left=(int)fmax(0,floor(left_bound)); right=(int)fmin(bitmap->width,ceil(right_bound));
+  if(clip && state && state->clip_bounds) {
+    const exr_clip_bounds *b=state->clip_bounds;
+    if(left<(int)b->left) left=(int)b->left;
+    if(right>(int)b->right) right=(int)b->right;
+    if(top<(int)b->top) top=(int)b->top;
+    if(bottom>(int)b->bottom) bottom=(int)b->bottom;
+    if(left>=right || top>=bottom) return exr_fail(error,EXR_OK,"");
+    if(b->solid) clip=NULL;
+  }
+  if(exr_composite_plain(state)) state=NULL;
+  row_width=(uint32_t)(right-left);
   /* Exact rectangle/pixel intersection area: bulk interior, at most two edge
      pixels per row and two fractional rows. No crossings/coverage allocation. */
   if(axis_rectangles(edges,count,rule,left_bound,low,right_bound,high)) {

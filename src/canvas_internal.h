@@ -2,7 +2,7 @@
 #ifndef EXR_CANVAS_INTERNAL_H
 #define EXR_CANVAS_INTERNAL_H
 #include "vector_internal.h"
-typedef struct { exr_bitmap bitmap; size_t refs; } exr_clip_mask;
+typedef struct { exr_bitmap bitmap; size_t refs; exr_clip_bounds bounds; unsigned bounded; } exr_clip_mask;
 typedef struct {
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
   int parent_offset_x,parent_offset_y;

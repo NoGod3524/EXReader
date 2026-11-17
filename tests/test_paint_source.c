@@ -119,7 +119,8 @@ static void clipped_budget(int verify) {
     if(verify) {
       if(clipped) {
         const exr_bitmap *b=exr_canvas_bitmap(c);const unsigned char *pixel;
-        CHECK(status==EXR_OK && s.calls==12*4);CHECK(work==(size_t)size*size+16+12*48);
+        /* Two 4x4 region scans, then twelve covered pixels; no page scan. */
+        CHECK(status==EXR_OK && s.calls==12*4);CHECK(work==16+16+12*48);
         pixel=b->pixels+100*b->stride+100*4;CHECK(pixel[2]==255 && pixel[3]==255);
         pixel=b->pixels+101*b->stride+101*4;CHECK(!pixel[0] && !pixel[1] && !pixel[2] && !pixel[3]);
         CHECK(!b->pixels[3]);

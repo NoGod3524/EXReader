@@ -1,0 +1,1 @@
+1087457 native vector fill checks passed
