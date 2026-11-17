@@ -14,6 +14,10 @@ static inline void exr_pixel(exr_bitmap *bitmap,int x,int y,uint32_t color,unsig
     p[0]=(unsigned char)((p[0]*(255-alpha)+r*alpha+127)/255);
     p[1]=(unsigned char)((p[1]*(255-alpha)+g*alpha+127)/255);
     p[2]=(unsigned char)((p[2]*(255-alpha)+b*alpha+127)/255);
+  } else if(!p[3]) {
+    /* Transparent destination: with d=alpha*255 the general quotients reduce
+       exactly to (source*d+d/2)/d=source and (d+127)/255=alpha. */
+    p[0]=(unsigned char)r; p[1]=(unsigned char)g; p[2]=(unsigned char)b; p[3]=(unsigned char)alpha;
   } else {
     unsigned source[3]={r,g,b},denominator=alpha*255+p[3]*(255-alpha),k;
     for(k=0;k<3;k++) p[k]=(unsigned char)((source[k]*alpha*255+p[k]*p[3]*(255-alpha)+denominator/2)/denominator);
