@@ -80,3 +80,51 @@ The native differential test uses an opaque identity mask layer to exercise the 
 The comparator decompressed actual RGBA snapshots and checked the bytes across every page and width. [Pixel results and per-page hashes](pixels.json).
 
 CTest passed **577/577**. [CTest summary](ctest-summary.txt).
+
+## Word-5 regression follow-up
+
+The follow-up compares the PR head `fa47cf9f3`, the GCC outlining fix, and main `8c603624f` where measured. The machine used an Intel Core Ultra 7 256V with eight logical CPUs, Windows 11, AC power, the Balanced plan, and MinGW GCC 16.2.0 Release. The handoff names three fixtures. `pptx-1` is the fourth timing control from the same fixture set.
+
+### Reproduction and attribution
+
+The handoff runner sampled 13.28% system CPU before the original Word run. It samples once for the full invocation. The measured p50s were 3.058 ms at 600 px (14.3% spread) and 7.423 ms at 1200 px (3.5% spread).
+
+One trace rendered every page once at each width. Code 1 recorded a successful `nearest_axis` dispatch, 0 or 2 a mask-validation call, and 3 a successful solid-mask dispatch.
+
+| Fixture | Width | Nearest-axis draws | Mask validation calls | Solid-mask draws |
+| --- | ---: | ---: | ---: | ---: |
+| word-5 | 600 | 5 | 0 | 0 |
+| word-5 | 1200 | 5 | 0 | 0 |
+| deck | 600 | 0 | 135 | 135 |
+| deck | 1200 | 0 | 135 | 135 |
+
+MinGW GCC inlined both fast paths into `exr_vector_texture_blend_inks`. Adding the masked path changed the emitted unmasked path. Disabling only the masked branch produced affine-object disassembly identical to main. Outlining `nearest_axis` gives GCC a separate function body and retains the solid-mask dispatch and its validation.
+
+Paired Word diagnostics rotated DLL order on each page, with 3 warmup rounds followed by 20 measured rounds per repeat. CPU readings apply to every DLL in that repeat. Spread is (max − min) ÷ min across repeat p50s.
+
+| Width | Build | Repeat p50s (ms) | Median p50 (ms) | Spread | Pre-CPU (%) | Capture CPU (%) |
+| ---: | --- | --- | ---: | ---: | --- | --- |
+| 600 | before | 3.471 / 3.299 / 3.131 | 3.299 | 10.9% | 12.11 / 11.67 / 13.28 | 34.90 / 26.68 / 41.35 |
+| 600 | main | 3.446 / 3.289 / 3.081 | 3.289 | 11.8% | 12.11 / 11.67 / 13.28 | 34.90 / 26.68 / 41.35 |
+| 600 | no-solid | 3.412 / 3.253 / 3.143 | 3.253 | 8.6% | 12.11 / 11.67 / 13.28 | 34.90 / 26.68 / 41.35 |
+| 600 | outline-solid | 3.456 / 3.260 / 3.179 | 3.260 | 8.7% | 12.11 / 11.67 / 13.28 | 34.90 / 26.68 / 41.35 |
+| 600 | outline-nearest | 3.339 / 3.167 / 2.994 | 3.167 | 11.5% | 12.11 / 11.67 / 13.28 | 34.90 / 26.68 / 41.35 |
+
+### Render acceptance
+
+The repository runner uses 20 rounds after one warmup and three fresh processes per width. Each repeat requires system pre-CPU of 15% or less. Capture CPU includes the benchmark. The p50 is the median of repeat p50s.
+
+| Fixture | Width | Build | p50 (ms) | Repeat p50s (ms) | Spread | Pre-CPU (%) | Capture CPU (%) |
+| --- | ---: | --- | ---: | --- | ---: | --- | --- |
+
+### Verification
+
+| Fixture | Page/width combinations | Active RGBA pixels | Different pixels | Maximum channel delta |
+| --- | ---: | ---: | ---: | ---: |
+| word-5 | 10 | 11,649,000 | 0 | 0 |
+| deck | 30 | 15,192,000 | 0 | 0 |
+| pptx-20 | 60 | 85,056,000 | 0 | 0 |
+
+Compared 111,897,000 active RGBA pixels between the original and final DLLs. CTest passed 577/577.
+
+word-5 回退的原因是 GCC 把两条快路径内联到同一个函数后，改变了 word-5 所用无掩码近邻循环的机器码。
