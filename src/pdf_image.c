@@ -64,6 +64,10 @@ static int image_name_is(exr_pdf_file *file,uint32_t id,const char *name) {
   bytes=exr_pdf_bytes(file,id,&n);
   return bytes && n==strlen(name) && !memcmp(bytes,name,n);
 }
+/* A decoded pixel is a pure function of its raw samples unless a matte mixes
+   in the soft mask, so repeated sample tuples can reuse the converted bytes. */
+typedef struct { uint64_t key; unsigned char valid,rgba[4],inks[4]; } pixel_memo;
+#define PIXEL_MEMO_SLOTS 1024u
 static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
                                  unsigned intent,exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e,
                                  image_chain *chain,unsigned *kind,exr_bitmap *inks) {
@@ -71,7 +75,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   int stencil=0,interpolate=0; double decode[2*EXR_PDF_MAX_COLORANTS]={0,1}; exr_pdf_colorspace *space=NULL;
   const unsigned char *bytes; unsigned char *jpx_samples=NULL; size_t size,row,y,x,local_work=0,owned=0,jpx_live=0; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
   uint32_t mask=EXR_PDF_NONE; unsigned soft=0,entered=0,charged=0,matte=0; double matte_rgb[4]={0};
-  exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE;
+  exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE; pixel_memo *memo=NULL;
   if(out) *out=NULL;
   if(inks) memset(inks,0,sizeof(*inks));
   if(!file || !out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF image input/output");
@@ -213,13 +217,27 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     if((soft && mask_kind!=1) || (!soft && mask_kind!=0)) goto invalid;
   }
   if(matte && (!mask_texture || mask_texture->bitmap.width!=width || mask_texture->bitmap.height!=height || mask_texture->mask)) goto invalid;
+  if(!matte && channels*bits<=64) memo=calloc(PIXEL_MEMO_SLOTS,sizeof(*memo)); /* optional: NULL just disables reuse */
   for(y=0;y<height;y++) {
     if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
     if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
     for(x=0;x<width;x++) {
       double values[EXR_PDF_MAX_COLORANTS]; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
+      unsigned raws[EXR_PDF_MAX_COLORANTS]; pixel_memo *slot=NULL;
+      for(k=0;k<channels;k++) raws[k]=codec==EXR_PDF_STREAM_JPEG ? p[k] : sample(bytes+y*row,(x*channels+k)*bits,bits);
+      if(memo) {
+        uint64_t packed=0;
+        for(k=0;k<channels;k++) packed=(packed<<bits)|raws[k];
+        slot=memo+(size_t)(((packed^(packed>>32))*UINT64_C(0x9E3779B97F4A7C15))>>54);
+        if(slot->valid && slot->key==packed) {
+          memcpy(p,slot->rgba,4);
+          if(inks && inks->pixels) memcpy(inks->pixels+y*inks->stride+x*4,slot->inks,4);
+          continue;
+        }
+        slot->valid=0; slot->key=packed;
+      }
       for(k=0;k<channels;k++) {
-        unsigned raw=codec==EXR_PDF_STREAM_JPEG ? p[k] : sample(bytes+y*row,(x*channels+k)*bits,bits);
+        unsigned raw=raws[k];
         double unit=(double)raw/((1u<<bits)-1);
         if(color_key && (raw<key[2*k] || raw>key[2*k+1])) transparent=0;
         values[k]=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
@@ -237,6 +255,11 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
         p[3]=exr_pdf_colorspace_no_paint(space) ? 0 : 255;
         if(transparent) p[3]=0;
       }
+      if(slot) {
+        memcpy(slot->rgba,p,4);
+        if(inks && inks->pixels) memcpy(slot->inks,inks->pixels+y*inks->stride+x*4,4);
+        slot->valid=1;
+      }
     }
   }
   if(r.error.code==EXR_OK && exr_control_cancel(control,&r.error)==EXR_OK) {
@@ -253,7 +276,7 @@ done:
   if(entered) chain->depth--;
   chain->live-=jpx_live;free(jpx_samples);
   if(charged) chain->live-=owned;
-  release_texture(mask_texture,chain); free(bitmap.pixels); exr_pdf_colorspace_free(space);
+  release_texture(mask_texture,chain); free(bitmap.pixels); free(memo); exr_pdf_colorspace_free(space);
   if(r.error.code!=EXR_OK && inks) { free(inks->pixels);memset(inks,0,sizeof(*inks)); }
   if(e) *e=r.error;
   return r.error.code;
