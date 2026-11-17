@@ -82,6 +82,39 @@ static void affine(void) {
     color.mask=&opacity; opacity.bitmap=dst; CHECK(exr_vector_texture_paint(&dst,&color,matrix,1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
   }
 }
+/* An opaque tail mask forces the recursive sampler without changing samples.
+   Compare it with the paired nearest path over padded strides, partial source
+   and mask alpha, clip holes, rotations, reflections and both mask modes. */
+static void paired_nearest(void) {
+  unsigned char source[180],mask[200],opaque[4]={255,255,255,255},a[936],b[936],clips[247];
+  exr_vector_texture color={0},opacity={0},tail={0}; exr_bitmap dst={0},clip={0};
+  unsigned i,trial; uint32_t seed=17;
+  color.bitmap.width=opacity.bitmap.width=7; color.bitmap.height=opacity.bitmap.height=5;
+  color.bitmap.channels=opacity.bitmap.channels=4; color.bitmap.stride=36; opacity.bitmap.stride=40;
+  color.bitmap.pixels=source; opacity.bitmap.pixels=mask; color.mask=&opacity;
+  tail.bitmap.width=tail.bitmap.height=1; tail.bitmap.channels=tail.bitmap.stride=4; tail.bitmap.pixels=opaque;
+  opacity.mask_mode=1;
+  dst.width=17; dst.height=13; dst.channels=4; dst.stride=72;
+  clip.width=17; clip.height=13; clip.channels=1; clip.stride=19; clip.pixels=clips;
+  for(trial=0;trial<64;trial++) {
+    double angle=trial&8 ? 0 : trial*.19,m[6]={12*cos(angle),12*sin(angle),-9*sin(angle),9*cos(angle),3,2};
+    double alpha=(trial%4)/3.; exr_blend_mode mode=trial&1 ? EXR_BLEND_MULTIPLY : EXR_BLEND_NORMAL;
+    exr_composite_state state={0}; float shape_a[221]={0},shape_b[221]={0},working_a[1105]={0},working_b[1105]={0};
+    for(i=0;i<sizeof(source);i++) { seed=seed*1664525u+1013904223u; source[i]=(unsigned char)(seed>>24); }
+    for(i=0;i<sizeof(mask);i++) { seed=seed*1664525u+1013904223u; mask[i]=(unsigned char)(seed>>24); }
+    for(i=0;i<sizeof(a);i++) { seed=seed*1664525u+1013904223u; a[i]=b[i]=(unsigned char)(seed>>24); }
+    for(i=0;i<sizeof(clips);i++) clips[i]=i%3 ? (unsigned char)i : 0;
+    if(trial&2) m[0]=-m[0];
+    if(trial&4) { memset(source,255,sizeof(source)); memset(mask,trial&8 ? 255 : 0,sizeof(mask)); }
+    color.mask_mode=trial&1 ? 1 : 2; opacity.mask=NULL;
+    state.isolated=1; state.alpha_flags=trial%4; state.shape=trial&16 ? shape_a : NULL; state.pixels=trial&32 ? working_a : NULL;
+    dst.pixels=a;
+    OK(exr_vector_texture_blend(&dst,&color,m,alpha,&clip,mode,&state,NULL,NULL,&error));
+    opacity.mask=&tail; state.shape=trial&16 ? shape_b : NULL; state.pixels=trial&32 ? working_b : NULL; dst.pixels=b;
+    OK(exr_vector_texture_blend(&dst,&color,m,alpha,&clip,mode,&state,NULL,NULL,&error));
+    CHECK(!memcmp(a,b,sizeof(a))); CHECK(!memcmp(shape_a,shape_b,sizeof(shape_a))); CHECK(!memcmp(working_a,working_b,sizeof(working_a)));
+  }
+}
 static void jpeg_cases(const char *dir) {
   const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
   unsigned char *data; size_t size,i; exr_pdf_file *file=NULL; exr_bitmap b;
@@ -157,7 +190,7 @@ static void cmyk_jpeg_cases(const char *dir) {
 int main(int argc,char **argv) {
   const char *bad[]={"soft-color","explicit-type","matte-short","palette-short","palette-high","key-range","short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
   size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
-  CHECK(argc==2); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
+  CHECK(argc==2); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine(); paired_nearest();
   { exr_vector_texture *texture=NULL; OK(exr_pdf_image_load(file,image(file,"HighMask"),resources(file),0,&texture,NULL,NULL,&error));
     CHECK(texture && texture->bitmap.width==1 && texture->mask && texture->mask->bitmap.width==4); exr_pdf_image_release(texture); exr_pdf_image_release(NULL);
   }
