@@ -1,0 +1,11 @@
+{
+  "baseline": "98b029bb41242ec211973be90eefc82338b17445",
+  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
+  "candidate_vector_git_blob": "17f44b8efdb8f53841a1184a43aec84d20d4dbd0",
+  "dll_sha256": {
+    "A": "c3678d4404bc4dd8603c3df876299a7edc9b8a2068840e3ab0f15778075c8fd6",
+    "B": "c337e10451da59dee35e3d1570ee7c70122ec231e324204643cd8b8fd69cfaf4"
+  },
+  "build_type": "Release",
+  "EXR_ENABLE_IMAGE_AVIF": false
+}

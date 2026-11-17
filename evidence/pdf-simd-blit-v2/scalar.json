@@ -1,0 +1,5 @@
+{
+  "assertions_passed": 168190,
+  "compiler_flag": "-U__SSE2__",
+  "output": "168190 native vector fill checks passed"
+}

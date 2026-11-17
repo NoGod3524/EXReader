@@ -44,6 +44,7 @@ def measure_kernels(baseline, output):
                 kind, _, ns, _ = line.split()
                 capture[names[int(kind)]] = float(ns)
             captures.append(capture)
+            print(f'kernel pair {pair} {variant}: CPU {busy:.2f}%', flush=True)
     result = {'scope': 'Hot-cache ns per visited span pixel', 'span_pixels': 1200,
               'repetitions_per_sample': 20000, 'captures': captures,
               'p50_ns_per_pixel': {variant: {name: statistics.median(
@@ -57,9 +58,14 @@ def main():
     parser.add_argument('baseline_source', type=Path)
     parser.add_argument('build', type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--kernels', action='store_true', help='Alternate hot-cache spans instead of instrumented PDF renders')
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
+    baseline = args.baseline_source.resolve()
+    if args.kernels:
+        measure_kernels(baseline, output)
+        return
     source = output / 'profile_pdf_spans.py'
     prior = subprocess.check_output(['git', 'show', f'{PRIOR}:tools/profile_pdf_spans.py'],
                                     cwd=ROOT, encoding='utf-8')
@@ -67,7 +73,6 @@ def main():
     spec = importlib.util.spec_from_file_location('profile_pdf_spans', source)
     profile = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(profile)
-    baseline = args.baseline_source.resolve()
     libraries = {}
     for variant, source_root in [('A', baseline), ('B', ROOT)]:
         directory = output / variant
@@ -90,7 +95,6 @@ def main():
             write_json(output / name, result)
             print(f'{pdf.name} {variant}: {measured["ns_per_output_pixel"]:.4f} ns/output pixel',
                   flush=True)
-    measure_kernels(baseline, output)
 
 
 if __name__ == '__main__':
