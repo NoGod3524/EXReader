@@ -202,8 +202,13 @@ static void cmyk_soft_masks(void) {
     }
     exr_bitmap_free(&bitmap);
     if(scenario==1) {
+      /* The page clip covers the whole canvas, so it allocates no mask and cannot
+         exhaust a 1-byte budget; a plain page render must therefore succeed. A clip
+         that really allocates is still refused, which native-canvas and
+         native-pdf-raster cover with a partial rectangle. */
       options.mask_budget=1;
-      CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_LIMIT && !bitmap.pixels);
+      CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_OK && bitmap.pixels);
+      exr_bitmap_free(&bitmap);
       options.mask_budget=0;options.control.cancelled=cancel_mask;
       CHECK(exr_fixed_render(document,0,1,&options,&bitmap,&error)==EXR_CANCELLED && !bitmap.pixels);
     }
@@ -239,3 +244,6 @@ int main(int argc,char **argv) {
   printf("%u native PDF group colour-space checks passed\n",checks);
   return 0;
 }
+
+
+

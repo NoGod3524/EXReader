@@ -45,7 +45,7 @@ static void clip_cases(exr_pdf_file *file,uint32_t resources) {
   at+=(size_t)snprintf(content+at,sizeof(content)-at,"0 g 0 0 12 12 re f ");
   for(i=0;i<120;i++) at+=(size_t)snprintf(content+at,sizeof(content)-at,"Q ");
   b=render(file,resources,content,1,144); pixel(&b,1,1,0,0,0); free(b.pixels); /* 120 saves share one 144-byte mask. */
-  config.width=config.height=12; config.channels=1; config.background=0xffffffff; config.mask_budget=144;
+  config.width=config.height=12; config.channels=1; config.background=0xffffffff; config.mask_budget=100; /* the inner 6x6 clip is 144 bytes, the page clip is free */
   { const char *s="0 0 12 12 re W n q 0 0 6 6 re W n Q"; CHECK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels && !b.width); }
 }
 static int cancelled(void *ctx) { (void)ctx; return 1; }
@@ -224,7 +224,9 @@ int main(int argc,char **argv) {
   }
   config.width=0; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
   config.width=12; control.cancelled=cancelled; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,&control,&b,&error)==EXR_CANCELLED && !b.pixels);
-  { double clip[4]={0,0,12,12}; config.initial_clip=clip;
+  /* The initial clip must be a real sub-rectangle: a clip covering the whole canvas
+     allocates no mask, so it cannot be what exhausts the budget below. */
+  { double clip[4]={1,1,11,11}; config.initial_clip=clip;
     clip[0]=NAN; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
     clip[0]=13; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
     clip[0]=0; config.mask_budget=143; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
@@ -237,3 +239,5 @@ int main(int argc,char **argv) {
   { const char *s="/Image Do"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); pixel(&b,0,0,0,0,0); free(b.pixels); }
   exr_pdf_close(file); free(data); printf("%u native PDF raster checks passed\n",checks); return 0;
 }
+
+
