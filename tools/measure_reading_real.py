@@ -19,7 +19,7 @@ from measure_reading_pdf import number, require
 from check_parallel_integration import download_artifact_zip, fetch, pages
 
 SDK = "9854061be331fe603a1822d9b2b36ee357154927"
-CORPUS_REGISTRATION = "ea5c13e081cfba86d9f6dd759439894463e51126"
+CORPUS_REGISTRATION = "e98c600cac2a8da07d0815b61cd852ca0a9f7fe3"
 PROTECTED = ("src", "include", "cmake", "CMakeLists.txt", "tests/fixtures",
              ".github/workflows/native.yml", ".github/workflows/reliability.yml", "bindings")
 CONTRACT = ROOT / "tests/reading_real/contract.json"

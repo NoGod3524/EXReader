@@ -16,7 +16,7 @@ on:
         default: tools/reading_corpus/real-v1.json
       registration:
         type: string
-        default: ea5c13e081cfba86d9f6dd759439894463e51126
+        default: e98c600cac2a8da07d0815b61cd852ca0a9f7fe3
   workflow_call:
     inputs:
       manifest:
@@ -24,7 +24,7 @@ on:
         default: tools/reading_corpus/real-v1.json
       registration:
         type: string
-        default: ea5c13e081cfba86d9f6dd759439894463e51126
+        default: e98c600cac2a8da07d0815b61cd852ca0a9f7fe3
     outputs:
       accepted:
         value: ${{ jobs.accept.outputs.accepted }}
@@ -46,7 +46,7 @@ jobs:
       manifest_sha256: ${{ steps.accept.outputs.manifest_sha256 }}
     env:
       R2_MANIFEST: ${{ inputs.manifest || 'tools/reading_corpus/real-v1.json' }}
-      R2_REGISTRATION: ${{ inputs.registration || 'ea5c13e081cfba86d9f6dd759439894463e51126' }}
+      R2_REGISTRATION: ${{ inputs.registration || 'e98c600cac2a8da07d0815b61cd852ca0a9f7fe3' }}
     steps:
       - uses: actions/checkout@v4
         with:
