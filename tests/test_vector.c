@@ -371,7 +371,31 @@ static void composite_rows(void) {
   }
   free(source.pixels);free(target.pixels);free(expected.pixels);free(clip.pixels);
 }
+static void rectangle_simd_equivalence(void) {
+  enum {width=79,stride=336};
+  unsigned char actual[stride+16],expected[stride+16],mask[width];
+  exr_bitmap output={width,1,stride,actual,4},reference=output,clip={width,1,width,mask,1};
+  exr_vector_edge edges[4];
+  unsigned offset,alpha,coverage,i;
+  for(i=0;i<width;i++) mask[i]=(unsigned char)(i<20 ? 255 : i<40 ? 128 : i<64 ? 0 : i*17);
+  for(offset=0;offset<16;offset++) for(alpha=0;alpha<256;alpha++) for(coverage=255;coverage>0;coverage-=17) {
+    uint32_t color=0x27b5ed00u|alpha;
+    size_t work=0;
+    output.pixels=actual+offset;reference.pixels=expected+offset;
+    for(i=0;i<sizeof(actual);i++) actual[i]=(unsigned char)(i*73+alpha*19+coverage);
+    for(i=0;i<width;i++) output.pixels[i*4+3]=(unsigned char)(i<48 ? 255 : i*17);
+    memcpy(expected,actual,sizeof(actual));
+    rectangle(edges,1,0,width-1,coverage/255.,0);
+    OK(exr_vector_fill(&output,edges,4,EXR_VECTOR_NONZERO,color,offset&1 ? &clip : NULL,&work,NULL,&error));
+    for(i=1;i<width-1;i++) {
+      unsigned applied=offset&1 ? (coverage*mask[i]+127)/255 : coverage;
+      exr_pixel(&reference,(int)i,0,color,applied);
+    }
+    CHECK(!memcmp(actual,expected,sizeof(actual)));
+  }
+}
 int main(void) {
+  rectangle_simd_equivalence();
   composite_rows();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
   curves(); strokes(); dashes(); mask_fill_equivalence(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);

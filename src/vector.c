@@ -2,6 +2,16 @@
 #include "vector_internal.h"
 #include "pixels_internal.h"
 #include <float.h>
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP>=2)
+#define EXR_SPAN_SSE2
+#include <emmintrin.h>
+#elif defined(_M_ARM64) && !defined(__clang__)
+#define EXR_SPAN_NEON
+#include <arm64_neon.h>
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
+#define EXR_SPAN_NEON
+#include <arm_neon.h>
+#endif
 typedef struct { double x; int winding; } crossing;
 static int compare_crossing(const void *a,const void *b) {
   const crossing *x=a,*y=b; return x->x<y->x ? -1 : x->x>y->x;
@@ -61,26 +71,125 @@ static int axis_rectangles(const exr_vector_edge *edges,size_t count,exr_vector_
   }
   return rule==EXR_VECTOR_EVENODD ? (count/4)%2!=0 : winding!=0;
 }
+#if defined(EXR_SPAN_SSE2)
+static inline __m128i blend_opaque_rgba(__m128i dst,__m128i zero,__m128i inv,__m128i source) {
+  __m128i lo=_mm_add_epi16(_mm_mullo_epi16(_mm_unpacklo_epi8(dst,zero),inv),source);
+  __m128i hi=_mm_add_epi16(_mm_mullo_epi16(_mm_unpackhi_epi8(dst,zero),inv),source);
+  /* Exact (dst*(255-alpha)+src*alpha+127)/255. The source includes a bias of 128. */
+  lo=_mm_srli_epi16(_mm_add_epi16(lo,_mm_srli_epi16(lo,8)),8);
+  hi=_mm_srli_epi16(_mm_add_epi16(hi,_mm_srli_epi16(hi,8)),8);
+  return _mm_packus_epi16(lo,hi);
+}
+#endif
+static void blend_span(exr_bitmap *bitmap,int left,int right,int y,uint32_t color,unsigned coverage) {
+  int x=left;unsigned alpha=(color&255)*coverage/255;
+  if(!alpha) return;
+#if defined(EXR_SPAN_SSE2)
+  if(right-left>=8) {
+    unsigned char *p=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*4;
+    const __m128i zero=_mm_setzero_si128(),a=_mm_set1_epi16((short)alpha),inv=_mm_set1_epi16((short)(255-alpha));
+    const __m128i rgb=_mm_set_epi16(255,(short)((color>>8)&255),(short)((color>>16)&255),(short)(color>>24),
+                                  255,(short)((color>>8)&255),(short)((color>>16)&255),(short)(color>>24));
+    const __m128i source=_mm_add_epi16(_mm_mullo_epi16(rgb,a),_mm_set1_epi16(128));
+    const __m128i alpha_bytes=_mm_set1_epi32((int)0xff000000u);
+    for(;x+8<=right;x+=8,p+=32) {
+      __m128i d0=_mm_loadu_si128((const __m128i *)p);
+      __m128i d1=_mm_loadu_si128((const __m128i *)(p+16));
+      __m128i both=_mm_and_si128(d0,d1);
+      /* Nonopaque destinations require the scalar variable-denominator formula. */
+      if(_mm_movemask_epi8(_mm_cmpeq_epi8(_mm_and_si128(both,alpha_bytes),alpha_bytes))!=0xffff) {
+        int i;
+        for(i=0;i<8;i++) exr_pixel(bitmap,x+i,y,color,coverage);
+        continue;
+      }
+      _mm_storeu_si128((__m128i *)p,blend_opaque_rgba(d0,zero,inv,source));
+      _mm_storeu_si128((__m128i *)(p+16),blend_opaque_rgba(d1,zero,inv,source));
+    }
+  }
+#elif defined(EXR_SPAN_NEON)
+  if(right-left>=8) {
+    unsigned char *p=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*4;
+    const unsigned char rgba[8]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255,
+                                (unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
+    const uint16x8_t source=vaddq_u16(vmulq_n_u16(vmovl_u8(vld1_u8(rgba)),(uint16_t)alpha),vdupq_n_u16(128));
+    for(;x+8<=right;x+=8,p+=32) {
+      int i;
+      for(i=0;i<8;i++) if(p[i*4+3]!=255) break;
+      if(i!=8) { for(i=0;i<8;i++) exr_pixel(bitmap,x+i,y,color,coverage);continue; }
+      for(i=0;i<4;i++) {
+        uint16x8_t v=vaddq_u16(vmulq_n_u16(vmovl_u8(vld1_u8(p+i*8)),(uint16_t)(255-alpha)),source);
+        vst1_u8(p+i*8,vshrn_n_u16(vaddq_u16(v,vshrq_n_u16(v,8)),8));
+      }
+    }
+  }
+#endif
+  for(;x<right;x++) exr_pixel(bitmap,x,y,color,coverage);
+}
+static void rgba_span(exr_bitmap *bitmap,int left,int right,int y,unsigned coverage,uint32_t color) {
+  unsigned char *pixel;
+  int x=left;
+  if((color&255)!=255 || coverage!=255) {
+    blend_span(bitmap,left,right,y,color,coverage);
+    return;
+  }
+  pixel=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*4;
+  if(color==0xffffffffu) {
+    memset(pixel,255,(size_t)(right-left)*4);
+    return;
+  }
+  const unsigned char rgba[4]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
+#if defined(EXR_SPAN_SSE2)
+  uint32_t packed;__m128i value;
+  memcpy(&packed,rgba,4);value=_mm_set1_epi32((int)packed);
+  /* Pixel-aligned rows can reach a 16-byte boundary with scalar stores.
+     Arbitrary external strides retain unaligned vector stores. */
+  if(!((uintptr_t)pixel&3)) {
+    for(;x<right && ((uintptr_t)pixel&15);x++,pixel+=4) memcpy(pixel,rgba,4);
+    for(;x+4<=right;x+=4,pixel+=16) _mm_store_si128((__m128i *)pixel,value);
+  } else for(;x+4<=right;x+=4,pixel+=16) _mm_storeu_si128((__m128i *)pixel,value);
+#elif defined(EXR_SPAN_NEON)
+  uint32_t packed;memcpy(&packed,rgba,4);
+  for(;x+4<=right;x+=4,pixel+=16) vst1q_u8(pixel,vreinterpretq_u8_u32(vdupq_n_u32(packed)));
+#endif
+  for(;x<right;x++,pixel+=4) memcpy(pixel,rgba,4);
+}
 static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned coverage,uint32_t color,
                            const double *cmyk,double cmyk_alpha,const exr_bitmap *clip,
                            exr_blend_mode mode,exr_composite_state *state) {
   int x;
   const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
   if(!coverage || left>=right) return;
+  if(bitmap->channels==4 && !cmyk && !state && mode==EXR_BLEND_NORMAL) {
+    if(!mask) {
+      rgba_span(bitmap,left,right,y,coverage,color);
+      return;
+    }
+    /* Read the existing clip row directly; long constant runs share one span. */
+    for(x=left;x<right;) {
+      int start=x;
+      unsigned value=mask[x++];
+#if defined(EXR_SPAN_SSE2)
+      if(x+16<=right && mask[x]==value) {
+        const __m128i expected=_mm_set1_epi8((char)value);
+        for(;x+16<=right;x+=16) {
+          __m128i block=_mm_loadu_si128((const __m128i *)(mask+x));
+          if(_mm_movemask_epi8(_mm_cmpeq_epi8(block,expected))!=0xffff) break;
+        }
+      }
+#endif
+      while(x<right && mask[x]==value) x++;
+      if(value) rgba_span(bitmap,start,x,y,(coverage*value+127)/255,color);
+    }
+    return;
+  }
   if(!cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 && coverage==255) {
-    const unsigned char rgba[4]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
-    const unsigned char gray=(unsigned char)((rgba[0]*77+rgba[1]*150+rgba[2]*29+128)>>8);
-    unsigned char *pixel=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*bitmap->channels;
-    /* Preserve the integer rectangle's bulk stores for every fully covered span. */
-    if(!mask && bitmap->channels==1) memset(pixel,gray,(size_t)(right-left));
-    else if(!mask && color==0xffffffffu) memset(pixel,255,(size_t)(right-left)*bitmap->channels);
-    else if(!mask) for(x=left;x<right;x++,pixel+=4) memcpy(pixel,rgba,4);
-    else for(x=left;x<right;x++,pixel+=bitmap->channels) {
-      unsigned alpha=mask ? mask[x] : 255;
-      if(alpha==255) {
-        if(bitmap->channels==1) *pixel=gray;
-        else memcpy(pixel,rgba,4);
-      } else if(alpha) exr_pixel(bitmap,x,y,color,alpha);
+    unsigned char gray=(unsigned char)(((color>>24)*77+((color>>16)&255)*150+((color>>8)&255)*29+128)>>8);
+    unsigned char *pixel=bitmap->pixels+(size_t)y*bitmap->stride+left;
+    if(!mask) memset(pixel,gray,(size_t)(right-left));
+    else for(x=left;x<right;x++,pixel++) {
+      unsigned alpha=mask[x];
+      if(alpha==255) *pixel=gray;
+      else if(alpha) exr_pixel(bitmap,x,y,color,alpha);
     }
     return;
   }
