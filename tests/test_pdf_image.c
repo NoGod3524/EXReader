@@ -87,16 +87,28 @@ static void affine(void) {
     opacity.bitmap=color.bitmap;opacity.bitmap.pixels=masks;color.mask=&opacity;
     unit.bitmap=color.bitmap;unit.bitmap.width=unit.bitmap.height=1;unit.bitmap.stride=4;unit.bitmap.pixels=white;
     other.pixels=reference;matrix[0]=6.5;matrix[1]=.3;matrix[2]=.25;matrix[3]=6.8;matrix[4]=-.2;matrix[5]=.1;
-    for(trial=0;trial<32;trial++) {
+    for(trial=0;trial<64;trial++) {
+      double alpha=trial<32 ? .63 : 1;
       for(i=0;i<16;i++) { colors[i]=(unsigned char)(i*29+trial*17);masks[i]=(unsigned char)(i*41+trial*11); }
       for(i=0;i<256;i++) initial[i]=(unsigned char)(i*13+trial);
-      memcpy(target,initial,256);memcpy(reference,initial,256);color.mask_mode=trial&1 ? 1 : 2;
+      color.mask_mode=trial&1 ? 1 : 2;
+      if(trial>=32) {
+        /* Constant opaque color and a varying soft mask with fractional
+           edges, horizontal/vertical reflection and partially covered pixels. */
+        matrix[0]=trial&1 ? -6.5 : 6.5; matrix[4]=trial&1 ? 6.3 : -.2;
+        matrix[3]=trial&4 ? -6.8 : 6.8; matrix[5]=trial&4 ? 6.9 : .1;
+        matrix[1]=matrix[2]=0; colors[3]=255; color.mask_mode=1;
+        for(i=4;i<16;i+=4) memcpy(colors+i,colors,4);
+        for(i=3;i<16;i+=4) masks[i]=255;
+        for(i=0;i<64;i++) mask[i]=(unsigned char)(i*17);
+      }
+      memcpy(target,initial,256);memcpy(reference,initial,256);
       opacity.mask=NULL;
-      OK(exr_vector_texture_paint(&dst,&color,matrix,.63,trial&2 ? &clip : NULL,NULL,NULL,&error));
+      OK(exr_vector_texture_paint(&dst,&color,matrix,alpha,trial&2 ? &clip : NULL,NULL,NULL,&error));
       /* An opaque identity child forces the generic sampler without changing
          the mask samples, providing an independent path for comparison. */
       opacity.mask=&unit;opacity.mask_mode=2;
-      OK(exr_vector_texture_paint(&other,&color,matrix,.63,trial&2 ? &clip : NULL,NULL,NULL,&error));
+      OK(exr_vector_texture_paint(&other,&color,matrix,alpha,trial&2 ? &clip : NULL,NULL,NULL,&error));
       CHECK(!memcmp(target,reference,256));
     }
   }

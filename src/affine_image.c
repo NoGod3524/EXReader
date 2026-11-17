@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "vector_internal.h"
 #include "pixels_internal.h"
+#include <fenv.h>
 #ifdef EXR_PROFILE_IMAGE
 #include <windows.h>
 #include <stdio.h>
@@ -104,6 +105,64 @@ static void masked_nearest_sample(const exr_vector_texture *texture,double u,dou
    Truncation after +.5 is the same rounding as floor, including saturation. */
 static uint32_t image_byte(double value) {
   uint32_t rounded=(uint32_t)(value+.5); return rounded>255 ? 255 : rounded;
+}
+/* Validate the constant color and opaque gray-mask texels before using the
+   integer sample sum. Stride padding is outside the sampled image. */
+static int solid_with_opaque_mask(const exr_bitmap *color,const exr_bitmap *mask) {
+  size_t bytes=(size_t)color->width*4;
+  if(color->pixels[3]!=255) return 0;
+  for(size_t y=0;y<color->height;y++) {
+    const unsigned char *row=color->pixels+y*color->stride;
+    const unsigned char *gray=mask->pixels+y*mask->stride;
+    unsigned opaque=255;
+    if(memcmp(row,color->pixels,4) || memcmp(row,row+4,bytes-4)) return 0;
+    for(size_t x=3;x<bytes;x+=4) opaque&=gray[x];
+    if(opaque!=255) return 0;
+  }
+  return 1;
+}
+static int nearest_axis(double coordinate,unsigned extent) {
+  unsigned index;
+  if(coordinate<0 || coordinate>=1) return -1;
+  index=(unsigned)(coordinate*extent);
+  return (int)(index<extent ? index : extent-1);
+}
+static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,const double inv[6],
+                                  const exr_bitmap *clip,int x0,int y0,int x1,int y1,int *columns,uint32_t rgb,
+                                  size_t cost,size_t *work,const exr_control *control,exr_error *e) {
+  double px0=x0+.25,py0=y0+.25;
+  /* The cross terms are zero. Retain the general sampler's expression so
+     multiply-add contraction cannot move a tap across a texel boundary. */
+  for(int x=x0;x<x1;x++) {
+    columns[2*(x-x0)]=nearest_axis(inv[0]*(x+.25)+inv[2]*py0+inv[4],mask->width);
+    columns[2*(x-x0)+1]=nearest_axis(inv[0]*(x+.75)+inv[2]*py0+inv[4],mask->width);
+  }
+  for(int y=y0;y<y1;y++) {
+    int y_first=nearest_axis(inv[1]*px0+inv[3]*(y+.25)+inv[5],mask->height);
+    int y_second=nearest_axis(inv[1]*px0+inv[3]*(y+.75)+inv[5],mask->height);
+    const unsigned char *first=y_first<0 ? NULL : mask->pixels+(size_t)y_first*mask->stride;
+    const unsigned char *second=y_second<0 ? NULL : mask->pixels+(size_t)y_second*mask->stride;
+    const unsigned char *coverage=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    const int *column=columns;
+    if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+    if(!exr_vector_work(work,(size_t)(x1-x0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
+    if(!first && !second) continue;
+    for(int x=x0;x<x1;x++,column+=2) {
+      unsigned opacity=0,covered=coverage ? coverage[x] : 255;
+      if(!covered) continue;
+      for(unsigned tap=0;tap<2;tap++) if(column[tap]>=0) {
+        int offset=column[tap]*4;
+        if(first) opacity+=first[offset];
+        if(second) opacity+=second[offset];
+      }
+      /* With opaque source and mask texels each quarter sample contributes
+         its gray byte exactly. Missing taps contribute zero. Every nonzero
+         premultiplied RGB sample has the same straight color. */
+      opacity=(opacity+2)/4;
+      if(opacity) exr_pixel(target,x,y,rgb|opacity,covered);
+    }
+  }
+  return exr_fail(e,EXR_OK,"");
 }
 static void ink_sample(const exr_vector_texture *source,const exr_bitmap *inks,double u,double v,double out[5],double *shape,unsigned flags) {
   double rgba[4],weights[4]={1,0,0,0},a=0;unsigned i,k,n=1;uint32_t xs[4],ys[4];
@@ -224,6 +283,25 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
 #ifndef EXR_PROFILE_IMAGE
   { exr_status fast; if(!inks && !state && nearest_axis(target,source,inv,alpha,clip,mode,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast; }
 #endif
+  /* Bound the validation scan by the destination work. Endpoints ensure the
+     separable index calculations stay finite throughout the rectangle. */
+  if(paired_nearest && source->mask_mode==1 && !state && mode==EXR_BLEND_NORMAL && alpha==1 &&
+     (!control || !control->cancelled) && m[1]==0 && m[2]==0 && x1>x0 && y1>y0 &&
+     (size_t)source->bitmap.width*source->bitmap.height<=8*(size_t)(x1-x0)*(y1-y0) &&
+     isfinite(inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4]) &&
+     isfinite(inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4]) &&
+     isfinite(inv[1]*(x0+.25)+inv[3]*(y0+.25)+inv[5]) &&
+     isfinite(inv[1]*(x0+.25)+inv[3]*(y1-.25)+inv[5]) && fegetround()==FE_TONEAREST &&
+     solid_with_opaque_mask(&source->bitmap,&source->mask->bitmap)) {
+    int *columns=malloc(2*(size_t)(x1-x0)*sizeof(*columns));
+    if(columns) {
+      const unsigned char *p=source->bitmap.pixels;
+      uint32_t color=((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8);
+      exr_status status=solid_mask_blend(target,&source->mask->bitmap,inv,clip,x0,y0,x1,y1,columns,color,cost,work,control,e);
+      free(columns);
+      return status;
+    }
+  }
 #ifdef EXR_PROFILE_IMAGE
   memset(&image_profile,0,sizeof(image_profile));
   unsigned long long loop_start=image_tick();
