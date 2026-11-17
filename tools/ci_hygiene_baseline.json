@@ -1,261 +1,2002 @@
 [
-  {"file": ".github/workflows/acroform.yml", "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/acroform.yml", "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/acroform.yml", "content_sha256": "47c56d0162173896bd7e5da8b9a5720f4cc9c91ba05dd386ac344130e19a6195", "occurrence": 4, "patterns": ["failfast"]},
-  {"file": ".github/workflows/acroform.yml", "content_sha256": "47c56d0162173896bd7e5da8b9a5720f4cc9c91ba05dd386ac344130e19a6195", "occurrence": 5, "patterns": ["failfast"]},
-  {"file": ".github/workflows/compat-corpus.yml", "content_sha256": "a3bf86ea3e14ef9be3e8f818844304398025c0a617e12aca5bf4bd967c3c8470", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/conversion-memory.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 1, "patterns": ["negative"]},
-  {"file": ".github/workflows/f07-authoritative-symbols-20261103.yml", "content_sha256": "5bbe869424cb058929fa363ae66d24ef7a6a55f84c87fb3652f048a0f2d34620", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/f07-authoritative-symbols-20261103.yml", "content_sha256": "75749720e25e537acf74c896e9aa8d1958c9a5db5394116f1c43ca2849d49ce5", "occurrence": 1, "patterns": ["diagnostic"]},
-  {"file": ".github/workflows/r2-reading-corpus.yml", "content_sha256": "32dff0197f9466f20bdbf2431a540eda5d9f6e06ea844fe71ef2e515814187cb", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/r2-reading-corpus.yml", "content_sha256": "c51be60bfeb6ab77fa48f761cfc099c57a85fc61f4f4014cd78956fa6cad9b2b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/r2-reading-corpus.yml", "content_sha256": "5be778ebe876aba931c21702f88d1c64f8dc143d5e7e64d8947774c556499351", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/r5-android-bounded-candidate.yml", "content_sha256": "879baeb43578ab94e683504e27266c7e030bf27a99a93443897ed43487d85b12", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/r5-android-bounded-candidate.yml", "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/r5-android-bounded-candidate.yml", "content_sha256": "7c98eb14d221e8a8b16bf74d9fad24f7b4e26a1e3166c93fa48bfa8958da1bca", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/r5-android-bounded-candidate.yml", "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-a11y-windows.yml", "content_sha256": "78445745f722191f4bddbc6628580f91e2a0d0f136312c1ff5e45f5e157f02b7", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-a11y-windows.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-account-profiles.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-android-page-theme.yml", "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-android-raw3.yml", "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-annotation-export.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-hosts-preflight.yml", "content_sha256": "3f0b914d8746022f3e87a000991ff83a21ba31dfd135b8ee33d459e8ea2a41eb", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-import-mapping.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-import-mapping.yml", "content_sha256": "e05a13b3a98c87106c752e02531bdb13990a720c69692c2462d0b638f07063b6", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-import-mapping.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-import-mapping.yml", "content_sha256": "d02019d486751064fede4a295e166f8d34f29ea135298c0097dacf52a299ff82", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-import-mapping.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-import-mapping.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-import-mapping.yml", "content_sha256": "e62eeeab46cfb4b8f43b25e202eaa9478a5ad462f8bce1b0b6ebd75b99169f92", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-navigation.yml", "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-navigation.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-navigation.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-navigation.yml", "content_sha256": "b429332f3475c3e25f102b72ac2a6796a04cfef470fada8c28b235bf4b8ebd26", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-navigation.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-navigation.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-page-theme.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-page-theme.yml", "content_sha256": "157633ab4a962e7279133ce53a4f0dd0b442a22eb7feb729dbe4b683fd6f2f45", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-page-theme.yml", "content_sha256": "49ab8997ed405370fb4080f3e1087154b559e304280b7229aa570d1244caebc8", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-page-theme.yml", "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-page-theme.yml", "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-raw3-ios-ready.yml", "content_sha256": "21ca129e067ad65e69be8e7aa5b866828f53945a25d7b249942b4f9e06b7f258", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-raw3-ios-ready.yml", "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-raw3-ios.yml", "content_sha256": "21ca129e067ad65e69be8e7aa5b866828f53945a25d7b249942b4f9e06b7f258", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-raw3-ios.yml", "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-raw3.yml", "content_sha256": "378bab68f33d90b532d4abba6e39236d4977d389a307ac8f2d39a8eae22ee016", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records-diagnostic.yml", "content_sha256": "e51fbcf91d6640a1911c25003d16454a4a7f44a81bd2352a57b09f334ca70414", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records-diagnostic.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records.yml", "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records.yml", "content_sha256": "c375bbddbee13a2ecec23d7b240862c0584b221cc53ec3aba507ec1312ac2d56", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-reading-records.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-records-ready.yml", "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-records-ready.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-records-ready.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-records-ready.yml", "content_sha256": "c375bbddbee13a2ecec23d7b240862c0584b221cc53ec3aba507ec1312ac2d56", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-records-ready.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-records-ready.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-search.yml", "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-search.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-search.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-search.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-search.yml", "content_sha256": "694230a337943067000f41903de81c6810c6a321b14a18dda13284b01d87fafc", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-search.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 3, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-search.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf-diagnostic.yml", "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf-diagnostic.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf-diagnostic.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf-publication.yml", "content_sha256": "9da7cabf1eac00c685b70ddbd1090b9595c89de4930d357997655e8eaa7b7ce5", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "dd344cf483af1d42bef6b8a67bdcbfbbddae92b0453583fcc1915edecdf2465f", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 3, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 5, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "256cc89409e8f31ac756aef0b2292889d2fa7621c36aaec582dcf92136566828", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 4, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-shelf.yml", "content_sha256": "3983c2de941de0fa161fef77da5b64df50807ecfbddcbfc421dd5226cbf3f1a8", "occurrence": 1, "patterns": ["packaging"]},
-  {"file": ".github/workflows/reader-apple-simulator-ready.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-simulator-ready.yml", "content_sha256": "157633ab4a962e7279133ce53a4f0dd0b442a22eb7feb729dbe4b683fd6f2f45", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-simulator-ready.yml", "content_sha256": "49ab8997ed405370fb4080f3e1087154b559e304280b7229aa570d1244caebc8", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-simulator-ready.yml", "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-apple-simulator-ready.yml", "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-book-information.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-bulk-organization.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-commands.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-common-source-apple.yml", "content_sha256": "48580362cc38298542e86f9797ca7cc27f9eb44c389887b38804b2394232d175", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-common-source-apple.yml", "content_sha256": "5120dd96b5f1b374b9d8ac9b2ee298ca2549aa33f7331c1207a830e2e64f08b1", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-common-source-apple.yml", "content_sha256": "6694d48e01d7a92b5b55c3390e86d1065be57a9555bb32acca555c403e92c9cd", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-common-source-apple.yml", "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-composition-341.yml", "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-composition-341.yml", "content_sha256": "5fb621c30724161c668b57fb87400b957a69fb8fb99b09eab5292cef7aa1be30", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-composition-perf-gtk.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 3, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-composition-perf-gtk.yml", "content_sha256": "43ddfc4778725d030eef50ba39e8e29c4bd61d77be1f3587b409d259cfaf254e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-composition-perf-windows.yml", "content_sha256": "dfb4422c6157f7fb85909e6d3f08b6d4d02e7894e1e1cf42a5ca0ab5fdcda91c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 1, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 2, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 3, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 4, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 5, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 6, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-desktop-drop.yml", "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea", "occurrence": 7, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-g1-integration.yml", "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-g1-integration.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-g1-integration.yml", "content_sha256": "e9c566a06e19424c8b4f9f020fb74d45eb51db7e5334f3ad04059b4ea67a5c49", "occurrence": 1, "patterns": ["diagnostic"]},
-  {"file": ".github/workflows/reader-gtk-navigation-frame-proof.yml", "content_sha256": "433acfb4cefa985078d4a79830ee726f7f5a34685a262fbdc6c8a0d72ef9485d", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-gtk-navigation-frame-proof.yml", "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-gtk-navigation-frame-proof.yml", "content_sha256": "efeb6bb6041fe5faa91bafa253987c870d712c622d972cac26b2f717bb977a2e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-gtk-navigation-frame-proof.yml", "content_sha256": "433acfb4cefa985078d4a79830ee726f7f5a34685a262fbdc6c8a0d72ef9485d", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-gtk-raw-wave3.yml", "content_sha256": "a9bbec7da90db4392f93225c253d483baefd64382a780ebe17e3750989a3435d", "occurrence": 1, "patterns": ["diagnostic"]},
-  {"file": ".github/workflows/reader-hosts-integration.yml", "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-hosts-integration.yml", "content_sha256": "5fb621c30724161c668b57fb87400b957a69fb8fb99b09eab5292cef7aa1be30", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-hosts-integration.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-hosts-integration.yml", "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-jump-history.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-keyboard-actions.yml", "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-keyboard-actions.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-later-module-sdk.yml", "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-module-composition.yml", "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-organization-android.yml", "content_sha256": "3f55134787145c70c6f837683b975ff535860b7d7f3090d074cac05968552844", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-organization-android.yml", "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-organization-android.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-organization-android.yml", "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-owner-android.yml", "content_sha256": "3f55134787145c70c6f837683b975ff535860b7d7f3090d074cac05968552844", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-owner-android.yml", "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-owner-android.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-owner-android.yml", "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-perf-gtk.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 3, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-perf-gtk.yml", "content_sha256": "43ddfc4778725d030eef50ba39e8e29c4bd61d77be1f3587b409d259cfaf254e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-perf-windows.yml", "content_sha256": "dfb4422c6157f7fb85909e6d3f08b6d4d02e7894e1e1cf42a5ca0ab5fdcda91c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-preferences.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-private-capture.yml", "content_sha256": "6607d1467261568e49bcb61898932cf25ebf2949a6b2a7d50e9ac41006f4da83", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw-store-companions.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw-store-companions.yml", "content_sha256": "2677b51a1574b2af1ce618e52da7e043e071f6cd7b3b5763644b2b2ab24cdea4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw-store-companions.yml", "content_sha256": "af45fa9450d208dd1fb70866dd1881708436eaa609e890bcabd1c3ba60b168c2", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-android.yml", "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-ios.yml", "content_sha256": "976341a3980da3108e76be7916f513c308422dff8b77195ae937bcfb0335327e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-ios.yml", "content_sha256": "21ca129e067ad65e69be8e7aa5b866828f53945a25d7b249942b4f9e06b7f258", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-ios.yml", "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-macos.yml", "content_sha256": "976341a3980da3108e76be7916f513c308422dff8b77195ae937bcfb0335327e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-macos.yml", "content_sha256": "378bab68f33d90b532d4abba6e39236d4977d389a307ac8f2d39a8eae22ee016", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-records.yml", "content_sha256": "976341a3980da3108e76be7916f513c308422dff8b77195ae937bcfb0335327e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-records.yml", "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-records.yml", "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-records.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-records.yml", "content_sha256": "c375bbddbee13a2ecec23d7b240862c0584b221cc53ec3aba507ec1312ac2d56", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-records.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-apple-records.yml", "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-windows-owner.yml", "content_sha256": "b91f338fce6083d60b405d789ab78f95dc788f97b4741e48b54b350d6d0a9f82", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-windows-owner.yml", "content_sha256": "bc58971e2af83763f205a9b0f20d7be56a7c7597b515d4d620ee7b2147cf0e49", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-raw3-common-windows.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-reading-v2.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-reviewed-composition.yml", "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-reviewed-composition.yml", "content_sha256": "5fb621c30724161c668b57fb87400b957a69fb8fb99b09eab5292cef7aa1be30", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-search.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-selector-bytes.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-sync-status-view.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-team24-composition.yml", "content_sha256": "9cb3297707afd1c388688a4c240b5f66f96b2a420b1b7a4bfe3bb676dada64ab", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-team24-composition.yml", "content_sha256": "11daa8ab83a5bc838fbab041d88323d58a541b2e36fff594c0ce64d0eb2b4a9d", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-team24-windows.yml", "content_sha256": "11daa8ab83a5bc838fbab041d88323d58a541b2e36fff594c0ce64d0eb2b4a9d", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-thumbnails.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-thumbnails.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 4, "patterns": ["negative"]},
-  {"file": ".github/workflows/reader-wave3-c10.yml", "content_sha256": "a9bbec7da90db4392f93225c253d483baefd64382a780ebe17e3750989a3435d", "occurrence": 1, "patterns": ["diagnostic"]},
-  {"file": ".github/workflows/reader-wave3-c11.yml", "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-webdav-apple.yml", "content_sha256": "a503840a21b7acf6547285052b7435e6f1234cec3cc16488213dd7120300dd30", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-webdav-import.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-webdav.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-341-common.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-compact.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-import-organize.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-navigation-ui.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-preferences-commit.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-preferences-ui.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-raw3-host.yml", "content_sha256": "b91f338fce6083d60b405d789ab78f95dc788f97b4741e48b54b350d6d0a9f82", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-raw3-host.yml", "content_sha256": "bc58971e2af83763f205a9b0f20d7be56a7c7597b515d4d620ee7b2147cf0e49", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-raw3-original-full.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-raw3-preflight.yml", "content_sha256": "09e56dcf93d4e098550de740223abc1f73480db34c85d408c656cb1f8f057342", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-raw3-preflight.yml", "content_sha256": "870ee1128bce5fab30808bd2e45afb8f1dded1629414cac5588cddb0867a0adc", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-reading-records.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reader-windows-search-ui.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-core.yml", "content_sha256": "2041b23897da52e813412eb9bd610803b78eb87a32bea7d8e5f0e75e633f08a6", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-core.yml", "content_sha256": "7c19f991dfbd1be57e67fdcedb0a6f3bca0e5c88951af9de408e5006e0fe2a20", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-core.yml", "content_sha256": "cbac0caea5e65576ac9ded5071282f8b05674ca7f92274214381305070d7157a", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-core.yml", "content_sha256": "adf73481a1359f7aa37a74ad12d93f47995e35b89ffe464b05d6491a0e482823", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-core.yml", "content_sha256": "eebf1784be8f3b04c89c645bb5b6c1dc46ec4a79c5bafdf845ac7a0752af1dcf", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-core.yml", "content_sha256": "cbac0caea5e65576ac9ded5071282f8b05674ca7f92274214381305070d7157a", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-core.yml", "content_sha256": "44f7020e4c8b9221f32b74dcfc16faef1ddb646c74c9ed2db5bf46a28f78d75c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-cpu-baseline-export.yml", "content_sha256": "6d0982a1f950b84292ad8f86b17854c02806222012054dd0fa8785c9cefe640b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-cpu-baseline-export.yml", "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-cpu-baseline-export.yml", "content_sha256": "5e7c651ed9c27b06c18050b45933a167109bbeddb224e829bbea1d7599f15ed4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-cpu-baseline-export.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-cpu-baseline-export.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-platforms.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-platforms.yml", "content_sha256": "9d9bfd6a1acaf371ce901e71e75c683b0c7543eefa3e25113af9309acc266165", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-real.yml", "content_sha256": "4d40d60775664c0625fd8c80c6742fcd906d826ecbccb32cd3399c768caae751", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-real.yml", "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-real.yml", "content_sha256": "f4fd5b8887ce9e17fcbc1c9335398cf0818acfce8d152b7119aa5cae4ffd02ae", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-real.yml", "content_sha256": "183b4cb607422c9de27116e9e31eb72b1db22a840aaacc8c5be5798e1e2543a3", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-real.yml", "content_sha256": "49b7e6832424a11c96ea18bd920ca4912e47c9f8afce5a68aafc19f2b41295b7", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-real.yml", "content_sha256": "e39fe755765f9dbbe929bf0b1c9070934d7284ee94230141107e0cabdb0409ee", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-real.yml", "content_sha256": "e8c940e4b394624c26c782e482e6e946adafac901a056e60f70bed4ef421f46c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-required.yml", "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reading-required.yml", "content_sha256": "bd0143d94862d040e736037ec6199117c55eec8fd9cfe2fbe0044a1bb0d10e57", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reliability.yml", "content_sha256": "0c77bc80404b91f45f1084802b2ca9020a73c2d2709753ee801ae2c8456b3272", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reliability.yml", "content_sha256": "879046dcc51aeaf7c742f882b05602451116b70af98312336a7a04b34bcec3e4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reliability.yml", "content_sha256": "f6097f85f2751d61afda0bb9fbc3c24ef2912a5bf48d9ab3320ab205d2d6d9e0", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reliability.yml", "content_sha256": "f443d2a16f4b570fa1ad9577e3a898e4f3755b79f5085ecb1d459df24ba43bf4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/reliability.yml", "content_sha256": "795d8abe0e1a18666533cc100db6b7b4967ec81beddd3e3a685eae848c7bf2fa", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/sdk-page-background.yml", "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/team24-apple.yml", "content_sha256": "f818df2292af7ea2a9754a9e222c38a1428a05e830d4e984c9f6e1aabcb6add1", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/team24-apple.yml", "content_sha256": "6694d48e01d7a92b5b55c3390e86d1065be57a9555bb32acca555c403e92c9cd", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/team24-apple.yml", "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/team24-apple.yml", "content_sha256": "ed350a2fc97982611e3bf62dd7e36730f1e8bcbc49f7af40480351e833cb48ce", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp11-ocr.yml", "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp11-ocr.yml", "content_sha256": "9f4985e381c136802282156698a2f7445af964ca2533c4cc71fb4e17b2ad8462", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp11-ocr.yml", "content_sha256": "f5bbf0c2167a7481a25fed515b4f602bf8aa5bb53aa235e52b45c863d68881ba", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp12-migration.yml", "content_sha256": "6d6d87aeb7b8657ef6dd4620c75162f462daf50dc177be7fc4bea529f0580854", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp12-migration.yml", "content_sha256": "e100ff19ee7cb6bac6f4ecfd4d087dc65dc0d219e54d1569ef4fe751d43b165b", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-android.yml", "content_sha256": "879b8189dedf03266c08b5b43092d621462bbafb629c97db0459cbad643eb520", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-android.yml", "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-android.yml", "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-android.yml", "content_sha256": "546127c330d32d1cb4ee39b74ae39ba30ce7ca85c7852cfa51e36abea87a7424", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-android.yml", "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "cf95a2d9351a24946392a2509f401b7cbf464abb39abd69dfd894a2b19185f04", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "3212639e43c2cc7f8d10ad9b9502db22cc539cb4ecf1ddf9bcbf723df30083e9", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "b59ebfa511328c02df3dede32efbef4258b32fd3b735083046107f6e9ba82602", "occurrence": 4, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "b59ebfa511328c02df3dede32efbef4258b32fd3b735083046107f6e9ba82602", "occurrence": 5, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "b59ebfa511328c02df3dede32efbef4258b32fd3b735083046107f6e9ba82602", "occurrence": 6, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "244f0a33192490002aca893913d4c10d3556819a6049cce2b1cd326b6caa7631", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "8b9bd926026cb28ed7a3547af9812c8ca18aa1b42f7e03f15d4e9f53b3acc988", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "6cc4fef54e512b497d221f56990b9cb7131ca17f8c7a3ff2266580eb5632d3e7", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "57a7d1d72d9b573d93f7db7eff197355da4e20a39def8b0a20d838b5d3a6c56f", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "6cc4fef54e512b497d221f56990b9cb7131ca17f8c7a3ff2266580eb5632d3e7", "occurrence": 2, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "8de0d5249d99247459abad903b0d8e30399a429c5050fdee978e8233a79933d1", "occurrence": 1, "patterns": ["packaging"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "74c69393995a6640c3a8bd0ade15b39b76d4c43853911c20ce08f33b4bd2644e", "occurrence": 1, "patterns": ["packaging"]},
-  {"file": ".github/workflows/wp13-apple.yml", "content_sha256": "b9b2638b48375428019e39aa4d9f41a91491d3c80b6dc4f536e4aa8e8205c5e7", "occurrence": 1, "patterns": ["packaging"]},
-  {"file": ".github/workflows/wp13-linux.yml", "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-linux.yml", "content_sha256": "6473e66ff1b6aa9c64b06c56848190515a35a59fc9b3608f9c7c99d2a61d99c1", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-linux.yml", "content_sha256": "e5e09c84dd0d9476331e8a5e2b321996573cfdd6f60e44109e1d3c1fbe47ff24", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-linux.yml", "content_sha256": "9658438b9c9e34e558b734ecbfa2e393d9c8fa303128023279ab03ef3719d552", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-linux.yml", "content_sha256": "17294f20245675349d2733f16494ea110c722a825f515129dd74276f459372b3", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-evidence.yml", "content_sha256": "80a84d07d1523658de5e5c4fc27c93e004b17e3b8e7f115f77d134855557fa62", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-evidence.yml", "content_sha256": "fff34dcce19b142d89cd585e6bb48fd8561d767fa0a0e033ff5e6177188644b4", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-evidence.yml", "content_sha256": "470843e43a0477b5afb43f99740b1120bfa5d96a907c08d123ad19329ccdeade", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-evidence.yml", "content_sha256": "28b03570ee88cd351aae56c2ceb0ea683308617cfb03de5532a261503d878d5c", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-worker.yml", "content_sha256": "80a84d07d1523658de5e5c4fc27c93e004b17e3b8e7f115f77d134855557fa62", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-worker.yml", "content_sha256": "0b94d012ea4294833401513d8df6f58b4196880ce1a600d09df7f7567678337f", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-worker.yml", "content_sha256": "7d4882082f2fad21bb550cfc4e65a478746ffc56f1733b57d7faf7aeb4312c36", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-worker.yml", "content_sha256": "838a5101d1ba7ba924066308cf0cc60694c4351088401b67da2684dd2fd41f6a", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-worker.yml", "content_sha256": "dc178bd9d7e3db38739dfaa0320fd784d126b98efec17f12889bd213534fbd16", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp13-windows-worker.yml", "content_sha256": "5ac4c7cacfdfb929158340bb5f863599ce1bda96df3fefbeefae8493577877ae", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp15-opds.yml", "content_sha256": "d8413de50a0925ac5c3666f94c62a9f13e3949afb2c571adb8cb788755706a70", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp15-opds.yml", "content_sha256": "55ffc2b2b5df961cbfb9326e3dbf79bdef5bc5d60575531826981f8f3ab5129d", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp15-opds.yml", "content_sha256": "0b7d4ddf796ccee93872e42133d538ad92a31d811d1aff47bae3b2c645ab7265", "occurrence": 1, "patterns": ["failfast"]},
-  {"file": ".github/workflows/wp5-border-spacing.yml", "content_sha256": "a1388adf7eb622d2c47be7bc1d4d5d766baaf6f6f953a6af1f6e3615ce66bc2c", "occurrence": 1, "patterns": ["failfast"]}
+  {
+    "file": ".github/workflows/acroform.yml",
+    "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/acroform.yml",
+    "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/acroform.yml",
+    "content_sha256": "47c56d0162173896bd7e5da8b9a5720f4cc9c91ba05dd386ac344130e19a6195",
+    "occurrence": 4,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/acroform.yml",
+    "content_sha256": "47c56d0162173896bd7e5da8b9a5720f4cc9c91ba05dd386ac344130e19a6195",
+    "occurrence": 5,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/compat-corpus.yml",
+    "content_sha256": "a3bf86ea3e14ef9be3e8f818844304398025c0a617e12aca5bf4bd967c3c8470",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/conversion-memory.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 1,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/f07-authoritative-symbols-20261103.yml",
+    "content_sha256": "5bbe869424cb058929fa363ae66d24ef7a6a55f84c87fb3652f048a0f2d34620",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/f07-authoritative-symbols-20261103.yml",
+    "content_sha256": "75749720e25e537acf74c896e9aa8d1958c9a5db5394116f1c43ca2849d49ce5",
+    "occurrence": 1,
+    "patterns": [
+      "diagnostic"
+    ]
+  },
+  {
+    "file": ".github/workflows/r2-reading-corpus.yml",
+    "content_sha256": "32dff0197f9466f20bdbf2431a540eda5d9f6e06ea844fe71ef2e515814187cb",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/r2-reading-corpus.yml",
+    "content_sha256": "c51be60bfeb6ab77fa48f761cfc099c57a85fc61f4f4014cd78956fa6cad9b2b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/r2-reading-corpus.yml",
+    "content_sha256": "5be778ebe876aba931c21702f88d1c64f8dc143d5e7e64d8947774c556499351",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/r5-android-bounded-candidate.yml",
+    "content_sha256": "879baeb43578ab94e683504e27266c7e030bf27a99a93443897ed43487d85b12",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/r5-android-bounded-candidate.yml",
+    "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/r5-android-bounded-candidate.yml",
+    "content_sha256": "7c98eb14d221e8a8b16bf74d9fad24f7b4e26a1e3166c93fa48bfa8958da1bca",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/r5-android-bounded-candidate.yml",
+    "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-a11y-windows.yml",
+    "content_sha256": "78445745f722191f4bddbc6628580f91e2a0d0f136312c1ff5e45f5e157f02b7",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-a11y-windows.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-account-profiles.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-android-page-theme.yml",
+    "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-android-raw3.yml",
+    "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-annotation-export.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-hosts-preflight.yml",
+    "content_sha256": "3f0b914d8746022f3e87a000991ff83a21ba31dfd135b8ee33d459e8ea2a41eb",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "content_sha256": "e05a13b3a98c87106c752e02531bdb13990a720c69692c2462d0b638f07063b6",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "content_sha256": "d02019d486751064fede4a295e166f8d34f29ea135298c0097dacf52a299ff82",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-import-mapping.yml",
+    "content_sha256": "e62eeeab46cfb4b8f43b25e202eaa9478a5ad462f8bce1b0b6ebd75b99169f92",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "content_sha256": "b429332f3475c3e25f102b72ac2a6796a04cfef470fada8c28b235bf4b8ebd26",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-navigation.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-page-theme.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-page-theme.yml",
+    "content_sha256": "157633ab4a962e7279133ce53a4f0dd0b442a22eb7feb729dbe4b683fd6f2f45",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-page-theme.yml",
+    "content_sha256": "49ab8997ed405370fb4080f3e1087154b559e304280b7229aa570d1244caebc8",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-page-theme.yml",
+    "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-page-theme.yml",
+    "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-raw3-ios-ready.yml",
+    "content_sha256": "21ca129e067ad65e69be8e7aa5b866828f53945a25d7b249942b4f9e06b7f258",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-raw3-ios-ready.yml",
+    "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-raw3-ios.yml",
+    "content_sha256": "21ca129e067ad65e69be8e7aa5b866828f53945a25d7b249942b4f9e06b7f258",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-raw3-ios.yml",
+    "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-raw3.yml",
+    "content_sha256": "378bab68f33d90b532d4abba6e39236d4977d389a307ac8f2d39a8eae22ee016",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records-diagnostic.yml",
+    "content_sha256": "e51fbcf91d6640a1911c25003d16454a4a7f44a81bd2352a57b09f334ca70414",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records-diagnostic.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "content_sha256": "c375bbddbee13a2ecec23d7b240862c0584b221cc53ec3aba507ec1312ac2d56",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-reading-records.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "content_sha256": "c375bbddbee13a2ecec23d7b240862c0584b221cc53ec3aba507ec1312ac2d56",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-records-ready.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "content_sha256": "694230a337943067000f41903de81c6810c6a321b14a18dda13284b01d87fafc",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 3,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-search.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf-diagnostic.yml",
+    "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf-diagnostic.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf-diagnostic.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf-publication.yml",
+    "content_sha256": "9da7cabf1eac00c685b70ddbd1090b9595c89de4930d357997655e8eaa7b7ce5",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "dd344cf483af1d42bef6b8a67bdcbfbbddae92b0453583fcc1915edecdf2465f",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 3,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 5,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "256cc89409e8f31ac756aef0b2292889d2fa7621c36aaec582dcf92136566828",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 4,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-shelf.yml",
+    "content_sha256": "3983c2de941de0fa161fef77da5b64df50807ecfbddcbfc421dd5226cbf3f1a8",
+    "occurrence": 1,
+    "patterns": [
+      "packaging"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-simulator-ready.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-simulator-ready.yml",
+    "content_sha256": "157633ab4a962e7279133ce53a4f0dd0b442a22eb7feb729dbe4b683fd6f2f45",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-simulator-ready.yml",
+    "content_sha256": "49ab8997ed405370fb4080f3e1087154b559e304280b7229aa570d1244caebc8",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-simulator-ready.yml",
+    "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-apple-simulator-ready.yml",
+    "content_sha256": "7e79151e1b795a2ab1d9bc249f17a6f1dfbc43d151004ed23a57025bcd7048e7",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-book-information.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-bulk-organization.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-commands.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-common-source-apple.yml",
+    "content_sha256": "48580362cc38298542e86f9797ca7cc27f9eb44c389887b38804b2394232d175",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-common-source-apple.yml",
+    "content_sha256": "5120dd96b5f1b374b9d8ac9b2ee298ca2549aa33f7331c1207a830e2e64f08b1",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-common-source-apple.yml",
+    "content_sha256": "6694d48e01d7a92b5b55c3390e86d1065be57a9555bb32acca555c403e92c9cd",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-common-source-apple.yml",
+    "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-composition-341.yml",
+    "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-composition-341.yml",
+    "content_sha256": "5fb621c30724161c668b57fb87400b957a69fb8fb99b09eab5292cef7aa1be30",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-composition-perf-gtk.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 3,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-composition-perf-gtk.yml",
+    "content_sha256": "43ddfc4778725d030eef50ba39e8e29c4bd61d77be1f3587b409d259cfaf254e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-composition-perf-windows.yml",
+    "content_sha256": "dfb4422c6157f7fb85909e6d3f08b6d4d02e7894e1e1cf42a5ca0ab5fdcda91c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 1,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 2,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 3,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 4,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 5,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 6,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-desktop-drop.yml",
+    "content_sha256": "076629afb62c99d11482f673974f7e2b0eae5fabdc16ae113b2786c75d07d5ea",
+    "occurrence": 7,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-g1-integration.yml",
+    "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-g1-integration.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-g1-integration.yml",
+    "content_sha256": "e9c566a06e19424c8b4f9f020fb74d45eb51db7e5334f3ad04059b4ea67a5c49",
+    "occurrence": 1,
+    "patterns": [
+      "diagnostic"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-gtk-navigation-frame-proof.yml",
+    "content_sha256": "433acfb4cefa985078d4a79830ee726f7f5a34685a262fbdc6c8a0d72ef9485d",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-gtk-navigation-frame-proof.yml",
+    "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-gtk-navigation-frame-proof.yml",
+    "content_sha256": "efeb6bb6041fe5faa91bafa253987c870d712c622d972cac26b2f717bb977a2e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-gtk-navigation-frame-proof.yml",
+    "content_sha256": "433acfb4cefa985078d4a79830ee726f7f5a34685a262fbdc6c8a0d72ef9485d",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-gtk-raw-wave3.yml",
+    "content_sha256": "a9bbec7da90db4392f93225c253d483baefd64382a780ebe17e3750989a3435d",
+    "occurrence": 1,
+    "patterns": [
+      "diagnostic"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-hosts-integration.yml",
+    "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-hosts-integration.yml",
+    "content_sha256": "5fb621c30724161c668b57fb87400b957a69fb8fb99b09eab5292cef7aa1be30",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-hosts-integration.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-hosts-integration.yml",
+    "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-jump-history.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-keyboard-actions.yml",
+    "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-keyboard-actions.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-later-module-sdk.yml",
+    "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-module-composition.yml",
+    "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-organization-android.yml",
+    "content_sha256": "3f55134787145c70c6f837683b975ff535860b7d7f3090d074cac05968552844",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-organization-android.yml",
+    "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-organization-android.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-organization-android.yml",
+    "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-owner-android.yml",
+    "content_sha256": "3f55134787145c70c6f837683b975ff535860b7d7f3090d074cac05968552844",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-owner-android.yml",
+    "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-owner-android.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-owner-android.yml",
+    "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-perf-gtk.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 3,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-perf-gtk.yml",
+    "content_sha256": "43ddfc4778725d030eef50ba39e8e29c4bd61d77be1f3587b409d259cfaf254e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-perf-windows.yml",
+    "content_sha256": "dfb4422c6157f7fb85909e6d3f08b6d4d02e7894e1e1cf42a5ca0ab5fdcda91c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-preferences.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-private-capture.yml",
+    "content_sha256": "6607d1467261568e49bcb61898932cf25ebf2949a6b2a7d50e9ac41006f4da83",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw-store-companions.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw-store-companions.yml",
+    "content_sha256": "2677b51a1574b2af1ce618e52da7e043e071f6cd7b3b5763644b2b2ab24cdea4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw-store-companions.yml",
+    "content_sha256": "af45fa9450d208dd1fb70866dd1881708436eaa609e890bcabd1c3ba60b168c2",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-android.yml",
+    "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-ios.yml",
+    "content_sha256": "976341a3980da3108e76be7916f513c308422dff8b77195ae937bcfb0335327e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-ios.yml",
+    "content_sha256": "21ca129e067ad65e69be8e7aa5b866828f53945a25d7b249942b4f9e06b7f258",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-ios.yml",
+    "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-macos.yml",
+    "content_sha256": "976341a3980da3108e76be7916f513c308422dff8b77195ae937bcfb0335327e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-macos.yml",
+    "content_sha256": "378bab68f33d90b532d4abba6e39236d4977d389a307ac8f2d39a8eae22ee016",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "content_sha256": "976341a3980da3108e76be7916f513c308422dff8b77195ae937bcfb0335327e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "content_sha256": "9566ade087a044aa6b775baac4ec39bd84caa2c6e9bd9d632e8a16cd1377c29c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "content_sha256": "0d8238230091fc688ba5eaa52c221554c3378705e5b64e2e6160a2a7ab2cc361",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "content_sha256": "c375bbddbee13a2ecec23d7b240862c0584b221cc53ec3aba507ec1312ac2d56",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-apple-records.yml",
+    "content_sha256": "16d14324cb7ac0c22452b64dd60c2f050fe2afb29f73d721e8eb6b7714f41042",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows-owner.yml",
+    "content_sha256": "b91f338fce6083d60b405d789ab78f95dc788f97b4741e48b54b350d6d0a9f82",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows-owner.yml",
+    "content_sha256": "bc58971e2af83763f205a9b0f20d7be56a7c7597b515d4d620ee7b2147cf0e49",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-raw3-common-windows.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-reading-v2.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-reviewed-composition.yml",
+    "content_sha256": "e12b42aa9202090a5f0e28048661fddaecafb65d400e791d3897f1e5753fd6af",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-reviewed-composition.yml",
+    "content_sha256": "5fb621c30724161c668b57fb87400b957a69fb8fb99b09eab5292cef7aa1be30",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-search.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-selector-bytes.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-sync-status-view.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-team24-composition.yml",
+    "content_sha256": "9cb3297707afd1c388688a4c240b5f66f96b2a420b1b7a4bfe3bb676dada64ab",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-team24-composition.yml",
+    "content_sha256": "11daa8ab83a5bc838fbab041d88323d58a541b2e36fff594c0ce64d0eb2b4a9d",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-team24-windows.yml",
+    "content_sha256": "11daa8ab83a5bc838fbab041d88323d58a541b2e36fff594c0ce64d0eb2b4a9d",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-thumbnails.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-thumbnails.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 4,
+    "patterns": [
+      "negative"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-wave3-c10.yml",
+    "content_sha256": "a9bbec7da90db4392f93225c253d483baefd64382a780ebe17e3750989a3435d",
+    "occurrence": 1,
+    "patterns": [
+      "diagnostic"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-wave3-c11.yml",
+    "content_sha256": "304f9940cb2be04cf21a82a014ed1e924ee42bb17588eaf7b21367cde3f7e973",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-webdav-apple.yml",
+    "content_sha256": "a503840a21b7acf6547285052b7435e6f1234cec3cc16488213dd7120300dd30",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-webdav-import.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-webdav.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-341-common.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-compact.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-import-organize.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-navigation-ui.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-preferences-commit.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-preferences-ui.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-host.yml",
+    "content_sha256": "b91f338fce6083d60b405d789ab78f95dc788f97b4741e48b54b350d6d0a9f82",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-host.yml",
+    "content_sha256": "bc58971e2af83763f205a9b0f20d7be56a7c7597b515d4d620ee7b2147cf0e49",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-original-full.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-preflight.yml",
+    "content_sha256": "09e56dcf93d4e098550de740223abc1f73480db34c85d408c656cb1f8f057342",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-raw3-preflight.yml",
+    "content_sha256": "870ee1128bce5fab30808bd2e45afb8f1dded1629414cac5588cddb0867a0adc",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-reading-records.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reader-windows-search-ui.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-cpu-baseline-export.yml",
+    "content_sha256": "6d0982a1f950b84292ad8f86b17854c02806222012054dd0fa8785c9cefe640b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-cpu-baseline-export.yml",
+    "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-cpu-baseline-export.yml",
+    "content_sha256": "5e7c651ed9c27b06c18050b45933a167109bbeddb224e829bbea1d7599f15ed4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-cpu-baseline-export.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-cpu-baseline-export.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-real.yml",
+    "content_sha256": "4d40d60775664c0625fd8c80c6742fcd906d826ecbccb32cd3399c768caae751",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-real.yml",
+    "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-real.yml",
+    "content_sha256": "f4fd5b8887ce9e17fcbc1c9335398cf0818acfce8d152b7119aa5cae4ffd02ae",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-real.yml",
+    "content_sha256": "183b4cb607422c9de27116e9e31eb72b1db22a840aaacc8c5be5798e1e2543a3",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-real.yml",
+    "content_sha256": "49b7e6832424a11c96ea18bd920ca4912e47c9f8afce5a68aafc19f2b41295b7",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-real.yml",
+    "content_sha256": "e39fe755765f9dbbe929bf0b1c9070934d7284ee94230141107e0cabdb0409ee",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-real.yml",
+    "content_sha256": "e8c940e4b394624c26c782e482e6e946adafac901a056e60f70bed4ef421f46c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-required.yml",
+    "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reading-required.yml",
+    "content_sha256": "bd0143d94862d040e736037ec6199117c55eec8fd9cfe2fbe0044a1bb0d10e57",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reliability.yml",
+    "content_sha256": "0c77bc80404b91f45f1084802b2ca9020a73c2d2709753ee801ae2c8456b3272",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reliability.yml",
+    "content_sha256": "879046dcc51aeaf7c742f882b05602451116b70af98312336a7a04b34bcec3e4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reliability.yml",
+    "content_sha256": "f6097f85f2751d61afda0bb9fbc3c24ef2912a5bf48d9ab3320ab205d2d6d9e0",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reliability.yml",
+    "content_sha256": "f443d2a16f4b570fa1ad9577e3a898e4f3755b79f5085ecb1d459df24ba43bf4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/reliability.yml",
+    "content_sha256": "795d8abe0e1a18666533cc100db6b7b4967ec81beddd3e3a685eae848c7bf2fa",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/sdk-page-background.yml",
+    "content_sha256": "70bd593c6c9a9b73ccab180aa2ea96246493a43445fbf9c87cd3730e8c5dd75e",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/team24-apple.yml",
+    "content_sha256": "f818df2292af7ea2a9754a9e222c38a1428a05e830d4e984c9f6e1aabcb6add1",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/team24-apple.yml",
+    "content_sha256": "6694d48e01d7a92b5b55c3390e86d1065be57a9555bb32acca555c403e92c9cd",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/team24-apple.yml",
+    "content_sha256": "c6d5bfba2b30d6d80481d772446d5f4781ab147f043f09577526731704dc866b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/team24-apple.yml",
+    "content_sha256": "ed350a2fc97982611e3bf62dd7e36730f1e8bcbc49f7af40480351e833cb48ce",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp11-ocr.yml",
+    "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp11-ocr.yml",
+    "content_sha256": "9f4985e381c136802282156698a2f7445af964ca2533c4cc71fb4e17b2ad8462",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp11-ocr.yml",
+    "content_sha256": "f5bbf0c2167a7481a25fed515b4f602bf8aa5bb53aa235e52b45c863d68881ba",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp12-migration.yml",
+    "content_sha256": "6d6d87aeb7b8657ef6dd4620c75162f462daf50dc177be7fc4bea529f0580854",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp12-migration.yml",
+    "content_sha256": "e100ff19ee7cb6bac6f4ecfd4d087dc65dc0d219e54d1569ef4fe751d43b165b",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-android.yml",
+    "content_sha256": "879b8189dedf03266c08b5b43092d621462bbafb629c97db0459cbad643eb520",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-android.yml",
+    "content_sha256": "e7a84b58a680d17e5c846b605d9664d297be89275d087f54f5d3803c0cd67d84",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-android.yml",
+    "content_sha256": "b0592e543f848aa47a123db8577fa5a977bb3f6cb43167f12f57371e9c4bded4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-android.yml",
+    "content_sha256": "546127c330d32d1cb4ee39b74ae39ba30ce7ca85c7852cfa51e36abea87a7424",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-android.yml",
+    "content_sha256": "567794be2ab81fdc2824f5030d596c1294e5d1a02bdc91e4c4a01e992fbc2909",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "cf95a2d9351a24946392a2509f401b7cbf464abb39abd69dfd894a2b19185f04",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "3212639e43c2cc7f8d10ad9b9502db22cc539cb4ecf1ddf9bcbf723df30083e9",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "b59ebfa511328c02df3dede32efbef4258b32fd3b735083046107f6e9ba82602",
+    "occurrence": 4,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "b59ebfa511328c02df3dede32efbef4258b32fd3b735083046107f6e9ba82602",
+    "occurrence": 5,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "b59ebfa511328c02df3dede32efbef4258b32fd3b735083046107f6e9ba82602",
+    "occurrence": 6,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "244f0a33192490002aca893913d4c10d3556819a6049cce2b1cd326b6caa7631",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "8b9bd926026cb28ed7a3547af9812c8ca18aa1b42f7e03f15d4e9f53b3acc988",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "6cc4fef54e512b497d221f56990b9cb7131ca17f8c7a3ff2266580eb5632d3e7",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "57a7d1d72d9b573d93f7db7eff197355da4e20a39def8b0a20d838b5d3a6c56f",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "6cc4fef54e512b497d221f56990b9cb7131ca17f8c7a3ff2266580eb5632d3e7",
+    "occurrence": 2,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "8de0d5249d99247459abad903b0d8e30399a429c5050fdee978e8233a79933d1",
+    "occurrence": 1,
+    "patterns": [
+      "packaging"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "74c69393995a6640c3a8bd0ade15b39b76d4c43853911c20ce08f33b4bd2644e",
+    "occurrence": 1,
+    "patterns": [
+      "packaging"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-apple.yml",
+    "content_sha256": "b9b2638b48375428019e39aa4d9f41a91491d3c80b6dc4f536e4aa8e8205c5e7",
+    "occurrence": 1,
+    "patterns": [
+      "packaging"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-linux.yml",
+    "content_sha256": "29ed64595b074518ab42b1cf614cc335dc50b8c3e5f40738e3f878245a2f4702",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-linux.yml",
+    "content_sha256": "6473e66ff1b6aa9c64b06c56848190515a35a59fc9b3608f9c7c99d2a61d99c1",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-linux.yml",
+    "content_sha256": "e5e09c84dd0d9476331e8a5e2b321996573cfdd6f60e44109e1d3c1fbe47ff24",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-linux.yml",
+    "content_sha256": "9658438b9c9e34e558b734ecbfa2e393d9c8fa303128023279ab03ef3719d552",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-linux.yml",
+    "content_sha256": "17294f20245675349d2733f16494ea110c722a825f515129dd74276f459372b3",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-evidence.yml",
+    "content_sha256": "80a84d07d1523658de5e5c4fc27c93e004b17e3b8e7f115f77d134855557fa62",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-evidence.yml",
+    "content_sha256": "fff34dcce19b142d89cd585e6bb48fd8561d767fa0a0e033ff5e6177188644b4",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-evidence.yml",
+    "content_sha256": "470843e43a0477b5afb43f99740b1120bfa5d96a907c08d123ad19329ccdeade",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-evidence.yml",
+    "content_sha256": "28b03570ee88cd351aae56c2ceb0ea683308617cfb03de5532a261503d878d5c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-worker.yml",
+    "content_sha256": "80a84d07d1523658de5e5c4fc27c93e004b17e3b8e7f115f77d134855557fa62",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-worker.yml",
+    "content_sha256": "0b94d012ea4294833401513d8df6f58b4196880ce1a600d09df7f7567678337f",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-worker.yml",
+    "content_sha256": "7d4882082f2fad21bb550cfc4e65a478746ffc56f1733b57d7faf7aeb4312c36",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-worker.yml",
+    "content_sha256": "838a5101d1ba7ba924066308cf0cc60694c4351088401b67da2684dd2fd41f6a",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-worker.yml",
+    "content_sha256": "dc178bd9d7e3db38739dfaa0320fd784d126b98efec17f12889bd213534fbd16",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp13-windows-worker.yml",
+    "content_sha256": "5ac4c7cacfdfb929158340bb5f863599ce1bda96df3fefbeefae8493577877ae",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp15-opds.yml",
+    "content_sha256": "d8413de50a0925ac5c3666f94c62a9f13e3949afb2c571adb8cb788755706a70",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp15-opds.yml",
+    "content_sha256": "55ffc2b2b5df961cbfb9326e3dbf79bdef5bc5d60575531826981f8f3ab5129d",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp15-opds.yml",
+    "content_sha256": "0b7d4ddf796ccee93872e42133d538ad92a31d811d1aff47bae3b2c645ab7265",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  },
+  {
+    "file": ".github/workflows/wp5-border-spacing.yml",
+    "content_sha256": "a1388adf7eb622d2c47be7bc1d4d5d766baaf6f6f953a6af1f6e3615ce66bc2c",
+    "occurrence": 1,
+    "patterns": [
+      "failfast"
+    ]
+  }
 ]

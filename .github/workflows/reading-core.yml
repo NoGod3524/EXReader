@@ -23,24 +23,31 @@ jobs:
         with:
           fetch-depth: 0
       - name: Verify accepted integration ancestor
-        run: |
+        shell: bash
+          set -euo pipefail
           git fetch --no-tags origin 120fdfab3d2c327d3807de383ed289c2bb0bcfe5
           git merge-base --is-ancestor 120fdfab3d2c327d3807de383ed289c2bb0bcfe5 HEAD
       - name: Configure explicit reading preset
         run: cmake --preset "$PROFILE"
       - name: Build and install selected components
+        shell: bash
         run: |
+          set -euo pipefail
           cmake --build --preset "$PROFILE"
           cmake --install "build/$PROFILE"
       - name: Compile installed C consumers and C++ headers
+        shell: bash
         run: |
+          set -euo pipefail
           library=OFF
           if [ "$PROFILE" = reading-library ]; then library=ON; fi
           cmake -S tests/reading_core -B build/reading-consumer -G Ninja -DCMAKE_BUILD_TYPE=Release -DEXR_SDK="$PWD/build/$PROFILE/stage" -DEXR_EXPECT_LIBRARY="$library" -DEXR_TEST_FONT="$PWD/tests/fixtures/fonts/primary.ttf" -DEXR_TEST_COLOR_FONT="$PWD/tests/fixtures/fonts/colrv1.ttf" -DEXR_TEST_FIXTURES="$PWD/tests/fixtures"
           cmake --build build/reading-consumer --parallel 4
           ctest --test-dir build/reading-consumer --output-on-failure --no-tests=error --output-junit "$PWD/build/$PROFILE/consumer-tests.xml"
       - name: Verify exported composition and measure installed size
+        shell: bash
         run: |
+          set -euo pipefail
           python3 tests/check_reading_profile.py
           python3 tools/check_reading_profile.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" build/reading-consumer/reading-document "build/$PROFILE/profile.json"
       - name: Run predeclared nine-format fixture smoke
@@ -50,11 +57,15 @@ jobs:
       - name: Record initial fresh-process reflow measurements
         run: python3 tools/measure_reading_core.py build/reading-consumer/reading-benchmark tests/fixtures/fonts/primary.ttf "build/$PROFILE/measurements" --source-sha "$GITHUB_SHA" --compiler cc
       - name: Require complete release license materials on this installed stage
+        shell: bash
         run: |
+          set -euo pipefail
           python3 tools/check_reading_licenses.py "$PROFILE" "build/$PROFILE" "build/$PROFILE/stage" "build/$PROFILE/licenses.json" --require-release-ready
           python3 tests/check_reading_licenses.py
       - name: Execute the installed SDK identity and schema consumer
+        shell: bash
         run: |
+          set -euo pipefail
           library=OFF
           if [ "$PROFILE" = reading-library ]; then library=ON; fi
           cmake -S tests/reading_release -B build/release-identity -G Ninja -DEXR_SDK="$PWD/build/$PROFILE/stage" -DEXR_RELEASE_LIBRARY="$library"
@@ -62,7 +73,9 @@ jobs:
           build/release-identity/release-identity "$PWD/build/$PROFILE/release-schema.sqlite" > "build/$PROFILE/release-runtime.json"
           cat "build/$PROFILE/release-runtime.json"
       - name: Seal a candidate archive without granting quality or publication
+        shell: bash
         run: |
+          set -euo pipefail
           database=""
           if [ "$PROFILE" = reading-library ]; then database="--database build/$PROFILE/release-schema.sqlite"; fi
           python3 tools/reading_release.py --profile "$PROFILE" --stage "build/$PROFILE/stage" --evidence "build/$PROFILE" --runtime "build/$PROFILE/release-runtime.json" $database --output "build/$PROFILE/release-candidate"
