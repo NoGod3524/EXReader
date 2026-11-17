@@ -42,6 +42,23 @@ def percentiles(values):
             'p95_ms': ordered[math.ceil(.95 * len(ordered)) - 1]}
 
 
+def set_process_controls(affinity=None, priority=None):
+    """Optional Windows process-local controls for concurrent benchmark lanes."""
+    if affinity is None and priority is None:
+        return
+    if os.name != 'nt':
+        raise ValueError('Process controls require Windows')
+    kernel = c.WinDLL('kernel32', use_last_error=True)
+    kernel.GetCurrentProcess.restype = c.c_void_p
+    kernel.SetProcessAffinityMask.argtypes = [c.c_void_p, c.c_size_t]
+    kernel.SetPriorityClass.argtypes = [c.c_void_p, c.c_ulong]
+    process = kernel.GetCurrentProcess()
+    if affinity is not None and not kernel.SetProcessAffinityMask(process, affinity):
+        raise c.WinError(c.get_last_error())
+    if priority is not None and not kernel.SetPriorityClass(process, {'normal': 0x20, 'high': 0x80}[priority]):
+        raise c.WinError(c.get_last_error())
+
+
 def capture(args):
     # Each width runs in its own process, avoiding DLL search/cache interactions.
     directory = os.add_dll_directory(str(args.library.parent)) if os.name == 'nt' else None
@@ -189,6 +206,8 @@ def main():
     bench.add_argument('--output', type=Path, required=True)
     bench.add_argument('--widths', type=int, nargs='+', default=[1200, 2400])
     bench.add_argument('--runs', type=int, default=5)
+    bench.add_argument('--cpu-affinity', type=lambda s: int(s, 0), help='Windows CPU affinity mask')
+    bench.add_argument('--priority', choices=['normal', 'high'], help='Windows process priority class')
     bench.add_argument('--child', type=int, help=argparse.SUPPRESS)
     diff = commands.add_parser('compare')
     diff.add_argument('--before', type=Path, required=True)
@@ -199,6 +218,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     if args.command == 'compare':
         return compare(args)
+    set_process_controls(args.cpu_affinity, args.priority)
     args.library, args.input = args.library.resolve(), args.input.resolve()
     if args.runs < 5 or args.expect_pages < 1 or any(not 1 <= width <= 16384 for width in args.widths):
         parser.error('At least five rounds and positive page count/widths required')
@@ -210,13 +230,16 @@ def main():
                'library': str(args.library), 'library_sha256': digest(args.library),
                'script_sha256': digest(Path(__file__)), 'widths': args.widths, 'runs': args.runs,
                'clock': 'time.perf_counter_ns', 'warmup_rounds': 1,
+               'cpu_affinity': args.cpu_affinity, 'priority': args.priority,
                'scope': 'exr_fixed_render wall time including bitmap allocation; excludes PNG, hash, free; disk cache and background load uncontrolled',
                'pdfjs_reference': {'source': 'TASK-PDF-FAST-RECT.md supplied measurements, not measured by this script',
                                    'width': 1200, 'first_ms': 13, 'turn_ms': 4}, 'results': {}}
     for width in args.widths:
+        controls = (['--cpu-affinity', str(args.cpu_affinity)] if args.cpu_affinity is not None else [])
+        controls += ['--priority', args.priority] if args.priority else []
         subprocess.run([sys.executable, str(Path(__file__).resolve()), 'capture', '--library', str(args.library),
                         '--input', str(args.input), '--expect-pages', str(args.expect_pages),
-                        '--output', str(args.output), '--runs', str(args.runs), '--child', str(width)],
+                        '--output', str(args.output), '--runs', str(args.runs), '--child', str(width)] + controls,
                        check=True)
         record = json.loads((args.output / f'{width}.json').read_text(encoding='utf-8'))
         summary['results'][str(width)] = record

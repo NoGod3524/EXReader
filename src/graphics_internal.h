@@ -14,7 +14,9 @@ exr_status exr_jpeg_cmyk_decode(const void *data,size_t size,const exr_control *
                                exr_bitmap *out,exr_error *error);
 /* Non-isolated working pixels: premultiplied RGB, complete alpha, group-only
    alpha. A NULL buffer keeps the original compact 8-bit drawing path. */
+typedef struct { uint32_t left,top,right,bottom; unsigned solid; } exr_clip_bounds;
 typedef struct exr_composite_state {
+  const exr_clip_bounds *clip_bounds; /* Borrowed from the active immutable clip. */
   struct exr_icc *cmyk_profile;float *pixels;float *cmyk_pixels;exr_bitmap backdrop;const struct exr_composite_state *backdrop_state;
   float *shape; /* Allocated only for groups consumed by a knockout/shape-tracked parent. */
   uint32_t left,top,right,bottom;unsigned depth;unsigned knockout,isolated,gray;
@@ -25,6 +27,10 @@ typedef struct exr_composite_state {
   /* Graphics-state soft mask: one byte per page pixel, 255 = fully visible. */
   const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;
 } exr_composite_state;
+static inline int exr_composite_plain(const exr_composite_state *s) {
+  return !s || (!s->pixels && !s->cmyk_pixels && !s->shape && !s->soft_mask &&
+                !s->knockout && !s->gray && !s->alpha_flags);
+}
 exr_status exr_sink_begin_group(const exr_draw_sink_ex *sink,double opacity,exr_blend_mode mode,unsigned flags,exr_error *error);
 exr_status exr_sink_soft_mask(const exr_draw_sink_ex *sink,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 exr_status exr_sink_alpha_source(const exr_draw_sink_ex *sink,unsigned flags,exr_error *error);

@@ -353,7 +353,61 @@ static void composite_rows(void) {
   }
   free(source.pixels);free(target.pixels);free(expected.pixels);free(clip.pixels);
 }
+static void region_equivalence(void) {
+  exr_bitmap actual=bitmap(4,255),expected=bitmap(4,255),clip=bitmap(1,0),image=bitmap(4,83);
+  exr_clip_bounds bounds={2,3,6,7,0};exr_composite_state state={0};
+  exr_vector_edge edges[4];size_t work=0,full_work=0;unsigned x,y,shape,mode;
+  const double matrix[6]={8,0,0,8,0,0};
+  state.clip_bounds=&bounds;
+  for(y=3;y<7;y++) for(x=2;x<6;x++) clip.pixels[y*8+x]=(unsigned char)(x*31+y*9);
+  for(shape=0;shape<2;shape++) for(mode=0;mode<=EXR_BLEND_LUMINOSITY;mode++) {
+    rectangle(edges,.25,.125,7.75,7.875,0);
+    if(shape) { edges[0].x1=6.5;edges[1].x0=6.5; }
+    memset(actual.pixels,255,256);memset(expected.pixels,255,256);work=full_work=0;
+    OK(exr_vector_fill_blend(&actual,edges,4,EXR_VECTOR_NONZERO,0x27b5ed83,&clip,(exr_blend_mode)mode,&state,&work,NULL,&error));
+    OK(exr_vector_fill_blend(&expected,edges,4,EXR_VECTOR_NONZERO,0x27b5ed83,&clip,(exr_blend_mode)mode,NULL,&full_work,NULL,&error));
+    CHECK(!memcmp(actual.pixels,expected.pixels,256));CHECK(work<full_work);
+  }
+  memset(actual.pixels,255,256);memset(expected.pixels,255,256);work=full_work=0;
+  OK(exr_vector_texture_blend(&actual,&(exr_vector_texture){.bitmap=image},matrix,1,&clip,EXR_BLEND_NORMAL,&state,&work,NULL,&error));
+  OK(exr_vector_image(&expected,&image,matrix,1,0,&clip,&full_work,NULL,&error));
+  CHECK(!memcmp(actual.pixels,expected.pixels,256));CHECK(work<full_work);
+  memset(actual.pixels,255,256);memset(expected.pixels,255,256);work=full_work=0;
+  OK(exr_composite_frame(&actual,&image,1,EXR_BLEND_NORMAL,&clip,&state,NULL,0,0,&work,NULL,&error));
+  OK(exr_composite_frame(&expected,&image,1,EXR_BLEND_NORMAL,&clip,NULL,NULL,0,0,&full_work,NULL,&error));
+  CHECK(!memcmp(actual.pixels,expected.pixels,256));CHECK(work<full_work);
+  bounds.right=bounds.bottom=0;work=0;
+  OK(exr_vector_fill_blend(&actual,edges,4,EXR_VECTOR_NONZERO,0x27b5ed83,&clip,EXR_BLEND_NORMAL,&state,&work,NULL,&error));
+  CHECK(work==4);
+  free(actual.pixels);free(expected.pixels);free(clip.pixels);free(image.pixels);
+}
+static void span_equivalence(void) {
+  unsigned char actual[192],expected[192];unsigned a,coverage,offset,i;size_t work;
+  exr_bitmap b={37,1,192,actual,4},reference=b;exr_vector_edge edges[4];
+  reference.pixels=expected;
+  /* All paint-alpha/coverage pairs, arbitrary byte alignment, opaque blocks,
+     transparent blocks, scalar tails and untouched sentinel bytes. */
+  for(offset=0;offset<16;offset++) for(a=0;a<256;a++) for(coverage=0;coverage<256;coverage++) {
+    for(i=0;i<sizeof(actual);i++) actual[i]=(unsigned char)(i*73+a*19+coverage*31);
+    b.pixels=actual+offset;reference.pixels=expected+offset;
+    for(i=0;i<37;i++) b.pixels[i*4+3]=(unsigned char)(i<24 ? 255 : i*17);
+    memcpy(expected,actual,sizeof(actual));
+    exr_pixel_span(&b,0,37,0,0x27b5ed00u|a,coverage);
+    for(i=0;i<37;i++) exr_pixel(&reference,(int)i,0,0x27b5ed00u|a,coverage);
+    CHECK(!memcmp(actual,expected,sizeof(actual)));
+  }
+  for(offset=0;offset<16;offset++) {
+    b.pixels=actual+offset;reference.pixels=expected+offset;
+    memset(actual,83,sizeof(actual));memcpy(expected,actual,sizeof(actual));
+    rectangle(edges,1,0,36,1,0);work=0;
+    OK(exr_vector_fill(&b,edges,4,EXR_VECTOR_NONZERO,0x27b5edff,NULL,&work,NULL,&error));
+    for(i=1;i<36;i++) exr_pixel(&reference,(int)i,0,0x27b5edff,255);
+    CHECK(!memcmp(actual,expected,sizeof(actual)));
+  }
+}
 int main(void) {
+  region_equivalence();
+  span_equivalence();
   composite_rows();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
   curves(); strokes(); dashes(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);

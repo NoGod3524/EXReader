@@ -1,0 +1,175 @@
+{
+  "widths": [
+    {
+      "width": 600,
+      "pixels_per_page": 202800,
+      "variants": {
+        "baseline": {
+          "p50_ms": 3.74145,
+          "p95_ms": 4.0814,
+          "open_ms": 0.2209
+        },
+        "simd": {
+          "p50_ms": 3.602,
+          "p95_ms": 4.0509,
+          "open_ms": 0.2241
+        },
+        "region": {
+          "p50_ms": 3.5061999999999998,
+          "p95_ms": 3.8237,
+          "open_ms": 0.2284
+        },
+        "all": {
+          "p50_ms": 3.72545,
+          "p95_ms": 4.1613,
+          "open_ms": 0.2441
+        }
+      },
+      "speedup": 1.0042947831805553,
+      "reduction_percent": 0.4276416897192269,
+      "baseline_p50_ns_per_pixel": 18.44896449704142,
+      "all_p50_ns_per_pixel": 18.370069033530573,
+      "simd_only_saving_ms": 0.13945000000000007,
+      "region_only_saving_ms": 0.23525000000000018,
+      "simd_with_regions_saving_ms": -0.21925000000000017,
+      "regions_with_simd_saving_ms": -0.12345000000000006
+    },
+    {
+      "width": 1200,
+      "pixels_per_page": 810000,
+      "variants": {
+        "baseline": {
+          "p50_ms": 9.88955,
+          "p95_ms": 10.8799,
+          "open_ms": 0.229
+        },
+        "simd": {
+          "p50_ms": 9.28545,
+          "p95_ms": 10.4473,
+          "open_ms": 0.2236
+        },
+        "region": {
+          "p50_ms": 7.1784,
+          "p95_ms": 8.6414,
+          "open_ms": 0.2332
+        },
+        "all": {
+          "p50_ms": 9.2513,
+          "p95_ms": 10.4978,
+          "open_ms": 0.2358
+        }
+      },
+      "speedup": 1.0689903040653745,
+      "reduction_percent": 6.453782022437819,
+      "baseline_p50_ns_per_pixel": 12.209320987654321,
+      "all_p50_ns_per_pixel": 11.421358024691358,
+      "simd_only_saving_ms": 0.604099999999999,
+      "region_only_saving_ms": 2.71115,
+      "simd_with_regions_saving_ms": -2.0729000000000006,
+      "regions_with_simd_saving_ms": 0.03415000000000035
+    },
+    {
+      "width": 2400,
+      "pixels_per_page": 3240000,
+      "variants": {
+        "baseline": {
+          "p50_ms": 33.6906,
+          "p95_ms": 35.6473,
+          "open_ms": 0.2299
+        },
+        "simd": {
+          "p50_ms": 31.6981,
+          "p95_ms": 32.8395,
+          "open_ms": 0.2345
+        },
+        "region": {
+          "p50_ms": 30.8661,
+          "p95_ms": 31.8466,
+          "open_ms": 0.1692
+        },
+        "all": {
+          "p50_ms": 31.6829,
+          "p95_ms": 35.2456,
+          "open_ms": 0.2865
+        }
+      },
+      "speedup": 1.0633685679025595,
+      "reduction_percent": 5.959228983752154,
+      "baseline_p50_ns_per_pixel": 10.398333333333333,
+      "all_p50_ns_per_pixel": 9.778672839506173,
+      "simd_only_saving_ms": 1.9925000000000033,
+      "region_only_saving_ms": 2.824500000000004,
+      "simd_with_regions_saving_ms": -0.8168000000000006,
+      "regions_with_simd_saving_ms": 0.015200000000000102
+    }
+  ],
+  "tests": {
+    "count": 586,
+    "failed": 0,
+    "skipped": 0
+  },
+  "pixel_identity": {
+    "simd": {
+      "identical": true,
+      "compared_pixels": 85056000,
+      "different_pixels": 0,
+      "max_channel_delta": 0,
+      "max_page_rgba_rmse": 0.0
+    },
+    "region": {
+      "identical": true,
+      "compared_pixels": 85056000,
+      "different_pixels": 0,
+      "max_channel_delta": 0,
+      "max_page_rgba_rmse": 0.0
+    },
+    "all": {
+      "identical": true,
+      "compared_pixels": 85056000,
+      "different_pixels": 0,
+      "max_channel_delta": 0,
+      "max_page_rgba_rmse": 0.0
+    }
+  },
+  "profile_exclusive_ns_per_output_pixel": {
+    "baseline": {
+      "rectangle_opaque": 0.2891222222222222,
+      "rectangle_alpha": 0.0,
+      "rectangle_clip": 2.2879555555555555,
+      "rectangle_complex": 0.0,
+      "vector_fill_inclusive": 3.8931074074074075,
+      "group_commit": 0.5660382716049382,
+      "image_paint": 0.0,
+      "sampled_paint": 0.0,
+      "canvas_create": 1.5965432098765433,
+      "group_begin": 1.4256197530864199,
+      "group_end_inclusive": 0.24671234567901235,
+      "clip_bounds": 0.0,
+      "residual": 4.096104938271605,
+      "total": 14.401203703703704
+    },
+    "all": {
+      "rectangle_opaque": 2.0394111111111113,
+      "rectangle_alpha": 0.0016790123456790125,
+      "rectangle_clip": 0.0,
+      "rectangle_complex": 0.0,
+      "vector_fill_inclusive": 3.7302765432098766,
+      "group_commit": 0.46190246913580246,
+      "image_paint": 0.0,
+      "sampled_paint": 0.0,
+      "canvas_create": 1.5299604938271605,
+      "group_begin": 0.012279012345679012,
+      "group_end_inclusive": 0.24150493827160494,
+      "clip_bounds": 0.4065061728395062,
+      "residual": 3.9298382716049383,
+      "total": 12.353358024691358
+    }
+  },
+  "gates": {
+    "render_1200_p50_le_4ms": false,
+    "open_1200_p50_le_0_70ms": true,
+    "improves_every_width": true,
+    "pixel_identity": true,
+    "ctest_all_passed": true
+  }
+}

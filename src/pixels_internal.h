@@ -2,6 +2,8 @@
 #ifndef EXR_PIXELS_INTERNAL_H
 #define EXR_PIXELS_INTERNAL_H
 #include "graphics_internal.h"
+/* Constant-colour normal blend; retains straight-alpha rounding on all targets. */
+void exr_pixel_span(exr_bitmap *bitmap,int left,int right,int y,uint32_t color,unsigned coverage);
 /* Straight RGBA source-over; callers validate bounds and bitmap storage. */
 static inline void exr_pixel(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned coverage) {
   unsigned alpha=(color&255)*coverage/255,r=color>>24,g=(color>>16)&255,b=(color>>8)&255;

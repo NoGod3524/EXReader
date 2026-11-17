@@ -2,6 +2,54 @@
 #include "pixels_internal.h"
 #include "vector_internal.h"
 #include "icc_internal.h"
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP>=2)
+#include <emmintrin.h>
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
+#include <arm_neon.h>
+#endif
+
+void exr_pixel_span(exr_bitmap *bitmap,int left,int right,int y,uint32_t color,unsigned coverage) {
+  int x=left;unsigned alpha=(color&255)*coverage/255;
+  unsigned char *p=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*bitmap->channels;
+  if(!alpha) return;
+  if(bitmap->channels==4) {
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP>=2)
+    const __m128i zero=_mm_setzero_si128(),a=_mm_set1_epi16((short)alpha),inv=_mm_set1_epi16((short)(255-alpha));
+    const __m128i rgb=_mm_set_epi16(255,(short)((color>>8)&255),(short)((color>>16)&255),(short)(color>>24),
+                                  255,(short)((color>>8)&255),(short)((color>>16)&255),(short)(color>>24));
+    const __m128i source=_mm_add_epi16(_mm_mullo_epi16(rgb,a),_mm_set1_epi16(128));
+    for(;x+8<=right;x+=8,p+=32) {
+      int i;
+      /* Transparent destinations use the original variable-denominator formula. */
+      for(i=0;i<8;i++) if(p[i*4+3]!=255) break;
+      if(i!=8) { for(i=0;i<8;i++) exr_pixel(bitmap,x+i,y,color,coverage);continue; }
+      for(i=0;i<2;i++) {
+        __m128i d=_mm_loadu_si128((const __m128i *)(p+i*16));
+        __m128i lo=_mm_add_epi16(_mm_mullo_epi16(_mm_unpacklo_epi8(d,zero),inv),source);
+        __m128i hi=_mm_add_epi16(_mm_mullo_epi16(_mm_unpackhi_epi8(d,zero),inv),source);
+        /* Exact (channel*(255-alpha)+source*alpha+127)/255, without division. */
+        lo=_mm_srli_epi16(_mm_add_epi16(lo,_mm_srli_epi16(lo,8)),8);
+        hi=_mm_srli_epi16(_mm_add_epi16(hi,_mm_srli_epi16(hi,8)),8);
+        _mm_storeu_si128((__m128i *)(p+i*16),_mm_packus_epi16(lo,hi));
+      }
+    }
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__) || defined(_M_ARM64)
+    const unsigned char rgba[8]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255,
+                                (unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
+    const uint16x8_t source=vaddq_u16(vmulq_n_u16(vmovl_u8(vld1_u8(rgba)),(uint16_t)alpha),vdupq_n_u16(128));
+    for(;x+8<=right;x+=8,p+=32) {
+      int i;
+      for(i=0;i<8;i++) if(p[i*4+3]!=255) break;
+      if(i!=8) { for(i=0;i<8;i++) exr_pixel(bitmap,x+i,y,color,coverage);continue; }
+      for(i=0;i<4;i++) {
+        uint16x8_t v=vaddq_u16(vmulq_n_u16(vmovl_u8(vld1_u8(p+i*8)),(uint16_t)(255-alpha)),source);
+        vst1_u8(p+i*8,vshrn_n_u16(vaddq_u16(v,vshrq_n_u16(v,8)),8));
+      }
+    }
+#endif
+  }
+  for(;x<right;x++) exr_pixel(bitmap,x,y,color,coverage);
+}
 uint32_t exr_gray_color(uint32_t color) {
   double linear[3],gray;unsigned k,r=(color>>24)&255,g=(color>>16)&255,b=(color>>8)&255,l;
   if(r==g && g==b) return color;
@@ -280,6 +328,18 @@ exr_status exr_bitmap_to_gray(exr_bitmap *b,const exr_control *control,exr_error
   free(b->pixels);b->pixels=gray;b->channels=1;b->stride=b->width;return EXR_OK;
 }
 
+static int frame_clip(const exr_bitmap *clip,const exr_composite_state *state,int origin_x,int origin_y,
+                      size_t *left,size_t *top,size_t *right,size_t *bottom) {
+  if(clip && state && state->clip_bounds) {
+    const exr_clip_bounds *b=state->clip_bounds;
+    size_t ox=(size_t)origin_x,oy=(size_t)origin_y;
+    if(b->left>ox+*left) *left=b->left-ox;
+    if(b->top>oy+*top) *top=b->top-oy;
+    if(b->right<ox+*right) *right=b->right>ox ? b->right-ox : 0;
+    if(b->bottom<oy+*bottom) *bottom=b->bottom>oy ? b->bottom-oy : 0;
+  }
+  return *left<*right && *top<*bottom;
+}
 static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,
   const exr_bitmap *clip,exr_composite_state *target_state,const exr_composite_state *source_state,
   int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
@@ -287,6 +347,9 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
   unsigned cost=mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64;
   int dst_cmyk=target_state && target_state->cmyk_pixels;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+  if(!frame_clip(clip,target_state,origin_x,origin_y,&left,&top,&right,&bottom)) return EXR_OK;
+  if(clip && target_state && target_state->clip_bounds && target_state->clip_bounds->solid) clip=NULL;
+  if(exr_composite_plain(target_state)) target_state=NULL;
   for(y=top;y<bottom;y++) {
     size_t ty=y+(size_t)origin_y;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -355,6 +418,9 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
     return frame_cmyk(target,source,opacity,mode,clip,target_state,source_state,origin_x,origin_y,work,control,e);
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   if(source_state) { left=source_state->left;top=source_state->top;right=source_state->right;bottom=source_state->bottom; }
+  if(!frame_clip(clip,target_state,origin_x,origin_y,&left,&top,&right,&bottom)) return EXR_OK;
+  if(clip && target_state && target_state->clip_bounds && target_state->clip_bounds->solid) clip=NULL;
+  if(exr_composite_plain(target_state)) target_state=NULL;
   for(y=top;y<bottom;y++) {
     size_t ty=y+(size_t)origin_y;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -462,11 +528,14 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
 exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *e) {
-  size_t y,x;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
-  for(y=0;y<target->height;y++) {
+  size_t y,x,left=0,top=0,right=target->width,bottom=target->height;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
+  if(!frame_clip(clip,state,0,0,&left,&top,&right,&bottom)) return exr_control_cancel(control,e);
+  if(clip && state && state->clip_bounds && state->clip_bounds->solid) clip=NULL;
+  if(exr_composite_plain(state)) state=NULL;
+  for(y=top;y<bottom;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
-    if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
-    for(x=0;x<target->width;x++) {
+    if(!exr_vector_work(work,right-left)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
+    for(x=left;x<right;x++) {
       unsigned char *p=target->pixels+y*target->stride+x*target->channels,fp[4]={0},sp[4]={0};
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
       double fw,sw,bw,fa,sa,ba,a,m=1;unsigned channel;
@@ -511,7 +580,7 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
 exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
   const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
   const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
-  size_t y,x;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
+  size_t y,x,left=0,top=0,right=target->width,bottom=target->height;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
   if(!state || !state->cmyk_pixels) {
     double rf[3],rs[3];uint32_t fc=0,sc=0;unsigned c;
     exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,fill_cmyk,rf,1);exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,stroke_cmyk,rs,1);
@@ -519,10 +588,13 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
     return exr_composite_compound(target,fill,stroke,fc|(uint32_t)fmin(255,floor(fill_alpha*255+.5)),
       sc|(uint32_t)fmin(255,floor(stroke_alpha*255+.5)),mode,clip,state,work,control,e);
   }
-  for(y=0;y<target->height;y++) {
+  if(!frame_clip(clip,state,0,0,&left,&top,&right,&bottom)) return exr_control_cancel(control,e);
+  if(clip && state && state->clip_bounds && state->clip_bounds->solid) clip=NULL;
+  if(exr_composite_plain(state)) state=NULL;
+  for(y=top;y<bottom;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
-    if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
-    for(x=0;x<target->width;x++) {
+    if(!exr_vector_work(work,right-left)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
+    for(x=left;x<right;x++) {
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
       double fw,sw,bw,m=1,back[5],base[5],fr[5],sr[5],out[5],af=fill_alpha,as=stroke_alpha,opacity_mask,shape_mask=1;unsigned c;
       if(fill_alpha>0 || stroke_alpha>0 || !(state->knockout || state->shape)) {

@@ -79,7 +79,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
       return exr_fail(e,EXR_ARGUMENT,"Invalid affine image matte");
     cost+=layer->interpolate ? 24 : 12; layers[depth++]=layer; layer=layer->mask;
   }
-  cost+=state ? 20+state->depth*4 : 0;
+  cost+=exr_composite_plain(state) ? 0 : 20+state->depth*4;
   cost+=inks ? 40 : 0;
   cost+=mode==EXR_BLEND_NORMAL ? 0 : mode<EXR_BLEND_HUE ? 24 : 64;
   for(i=0;i<6;i++) if(!isfinite(m[i]) || fabs(m[i])>1e7) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image transform");
@@ -96,6 +96,16 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
     left=fmin(left,px); right=fmax(right,px); top=fmin(top,py); bottom=fmax(bottom,py);
   }
   x0=(int)fmax(0,floor(left)); x1=(int)fmin(target->width,ceil(right)); y0=(int)fmax(0,floor(top)); y1=(int)fmin(target->height,ceil(bottom));
+  if(clip && state && state->clip_bounds) {
+    const exr_clip_bounds *b=state->clip_bounds;
+    if(x0<(int)b->left) x0=(int)b->left;
+    if(x1>(int)b->right) x1=(int)b->right;
+    if(y0<(int)b->top) y0=(int)b->top;
+    if(y1>(int)b->bottom) y1=(int)b->bottom;
+    if(x0>=x1 || y0>=y1) return exr_fail(e,EXR_OK,"");
+    if(b->solid) clip=NULL;
+  }
+  if(exr_composite_plain(state)) state=NULL;
   for(y=y0;y<y1;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,(size_t)(x1>x0 ? x1-x0 : 0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
