@@ -100,6 +100,34 @@ static void affine(void) {
       CHECK(!memcmp(target,reference,256));
     }
   }
+  /* Axis-aligned unmasked nearest images take a tabulated fast path. An opaque
+     unit mask multiplies every sample by exactly 1 and forces the generic
+     sampler, so both renders must match byte for byte: flipped and fractional
+     scales, partly off-target placement, transparent texels and destinations,
+     varied clip coverage, constant alpha and a separable blend mode. */
+  { /* {4,4,-.75,-.75} puts samples exactly on the far image edge, u=v=1. */
+    static const double placements[][4]={{4,4,0,0},{-3.5,2.25,7.9,-.3},{1.7,-5.2,.4,7.6},{.6,.45,1.2,2.6},{9,9,-.5,-.5},{4,4,-.75,-.75}};
+    unsigned char colors[48],white[4]={255,255,255,255},reference[256],initial[256];unsigned trial,i;
+    exr_vector_texture color={0},unit={0};exr_bitmap other=dst;
+    color.bitmap.width=4;color.bitmap.height=3;color.bitmap.channels=4;color.bitmap.stride=16;color.bitmap.pixels=colors;
+    unit.bitmap.width=unit.bitmap.height=1;unit.bitmap.channels=unit.bitmap.stride=4;unit.bitmap.pixels=white;
+    other.pixels=reference;
+    for(i=0;i<64;i++) mask[i]=(unsigned char)(i*53);
+    for(trial=0;trial<48;trial++) {
+      const double *p=placements[trial%6],m[6]={p[0],0,0,p[1],p[2],p[3]};const exr_bitmap *cover=(trial/6)&4 ? NULL : &clip;
+      double alpha=(trial/6)&1 ? 1 : .63;exr_blend_mode mode=(trial/6)&2 ? EXR_BLEND_MULTIPLY : EXR_BLEND_NORMAL;
+      for(i=0;i<48;i++) colors[i]=(unsigned char)(i*37+trial*23);
+      colors[3]=0;colors[7]=255;
+      for(i=0;i<256;i++) initial[i]=(unsigned char)(i*13+trial);
+      for(i=3;i<256;i+=12) initial[i]=0;
+      memcpy(target,initial,256);memcpy(reference,initial,256);
+      color.mask=NULL;
+      OK(exr_vector_texture_blend(&dst,&color,m,alpha,cover,mode,NULL,NULL,NULL,&error));
+      color.mask=&unit;color.mask_mode=2;
+      OK(exr_vector_texture_blend(&other,&color,m,alpha,cover,mode,NULL,NULL,NULL,&error));
+      CHECK(memcmp(target,initial,256) && !memcmp(target,reference,256));
+    }
+  }
 }
 static void jpeg_cases(const char *dir) {
   const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
