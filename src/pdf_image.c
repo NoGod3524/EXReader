@@ -1,8 +1,18 @@
 /* SPDX-License-Identifier: MIT */
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "pdf_raster_internal.h"
 #include "pdf_jpx_internal.h"
+#include <errno.h>
+#include <time.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 typedef struct { exr_pdf_file *file; exr_error error; } image_reader;
 typedef struct { uint32_t active[16]; size_t depth,live; } image_chain;
+/* All PDF-owned textures have this private header, including mask children. */
+typedef struct { exr_vector_texture texture;size_t refs;unsigned uncacheable; } pdf_texture;
 static uint32_t get(image_reader *r,uint32_t dict,const char *key) {
   uint32_t id=EXR_PDF_NONE; if(r->error.code==EXR_OK) exr_pdf_resolve(r->file,exr_pdf_get(r->file,dict,key),&id,&r->error);
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NULL) id=EXR_PDF_NONE;
@@ -17,7 +27,7 @@ static int integer(image_reader *r,uint32_t id,uint32_t *out) {
   if(!v || v->kind!=EXR_PDF_INT || v->u.integer<0 || (uint64_t)v->u.integer>UINT32_MAX) return 0;
   *out=(uint32_t)v->u.integer; return 1;
 }
-static int boolean(image_reader *r,uint32_t id,int *out) {
+static int image_boolean(image_reader *r,uint32_t id,int *out) {
   const exr_pdf_value *v=exr_pdf_value_at(r->file,id);
   if(!v) { *out=0; return 1; }
   if(v->kind!=EXR_PDF_BOOL) return 0;
@@ -53,6 +63,7 @@ static int jpeg_frame(const unsigned char *data,size_t size,uint32_t width,uint3
 }
 static void release_texture(exr_vector_texture *texture,image_chain *chain) {
   if(!texture) return;
+  if(--((pdf_texture *)texture)->refs) return;
   release_texture(texture->mask,chain);
   if(chain && texture->bitmap.pixels) chain->live-=(size_t)texture->bitmap.stride*texture->bitmap.height;
   free(texture->bitmap.pixels); free(texture);
@@ -88,7 +99,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   chain->active[chain->depth++]=image; entered=1;
   if(!integer(&r,get(&r,image,"Width"),&width) || !integer(&r,get(&r,image,"Height"),&height) || !width || !height) goto invalid;
   if(width>8192 || height>8192 || width>(size_t)16*1024*1024/height) { exr_fail(&r.error,EXR_LIMIT,"PDF image exceeds 16 million pixels"); goto done; }
-  if(!boolean(&r,get(&r,image,"ImageMask"),&stencil) || !boolean(&r,get(&r,image,"Interpolate"),&interpolate)) goto invalid;
+  if(!image_boolean(&r,get(&r,image,"ImageMask"),&stencil) || !image_boolean(&r,get(&r,image,"Interpolate"),&interpolate)) goto invalid;
   id=get(&r,image,"BitsPerComponent");
   if((id!=EXR_PDF_NONE || !stencil) && !integer(&r,id,&bits)) goto invalid;
   if((stencil && bits!=1) || (bits!=1 && bits!=2 && bits!=4 && bits!=8 && bits!=16)) goto invalid;
@@ -263,8 +274,11 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     }
   }
   if(r.error.code==EXR_OK && exr_control_cancel(control,&r.error)==EXR_OK) {
-    exr_vector_texture *texture=calloc(1,sizeof(*texture));
+    pdf_texture *owned_texture=calloc(1,sizeof(*owned_texture));
+    exr_vector_texture *texture=(exr_vector_texture *)owned_texture;
     if(!texture) { exr_fail(&r.error,EXR_MEMORY,"PDF image layer allocation failed"); goto done; }
+    owned_texture->refs=1;owned_texture->uncacheable=(matte ? 1u : 0u)|(channels*bits>64 ? 2u : 0u)|
+      (mask_texture ? ((pdf_texture *)mask_texture)->uncacheable : 0u);
     texture->bitmap=bitmap; texture->mask=mask_texture; texture->interpolate=interpolate!=0;
     texture->mask_mode=soft ? 1 : 2; texture->has_matte=0;
     *kind=stencil ? 0 : exr_pdf_colorspace_device(space) ? (unsigned)exr_pdf_colorspace_device(space) : 5; *out=texture; memset(&bitmap,0,sizeof(bitmap)); mask_texture=NULL; charged=0;
@@ -285,15 +299,129 @@ exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resourc
                                exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e) {
   return exr_pdf_image_load_from(file,image,file,resources,color,1,out,work,control,e);
 }
+typedef struct {
+  uint32_t image,resources,color;unsigned intent,native;
+  exr_vector_texture *texture;exr_bitmap inks;size_t bytes,work,used;
+} image_cache_entry;
+typedef struct {
+  image_cache_entry entries[128];size_t byte_limit,entry_limit,clock;
+  unsigned profile;
+  exr_pdf_image_cache_stats stats;
+} image_cache;
+static void cache_evict(image_cache *cache,image_cache_entry *entry) {
+  cache->stats.bytes-=entry->bytes;cache->stats.entries--;
+  exr_pdf_image_release(entry->texture);free(entry->inks.pixels);memset(entry,0,sizeof(*entry));
+}
+static void cache_free(void *data) {
+  image_cache *cache=data;size_t i;if(!cache) return;
+  for(i=0;i<128;i++) if(cache->entries[i].texture) cache_evict(cache,cache->entries+i);
+  free(cache);
+}
+static image_cache *cache_get(exr_pdf_file *file) {
+  void **slot=exr_pdf_image_cache_slot(file,cache_free);image_cache *cache;
+  if(!slot) return NULL;
+  if(!*slot) {
+    const char *limit=getenv("EXR_PDF_IMAGE_CACHE_BYTES");
+    const char *profile=getenv("EXR_PDF_IMAGE_PROFILE");
+    cache=calloc(1,sizeof(*cache));if(!cache) return NULL;
+    cache->byte_limit=(size_t)64*1024*1024;cache->entry_limit=128;
+    cache->profile=profile && !strcmp(profile,"1");
+    if(limit && *limit>='0' && *limit<='9') {
+      char *end;unsigned long long bytes;errno=0;bytes=strtoull(limit,&end,10);
+      if(!errno && !*end && bytes<=SIZE_MAX) cache->byte_limit=(size_t)bytes;
+    }
+    *slot=cache;
+  }
+  return *slot;
+}
+void exr_pdf_image_cache_limits(exr_pdf_file *file,size_t bytes,size_t entries) {
+  image_cache *cache=cache_get(file);size_t i;if(!cache) return;
+  for(i=0;i<128;i++) if(cache->entries[i].texture) cache_evict(cache,cache->entries+i);
+  cache->byte_limit=bytes;cache->entry_limit=entries<128 ? entries : 128;
+}
+void exr_pdf_image_cache_report(exr_pdf_file *file,exr_pdf_image_cache_stats *out) {
+  image_cache *cache=cache_get(file);if(out) *out=cache ? cache->stats : (exr_pdf_image_cache_stats){0};
+}
+static size_t texture_bytes(const exr_vector_texture *texture) {
+  return texture ? sizeof(pdf_texture)+(size_t)texture->bitmap.stride*texture->bitmap.height+texture_bytes(texture->mask) : 0;
+}
+static int bitmap_copy(const exr_bitmap *source,exr_bitmap *out) {
+  *out=*source;
+  if(source->pixels) {
+    size_t bytes=(size_t)source->stride*source->height;
+    out->pixels=malloc(bytes);if(!out->pixels) return 0;
+    memcpy(out->pixels,source->pixels,bytes);
+  }
+  return 1;
+}
+static double image_time_ms(void) {
+#ifdef _WIN32
+  LARGE_INTEGER t,frequency;QueryPerformanceCounter(&t);QueryPerformanceFrequency(&frequency);
+  return (double)t.QuadPart*1000/(double)frequency.QuadPart;
+#else
+  struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);return (double)t.tv_sec*1000+t.tv_nsec/1e6;
+#endif
+}
+static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
+  unsigned intent,exr_vector_texture **out,exr_bitmap *inks,size_t *work,const exr_control *control,exr_error *e) {
+  image_chain chain={0};unsigned kind=0;size_t local_work=0,before,i,bytes;exr_status status;
+  double started=0;
+  image_cache *cache=NULL;image_cache_entry *entry=NULL;
+  if(out) *out=NULL;
+  if(inks) memset(inks,0,sizeof(*inks));
+  if(!file || !out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF image input/output");
+  if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+  if(exr_pdf_resolve(file,image,&image,e)!=EXR_OK) return e ? e->code : EXR_FORMAT;
+  if(!work) work=&local_work;
+  /* Inline operand arenas borrow a different resource file and are deliberately
+     uncached. Parsed stream value IDs are unique and stable within this file. */
+  if(file==resource_file) cache=cache_get(file);
+  if(cache && cache->byte_limit && cache->entry_limit) {
+    for(i=0;i<128;i++) {
+      image_cache_entry *candidate=cache->entries+i;
+      if(candidate->texture && candidate->image==image && candidate->resources==resources &&
+         candidate->color==color && candidate->intent==intent && candidate->native==(inks!=NULL)) {
+        if(!exr_vector_work(work,candidate->work)) return exr_fail(e,EXR_LIMIT,"PDF image sample/function work exceeds budget");
+        if(inks && !bitmap_copy(&candidate->inks,inks)) return exr_fail(e,EXR_MEMORY,"PDF cached ink allocation failed");
+        candidate->used=++cache->clock;cache->stats.hits++;
+        ((pdf_texture *)candidate->texture)->refs++;*out=candidate->texture;
+        return exr_fail(e,EXR_OK,"");
+      }
+    }
+  }
+  if(cache) cache->stats.misses++;
+  before=*work;
+  if(cache && cache->profile) started=image_time_ms();
+  status=decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,inks);
+  if(cache && cache->profile) cache->stats.decode_ms+=image_time_ms()-started;
+  if(status==EXR_OK && cache) {
+    unsigned skip=((pdf_texture *)*out)->uncacheable;
+    if(skip&1) cache->stats.matte_bypasses++;
+    if(skip&2) cache->stats.wide_bypasses++;
+  }
+  if(status!=EXR_OK || !cache || !cache->byte_limit || !cache->entry_limit || ((pdf_texture *)*out)->uncacheable) return status;
+  bytes=texture_bytes(*out)+(inks && inks->pixels ? (size_t)inks->stride*inks->height : 0);
+  if(bytes>cache->byte_limit) return status;
+  while(cache->stats.bytes>cache->byte_limit-bytes || cache->stats.entries>=cache->entry_limit) {
+    image_cache_entry *oldest=NULL;
+    for(i=0;i<128;i++) if(cache->entries[i].texture && (!oldest || cache->entries[i].used<oldest->used)) oldest=cache->entries+i;
+    cache_evict(cache,oldest);cache->stats.evictions++;
+  }
+  for(i=0;i<128;i++) if(!cache->entries[i].texture) { entry=cache->entries+i;break; }
+  if(inks && !bitmap_copy(inks,&entry->inks)) return status; /* optional cache */
+  entry->image=image;entry->resources=resources;entry->color=color;entry->intent=intent;entry->native=inks!=NULL;
+  entry->texture=*out;((pdf_texture *)*out)->refs++;
+  entry->bytes=bytes;entry->work=*work-before;entry->used=++cache->clock;
+  cache->stats.bytes+=bytes;cache->stats.entries++;
+  return status;
+}
 exr_status exr_pdf_image_load_from(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
                                unsigned intent,exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e) {
-  image_chain chain={0}; unsigned kind=0;
-  return decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,NULL);
+  return load_cached(file,image,resource_file,resources,color,intent,out,NULL,work,control,e);
 }
 exr_status exr_pdf_image_load_inks(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
   unsigned intent,exr_vector_texture **out,exr_bitmap *inks,size_t *work,const exr_control *control,exr_error *e) {
-  image_chain chain={0};unsigned kind=0;
-  return decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,inks);
+  return load_cached(file,image,resource_file,resources,color,intent,out,inks,work,control,e);
 }
 exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
                                  exr_bitmap *out,int *interpolate,size_t *work,const exr_control *control,exr_error *e) {
@@ -304,7 +432,10 @@ exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resou
   if(!work) work=&local_work;
   status=exr_pdf_image_load(file,image,resources,color,&texture,work,control,e);
   if(status!=EXR_OK) return status;
-  if(!texture->mask) { *out=texture->bitmap; texture->bitmap.pixels=NULL; }
+  if(!texture->mask) {
+    if(((pdf_texture *)texture)->refs==1) { *out=texture->bitmap;texture->bitmap.pixels=NULL; }
+    else if(!bitmap_copy(&texture->bitmap,out)) status=exr_fail(e,EXR_MEMORY,"PDF decoded image copy allocation failed");
+  }
   else {
     double matrix[6]={texture->bitmap.width,0,0,texture->bitmap.height,0,0};
     *out=texture->bitmap; out->pixels=calloc((size_t)out->stride*out->height,1);

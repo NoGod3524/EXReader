@@ -52,7 +52,7 @@ static exr_status mask_end(pdf_painter *r,paint_mask *mask,exr_status prior,exr_
   exr_status status=EXR_OK;
   exr_error cleanup={0};
   if(mask->pixels) status=exr_sink_soft_mask(&r->sink,NULL,0,0,prior==EXR_OK ? e : &cleanup);
-  *r->mask_bytes-=mask->bytes;free(mask->pixels);memset(mask,0,sizeof(*mask));
+  *r->mask_bytes-=mask->bytes;exr_buffer_put(exr_pdf_buffer_pool(r->file),mask->pixels,mask->bytes);memset(mask,0,sizeof(*mask));
   return prior==EXR_OK ? status : prior;
 }
 static exr_status blend_state(pdf_painter *r,exr_blend_mode mode,exr_error *e) {

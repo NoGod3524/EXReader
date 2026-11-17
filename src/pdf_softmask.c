@@ -103,10 +103,10 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
   status = exr_pdf_raster_content(file, resources, data, size, matrix, &config, control, &bitmap, e);
   if (status != EXR_OK) return status;
   status=load_transfer(file,mask,control,&function,e);
-  if(status!=EXR_OK) { free(bitmap.pixels);return status; }
+  if(status!=EXR_OK) { exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);return status; }
   sample_cost=1+(kind ? 8 : 0)+exr_pdf_function_cost(function);
-  result = malloc((size_t)width * height);
-  if (!result) { exr_pdf_function_free(function);free(bitmap.pixels); return fail(e, EXR_MEMORY, "PDF soft mask allocation failed"); }
+  result = exr_buffer_take(exr_pdf_buffer_pool(file),(size_t)width * height,0);
+  if (!result) { exr_pdf_function_free(function);exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height); return fail(e, EXR_MEMORY, "PDF soft mask allocation failed"); }
   pixels = bitmap.pixels;
   for(size_t y=0;y<height;y++) {
     status=exr_control_cancel(control,e);
@@ -133,8 +133,8 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
   status=EXR_OK;
 done:
   exr_pdf_function_free(function);
-  if(status!=EXR_OK) { free(result);free(bitmap.pixels);return status; }
-  free(bitmap.pixels);
+  if(status!=EXR_OK) { exr_buffer_put(exr_pdf_buffer_pool(file),result,(size_t)width*height);exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);return status; }
+  exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);
   *out = result;
   return EXR_OK;
 }

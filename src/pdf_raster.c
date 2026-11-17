@@ -18,7 +18,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
   settings.width=config->width; settings.height=config->height; settings.channels=config->channels; settings.background=config->background; settings.mask_budget=config->mask_budget;
   if(config->channels==1) { gray=1;settings.channels=4;settings.background|=255; }
   if(control) settings.control=*control;
-  status=exr_canvas_create(&settings,&canvas,e); if(status!=EXR_OK) return status;
+  status=exr_canvas_create_pooled(&settings,exr_pdf_buffer_pool(file),&canvas,e); if(status!=EXR_OK) return status;
   if(config->work) canvas->work=*config->work;
   if(config->background_cmyk) {
     exr_path_segment rect[5]={ {.verb=EXR_PATH_MOVE,.points={{0,0}}},

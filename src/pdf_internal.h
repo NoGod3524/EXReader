@@ -4,6 +4,7 @@
 #include "formats_internal.h"
 #include "exr/pdf.h"
 #include "vector_internal.h"
+#include "buffer_pool_internal.h"
 #define EXR_PDF_NONE UINT32_MAX
 /* Consumes data on success and failure, like the CBZ owned adapter. */
 exr_status exr_pptx_open_owned(unsigned char *data,size_t size,const char *title,
@@ -21,6 +22,10 @@ typedef struct {
   union { double number; int64_t integer; struct { uint32_t offset,length; } bytes; struct { uint32_t object,generation; } ref; } u;
 } exr_pdf_value;
 typedef struct exr_pdf_file exr_pdf_file;
+/* Lazy, document-owned decoded image state. The callback avoids coupling the
+   object parser (also built alone) to image codecs. */
+void **exr_pdf_image_cache_slot(exr_pdf_file *file,void (*release)(void *));
+exr_buffer_pool *exr_pdf_buffer_pool(exr_pdf_file *file);
 /* The input is borrowed until close. IDs remain stable; value pointers may move
    when another indirect object is resolved. Public access uses the fixed-document adapter. */
 exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *error);

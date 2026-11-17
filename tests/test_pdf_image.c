@@ -154,10 +154,76 @@ static void cmyk_jpeg_cases(const char *dir) {
     exr_pdf_close(file); free(data);
   }
 }
+static void cache_cases(const char *dir) {
+  unsigned char *data;size_t size,work=0,cost;exr_pdf_file *file=NULL,*other=NULL;
+  exr_vector_texture *a=NULL,*b=NULL,*c=NULL;exr_pdf_image_cache_stats stats,before;
+  data=load(dir,"pdf-images.pdf",&size);OK(exr_pdf_open(data,size,&file,&error));
+  OK(exr_pdf_open(data,size,&other,&error));
+  OK(exr_pdf_image_load(file,image(file,"Soft"),resources(file),0,&a,&work,NULL,&error));cost=work;
+  exr_pdf_operation_end(file);
+  OK(exr_pdf_image_load(file,image(file,"Soft"),resources(file),0,&b,&work,NULL,&error));
+  CHECK(a==b && a->mask && work==2*cost);exr_pdf_image_release(b);
+  exr_pdf_image_cache_report(file,&stats);CHECK(stats.hits==1 && stats.misses==1 && stats.entries==1 && stats.bytes>0);
+  OK(exr_pdf_image_load(other,image(other,"Soft"),resources(other),0,&b,NULL,NULL,&error));CHECK(b!=a);
+  exr_pdf_image_release(b);exr_pdf_close(other);
+  /* Eviction must not invalidate a layer still held by a caller. */
+  exr_pdf_image_cache_limits(file,1024,1);
+  OK(exr_pdf_image_load(file,image(file,"RGB"),resources(file),0,&b,NULL,NULL,&error));
+  OK(exr_pdf_image_load(file,image(file,"Gray"),resources(file),0,&c,NULL,NULL,&error));
+  pixel(&a->bitmap,0,0,255,0,0,255);pixel(&b->bitmap,0,0,255,0,0,255);
+  exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_release(c);
+  exr_pdf_image_cache_report(file,&stats);CHECK(stats.entries==1 && stats.bytes<=1024 && stats.evictions==1);
+  exr_pdf_image_cache_limits(file,0,0);before=stats;
+  OK(exr_pdf_image_load(file,image(file,"RGB"),resources(file),0,&a,NULL,NULL,&error));
+  OK(exr_pdf_image_load(file,image(file,"RGB"),resources(file),0,&b,NULL,NULL,&error));CHECK(a!=b);
+  exr_pdf_image_release(a);exr_pdf_image_release(b);
+  exr_pdf_image_cache_report(file,&stats);CHECK(!stats.bytes && !stats.entries && stats.hits==before.hits);
+  exr_pdf_image_cache_limits(file,1,128);
+  a=NULL;OK(exr_pdf_image_load(file,image(file,"RGB"),resources(file),0,&a,NULL,NULL,&error));exr_pdf_image_release(a);
+  exr_pdf_image_cache_report(file,&stats);CHECK(!stats.bytes);
+  exr_pdf_image_cache_limits(file,1024*1024,2);
+  OK(exr_pdf_image_load(file,image(file,"RGB"),resources(file),0,&a,NULL,NULL,&error));
+  OK(exr_pdf_image_load(file,image(file,"Gray"),resources(file),0,&b,NULL,NULL,&error));
+  OK(exr_pdf_image_load(file,image(file,"RGB"),resources(file),0,&c,NULL,NULL,&error));CHECK(c==a);exr_pdf_image_release(c);
+  OK(exr_pdf_image_load(file,image(file,"Rows1"),resources(file),0,&c,NULL,NULL,&error));exr_pdf_image_release(c);
+  /* The intervening RGB hit makes Gray the least recently used entry. */
+  OK(exr_pdf_image_load(file,image(file,"RGB"),resources(file),0,&c,NULL,NULL,&error));CHECK(c==a);exr_pdf_image_release(c);
+  OK(exr_pdf_image_load(file,image(file,"Gray"),resources(file),0,&c,NULL,NULL,&error));CHECK(c!=b);
+  exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_release(c);
+  exr_pdf_image_cache_limits(file,1024*1024,128);
+  OK(exr_pdf_image_load(file,image(file,"Matte"),resources(file),0,&a,NULL,NULL,&error));
+  OK(exr_pdf_image_load(file,image(file,"Matte"),resources(file),0,&b,NULL,NULL,&error));CHECK(a!=b);
+  exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_cache_report(file,&stats);CHECK(!stats.entries);
+  OK(exr_pdf_image_load(file,image(file,"Stencil"),resources(file),0xff0000ff,&a,NULL,NULL,&error));
+  OK(exr_pdf_image_load(file,image(file,"Stencil"),resources(file),0x00ff00ff,&b,NULL,NULL,&error));
+  pixel(&a->bitmap,0,0,255,0,0,255);pixel(&b->bitmap,0,0,0,255,0,255);
+  exr_pdf_image_release(a);exr_pdf_image_release(b);
+  { exr_bitmap ink_a={0},ink_b={0};uint32_t id=image(file,"CMYK2"),res=resources(file);
+    OK(exr_pdf_image_load_inks(file,id,file,res,0,1,&a,&ink_a,NULL,NULL,&error));
+    OK(exr_pdf_image_load_inks(file,id,file,res,0,1,&b,&ink_b,NULL,NULL,&error));
+    CHECK(a==b && ink_a.pixels && ink_b.pixels && ink_a.pixels!=ink_b.pixels);
+    CHECK(!memcmp(ink_a.pixels,ink_b.pixels,(size_t)ink_a.stride*ink_a.height));
+    free(ink_a.pixels);free(ink_b.pixels);exr_pdf_image_release(a);exr_pdf_image_release(b);
+    OK(exr_pdf_image_load_from(file,id,file,res,0,0,&a,NULL,NULL,&error));
+    OK(exr_pdf_image_load_from(file,id,file,res,0,1,&b,NULL,NULL,&error));CHECK(a!=b);
+    OK(exr_pdf_image_load_from(file,id,file,EXR_PDF_NONE,0,1,&c,NULL,NULL,&error));CHECK(c!=b);
+    exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_release(c);
+  }
+  { const char *content="q 4 0 0 4 0 0 cm /RGB Do Q q 4 0 0 4 4 4 cm /Soft Do Q q 0 1 0 rg 4 0 0 2 0 4 cm /Stencil Do Q";
+    exr_bitmap baseline,warm,hit;
+    exr_pdf_image_cache_limits(file,0,0);baseline=render(file,content);
+    exr_pdf_image_cache_limits(file,1024*1024,128);warm=render(file,content);exr_pdf_image_cache_report(file,&before);
+    exr_pdf_operation_end(file);hit=render(file,content);exr_pdf_image_cache_report(file,&stats);CHECK(stats.hits==before.hits+3);
+    CHECK(!memcmp(baseline.pixels,warm.pixels,(size_t)baseline.stride*baseline.height));
+    CHECK(!memcmp(baseline.pixels,hit.pixels,(size_t)baseline.stride*baseline.height));
+    free(baseline.pixels);free(warm.pixels);free(hit.pixels);
+  }
+  exr_pdf_close(file);free(data);
+}
 int main(int argc,char **argv) {
   const char *bad[]={"soft-color","explicit-type","matte-short","palette-short","palette-high","key-range","short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
   size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
-  CHECK(argc==2); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
+  CHECK(argc==2); cache_cases(argv[1]); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
   { exr_vector_texture *texture=NULL; OK(exr_pdf_image_load(file,image(file,"HighMask"),resources(file),0,&texture,NULL,NULL,&error));
     CHECK(texture && texture->bitmap.width==1 && texture->mask && texture->mask->bitmap.width==4); exr_pdf_image_release(texture); exr_pdf_image_release(NULL);
   }

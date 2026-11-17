@@ -24,6 +24,12 @@ static void unref(exr_canvas *c,exr_clip_mask *mask) {
 static void composite_free(exr_composite_state *state) {
   if(state) { free(state->shape);free(state->cmyk_pixels);free(state->pixels);free(state); }
 }
+static void composite_recycle(exr_buffer_pool *pool,exr_composite_state *state,size_t count) {
+  if(!state) return;
+  exr_buffer_put(pool,state->pixels,count*5*sizeof(float));
+  exr_buffer_put(pool,state->cmyk_pixels,count*6*sizeof(float));
+  exr_buffer_put(pool,state->shape,count*sizeof(float));free(state);
+}
 static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
   size_t bytes=(size_t)c->bitmap.width*c->bitmap.height; exr_clip_mask *mask;
   *out=NULL;
@@ -109,6 +115,9 @@ exr_draw_style exr_draw_style_defaults(void) {
   exr_draw_style style={0}; style.fill=style.stroke=0x000000ff; style.flags=EXR_DRAW_FILL; style.line.width=1; style.line.miter_limit=10; return style;
 }
 exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,exr_error *e) {
+  return exr_canvas_create_pooled(config,NULL,out,e);
+}
+exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_pool *pool,exr_canvas **out,exr_error *e) {
   exr_canvas *c; unsigned channels,k; size_t bytes,i;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing canvas output");
   *out=NULL;
@@ -118,11 +127,13 @@ exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,ex
   if(config->width>(size_t)64*1024*1024/channels/config->height) return exr_fail(e,EXR_LIMIT,"Canvas bitmap exceeds 64 MiB");
   if(exr_control_cancel(&config->control,e)!=EXR_OK) return EXR_CANCELLED;
   c=calloc(1,sizeof(*c)); if(!c) return exr_fail(e,EXR_MEMORY,"Canvas allocation failed");
+  c->pool=pool ? pool : &c->local_pool;
+  if(!pool) { const char *enabled=getenv("EXR_BUFFER_POOL");c->local_pool.disabled=enabled && !strcmp(enabled,"0"); }
   c->layer_budget=64*1024*1024;
   c->control=config->control; c->mask_budget=config->mask_budget ? config->mask_budget : (size_t)64*1024*1024;
   c->bitmap.width=config->width; c->bitmap.height=config->height;
   c->canvas_width=config->width; c->canvas_height=config->height; c->bitmap.channels=channels; c->bitmap.stride=config->width*channels;
-  bytes=(size_t)c->bitmap.stride*c->bitmap.height; c->bitmap.pixels=malloc(bytes);
+  bytes=(size_t)c->bitmap.stride*c->bitmap.height; c->bitmap.pixels=exr_buffer_take(c->pool,bytes,0);
   if(!c->bitmap.pixels) { free(c); return exr_fail(e,EXR_MEMORY,"Canvas bitmap allocation failed"); }
   if(channels==1) {
     unsigned r=config->background>>24,g=(config->background>>16)&255,b=(config->background>>8)&255;
@@ -145,6 +156,7 @@ void exr_canvas_free(exr_canvas *c) {
     free(l->pending_groups);composite_free(l->composite);free(l->bitmap.pixels);
     free(l->soft_mask_owned);
   }
+  exr_buffer_pool_clear(&c->local_pool);
   exr_icc_free(c->cmyk_profile);free(c->soft_mask_owned);free(c->layers);composite_free(c->composite);free(c->bitmap.pixels); free(c);
 }
 static size_t composite_size(const exr_bitmap *b,const exr_composite_state *state) {
@@ -154,7 +166,7 @@ static size_t composite_size(const exr_bitmap *b,const exr_composite_state *stat
 }
 size_t exr_canvas_memory_size(const exr_canvas *c) {
   size_t bytes,i;if(!c) return 0;
-  bytes=exr_icc_memory(c->cmyk_profile)+sizeof(*c)+(c->composite ? sizeof(*c->composite) : 0)+composite_size(&c->bitmap,c->composite)+(c->bitmap.pixels ? (size_t)c->bitmap.stride*c->bitmap.height : 0)+c->mask_bytes+c->mask_count*sizeof(exr_clip_mask)+c->layer_capacity*sizeof(*c->layers);
+  bytes=exr_icc_memory(c->cmyk_profile)+sizeof(*c)+c->pool->bytes+(c->composite ? sizeof(*c->composite) : 0)+composite_size(&c->bitmap,c->composite)+(c->bitmap.pixels ? (size_t)c->bitmap.stride*c->bitmap.height : 0)+c->mask_bytes+c->mask_count*sizeof(exr_clip_mask)+c->layer_capacity*sizeof(*c->layers);
   for(i=0;i<c->layer_depth;i++) bytes+=(size_t)c->layers[i].bitmap.stride*c->layers[i].bitmap.height+c->layers[i].group_depth*sizeof(exr_clip_mask *)+composite_size(&c->layers[i].bitmap,c->layers[i].composite)+(c->layers[i].composite ? sizeof(*c->layers[i].composite) : 0);
   return bytes;
 }
@@ -596,8 +608,8 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
     if(!layer.pending_groups) return finish(c,exr_fail(e,EXR_MEMORY,"Layer clip state allocation failed"),e);
     memcpy(layer.pending_groups,c->groups,c->group_depth*sizeof(*c->groups));
   }
-  pixels=calloc(count,4);if(needs_state) { state=calloc(1,sizeof(*state));if(state) { state->pixels=calloc(count,5*sizeof(float));if(cmyk) state->cmyk_pixels=calloc(count,6*sizeof(float)); } }
-  if(state && track_shape) state->shape=calloc(count,sizeof(float));
+  pixels=exr_buffer_take(c->pool,count*4,1);if(needs_state) { state=calloc(1,sizeof(*state));if(state) { state->pixels=exr_buffer_take(c->pool,count*5*sizeof(float),1);if(cmyk) state->cmyk_pixels=exr_buffer_take(c->pool,count*6*sizeof(float),1); } }
+  if(state && track_shape) state->shape=exr_buffer_take(c->pool,count*sizeof(float),1);
   if(!pixels || (needs_state && (!state || !state->pixels || (cmyk && !state->cmyk_pixels) || (track_shape && !state->shape)))) {
     free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,exr_fail(e,EXR_MEMORY,"Group working buffer allocation failed"),e);
   }
@@ -658,6 +670,8 @@ exr_status exr_canvas_end_layer(exr_canvas *c,unsigned commit,exr_error *e) {
   memset(c->groups,0,sizeof(c->groups));if(layer.group_depth) memcpy(c->groups,layer.pending_groups,layer.group_depth*sizeof(*c->groups));free(layer.pending_groups);
   c->layer_depth--;c->layer_bytes-=(size_t)source.stride*source.height+composite_size(&source,source_state);memset(c->layers+c->layer_depth,0,sizeof(*c->layers));
   if(commit && status==EXR_OK) status=exr_composite_frame(&c->bitmap,&source,layer.opacity,layer.blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),source_state,layer.origin_x,layer.origin_y,&c->work,&c->control,e);
-  composite_free(source_state);free(source.pixels);for(i=c->depth;i<160;i++) c->saved_blend[i]=EXR_BLEND_NORMAL;
+  composite_recycle(c->pool,source_state,(size_t)source.width*source.height);
+  exr_buffer_put(c->pool,source.pixels,(size_t)source.stride*source.height);
+  for(i=c->depth;i<160;i++) c->saved_blend[i]=EXR_BLEND_NORMAL;
   return finish(c,status,e);
 }
