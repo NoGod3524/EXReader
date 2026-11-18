@@ -1,0 +1,253 @@
+{
+  "library": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-tput\\build\\perf\\libexreader.dll",
+  "library_sha256": "4102119da0a18f9ca8fd3d31d4de9865abb3af66afa04e8b5cd69e056addc7e1",
+  "pdfjs_root": "C:\\Users\\Oscar\\Documents\\Codex\\pdfjs-bench2",
+  "runs": 5,
+  "repeat": 5,
+  "width": 1200,
+  "idle_threshold": 15.0,
+  "arms": [
+    "full",
+    "pdfjs",
+    "image",
+    "image-paint",
+    "path",
+    "glyph",
+    "shading",
+    "softmask",
+    "group"
+  ],
+  "samples": [
+    {
+      "case": "real-mixed-120",
+      "arm": "full",
+      "rep": 0,
+      "position": 0,
+      "file": "real-mixed-120-full-r0.json",
+      "started": 1795011080.8666892,
+      "pre_cpu_percent": 13.57,
+      "capture_cpu_percent": 31.65,
+      "throughput_pages_per_s": 68.39
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "pdfjs",
+      "rep": 0,
+      "position": 1,
+      "file": "real-mixed-120-pdfjs-r0.json",
+      "started": 1795011093.9986844,
+      "pre_cpu_percent": 11.97,
+      "capture_cpu_percent": 35.63,
+      "throughput_pages_per_s": 76.34
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "image",
+      "rep": 0,
+      "position": 2,
+      "file": "real-mixed-120-image-r0.json",
+      "started": 1795011106.7268193,
+      "pre_cpu_percent": 11.37,
+      "capture_cpu_percent": 29.68,
+      "throughput_pages_per_s": 107.52
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "image-paint",
+      "rep": 0,
+      "position": 3,
+      "file": "real-mixed-120-image-paint-r0.json",
+      "started": 1795011123.246235,
+      "pre_cpu_percent": 11.42,
+      "capture_cpu_percent": 28.47,
+      "throughput_pages_per_s": 109.24
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "path",
+      "rep": 0,
+      "position": 4,
+      "file": "real-mixed-120-path-r0.json",
+      "started": 1795011132.3446577,
+      "pre_cpu_percent": 12.11,
+      "capture_cpu_percent": 29.48,
+      "throughput_pages_per_s": 72.4
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "glyph",
+      "rep": 0,
+      "position": 5,
+      "file": "real-mixed-120-glyph-r0.json",
+      "started": 1795011146.4616637,
+      "pre_cpu_percent": 9.73,
+      "capture_cpu_percent": 28.71,
+      "throughput_pages_per_s": 86.28
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "shading",
+      "rep": 0,
+      "position": 6,
+      "file": "real-mixed-120-shading-r0.json",
+      "started": 1795011157.540748,
+      "pre_cpu_percent": 7.42,
+      "capture_cpu_percent": 24.49,
+      "throughput_pages_per_s": 99.77
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "softmask",
+      "rep": 0,
+      "position": 7,
+      "file": "real-mixed-120-softmask-r0.json",
+      "started": 1795011166.671996,
+      "pre_cpu_percent": 14.9,
+      "capture_cpu_percent": 31.72,
+      "throughput_pages_per_s": 55.04
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "group",
+      "rep": 0,
+      "position": 8,
+      "file": "real-mixed-120-group-r0.json",
+      "started": 1795011187.5086803,
+      "pre_cpu_percent": 7.54,
+      "capture_cpu_percent": 51.65,
+      "throughput_pages_per_s": 48.47
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "pdfjs",
+      "rep": 1,
+      "position": 0,
+      "file": "real-mixed-120-pdfjs-r1.json",
+      "started": 1795011204.2271202,
+      "pre_cpu_percent": 7.42,
+      "capture_cpu_percent": 36.15,
+      "throughput_pages_per_s": 81.04
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "full",
+      "rep": 1,
+      "position": 1,
+      "file": "real-mixed-120-full-r1.json",
+      "started": 1795011219.4230552,
+      "pre_cpu_percent": 6.25,
+      "capture_cpu_percent": 25.97,
+      "throughput_pages_per_s": 71.74
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "group",
+      "rep": 1,
+      "position": 2,
+      "file": "real-mixed-120-group-r1.json",
+      "started": 1795011437.183847,
+      "pre_cpu_percent": 10.51,
+      "capture_cpu_percent": 22.01,
+      "throughput_pages_per_s": 76.91
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "softmask",
+      "rep": 1,
+      "position": 3,
+      "file": "real-mixed-120-softmask-r1.json",
+      "started": 1795011448.282158,
+      "pre_cpu_percent": 5.47,
+      "capture_cpu_percent": 23.25,
+      "throughput_pages_per_s": 58.77
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "shading",
+      "rep": 1,
+      "position": 4,
+      "file": "real-mixed-120-shading-r1.json",
+      "started": 1795011464.9061413,
+      "pre_cpu_percent": 9.52,
+      "capture_cpu_percent": 20.15,
+      "throughput_pages_per_s": 104.15
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "glyph",
+      "rep": 1,
+      "position": 5,
+      "file": "real-mixed-120-glyph-r1.json",
+      "started": 1795011507.084445,
+      "pre_cpu_percent": 7.0,
+      "capture_cpu_percent": 30.01,
+      "throughput_pages_per_s": 87.93
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "path",
+      "rep": 1,
+      "position": 6,
+      "file": "real-mixed-120-path-r1.json",
+      "started": 1795011520.081864,
+      "pre_cpu_percent": 8.3,
+      "capture_cpu_percent": 21.78,
+      "throughput_pages_per_s": 78.53
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "image-paint",
+      "rep": 1,
+      "position": 7,
+      "file": "real-mixed-120-image-paint-r1.json",
+      "started": 1795011531.0402765,
+      "pre_cpu_percent": 3.91,
+      "capture_cpu_percent": 33.08,
+      "throughput_pages_per_s": 105.48
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "image",
+      "rep": 1,
+      "position": 8,
+      "file": "real-mixed-120-image-r1.json",
+      "started": 1795011539.7504175,
+      "pre_cpu_percent": 5.84,
+      "capture_cpu_percent": 24.18,
+      "throughput_pages_per_s": 109.24
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "path",
+      "rep": 2,
+      "position": 0,
+      "file": "real-mixed-120-path-r2.json",
+      "started": 1795011644.0614522,
+      "pre_cpu_percent": 8.53,
+      "capture_cpu_percent": 30.81,
+      "throughput_pages_per_s": 74.82
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "glyph",
+      "rep": 2,
+      "position": 1,
+      "file": "real-mixed-120-glyph-r2.json",
+      "started": 1795011658.8143954,
+      "pre_cpu_percent": 11.11,
+      "capture_cpu_percent": 23.34,
+      "throughput_pages_per_s": 86.66
+    },
+    {
+      "case": "real-mixed-120",
+      "arm": "shading",
+      "rep": 2,
+      "position": 2,
+      "file": "real-mixed-120-shading-r2.json",
+      "started": 1795011669.261203,
+      "pre_cpu_percent": 10.59,
+      "capture_cpu_percent": 27.64,
+      "throughput_pages_per_s": 96.74
+    }
+  ]
+}

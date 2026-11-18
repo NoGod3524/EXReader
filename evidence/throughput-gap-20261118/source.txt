@@ -1,0 +1,10 @@
+commit 811fcb1983507575c6d4036b58bd4f24cae33c0b
+Merge: acfcdd4f9 1db6cf506
+Author:     Yinuo Xu <Oscar_dudu@126.com>
+AuthorDate: Wed Nov 18 08:30:08 2026 -0500
+Commit:     GitHub <noreply@github.com>
+CommitDate: Wed Nov 18 08:30:08 2026 -0500
+
+    Merge pull request #259 from NoGod3524/perf/width1200-attribution
+    
+    Attribute the 600-to-1200 px throughput crossover

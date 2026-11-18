@@ -1,0 +1,11 @@
+{
+  "sha256": {
+    "tools/bench_large_vs_pdfjs.py": "52e9938079456d7f4f8e5a254bc10c6d6c0751ad02a124d57e11e9f91857385a",
+    "tools/bench_real_doc.py": "fb4ff7dab64248ce57aea9dc89466c08c1b585781ea4f1ced8d7c611ab86419e",
+    "tools/bench_pdfjs_large.cjs": "9d623a8cd8bd11c4a33ecad409000ad2aefe90227328f9596452642d093eaa46",
+    "tools/bench_engine.py": "26817bd4509b6cc1ba13514d57dddafbf751a5f1678f4cad56dca999b3098f3c",
+    "tools/benchmark_pdf_rect.py": "0e972ef120364d809e05abc7d1724fcee68497c5f8a968847fe4b49b62cd5d92"
+  },
+  "diff_vs_257_merge": "(empty)",
+  "dll_sha256": "4102119da0a18f9ca8fd3d31d4de9865abb3af66afa04e8b5cd69e056addc7e1"
+}
