@@ -34,6 +34,20 @@ static void mask_fill_equivalence(void) {
 }
 static int cancel(void *context) { unsigned *calls=context; return ++*calls>=3; }
 static int keep_drawing(void *context) { (void)context; return 0; }
+static void compound_spans(void) {
+  unsigned char fill[]={255,255,255,0,80,0,0,0},stroke[]={0,0,255,255,100,0,0,0};
+  unsigned char clip[]={255,255,255,255,128,255,0,255},actual[32],reference[32];
+  const exr_bitmap fm={8,1,8,fill,1},sm={8,1,8,stroke,1},cm={8,1,8,clip,1};
+  exr_bitmap fast={8,1,32,actual,4},slow={8,1,32,reference,4};
+  const uint32_t bounds[]={0,0,8,1};
+  const size_t limit=(size_t)256*1024*1024;
+  size_t a=0,b=limit-(8+5*12);
+  for(size_t i=0;i<sizeof(actual);i++) actual[i]=reference[i]=(unsigned char)(i*13);
+  OK(exr_composite_compound(&fast,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&cm,NULL,&a,NULL,&error));
+  OK(exr_composite_compound(&slow,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&cm,NULL,&b,NULL,&error));
+  CHECK(a==8+5*12 && b==limit && !memcmp(actual,reference,sizeof(actual)));
+  CHECK(!memcmp(actual,"\xaa\xbb\xcc\xff\xaa\xbb\xcc\xff\x11\x22\x33\xff\x11\x22\x33\xff",16));
+}
 static void stable_clip_rows(void) {
   exr_vector_edge edges[8];
   exr_bitmap actual=bitmap(1,0),reference=bitmap(1,0),clip=bitmap(1,0);
@@ -398,7 +412,7 @@ static void composite_rows(void) {
 int main(void) {
   composite_rows();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); strokes(); dashes(); mask_fill_equivalence(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  curves(); strokes(); dashes(); mask_fill_equivalence(); compound_spans(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);

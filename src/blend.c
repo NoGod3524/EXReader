@@ -504,14 +504,44 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *e) {
   size_t y,x,y0,y1,x0,x1;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
+  int opaque=mode==EXR_BLEND_NORMAL && !state && target->channels==4 && ((fill_color&stroke_color)&255)==255;
+  const unsigned char fill_rgba[4]={(unsigned char)(fill_color>>24),(unsigned char)(fill_color>>16),(unsigned char)(fill_color>>8),255};
+  const unsigned char stroke_rgba[4]={(unsigned char)(stroke_color>>24),(unsigned char)(stroke_color>>16),(unsigned char)(stroke_color>>8),255};
   exr_status status=compound_scan(target,bounds,&y0,&y1,&x0,&x1,work,control,e);
   if(status!=EXR_OK) return status;
   for(y=y0;y<y1;y++) {
+    const unsigned char *fill_row=fill->pixels+y*fill->stride,*stroke_row=stroke->pixels+y*stroke->stride;
+    const unsigned char *clip_row=clip ? clip->pixels+y*clip->stride : NULL;
+    size_t row_budget;
+    int solid_spans;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
+    /* Near the limit, keep the original pixel-by-pixel failure point. */
+    row_budget=*work;
+    solid_spans=opaque && exr_vector_work(&row_budget,(x1-x0)*cost);
     for(x=x0;x<x1;x++) {
+      if(solid_spans) {
+        unsigned f=fill_row[x],s=stroke_row[x],k=clip_row ? clip_row[x] : 255;
+        if(!k || !(f|s)) continue;
+        /* A fully covered opaque stroke replaces the fill. A fully covered
+           opaque fill with no stroke replaces the backdrop. */
+        if(k==255 && (s==255 || (f==255 && !s))) {
+          size_t end=x+1;
+          const unsigned char *rgba=s==255 ? stroke_rgba : fill_rgba;
+          unsigned char *pixel=target->pixels+y*target->stride+x*4;
+          if(s==255) {
+            while(end<x1 && stroke_row[end]==255 && (!clip_row || clip_row[end]==255)) end++;
+          } else {
+            while(end<x1 && fill_row[end]==255 && !stroke_row[end] && (!clip_row || clip_row[end]==255)) end++;
+          }
+          exr_vector_work(work,(end-x)*cost);
+          for(;x<end;x++,pixel+=4) memcpy(pixel,rgba,4);
+          x--;
+          continue;
+        }
+      }
       unsigned char *p=target->pixels+y*target->stride+x*target->channels,fp[4]={0},sp[4]={0};
-      double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
+      double f=fill_row[x]/255.,s=stroke_row[x]/255.,k=clip_row ? clip_row[x]/255. : 1;
       double fw,sw,bw,fa,sa,ba,a,m=1;unsigned channel;
       exr_bitmap first={1,1,target->channels,fp,target->channels},second={1,1,target->channels,sp,target->channels};
       if((fill_color&255) || (stroke_color&255) || !(state && (state->knockout || state->shape))) {
