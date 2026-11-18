@@ -489,15 +489,27 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
    visible subobject sees the original backdrop; visible stroke shape replaces
    fill. A zero-opacity stroke does not hide a visible fill. An entirely
    zero-opacity element still has shape when a knockout/shape parent needs it.
-   Clip covers the resulting element once. */
-exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
+   Clip covers the resulting element once. Pixels where both coverages are zero
+   are left untouched, so only the coverage bounds are scanned; the skipped rows
+   are still charged so the work budget matches a full-canvas scan. */
+static exr_status compound_scan(const exr_bitmap *target,const uint32_t bounds[4],size_t *y0,size_t *y1,size_t *x0,size_t *x1,
+  size_t *work,const exr_control *control,exr_error *e) {
+  *x0=bounds[0];*y0=bounds[1];*x1=bounds[2]<target->width ? bounds[2] : target->width;*y1=bounds[3]<target->height ? bounds[3] : target->height;
+  if(*x0>=*x1 || *y0>=*y1) *x0=*x1=*y0=*y1=0;
+  if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+  if(!exr_vector_work(work,(size_t)target->width*(target->height-(*y1-*y0)))) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
+  return EXR_OK;
+}
+exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *e) {
-  size_t y,x;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
-  for(y=0;y<target->height;y++) {
+  size_t y,x,y0,y1,x0,x1;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
+  exr_status status=compound_scan(target,bounds,&y0,&y1,&x0,&x1,work,control,e);
+  if(status!=EXR_OK) return status;
+  for(y=y0;y<y1;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
-    for(x=0;x<target->width;x++) {
+    for(x=x0;x<x1;x++) {
       unsigned char *p=target->pixels+y*target->stride+x*target->channels,fp[4]={0},sp[4]={0};
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
       double fw,sw,bw,fa,sa,ba,a,m=1;unsigned channel;
@@ -539,21 +551,23 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
   }
   return EXR_OK;
 }
-exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,
+exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
   const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
   const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
-  size_t y,x;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
+  size_t y,x,y0,y1,x0,x1;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;exr_status status;
   if(!state || !state->cmyk_pixels) {
     double rf[3],rs[3];uint32_t fc=0,sc=0;unsigned c;
     exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,fill_cmyk,rf,1);exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,stroke_cmyk,rs,1);
     for(c=0;c<3;c++) { fc|=(uint32_t)fmin(255,floor(rf[c]*255+.5))<<(24-8*c);sc|=(uint32_t)fmin(255,floor(rs[c]*255+.5))<<(24-8*c); }
-    return exr_composite_compound(target,fill,stroke,fc|(uint32_t)fmin(255,floor(fill_alpha*255+.5)),
+    return exr_composite_compound(target,fill,stroke,bounds,fc|(uint32_t)fmin(255,floor(fill_alpha*255+.5)),
       sc|(uint32_t)fmin(255,floor(stroke_alpha*255+.5)),mode,clip,state,work,control,e);
   }
-  for(y=0;y<target->height;y++) {
+  status=compound_scan(target,bounds,&y0,&y1,&x0,&x1,work,control,e);
+  if(status!=EXR_OK) return status;
+  for(y=y0;y<y1;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
-    for(x=0;x<target->width;x++) {
+    for(x=x0;x<x1;x++) {
       double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
       double fw,sw,bw,m=1,back[5],base[5],fr[5],sr[5],out[5],af=fill_alpha,as=stroke_alpha,opacity_mask,shape_mask=1;unsigned c;
       if(fill_alpha>0 || stroke_alpha>0 || !(state->knockout || state->shape)) {

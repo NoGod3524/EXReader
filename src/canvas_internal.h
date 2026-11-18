@@ -3,8 +3,9 @@
 #define EXR_CANVAS_INTERNAL_H
 #include "vector_internal.h"
 #include "buffer_pool_internal.h"
-/* Rows outside [dirty_top,dirty_bottom) are zero; recycling clears only the rest. */
-typedef struct { exr_bitmap bitmap; size_t refs; uint32_t dirty_top,dirty_bottom; } exr_clip_mask;
+/* Rows outside [dirty_top,dirty_bottom) are zero; recycling clears only the rest.
+   Path coverage also keeps columns outside [dirty_left,dirty_right) at zero. */
+typedef struct { exr_bitmap bitmap; size_t refs; uint32_t dirty_top,dirty_bottom,dirty_left,dirty_right; } exr_clip_mask;
 typedef struct {
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
   int parent_offset_x,parent_offset_y;
