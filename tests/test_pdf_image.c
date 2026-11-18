@@ -235,6 +235,38 @@ static void affine(void) {
     }
   }
 
+  /* Axis-aligned interpolated images with a one-level soft or shape mask
+     take the separable bilinear path. An opaque unit child under the mask
+     multiplies each mask sample by exactly 1 and forces the generic sampler.
+     Nearest and interpolated masks of other sizes, flipped and partly
+     off-target placements, transparent texels, clip coverage, constant alpha,
+     and both the converted-row and strongly minified source spans. */
+  { static const double placements[][4]={{4,4,0,0},{-3.5,2.25,7.9,-.3},{1.7,-5.2,.4,7.6},{9,9,-.5,-.5},{4,4,-.75,-.75},{8,6,0,1}};
+    static const unsigned sizes[][4]={{4,3,3,5},{48,2,5,2},{5,4,5,4}};
+    unsigned char colors[48*3*4],masks[5*5*4],white[4]={255,255,255,255},reference[256],initial[256];unsigned trial,i;
+    exr_vector_texture color={0},opacity={0},unit={0};exr_bitmap other=dst;
+    unit.bitmap.width=unit.bitmap.height=1;unit.bitmap.channels=unit.bitmap.stride=4;unit.bitmap.pixels=white;
+    color.bitmap.channels=opacity.bitmap.channels=4;color.bitmap.pixels=colors;opacity.bitmap.pixels=masks;
+    color.interpolate=1;color.mask=&opacity;other.pixels=reference;
+    for(i=0;i<64;i++) mask[i]=(unsigned char)(i*53);
+    for(trial=0;trial<144;trial++) {
+      const double *p=placements[trial%6],m[6]={p[0],0,0,p[1],p[2],p[3]};const unsigned *size=sizes[(trial/6)%3];
+      const exr_bitmap *cover=(trial/18)&1 ? NULL : &clip;double alpha=(trial/18)&2 ? 1 : .63;
+      color.bitmap.width=size[0];color.bitmap.height=size[1];color.bitmap.stride=size[0]*4;
+      opacity.bitmap.width=size[2];opacity.bitmap.height=size[3];opacity.bitmap.stride=size[2]*4;
+      opacity.interpolate=(trial/18)&4 ? 1 : 0;color.mask_mode=trial&1 ? 1 : 2;
+      for(i=0;i<sizeof(colors);i++) colors[i]=(unsigned char)(i*37+trial*23);
+      for(i=0;i<sizeof(masks);i++) masks[i]=(unsigned char)(i*41+trial*11);
+      colors[3]=0;colors[7]=255;masks[3]=0;
+      for(i=0;i<256;i++) initial[i]=(unsigned char)(i*13+trial);
+      memcpy(target,initial,256);memcpy(reference,initial,256);
+      opacity.mask=NULL;
+      OK(exr_vector_texture_paint(&dst,&color,m,alpha,cover,NULL,NULL,&error));
+      opacity.mask=&unit;opacity.mask_mode=2;
+      OK(exr_vector_texture_paint(&other,&color,m,alpha,cover,NULL,NULL,&error));
+      CHECK(memcmp(target,initial,256) && !memcmp(target,reference,256));
+    }
+  }
 }
 static void jpeg_cases(const char *dir) {
   const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
