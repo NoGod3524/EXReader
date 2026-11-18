@@ -1,0 +1,37 @@
+{
+ "fixture": "c027e8e78346b159e08d3a8c5313b0bd240403873e1c58de0e1b2c3f11b87cb2",
+ "variants": {
+  "image": {
+   "sha256": "7b6163425cbd5a634a1174b5389fd0e3efa46ced344c939ad95986d6394dbd43",
+   "content_edits": 14
+  },
+  "shading": {
+   "sha256": "e835e78ed72dbf29febcd259e707b3ebf104f917395e0cb9a290ca160c974d84",
+   "content_edits": 5
+  },
+  "shading-page": {
+   "sha256": "d9905e9a84ae762e334081731fae5b6c87b3bb35eef131dacf0c8f7c67a059a2",
+   "content_edits": 5
+  },
+  "softmask": {
+   "sha256": "eff06d8afbffec80bbd3f0cad224bf15c3b8eac586c7fdfab5bf055e22ff4ede",
+   "content_edits": 0
+  },
+  "gradient": {
+   "sha256": "985fd7d5cbfca8fcd63477a07f747b6b19d6c525e1f062b62bf506b90724623b",
+   "content_edits": 5
+  },
+  "path": {
+   "sha256": "80e00436ade2c836fab74d053cee1ce6df3e6c2fa0b7e27dab5d5cc9c8d143e4",
+   "content_edits": 10
+  },
+  "glyph": {
+   "sha256": "4daa774ee7fdd6d099f6bd5bca81cb2bb8fb8364d604943dac8ed79959bba545",
+   "content_edits": 21
+  },
+  "clip": {
+   "sha256": "5208f841ed79cbe842a2b35f7a56eb650dfeef4d44e4fbe211e8171e771db4ba",
+   "content_edits": 55
+  }
+ }
+}
