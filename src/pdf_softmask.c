@@ -8,7 +8,6 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
-#include "exr_diag.h"
 
 static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, message); }
 static int number(exr_pdf_file *file, uint32_t id, double *out) {
@@ -101,11 +100,8 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
   }
   config.work=work;config.active_mask_bytes=active_mask_bytes;
   config.initial_clip=box;config.initial_clip_transform=matrix;config.mask_budget=0;
-  { DIAG_T0(t_r);
   status = exr_pdf_raster_content(file, resources, data, size, matrix, &config, control, &bitmap, e);
-  DIAG_ADD(D_MASK_RASTER,t_r); }
   if (status != EXR_OK) return status;
-  DIAG_T0(t_lum);
   status=load_transfer(file,mask,control,&function,e);
   if(status!=EXR_OK) { exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);return status; }
   sample_cost=1+(kind ? 8 : 0)+exr_pdf_function_cost(function);
@@ -137,7 +133,6 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     }
   }
   status=EXR_OK;
-  DIAG_ADD(D_MASK_LUM,t_lum);
 done:
   exr_pdf_function_free(function);
   if(status!=EXR_OK) { exr_buffer_put(exr_pdf_buffer_pool(file),result,(size_t)width*height);exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);return status; }
@@ -156,6 +151,6 @@ exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double
   unsigned width,unsigned height,unsigned char **out,size_t *work,size_t *active_mask_bytes,const exr_control *control,exr_error *e) {
   exr_status status;*out=NULL;
   if(mask_depth==16) return exr_fail(e,EXR_LIMIT,"PDF soft mask nesting exceeds 16");
-  mask_depth++;exr_diag_mask_depth++;status=build_mask(file,mask,matrix,width,height,out,work,active_mask_bytes,control,e);mask_depth--;exr_diag_mask_depth--;
+  mask_depth++;status=build_mask(file,mask,matrix,width,height,out,work,active_mask_bytes,control,e);mask_depth--;
   return status;
 }

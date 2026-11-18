@@ -2,6 +2,9 @@
 #include "vector_internal.h"
 #include "pixels_internal.h"
 #include <fenv.h>
+#if defined(__SSE2__) || defined(_M_X64)
+#include <emmintrin.h>
+#endif
 #ifdef EXR_PROFILE_IMAGE
 #include <windows.h>
 #include <stdio.h>
@@ -28,21 +31,54 @@ static int overlap(const exr_bitmap *a,const exr_bitmap *b) {
   uintptr_t x=(uintptr_t)a->pixels,y=(uintptr_t)b->pixels;
   return x<=y ? y-x<(size_t)a->stride*a->height : x-y<(size_t)b->stride*b->height;
 }
+typedef struct {
+  double fraction;
+  int first, second;
+} image_tap;
+
+static inline image_tap bilinear_tap(double coordinate, unsigned length) {
+  double pos=coordinate*length-.5,max=length-1;
+  pos=pos<=0 ? 0 : pos>max ? max : pos;
+  int first=(int)pos;
+  return (image_tap){pos-first,first,first+1<(int)length ? first+1 : first};
+}
+
+static inline void bilinear_sample(const unsigned char *row0,const unsigned char *row1,image_tap x,double wy,double out[4]) {
+  double wx=x.fraction,weights[4]={(1-wx)*(1-wy),wx*(1-wy),(1-wx)*wy,wx*wy};
+  const unsigned char *p[4]={row0+x.first*4,row0+x.second*4,row1+x.first*4,row1+x.second*4};
+#if defined(__SSE2__) || defined(_M_X64)
+  __m128d rg=_mm_setzero_pd(),ba=_mm_setzero_pd();
+  for(unsigned i=0;i<4;i++) {
+    int rgba;
+    memcpy(&rgba,p[i],sizeof(rgba));
+    __m128i channels=_mm_cvtsi32_si128(rgba);
+    channels=_mm_unpacklo_epi8(channels,_mm_setzero_si128());
+    channels=_mm_unpacklo_epi16(channels,_mm_setzero_si128());
+    double a=p[i][3]*weights[i];
+    rg=_mm_add_pd(rg,_mm_mul_pd(_mm_cvtepi32_pd(channels),_mm_set1_pd(a)));
+    __m128d blue=_mm_cvtepi32_pd(_mm_srli_si128(channels,8));
+    ba=_mm_add_pd(ba,_mm_unpacklo_pd(_mm_mul_sd(blue,_mm_set_sd(a)),_mm_set_sd(a)));
+  }
+  _mm_storeu_pd(out,rg);_mm_storeu_pd(out+2,ba);
+#else
+  double red=0,green=0,blue=0,alpha=0;
+  for(unsigned i=0;i<4;i++) {
+    double a=p[i][3]*weights[i];
+    red+=p[i][0]*a;green+=p[i][1]*a;blue+=p[i][2]*a;alpha+=a;
+  }
+  out[0]=red;out[1]=green;out[2]=blue;out[3]=alpha;
+#endif
+}
+
 static void sample(const exr_bitmap *b,double u,double v,int interpolate,double out[4]) {
-  unsigned k;
   if(!interpolate) {
     uint32_t x=(uint32_t)(u*b->width),y=(uint32_t)(v*b->height); const unsigned char *p;
     if(x>=b->width) x=b->width-1;
     if(y>=b->height) y=b->height-1;
-    p=b->pixels+(size_t)y*b->stride+x*4; out[3]=p[3]; for(k=0;k<3;k++) out[k]=p[k]*out[3];
+    p=b->pixels+(size_t)y*b->stride+x*4; out[3]=p[3]; for(unsigned k=0;k<3;k++) out[k]=p[k]*out[3];
   } else {
-    double x=fmax(0,fmin(b->width-1,u*b->width-.5)),y=fmax(0,fmin(b->height-1,v*b->height-.5));
-    uint32_t x0=(uint32_t)x,y0=(uint32_t)y,x1=x0+1<b->width ? x0+1 : x0,y1=y0+1<b->height ? y0+1 : y0;
-    double wx=x-x0,wy=y-y0,weights[4]={(1-wx)*(1-wy),wx*(1-wy),(1-wx)*wy,wx*wy};
-    const unsigned char *p[4]={b->pixels+(size_t)y0*b->stride+x0*4,b->pixels+(size_t)y0*b->stride+x1*4,
-      b->pixels+(size_t)y1*b->stride+x0*4,b->pixels+(size_t)y1*b->stride+x1*4}; unsigned i;
-    memset(out,0,4*sizeof(*out));
-    for(i=0;i<4;i++) { double a=p[i][3]*weights[i]; out[3]+=a; for(k=0;k<3;k++) out[k]+=p[i][k]*a; }
+    image_tap x=bilinear_tap(u,b->width),y=bilinear_tap(v,b->height);
+    bilinear_sample(b->pixels+(size_t)y.first*b->stride,b->pixels+(size_t)y.second*b->stride,x,y.fraction,out);
   }
 }
 static void texture_sample(const exr_vector_texture *texture,double u,double v,double out[4],double *shape,unsigned flags) {
@@ -239,6 +275,63 @@ static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,cons
   }
   free(columns); *result=exr_fail(e,EXR_OK,""); return 1;
 }
+/* The separable transform gives each column the same two horizontal taps
+   on every row. Keep the generic tap, weight and summation order. */
+static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
+                         const exr_bitmap *clip,int x0,int y0,int x1,int y1,size_t cost,
+                         size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+  if(inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
+  double x_first=inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4],x_last=inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4];
+  double y_first=inv[1]*(x0+.25)+inv[3]*(y0+.25)+inv[5],y_last=inv[1]*(x0+.25)+inv[3]*(y1-.25)+inv[5];
+  if(!isfinite(x_first) || !isfinite(x_last) || !isfinite(y_first) || !isfinite(y_last)) return 0;
+  size_t width=(size_t)(x1-x0);
+  image_tap *columns=malloc(2*width*sizeof(*columns));
+  if(!columns) return 0;
+  for(size_t i=0;i<2*width;i++) {
+    double px=(x0+(int)(i>>1))+.25+.5*(i&1);
+    double u=inv[0]*px+inv[2]*(y0+.25)+inv[4];
+    columns[i]=u<0 || u>=1 ? (image_tap){0,-1,-1} : bilinear_tap(u,source->width);
+  }
+  for(int y=y0;y<y1;y++) {
+    *result=exr_control_cancel(control,e);
+    if(*result!=EXR_OK) break;
+    if(!exr_vector_work(work,width*cost)) {
+      *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break;
+    }
+    const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    const unsigned char *rows[2][2]={{NULL,NULL},{NULL,NULL}};
+    double wy[2]={0,0};
+    for(unsigned sy=0;sy<2;sy++) {
+      double py=y+.25+.5*sy,v=inv[1]*(x0+.25)+inv[3]*py+inv[5];
+      if(v<0 || v>=1) continue;
+      image_tap tap=bilinear_tap(v,source->height);
+      rows[sy][0]=source->pixels+(size_t)tap.first*source->stride;
+      rows[sy][1]=source->pixels+(size_t)tap.second*source->stride;
+      wy[sy]=tap.fraction;
+    }
+    for(int x=x0;x<x1;x++) {
+      unsigned coverage=mask ? mask[x] : 255;
+      const image_tap *taps=columns+2*(size_t)(x-x0);
+      double sums[4]={0};
+      if(!coverage) continue;
+      for(unsigned sy=0;sy<2;sy++) if(rows[sy][0]) {
+        for(unsigned sx=0;sx<2;sx++) if(taps[sx].first>=0) {
+          double rgba[4];
+          bilinear_sample(rows[sy][0],rows[sy][1],taps[sx],wy[sy],rgba);
+          for(unsigned k=0;k<4;k++) sums[k]+=rgba[k];
+        }
+      }
+      if(!sums[3]) continue;
+      uint32_t color=image_byte(sums[3]*alpha/4);
+      for(unsigned k=0;k<3;k++) color|=image_byte(sums[k]/sums[3])<<(24-8*k);
+      exr_pixel(target,x,y,color,coverage);
+    }
+  }
+  free(columns);
+  if(*result==EXR_OK) *result=exr_fail(e,EXR_OK,"");
+  return 1;
+}
+
 exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_texture *source,const exr_bitmap *inks,const double m[6],double alpha,
                                      const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
   size_t local_work=0,i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
@@ -281,7 +374,12 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
   }
   x0=(int)fmax(0,floor(left)); x1=(int)fmin(target->width,ceil(right)); y0=(int)fmax(0,floor(top)); y1=(int)fmin(target->height,ceil(bottom));
 #ifndef EXR_PROFILE_IMAGE
-  { exr_status fast; if(!inks && !state && nearest_axis(target,source,inv,alpha,clip,mode,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast; }
+  if(!inks && !state) {
+    exr_status fast;
+    if(nearest_axis(target,source,inv,alpha,clip,mode,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
+    if(source->interpolate && !source->mask && !source->has_matte && mode==EXR_BLEND_NORMAL && target->channels==4 &&
+       bilinear_axis(target,&source->bitmap,inv,alpha,clip,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
+  }
 #endif
   /* Bound the validation scan by the destination work. Endpoints ensure the
      separable index calculations stay finite throughout the rectangle. */
@@ -322,6 +420,12 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
         if(u<0 || u>=1 || v<0 || v>=1) continue;
         if(inks) ink_sample(source,inks,u,v,s,&sample_shape,state ? state->alpha_flags : 0);
         else if(paired_nearest) masked_nearest_sample(source,u,v,s,&sample_shape,state ? state->alpha_flags : 0);
+#ifndef EXR_PROFILE_IMAGE
+        else if(!source->mask) {
+          sample(&source->bitmap,u,v,(int)source->interpolate,s);
+          sample_shape=state && (state->alpha_flags&EXR_ALPHA_IMAGE_SHAPE) ? s[3]/255. : 1;
+        }
+#endif
         else texture_sample(source,u,v,s,&sample_shape,state ? state->alpha_flags : 0);
         shape_sum+=sample_shape;
         for(k=0;k<(inks ? 5u : 4u);k++) sums[k]+=s[k];

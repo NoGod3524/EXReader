@@ -3,7 +3,6 @@
 #include "pdf_face_internal.h"
 #include "icc_internal.h"
 #include <stdio.h>
-#include "exr_diag.h"
 typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
 typedef struct { unsigned char *pixels;size_t bytes; } paint_mask;
 typedef struct {
@@ -39,15 +38,13 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
 static exr_status mask_begin(pdf_painter *r,const exr_pdf_paint_state *paint,paint_mask *mask,exr_error *e) {
   unsigned width=0,height=0; exr_status status;
   memset(mask,0,sizeof(*mask));
-  if(paint->smask==EXR_PDF_NONE || (exr_diag_flags&DIAG_SKIP_SMASK)) return EXR_OK;
+  if(paint->smask==EXR_PDF_NONE) return EXR_OK;
   status=exr_sink_extent(&r->sink,&width,&height,e); if(status!=EXR_OK) return status;
   if(!width || !height || width>(size_t)64*1024*1024/height || *r->mask_bytes>(size_t)64*1024*1024 ||
       (size_t)width*height>(size_t)64*1024*1024-*r->mask_bytes)
     return exr_fail(e,EXR_LIMIT,"PDF active soft masks exceed 64 MiB");
   mask->bytes=(size_t)width*height;*r->mask_bytes+=mask->bytes;
-  { DIAG_T0(t_m);
   status=exr_pdf_soft_mask_build(r->file,paint->smask,paint->smask_matrix,width,height,&mask->pixels,r->work,r->mask_bytes,r->control,e);
-  DIAG_ADD(D_MASK_BUILD,t_m); }
   if(status!=EXR_OK) { *r->mask_bytes-=mask->bytes;mask->bytes=0;return status; }
   return exr_sink_soft_mask(&r->sink,mask->pixels,width,height,e);
 }
@@ -126,11 +123,8 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
   exr_bitmap inks={0};int native=r->sink.image_cmyk && (!r->sink.image_space || r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK);
   exr_pdf_paint_state image_paint=*paint;uint32_t own_mask;const exr_pdf_value *v;
   exr_status status; paint_mask mask={0}; if(!r->sink.base.image && !native) return EXR_OK;
-  if(exr_diag_flags&DIAG_SKIP_IMAGE) return EXR_OK;
   if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
-  { DIAG_T0(t_l);
   status=exr_pdf_image_load_inks(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,native ? &inks : NULL,r->work,r->control,e);
-  DIAG_ADD(D_IMG_LOAD,t_l); }
   multiply(paint->matrix,flip,matrix);
   if(status==EXR_OK) status=exr_sink_alpha_source(&r->sink,EXR_ALPHA_IMAGE_SHAPE|(paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0),e);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
@@ -146,11 +140,9 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
     }
   }
   if(status==EXR_OK) status=mask_begin(r,&image_paint,&mask,e);
-  { DIAG_T0(t_d);
   if(status==EXR_OK && inks.pixels) status=r->sink.image_cmyk(r->sink.base.context,image,&inks,matrix,paint->fill.alpha,e);
   else if(status==EXR_OK && r->sink.base.image) status=r->sink.base.image(r->sink.base.context,image,matrix,paint->fill.alpha,e);
   else if(status==EXR_OK) status=exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks RGB image support");
-  DIAG_ADD(D_IMG_DRAW,t_d); }
   if(mask.pixels) status=mask_end(r,&mask,status,e);
   exr_pdf_image_release(image);free(inks.pixels); return status;
 }
