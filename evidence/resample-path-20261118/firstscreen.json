@@ -1,0 +1,982 @@
+{
+  "definition": "fresh process -> open once -> render page 1 once; render timer only (bitmap allocation inside; PNG/hash/copy/free outside); open reported separately",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "runs": 15,
+  "sides": {
+    "main": {
+      "kind": "engine",
+      "target": "C:\\Users\\Oscar\\Documents\\Codex\\resample-dlls\\main-653e44b.dll",
+      "sha256": "445ab2d26f58f705033ea9ef9099a74d67a15a5ca46663f6c9e9f5a2955c636e"
+    },
+    "final": {
+      "kind": "engine",
+      "target": "C:\\Users\\Oscar\\Documents\\Codex\\resample-dlls\\final.dll",
+      "sha256": "03a444eae6b0f4d3467fedae57ecbf4f0b84e8614777af1e5e896be46a7899f1"
+    }
+  },
+  "cases": {
+    "deck@1200": {
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\tests\\fixtures\\pdf-ppt\\deck.pdf",
+      "input_sha256": "b1549f6bdb6c3d51c456e5222ba8efaa7487558e6d2ace106bdb4059d8ef2204",
+      "idle_cpu_percent": [
+        11.63,
+        13.79,
+        10.55,
+        6.32,
+        12.11,
+        12.06,
+        4.3,
+        5.58,
+        12.89,
+        14.68,
+        13.6,
+        6.75,
+        8.2,
+        6.25,
+        6.64
+      ],
+      "raw": {
+        "main": [
+          {
+            "first_render_ms": 26.741,
+            "open_ms": 0.3798,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 33.3964,
+            "open_ms": 0.4769,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.9969,
+            "open_ms": 0.4153,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 27.8889,
+            "open_ms": 0.4476,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.4379,
+            "open_ms": 0.4729,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.7332,
+            "open_ms": 0.4213,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.5923,
+            "open_ms": 0.4523,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 29.2256,
+            "open_ms": 0.4883,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 27.2646,
+            "open_ms": 0.4651,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.7229,
+            "open_ms": 0.3744,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.3113,
+            "open_ms": 0.4427,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.2542,
+            "open_ms": 0.4737,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.5629,
+            "open_ms": 0.6392,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.9652,
+            "open_ms": 0.3458,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.0132,
+            "open_ms": 0.3843,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          }
+        ],
+        "final": [
+          {
+            "first_render_ms": 26.3217,
+            "open_ms": 0.4661,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.6747,
+            "open_ms": 0.3855,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.5084,
+            "open_ms": 0.4712,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.165,
+            "open_ms": 0.4099,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.7742,
+            "open_ms": 0.461,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 27.5591,
+            "open_ms": 0.4354,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.7742,
+            "open_ms": 0.3881,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.3649,
+            "open_ms": 0.38,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 27.8919,
+            "open_ms": 0.3918,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 28.0189,
+            "open_ms": 0.4186,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.1507,
+            "open_ms": 0.3847,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.5957,
+            "open_ms": 0.3934,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 26.7105,
+            "open_ms": 0.4576,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 25.648,
+            "open_ms": 0.5367,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          },
+          {
+            "first_render_ms": 24.9324,
+            "open_ms": 0.4082,
+            "rgba_sha256": "1d62be38af750105e6514a9d4553838d428ef3a9e6f623e04c3c29f58d478dbd"
+          }
+        ]
+      },
+      "summary": {
+        "main": {
+          "first_render_ms": {
+            "median": 26.438,
+            "min": 25.563,
+            "max": 33.396,
+            "spread_percent": 30.6,
+            "samples": [
+              26.741,
+              33.396,
+              26.997,
+              27.889,
+              26.438,
+              25.733,
+              25.592,
+              29.226,
+              27.265,
+              26.723,
+              26.311,
+              26.254,
+              25.563,
+              25.965,
+              26.013
+            ]
+          },
+          "open_ms": {
+            "median": 0.448,
+            "min": 0.346,
+            "max": 0.639,
+            "spread_percent": 84.8,
+            "samples": [
+              0.38,
+              0.477,
+              0.415,
+              0.448,
+              0.473,
+              0.421,
+              0.452,
+              0.488,
+              0.465,
+              0.374,
+              0.443,
+              0.474,
+              0.639,
+              0.346,
+              0.384
+            ]
+          },
+          "first_screen_ms": {
+            "median": 26.911,
+            "min": 26.045,
+            "max": 33.873,
+            "spread_percent": 30.1,
+            "samples": [
+              27.121,
+              33.873,
+              27.412,
+              28.337,
+              26.911,
+              26.154,
+              26.045,
+              29.714,
+              27.73,
+              27.097,
+              26.754,
+              26.728,
+              26.202,
+              26.311,
+              26.398
+            ]
+          }
+        },
+        "final": {
+          "first_render_ms": {
+            "median": 26.165,
+            "min": 24.932,
+            "max": 28.019,
+            "spread_percent": 12.4,
+            "samples": [
+              26.322,
+              26.675,
+              25.508,
+              26.165,
+              26.774,
+              27.559,
+              25.774,
+              25.365,
+              27.892,
+              28.019,
+              26.151,
+              25.596,
+              26.71,
+              25.648,
+              24.932
+            ]
+          },
+          "open_ms": {
+            "median": 0.41,
+            "min": 0.38,
+            "max": 0.537,
+            "spread_percent": 41.2,
+            "samples": [
+              0.466,
+              0.386,
+              0.471,
+              0.41,
+              0.461,
+              0.435,
+              0.388,
+              0.38,
+              0.392,
+              0.419,
+              0.385,
+              0.393,
+              0.458,
+              0.537,
+              0.408
+            ]
+          },
+          "first_screen_ms": {
+            "median": 26.575,
+            "min": 25.341,
+            "max": 28.438,
+            "spread_percent": 12.2,
+            "samples": [
+              26.788,
+              27.06,
+              25.98,
+              26.575,
+              27.235,
+              27.995,
+              26.162,
+              25.745,
+              28.284,
+              28.438,
+              26.535,
+              25.989,
+              27.168,
+              26.185,
+              25.341
+            ]
+          }
+        }
+      }
+    },
+    "real-mixed-120@1200": {
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\tests\\fixtures\\pdf-large\\real-mixed-120.pdf",
+      "input_sha256": "cdfc1ee6952652613c15fe91288450c6e168994e3b1792e52bb56db14ab8a693",
+      "idle_cpu_percent": [
+        11.02,
+        8.98,
+        7.81,
+        14.06,
+        12.11,
+        14.06,
+        12.11,
+        8.98,
+        7.81,
+        10.0,
+        14.06,
+        9.16,
+        10.16,
+        12.26,
+        9.06
+      ],
+      "raw": {
+        "main": [
+          {
+            "first_render_ms": 64.6807,
+            "open_ms": 0.7428,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.6198,
+            "open_ms": 0.7845,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 76.5182,
+            "open_ms": 0.953,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.6885,
+            "open_ms": 0.9693,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.5003,
+            "open_ms": 0.7507,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.0457,
+            "open_ms": 0.7295,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.12,
+            "open_ms": 0.7417,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 62.2795,
+            "open_ms": 0.7379,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 60.9291,
+            "open_ms": 0.7497,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 62.6946,
+            "open_ms": 0.7866,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 61.5962,
+            "open_ms": 0.9285,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.5881,
+            "open_ms": 0.7216,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.3779,
+            "open_ms": 0.8437,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 62.7537,
+            "open_ms": 0.8176,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.1277,
+            "open_ms": 0.7614,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          }
+        ],
+        "final": [
+          {
+            "first_render_ms": 74.5109,
+            "open_ms": 0.9323,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.4997,
+            "open_ms": 0.7174,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.2549,
+            "open_ms": 0.7947,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.3596,
+            "open_ms": 0.7572,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.8663,
+            "open_ms": 0.7407,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.6603,
+            "open_ms": 0.7739,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 62.8453,
+            "open_ms": 0.7928,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 68.2624,
+            "open_ms": 0.6977,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.347,
+            "open_ms": 0.9171,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.0567,
+            "open_ms": 0.7034,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.8329,
+            "open_ms": 0.7255,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 62.5096,
+            "open_ms": 0.8411,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 66.4427,
+            "open_ms": 0.772,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 65.9259,
+            "open_ms": 0.6987,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.795,
+            "open_ms": 0.7173,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          }
+        ]
+      },
+      "summary": {
+        "main": {
+          "first_render_ms": {
+            "median": 63.378,
+            "min": 60.929,
+            "max": 76.518,
+            "spread_percent": 25.6,
+            "samples": [
+              64.681,
+              64.62,
+              76.518,
+              63.688,
+              63.5,
+              64.046,
+              63.12,
+              62.279,
+              60.929,
+              62.695,
+              61.596,
+              63.588,
+              63.378,
+              62.754,
+              63.128
+            ]
+          },
+          "open_ms": {
+            "median": 0.761,
+            "min": 0.722,
+            "max": 0.969,
+            "spread_percent": 34.3,
+            "samples": [
+              0.743,
+              0.784,
+              0.953,
+              0.969,
+              0.751,
+              0.73,
+              0.742,
+              0.738,
+              0.75,
+              0.787,
+              0.928,
+              0.722,
+              0.844,
+              0.818,
+              0.761
+            ]
+          },
+          "first_screen_ms": {
+            "median": 64.222,
+            "min": 61.679,
+            "max": 77.471,
+            "spread_percent": 25.6,
+            "samples": [
+              65.424,
+              65.404,
+              77.471,
+              64.658,
+              64.251,
+              64.775,
+              63.862,
+              63.017,
+              61.679,
+              63.481,
+              62.525,
+              64.31,
+              64.222,
+              63.571,
+              63.889
+            ]
+          }
+        },
+        "final": {
+          "first_render_ms": {
+            "median": 63.795,
+            "min": 62.51,
+            "max": 74.511,
+            "spread_percent": 19.2,
+            "samples": [
+              74.511,
+              63.5,
+              64.255,
+              63.36,
+              63.866,
+              63.66,
+              62.845,
+              68.262,
+              63.347,
+              63.057,
+              63.833,
+              62.51,
+              66.443,
+              65.926,
+              63.795
+            ]
+          },
+          "open_ms": {
+            "median": 0.757,
+            "min": 0.698,
+            "max": 0.932,
+            "spread_percent": 33.6,
+            "samples": [
+              0.932,
+              0.717,
+              0.795,
+              0.757,
+              0.741,
+              0.774,
+              0.793,
+              0.698,
+              0.917,
+              0.703,
+              0.726,
+              0.841,
+              0.772,
+              0.699,
+              0.717
+            ]
+          },
+          "first_screen_ms": {
+            "median": 64.512,
+            "min": 63.351,
+            "max": 75.443,
+            "spread_percent": 19.1,
+            "samples": [
+              75.443,
+              64.217,
+              65.05,
+              64.117,
+              64.607,
+              64.434,
+              63.638,
+              68.96,
+              64.264,
+              63.76,
+              64.558,
+              63.351,
+              67.215,
+              66.625,
+              64.512
+            ]
+          }
+        }
+      }
+    },
+    "image-heavy-100@1200": {
+      "input": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\tests\\fixtures\\pdf-large\\image-heavy-100.pdf",
+      "input_sha256": "c027e8e78346b159e08d3a8c5313b0bd240403873e1c58de0e1b2c3f11b87cb2",
+      "idle_cpu_percent": [
+        7.42,
+        13.46,
+        9.84,
+        9.58,
+        13.51,
+        9.84,
+        6.67,
+        8.56,
+        8.33,
+        5.79,
+        10.53,
+        8.56,
+        7.03,
+        14.29,
+        9.34
+      ],
+      "raw": {
+        "main": [
+          {
+            "first_render_ms": 63.2442,
+            "open_ms": 0.688,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.8051,
+            "open_ms": 0.6378,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 60.9085,
+            "open_ms": 0.6801,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.1101,
+            "open_ms": 0.6241,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 75.0151,
+            "open_ms": 0.7056,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 68.6843,
+            "open_ms": 0.7779,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 69.6216,
+            "open_ms": 0.7521,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 67.7708,
+            "open_ms": 0.7137,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.8295,
+            "open_ms": 0.7245,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.7543,
+            "open_ms": 0.7384,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.2835,
+            "open_ms": 0.6446,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 61.6716,
+            "open_ms": 0.6446,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 67.7333,
+            "open_ms": 0.7143,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 70.8743,
+            "open_ms": 0.7973,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 75.2152,
+            "open_ms": 1.0216,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          }
+        ],
+        "final": [
+          {
+            "first_render_ms": 61.3338,
+            "open_ms": 0.6056,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 65.5409,
+            "open_ms": 0.7741,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 79.1333,
+            "open_ms": 0.6583,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.66,
+            "open_ms": 0.669,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 62.7631,
+            "open_ms": 0.6051,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 65.2926,
+            "open_ms": 0.6779,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 71.6307,
+            "open_ms": 0.8606,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.6747,
+            "open_ms": 1.0314,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.5819,
+            "open_ms": 0.6518,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 65.9278,
+            "open_ms": 0.703,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 64.9861,
+            "open_ms": 0.7367,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 62.8336,
+            "open_ms": 0.6744,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.6621,
+            "open_ms": 0.6892,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 74.3314,
+            "open_ms": 0.7768,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          },
+          {
+            "first_render_ms": 63.7077,
+            "open_ms": 0.7425,
+            "rgba_sha256": "ebabadf56d54e4df39b73731c02275136c882fc44ad80aade26342fea1094ba5"
+          }
+        ]
+      },
+      "summary": {
+        "main": {
+          "first_render_ms": {
+            "median": 64.754,
+            "min": 60.908,
+            "max": 75.215,
+            "spread_percent": 23.5,
+            "samples": [
+              63.244,
+              63.805,
+              60.908,
+              64.11,
+              75.015,
+              68.684,
+              69.622,
+              67.771,
+              63.83,
+              64.754,
+              63.283,
+              61.672,
+              67.733,
+              70.874,
+              75.215
+            ]
+          },
+          "open_ms": {
+            "median": 0.714,
+            "min": 0.624,
+            "max": 1.022,
+            "spread_percent": 63.7,
+            "samples": [
+              0.688,
+              0.638,
+              0.68,
+              0.624,
+              0.706,
+              0.778,
+              0.752,
+              0.714,
+              0.725,
+              0.738,
+              0.645,
+              0.645,
+              0.714,
+              0.797,
+              1.022
+            ]
+          },
+          "first_screen_ms": {
+            "median": 65.493,
+            "min": 61.589,
+            "max": 76.237,
+            "spread_percent": 23.8,
+            "samples": [
+              63.932,
+              64.443,
+              61.589,
+              64.734,
+              75.721,
+              69.462,
+              70.374,
+              68.484,
+              64.554,
+              65.493,
+              63.928,
+              62.316,
+              68.448,
+              71.672,
+              76.237
+            ]
+          }
+        },
+        "final": {
+          "first_render_ms": {
+            "median": 64.675,
+            "min": 61.334,
+            "max": 79.133,
+            "spread_percent": 29.0,
+            "samples": [
+              61.334,
+              65.541,
+              79.133,
+              63.66,
+              62.763,
+              65.293,
+              71.631,
+              64.675,
+              64.582,
+              65.928,
+              64.986,
+              62.834,
+              63.662,
+              74.331,
+              63.708
+            ]
+          },
+          "open_ms": {
+            "median": 0.689,
+            "min": 0.605,
+            "max": 1.031,
+            "spread_percent": 70.5,
+            "samples": [
+              0.606,
+              0.774,
+              0.658,
+              0.669,
+              0.605,
+              0.678,
+              0.861,
+              1.031,
+              0.652,
+              0.703,
+              0.737,
+              0.674,
+              0.689,
+              0.777,
+              0.743
+            ]
+          },
+          "first_screen_ms": {
+            "median": 65.706,
+            "min": 61.939,
+            "max": 79.792,
+            "spread_percent": 28.8,
+            "samples": [
+              61.939,
+              66.315,
+              79.792,
+              64.329,
+              63.368,
+              65.97,
+              72.491,
+              65.706,
+              65.234,
+              66.631,
+              65.723,
+              63.508,
+              64.351,
+              75.108,
+              64.45
+            ]
+          }
+        }
+      }
+    }
+  }
+}

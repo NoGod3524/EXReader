@@ -1,0 +1,45 @@
+{
+ "pdf": "tests/fixtures/pdf-hybrid-real/word-5.pdf",
+ "width": 1200,
+ "pages": [
+  1,
+  5
+ ],
+ "reps": 41,
+ "idle_gate": 2.734375,
+ "sum_a_p50_ms": 30.095399999999998,
+ "sum_b_p50_ms": 30.2517,
+ "sum_paired_delta_ms": 0.31899999999999995,
+ "per_page": [
+  {
+   "page": 1,
+   "a_p50_ms": 5.9998,
+   "b_p50_ms": 6.0206,
+   "paired_delta_ms": 0.0045000000000001705
+  },
+  {
+   "page": 2,
+   "a_p50_ms": 6.0303,
+   "b_p50_ms": 6.062,
+   "paired_delta_ms": 0.02200000000000024
+  },
+  {
+   "page": 3,
+   "a_p50_ms": 6.0638,
+   "b_p50_ms": 6.1112,
+   "paired_delta_ms": 0.10850000000000026
+  },
+  {
+   "page": 4,
+   "a_p50_ms": 6.0056,
+   "b_p50_ms": 6.0737,
+   "paired_delta_ms": 0.03759999999999941
+  },
+  {
+   "page": 5,
+   "a_p50_ms": 5.9959,
+   "b_p50_ms": 5.9842,
+   "paired_delta_ms": 0.14639999999999986
+  }
+ ]
+}
