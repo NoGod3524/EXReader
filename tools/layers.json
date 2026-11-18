@@ -67,6 +67,7 @@
     "cfi_offset.c": "doc",
     "cfi_text.c": "doc",
     "common.c": "base",
+    "exr_diag.c": "base",
     "construct.c": "doc",
     "core.c": "base",
     "curves.c": "graphics",
