@@ -477,6 +477,11 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
 static int bilinear_shear(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
                          const exr_bitmap *clip,int x0,int y0,int x1,int y1,size_t cost,
                          size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+  /* The body below is SSE2-only; other targets take the scalar fallback, so
+     these parameters must be explicitly discarded to keep -Werror quiet. */
+  (void)target;(void)source;(void)inv;(void)alpha;(void)clip;
+  (void)x0;(void)y0;(void)x1;(void)y1;(void)cost;(void)work;
+  (void)control;(void)e;(void)result;
 #if defined(__SSE2__) || defined(_M_X64)
   if(!inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
   double first=inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4];
