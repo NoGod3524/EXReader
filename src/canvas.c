@@ -47,13 +47,13 @@ static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
   for(i=0;i<4;i++) if((mask=c->spare_masks[i]) && mask->bitmap.width==c->bitmap.width && mask->bitmap.height==c->bitmap.height) {
     c->spare_masks[i]=NULL;
     if(mask->dirty_bottom>mask->dirty_top) memset(mask->bitmap.pixels+(size_t)mask->dirty_top*mask->bitmap.stride,0,(size_t)(mask->dirty_bottom-mask->dirty_top)*mask->bitmap.stride);
-    mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0;
+    mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0; mask->dirty_left=mask->bitmap.width; mask->dirty_right=0;
     mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
   }
   mask=calloc(1,sizeof(*mask)); if(!mask) return exr_fail(e,EXR_MEMORY,"Canvas clip mask allocation failed");
   mask->bitmap=c->bitmap; mask->bitmap.channels=1; mask->bitmap.stride=c->bitmap.width; mask->bitmap.pixels=calloc(bytes,1);
   if(!mask->bitmap.pixels) { free(mask); return exr_fail(e,EXR_MEMORY,"Canvas clip pixel allocation failed"); }
-  mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0;
+  mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0; mask->dirty_left=mask->bitmap.width; mask->dirty_right=0;
   mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
 }
 /* The soft mask rides on the composite state so every pixel writer applies it. */
@@ -105,21 +105,33 @@ static exr_status fill_cmyk(exr_canvas *c,const exr_vector_polyline *path,exr_fi
     target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->work,&c->control,e);
   free(edges); return status;
 }
-/* Coverage into a clip mask. Rasterized rows lie within the path's vertical
-   extent; one extra row on each side keeps the dirty range conservative. */
+/* Coverage into a clip mask. Rasterized pixels lie within the path's extent;
+   one extra pixel on each side keeps the dirty range conservative. */
+static void extent(double low,double high,uint32_t size,uint32_t *first,uint32_t *last) {
+  *first=0; *last=size;
+  if(!isfinite(low) || !isfinite(high)) return;
+  low=floor(low)-1; high=ceil(high)+1;
+  *first=low<=0 ? 0 : low>=size ? size : (uint32_t)low;
+  *last=high<=0 ? 0 : high>=size ? size : (uint32_t)high;
+}
 static exr_status mask_fill(exr_canvas *c,const exr_vector_polyline *path,exr_fill_rule rule,exr_clip_mask *mask,
                             const exr_clip_mask *clip,exr_error *e) {
-  double low=INFINITY,high=-INFINITY; uint32_t top=0,bottom=mask->bitmap.height; size_t i;
-  for(i=0;i<path->point_count;i++) { low=fmin(low,path->points[i].y); high=fmax(high,path->points[i].y); }
-  if(isfinite(low) && isfinite(high)) {
-    low=floor(low)-1; high=ceil(high)+1;
-    top=low<=0 ? 0 : low>=bottom ? bottom : (uint32_t)low;
-    bottom=high<=0 ? 0 : high>=bottom ? bottom : (uint32_t)high;
+  double low=INFINITY,high=-INFINITY,left=INFINITY,right=-INFINITY; uint32_t top,bottom,first,last; size_t i;
+  for(i=0;i<path->point_count;i++) {
+    low=fmin(low,path->points[i].y); high=fmax(high,path->points[i].y);
+    left=fmin(left,path->points[i].x); right=fmax(right,path->points[i].x);
   }
-  for(i=0;i<path->point_count;i++) if(!isfinite(path->points[i].x) || !isfinite(path->points[i].y)) { top=0; bottom=mask->bitmap.height; break; }
+  extent(low,high,mask->bitmap.height,&top,&bottom); extent(left,right,mask->bitmap.width,&first,&last);
+  for(i=0;i<path->point_count;i++) if(!isfinite(path->points[i].x) || !isfinite(path->points[i].y)) {
+    top=0; bottom=mask->bitmap.height; first=0; last=mask->bitmap.width; break;
+  }
   if(top<bottom) {
     if(top<mask->dirty_top) mask->dirty_top=top;
     if(bottom>mask->dirty_bottom) mask->dirty_bottom=bottom;
+  }
+  if(first<last) {
+    if(first<mask->dirty_left) mask->dirty_left=first;
+    if(last>mask->dirty_right) mask->dirty_right=last;
   }
   return fill(c,path,rule,0xffffffff,&mask->bitmap,clip,e);
 }
@@ -262,19 +274,25 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
 
   }
   if(status==EXR_OK && style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE)) {
-    exr_clip_mask *fm=NULL,*sm=NULL;status=new_mask(c,&fm,e);
+    exr_clip_mask *fm=NULL,*sm=NULL;uint32_t bounds[4];status=new_mask(c,&fm,e);
     if(status==EXR_OK) status=new_mask(c,&sm,e);
     if(status==EXR_OK) status=mask_fill(c,&flat,style->rule,fm,NULL,e);
     if(status==EXR_OK) status=mask_fill(c,&outline,EXR_FILL_NONZERO,sm,NULL,e);
+    if(status==EXR_OK) {
+      bounds[0]=fm->dirty_left<sm->dirty_left ? fm->dirty_left : sm->dirty_left;
+      bounds[1]=fm->dirty_top<sm->dirty_top ? fm->dirty_top : sm->dirty_top;
+      bounds[2]=fm->dirty_right>sm->dirty_right ? fm->dirty_right : sm->dirty_right;
+      bounds[3]=fm->dirty_bottom>sm->dirty_bottom ? fm->dirty_bottom : sm->dirty_bottom;
+    }
     if(status==EXR_OK && c->cmyk_groups) {
       double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
       if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,frgb,fc); }
       if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,srgb,sc); }
-      status=exr_composite_compound_cmyk(&c->bitmap,&fm->bitmap,&sm->bitmap,fc,sc,
+      status=exr_composite_compound_cmyk(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,fc,sc,
         (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,c->clip ? &c->clip->bitmap : NULL,
         masked_state(c),&c->work,&c->control,e);
     }
-    else if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,style->fill,style->stroke,c->blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),&c->work,&c->control,e);
+    else if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,style->fill,style->stroke,c->blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),&c->work,&c->control,e);
     unref(c,fm);unref(c,sm);
   } else if(status==EXR_OK && (style->flags&EXR_DRAW_FILL)) {
     status=cmyk_fill ? fill_cmyk(c,&flat,style->rule,cmyk_fill,(style->fill&255)/255.,&c->bitmap,c->clip,e)
