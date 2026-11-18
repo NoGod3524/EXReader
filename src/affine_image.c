@@ -470,6 +470,86 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
   return 1;
 }
 #endif
+/* A one-axis shear keeps horizontal taps constant down each column. When
+   both vertical taps stay on the same source rows across a destination row,
+   reuse their converted texels; crossing rows retain the scalar sampler.
+   Coordinates, weights and four-sample accumulation keep their original order. */
+static int bilinear_shear(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
+                         const exr_bitmap *clip,int x0,int y0,int x1,int y1,size_t cost,
+                         size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+#if defined(__SSE2__) || defined(_M_X64)
+  if(!inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
+  double first=inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4];
+  double last=inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4];
+  if(!isfinite(first) || !isfinite(last)) return 0;
+  for(unsigned i=0;i<4;i++) {
+    double v=inv[1]*(i&1 ? x1-.25 : x0+.25)+inv[3]*(i&2 ? y1-.25 : y0+.25)+inv[5];
+    if(!isfinite(v)) return 0;
+  }
+  size_t width=(size_t)(x1-x0);unsigned lo=source->width,hi=0;
+  image_tap *columns=malloc(2*width*sizeof(*columns));
+  if(!columns) return 0;
+  for(size_t i=0;i<2*width;i++) {
+    double u=inv[0]*((x0+(int)(i>>1))+.25+.5*(i&1))+inv[2]*(y0+.25)+inv[4];
+    columns[i]=u<0 || u>=1 ? (image_tap){0,-1,-1} : bilinear_tap(u,source->width);
+    if(columns[i].first>=0) {
+      if((unsigned)columns[i].first<lo) lo=(unsigned)columns[i].first;
+      if((unsigned)columns[i].first+1>hi) hi=(unsigned)columns[i].first+1;
+    }
+  }
+  double *storage_rows=lo<=hi && (size_t)(hi-lo)<=4*width ? malloc(4*5*(size_t)(hi-lo+1)*sizeof(double)) : NULL;
+  if(!storage_rows) { free(columns);return 0; }
+  converted_row slots[4];size_t span=(size_t)(hi-lo+1);
+  for(unsigned i=0;i<4;i++) { slots[i].row=-1;slots[i].rgb1=storage_rows+i*5*span;slots[i].alpha=slots[i].rgb1+4*span; }
+  *result=EXR_OK;
+  for(int y=y0;y<y1;y++) {
+    *result=exr_control_cancel(control,e);if(*result!=EXR_OK) break;
+    if(!exr_vector_work(work,width*cost)) { *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break; }
+    const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    int need[4],stable=1;unsigned count=0;
+    const converted_row *rows[2][2];
+    for(unsigned sy=0;sy<2;sy++) {
+      double py=y+.25+.5*sy;
+      double a=inv[1]*(x0+.25)+inv[3]*py+inv[5],b=inv[1]*(x1-.25)+inv[3]*py+inv[5];
+      if(a<0 || a>=1 || b<0 || b>=1) { stable=0;break; }
+      image_tap ta=bilinear_tap(a,source->height),tb=bilinear_tap(b,source->height);
+      if(ta.first!=tb.first || ta.second!=tb.second) { stable=0;break; }
+      need[count++]=ta.first;need[count++]=ta.second;
+    }
+    if(stable) for(unsigned sy=0;sy<2;sy++) for(unsigned k=0;k<2;k++)
+      rows[sy][k]=find_row(slots,need,count,need[2*sy+k],source,lo,hi);
+    for(int x=x0;x<x1;x++) {
+      unsigned coverage=mask ? mask[x] : 255;if(!coverage) continue;
+      const image_tap *column=columns+2*(size_t)(x-x0);
+      double sums[4]={0};__m128d rg=_mm_setzero_pd(),ba=_mm_setzero_pd();
+      for(unsigned sy=0;sy<2;sy++) for(unsigned sx=0;sx<2;sx++) if(column[sx].first>=0) {
+        double px=x+.25+.5*sx,py=y+.25+.5*sy;
+        double v=inv[1]*px+inv[3]*py+inv[5];
+        if(v<0 || v>=1) continue;
+        if(stable) {
+          double wy=bilinear_tap(v,source->height).fraction,wx=column[sx].fraction;
+          converted_sample(rows[sy][0],rows[sy][1],(size_t)(column[sx].first-(int)lo),
+            _mm_set_pd(wx,1-wx),_mm_set1_pd(1-wy),_mm_set1_pd(wy),&rg,&ba);
+        } else {
+          image_tap tap=bilinear_tap(v,source->height);double rgba[4];
+          bilinear_sample(source->pixels+(size_t)tap.first*source->stride,source->pixels+(size_t)tap.second*source->stride,column[sx],tap.fraction,rgba);
+          for(unsigned k=0;k<4;k++) sums[k]+=rgba[k];
+        }
+      }
+      if(stable) { _mm_storeu_pd(sums,rg);_mm_storeu_pd(sums+2,ba); }
+      if(!sums[3]) continue;
+      uint32_t color=image_byte(sums[3]*alpha/4);
+      for(unsigned k=0;k<3;k++) color|=image_byte(sums[k]/sums[3])<<(24-8*k);
+      exr_pixel(target,x,y,color,coverage);
+    }
+  }
+  free(storage_rows);free(columns);
+  if(*result==EXR_OK) *result=exr_fail(e,EXR_OK,"");
+  return 1;
+#else
+  return 0;
+#endif
+}
 /* The separable transform gives each column the same two horizontal taps
    on every row. Keep the generic tap, weight and summation order. */
 static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
@@ -580,6 +660,8 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
   if(!inks && !state) {
     exr_status fast;
     if(nearest_axis(target,source,inv,alpha,clip,mode,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
+    if(source->interpolate && !source->mask && !source->has_matte && mode==EXR_BLEND_NORMAL && target->channels==4 &&
+       bilinear_shear(target,&source->bitmap,inv,alpha,clip,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
     if(source->interpolate && !source->mask && !source->has_matte && mode==EXR_BLEND_NORMAL && target->channels==4 &&
        bilinear_axis(target,&source->bitmap,inv,alpha,clip,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
 #if defined(__SSE2__) || defined(_M_X64)

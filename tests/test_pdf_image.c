@@ -203,6 +203,38 @@ static void affine(void) {
       CHECK(memcmp(drawn,initial,sizeof(drawn)) && !memcmp(drawn,reference,sizeof(drawn)));
     }
   }
+  /* A unit opacity mask forces the independent generic sampler. Exercise the
+     sheared bilinear row cache, row crossings and image edges with reflections,
+     transparent texels/destinations, fractional opacity and clip coverage. */
+  {
+    static const double placements[][6]={
+      {6.5,.0000005,0,6.8,-.2,.1},{6.5,.3,0,6.8,-.2,.1},
+      {-6.5,-.3,0,6.8,6.3,.1},{6.5,.3,0,-6.8,-.2,6.9},
+      {9,2,0,9,-.5,-.5},{.6,.01,0,.45,1.2,2.6}};
+    unsigned char colors[48],white[4]={255,255,255,255},reference[256],initial[256];
+    exr_vector_texture color={0},unit={0};exr_bitmap other=dst;
+    color.bitmap=(exr_bitmap){.width=4,.height=3,.stride=16,.pixels=colors,.channels=4};color.interpolate=1;
+    unit.bitmap=(exr_bitmap){1,1,4,white,4};other.pixels=reference;
+    for(unsigned trial=0;trial<96;trial++) {
+      const double *m=placements[trial%6];double alpha=trial&1 ? .63 : 1;
+      const exr_bitmap *cover=trial&2 ? &clip : NULL;size_t a_work=0,b_work=0;
+      for(unsigned i=0;i<48;i++) colors[i]=(unsigned char)(i*37+trial*23);
+      colors[3]=0;colors[7]=255;
+      for(unsigned i=0;i<64;i++) mask[i]=(unsigned char)(i*53+trial);
+      for(unsigned i=0;i<256;i++) initial[i]=(unsigned char)(i*13+trial);
+      for(unsigned i=3;i<256;i+=12) initial[i]=0;
+      memcpy(target,initial,256);memcpy(reference,initial,256);color.mask=NULL;
+      error.code=EXR_FORMAT;
+      OK(exr_vector_texture_paint(&dst,&color,m,alpha,cover,&a_work,NULL,&error));
+      CHECK(error.code==EXR_OK);
+      color.mask=&unit;color.mask_mode=2;
+      OK(exr_vector_texture_paint(&other,&color,m,alpha,cover,&b_work,NULL,&error));
+      CHECK(!memcmp(target,reference,256));
+      /* The identity mask adds twelve work units per destination pixel. */
+      CHECK(b_work>=a_work && (b_work-a_work)%12==0);
+    }
+  }
+
 }
 static void jpeg_cases(const char *dir) {
   const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
