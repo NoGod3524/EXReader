@@ -3,11 +3,22 @@
 #include "pdf_face_internal.h"
 #include "icc_internal.h"
 #include <stdio.h>
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
+#include <time.h>
+#ifdef _WIN32
 #include <windows.h>
+#endif
 static double diag_ms(void) {
+#ifdef _WIN32
   LARGE_INTEGER t,f;
   QueryPerformanceCounter(&t);QueryPerformanceFrequency(&f);
   return (double)t.QuadPart*1000/(double)f.QuadPart;
+#else
+  struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);
+  return (double)t.tv_sec*1000+(double)t.tv_nsec/1e6;
+#endif
 }
 static int diag_skip(const char *name) {
   const char *mode=getenv("EXR_ATTRIBUTION_SKIP");
