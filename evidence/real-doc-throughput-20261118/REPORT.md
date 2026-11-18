@@ -57,30 +57,41 @@ On the warm scoped renders, the two axial passes still used 372.569 ms at the me
 
 ## Change
 
-The procedural axial sampler precomputes the normalized origin and direction when the shading coordinates determine the normalization scale. Outside that range it recomputes the projection with the original sample-dependent scale. Every sample uses the original positions, projection arithmetic, interpolation and work charge. The hot interpolation clamps use comparisons with the existing endpoints. [Sampler](../../src/pdf_shading.c).
+The procedural axial sampler (`src/pdf_shading.c`) precomputes the normalized origin and direction when the shading coordinates determine the normalization scale, and caches the last two subpixel evaluations along axis-aligned gradients (`ux == 0` or `uy == 0`). When `exr_canvas_paint` (`src/canvas.c`) paints an in-scale axis-aligned axial gradient row whose projection is constant along the scanline (`(!inv[1] && !axial_ux) || (!inv[0] && !axial_uy)`), it evaluates the four subpixel samples once for the row's in-scale span, charges the exact per-pixel work budget (`4` per covered pixel), and reuses the resulting colour/alpha/shape across the scanline. Opaque normal-blend writes into non-isolated groups and soft-mask-modulated normal-blend writes avoid redundant per-pixel backdrop reads and float-to-byte conversions (`src/blend.c`, `src/canvas.c`), and `build_mask` (`src/pdf_softmask.c`) reuses the converted 8-bit mask value when adjacent RGBA source pixels are identical. Every out-of-scale or non-aligned sample falls back to the exact per-subpixel path. [Shading sampler](../../src/pdf_shading.c) · [Canvas paint](../../src/canvas.c) · [Group blend](../../src/blend.c) · [Soft-mask builder](../../src/pdf_softmask.c).
 
 ## Paired production verification
 
-A is the preserved DLL from the committed baseline. B is the Release DLL built with `cmake --build build/perf --parallel 6` after removing the diagnostic switches. Both loaded into one process, each with its own document. The runner alternated AB/BA on each page and reversed the starting order on alternate sweeps. It checked the 15% system CPU idle gate before each large sweep and each batch of five small-fixture sweeps. Observed prechecks ranged from 3.52% to 14.73%. Windows 11, Intel Core Ultra 7 256V, Balanced power plan, MinGW GCC 16.2.0. [Per-page samples, pair order, CPU readings and DLL hashes](final-paired.json).
+A is the preserved DLL from the committed baseline (`4e2b26ae367126a882886620634a1a9c67705a79abc41cfb0e4686f46d58c48d`). B is the Release DLL built with `cmake --build build/perf --parallel 6` (`3733261d7fdd039ac091c8d30997b6785701f50fe3adcc2d326d607cb706dfbb`) with no diagnostic switches. Both loaded into one process, each with its own document. The runner alternated AB/BA on each page and reversed the starting order on alternate sweeps. It checked the 15% system CPU idle gate before each large sweep and each batch of five small-fixture sweeps. Observed prechecks ranged from 3.86% to 14.79%. Windows 11, Intel Core Ultra 7 256V, Balanced power plan, MinGW GCC 16.2.0. [Per-page samples, pair order, CPU readings and DLL hashes](final-paired.json).
 
 Large-fixture timings use three timed sweeps after one pixel comparison sweep at 1200 px. Throughput uses the median sum of render-call times per sweep and excludes pixel comparison. The worst-page figure is the highest per-page p50 across the timed sweeps.
 
-| Fixture | p50 A → B (ms) | p95 A → B (ms) | Worst page p50 A → B (ms) | Throughput A → B (pages/s) |
-| --- | ---: | ---: | ---: | ---: |
-| real-mixed-120 | 8.775 → 8.573 | 594.293 → 474.677 | 614.599 (p2) → 491.914 (p2) | 8.98 → 10.96 |
-| image-heavy-100 | 29.213 → 29.281 | 585.611 → 476.532 | 645.927 (p5) → 513.867 (p2) | 7.36 → 7.95 |
-| vector-heavy-100 | 16.300 → 16.262 | 568.522 → 457.950 | 585.352 (p2) → 470.148 (p2) | 9.70 → 10.83 |
+| Fixture | p50 A → B (ms) | p95 A → B (ms) | Worst page p50 A → B (ms) | First screen A → B (ms) | Throughput A → B (pages/s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| real-mixed-120 | 8.641 → 8.437 | 551.619 → 194.018 (−64.8%) | 601.097 (p2) → 224.846 (p2) (−62.6%) | 526.952 → 185.706 (−64.8%) | 9.67 → 23.59 (2.44×) |
+| image-heavy-100 | 23.193 → 23.103 | 524.465 → 224.969 (−57.1%) | 563.559 (p5) → 232.073 (p85) (−58.8%) | 531.859 → 227.755 (−57.2%) | 8.83 → 12.21 (1.38×) |
+| vector-heavy-100 | 15.820 → 15.909 | 571.318 → 204.570 (−64.2%) | 613.787 (p10) → 208.273 (p8) (−66.1%) | 427.185 → 162.587 (−61.9%) | 9.60 → 15.15 (1.58×) |
+
+### `real-mixed-120` 10-page bucket averages (paired A → B)
+
+| Pages | A mean of per-page p50 (ms) | B mean of per-page p50 (ms) | Pages | A mean of per-page p50 (ms) | B mean of per-page p50 (ms) |
+| --- | ---: | ---: | --- | ---: | ---: |
+| 1–10 | 538.3 | 190.6 | 61–70 | 8.4 | 7.8 |
+| 11–20 | 533.7 | 188.4 | 71–80 | 5.8 | 5.8 |
+| 21–30 | 77.6 | 42.9 | 81–90 | 2.7 | 2.6 |
+| 31–40 | 27.3 | 26.2 | 91–100 | 2.8 | 2.8 |
+| 41–50 | 27.6 | 26.2 | 101–110 | 2.4 | 2.4 |
+| 51–60 | 10.2 | 9.9 | 111–120 | 5.3 | 4.8 |
 
 ### Small-fixture timing guards
 
-All four paired changes were within 3%. **Both builds exceeded all four absolute ceilings**, including the 3% allowance. The handoff references were recorded for main `453b1dcb3`. The preserved A/B baseline comes from `1693e2f56`. Each timing case used 15 measured sweeps after one warmup, with p50 calculated across the measured renders. [Per-page samples](final-paired.json).
+All four paired changes were within ±3% (−0.75% to +1.15%). **Both builds exceeded the four absolute reference numbers**, because the handoff references (`0.824 / 1.699 / 16.884 / 6.553 ms`) were recorded on `main` `453b1dcb3` (after PR #244's cross-page font-stream retention), whereas this branch and its preserved baseline DLL `A` are rooted at `1693e2f56` (`7df4a5525`, prior to PR #244). Each timing case used 15 measured sweeps after one warmup, with p50 calculated across the measured renders. [Per-page samples](final-paired.json).
 
 | Fixture | A p50 (ms) | B p50 (ms) | Change | Handoff reference (ms) | Ceiling with +3% (ms) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| pptx-20 @ 600 | 1.5077 | 1.5114 | +0.25% | 0.824 | 0.84872 |
-| pptx-20 @ 1200 | 2.6619 | 2.6684 | +0.24% | 1.699 | 1.74997 |
-| deck @ 1200 | 28.0290 | 28.0071 | −0.08% | 16.884 | 17.39052 |
-| word-5 @ 1200 | 8.1259 | 8.1396 | +0.17% | 6.553 | 6.74959 |
+| pptx-20 @ 600 | 1.5443 | 1.5327 | −0.75% | 0.824 | 0.84872 |
+| pptx-20 @ 1200 | 2.6385 | 2.6509 | +0.47% | 1.699 | 1.74997 |
+| deck @ 1200 | 26.8644 | 27.1721 | +1.15% | 16.884 | 17.39052 |
+| word-5 @ 1200 | 8.1756 | 8.2432 | +0.83% | 6.553 | 6.74959 |
 
 ### Pixel equivalence
 
@@ -95,4 +106,4 @@ The runner compared active RGBA bytes directly on every page at each listed widt
 | image-heavy-100 | 1200 | 112,872,000 | 0 |
 | vector-heavy-100 | 1200 | 108,954,000 | 0 |
 
-CTest passed **577/577** in 76.40 seconds. [CTest summary](ctest.txt).
+CTest passed **577/577** in 87.71 seconds. [CTest summary](ctest.txt).

@@ -427,6 +427,89 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
       if(!active) continue;
     }
     if(!exr_vector_work(&c->work,active*cost+(c->clip ? last-first : 0))) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
+    if(source.context && ((const exr_shading_paint_source *)source.context)->sample==source.sample &&
+       ((const exr_shading_paint_source *)source.context)->magic==EXR_SHADING_SOURCE_MAGIC) {
+      const exr_shading_paint_source *axial=source.context;
+      if(axial->type==2 && axial->axial_length>0 && !(space==EXR_GROUP_CMYK && !axial->inks) &&
+         ((!inv[1] && !axial->axial_ux) || (!inv[0] && !axial->axial_uy))) {
+        double py0=(double)y+c->offset_y+.25,py1=py0+.5,s=axial->axial_scale;
+        double v_row0=inv[3]*py0+inv[5],v_row1=inv[3]*py1+inv[5];
+        int aligned=!inv[1] && !inv[2] && !axial->axial_ux;
+        int v_ok=aligned && fabs(v_row0)<=s && fabs(v_row1)<=s;
+        int fast_group=space!=EXR_GROUP_CMYK && state && state->pixels && !state->cmyk_pixels &&
+          !state->knockout && !state->shape && !state->soft_mask && !state->gray &&
+          c->blend==EXR_BLEND_NORMAL && c->bitmap.channels==4;
+        int fast_mask=space!=EXR_GROUP_CMYK && state && !state->pixels && !state->cmyk_pixels &&
+          !state->knockout && !state->shape && state->soft_mask && !state->gray &&
+          c->blend==EXR_BLEND_NORMAL && c->bitmap.channels==4 && (size_t)y<state->soft_mask_height;
+        double in_colors[4]={0},in_alpha=0,in_shape=0;uint32_t in_color=0;float in_q[5]={0};int have_in=0;
+        for(unsigned x=first;x<last;x++) {
+          unsigned coverage=c->clip ? c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x] : 255;
+          double px0=(double)x+c->offset_x+.25,px1=px0+.5;
+          int in_scale;
+          double colors[4]={0},row_alpha,row_shape,object_alpha,object_shape;uint32_t pixel_color=0;
+          if(!coverage) continue;
+          if(aligned) {
+            in_scale=v_ok && fabs(inv[0]*px0+inv[4])<=s && fabs(inv[0]*px1+inv[4])<=s;
+          } else {
+            double u00=inv[0]*px0+inv[2]*py0+inv[4],v00=inv[1]*px0+v_row0;
+            double u10=inv[0]*px1+inv[2]*py0+inv[4],v10=inv[1]*px1+v_row0;
+            double u01=inv[0]*px0+inv[2]*py1+inv[4],v01=inv[1]*px0+v_row1;
+            double u11=inv[0]*px1+inv[2]*py1+inv[4],v11=inv[1]*px1+v_row1;
+            in_scale=fabs(u00)<=s && fabs(v00)<=s && fabs(u10)<=s && fabs(v10)<=s &&
+                     fabs(u01)<=s && fabs(v01)<=s && fabs(u11)<=s && fabs(v11)<=s;
+          }
+          if(in_scale && have_in) {
+            if(!exr_vector_work(axial->work,4)) return finish(c,exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget"),e);
+            if(fast_group && coverage==255 && in_alpha*alpha==1 && in_shape==1) {
+              float *q=state->pixels+((size_t)y*c->bitmap.width+x)*5;
+              unsigned char *p=c->bitmap.pixels+(size_t)y*c->bitmap.stride+x*4;
+              memcpy(q,in_q,sizeof(in_q));
+              p[0]=(unsigned char)(in_color>>24);p[1]=(unsigned char)(in_color>>16);p[2]=(unsigned char)(in_color>>8);p[3]=255;
+              if(x<state->left) state->left=x;
+              if(y<state->top) state->top=y;
+              if(x>=state->right) state->right=x+1;
+              if(y>=state->bottom) state->bottom=y+1;
+              continue;
+            }
+            if(fast_mask && coverage==255 && in_alpha*alpha==1 && in_shape>0 && (size_t)x<state->soft_mask_width) {
+              unsigned m=state->soft_mask[(size_t)y*state->soft_mask_width+x];
+              if(m) exr_pixel(&c->bitmap,(int)x,(int)y,(in_color&0xffffff00u)|m,255);
+              continue;
+            }
+            for(unsigned k=0;k<components;k++) colors[k]=in_colors[k];
+            row_alpha=in_alpha;row_shape=in_shape;pixel_color=in_color;
+          } else {
+            double sum_alpha=0,sum_shape=0;
+            for(unsigned sy=0;sy<2;sy++) for(unsigned sx=0;sx<2;sx++) {
+              double px=sx ? px1 : px0,py=sy ? py1 : py0;
+              double u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],color[4]={0},shape=0,opacity=0,a;
+              if(!isfinite(u) || !isfinite(v)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source sample exceeds precision"),e);
+              e->code=EXR_OK;e->message[0]=0;status=source.sample(source.context,u,v,space,color,&shape,&opacity,e);
+              if(status!=EXR_OK || e->code!=EXR_OK) return finish(c,status!=EXR_OK ? status : e->code,e);
+              a=shape*opacity;sum_alpha+=a;sum_shape+=shape;
+              for(unsigned k=0;k<components;k++) colors[k]+=a*color[k];
+            }
+            if(sum_alpha) for(unsigned k=0;k<components;k++) colors[k]/=sum_alpha;
+            row_alpha=sum_alpha/4;row_shape=sum_shape/4;
+            if(space!=EXR_GROUP_CMYK) for(unsigned k=0;k<3;k++) pixel_color|=(uint32_t)fmin(255,floor(colors[k]*255+.5))<<(24-8*k);
+            if(in_scale) {
+              for(unsigned k=0;k<components;k++) in_colors[k]=colors[k];
+              if(space!=EXR_GROUP_CMYK) {
+                for(unsigned k=0;k<3;k++) in_q[k]=(float)(((pixel_color>>(24-8*k))&255)/255.);
+                in_q[3]=in_q[4]=1.0f;
+              }
+              in_alpha=row_alpha;in_shape=row_shape;in_color=pixel_color;have_in=1;
+            }
+          }
+          exr_pixel_alpha_shape(state,x,y,row_alpha,row_shape,alpha,coverage,&object_alpha,&object_shape);
+          if(!object_shape) continue;
+          if(space==EXR_GROUP_CMYK) exr_pixel_object_cmyk(&c->bitmap,(int)x,(int)y,colors,object_alpha,object_shape,c->blend,state);
+          else exr_pixel_object(&c->bitmap,(int)x,(int)y,pixel_color,object_alpha,object_shape,c->blend,state);
+        }
+        continue;
+      }
+    }
     for(unsigned x=first;x<last;x++) {
       unsigned coverage=c->clip ? c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x] : 255;
       double colors[4]={0},sum_alpha=0,sum_shape=0,object_alpha,object_shape;
