@@ -1,0 +1,145 @@
+{
+  "pages": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "width": 1200,
+  "dll_sha256": "e283bea43cc9fa1326bf34d55d7fe8176dcd24bb956ccdd8540912c00c8f416d",
+  "fixture_sha256": "c027e8e78346b159e08d3a8c5313b0bd240403873e1c58de0e1b2c3f11b87cb2",
+  "method": {
+    "exreader": "EXR_ATTRIBUTION_TRACE=1, counts from the existing EXReader worker's ATTR output",
+    "pdfjs": "PDF.js 3.11.174 getOperatorList(), shadingFill and beginGroup split by smask"
+  },
+  "exreader": {
+    "full": [
+      {"page": 1, "source_draws": 2, "mask_builds": 1},
+      {"page": 2, "source_draws": 2, "mask_builds": 1},
+      {"page": 3, "source_draws": 2, "mask_builds": 1},
+      {"page": 4, "source_draws": 2, "mask_builds": 1},
+      {"page": 5, "source_draws": 2, "mask_builds": 1},
+      {"page": 6, "source_draws": 2, "mask_builds": 1},
+      {"page": 7, "source_draws": 2, "mask_builds": 1},
+      {"page": 8, "source_draws": 2, "mask_builds": 1},
+      {"page": 9, "source_draws": 2, "mask_builds": 1},
+      {"page": 10, "source_draws": 2, "mask_builds": 1}
+    ],
+    "shading-page": [
+      {"page": 1, "source_draws": 0, "mask_builds": 0},
+      {"page": 2, "source_draws": 0, "mask_builds": 0},
+      {"page": 3, "source_draws": 0, "mask_builds": 0},
+      {"page": 4, "source_draws": 0, "mask_builds": 0},
+      {"page": 5, "source_draws": 0, "mask_builds": 0},
+      {"page": 6, "source_draws": 0, "mask_builds": 0},
+      {"page": 7, "source_draws": 0, "mask_builds": 0},
+      {"page": 8, "source_draws": 0, "mask_builds": 0},
+      {"page": 9, "source_draws": 0, "mask_builds": 0},
+      {"page": 10, "source_draws": 0, "mask_builds": 0}
+    ],
+    "shading": [
+      {"page": 1, "source_draws": 0, "mask_builds": 0},
+      {"page": 2, "source_draws": 0, "mask_builds": 0},
+      {"page": 3, "source_draws": 0, "mask_builds": 0},
+      {"page": 4, "source_draws": 0, "mask_builds": 0},
+      {"page": 5, "source_draws": 0, "mask_builds": 0},
+      {"page": 6, "source_draws": 0, "mask_builds": 0},
+      {"page": 7, "source_draws": 0, "mask_builds": 0},
+      {"page": 8, "source_draws": 0, "mask_builds": 0},
+      {"page": 9, "source_draws": 0, "mask_builds": 0},
+      {"page": 10, "source_draws": 0, "mask_builds": 0}
+    ],
+    "softmask": [
+      {"page": 1, "source_draws": 1, "mask_builds": 0},
+      {"page": 2, "source_draws": 1, "mask_builds": 0},
+      {"page": 3, "source_draws": 1, "mask_builds": 0},
+      {"page": 4, "source_draws": 1, "mask_builds": 0},
+      {"page": 5, "source_draws": 1, "mask_builds": 0},
+      {"page": 6, "source_draws": 1, "mask_builds": 0},
+      {"page": 7, "source_draws": 1, "mask_builds": 0},
+      {"page": 8, "source_draws": 1, "mask_builds": 0},
+      {"page": 9, "source_draws": 1, "mask_builds": 0},
+      {"page": 10, "source_draws": 1, "mask_builds": 0}
+    ],
+    "gradient": [
+      {"page": 1, "source_draws": 0, "mask_builds": 0},
+      {"page": 2, "source_draws": 0, "mask_builds": 0},
+      {"page": 3, "source_draws": 0, "mask_builds": 0},
+      {"page": 4, "source_draws": 0, "mask_builds": 0},
+      {"page": 5, "source_draws": 0, "mask_builds": 0},
+      {"page": 6, "source_draws": 0, "mask_builds": 0},
+      {"page": 7, "source_draws": 0, "mask_builds": 0},
+      {"page": 8, "source_draws": 0, "mask_builds": 0},
+      {"page": 9, "source_draws": 0, "mask_builds": 0},
+      {"page": 10, "source_draws": 0, "mask_builds": 0}
+    ]
+  },
+  "pdfjs": {
+    "full": [
+      {"page": 1, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 2, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 3, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 4, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 5, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 6, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 7, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 8, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 9, "shading_ops": 2, "smask_groups": 1, "form_groups": 0},
+      {"page": 10, "shading_ops": 2, "smask_groups": 1, "form_groups": 0}
+    ],
+    "shading-page": [
+      {"page": 1, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 2, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 3, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 4, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 5, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 6, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 7, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 8, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 9, "shading_ops": 1, "smask_groups": 1, "form_groups": 0},
+      {"page": 10, "shading_ops": 1, "smask_groups": 1, "form_groups": 0}
+    ],
+    "shading": [
+      {"page": 1, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 2, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 3, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 4, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 5, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 6, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 7, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 8, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 9, "shading_ops": 0, "smask_groups": 1, "form_groups": 0},
+      {"page": 10, "shading_ops": 0, "smask_groups": 1, "form_groups": 0}
+    ],
+    "softmask": [
+      {"page": 1, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 2, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 3, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 4, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 5, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 6, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 7, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 8, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 9, "shading_ops": 1, "smask_groups": 0, "form_groups": 0},
+      {"page": 10, "shading_ops": 1, "smask_groups": 0, "form_groups": 0}
+    ],
+    "gradient": [
+      {"page": 1, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 2, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 3, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 4, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 5, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 6, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 7, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 8, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 9, "shading_ops": 0, "smask_groups": 0, "form_groups": 0},
+      {"page": 10, "shading_ops": 0, "smask_groups": 0, "form_groups": 0}
+    ]
+  }
+}
