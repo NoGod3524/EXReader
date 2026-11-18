@@ -59,6 +59,13 @@ static size_t buffer_index(const exr_composite_state *state,size_t width,size_t 
   (void)state;
   return (size_t)y*width + (size_t)x;
 }
+/* fmax(0,fmin(255,floor(fmax(0,fmin(1,v))*255+.5))) without libm calls.
+   fmin(1,NaN) is 1; the clamped product plus .5 lies in [.5,255.5], where
+   truncation is floor and the outer clamp is the identity. */
+static inline unsigned char unit_byte(double v) {
+  double c=v<0 ? 0 : v<1 ? v : 1;
+  return (unsigned char)(int)(c*255+.5);
+}
 static void read_rgba(const exr_bitmap *b,const exr_composite_state *state,size_t x,size_t y,double out[4]) {
   unsigned k;
   if(state && state->pixels) {
@@ -461,7 +468,7 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         if(!exr_vector_work(work,cost+32+(target_state ? target_state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
         if(q && ag==1 && object_opacity==1 && coverage==255 && mode==EXR_BLEND_NORMAL && !target_state && target->channels==4) {
           unsigned char *dst=target->pixels+ty*target->stride+tx*4;
-          for(k=0;k<3;k++) dst[k]=(unsigned char)fmax(0,fmin(255,floor(fmax(0,fmin(1,(double)q[k]))*255+.5)));
+          for(k=0;k<3;k++) dst[k]=unit_byte(q[k]);
           dst[3]=255;continue;
         }
         read_rgba(target,target_state,tx,ty,back);
