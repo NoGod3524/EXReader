@@ -1,6 +1,6 @@
 # Multi-image PDF pages at 1200 px
 
-The candidate reduces the sum of p71–100 page medians from **2,135.55 to 1,315.62 ms** on the pinned CPU. It wins all seven paired sweeps, with a median reduction of **37.98%**. Direct comparison found **zero differing pixels across 465,040,200 pixels**, and CTest passed **577/577**. The machine-wide idle gate has yet to admit a sweep. The small-fixture timing ceilings remain open.
+The candidate reduces the sum of p71–100 page medians from **2,716.97 to 1,482.25 ms** in the machine-wide idle-gated run and from **2,135.55 to 1,315.62 ms** on the pinned CPU. It wins all seven paired sweeps in each run. Direct comparison found **zero differing pixels across 465,040,200 pixels**, and CTest passed **577/577**. Both builds exceed the four absolute small-fixture ceilings in the machine-wide idle-gated captures.
 
 ## Attribution of the historical 447.54 ms
 
@@ -31,6 +31,8 @@ PDF.js 3.11.174 with node-canvas 3.2.3 runs the same pages. The probe times imag
 | EXReader image callback | 1,237.76 | 659.69 |
 
 The PDF.js clip callback totals 1.84 ms. EXReader image loading, including any cache misses and decode, is timed outside its callback at 266.88 ms in this particular pinned run. Each row in the table is a median of whole-sweep scope sums. [PDF.js scopes](core-3/diagnostic-pdfjs.json.gz) · [scope summaries](core-3/summary.json)
+
+The machine-wide gated scopes show the same ordering under different CPU load. EXReader spends 1,845.36 ms in masked image callbacks and 933.42 ms in unmasked callbacks. PDF.js spends 706.98 and 535.31 ms. EXReader clip construction takes 18.02 ms, and row preparation totals 40.44 and 33.84 ms for masked and unmasked draws. The EXReader scope and sampled probes increase the median paired render time by 11.10% and 19.05% in this run. [EXReader scope capture](diagnostic-scopes.json.gz) · [sampled capture](diagnostic-sampled.json.gz) · [PDF.js scope capture](diagnostic-pdfjs.json.gz)
 
 ## Structural findings and change
 
@@ -69,13 +71,48 @@ Both arms use Release GCC 16.2.0 DLLs. Each sweep alternates AB/BA per page and 
 | Deck @1200 | 27.365 | 27.211 | 15.4 | −0.69% |
 | Word @1200 | 12.437 | 12.465 | 5.75 | +0.33% |
 
-Both arms exceed every absolute ceiling under the pinned run's package load. Across slides, deck, Word, and the two PPTX widths the paired changes straddle zero. The absolute timing acceptance remains unverified.
+Across slides, deck, Word, and the two PPTX widths the pinned paired changes straddle zero.
+
+### Machine-wide idle gate
+
+This run starts each large sweep and small-fixture batch only after a 0.5-second package CPU measurement of ≤15%. Warm CPU during the large sweeps varied from 22.33% to 55.97%, including rendering. The p71–100 median paired sweep reduction is **45.09%**, ranging from **44.79% to 46.75%**. [Large-document samples](production-heavy-1200.json.gz)
+
+| 100-page cohort | A sum of page p50s (ms) | B sum of page p50s (ms) | Median paired sweep change |
+| --- | ---: | ---: | ---: |
+| p1–10 slides | 1,330.14 | 1,337.15 | +0.92% |
+| p11–40 deck | 1,122.09 | 1,081.94 | −2.92% |
+| p41–60 Word | 256.99 | 258.27 | +1.78% |
+| p61–70 image-only | 165.25 | 167.95 | +0.34% |
+| **p71–100 multi-image** | **2,716.97** | **1,482.25** | **−45.09%** |
+| p1–100 | 5,591.43 | 4,327.56 | −22.53% |
+
+Slides and Word have small positive median paired changes, with ranges of −2.39% to +7.09% and −8.11% to +11.77%. The observed ranges leave the strict no-regression checks inconclusive.
+
+Warm CPU during the small-fixture batches varied from 15.05% to 52.73%, including rendering. All 15 warm sweeps per case are included.
+
+| Small fixture | A render p50 (ms) | B render p50 (ms) | Ceiling (ms) | Median paired sweep change |
+| --- | ---: | ---: | ---: | ---: |
+| PPTX @600 | 2.005 | 2.029 | 0.844 | −2.44% |
+| PPTX @1200 | 3.142 | 3.055 | 1.729 | −3.89% |
+| Deck @1200 | 37.660 | 36.328 | 15.4 | −2.45% |
+| Word @1200 | 13.693 | 13.507 | 5.75 | −2.16% |
+
+The candidate wins 10/15, 12/15, 10/15, and 11/15 paired sweep totals, respectively. PPTX @600 has a 0.024 ms higher pooled per-render p50 on B while its median paired sweep total decreases. Every observed pooled p50 exceeds its absolute ceiling, including those of the baseline. [PPTX @600](production-pptx-600.json.gz) · [PPTX @1200](production-pptx-1200.json.gz) · [Deck](production-deck-1200.json.gz) · [Word](production-word-1200.json.gz)
+
+The repository's fresh-process runner repeats the ceiling check with AB/BA/AB process pairs and 20 warm sweeps per process. Startup CPU ranges from 1.95% to 14.84%. The candidate reduces the median process p50 on all four cases. Both arms still exceed every ceiling. [Fresh-process results](fresh-process.json.gz)
+
+| Small fixture | A p50 (ms) | B p50 (ms) | Ceiling (ms) |
+| --- | ---: | ---: | ---: |
+| PPTX @600 | 1.786 | 1.773 | 0.844 |
+| PPTX @1200 | 3.039 | 2.957 | 1.729 |
+| Deck @1200 | 36.214 | 35.097 | 15.4 |
+| Word @1200 | 12.402 | 12.308 | 5.75 |
 
 ## Pixel, test and memory acceptance
 
 - **Pixel comparison:** 353,143,200 large-fixture pixels and 111,897,000 small-fixture pixels with zero differences in active RGBA. [Direct comparison](pixels-B.json)
 - **CTest:** 577/577 on the candidate build. [CTest output](ctest-B.log.gz)
-- **Peak RSS:** Fresh-process Windows peak working sets, maximum of three alternating pairs for each fixture at 1200 px. The largest observed increase is **0.42%**, within the 10% budget. The RSS harness records working sets independently of wall-clock timing. [Raw peaks](rss.json)
+- **Peak RSS:** Fresh-process Windows peak working sets, maximum of three alternating pairs for each large fixture at 1200 px. The largest increase is **0.42%** among the large fixtures and **0.45%** across all fixtures, within the 10% budget. The RSS harness records large-fixture working sets independently of wall-clock timing. [Raw large-fixture peaks](rss.json) · [small-fixture peaks](fresh-process.json.gz)
 
 | Fixture | A peak bytes | B peak bytes | Change |
 | --- | ---: | ---: | ---: |
