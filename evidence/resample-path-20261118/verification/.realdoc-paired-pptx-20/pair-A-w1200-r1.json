@@ -1,0 +1,488 @@
+{
+  "width": 1200,
+  "page_count": 20,
+  "runs": 5,
+  "open_ms": 0.4189,
+  "first_page_render_ms": 2.8209,
+  "first_screen_ms": 3.2398,
+  "cold_round_wall_ms": 61.145,
+  "p50_ms": 1.6216,
+  "p95_ms": 1.9717,
+  "page_p50_median_ms": 1.6136,
+  "page_p95_ms": 1.8708,
+  "worst_page": 19,
+  "worst_page_p50_ms": 1.9176,
+  "worst_page_max_ms": 2.379,
+  "worst_max_page": 3,
+  "round_wall_ms_p50": 33.194,
+  "total_measured_wall_ms": 166.121,
+  "throughput_pages_per_s": 602.51,
+  "rss_start_bytes": 26025984,
+  "rss_after_open_bytes": 26456064,
+  "rss_end_bytes": 30703616,
+  "peak_rss_bytes": 33943552,
+  "peak_rss_mib": 32.37,
+  "active_pixels_per_round": 16200000,
+  "pages": [
+    {
+      "page": 1,
+      "scale": 1.25,
+      "render_ms": [
+        1.5087,
+        1.6996,
+        2.2463,
+        1.4594,
+        1.5396
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "e7f0232f7274f7e67777f22626549558effcc0112bed0bfdcd8e58a5df653f5c",
+      "first_render_ms": 2.8209,
+      "rss_after_first_render_bytes": 33787904,
+      "peak_rss_after_first_render_bytes": 33787904,
+      "p50_ms": 1.5396,
+      "p95_ms": 2.2463,
+      "max_ms": 2.2463
+    },
+    {
+      "page": 2,
+      "scale": 1.25,
+      "render_ms": [
+        1.4668,
+        2.2251,
+        1.7544,
+        1.4576,
+        1.5673
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "7a216cabbfb2141760236138c78ff0f98c039c96546c8435aa07ad2b2e1272f8",
+      "first_render_ms": 1.6073,
+      "rss_after_first_render_bytes": 33816576,
+      "peak_rss_after_first_render_bytes": 33816576,
+      "p50_ms": 1.5673,
+      "p95_ms": 2.2251,
+      "max_ms": 2.2251
+    },
+    {
+      "page": 3,
+      "scale": 1.25,
+      "render_ms": [
+        1.8452,
+        2.379,
+        1.6755,
+        1.4545,
+        1.5172
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "f543e08e216d9c546c0edf084a5919cd627432f9c54f951fe693519460fcfed4",
+      "first_render_ms": 1.5212,
+      "rss_after_first_render_bytes": 33816576,
+      "peak_rss_after_first_render_bytes": 33816576,
+      "p50_ms": 1.6755,
+      "p95_ms": 2.379,
+      "max_ms": 2.379
+    },
+    {
+      "page": 4,
+      "scale": 1.25,
+      "render_ms": [
+        2.0118,
+        1.6456,
+        1.6114,
+        1.5352,
+        1.6009
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "79888e35c7ded3a14d7e1e8e2671170c50b57f1d5562f124e523d51723594c43",
+      "first_render_ms": 1.5378,
+      "rss_after_first_render_bytes": 33816576,
+      "peak_rss_after_first_render_bytes": 33816576,
+      "p50_ms": 1.6114,
+      "p95_ms": 2.0118,
+      "max_ms": 2.0118
+    },
+    {
+      "page": 5,
+      "scale": 1.25,
+      "render_ms": [
+        1.6488,
+        1.6667,
+        1.5442,
+        1.5946,
+        1.5135
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "9bc8ddc1e6e509952cde942b8ead0e2022e4ce7f167d80d65abc80b2a03c7fe6",
+      "first_render_ms": 1.4813,
+      "rss_after_first_render_bytes": 33824768,
+      "peak_rss_after_first_render_bytes": 33824768,
+      "p50_ms": 1.5946,
+      "p95_ms": 1.6667,
+      "max_ms": 1.6667
+    },
+    {
+      "page": 6,
+      "scale": 1.25,
+      "render_ms": [
+        1.6111,
+        1.6345,
+        1.7029,
+        1.5813,
+        1.5012
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "4a1a144f072353168bc369eaf811a784e8fe7c54a1941de8d7582baced9b1bc8",
+      "first_render_ms": 2.1916,
+      "rss_after_first_render_bytes": 33824768,
+      "peak_rss_after_first_render_bytes": 33824768,
+      "p50_ms": 1.6111,
+      "p95_ms": 1.7029,
+      "max_ms": 1.7029
+    },
+    {
+      "page": 7,
+      "scale": 1.25,
+      "render_ms": [
+        1.5848,
+        1.5939,
+        1.5495,
+        1.4603,
+        1.4963
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "681cf35e6c8267c1c8432a9c54c7e89c823f3fa814f9a89e13c429c5624ac5fe",
+      "first_render_ms": 1.7382,
+      "rss_after_first_render_bytes": 33832960,
+      "peak_rss_after_first_render_bytes": 33832960,
+      "p50_ms": 1.5495,
+      "p95_ms": 1.5939,
+      "max_ms": 1.5939
+    },
+    {
+      "page": 8,
+      "scale": 1.25,
+      "render_ms": [
+        1.5458,
+        1.6202,
+        1.5322,
+        1.5126,
+        1.8734
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "dd33325fcdb884e26b0a981ce281fa1068cc722f11b5306618fc0506958f35e4",
+      "first_render_ms": 1.5207,
+      "rss_after_first_render_bytes": 33832960,
+      "peak_rss_after_first_render_bytes": 33832960,
+      "p50_ms": 1.5458,
+      "p95_ms": 1.8734,
+      "max_ms": 1.8734
+    },
+    {
+      "page": 9,
+      "scale": 1.25,
+      "render_ms": [
+        1.8708,
+        1.6506,
+        1.8756,
+        1.9466,
+        1.6374
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "76d8929f95829c24deb74d4841aeca303027434b47e0eb7cad802e113f4a45db",
+      "first_render_ms": 1.5563,
+      "rss_after_first_render_bytes": 33837056,
+      "peak_rss_after_first_render_bytes": 33837056,
+      "p50_ms": 1.8708,
+      "p95_ms": 1.9466,
+      "max_ms": 1.9466
+    },
+    {
+      "page": 10,
+      "scale": 1.25,
+      "render_ms": [
+        1.5125,
+        1.7898,
+        1.6925,
+        1.8545,
+        1.5408
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "834168951f91c196ae2b951de30aa38764cfe06ea13e4e6e6048502cce49c2e1",
+      "first_render_ms": 1.5778,
+      "rss_after_first_render_bytes": 33837056,
+      "peak_rss_after_first_render_bytes": 33837056,
+      "p50_ms": 1.6925,
+      "p95_ms": 1.8545,
+      "max_ms": 1.8545
+    },
+    {
+      "page": 11,
+      "scale": 1.25,
+      "render_ms": [
+        1.6835,
+        1.7773,
+        1.5213,
+        1.502,
+        1.5177
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "010ae143574a2b5fa5b6433bdab5755b06c28c1216f1dc9649f0fec264068d6e",
+      "first_render_ms": 1.9089,
+      "rss_after_first_render_bytes": 33837056,
+      "peak_rss_after_first_render_bytes": 33837056,
+      "p50_ms": 1.5213,
+      "p95_ms": 1.7773,
+      "max_ms": 1.7773
+    },
+    {
+      "page": 12,
+      "scale": 1.25,
+      "render_ms": [
+        1.6159,
+        1.8062,
+        1.6197,
+        1.4226,
+        1.4982
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "e05a878801c793ecd5e2fc16dd92ca42515e0da31199f98ddc971ee964de1ad0",
+      "first_render_ms": 1.8779,
+      "rss_after_first_render_bytes": 33841152,
+      "peak_rss_after_first_render_bytes": 33841152,
+      "p50_ms": 1.6159,
+      "p95_ms": 1.8062,
+      "max_ms": 1.8062
+    },
+    {
+      "page": 13,
+      "scale": 1.25,
+      "render_ms": [
+        1.9186,
+        1.6786,
+        1.5209,
+        1.434,
+        1.6782
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "42806c873e829cac286507158e22b3ba20ff89c1ab3610329be78ace648c24ff",
+      "first_render_ms": 1.5932,
+      "rss_after_first_render_bytes": 33845248,
+      "peak_rss_after_first_render_bytes": 33845248,
+      "p50_ms": 1.6782,
+      "p95_ms": 1.9186,
+      "max_ms": 1.9186
+    },
+    {
+      "page": 14,
+      "scale": 1.25,
+      "render_ms": [
+        1.6911,
+        1.6447,
+        1.7172,
+        1.4069,
+        1.6346
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "83489b2d74e5f3eaf3a8b611a55e539ffe45994acb5552f274053cb625120bd4",
+      "first_render_ms": 1.5417,
+      "rss_after_first_render_bytes": 33849344,
+      "peak_rss_after_first_render_bytes": 33849344,
+      "p50_ms": 1.6447,
+      "p95_ms": 1.7172,
+      "max_ms": 1.7172
+    },
+    {
+      "page": 15,
+      "scale": 1.25,
+      "render_ms": [
+        1.6269,
+        1.6342,
+        1.7692,
+        1.6395,
+        1.4887
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "17eab1a41be6e76b5c9247d9f6f273c2987ad7d0ffc6540c7bb498454c2ec4c3",
+      "first_render_ms": 1.5412,
+      "rss_after_first_render_bytes": 33853440,
+      "peak_rss_after_first_render_bytes": 33853440,
+      "p50_ms": 1.6342,
+      "p95_ms": 1.7692,
+      "max_ms": 1.7692
+    },
+    {
+      "page": 16,
+      "scale": 1.25,
+      "render_ms": [
+        1.6255,
+        1.6725,
+        1.6229,
+        1.7424,
+        1.5371
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "72f09a410d10de8a5c78629d9440109cac6b7d3ae4382b7b529f809aeb25e441",
+      "first_render_ms": 1.6748,
+      "rss_after_first_render_bytes": 33853440,
+      "peak_rss_after_first_render_bytes": 33853440,
+      "p50_ms": 1.6255,
+      "p95_ms": 1.7424,
+      "max_ms": 1.7424
+    },
+    {
+      "page": 17,
+      "scale": 1.25,
+      "render_ms": [
+        1.5829,
+        1.6339,
+        1.4784,
+        1.6434,
+        1.6109
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "35675390a2745d617a0675b22f1d24d1c77fe1a072a9909829f501f80a3f3ca9",
+      "first_render_ms": 1.9079,
+      "rss_after_first_render_bytes": 33861632,
+      "peak_rss_after_first_render_bytes": 33861632,
+      "p50_ms": 1.6109,
+      "p95_ms": 1.6434,
+      "max_ms": 1.6434
+    },
+    {
+      "page": 18,
+      "scale": 1.25,
+      "render_ms": [
+        1.6024,
+        1.6188,
+        1.4703,
+        1.6532,
+        1.9717
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "b5422100a25c69e57d1732d673624a3a506a071c31033d6273a39b7b8546ea0f",
+      "first_render_ms": 1.6634,
+      "rss_after_first_render_bytes": 33918976,
+      "peak_rss_after_first_render_bytes": 33918976,
+      "p50_ms": 1.6188,
+      "p95_ms": 1.9717,
+      "max_ms": 1.9717
+    },
+    {
+      "page": 19,
+      "scale": 1.25,
+      "render_ms": [
+        1.5735,
+        1.9176,
+        1.7806,
+        2.2213,
+        1.9359
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "3abfcb517af80a4da89f79f79b0404860315f27d05a6f24ab1d0971a5360e758",
+      "first_render_ms": 1.535,
+      "rss_after_first_render_bytes": 33918976,
+      "peak_rss_after_first_render_bytes": 33918976,
+      "p50_ms": 1.9176,
+      "p95_ms": 2.2213,
+      "max_ms": 2.2213
+    },
+    {
+      "page": 20,
+      "scale": 1.25,
+      "render_ms": [
+        1.6679,
+        1.9655,
+        1.602,
+        1.5917,
+        1.6106
+      ],
+      "dimensions": [
+        1200,
+        675
+      ],
+      "pixels": 810000,
+      "rgba_sha256": "0dc0a0fa6e349cb188fbb3712472b700465a9739915ad165d3e409a452f5a2af",
+      "first_render_ms": 1.555,
+      "rss_after_first_render_bytes": 33927168,
+      "peak_rss_after_first_render_bytes": 33927168,
+      "p50_ms": 1.6106,
+      "p95_ms": 1.9655,
+      "max_ms": 1.9655
+    }
+  ]
+}

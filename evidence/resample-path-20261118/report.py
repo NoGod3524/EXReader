@@ -2,10 +2,13 @@
 from pathlib import Path
 import json
 import statistics as s
+import sys
 
 HERE = Path(__file__).resolve().parent
-OUT = HERE / 'continuation'
+OUT = Path(sys.argv[1]).resolve() if len(sys.argv)>1 else HERE / 'continuation'
 fresh = (OUT/'pixels.json').exists() and (OUT/'ctest.txt').exists()
+if len(sys.argv)>1:
+    assert fresh, 'Explicit capture directory requires completed pixel and CTest checks'
 timing_dir = OUT if fresh else HERE/'interleaved'
 paired_dir = OUT if fresh else HERE/'paired'
 pixel_path = OUT/'pixels.json' if fresh else HERE/'pixels.json'
@@ -22,8 +25,8 @@ def ablation(mode, lo, hi, side):
     return s.mean(s.median(v) for v in pages.values())
 
 lines = ['# Masked interpolated image resampling', '',
-    'Continuation of `51d3f69c2`; production fix retained from `b515fe418`. '
-    'The measurements below distinguish the committed diagnostic captures from the fresh continuation captures. '
+    'Production fix retained from `b515fe418`. '
+    'The measurements below distinguish the committed diagnostic captures from the fresh verification captures. '
     'Decode remains excluded by the prior cache-cap experiment; the cache limit is unchanged.', '',
     '## Content difference', '',
     'Image dictionaries and every drawn image/clip were enumerated without decoding image data '
@@ -92,12 +95,12 @@ lines += ['',
     'there is no measured separate pattern rebuild stage. The fix targets the larger background sampler.', '',
     '## Candidate A/B', '',
     'Release MinGW build: removed `build/perf/libexreader.dll`, forced a relink, checked the new timestamp and hashes '
-    '([build log](build-continuation.txt), [PE section identities](continuation/build-identity.json)). '
+    f'([build log](build-verification.txt), [PE section identities]({OUT.relative_to(HERE).as_posix()}/build-identity.json)). '
     'The latter compares the executable code section to the preserved committed candidate; a relink may change '
     'the overall PE hash.', '',
-    ('The tables below use fresh continuation captures. Every warm sweep requires ≤15% CPU. '
+    ('The tables below use fresh verification captures. Every warm sweep requires ≤15% CPU. '
      'Timeout retries; a 0.5-second process monitor rejects sweeps overlapping other Python measurements or native builds/tests. '
-     'Records: `continuation/interleaved-*.json`.' if fresh else
+     f'Records: `{OUT.relative_to(HERE).as_posix()}/interleaved-*.json`.' if fresh else
      'The tables below use the captures committed at `51d3f69c2`, in `interleaved/` and `paired/`. '
      'Accepted continuation captures follow separately below. Pixel and CTest checks are retained from '
      'the committed candidate whose code, constants, data and unwind sections match the relink. '
@@ -139,8 +142,8 @@ if not fresh and (OUT/'interleaved-image-heavy.json').exists():
         a=s.mean(p['a_p50_ms'] for p in ps);b=s.mean(p['b_p50_ms'] for p in ps)
         lines.append(f'| p{lo}–{hi} | {a:.3f} | {b:.3f} | {100*(b/a-1):+.2f}% |')
 lines += ['',
-    'Fresh-process `tools/bench_real_doc.py` captures alternate AB/BA (four repeats on image-heavy and small fixtures; '
-    'two on real-mixed/vector-heavy in the committed captures), five warm rounds per child after '
+    'Fresh-process `tools/bench_real_doc.py` captures alternate AB/BA (four repeats per fixture in fresh captures; '
+    'two on real-mixed/vector-heavy in older committed captures), five warm rounds per child after '
     'one cold round. RSS is the median of process peak working sets. These results use whole documents:', '',
     '| Fixture / capture | p50 A → B, ms | p95 A → B, ms | Throughput A → B, pages/s | Peak RSS A → B, MiB | RSS change |',
     '| --- | ---: | ---: | ---: | ---: | ---: |']
@@ -150,17 +153,17 @@ for f in sorted(paired_dir.glob('paired-*.json' if fresh else '*.json')):
     name=f.stem.removeprefix('paired-')
     continuation=OUT/f'paired-{name}.json'
     selected=continuation if continuation.exists() else f
-    origin='continuation' if selected==continuation else 'committed'
+    origin=OUT.name if selected==continuation else 'committed'
     d=read(selected)['widths']['1200'];a=d['A'];b=d['B']
     lines.append(f'| {name} / {origin} | {a["p50_ms_median"]:.3f} → {b["p50_ms_median"]:.3f} | {a["p95_ms_median"]:.3f} → {b["p95_ms_median"]:.3f} | {a["throughput_pages_per_s_median"]:.2f} → {b["throughput_pages_per_s_median"]:.2f} | {a["peak_rss_mib_median"]:.2f} → {b["peak_rss_mib_median"]:.2f} | {d["peak_rss_delta_pct"]:+.2f}% |')
 if not (OUT/'paired-real-mixed-120.json').exists() and (OUT/'.realdoc-paired-real-mixed-120').exists():
     lines += ['', 'Partial children in `continuation/.realdoc-paired-real-mixed-120/` came from a '
         'gate-aborted duplicate batch and are excluded from every table.', '']
-lines += ['', 'Small-fixture acceptance uses the all-page render p50 from the committed fresh-process paired '
-    'captures (four repeats × five warm rounds). The relink code/data sections match that candidate:', '',
+lines += ['', 'Small-fixture acceptance uses the all-page render p50 from '
+    + ('fresh' if fresh else 'committed') + ' process-paired captures (four repeats × five warm rounds):', '',
     '| Fixture | A p50, ms | B p50, ms | Limit, ms |', '| --- | ---: | ---: | ---: |']
 for name,width,limit in [('pptx-20',600,.871),('pptx-20',1200,1.768),('deck',1200,15.4),('word-5',1200,6.5)]:
-    d=read(HERE/'paired'/f'{name}.json')['widths'][str(width)]
+    d=read(OUT/f'paired-{name}.json' if fresh else HERE/'paired'/f'{name}.json')['widths'][str(width)]
     lines.append(f'| {name} @ {width} | {d["A"]["p50_ms_median"]:.3f} | {d["B"]["p50_ms_median"]:.3f} | {limit} |')
 pixels=read(pixel_path)
 assert pixels['different_pixels']==0
@@ -183,8 +186,8 @@ lines += ['', '## Correctness', '',
     'Get-Item build/perf/libexreader.dll',
     'Get-FileHash build/perf/libexreader.dll',
     'python -X utf8 evidence/resample-path-20261118/content.py',
-    'python -X utf8 evidence/resample-path-20261118/verify_continuation.py',
-    'python -X utf8 evidence/resample-path-20261118/report.py',
+    f'python -X utf8 evidence/resample-path-20261118/verify_continuation.py {OUT.as_posix()}',
+    f'python -X utf8 evidence/resample-path-20261118/report.py {OUT.as_posix()}',
     '```', '',
     'The rebuilt diagnostic has the same executable `.text` hash as the committed probe, and its exported '
     'counter reset/read smoke check passed ([identity](continuation/probe-identity.json), '
@@ -203,5 +206,16 @@ if (OUT/'interleaved-image-heavy.json').exists():
         f'{memory["B"]["peak_rss_mib_median"]:.2f} MiB**. '
         f'The maximum process peaks across the four repeats were '
         f'{max(memory["A"]["peak_rss_mib_repeats"]):.2f} → {max(memory["B"]["peak_rss_mib_repeats"]):.2f} MiB.', '']
+if fresh:
+    for name in ('real-mixed-120','vector-heavy-100'):
+        comparison=read(OUT/f'paired-{name}.json')['widths']['1200']
+        if comparison['throughput_delta_pct']<0:
+            a,b=comparison['A'],comparison['B']
+            lines[2:2]=[
+                f'**Full acceptance is not established.** Fresh-process {name} throughput measured '
+                f'**{a["throughput_pages_per_s_median"]:.2f} → {b["throughput_pages_per_s_median"]:.2f} pages/s '
+                f'({comparison["throughput_delta_pct"]:+.2f}%)**, and p50 '
+                f'{a["p50_ms_median"]:.3f} → {b["p50_ms_median"]:.3f} ms. '
+                'The no-regression requirement is not met by this capture. All four alternating repeats are retained.', '']
 (HERE/'REPORT.md').write_text('\n'.join(lines),encoding='utf-8')
 print(HERE/'REPORT.md')

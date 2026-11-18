@@ -1,0 +1,40 @@
+image-heavy-100.pdf@1200 p1-100: A 3831.91 B 2240.84 ms (-41.52%), paired delta -1583.666 ms (-41.33%)
+vector-heavy-100.pdf@1200 p1-100: A 1389.87 B 1392.33 ms (+0.18%), paired delta +6.598 ms (+0.47%)
+real-mixed-120.pdf@1200 p1-120: A 1648.47 B 1648.42 ms (-0.00%), paired delta +1.696 ms (+0.10%)
+pptx-20.pdf@600 p1-20: A 16.85 B 16.84 ms (-0.07%), paired delta -0.057 ms (-0.34%)
+pptx-20.pdf@1200 p1-20: A 32.04 B 32.19 ms (+0.49%), paired delta +0.083 ms (+0.26%)
+deck.pdf@1200 p1-15: A 202.68 B 202.55 ms (-0.06%), paired delta -0.137 ms (-0.07%)
+word-5.pdf@1200 p1-5: A 29.91 B 29.64 ms (-0.91%), paired delta -0.178 ms (-0.59%)
+ 1200 px [paired AB/BA/AB/BA] pixels=112,872,000 identical=True
+  A: p50= 13.572 ms | p95=119.358 ms | worst(p76)=122.955 ms | tput= 25.66 p/s | RSS=146.92 MiB | first= 63.073 ms
+  B: p50= 13.795 ms (+1.64%) | p95= 59.486 ms | worst(p2)= 71.204 ms (-42.09%) | tput= 43.72 p/s (+70.38%) | RSS=146.84 MiB (-0.05%) | first= 61.795 ms (-2.03%)
+ 1200 px [paired AB/BA/AB/BA] pixels=131,317,200 identical=True
+  A: p50=  6.540 ms | p95= 50.192 ms | worst(p2)= 66.127 ms | tput= 70.59 p/s | RSS=107.62 MiB | first= 64.139 ms
+  B: p50=  6.727 ms (+2.86%) | p95= 52.729 ms | worst(p2)= 68.455 ms (+3.52%) | tput= 66.54 p/s (-5.74%) | RSS=107.84 MiB (+0.21%) | first= 64.016 ms (-0.19%)
+ 1200 px [paired AB/BA/AB/BA] pixels=108,954,000 identical=True
+  A: p50= 11.975 ms | p95= 47.572 ms | worst(p2)= 51.723 ms | tput= 71.23 p/s | RSS= 78.92 MiB | first= 67.220 ms
+  B: p50= 11.389 ms (-4.89%) | p95= 47.606 ms | worst(p2)= 51.798 ms (+0.15%) | tput= 71.74 p/s (+0.72%) | RSS= 79.02 MiB (+0.13%) | first= 67.249 ms (+0.04%)
+  600 px [paired AB/BA/AB/BA] pixels=4,056,000 identical=True
+  A: p50=  0.809 ms | p95=  1.132 ms | worst(p18)=  0.912 ms | tput=1183.37 p/s | RSS= 27.85 MiB | first=  1.811 ms
+  B: p50=  0.797 ms (-1.48%) | p95=  1.086 ms | worst(p7)=  0.893 ms (-2.08%) | tput=1179.04 p/s (-0.37%) | RSS= 27.94 MiB (+0.29%) | first=  1.790 ms (-1.16%)
+ 1200 px [paired AB/BA/AB/BA] pixels=16,200,000 identical=True
+  A: p50=  1.564 ms | p95=  1.987 ms | worst(p14)=  1.873 ms | tput=614.62 p/s | RSS= 32.36 MiB | first=  3.268 ms
+  B: p50=  1.586 ms (+1.41%) | p95=  1.954 ms | worst(p8)=  1.745 ms (-6.83%) | tput=621.92 p/s (+1.19%) | RSS= 32.36 MiB (-0.02%) | first=  3.091 ms (-5.42%)
+ 1200 px [paired AB/BA/AB/BA] pixels=12,150,000 identical=True
+  A: p50= 13.470 ms | p95= 14.543 ms | worst(p7)= 13.690 ms | tput= 74.52 p/s | RSS= 47.16 MiB | first= 26.554 ms
+  B: p50= 13.318 ms (-1.13%) | p95= 14.366 ms | worst(p10)= 13.957 ms (+1.95%) | tput= 74.81 p/s (+0.39%) | RSS= 47.05 MiB (-0.23%) | first= 25.519 ms (-3.90%)
+ 1200 px [paired AB/BA/AB/BA] pixels=9,318,000 identical=True
+  A: p50=  5.906 ms | p95=  6.460 ms | worst(p1)=  6.095 ms | tput=169.58 p/s | RSS= 47.52 MiB | first= 10.071 ms
+  B: p50=  5.868 ms (-0.64%) | p95=  6.486 ms | worst(p3)=  6.076 ms (-0.31%) | tput=169.27 p/s (-0.18%) | RSS= 47.79 MiB (+0.57%) | first=  9.617 ms (-4.51%)
+{'fixture': 'pptx-20', 'width': 600, 'pages': 20, 'compared_pixels': 4056000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'pptx-20', 'width': 1200, 'pages': 20, 'compared_pixels': 16200000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'pptx-20', 'width': 2400, 'pages': 20, 'compared_pixels': 64800000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'deck', 'width': 600, 'pages': 15, 'compared_pixels': 3042000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'deck', 'width': 1200, 'pages': 15, 'compared_pixels': 12150000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'word-5', 'width': 600, 'pages': 5, 'compared_pixels': 2331000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'word-5', 'width': 1200, 'pages': 5, 'compared_pixels': 9318000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'real-mixed-120', 'width': 1200, 'pages': 120, 'compared_pixels': 131317200, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'image-heavy-100', 'width': 1200, 'pages': 100, 'compared_pixels': 112872000, 'different_pixels': 0, 'different_pages': []}
+{'fixture': 'vector-heavy-100', 'width': 1200, 'pages': 100, 'compared_pixels': 108954000, 'different_pixels': 0, 'different_pages': []}
+total 465040200 different 0
+Acceptance captures complete

@@ -1,8 +1,10 @@
 # Masked interpolated image resampling
 
-At 1200 px, fresh same-process p71–100 improved from **87.902 to 35.685 ms/page** (**59.40% less time**), meeting the ≤60 ms/page target. Fresh image-heavy peak RSS medians were **146.95 → 146.69 MiB**. The maximum process peaks across the four repeats were 147.32 → 146.88 MiB.
+**Full acceptance is not established.** Fresh-process real-mixed-120 throughput measured **70.59 → 66.54 pages/s (-5.74%)**, and p50 6.540 → 6.727 ms. The no-regression requirement is not met by this capture. All four alternating repeats are retained.
 
-Continuation of `51d3f69c2`; production fix retained from `b515fe418`. The measurements below distinguish the committed diagnostic captures from the fresh continuation captures. Decode remains excluded by the prior cache-cap experiment; the cache limit is unchanged.
+At 1200 px, fresh same-process p71–100 improved from **88.232 to 35.337 ms/page** (**59.95% less time**), meeting the ≤60 ms/page target. Fresh image-heavy peak RSS medians were **146.92 → 146.84 MiB**. The maximum process peaks across the four repeats were 147.07 → 147.13 MiB.
+
+Production fix retained from `b515fe418`. The measurements below distinguish the committed diagnostic captures from the fresh verification captures. Decode remains excluded by the prior cache-cap experiment; the cache limit is unchanged.
 
 ## Content difference
 
@@ -51,71 +53,52 @@ The probe records 1.0 background and 2.0 tile blend calls/page, and 1.0/2.0 back
 
 ## Candidate A/B
 
-Release MinGW build: removed `build/perf/libexreader.dll`, forced a relink, checked the new timestamp and hashes ([build log](build-continuation.txt), [PE section identities](continuation/build-identity.json)). The latter compares the executable code section to the preserved committed candidate; a relink may change the overall PE hash.
+Release MinGW build: removed `build/perf/libexreader.dll`, forced a relink, checked the new timestamp and hashes ([build log](build-verification.txt), [PE section identities](verification/build-identity.json)). The latter compares the executable code section to the preserved committed candidate; a relink may change the overall PE hash.
 
-The tables below use the captures committed at `51d3f69c2`, in `interleaved/` and `paired/`. Accepted continuation captures follow separately below. Pixel and CTest checks are retained from the committed candidate whose code, constants, data and unwind sections match the relink. All committed same-process idle prechecks returned values below 15% CPU.
+The tables below use fresh verification captures. Every warm sweep requires ≤15% CPU. Timeout retries; a 0.5-second process monitor rejects sweeps overlapping other Python measurements or native builds/tests. Records: `verification/interleaved-*.json`.
 
 Same-process captures load both DLLs and alternate AB/BA on each page, reversing the starting order each sweep. One cold sweep is excluded. Paired Δ is the sum of per-page median (B−A) differences divided by the sum of A page medians; the separate A/B medians are a different aggregation.
 
 | Fixture @ width | A mean page p50, ms | B mean page p50, ms | Median paired Δ / A |
 | --- | ---: | ---: | ---: |
-| deck @ 1200 | 13.551 | 13.530 | +0.07% |
-| image-heavy-100 @ 1200 | 41.688 | 24.765 | -40.98% |
-| pptx-20-1200 @ 1200 | 1.618 | 1.606 | -0.35% |
-| pptx-20-600 @ 600 | 0.817 | 0.818 | -0.11% |
-| real-mixed-120 @ 1200 | 14.311 | 14.296 | +0.01% |
-| vector-heavy-100 @ 1200 | 14.020 | 13.978 | -0.65% |
-| word-5 @ 1200 | 6.019 | 6.050 | +1.06% |
+| deck @ 1200 | 13.512 | 13.503 | -0.07% |
+| image-heavy @ 1200 | 38.319 | 22.408 | -41.33% |
+| pptx-1200 @ 1200 | 1.602 | 1.610 | +0.26% |
+| pptx-600 @ 600 | 0.843 | 0.842 | -0.34% |
+| real-mixed @ 1200 | 13.737 | 13.737 | +0.10% |
+| vector-heavy @ 1200 | 13.899 | 13.923 | +0.47% |
+| word-5 @ 1200 | 5.983 | 5.928 | -0.59% |
 
 | Image-heavy cohort | A ms/page | B ms/page | Change |
 | --- | ---: | ---: | ---: |
-| p11–70 | 11.567 | 11.666 | +0.86% |
-| p71–100 | 95.231 | 38.628 | -59.44% |
+| p11–70 | 10.269 | 10.276 | +0.06% |
+| p71–100 | 88.232 | 35.337 | -59.95% |
 
-### Accepted continuation captures
-
-The continuation runner retains only sweeps that passed the ≤15% CPU gate and the process-overlap monitor. Other jobs during idle waits do not invalidate already accepted sweeps. [Raw samples](continuation/).
-
-| Fresh same-process fixture | A mean page p50, ms | B mean page p50, ms | Paired Δ / A |
-| --- | ---: | ---: | ---: |
-| deck @ 1200 | 13.515 | 13.518 | -0.00% |
-| image-heavy @ 1200 | 38.517 | 22.791 | -41.10% |
-| pptx-1200 @ 1200 | 1.641 | 1.627 | +0.15% |
-| pptx-600 @ 600 | 0.841 | 0.845 | -0.01% |
-| real-mixed @ 1200 | 14.036 | 14.044 | -0.37% |
-| vector-heavy @ 1200 | 13.903 | 13.883 | -0.36% |
-| word-5 @ 1200 | 6.096 | 6.067 | -0.80% |
-
-| Fresh image-heavy cohort | A ms/page | B ms/page | Change |
-| --- | ---: | ---: | ---: |
-| p11–70 | 10.546 | 10.518 | -0.27% |
-| p71–100 | 87.902 | 35.685 | -59.40% |
-
-Fresh-process `tools/bench_real_doc.py` captures alternate AB/BA (four repeats on image-heavy and small fixtures; two on real-mixed/vector-heavy in the committed captures), five warm rounds per child after one cold round. RSS is the median of process peak working sets. These results use whole documents:
+Fresh-process `tools/bench_real_doc.py` captures alternate AB/BA (four repeats per fixture in fresh captures; two on real-mixed/vector-heavy in older committed captures), five warm rounds per child after one cold round. RSS is the median of process peak working sets. These results use whole documents:
 
 | Fixture / capture | p50 A → B, ms | p95 A → B, ms | Throughput A → B, pages/s | Peak RSS A → B, MiB | RSS change |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| image-heavy-100 / continuation | 13.619 → 13.749 | 121.198 → 58.522 | 25.93 → 44.62 | 146.95 → 146.69 | -0.18% |
-| real-mixed-120 / committed | 6.522 → 6.306 | 49.332 → 50.009 | 70.06 → 71.56 | 107.86 → 107.99 | +0.12% |
-| vector-heavy-100 / committed | 11.736 → 11.752 | 47.235 → 48.711 | 71.51 → 69.96 | 78.91 → 79.01 | +0.12% |
+| deck / verification | 13.470 → 13.318 | 14.543 → 14.366 | 74.52 → 74.81 | 47.16 → 47.05 | -0.23% |
+| image-heavy-100 / verification | 13.572 → 13.795 | 119.358 → 59.486 | 25.66 → 43.72 | 146.92 → 146.84 | -0.05% |
+| pptx-20 / verification | 1.564 → 1.586 | 1.987 → 1.954 | 614.62 → 621.92 | 32.36 → 32.36 | -0.02% |
+| real-mixed-120 / verification | 6.540 → 6.727 | 50.192 → 52.729 | 70.59 → 66.54 | 107.62 → 107.84 | +0.21% |
+| vector-heavy-100 / verification | 11.975 → 11.389 | 47.572 → 47.606 | 71.23 → 71.74 | 78.92 → 79.02 | +0.13% |
+| word-5 / verification | 5.906 → 5.868 | 6.460 → 6.486 | 169.58 → 169.27 | 47.52 → 47.79 | +0.57% |
 
-Partial children in `continuation/.realdoc-paired-real-mixed-120/` came from a gate-aborted duplicate batch and are excluded from every table.
-
-
-Small-fixture acceptance uses the all-page render p50 from the committed fresh-process paired captures (four repeats × five warm rounds). The relink code/data sections match that candidate:
+Small-fixture acceptance uses the all-page render p50 from fresh process-paired captures (four repeats × five warm rounds):
 
 | Fixture | A p50, ms | B p50, ms | Limit, ms |
 | --- | ---: | ---: | ---: |
-| pptx-20 @ 600 | 0.864 | 0.841 | 0.871 |
-| pptx-20 @ 1200 | 1.639 | 1.617 | 1.768 |
-| deck @ 1200 | 13.551 | 13.528 | 15.4 |
-| word-5 @ 1200 | 6.094 | 6.038 | 6.5 |
+| pptx-20 @ 600 | 0.809 | 0.797 | 0.871 |
+| pptx-20 @ 1200 | 1.564 | 1.586 | 1.768 |
+| deck @ 1200 | 13.470 | 13.318 | 15.4 |
+| word-5 @ 1200 | 5.906 | 5.868 | 6.5 |
 
 ## Correctness
 
-Active-row byte comparison: **353,143,200 + 111,897,000 = 465,040,200 pixels**, **0 differing pixels** ([records](pixels.json)). The large split is 353,143,200; the small split is 111,897,000. The production test adds 144 cases comparing the fast path with a mathematically identical nested-mask generic reference: nearest/interpolated masks, differing source/mask dimensions, flipped/off-target placement, transparent texels, clip coverage, constant alpha, and both source-row conversion branches.
+Active-row byte comparison: **353,143,200 + 111,897,000 = 465,040,200 pixels**, **0 differing pixels** ([records](verification/pixels.json)). The large split is 353,143,200; the small split is 111,897,000. The production test adds 144 cases comparing the fast path with a mathematically identical nested-mask generic reference: nearest/interpolated masks, differing source/mask dimensions, flipped/off-target placement, transparent texels, clip coverage, constant alpha, and both source-row conversion branches.
 
-**CTest: 577/577 passed** ([log](ctest.txt)). No cache-cap increase, sampling reduction, interpolation switch-off or drawing omission is present in production.
+**CTest: 577/577 passed** ([log](verification/ctest.txt)). No cache-cap increase, sampling reduction, interpolation switch-off or drawing omission is present in production.
 
 ## Reproduction
 
@@ -125,8 +108,8 @@ cmake --build build/perf --parallel 4
 Get-Item build/perf/libexreader.dll
 Get-FileHash build/perf/libexreader.dll
 python -X utf8 evidence/resample-path-20261118/content.py
-python -X utf8 evidence/resample-path-20261118/verify_continuation.py
-python -X utf8 evidence/resample-path-20261118/report.py
+python -X utf8 evidence/resample-path-20261118/verify_continuation.py C:/Users/Oscar/Documents/Codex/EXReader-decode2/evidence/resample-path-20261118/verification
+python -X utf8 evidence/resample-path-20261118/report.py C:/Users/Oscar/Documents/Codex/EXReader-decode2/evidence/resample-path-20261118/verification
 ```
 
 The rebuilt diagnostic has the same executable `.text` hash as the committed probe, and its exported counter reset/read smoke check passed ([identity](continuation/probe-identity.json), [build log](continuation/probe-build.txt)).

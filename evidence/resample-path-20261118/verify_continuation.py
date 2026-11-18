@@ -3,7 +3,8 @@ from pathlib import Path
 import hashlib,json,struct,subprocess,sys,time
 import psutil
 ROOT=Path(__file__).resolve().parents[2]
-OUT=Path(__file__).resolve().parent/'continuation'
+OUT=Path(sys.argv[1]) if len(sys.argv)>1 else Path(__file__).resolve().parent/'continuation'
+OUT.mkdir(parents=True,exist_ok=True)
 A=ROOT.parent/'resample-dlls/main-653e44b.dll'
 B=ROOT/'build/perf/libexreader.dll'
 def sections(path):
@@ -78,6 +79,8 @@ for name,pdf,width,reps in [
     run('evidence/resample-path-20261118/interleaved_ab.py',A,B,f'tests/fixtures/{pdf}.pdf',width,1,count,reps,OUT/f'interleaved-{name}.json')
 for name in ['image-heavy-100','real-mixed-120','vector-heavy-100']:
     run('evidence/resample-path-20261118/gated_pairs.py','--library-a',A,'--library-b',B,'--input',f'tests/fixtures/pdf-large/{name}.pdf','--runs',5,'--repeat',4,'--out',OUT/f'paired-{name}.json','--idle-timeout',60)
+for name,pdf,widths in [('pptx-20','pdf-hybrid-real/pptx-20',[600,1200]),('deck','pdf-ppt/deck',[1200]),('word-5','pdf-hybrid-real/word-5',[1200])]:
+    run('evidence/resample-path-20261118/gated_pairs.py','--library-a',A,'--library-b',B,'--input',f'tests/fixtures/{pdf}.pdf','--widths',*widths,'--runs',5,'--repeat',4,'--out',OUT/f'paired-{name}.json','--idle-timeout',60)
 run('evidence/dense-vector-throughput-20261118/verify_pixels.py',A,B,OUT/'pixels.json')
 with (OUT/'ctest.txt').open('w') as log:
     subprocess.run(['ctest','--test-dir','build/perf','--output-on-failure','-j','4'],cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,check=True)
