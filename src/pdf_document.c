@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
+#include <stdio.h>
+extern _Thread_local double diag_source_ms,diag_mask_ms,diag_image_ms;
+extern _Thread_local size_t diag_sources,diag_masks;
 #include "ppt_internal.h"
 #include "font_internal.h"
 #include "pdf_crypto.h"
@@ -46,7 +49,18 @@ static exr_status draw_ex(void *context,size_t page,const double matrix[6],const
   exr_pdf_control(d->file,control);
   status=exr_control_cancel(control,e);
   if(status==EXR_OK) status=exr_pdf_content(d->file,d->pages[page].contents,&content,e);
+  int trace=getenv("EXR_ATTRIBUTION_TRACE")!=NULL;
+  exr_pdf_image_cache_stats before,after;
+  if(trace) exr_pdf_image_cache_report(d->file,&before);
+  diag_source_ms=diag_mask_ms=diag_image_ms=0;
+  diag_sources=diag_masks=0;
   if(status==EXR_OK) status=exr_pdf_paint_page_ex(d->file,&d->pages[page],content.data,content.size,matrix,sink,program,d,NULL,control,e);
+  if(trace) {
+    exr_pdf_image_cache_report(d->file,&after);
+    fprintf(stderr,"ATTR %zu %zu %.6f %zu %.6f %zu %.6f %.6f %zu %zu\n",
+      page+1,content.size,diag_source_ms,diag_sources,diag_mask_ms,diag_masks,diag_image_ms,
+      after.decode_ms-before.decode_ms,after.hits-before.hits,after.misses-before.misses);
+  }
   free(content.data);
   /* Failed lazy resolution/decoding can leave a sticky parser error. Rebuild
      the reader on the next request, so another page remains independently usable. */

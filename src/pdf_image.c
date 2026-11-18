@@ -1,3 +1,4 @@
+#include <stdio.h>
 /* SPDX-License-Identifier: MIT */
 #if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200809L
@@ -120,6 +121,11 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   if(id!=EXR_PDF_NONE) { uint32_t value; if(!integer(&r,id,&value) || value) goto invalid; }
   mask=get(&r,image,"SMask");
   if(mask!=EXR_PDF_NONE && name_is(&r,mask,"None")) mask=EXR_PDF_NONE;
+  const char *diag_skip=getenv("EXR_ATTRIBUTION_SKIP");
+  if(mask!=EXR_PDF_NONE && diag_skip && !strcmp(diag_skip,"softmask")) {
+    soft=1;
+    mask=EXR_PDF_NONE;
+  }
   if(mask!=EXR_PDF_NONE) {
     uint32_t at;
     if(stencil || exr_pdf_value_at(file,mask)->kind!=EXR_PDF_STREAM) goto invalid;
@@ -513,6 +519,8 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   if(cache && cache->profile) started=image_time_ms();
   status=decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,inks);
   if(cache && cache->profile) cache->stats.decode_ms+=image_time_ms()-started;
+  if(cache && cache->profile && getenv("EXR_ATTRIBUTION_TRACE")) { const exr_vector_texture *t=status==EXR_OK ? *out : NULL;
+    fprintf(stderr,"IMGDEC %u %.6f %u %u %d\n",(unsigned)image,image_time_ms()-started,t ? (unsigned)t->bitmap.width : 0u,t ? (unsigned)t->bitmap.height : 0u,t && t->mask ? 1 : 0); }
   if(status==EXR_OK && cache) {
     unsigned skip=((pdf_texture *)*out)->uncacheable;
     if(skip&2) cache->stats.wide_bypasses++;

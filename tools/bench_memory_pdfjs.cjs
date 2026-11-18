@@ -90,6 +90,12 @@ async function closeAll(docs) {
   // getPage(1) is included: PDF.js resolves the page tree lazily at this point.
   result.first_render_ms = await render(docs[0].doc, 1);
   await stage('first_page');
+  if (argv.includes('--first-only')) {
+    await closeAll(docs);
+    process.stdout.write('RESULT ' + JSON.stringify(result) + '\n');
+    rl.close();
+    return;
+  }
   await renderAll(docs, true);
   await stage('rendered');
   if (rounds) {

@@ -193,14 +193,15 @@ def drive(cmd, cwd=None, env=None):
     return {'stages': stages, 'result': result}
 
 
-def side_command(kind, target, inputs, width, rounds, cycles):
+def side_command(kind, target, inputs, width, rounds, cycles, *, first_only=False):
     if kind == 'engine':
         return [sys.executable, '-X', 'utf8', str(Path(__file__).resolve()), 'engine-child',
                 '--library', str(Path(target).resolve()), '--width', str(width),
                 '--rounds', str(rounds), '--cycles', str(cycles), '--inputs', *inputs], None
     if kind == 'pdfjs':
+        flags = ['--first-only'] if first_only else []
         return ['node', '--expose-gc', str(HERE / 'bench_memory_pdfjs.cjs'), '--pdfjs-root', str(Path(target).resolve()),
-                '--width', str(width), '--rounds', str(rounds), '--cycles', str(cycles), '--', *inputs], None
+                '--width', str(width), '--rounds', str(rounds), '--cycles', str(cycles), *flags, '--', *inputs], None
     raise SystemExit(f'unknown side kind {kind}')
 
 
