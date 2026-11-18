@@ -33,6 +33,30 @@ static void mask_fill_equivalence(void) {
   free(mask.pixels);free(rgba.pixels);free(clip.pixels);
 }
 static int cancel(void *context) { unsigned *calls=context; return ++*calls>=3; }
+static int keep_drawing(void *context) { (void)context; return 0; }
+static void stable_clip_rows(void) {
+  exr_vector_edge edges[8];
+  exr_bitmap actual=bitmap(1,0),reference=bitmap(1,0),clip=bitmap(1,0);
+  exr_control control={0};
+  control.cancelled=keep_drawing;
+  rectangle(edges,.2,.125,7.6,7.875,0);
+  rectangle(edges+4,2.3,2.875,5.1,5.125,1);
+  for(size_t i=0;i<64;i++) clip.pixels[i]=(unsigned char)(i*37);
+  for(unsigned sloped=0;sloped<2;sloped++) {
+    if(sloped) edges[4].x0=edges[7].x1=2.7;
+    for(unsigned rule=0;rule<2;rule++) {
+      exr_vector_rule fill_rule=rule ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO;
+      for(size_t remaining=0;remaining<=1024;remaining++) {
+        size_t a=(size_t)256*1024*1024-remaining,b=a;
+        memset(actual.pixels,17,64);memset(reference.pixels,17,64);
+        exr_status s=exr_vector_fill(&actual,edges,8,fill_rule,0xffffffff,&clip,&a,NULL,&error);
+        exr_status t=exr_vector_fill(&reference,edges,8,fill_rule,0xffffffff,&clip,&b,&control,&error);
+        CHECK(s==t && a==b && !memcmp(actual.pixels,reference.pixels,64));
+      }
+    }
+  }
+  free(actual.pixels);free(reference.pixels);free(clip.pixels);
+}
 static double segment_distance(exr_vector_point p,exr_vector_point a,exr_vector_point b) {
   double length=hypot(b.x-a.x,b.y-a.y),left=hypot(p.x-a.x,p.y-a.y),right=hypot(p.x-b.x,p.y-b.y);
   if(!length || left*left>=right*right+length*length || right*right>=left*left+length*length) return fmin(left,right);
@@ -374,7 +398,7 @@ static void composite_rows(void) {
 int main(void) {
   composite_rows();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); strokes(); dashes(); mask_fill_equivalence(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  curves(); strokes(); dashes(); mask_fill_equivalence(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);

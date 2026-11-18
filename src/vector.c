@@ -6,6 +6,22 @@ typedef struct { double x; int winding; } crossing;
 static int compare_crossing(const void *a,const void *b) {
   const crossing *x=a,*y=b; return x->x<y->x ? -1 : x->x>y->x;
 }
+static double stable_crossings_until(const exr_vector_edge *edges,size_t count,double scan) {
+  double next=DBL_MAX;
+  for(size_t i=0;i<count;i++) {
+    const exr_vector_edge *edge=&edges[i];
+    double low=edge->y0<edge->y1 ? edge->y0 : edge->y1;
+    double high=edge->y0<edge->y1 ? edge->y1 : edge->y0;
+    if(scan>=high || low==high) continue;
+    if(scan<low) {
+      if(low<next) next=low;
+    } else {
+      if(edge->x0!=edge->x1) return scan;
+      if(high<next) next=high;
+    }
+  }
+  return next;
+}
 static int storage(const exr_bitmap *bitmap,unsigned channels) {
   return bitmap && bitmap->pixels && bitmap->width && bitmap->height && bitmap->width<=16384 && bitmap->height<=16384 &&
     bitmap->channels==channels && bitmap->stride>=(size_t)bitmap->width*channels && bitmap->stride<=(size_t)64*1024*1024/bitmap->height;
@@ -16,8 +32,12 @@ static int overlaps(const exr_bitmap *a,const exr_bitmap *b) {
 }
 static void span(float *coverage,int origin,uint32_t width,double left,double right) {
   int x,first,last;
-  left=fmax(origin,left); right=fmin(origin+(double)width,right); if(right<=left) return;
-  first=(int)floor(left);last=(int)ceil(right)-1;
+  double end=origin+(double)width;
+  if(left<origin) left=origin;
+  if(right>end) right=end;
+  if(right<=left) return;
+  first=(int)left;last=(int)right;
+  if(right==last) last--;
   if(first==last) { coverage[first-origin]+=(float)(right-left);return; }
   coverage[first-origin]+=(float)(first+1-left);
   /* Interior pixels contribute exactly one sample; only endpoints need min/max. */
@@ -98,7 +118,8 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
                             const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,
                             size_t *work,const exr_control *control,exr_error *error) {
   size_t local_work=0,i; crossing *crossings=NULL; float *coverage=NULL; double low=DBL_MAX,high=-DBL_MAX,left_bound=DBL_MAX,right_bound=-DBL_MAX;
-  int y,top,bottom,left,right; uint32_t row_width; exr_status status=EXR_OK;
+  double stable_until=-DBL_MAX; size_t stable_work=0;
+  int y,top,bottom,left,right,write_mask,reuse_coverage; uint32_t row_width; exr_status status=EXR_OK;
   if(!storage(bitmap,1) && !storage(bitmap,4)) return exr_fail(error,EXR_ARGUMENT,"Invalid vector target bitmap storage");
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(error,EXR_ARGUMENT,"Invalid vector blend mode");
   if((count && !edges) || (rule!=EXR_VECTOR_NONZERO && rule!=EXR_VECTOR_EVENODD) ||
@@ -112,8 +133,16 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
     if(!isfinite(edge->x0) || !isfinite(edge->y0) || !isfinite(edge->x1) || !isfinite(edge->y1) ||
        fabs(edge->x0)>1e7 || fabs(edge->x1)>1e7 || fabs(edge->y0)>1e7 || fabs(edge->y1)>1e7)
       return exr_fail(error,EXR_ARGUMENT,"Invalid vector edge coordinates");
-    left_bound=fmin(left_bound,fmin(edge->x0,edge->x1)); right_bound=fmax(right_bound,fmax(edge->x0,edge->x1));
-    if(edge->y0!=edge->y1) { low=fmin(low,fmin(edge->y0,edge->y1)); high=fmax(high,fmax(edge->y0,edge->y1)); }
+    if(edge->x0<left_bound) left_bound=edge->x0;
+    if(edge->x1<left_bound) left_bound=edge->x1;
+    if(edge->x0>right_bound) right_bound=edge->x0;
+    if(edge->x1>right_bound) right_bound=edge->x1;
+    if(edge->y0!=edge->y1) {
+      if(edge->y0<low) low=edge->y0;
+      if(edge->y1<low) low=edge->y1;
+      if(edge->y0>high) high=edge->y0;
+      if(edge->y1>high) high=edge->y1;
+    }
   }
   status=exr_control_cancel(control,error); if(status!=EXR_OK) return status;
   if((!(cmyk ? cmyk_alpha>0 : (color&255)) && (!state || !(state->knockout || state->shape) || (state->alpha_flags&EXR_ALPHA_CONSTANT_SHAPE))) || high<=0 || low>=bitmap->height || low>=high || right_bound<=0 || left_bound>=bitmap->width || left_bound>=right_bound) return exr_fail(error,EXR_OK,"");
@@ -145,37 +174,66 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   }
   crossings=malloc(count*sizeof(*crossings)); coverage=calloc(row_width,sizeof(*coverage));
   if(!crossings || !coverage) { status=exr_fail(error,EXR_MEMORY,"Vector scanline allocation failed"); goto done; }
+  write_mask=bitmap->channels==1 && color==0xffffffffu && !cmyk && !state && mode==EXR_BLEND_NORMAL;
+  reuse_coverage=write_mask && (!control || !control->cancelled);
   for(y=top;y<bottom;y++) {
     unsigned sample,x;
+    int build_coverage;
     status=exr_control_cancel(control,error); if(status!=EXR_OK) goto done;
-    memset(coverage,0,(size_t)row_width*sizeof(*coverage));
-    for(sample=0;sample<4;sample++) {
-      double scan=y+(sample+.5)/4,previous=0; size_t n=0,at=0,sorting=0,levels=0; int winding=0;
-      if(!exr_vector_work(work,count)) goto limit;
-      for(i=0;i<count;i++) {
-        const exr_vector_edge *edge=&edges[i]; double minimum=fmin(edge->y0,edge->y1),maximum=fmax(edge->y0,edge->y1);
-        if(scan>=minimum && scan<maximum) crossings[n++]=(crossing){edge->x0+(scan-edge->y0)/(edge->y1-edge->y0)*(edge->x1-edge->x0),edge->y1>edge->y0 ? 1 : -1};
+    /* Vertical crossings are constant until the next edge endpoint. A
+       stable four-tap row can reuse its coverage and original work charge.
+       Use the ordinary loop at the budget boundary for the same failure point. */
+    build_coverage=y+.875>=stable_until || !exr_vector_work(work,stable_work);
+    if(build_coverage) {
+      size_t work_before=*work;
+      memset(coverage,0,(size_t)row_width*sizeof(*coverage));
+      for(sample=0;sample<4;sample++) {
+        double scan=y+(sample+.5)/4,previous=0; size_t n=0,at=0,sorting=0,levels=0; int winding=0;
+        if(!exr_vector_work(work,count)) goto limit;
+        for(i=0;i<count;i++) {
+          const exr_vector_edge *edge=&edges[i];
+          /* Coordinates were checked above. Ordered comparisons suffice for
+             finite endpoints and keep libm calls out of the scanline loop. */
+          int upward=edge->y1>edge->y0;
+          double minimum=upward ? edge->y0 : edge->y1,maximum=upward ? edge->y1 : edge->y0;
+          if(scan>=minimum && scan<maximum) crossings[n++]=(crossing){edge->x0+(scan-edge->y0)/(edge->y1-edge->y0)*(edge->x1-edge->x0),upward ? 1 : -1};
+        }
+        for(i=n;i>1;i=(i+1)/2) levels++;
+        sorting=n*(levels+1);
+        if(!exr_vector_work(work,sorting) || !exr_vector_work(work,row_width)) goto limit;
+        if(n>8) qsort(crossings,n,sizeof(*crossings),compare_crossing);
+        else for(i=1;i<n;i++) {
+          crossing next=crossings[i]; size_t j=i;
+          while(j && next.x<crossings[j-1].x) { crossings[j]=crossings[j-1]; j--; }
+          crossings[j]=next;
+        }
+        while(at<n) {
+          double current=crossings[at].x; int delta=0;
+          if(winding) span(coverage,left,row_width,previous,current);
+          do { delta+=rule==EXR_VECTOR_EVENODD ? 1 : crossings[at].winding; at++; } while(at<n && crossings[at].x==current);
+          if(rule==EXR_VECTOR_EVENODD) winding=(winding+delta)&1; else winding+=delta;
+          previous=current;
+        }
       }
-      for(i=n;i>1;i=(i+1)/2) levels++;
-      sorting=n*(levels+1);
-      if(!exr_vector_work(work,sorting) || !exr_vector_work(work,row_width)) goto limit;
-      if(n) qsort(crossings,n,sizeof(*crossings),compare_crossing);
-      while(at<n) {
-        double current=crossings[at].x; int delta=0;
-        if(winding) span(coverage,left,row_width,previous,current);
-        do { delta+=rule==EXR_VECTOR_EVENODD ? 1 : crossings[at].winding; at++; } while(at<n && crossings[at].x==current);
-        if(rule==EXR_VECTOR_EVENODD) winding=(winding+delta)&1; else winding+=delta;
-        previous=current;
+      if(reuse_coverage) {
+        double change=stable_crossings_until(edges,count,y+.125);
+        stable_until=change>y+.875 ? change : -DBL_MAX;
+        stable_work=*work-work_before;
       }
     }
     if(!exr_vector_work(work,(size_t)row_width*((state ? 20+state->depth*4 : 0)+(mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64)))) goto limit;
     /* Clip masks paint opaque white into one channel. Keep the identical
        source-over arithmetic in a row loop without per-pixel paint dispatch. */
-    if(bitmap->channels==1 && color==0xffffffffu && !cmyk && !state && mode==EXR_BLEND_NORMAL) {
+    if(write_mask) {
       unsigned char *target=bitmap->pixels+(size_t)y*bitmap->stride+left;
       const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride+left : NULL;
+      unsigned char *opacity=(unsigned char *)coverage;
+      /* Pack the floats in place, left to right, after the last sample.
+         Subsequent stable rows reuse the same rounded coverage bytes. */
+      if(build_coverage) for(x=0;x<row_width;x++)
+        opacity[x]=coverage[x]>=4 ? 255 : (unsigned char)(coverage[x]*255/4+.5);
       for(x=0;x<row_width;x++) {
-        unsigned alpha=coverage[x]>=4 ? 255u : (unsigned)(coverage[x]*255/4+.5);
+        unsigned alpha=opacity[x];
         if(mask) alpha=(alpha*mask[x]+127)/255;
         if(!target[x] || alpha==255) target[x]=(unsigned char)alpha;
         else target[x]=(unsigned char)(target[x]+((255-target[x])*alpha+127)/255);
