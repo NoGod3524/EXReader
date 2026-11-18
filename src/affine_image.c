@@ -275,6 +275,54 @@ static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,cons
   }
   free(columns); *result=exr_fail(e,EXR_OK,""); return 1;
 }
+#if defined(__SSE2__) || defined(_M_X64)
+/* A source row converted once to doubles: {r,g,b,1} per texel plus a separate
+   alpha array, covering texels lo..hi. One texel past the last image column
+   repeats it, so the clamped right-edge tap (second==first) reads first+1. */
+typedef struct { int row; double *rgb1,*alpha; } converted_row;
+static void convert_row(const exr_bitmap *source,int row,unsigned lo,unsigned hi,converted_row *out) {
+  const unsigned char *line=source->pixels+(size_t)row*source->stride;
+  for(unsigned x=lo;x<=hi;x++) {
+    const unsigned char *p=line+(size_t)(x<source->width ? x : source->width-1)*4;
+    double *q=out->rgb1+4*(size_t)(x-lo);
+    q[0]=p[0];q[1]=p[1];q[2]=p[2];q[3]=1;out->alpha[x-lo]=p[3];
+  }
+  out->row=row;
+}
+static const converted_row *find_row(converted_row slots[4],const int need[4],unsigned count,int row,
+                                     const exr_bitmap *source,unsigned lo,unsigned hi) {
+  unsigned s,k;
+  for(s=0;s<4;s++) if(slots[s].row==row) return slots+s;
+  for(s=0;s<4;s++) {
+    for(k=0;k<count && need[k]!=slots[s].row;k++) {}
+    if(k==count) break;
+  }
+  convert_row(source,row,lo,hi,slots+s);
+  return slots+s;
+}
+/* One bilinear sample from converted rows, added to the running sums. With
+   w=[1-wx,wx] the weight products, tap alphas, channel products and the
+   sequential tap order are the scalar sampler's; 1*a is a exactly, and the
+   scalar sampler's 0+x is x for these nonnegative terms. */
+static inline void converted_sample(const converted_row *r0,const converted_row *r1,size_t index,
+                                    __m128d w,__m128d wy0,__m128d wy1,__m128d *rg,__m128d *ba) {
+  const double *t0=r0->rgb1+4*index,*t1=r1->rgb1+4*index;
+  __m128d a01=_mm_mul_pd(_mm_loadu_pd(r0->alpha+index),_mm_mul_pd(w,wy0));
+  __m128d a23=_mm_mul_pd(_mm_loadu_pd(r1->alpha+index),_mm_mul_pd(w,wy1));
+  __m128d a=_mm_unpacklo_pd(a01,a01);
+  __m128d red_green=_mm_mul_pd(_mm_loadu_pd(t0),a),blue_alpha=_mm_mul_pd(_mm_loadu_pd(t0+2),a);
+  a=_mm_unpackhi_pd(a01,a01);
+  red_green=_mm_add_pd(red_green,_mm_mul_pd(_mm_loadu_pd(t0+4),a));
+  blue_alpha=_mm_add_pd(blue_alpha,_mm_mul_pd(_mm_loadu_pd(t0+6),a));
+  a=_mm_unpacklo_pd(a23,a23);
+  red_green=_mm_add_pd(red_green,_mm_mul_pd(_mm_loadu_pd(t1),a));
+  blue_alpha=_mm_add_pd(blue_alpha,_mm_mul_pd(_mm_loadu_pd(t1+2),a));
+  a=_mm_unpackhi_pd(a23,a23);
+  red_green=_mm_add_pd(red_green,_mm_mul_pd(_mm_loadu_pd(t1+4),a));
+  blue_alpha=_mm_add_pd(blue_alpha,_mm_mul_pd(_mm_loadu_pd(t1+6),a));
+  *rg=_mm_add_pd(*rg,red_green);*ba=_mm_add_pd(*ba,blue_alpha);
+}
+#endif
 /* The separable transform gives each column the same two horizontal taps
    on every row. Keep the generic tap, weight and summation order. */
 static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
@@ -287,11 +335,69 @@ static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const doubl
   size_t width=(size_t)(x1-x0);
   image_tap *columns=malloc(2*width*sizeof(*columns));
   if(!columns) return 0;
+  unsigned lo=source->width,hi=0;
   for(size_t i=0;i<2*width;i++) {
     double px=(x0+(int)(i>>1))+.25+.5*(i&1);
     double u=inv[0]*px+inv[2]*(y0+.25)+inv[4];
     columns[i]=u<0 || u>=1 ? (image_tap){0,-1,-1} : bilinear_tap(u,source->width);
+    if(columns[i].first>=0) {
+      if((unsigned)columns[i].first<lo) lo=(unsigned)columns[i].first;
+      if((unsigned)columns[i].first+1>hi) hi=(unsigned)columns[i].first+1;
+    }
   }
+#if defined(__SSE2__) || defined(_M_X64)
+  /* Convert each source row once when the used span is comparable to the
+     destination width; strong minification keeps per-tap conversion. */
+  double *storage_rows=lo<=hi && (size_t)(hi-lo)<=4*width ? malloc(4*5*(size_t)(hi-lo+1)*sizeof(double)) : NULL;
+  if(storage_rows) {
+    converted_row slots[4];size_t span=(size_t)(hi-lo+1);
+    for(unsigned s=0;s<4;s++) { slots[s].row=-1;slots[s].rgb1=storage_rows+s*5*span;slots[s].alpha=slots[s].rgb1+4*span; }
+    for(int y=y0;y<y1;y++) {
+      *result=exr_control_cancel(control,e);
+      if(*result!=EXR_OK) break;
+      if(!exr_vector_work(work,width*cost)) {
+        *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break;
+      }
+      const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+      image_tap taps[2];int valid[2]={0,0},need[4];unsigned count=0;
+      const converted_row *rows[2][2]={{NULL,NULL},{NULL,NULL}};__m128d wy[2][2];
+      for(unsigned sy=0;sy<2;sy++) {
+        double py=y+.25+.5*sy,v=inv[1]*(x0+.25)+inv[3]*py+inv[5];
+        if(v<0 || v>=1) continue;
+        taps[sy]=bilinear_tap(v,source->height);valid[sy]=1;
+        need[count++]=taps[sy].first;need[count++]=taps[sy].second;
+      }
+      if(!count) continue;
+      for(unsigned sy=0;sy<2;sy++) if(valid[sy]) {
+        double fraction=taps[sy].fraction;
+        rows[sy][0]=find_row(slots,need,count,taps[sy].first,source,lo,hi);
+        rows[sy][1]=find_row(slots,need,count,taps[sy].second,source,lo,hi);
+        wy[sy][0]=_mm_set1_pd(1-fraction);wy[sy][1]=_mm_set1_pd(fraction);
+      }
+      for(int x=x0;x<x1;x++) {
+        unsigned coverage=mask ? mask[x] : 255;
+        const image_tap *column=columns+2*(size_t)(x-x0);
+        __m128d rg=_mm_setzero_pd(),ba=_mm_setzero_pd();double sums[4];
+        if(!coverage) continue;
+        for(unsigned sy=0;sy<2;sy++) if(valid[sy]) {
+          for(unsigned sx=0;sx<2;sx++) if(column[sx].first>=0) {
+            double fraction=column[sx].fraction;
+            converted_sample(rows[sy][0],rows[sy][1],(size_t)(column[sx].first-(int)lo),
+              _mm_set_pd(fraction,1-fraction),wy[sy][0],wy[sy][1],&rg,&ba);
+          }
+        }
+        _mm_storeu_pd(sums,rg);_mm_storeu_pd(sums+2,ba);
+        if(!sums[3]) continue;
+        uint32_t color=image_byte(sums[3]*alpha/4);
+        for(unsigned k=0;k<3;k++) color|=image_byte(sums[k]/sums[3])<<(24-8*k);
+        exr_pixel(target,x,y,color,coverage);
+      }
+    }
+    free(storage_rows);free(columns);
+    if(*result==EXR_OK) *result=exr_fail(e,EXR_OK,"");
+    return 1;
+  }
+#endif
   for(int y=y0;y<y1;y++) {
     *result=exr_control_cancel(control,e);
     if(*result!=EXR_OK) break;

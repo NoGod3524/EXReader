@@ -459,6 +459,41 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
             in_scale=fabs(u00)<=s && fabs(v00)<=s && fabs(u10)<=s && fabs(v10)<=s &&
                      fabs(u01)<=s && fabs(v01)<=s && fabs(u11)<=s && fabs(v11)<=s;
           }
+          /* Runs of the two fast stores below. Each pixel keeps the same
+             coverage, scale and budget tests in the same order; bounds and the
+             work counter live in locals until the run ends. */
+          if(aligned && in_scale && have_in && coverage==255 && in_alpha*alpha==1 &&
+             ((fast_group && in_shape==1) || (fast_mask && in_shape>0 && (size_t)x<state->soft_mask_width))) {
+            const unsigned char *clip_row=c->clip ? c->clip->bitmap.pixels+(size_t)y*c->clip->bitmap.stride : NULL;
+            size_t budget=*axial->work;unsigned end=x;int over=0;
+            unsigned limit=fast_group ? last : (unsigned)(state->soft_mask_width<last ? state->soft_mask_width : last);
+            for(;end<limit;end++) {
+              if(end>x) {
+                double run0=(double)end+c->offset_x+.25,run1=run0+.5;
+                if((clip_row && clip_row[end]!=255) || !(fabs(inv[0]*run0+inv[4])<=s && fabs(inv[0]*run1+inv[4])<=s)) break;
+              }
+              if(!exr_vector_work(&budget,4)) { over=1;break; }
+            }
+            if(fast_group) {
+              float *q=state->pixels+((size_t)y*c->bitmap.width+x)*5;
+              unsigned char *p=c->bitmap.pixels+(size_t)y*c->bitmap.stride+(size_t)x*4;
+              unsigned char rgb[4]={(unsigned char)(in_color>>24),(unsigned char)(in_color>>16),(unsigned char)(in_color>>8),255};
+              for(unsigned i=x;i<end;i++,q+=5,p+=4) { memcpy(q,in_q,sizeof(in_q));memcpy(p,rgb,4); }
+              if(end>x) {
+                if(x<state->left) state->left=x;
+                if(y<state->top) state->top=y;
+                if(end>state->right) state->right=end;
+                if(y>=state->bottom) state->bottom=y+1;
+              }
+            } else {
+              exr_bitmap target=c->bitmap;
+              const unsigned char *mask_row=state->soft_mask+(size_t)y*state->soft_mask_width;
+              for(unsigned i=x;i<end;i++) if(mask_row[i]) exr_pixel(&target,(int)i,(int)y,(in_color&0xffffff00u)|mask_row[i],255);
+            }
+            *axial->work=budget;
+            if(over) return finish(c,exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget"),e);
+            x=end-1;continue;
+          }
           if(in_scale && have_in) {
             if(!exr_vector_work(axial->work,4)) return finish(c,exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget"),e);
             if(fast_group && coverage==255 && in_alpha*alpha==1 && in_shape==1) {
