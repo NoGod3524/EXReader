@@ -1,11 +1,14 @@
 /* SPDX-License-Identifier: MIT */
+/* The feature macro must precede every header: the project headers below pull
+   system headers first, and glibc then fixes its feature set so that
+   clock_gettime stays undeclared. */
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "pdf_raster_internal.h"
 #include "pdf_face_internal.h"
 #include "icc_internal.h"
 #include <stdio.h>
-#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE 200809L
-#endif
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
