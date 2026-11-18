@@ -1,8 +1,34 @@
 /* SPDX-License-Identifier: MIT */
+/* The feature macro must precede every header: the project headers below pull
+   system headers first, and glibc then fixes its feature set so that
+   clock_gettime stays undeclared. */
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "pdf_raster_internal.h"
 #include "pdf_face_internal.h"
 #include "icc_internal.h"
 #include <stdio.h>
+#include <time.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+static double diag_ms(void) {
+#ifdef _WIN32
+  LARGE_INTEGER t,f;
+  QueryPerformanceCounter(&t);QueryPerformanceFrequency(&f);
+  return (double)t.QuadPart*1000/(double)f.QuadPart;
+#else
+  struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);
+  return (double)t.tv_sec*1000+(double)t.tv_nsec/1e6;
+#endif
+}
+static int diag_skip(const char *name) {
+  const char *mode=getenv("EXR_ATTRIBUTION_SKIP");
+  return mode && !strcmp(mode,name);
+}
+_Thread_local double diag_source_ms,diag_mask_ms,diag_image_ms;
+_Thread_local size_t diag_sources,diag_masks;
 typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
 typedef struct { unsigned char *pixels;size_t bytes; } paint_mask;
 typedef struct {
@@ -38,13 +64,15 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
 static exr_status mask_begin(pdf_painter *r,const exr_pdf_paint_state *paint,paint_mask *mask,exr_error *e) {
   unsigned width=0,height=0; exr_status status;
   memset(mask,0,sizeof(*mask));
-  if(paint->smask==EXR_PDF_NONE) return EXR_OK;
+  if(paint->smask==EXR_PDF_NONE || diag_skip("softmask")) return EXR_OK;
   status=exr_sink_extent(&r->sink,&width,&height,e); if(status!=EXR_OK) return status;
   if(!width || !height || width>(size_t)64*1024*1024/height || *r->mask_bytes>(size_t)64*1024*1024 ||
       (size_t)width*height>(size_t)64*1024*1024-*r->mask_bytes)
     return exr_fail(e,EXR_LIMIT,"PDF active soft masks exceed 64 MiB");
   mask->bytes=(size_t)width*height;*r->mask_bytes+=mask->bytes;
+  double started=diag_ms();
   status=exr_pdf_soft_mask_build(r->file,paint->smask,paint->smask_matrix,width,height,&mask->pixels,r->work,r->mask_bytes,r->control,e);
+  diag_mask_ms+=diag_ms()-started;diag_masks++;
   if(status!=EXR_OK) { *r->mask_bytes-=mask->bytes;mask->bytes=0;return status; }
   return exr_sink_soft_mask(&r->sink,mask->pixels,width,height,e);
 }
@@ -86,7 +114,9 @@ static exr_status geometry(pdf_painter *r,const exr_vector_segment *segments,siz
   return status;
 }
 static exr_status path_event(void *context,const exr_pdf_path_paint *p,exr_error *e) {
-  return geometry(context,p->segments,p->count,NULL,&p->paint,p->flags,p->rule,0,e);
+  unsigned flags=diag_skip("path") ? p->flags&EXR_PDF_CLIP : p->flags;
+  if(!flags) return EXR_OK;
+  return geometry(context,p->segments,p->count,NULL,&p->paint,flags,p->rule,0,e);
 }
 static exr_status state_event(void *context,exr_pdf_state_event event,exr_error *e) {
   pdf_painter *r=context;
@@ -101,6 +131,7 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
   if(mode==3) return EXR_OK;
   if(mode==0 || mode==2 || mode==4 || mode==6) flags|=EXR_PDF_FILL;
   if(mode==1 || mode==2 || mode==5 || mode==6) flags|=EXR_PDF_STROKE;
+  if(diag_skip("glyph")) flags=0;
   if(mode>=4) flags|=EXR_PDF_CLIP;
   if(!((flags&3) && r->sink.base.path) && !((flags&EXR_PDF_CLIP) && r->sink.base.clip)) return EXR_OK;
   for(i=0;i<r->font_count;i++) if(r->fonts[i].key==g->font) break;
@@ -123,9 +154,16 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
   exr_bitmap inks={0};int native=r->sink.image_cmyk && (!r->sink.image_space || r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK);
   exr_pdf_paint_state image_paint=*paint;uint32_t own_mask;const exr_pdf_value *v;
   exr_status status; paint_mask mask={0}; if(!r->sink.base.image && !native) return EXR_OK;
+  if(diag_skip("image")) return EXR_OK;
+  /* Ablation split: "image-paint" performs the decode but skips drawing, so
+     decode cost = t(image-paint) - t(image) and paint cost = t(full) - t(image-paint).
+     "image-decode" (pdf_image.c) paints a same-shaped placeholder instead of decoding. */
+  int ablation_paint=diag_skip("image-paint");
+  double started=diag_ms();
   if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
   status=exr_pdf_image_load_inks(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,native ? &inks : NULL,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
+  if(ablation_paint) { exr_pdf_image_release(image);free(inks.pixels);return status; }
   if(status==EXR_OK) status=exr_sink_alpha_source(&r->sink,EXR_ALPHA_IMAGE_SHAPE|(paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0),e);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
   /* ISO 32000-1 11.6.4.3: either image mask overrides the graphics-state mask. */
@@ -144,7 +182,7 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
   else if(status==EXR_OK && r->sink.base.image) status=r->sink.base.image(r->sink.base.context,image,matrix,paint->fill.alpha,e);
   else if(status==EXR_OK) status=exr_fail(e,EXR_UNSUPPORTED,"Drawing consumer lacks RGB image support");
   if(mask.pixels) status=mask_end(r,&mask,status,e);
-  exr_pdf_image_release(image);free(inks.pixels); return status;
+  exr_pdf_image_release(image);free(inks.pixels);diag_image_ms+=diag_ms()-started;return status;
 }
 static unsigned image_space(void *context) {
   pdf_painter *r=context;
@@ -152,6 +190,7 @@ static unsigned image_space(void *context) {
 }
 static exr_status begin_group_event(void *context,const exr_pdf_paint_state *paint,unsigned flags,exr_error *e) {
   pdf_painter *r=context;paint_mask mask={0};exr_status status;
+  if(diag_skip("group")) return EXR_OK;
   if(r->group_depth==32) return exr_fail(e,EXR_LIMIT,"PDF paint group mask depth exceeds 32");
   status=exr_sink_alpha_source(&r->sink,paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0,e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
@@ -182,6 +221,7 @@ static exr_status shading_event(void *context,const exr_bitmap *bitmap,const exr
 }
 static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
   pdf_painter *r=context;paint_mask mask;exr_status status;
+  if(diag_skip("group")) return EXR_OK;
   if(!r->group_depth) return exr_fail(e,EXR_FORMAT,"PDF paint group stack underflow");
   mask=r->group_masks[--r->group_depth];memset(r->group_masks+r->group_depth,0,sizeof(mask));
   status=r->sink.end_layer ? r->sink.end_layer(r->sink.base.context,commit,e) : exr_fail(e,EXR_FORMAT,"Drawing consumer lacks isolated layers");
@@ -193,7 +233,11 @@ static exr_status source_event(void *context,const exr_paint_source *source,cons
   status=exr_sink_alpha_source(&r->sink,paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0,e);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
-  if(status==EXR_OK) status=r->sink.paint(r->sink.base.context,source,matrix,paint->fill.alpha,e);
+  if(status==EXR_OK) {
+    double started=diag_ms();
+    status=r->sink.paint(r->sink.base.context,source,matrix,paint->fill.alpha,e);
+    diag_source_ms+=diag_ms()-started;diag_sources++;
+  }
   if(status==EXR_OK && e && e->code!=EXR_OK) status=e->code;
   if(mask.pixels) status=mask_end(r,&mask,status,e);
   return status;

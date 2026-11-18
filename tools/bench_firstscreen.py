@@ -18,8 +18,8 @@ Subcommands:
   run     Unified first screen for EXReader and PDF.js. Every sample is a new
           process, sides alternate ABAB/BABA, and every run is idle-gated.
   ablate  Per-class disabling with a diagnostic DLL that honours
-          EXR_ATTRIBUTION_SKIP=<image|path|glyph|group|shading>. Every arm is a
-          new process. The arm order rotates on each run.
+          EXR_ATTRIBUTION_SKIP=<image|path|glyph|group|shading|softmask>.
+          Each disabled arm alternates with a fresh full-render control.
   child   (internal) one unified sample.
 
   python -X utf8 tools/bench_firstscreen.py run \
@@ -49,7 +49,7 @@ def stats(values):
     ordered = sorted(values)
     low = ordered[0]
     return {'median': round(statistics.median(ordered), 3), 'min': round(low, 3), 'max': round(ordered[-1], 3),
-            'spread_percent': round(100.0 * (ordered[-1] - low) / low, 1) if low else 0.0,
+            'spread_percent': round(100.0 * (ordered[-1] - low) / abs(low), 1) if low else 0.0,
             'samples': [round(v, 3) for v in values]}
 
 
@@ -246,17 +246,19 @@ def run_cmd(args):
                     if kind == 'engine':
                         r = run_child(target, pdf, width)
                         raw[name].append({'first_render_ms': r['first_render_ms'], 'open_ms': r['open_ms'],
-                                          'rgba_sha256': r['rgba_sha256']})
+                                          'page_count': r['page_count'], 'rgba_sha256': r['rgba_sha256']})
                     else:
-                        cmd, cwd = bench_memory.side_command('pdfjs', str(target), [str(pdf)], width, 0, 0)
+                        cmd, cwd = bench_memory.side_command('pdfjs', str(target), [str(pdf)], width, 0, 0, first_only=True)
                         r = bench_memory.drive(cmd, cwd)['result']
-                        raw[name].append({'first_render_ms': r['first_render_ms'], 'open_ms': r['open_ms'][0]})
+                        raw[name].append({'first_render_ms': r['first_render_ms'], 'open_ms': r['open_ms'][0],
+                                          'page_count': r['pages'][0]})
             summary = {}
             for name, rows in raw.items():
                 summary[name] = {'first_render_ms': stats([r['first_render_ms'] for r in rows]),
                                  'open_ms': stats([r['open_ms'] for r in rows]),
                                  'first_screen_ms': stats([r['first_render_ms'] + r['open_ms'] for r in rows])}
             report['cases'][key] = {'input': str(pdf), 'input_sha256': sha256(pdf), 'idle_cpu_percent': gates,
+                                    'orders': [list(raw)[::1 if i % 2 == 0 else -1] for i in range(args.runs)],
                                     'raw': raw, 'summary': summary}
             print(f'{key:>16} ' + '  '.join(
                 f'{n} {s["first_render_ms"]["median"]:8.3f} ms ({s["first_render_ms"]["spread_percent"]:4.1f}%)'
@@ -268,6 +270,12 @@ def run_cmd(args):
 TRACE_FIELDS = ['page', 'content_bytes', 'source_paint_ms', 'source_paints', 'mask_build_ms', 'mask_builds',
                 'shading_samples', 'image_ms', 'image_decode_ms', 'image_cache_hits', 'image_cache_misses',
                 'axial_samples']
+TRACE_FIELDS_NO_SAMPLE_COUNTS = [f for f in TRACE_FIELDS if f not in ('shading_samples', 'axial_samples')]
+
+
+def parse_trace(fields):
+    names = TRACE_FIELDS if len(fields) == len(TRACE_FIELDS) else TRACE_FIELDS_NO_SAMPLE_COUNTS
+    return dict(zip(names, map(float, fields), strict=True))
 
 
 def ablate_cmd(args):
@@ -279,32 +287,38 @@ def ablate_cmd(args):
         for width in args.widths:
             key = f'{label}@{width}#p{args.page}'
             raw = {m: [] for m in modes}
-            gates = []
-            for run in range(args.runs):
-                gates.append(gate(args.idle_threshold, args.idle_timeout))
-                for mode in modes[run % len(modes):] + modes[:run % len(modes)]:
-                    env = dict(os.environ, EXR_ATTRIBUTION_TRACE='1', EXR_PDF_IMAGE_PROFILE='1')
-                    env.pop('EXR_ATTRIBUTION_SKIP', None)
-                    if mode != 'full':
-                        env['EXR_ATTRIBUTION_SKIP'] = mode
-                    r = run_child(library, pdf, width, page=args.page, warm=args.warm, env=env)
-                    r['trace'] = [dict(zip(TRACE_FIELDS, map(float, t))) for t in r['trace']]
-                    raw[mode].append(r)
+            pairs = {}
+            for disabled in args.modes:
+                controls, gates, orders = [], [], []
+                for run in range(args.runs):
+                    gates.append(gate(args.idle_threshold, args.idle_timeout))
+                    order = ('full', disabled) if run % 2 == 0 else (disabled, 'full')
+                    orders.append(order)
+                    for mode in order:
+                        env = dict(os.environ, EXR_ATTRIBUTION_TRACE='1', EXR_PDF_IMAGE_PROFILE='1',
+                                   EXR_ATTRIBUTION_SKIP='' if mode == 'full' else mode)
+                        r = run_child(library, pdf, width, page=args.page, warm=args.warm, env=env)
+                        r['trace'] = [parse_trace(t) for t in r['trace']]
+                        (controls if mode == 'full' else raw[mode]).append(r)
+                pairs[disabled] = {'full': controls, 'idle_cpu_percent': gates, 'orders': orders}
+            raw['full'] = pairs[args.modes[0]]['full']
             summary = {}
             for mode in modes:
                 rows = raw[mode]
                 row = {'cold_ms': stats([r['first_render_ms'] for r in rows]),
+                       'open_ms': stats([r['open_ms'] for r in rows]),
                        'warm_ms': stats([statistics.median(r['warm_render_ms']) for r in rows]) if args.warm else None,
-                       'cold_trace': {k: statistics.median(r['trace'][0][k] for r in rows) for k in TRACE_FIELDS}}
+                       'cold_trace': {k: statistics.median(r['trace'][0][k] for r in rows) for k in rows[0]['trace'][0]}}
                 if mode != 'full':
-                    # Unchanged pixels mean the page has nothing of this class to skip.
-                    row['pixels_changed'] = rows[0]['rgba_sha256'] != raw['full'][0]['rgba_sha256']
+                    controls = pairs[mode]['full']
+                    row['paired_full_cold_ms'] = stats([r['first_render_ms'] for r in controls])
+                    row['pixels_changed'] = any(f['rgba_sha256'] != d['rgba_sha256'] for f, d in zip(controls, rows))
                     row['paired_cold_saving_ms'] = stats([f['first_render_ms'] - d['first_render_ms']
-                                                          for f, d in zip(raw['full'], rows)])
+                                                          for f, d in zip(controls, rows)])
                     if args.warm:
                         row['paired_warm_saving_ms'] = stats([statistics.median(f['warm_render_ms'])
                                                               - statistics.median(d['warm_render_ms'])
-                                                              for f, d in zip(raw['full'], rows)])
+                                                              for f, d in zip(controls, rows)])
                 if mode == 'full':
                     # Decodes happen only on the cold render (cache misses); median per image across runs.
                     per_image = {}
@@ -315,8 +329,8 @@ def ablate_cmd(args):
                         (dict(d, decode_ms=round(statistics.median(d['decode_ms']), 3)) for d in per_image.values()),
                         key=lambda d: -d['decode_ms'])
                 summary[mode] = row
-            report['cases'][key] = {'input': str(pdf), 'input_sha256': sha256(pdf), 'idle_cpu_percent': gates,
-                                    'raw': raw, 'summary': summary}
+            report['cases'][key] = {'input': str(pdf), 'input_sha256': sha256(pdf),
+                                    'raw': raw, 'pairs': pairs, 'summary': summary}
             for mode, row in summary.items():
                 save = row.get('paired_cold_saving_ms', {}).get('median', 0.0)
                 warm = row['warm_ms']['median'] if row['warm_ms'] else float('nan')

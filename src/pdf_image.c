@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: MIT */
+/* The feature macro must precede every system header: including <stdio.h>
+   first fixes glibc's feature set and leaves clock_gettime undeclared. */
 #if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200809L
 #endif
+#include <stdio.h>
 #include "pdf_raster_internal.h"
 #include "pdf_jpx_internal.h"
 #include <errno.h>
@@ -120,6 +123,11 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   if(id!=EXR_PDF_NONE) { uint32_t value; if(!integer(&r,id,&value) || value) goto invalid; }
   mask=get(&r,image,"SMask");
   if(mask!=EXR_PDF_NONE && name_is(&r,mask,"None")) mask=EXR_PDF_NONE;
+  const char *diag_skip=getenv("EXR_ATTRIBUTION_SKIP");
+  if(mask!=EXR_PDF_NONE && diag_skip && !strcmp(diag_skip,"softmask")) {
+    soft=1;
+    mask=EXR_PDF_NONE;
+  }
   if(mask!=EXR_PDF_NONE) {
     uint32_t at;
     if(stencil || exr_pdf_value_at(file,mask)->kind!=EXR_PDF_STREAM) goto invalid;
@@ -475,6 +483,31 @@ static double image_time_ms(void) {
   struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);return (double)t.tv_sec*1000+t.tv_nsec/1e6;
 #endif
 }
+/* Ablation EXR_ATTRIBUTION_SKIP=image-decode: an opaque placeholder with the
+   image's size, /Interpolate and /SMask structure, built without reading the
+   payload, so the paint path runs unchanged and decode cost is t(full)-t(this). */
+static uint32_t diag_dict_value(exr_pdf_file *file,uint32_t image,const char *key) {
+  uint32_t id=EXR_PDF_NONE; exr_error ignored={0};
+  if(exr_pdf_resolve(file,exr_pdf_get(file,image,key),&id,&ignored)!=EXR_OK) return EXR_PDF_NONE;
+  return id;
+}
+static exr_vector_texture *diag_placeholder(exr_pdf_file *file,uint32_t image,unsigned depth) {
+  const exr_pdf_value *w=exr_pdf_value_at(file,diag_dict_value(file,image,"Width")),*h=exr_pdf_value_at(file,diag_dict_value(file,image,"Height"));
+  const exr_pdf_value *interpolate=exr_pdf_value_at(file,diag_dict_value(file,image,"Interpolate"));
+  uint32_t smask=diag_dict_value(file,image,"SMask"); pdf_texture *t;
+  if(!w || !h || w->kind!=EXR_PDF_INT || h->kind!=EXR_PDF_INT || w->u.integer<1 || h->u.integer<1 || w->u.integer>8192 || h->u.integer>8192) return NULL;
+  if(!(t=calloc(1,sizeof(*t)))) return NULL;
+  t->refs=1; t->texture.bitmap.width=(uint32_t)w->u.integer; t->texture.bitmap.height=(uint32_t)h->u.integer;
+  t->texture.bitmap.channels=4; t->texture.bitmap.stride=t->texture.bitmap.width*4;
+  t->texture.interpolate=interpolate && interpolate->kind==EXR_PDF_BOOL && interpolate->u.integer;
+  t->texture.bitmap.pixels=malloc((size_t)t->texture.bitmap.stride*t->texture.bitmap.height);
+  if(!t->texture.bitmap.pixels) { free(t); return NULL; }
+  memset(t->texture.bitmap.pixels,255,(size_t)t->texture.bitmap.stride*t->texture.bitmap.height);
+  if(!depth && smask!=EXR_PDF_NONE && exr_pdf_value_at(file,smask) && exr_pdf_value_at(file,smask)->kind==EXR_PDF_STREAM) {
+    t->texture.mask=diag_placeholder(file,smask,1); t->texture.mask_mode=1;
+  }
+  return &t->texture;
+}
 static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
   unsigned intent,exr_vector_texture **out,exr_bitmap *inks,size_t *work,const exr_control *control,exr_error *e) {
   image_chain chain={0};unsigned kind=0;size_t local_work=0,before,i,bytes;exr_status status;
@@ -509,10 +542,17 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
     }
   }
   if(cache) cache->stats.misses++;
+  { const char *skip=getenv("EXR_ATTRIBUTION_SKIP");
+    if(skip && !strcmp(skip,"image-decode") && !inks) {
+      *out=diag_placeholder(file,image,0);
+      return *out ? exr_fail(e,EXR_OK,"") : exr_fail(e,EXR_UNSUPPORTED,"image-decode ablation placeholder unavailable");
+    } }
   before=*work;
   if(cache && cache->profile) started=image_time_ms();
   status=decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,inks);
   if(cache && cache->profile) cache->stats.decode_ms+=image_time_ms()-started;
+  if(cache && cache->profile && getenv("EXR_ATTRIBUTION_TRACE")) { const exr_vector_texture *t=status==EXR_OK ? *out : NULL;
+    fprintf(stderr,"IMGDEC %u %.6f %u %u %d\n",(unsigned)image,image_time_ms()-started,t ? (unsigned)t->bitmap.width : 0u,t ? (unsigned)t->bitmap.height : 0u,t && t->mask ? 1 : 0); }
   if(status==EXR_OK && cache) {
     unsigned skip=((pdf_texture *)*out)->uncacheable;
     if(skip&2) cache->stats.wide_bypasses++;

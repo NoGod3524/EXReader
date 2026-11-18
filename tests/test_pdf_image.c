@@ -112,6 +112,30 @@ static void affine(void) {
       CHECK(!memcmp(target,reference,256));
     }
   }
+  /* Solid-mask SIMD blending into an opaque RGBA destination must match the
+     generic sampler across every mask byte and source channel byte, with
+     varying destination colors and clip coverage. */
+  { unsigned char rgb[4],gray[1024],initial[1024],drawn[1024],reference[1024],cover[256],white[4]={255,255,255,255};
+    exr_vector_texture color={0},opacity={0},unit={0};exr_bitmap out={0},other,coverage={0};
+    const double m[6]={256,0,0,1,0,0};
+    color.bitmap=(exr_bitmap){.width=1,.height=1,.channels=4,.stride=4,.pixels=rgb};
+    opacity.bitmap=(exr_bitmap){.width=256,.height=1,.channels=4,.stride=1024,.pixels=gray};
+    unit.bitmap=(exr_bitmap){.width=1,.height=1,.channels=4,.stride=4,.pixels=white};color.mask=&opacity;color.mask_mode=1;opacity.mask_mode=2;
+    out=(exr_bitmap){.width=256,.height=1,.channels=4,.stride=1024,.pixels=drawn};other=out;other.pixels=reference;
+    coverage=(exr_bitmap){.width=256,.height=1,.channels=1,.stride=256,.pixels=cover};
+    for(unsigned trial=0;trial<256;trial++) {
+      rgb[0]=(unsigned char)trial;rgb[1]=(unsigned char)(255-trial);rgb[2]=(unsigned char)(trial*37);rgb[3]=255;
+      for(unsigned x=0;x<256;x++) {
+        gray[x*4]=gray[x*4+1]=gray[x*4+2]=(unsigned char)x;gray[x*4+3]=255;
+        initial[x*4]=(unsigned char)x;initial[x*4+1]=(unsigned char)(x*17+trial);initial[x*4+2]=(unsigned char)(trial*31+x*7);initial[x*4+3]=255;
+        cover[x]=(unsigned char)(x*53+trial);
+      }
+      memcpy(drawn,initial,sizeof(drawn));memcpy(reference,initial,sizeof(reference));
+      opacity.mask=NULL;OK(exr_vector_texture_paint(&out,&color,m,1,trial&1 ? &coverage : NULL,NULL,NULL,&error));
+      opacity.mask=&unit;OK(exr_vector_texture_paint(&other,&color,m,1,trial&1 ? &coverage : NULL,NULL,NULL,&error));
+      CHECK(!memcmp(drawn,reference,sizeof(drawn)));
+    }
+  }
   /* Axis-aligned unmasked nearest images take a tabulated fast path. An opaque
      unit mask multiplies every sample by exactly 1 and forces the generic
      sampler, so both renders must match byte for byte: flipped and fractional
@@ -138,6 +162,45 @@ static void affine(void) {
       color.mask=&unit;color.mask_mode=2;
       OK(exr_vector_texture_blend(&other,&color,m,alpha,cover,mode,NULL,NULL,NULL,&error));
       CHECK(memcmp(target,initial,256) && !memcmp(target,reference,256));
+    }
+  }
+  /* Axis-aligned interpolated images, unmasked or with an image soft mask,
+     take the converted-row axis path. A nested opaque unit mask forces the
+     generic sampler and scales by exactly 1, so both renders must match byte
+     for byte: up- and downscales, flips, fractional and off-target placement,
+     mask grids unlike the image's, nearest and interpolated masks, both mask
+     modes, transparent texels and destinations, clip coverage and alpha. */
+  { static const double placements[][4]={{24,20,0,0},{-17.5,9.25,20.9,-.3},{6.7,-21.2,3.4,19.6},{30.5,26,-3.1,-2.7},{3.3,2.9,10.2,8.6},{11,13,-.5,6.25}};
+    static const unsigned sizes[][4]={{5,4,5,4},{7,3,4,6},{9,8,3,2},{2,2,6,5}};
+    unsigned char colors[288],masks[144],white[4]={255,255,255,255},drawn[1920],reference[1920],initial[1920],cover[480];
+    exr_vector_texture color={0},opacity={0},unit={0},child={0};exr_bitmap out={0},other,coverage={0};unsigned trial,i;
+    out.width=24;out.height=20;out.channels=4;out.stride=96;out.pixels=drawn;other=out;other.pixels=reference;
+    coverage.width=24;coverage.height=20;coverage.channels=1;coverage.stride=24;coverage.pixels=cover;
+    for(i=0;i<sizeof(cover);i++) cover[i]=(unsigned char)(i*53);
+    unit.bitmap.width=unit.bitmap.height=1;unit.bitmap.channels=unit.bitmap.stride=4;unit.bitmap.pixels=white;
+    child=unit;child.mask=&unit;child.mask_mode=2;
+    color.bitmap.channels=opacity.bitmap.channels=4;color.bitmap.pixels=colors;opacity.bitmap.pixels=masks;color.interpolate=1;
+    for(trial=0;trial<384;trial++) {
+      const double *p=placements[trial%6],m[6]={p[0],0,0,p[1],p[2],p[3]};const unsigned *z=sizes[(trial/6)%4],variant=trial/24;
+      double alpha=variant&1 ? 1 : .63;const exr_bitmap *clip_used=variant&2 ? &coverage : NULL;
+      color.bitmap.width=z[0];color.bitmap.height=z[1];color.bitmap.stride=z[0]*4;
+      opacity.bitmap.width=z[2];opacity.bitmap.height=z[3];opacity.bitmap.stride=z[2]*4;opacity.interpolate=(variant&4)!=0;
+      for(i=0;i<sizeof(colors);i++) colors[i]=(unsigned char)(i*37+trial*23);
+      for(i=0;i<sizeof(masks);i++) masks[i]=(unsigned char)(i*41+trial*11);
+      colors[3]=0;colors[7]=255;
+      for(i=0;i<sizeof(initial);i++) initial[i]=(unsigned char)(i*13+trial);
+      for(i=3;i<sizeof(initial);i+=12) initial[i]=0;
+      /* Soft-masked. */
+      color.mask=&opacity;color.mask_mode=variant&8 ? 2 : 1;
+      memcpy(drawn,initial,sizeof(drawn));memcpy(reference,initial,sizeof(reference));
+      opacity.mask=NULL;OK(exr_vector_texture_paint(&out,&color,m,alpha,clip_used,NULL,NULL,&error));
+      opacity.mask=&unit;opacity.mask_mode=2;OK(exr_vector_texture_paint(&other,&color,m,alpha,clip_used,NULL,NULL,&error));
+      CHECK(memcmp(drawn,initial,sizeof(drawn)) && !memcmp(drawn,reference,sizeof(drawn)));
+      /* Unmasked. */
+      memcpy(drawn,initial,sizeof(drawn));memcpy(reference,initial,sizeof(reference));
+      color.mask=NULL;OK(exr_vector_texture_paint(&out,&color,m,alpha,clip_used,NULL,NULL,&error));
+      color.mask=&child;color.mask_mode=2;OK(exr_vector_texture_paint(&other,&color,m,alpha,clip_used,NULL,NULL,&error));
+      CHECK(memcmp(drawn,initial,sizeof(drawn)) && !memcmp(drawn,reference,sizeof(drawn)));
     }
   }
 }
