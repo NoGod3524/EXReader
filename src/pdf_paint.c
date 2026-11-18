@@ -142,13 +142,14 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
   exr_status status; paint_mask mask={0}; if(!r->sink.base.image && !native) return EXR_OK;
   if(diag_skip("image")) return EXR_OK;
   /* Ablation split: "image-paint" performs the decode but skips drawing, so
-     decode cost = t(image-paint) - t(image) and paint cost = t(full) - t(image-paint). */
+     decode cost = t(image-paint) - t(image) and paint cost = t(full) - t(image-paint).
+     "image-decode" (pdf_image.c) paints a same-shaped placeholder instead of decoding. */
   int ablation_paint=diag_skip("image-paint");
   double started=diag_ms();
   if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
   status=exr_pdf_image_load_inks(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,native ? &inks : NULL,r->work,r->control,e);
   multiply(paint->matrix,flip,matrix);
-  if(ablation_paint) return EXR_OK;
+  if(ablation_paint) { exr_pdf_image_release(image);free(inks.pixels);return status; }
   if(status==EXR_OK) status=exr_sink_alpha_source(&r->sink,EXR_ALPHA_IMAGE_SHAPE|(paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0),e);
   if(status==EXR_OK) status=blend_state(r,paint->blend,e);
   /* ISO 32000-1 11.6.4.3: either image mask overrides the graphics-state mask. */

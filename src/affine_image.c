@@ -323,6 +323,129 @@ static inline void converted_sample(const converted_row *r0,const converted_row 
   *rg=_mm_add_pd(*rg,red_green);*ba=_mm_add_pd(*ba,blue_alpha);
 }
 #endif
+#if defined(__SSE2__) || defined(_M_X64)
+/* One layer of the axis path: column taps on its own width, and for an
+   interpolated layer the converted-row cache over the used span. A nearest
+   layer stores the generic sampler's clamped texel in first. */
+typedef struct { const exr_bitmap *bitmap; image_tap *columns; double *storage; converted_row slots[4]; unsigned lo,hi; int interpolate; } axis_layer;
+static void axis_layer_free(axis_layer *l) { free(l->columns);free(l->storage); }
+static int axis_layer_init(axis_layer *l,const exr_bitmap *b,int interpolate,const double inv[6],int x0,int y0,size_t width) {
+  memset(l,0,sizeof(*l)); l->bitmap=b; l->interpolate=interpolate; l->lo=b->width;
+  l->columns=malloc(2*width*sizeof(*l->columns)); if(!l->columns) return 0;
+  for(size_t i=0;i<2*width;i++) {
+    double px=(x0+(int)(i>>1))+.25+.5*(i&1),u=inv[0]*px+inv[2]*(y0+.25)+inv[4];
+    if(u<0 || u>=1) { l->columns[i]=(image_tap){0,-1,-1}; continue; }
+    if(!interpolate) { uint32_t t=(uint32_t)(u*b->width); if(t>=b->width) t=b->width-1; l->columns[i]=(image_tap){0,(int)t,(int)t}; continue; }
+    l->columns[i]=bilinear_tap(u,b->width);
+    if((unsigned)l->columns[i].first<l->lo) l->lo=(unsigned)l->columns[i].first;
+    if((unsigned)l->columns[i].first+1>l->hi) l->hi=(unsigned)l->columns[i].first+1;
+  }
+  if(!interpolate) return 1;
+  /* Convert each source row once when the used span is comparable to the
+     destination width; strong minification keeps per-tap conversion. */
+  if(l->lo>l->hi || (size_t)(l->hi-l->lo)>4*width) return 0;
+  size_t span=(size_t)(l->hi-l->lo+1);
+  l->storage=malloc(4*5*span*sizeof(double)); if(!l->storage) return 0;
+  for(unsigned s=0;s<4;s++) { l->slots[s].row=-1;l->slots[s].rgb1=l->storage+s*5*span;l->slots[s].alpha=l->slots[s].rgb1+4*span; }
+  return 1;
+}
+/* One destination row of the axis path. */
+typedef struct {
+  exr_bitmap *target; const unsigned char *coverage; const axis_layer *color,*mask; double alpha; int y,x0,x1,luminosity,valid[2];
+  const converted_row *crows[2][2],*mrows[2][2]; double cwy[2][2],mwy[2][2]; const unsigned char *mline[2];
+} axis_row;
+/* texture_sample's mask factor: a=(mode 1 ? m0/255 : m3)/255. */
+static inline double axis_mask_factor(int luminosity,double m0,double m3) { return (luminosity ? m0/255 : m3)/255; }
+static inline void axis_store(const axis_row *r,int x,const double sums[4],unsigned coverage) {
+  if(!sums[3]) return;
+  uint32_t color=image_byte(sums[3]*r->alpha/4);
+  for(unsigned k=0;k<3;k++) color|=image_byte(sums[k]/sums[3])<<(24-8*k);
+  exr_pixel(r->target,x,r->y,color,coverage);
+}
+static void axis_row_paint(const axis_row *r) {
+  const axis_layer *c=r->color,*m=r->mask;
+  for(int x=r->x0;x<r->x1;x++) {
+    unsigned coverage=r->coverage ? r->coverage[x] : 255;
+    const image_tap *cc=c->columns+2*(size_t)(x-r->x0),*mc=m ? m->columns+2*(size_t)(x-r->x0) : NULL;
+    __m128d rg=_mm_setzero_pd(),ba=_mm_setzero_pd();double sums[4];
+    if(!coverage) continue;
+    for(unsigned sy=0;sy<2;sy++) if(r->valid[sy]) {
+      __m128d cy0=_mm_set1_pd(r->cwy[sy][0]),cy1=_mm_set1_pd(r->cwy[sy][1]);
+      for(unsigned sx=0;sx<2;sx++) if(cc[sx].first>=0) {
+        __m128d w=_mm_set_pd(cc[sx].fraction,1-cc[sx].fraction);
+        size_t index=(size_t)(cc[sx].first-(int)c->lo);
+        if(!m) { converted_sample(r->crows[sy][0],r->crows[sy][1],index,w,cy0,cy1,&rg,&ba); continue; }
+        __m128d srg=_mm_setzero_pd(),sba=_mm_setzero_pd();double m0,m3;
+        converted_sample(r->crows[sy][0],r->crows[sy][1],index,w,cy0,cy1,&srg,&sba);
+        if(m->interpolate) {
+          __m128d mrg=_mm_setzero_pd(),mba=_mm_setzero_pd();
+          converted_sample(r->mrows[sy][0],r->mrows[sy][1],(size_t)(mc[sx].first-(int)m->lo),
+            _mm_set_pd(mc[sx].fraction,1-mc[sx].fraction),_mm_set1_pd(r->mwy[sy][0]),_mm_set1_pd(r->mwy[sy][1]),&mrg,&mba);
+          m0=_mm_cvtsd_f64(mrg);m3=_mm_cvtsd_f64(_mm_unpackhi_pd(mba,mba));
+        } else { const unsigned char *p=r->mline[sy]+(size_t)mc[sx].first*4; m3=p[3];m0=p[0]*m3; }
+        __m128d a=_mm_set1_pd(axis_mask_factor(r->luminosity,m0,m3));
+        rg=_mm_add_pd(rg,_mm_mul_pd(srg,a));ba=_mm_add_pd(ba,_mm_mul_pd(sba,a));
+      }
+    }
+    _mm_storeu_pd(sums,rg);_mm_storeu_pd(sums+2,ba);
+    axis_store(r,x,sums,coverage);
+  }
+}
+/* Axis-aligned interpolated image, optionally with an image soft mask (no
+   matte, no nested mask), without composite state. Per subsample this is
+   the generic loop's sample/texture_sample: the color sample, the mask
+   sample on the mask's own grid, out*=a, then the running sums in the same
+   sy/sx order. Unmasked, the sample adds to the sums directly as
+   bilinear_axis always did. Returns 0 when the converted-row form does not
+   apply. */
+static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vector_texture *mt,unsigned mask_mode,const double inv[6],double alpha,
+                      const exr_bitmap *clip,int x0,int y0,int x1,int y1,size_t cost,
+                      size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+  axis_layer color,mask; size_t width;
+  if(inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
+  if(!isfinite(inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4]) || !isfinite(inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4]) ||
+     !isfinite(inv[1]*(x0+.25)+inv[3]*(y0+.25)+inv[5]) || !isfinite(inv[1]*(x0+.25)+inv[3]*(y1-.25)+inv[5])) return 0;
+  width=(size_t)(x1-x0); memset(&mask,0,sizeof(mask));
+  if(!axis_layer_init(&color,source,1,inv,x0,y0,width) ||
+     (mt && !axis_layer_init(&mask,&mt->bitmap,(int)mt->interpolate,inv,x0,y0,width))) {
+    axis_layer_free(&color);axis_layer_free(&mask); return 0;
+  }
+  *result=EXR_OK;
+  for(int y=y0;y<y1;y++) {
+    *result=exr_control_cancel(control,e);
+    if(*result!=EXR_OK) break;
+    if(!exr_vector_work(work,width*cost)) { *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break; }
+    axis_row r; int cneed[4],mneed[4]; unsigned ccount=0,mcount=0; image_tap ctap[2]={{0,0,0},{0,0,0}},mtap[2]={{0,0,0},{0,0,0}};
+    memset(&r,0,sizeof(r));
+    r.target=target;r.coverage=clip ? clip->pixels+(size_t)y*clip->stride : NULL;r.color=&color;r.mask=mt ? &mask : NULL;
+    r.alpha=alpha;r.y=y;r.x0=x0;r.x1=x1;r.luminosity=mask_mode==1;
+    for(unsigned sy=0;sy<2;sy++) {
+      double py=y+.25+.5*sy,v=inv[1]*(x0+.25)+inv[3]*py+inv[5];
+      if(v<0 || v>=1) continue;
+      r.valid[sy]=1; ctap[sy]=bilinear_tap(v,source->height);
+      cneed[ccount++]=ctap[sy].first;cneed[ccount++]=ctap[sy].second;
+      if(!mt) continue;
+      if(mask.interpolate) { mtap[sy]=bilinear_tap(v,mt->bitmap.height);mneed[mcount++]=mtap[sy].first;mneed[mcount++]=mtap[sy].second; }
+      else { uint32_t t=(uint32_t)(v*mt->bitmap.height); if(t>=mt->bitmap.height) t=mt->bitmap.height-1; r.mline[sy]=mt->bitmap.pixels+(size_t)t*mt->bitmap.stride; }
+    }
+    if(!ccount) continue;
+    for(unsigned sy=0;sy<2;sy++) if(r.valid[sy]) {
+      r.crows[sy][0]=find_row(color.slots,cneed,ccount,ctap[sy].first,source,color.lo,color.hi);
+      r.crows[sy][1]=find_row(color.slots,cneed,ccount,ctap[sy].second,source,color.lo,color.hi);
+      r.cwy[sy][0]=1-ctap[sy].fraction;r.cwy[sy][1]=ctap[sy].fraction;
+      if(mt && mask.interpolate) {
+        r.mrows[sy][0]=find_row(mask.slots,mneed,mcount,mtap[sy].first,&mt->bitmap,mask.lo,mask.hi);
+        r.mrows[sy][1]=find_row(mask.slots,mneed,mcount,mtap[sy].second,&mt->bitmap,mask.lo,mask.hi);
+        r.mwy[sy][0]=1-mtap[sy].fraction;r.mwy[sy][1]=mtap[sy].fraction;
+      }
+    }
+    axis_row_paint(&r);
+  }
+  axis_layer_free(&color);axis_layer_free(&mask);
+  if(*result==EXR_OK) *result=exr_fail(e,EXR_OK,"");
+  return 1;
+}
+#endif
 /* The separable transform gives each column the same two horizontal taps
    on every row. Keep the generic tap, weight and summation order. */
 static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
@@ -332,6 +455,9 @@ static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const doubl
   double x_first=inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4],x_last=inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4];
   double y_first=inv[1]*(x0+.25)+inv[3]*(y0+.25)+inv[5],y_last=inv[1]*(x0+.25)+inv[3]*(y1-.25)+inv[5];
   if(!isfinite(x_first) || !isfinite(x_last) || !isfinite(y_first) || !isfinite(y_last)) return 0;
+#if defined(__SSE2__) || defined(_M_X64)
+  if(axis_paint(target,source,NULL,0,inv,alpha,clip,x0,y0,x1,y1,cost,work,control,e,result)) return 1;
+#endif
   size_t width=(size_t)(x1-x0);
   image_tap *columns=malloc(2*width*sizeof(*columns));
   if(!columns) return 0;
@@ -345,59 +471,6 @@ static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const doubl
       if((unsigned)columns[i].first+1>hi) hi=(unsigned)columns[i].first+1;
     }
   }
-#if defined(__SSE2__) || defined(_M_X64)
-  /* Convert each source row once when the used span is comparable to the
-     destination width; strong minification keeps per-tap conversion. */
-  double *storage_rows=lo<=hi && (size_t)(hi-lo)<=4*width ? malloc(4*5*(size_t)(hi-lo+1)*sizeof(double)) : NULL;
-  if(storage_rows) {
-    converted_row slots[4];size_t span=(size_t)(hi-lo+1);
-    for(unsigned s=0;s<4;s++) { slots[s].row=-1;slots[s].rgb1=storage_rows+s*5*span;slots[s].alpha=slots[s].rgb1+4*span; }
-    for(int y=y0;y<y1;y++) {
-      *result=exr_control_cancel(control,e);
-      if(*result!=EXR_OK) break;
-      if(!exr_vector_work(work,width*cost)) {
-        *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break;
-      }
-      const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
-      image_tap taps[2];int valid[2]={0,0},need[4];unsigned count=0;
-      const converted_row *rows[2][2]={{NULL,NULL},{NULL,NULL}};__m128d wy[2][2];
-      for(unsigned sy=0;sy<2;sy++) {
-        double py=y+.25+.5*sy,v=inv[1]*(x0+.25)+inv[3]*py+inv[5];
-        if(v<0 || v>=1) continue;
-        taps[sy]=bilinear_tap(v,source->height);valid[sy]=1;
-        need[count++]=taps[sy].first;need[count++]=taps[sy].second;
-      }
-      if(!count) continue;
-      for(unsigned sy=0;sy<2;sy++) if(valid[sy]) {
-        double fraction=taps[sy].fraction;
-        rows[sy][0]=find_row(slots,need,count,taps[sy].first,source,lo,hi);
-        rows[sy][1]=find_row(slots,need,count,taps[sy].second,source,lo,hi);
-        wy[sy][0]=_mm_set1_pd(1-fraction);wy[sy][1]=_mm_set1_pd(fraction);
-      }
-      for(int x=x0;x<x1;x++) {
-        unsigned coverage=mask ? mask[x] : 255;
-        const image_tap *column=columns+2*(size_t)(x-x0);
-        __m128d rg=_mm_setzero_pd(),ba=_mm_setzero_pd();double sums[4];
-        if(!coverage) continue;
-        for(unsigned sy=0;sy<2;sy++) if(valid[sy]) {
-          for(unsigned sx=0;sx<2;sx++) if(column[sx].first>=0) {
-            double fraction=column[sx].fraction;
-            converted_sample(rows[sy][0],rows[sy][1],(size_t)(column[sx].first-(int)lo),
-              _mm_set_pd(fraction,1-fraction),wy[sy][0],wy[sy][1],&rg,&ba);
-          }
-        }
-        _mm_storeu_pd(sums,rg);_mm_storeu_pd(sums+2,ba);
-        if(!sums[3]) continue;
-        uint32_t color=image_byte(sums[3]*alpha/4);
-        for(unsigned k=0;k<3;k++) color|=image_byte(sums[k]/sums[3])<<(24-8*k);
-        exr_pixel(target,x,y,color,coverage);
-      }
-    }
-    free(storage_rows);free(columns);
-    if(*result==EXR_OK) *result=exr_fail(e,EXR_OK,"");
-    return 1;
-  }
-#endif
   for(int y=y0;y<y1;y++) {
     *result=exr_control_cancel(control,e);
     if(*result!=EXR_OK) break;
@@ -485,6 +558,10 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
     if(nearest_axis(target,source,inv,alpha,clip,mode,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
     if(source->interpolate && !source->mask && !source->has_matte && mode==EXR_BLEND_NORMAL && target->channels==4 &&
        bilinear_axis(target,&source->bitmap,inv,alpha,clip,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
+#if defined(__SSE2__) || defined(_M_X64)
+    if(source->interpolate && source->mask && !source->mask->mask && !source->has_matte && mode==EXR_BLEND_NORMAL && target->channels==4 &&
+       axis_paint(target,&source->bitmap,source->mask,source->mask_mode,inv,alpha,clip,x0,y0,x1,y1,cost,work,control,e,&fast)) return fast;
+#endif
   }
 #endif
   /* Bound the validation scan by the destination work. Endpoints ensure the
