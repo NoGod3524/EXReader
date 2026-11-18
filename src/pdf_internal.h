@@ -6,6 +6,13 @@
 #include "vector_internal.h"
 #include "buffer_pool_internal.h"
 #define EXR_PDF_NONE UINT32_MAX
+typedef enum {
+  EXR_DIAG_NONE,EXR_DIAG_IMAGE,EXR_DIAG_IMAGE_PAINT,EXR_DIAG_IMAGE_DECODE,
+  EXR_DIAG_PATH,EXR_DIAG_GLYPH,EXR_DIAG_GROUP,EXR_DIAG_SHADING,EXR_DIAG_SOFTMASK
+} exr_pdf_diag_mode;
+/* Set EXR_ATTRIBUTION_SKIP before process startup. The first diagnostic check
+   snapshots it process-wide; later environment changes have no effect. */
+int exr_pdf_diag_skip(exr_pdf_diag_mode mode);
 /* Consumes data on success and failure, like the CBZ owned adapter. */
 exr_status exr_pptx_open_owned(unsigned char *data,size_t size,const char *title,
   const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *error);

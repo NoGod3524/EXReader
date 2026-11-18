@@ -19,6 +19,8 @@ Subcommands:
           process, sides alternate ABAB/BABA, and every run is idle-gated.
   ablate  Per-class disabling with a diagnostic DLL that honours
           EXR_ATTRIBUTION_SKIP=<image|path|glyph|group|shading|softmask>.
+          Set it before starting each process: the first diagnostic check caches
+          this toggle process-wide; changing it during a run has no effect.
           Each disabled arm alternates with a fresh full-render control.
   child   (internal) one unified sample.
 

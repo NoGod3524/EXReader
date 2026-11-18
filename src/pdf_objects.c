@@ -3,6 +3,24 @@
 #include "pdf_crypto.h"
 #include <miniz.h>
 #include <inttypes.h>
+#include <stdatomic.h>
+int exr_pdf_diag_skip(exr_pdf_diag_mode mode) {
+  static atomic_int cached=ATOMIC_VAR_INIT(-1);
+  int value=atomic_load_explicit(&cached,memory_order_acquire);
+  if(value<0) {
+    int expected=-1;
+    if(atomic_compare_exchange_strong_explicit(&cached,&expected,-2,memory_order_acq_rel,memory_order_acquire)) {
+      static const char *const names[]={"","image","image-paint","image-decode","path","glyph","group","shading","softmask"};
+      const char *name=getenv("EXR_ATTRIBUTION_SKIP");
+      value=EXR_DIAG_NONE;
+      if(name) for(unsigned i=1;i<sizeof(names)/sizeof(*names);i++) if(!strcmp(name,names[i])) { value=(int)i;break; }
+      atomic_store_explicit(&cached,value,memory_order_release);
+    } else {
+      do { value=atomic_load_explicit(&cached,memory_order_acquire); } while(value<0);
+    }
+  }
+  return value==(int)mode;
+}
 #define PDF_MAX_OBJECTS 1048576u
 #define PDF_MAX_VALUES EXR_PDF_MAX_VALUES
 #define PDF_MAX_STRINGS ((size_t)32*1024*1024)

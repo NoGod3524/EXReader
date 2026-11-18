@@ -123,8 +123,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   if(id!=EXR_PDF_NONE) { uint32_t value; if(!integer(&r,id,&value) || value) goto invalid; }
   mask=get(&r,image,"SMask");
   if(mask!=EXR_PDF_NONE && name_is(&r,mask,"None")) mask=EXR_PDF_NONE;
-  const char *diag_skip=getenv("EXR_ATTRIBUTION_SKIP");
-  if(mask!=EXR_PDF_NONE && diag_skip && !strcmp(diag_skip,"softmask")) {
+  if(mask!=EXR_PDF_NONE && exr_pdf_diag_skip(EXR_DIAG_SOFTMASK)) {
     soft=1;
     mask=EXR_PDF_NONE;
   }
@@ -542,8 +541,7 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
     }
   }
   if(cache) cache->stats.misses++;
-  { const char *skip=getenv("EXR_ATTRIBUTION_SKIP");
-    if(skip && !strcmp(skip,"image-decode") && !inks) {
+  { if(exr_pdf_diag_skip(EXR_DIAG_IMAGE_DECODE) && !inks) {
       *out=diag_placeholder(file,image,0);
       return *out ? exr_fail(e,EXR_OK,"") : exr_fail(e,EXR_UNSUPPORTED,"image-decode ablation placeholder unavailable");
     } }
