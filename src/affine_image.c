@@ -386,9 +386,9 @@ static inline void axis_store(const axis_row *r,int x,const double sums[4],unsig
   for(unsigned k=0;k<3;k++) color|=image_byte(sums[k]/sums[3])<<(24-8*k);
   exr_pixel(r->target,x,r->y,color,coverage);
 }
-static void axis_row_paint(const axis_row *r) {
+static void axis_row_paint(const axis_row *r,int first,int last) {
   const axis_layer *c=r->color,*m=r->mask;
-  for(int x=r->x0;x<r->x1;x++) {
+  for(int x=first;x<last;x++) {
     unsigned coverage=r->coverage ? r->coverage[x] : 255;
     const image_tap *cc=c->columns+2*(size_t)(x-r->x0),*mc=m ? m->columns+2*(size_t)(x-r->x0) : NULL;
     __m128d rg=_mm_setzero_pd(),ba=_mm_setzero_pd();double sums[4];
@@ -415,6 +415,63 @@ static void axis_row_paint(const axis_row *r) {
     axis_store(r,x,sums,coverage);
   }
 }
+static int has_flat_footprints(const exr_bitmap *source) {
+  /* A few adjacent pairs keep continuously varying images on the regular path. */
+  unsigned matches=0;
+  if(source->width<128 || source->height<128) return 0;
+  for(unsigned i=1;i<=4;i++) {
+    unsigned x=source->width*i/5,y=source->height*i/5;
+    const unsigned char *p=source->pixels+(size_t)y*source->stride+(size_t)x*4;
+    if(p[3]==255 && !memcmp(p,p+4,4) && !memcmp(p,p+source->stride,4)) matches++;
+  }
+  return matches>=2;
+}
+static void axis_flat_row_paint(const axis_row *r,const image_tap ytaps[2]) {
+  const exr_bitmap *color=r->color->bitmap,*mask=r->mask ? r->mask->bitmap : NULL;
+  int top=ytaps[0].first<ytaps[1].first ? ytaps[0].first : ytaps[1].first;
+  int bottom=ytaps[0].second>ytaps[1].second ? ytaps[0].second : ytaps[1].second;
+  const unsigned char *rows[4],*masks[4];
+  int pending=r->x0,next=0;
+  if(!r->valid[0] || !r->valid[1] || bottom-top>=4) {
+    axis_row_paint(r,r->x0,r->x1);
+    return;
+  }
+  for(int i=0;i<=bottom-top;i++) {
+    rows[i]=color->pixels+(size_t)(top+i)*color->stride;
+    masks[i]=mask ? mask->pixels+(size_t)(top+i)*mask->stride : NULL;
+  }
+  for(int x=r->x0;x<r->x1;) {
+    const image_tap *tap=r->color->columns+2*(size_t)(x-r->x0);
+    int left=tap[0].first,right=tap[1].second;
+    if(left<next || right<0) { x++;continue; }
+    const unsigned char *p=rows[0]+(size_t)left*4,*q=mask ? masks[0]+(size_t)left*4 : NULL;
+    next=left+1;
+    if(p[3]!=255 || (q && q[3]!=255)) { x++;continue; }
+    /* All four subsamples lie inside this footprint. Equal opaque texels
+       interpolate to their byte values within rounding error. The nearest
+       gray mask samples the same footprint, so alpha also rounds to its byte. */
+    int limit=r->color->hi<(unsigned)color->width ? (int)r->color->hi : (int)color->width-1;
+    int col=left;
+    for(;col<=limit;col++) {
+      size_t offset=(size_t)col*4;
+      int i=0;
+      while(i<=bottom-top && !memcmp(rows[i]+offset,p,4) &&
+            (!mask || !memcmp(masks[i]+offset,q,4))) i++;
+      if(i<=bottom-top) break;
+    }
+    if(right>=col) { if(col>next) next=col;x++;continue; }
+    next=col;
+    if(pending<x) axis_row_paint(r,pending,x);
+    uint32_t rgba=((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|(q ? q[0] : 255);
+    do {
+      unsigned coverage=r->coverage ? r->coverage[x] : 255;
+      exr_pixel(r->target,x,r->y,rgba,coverage);
+      x++;tap+=2;
+    } while(x<r->x1 && tap[1].second>=0 && tap[1].second<next);
+    pending=x;
+  }
+  if(pending<r->x1) axis_row_paint(r,pending,r->x1);
+}
 /* Axis-aligned interpolated image, optionally with an image soft mask (no
    matte, no nested mask), without composite state. Per subsample this is
    the generic loop's sample/texture_sample: the color sample, the mask
@@ -434,6 +491,9 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
      (mt && !axis_layer_init(&mask,&mt->bitmap,(int)mt->interpolate,inv,x0,y0,width))) {
     axis_layer_free(&color);axis_layer_free(&mask); return 0;
   }
+  int flat=alpha==1 && inv[0]>0 && inv[0]*source->width<=1 && fabs(inv[3])*source->height<=1 &&
+    (!mt || (mask_mode==1 && !mask.interpolate && mt->bitmap.width==source->width && mt->bitmap.height==source->height)) &&
+    has_flat_footprints(source) && fegetround()==FE_TONEAREST;
   *result=EXR_OK;
   for(int y=y0;y<y1;y++) {
     *result=exr_control_cancel(control,e);
@@ -463,7 +523,8 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
         r.mwy[sy][0]=1-mtap[sy].fraction;r.mwy[sy][1]=mtap[sy].fraction;
       }
     }
-    axis_row_paint(&r);
+    if(flat) axis_flat_row_paint(&r,ctap);
+    else axis_row_paint(&r,r.x0,r.x1);
   }
   axis_layer_free(&color);axis_layer_free(&mask);
   if(*result==EXR_OK) *result=exr_fail(e,EXR_OK,"");
