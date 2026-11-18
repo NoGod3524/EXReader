@@ -112,6 +112,30 @@ static void affine(void) {
       CHECK(!memcmp(target,reference,256));
     }
   }
+  /* Solid-mask SIMD blending into an opaque RGBA destination must match the
+     generic sampler across every mask byte and source channel byte, with
+     varying destination colors and clip coverage. */
+  { unsigned char rgb[4],gray[1024],initial[1024],drawn[1024],reference[1024],cover[256],white[4]={255,255,255,255};
+    exr_vector_texture color={0},opacity={0},unit={0};exr_bitmap out={0},other,coverage={0};
+    const double m[6]={256,0,0,1,0,0};
+    color.bitmap=(exr_bitmap){.width=1,.height=1,.channels=4,.stride=4,.pixels=rgb};
+    opacity.bitmap=(exr_bitmap){.width=256,.height=1,.channels=4,.stride=1024,.pixels=gray};
+    unit.bitmap=(exr_bitmap){.width=1,.height=1,.channels=4,.stride=4,.pixels=white};color.mask=&opacity;color.mask_mode=1;opacity.mask_mode=2;
+    out=(exr_bitmap){.width=256,.height=1,.channels=4,.stride=1024,.pixels=drawn};other=out;other.pixels=reference;
+    coverage=(exr_bitmap){.width=256,.height=1,.channels=1,.stride=256,.pixels=cover};
+    for(unsigned trial=0;trial<256;trial++) {
+      rgb[0]=(unsigned char)trial;rgb[1]=(unsigned char)(255-trial);rgb[2]=(unsigned char)(trial*37);rgb[3]=255;
+      for(unsigned x=0;x<256;x++) {
+        gray[x*4]=gray[x*4+1]=gray[x*4+2]=(unsigned char)x;gray[x*4+3]=255;
+        initial[x*4]=(unsigned char)x;initial[x*4+1]=(unsigned char)(x*17+trial);initial[x*4+2]=(unsigned char)(trial*31+x*7);initial[x*4+3]=255;
+        cover[x]=(unsigned char)(x*53+trial);
+      }
+      memcpy(drawn,initial,sizeof(drawn));memcpy(reference,initial,sizeof(reference));
+      opacity.mask=NULL;OK(exr_vector_texture_paint(&out,&color,m,1,trial&1 ? &coverage : NULL,NULL,NULL,&error));
+      opacity.mask=&unit;OK(exr_vector_texture_paint(&other,&color,m,1,trial&1 ? &coverage : NULL,NULL,NULL,&error));
+      CHECK(!memcmp(drawn,reference,sizeof(drawn)));
+    }
+  }
   /* Axis-aligned unmasked nearest images take a tabulated fast path. An opaque
      unit mask multiplies every sample by exactly 1 and forces the generic
      sampler, so both renders must match byte for byte: flipped and fractional

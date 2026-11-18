@@ -163,10 +163,18 @@ static int nearest_index(double coordinate,unsigned extent) {
   index=(unsigned)(coordinate*extent);
   return (int)(index<extent ? index : extent-1);
 }
+#if defined(__GNUC__)
+__attribute__((noinline))
+#elif defined(_MSC_VER)
+__declspec(noinline)
+#endif
 static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,const double inv[6],
                                   const exr_bitmap *clip,int x0,int y0,int x1,int y1,int *columns,uint32_t rgb,
                                   size_t cost,size_t *work,const exr_control *control,exr_error *e) {
   double px0=x0+.25,py0=y0+.25;
+#if defined(__SSE2__) || defined(_M_X64)
+  const __m128i rgba=_mm_setr_epi16((short)(rgb>>24),(short)((rgb>>16)&255),(short)((rgb>>8)&255),255,0,0,0,0);
+#endif
   /* The cross terms are zero. Retain the general sampler's expression so
      multiply-add contraction cannot move a tap across a texel boundary. */
   for(int x=x0;x<x1;x++) {
@@ -195,6 +203,22 @@ static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,con
          its gray byte exactly. Missing taps contribute zero. Every nonzero
          premultiplied RGB sample has the same straight color. */
       opacity=(opacity+2)/4;
+#if defined(__SSE2__) || defined(_M_X64)
+      if(opacity && target->channels==4) {
+        unsigned char *p=target->pixels+(size_t)y*target->stride+(size_t)x*4;
+        if(p[3]==255) {
+          unsigned a=opacity*covered/255;int packed;memcpy(&packed,p,4);
+          __m128i dst=_mm_unpacklo_epi8(_mm_cvtsi32_si128(packed),_mm_setzero_si128());
+          __m128i sum=_mm_add_epi16(_mm_mullo_epi16(dst,_mm_set1_epi16((short)(255-a))),_mm_mullo_epi16(rgba,_mm_set1_epi16((short)a)));
+          /* For 0 <= n <= 65025, (n+127)/255 equals (t+(t>>8))>>8,
+             t=n+128. All intermediate unsigned lanes fit in 16 bits. */
+          sum=_mm_add_epi16(sum,_mm_set1_epi16(128));
+          sum=_mm_srli_epi16(_mm_add_epi16(sum,_mm_srli_epi16(sum,8)),8);
+          packed=_mm_cvtsi128_si32(_mm_packus_epi16(sum,_mm_setzero_si128()));memcpy(p,&packed,4);
+          continue;
+        }
+      }
+#endif
       if(opacity) exr_pixel(target,x,y,rgb|opacity,covered);
     }
   }

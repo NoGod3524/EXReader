@@ -500,7 +500,7 @@ static exr_vector_texture *diag_placeholder(exr_pdf_file *file,uint32_t image,un
   t->texture.interpolate=interpolate && interpolate->kind==EXR_PDF_BOOL && interpolate->u.integer;
   t->texture.bitmap.pixels=malloc((size_t)t->texture.bitmap.stride*t->texture.bitmap.height);
   if(!t->texture.bitmap.pixels) { free(t); return NULL; }
-  memset(t->texture.bitmap.pixels,depth ? 255 : 128,(size_t)t->texture.bitmap.stride*t->texture.bitmap.height);
+  memset(t->texture.bitmap.pixels,255,(size_t)t->texture.bitmap.stride*t->texture.bitmap.height);
   if(!depth && smask!=EXR_PDF_NONE && exr_pdf_value_at(file,smask) && exr_pdf_value_at(file,smask)->kind==EXR_PDF_STREAM) {
     t->texture.mask=diag_placeholder(file,smask,1); t->texture.mask_mode=1;
   }
