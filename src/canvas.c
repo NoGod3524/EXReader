@@ -187,7 +187,11 @@ exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_p
     memset(c->bitmap.pixels,(int)((r*77+g*150+b*29+128)>>8),bytes);
   } else if(config->background==(config->background&255u)*0x01010101u)
     memset(c->bitmap.pixels,(int)(config->background&255u),bytes);
-  else for(i=0;i<bytes;i+=4) for(k=0;k<4;k++) c->bitmap.pixels[i+k]=(unsigned char)(config->background>>(24-8*k));
+  else {
+    /* One RGBA pixel, then doubling copies: the same bytes as a per-byte loop. */
+    for(k=0;k<4;k++) c->bitmap.pixels[k]=(unsigned char)(config->background>>(24-8*k));
+    for(i=4;i<bytes;i*=2) memcpy(c->bitmap.pixels+i,c->bitmap.pixels,i<bytes-i ? i : bytes-i);
+  }
   *out=c; return exr_fail(e,EXR_OK,"");
 }
 void exr_canvas_union_abort(exr_canvas *c) { if(c) { unref(c,c->group); c->group=NULL; } }
@@ -770,7 +774,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
         if(yy>=y1) y1=yy+1;
       }
     }
-    if(x1>x0 && y1>y0 && (x1-x0)*(y1-y0)<=region_width*region_height/2) {
+    if(x1>x0 && y1>y0 && (x1-x0)*(y1-y0)<region_width*region_height) {
       region_x=(int)x0;region_y=(int)y0;region_width=x1-x0;region_height=y1-y0;
     }
     else if(x1==0 || y1==0) region_width=region_height=1;

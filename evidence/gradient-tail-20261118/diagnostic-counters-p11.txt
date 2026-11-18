@@ -1,0 +1,5 @@
+# diagnostic-counters.py build (main 811fcb198 + counters), real-mixed-120 p11 @1200, warm render.
+# First line: gradient inside the soft-mask group (float group pixels); second: page gradient under the mask.
+PAINT ms=6.0375 1200x900 clip=1 alpha=1 blend=0 state=1 pix=1 smask=0 knock=0 shape=0 gray=0 cmyk=0 type=2 ux=0 uy=-1 rows=536 alignedrows=536 fgrows=536 fmrows=0 run=625950 single=0 cached=1170 sampled=16080 generic=0 obj=17250
+PAINT ms=4.8357 1200x900 clip=1 alpha=1 blend=0 state=1 pix=0 smask=1 knock=0 shape=0 gray=0 cmyk=0 type=2 ux=0 uy=-1 rows=536 alignedrows=536 fgrows=0 fmrows=536 run=625950 single=0 cached=1170 sampled=16080 generic=0 obj=17250
+# Identical counts on p2, p12, p14, p16, p17.

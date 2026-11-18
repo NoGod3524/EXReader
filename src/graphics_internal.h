@@ -61,6 +61,8 @@ typedef struct {
   double coords[6];const double *rgb;const unsigned char *inks;size_t *work;
   double axial_scale,axial_x,axial_y,axial_ux,axial_uy,axial_length;
   double cached_coord[2],cached_color[2][4],cached_shape[2];
+  /* Axial normalizations outside axial_scale, keyed by their scale (0 = empty). */
+  double norm_scale[128],norm[128][5];
   unsigned type,extend0,extend1,cached_space,cached_axis,cached_slot;
 } exr_shading_paint_source;
 #endif

@@ -408,6 +408,30 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         continue;
       }
     }
+    if(!target_state && source_state && source_state->pixels && !source_state->isolated && !source_state->shape &&
+       opacity==1 && mode==EXR_BLEND_NORMAL && target->channels==4) {
+      /* The generic loop below restricted to this state: the same skips, work
+         charges, opaque stores and backdrop removal, without the per-pixel
+         tests for target masks, shape, CMYK, gray and knockout. */
+      const float *q=source_state->pixels+(y*source->width+left)*5;
+      const unsigned char *mask=clip ? clip->pixels+ty*clip->stride : NULL;
+      for(x=left;x<right;x++,q+=5) {
+        size_t tx=x+(size_t)origin_x;
+        unsigned coverage=mask ? mask[tx] : 255;double ag=q[4];
+        if(!coverage || !ag) continue;
+        if(!exr_vector_work(work,cost+32)) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
+        if(ag==1 && coverage==255) {
+          unsigned char *dst=target->pixels+ty*target->stride+tx*4;
+          dst[0]=unit_byte(q[0]);dst[1]=unit_byte(q[1]);dst[2]=unit_byte(q[2]);dst[3]=255;continue;
+        }
+        { double back[4],rgb[3],out[4],initial[4];unsigned k;
+          read_rgba(target,NULL,tx,ty,back);
+          if(ag<1) read_backdrop(source_state,x,y,initial);
+          for(k=0;k<3;k++) rgb[k]=ag>=1 ? fmax(0,fmin(1,(double)q[k])) : (ag>0 ? fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag)) : 0);
+          ag*=coverage/255.;over_rgba(back,rgb,ag,mode,out);write_rgba(target,NULL,tx,ty,out,ag,coverage/255.); }
+      }
+      continue;
+    }
     for(x=left;x<right;x++) {
       size_t tx=x+(size_t)origin_x;
       unsigned char gray_pixel[4];const unsigned char *p=source->pixels+y*source->stride+x*4;

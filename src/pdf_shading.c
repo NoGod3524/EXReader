@@ -105,10 +105,17 @@ static exr_status source_sample(void *context,double x,double y,unsigned space,d
     double scale=s->axial_scale,px=s->axial_x,py=s->axial_y,ux=s->axial_ux,uy=s->axial_uy,length=s->axial_length;
     /* The original normalization depends on the sample only outside this range. */
     if(!(fabs(x)<=scale && fabs(y)<=scale)) {
-      axial_projection local;
+      /* The normalization is a pure function of scale, which repeats down each
+         device column; memoize it rather than recomputing the same doubles. */
+      uint64_t bits;unsigned slot;double *n;
       scale=fmax(scale,fmax(fabs(x),fabs(y)));
-      local=axial_normalize(s->coords,scale);
-      px=local.x;py=local.y;ux=local.ux;uy=local.uy;length=local.length;
+      memcpy(&bits,&scale,sizeof(bits));bits^=bits>>29;bits*=0x9e3779b97f4a7c15ULL;slot=(unsigned)(bits>>57);
+      n=s->norm[slot];
+      if(s->norm_scale[slot]!=scale) {
+        axial_projection local=axial_normalize(s->coords,scale);
+        n[0]=local.x;n[1]=local.y;n[2]=local.ux;n[3]=local.uy;n[4]=local.length;s->norm_scale[slot]=scale;
+      }
+      px=n[0];py=n[1];ux=n[2];uy=n[3];length=n[4];
     } else if(s->cached_axis) {
       coord=s->cached_axis==1 ? y : x;
       if(s->cached_space==space) {
