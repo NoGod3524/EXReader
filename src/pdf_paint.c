@@ -23,10 +23,6 @@ static double diag_ms(void) {
   return (double)t.tv_sec*1000+(double)t.tv_nsec/1e6;
 #endif
 }
-static int diag_skip(const char *name) {
-  const char *mode=getenv("EXR_ATTRIBUTION_SKIP");
-  return mode && !strcmp(mode,name);
-}
 _Thread_local double diag_source_ms,diag_mask_ms,diag_image_ms;
 _Thread_local size_t diag_sources,diag_masks;
 typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
@@ -64,7 +60,7 @@ static void multiply(const double a[6],const double b[6],double out[6]) {
 static exr_status mask_begin(pdf_painter *r,const exr_pdf_paint_state *paint,paint_mask *mask,exr_error *e) {
   unsigned width=0,height=0; exr_status status;
   memset(mask,0,sizeof(*mask));
-  if(paint->smask==EXR_PDF_NONE || diag_skip("softmask")) return EXR_OK;
+  if(paint->smask==EXR_PDF_NONE || exr_pdf_diag_skip(EXR_DIAG_SOFTMASK)) return EXR_OK;
   status=exr_sink_extent(&r->sink,&width,&height,e); if(status!=EXR_OK) return status;
   if(!width || !height || width>(size_t)64*1024*1024/height || *r->mask_bytes>(size_t)64*1024*1024 ||
       (size_t)width*height>(size_t)64*1024*1024-*r->mask_bytes)
@@ -114,7 +110,7 @@ static exr_status geometry(pdf_painter *r,const exr_vector_segment *segments,siz
   return status;
 }
 static exr_status path_event(void *context,const exr_pdf_path_paint *p,exr_error *e) {
-  unsigned flags=diag_skip("path") ? p->flags&EXR_PDF_CLIP : p->flags;
+  unsigned flags=exr_pdf_diag_skip(EXR_DIAG_PATH) ? p->flags&EXR_PDF_CLIP : p->flags;
   if(!flags) return EXR_OK;
   return geometry(context,p->segments,p->count,NULL,&p->paint,flags,p->rule,0,e);
 }
@@ -131,7 +127,7 @@ static exr_status glyph_event(void *context,const exr_pdf_text_glyph *g,exr_erro
   if(mode==3) return EXR_OK;
   if(mode==0 || mode==2 || mode==4 || mode==6) flags|=EXR_PDF_FILL;
   if(mode==1 || mode==2 || mode==5 || mode==6) flags|=EXR_PDF_STROKE;
-  if(diag_skip("glyph")) flags=0;
+  if(exr_pdf_diag_skip(EXR_DIAG_GLYPH)) flags=0;
   if(mode>=4) flags|=EXR_PDF_CLIP;
   if(!((flags&3) && r->sink.base.path) && !((flags&EXR_PDF_CLIP) && r->sink.base.clip)) return EXR_OK;
   for(i=0;i<r->font_count;i++) if(r->fonts[i].key==g->font) break;
@@ -154,11 +150,11 @@ static exr_status image_event(void *context,exr_pdf_file *file,uint32_t id,exr_p
   exr_bitmap inks={0};int native=r->sink.image_cmyk && (!r->sink.image_space || r->sink.image_space(r->sink.base.context)==EXR_GROUP_CMYK);
   exr_pdf_paint_state image_paint=*paint;uint32_t own_mask;const exr_pdf_value *v;
   exr_status status; paint_mask mask={0}; if(!r->sink.base.image && !native) return EXR_OK;
-  if(diag_skip("image")) return EXR_OK;
+  if(exr_pdf_diag_skip(EXR_DIAG_IMAGE)) return EXR_OK;
   /* Ablation split: "image-paint" performs the decode but skips drawing, so
      decode cost = t(image-paint) - t(image) and paint cost = t(full) - t(image-paint).
      "image-decode" (pdf_image.c) paints a same-shaped placeholder instead of decoding. */
-  int ablation_paint=diag_skip("image-paint");
+  int ablation_paint=exr_pdf_diag_skip(EXR_DIAG_IMAGE_PAINT);
   double started=diag_ms();
   if(paint->fill.space==EXR_PDF_DEVICE_CMYK && !r->cmyk_profile) { status=exr_icc_default_cmyk(r->control,&r->cmyk_profile,e);if(status!=EXR_OK) return status; }
   status=exr_pdf_image_load_inks(file,id,resource_file,resources,rgba(r,&paint->fill,paint->intent),paint->intent,&image,native ? &inks : NULL,r->work,r->control,e);
@@ -190,7 +186,7 @@ static unsigned image_space(void *context) {
 }
 static exr_status begin_group_event(void *context,const exr_pdf_paint_state *paint,unsigned flags,exr_error *e) {
   pdf_painter *r=context;paint_mask mask={0};exr_status status;
-  if(diag_skip("group")) return EXR_OK;
+  if(exr_pdf_diag_skip(EXR_DIAG_GROUP)) return EXR_OK;
   if(r->group_depth==32) return exr_fail(e,EXR_LIMIT,"PDF paint group mask depth exceeds 32");
   status=exr_sink_alpha_source(&r->sink,paint->alpha_is_shape ? EXR_ALPHA_CONSTANT_SHAPE : 0,e);
   if(status==EXR_OK) status=mask_begin(r,paint,&mask,e);
@@ -221,7 +217,7 @@ static exr_status shading_event(void *context,const exr_bitmap *bitmap,const exr
 }
 static exr_status end_layer_event(void *context,unsigned commit,exr_error *e) {
   pdf_painter *r=context;paint_mask mask;exr_status status;
-  if(diag_skip("group")) return EXR_OK;
+  if(exr_pdf_diag_skip(EXR_DIAG_GROUP)) return EXR_OK;
   if(!r->group_depth) return exr_fail(e,EXR_FORMAT,"PDF paint group stack underflow");
   mask=r->group_masks[--r->group_depth];memset(r->group_masks+r->group_depth,0,sizeof(mask));
   status=r->sink.end_layer ? r->sink.end_layer(r->sink.base.context,commit,e) : exr_fail(e,EXR_FORMAT,"Drawing consumer lacks isolated layers");

@@ -388,8 +388,7 @@ static exr_status clip_bounds(content_reader *r,const double box[4],exr_error *e
   return path_event(r,boundary,5,EXR_PDF_CLIP,EXR_VECTOR_NONZERO,error);
 }
 static exr_status shading_operation(content_reader *r,uint32_t shading,exr_error *error) {
-  const char *skip=getenv("EXR_ATTRIBUTION_SKIP");
-  if(skip && !strcmp(skip,"shading")) return EXR_OK;
+  if(exr_pdf_diag_skip(EXR_DIAG_SHADING)) return EXR_OK;
   uint32_t id;double box[4];int clipped=0;const exr_pdf_value *v;
   exr_pdf_paint_state paint=paint_state(r);exr_status status;
   status=resolved(r->file,exr_pdf_get(r->file,shading,"BBox"),&id,error);if(status!=EXR_OK) return status;
