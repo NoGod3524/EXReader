@@ -1,0 +1,14 @@
+{
+  "compared_render_and_header_files": 211,
+  "source_mismatches": [],
+  "base_commit": "adbbac452a86d0cb5b5ce7d3b7793de9c3b7361a",
+  "worktree_head": "adbbac452a86d0cb5b5ce7d3b7793de9c3b7361a",
+  "cpu": {
+    "Name": "Intel(R) Core(TM) Ultra 7 256V",
+    "NumberOfCores": 8,
+    "NumberOfLogicalProcessors": 8,
+    "L2CacheSize": 14336,
+    "L3CacheSize": 12288
+  },
+  "ninja_log_sha256": "df9a9c333fe0f59195d1cff1caab7ff8483de50f2b48e4d6626bb485ca692133"
+}
