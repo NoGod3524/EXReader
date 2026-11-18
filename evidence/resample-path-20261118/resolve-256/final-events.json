@@ -1,0 +1,62 @@
+[
+  {
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "evidence/resample-path-20261118/interleaved_ab.py",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\main.dll",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\final.dll",
+      "tests/fixtures/pdf-large/image-heavy-100.pdf",
+      "1200",
+      "71",
+      "100",
+      "9",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\final-cohort.json"
+    ],
+    "exit": 0,
+    "overlap": false,
+    "overlapping_pids": []
+  },
+  {
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "evidence/resample-path-20261118/gated_pairs.py",
+      "--library-a",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\main.dll",
+      "--library-b",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\final.dll",
+      "--input",
+      "tests/fixtures/pdf-large/image-heavy-100.pdf",
+      "--widths",
+      "1200",
+      "--runs",
+      "5",
+      "--repeat",
+      "4",
+      "--idle-timeout",
+      "60",
+      "--out",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\final-paired.json"
+    ],
+    "exit": 0,
+    "overlap": false,
+    "overlapping_pids": []
+  },
+  {
+    "command": [
+      "C:\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "evidence/dense-vector-throughput-20261118/verify_pixels.py",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\main.dll",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\final.dll",
+      "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-decode2\\evidence\\resample-path-20261118\\resolve-256\\final-pixels.json"
+    ],
+    "exit": 0,
+    "overlap": false,
+    "overlapping_pids": []
+  }
+]

@@ -78,4 +78,3 @@ rsp.write_text(' '.join(objects)+' '+link[2])
 dll=OUT/'probe.dll'
 subprocess.run([args[0],'-shared','-static','-static-libgcc','exreader.def','-o',str(dll),'@'+str(rsp)],cwd=BUILD,check=True)
 print(dll)
-

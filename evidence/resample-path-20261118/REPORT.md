@@ -1,5 +1,7 @@
 # Masked interpolated image resampling
 
+**2026-11-18 resolution: PR #256 is reduced to tests and evidence. Its target speedup is already covered by #255; #258's shear optimization is preserved.** The current-main alternating A/B and final-branch checks are in [与 #255/#258 的关系](#与-255258-的关系) below. Earlier measurements in this report used a pre-#255 baseline and do not establish an incremental gain over current main.
+
 **Full acceptance is not established.** Fresh-process real-mixed-120 throughput measured **70.59 → 66.54 pages/s (-5.74%)**, and p50 6.540 → 6.727 ms. The no-regression requirement is not met by this capture. All four alternating repeats are retained.
 
 At 1200 px, fresh same-process p71–100 improved from **88.232 to 35.337 ms/page** (**59.95% less time**), meeting the ≤60 ms/page target. Fresh image-heavy peak RSS medians were **146.92 → 146.84 MiB**. The maximum process peaks across the four repeats were 147.07 → 147.13 MiB.
@@ -115,3 +117,80 @@ python -X utf8 evidence/resample-path-20261118/report.py C:/Users/Oscar/Document
 The rebuilt diagnostic has the same executable `.text` hash as the committed probe, and its exported counter reset/read smoke check passed ([identity](continuation/probe-identity.json), [build log](continuation/probe-build.txt)).
 
 The preserved A DLL is `../resample-dlls/main-653e44b.dll`. To reproduce diagnostics after building the candidate, `build_probe.py` explicitly restores the baseline `affine_image.c` as well as the instrumented canvas/PDF files.
+
+## 与 #255/#258 的关系
+
+### Decision and code comparison
+
+**已被 #255/#258 覆盖：withdraw #256's production optimization and retain its additional regression tests.** More precisely, #255's `axis_paint` already accelerates the masked interpolated images targeted by #256. #258 accelerates a complementary unmasked shear case; it is not an implementation of masked axis sampling.
+
+The baseline here is **`acfcdd4f92bff41cc7b67ae0ae5f884962e57e19`**, including both merges. The original PR head was `43a6aa51afd352823268d4212e236b7ba2f71431`. Its historical approximately 60% improvement was against an older baseline, not this main.
+
+| Detail | #256 texture + mask `bilinear_axis` | Main `axis_paint` from #255 |
+| --- | --- | --- |
+| Coordinates and color | Tabulates two horizontal taps per destination column; two vertical taps per row; four subsamples | Same coordinate and accumulation order |
+| Mask semantics | One-level nearest or bilinear mask on its own grid; luminosity or alpha factor applied before accumulating each color sample | Same semantics, dimensions, factor and operation order |
+| Converted rows | Caches color rows; interpolated masks use per-tap scalar sampling | Caches color rows and interpolated mask rows |
+| Strong minification | Retains tabulated scalar sampling when the converted span is too large | Declines row conversion and falls back to the existing generic sampler |
+| Non-SSE2 | Has a tabulated scalar masked path | Uses the existing generic masked sampler |
+| Exclusions | Matte reversal, nested masks, composite state, non-axis transforms | Same exclusions for the masked axis optimization |
+
+Thus #256 has broader **fast-path eligibility**, not new rendering semantics. Its extra eligibility does not deliver a measured gain on the target fixture. Main also retains its separate unmasked `bilinear_axis` and #258's `bilinear_shear`.
+
+The rebase was completed with all four `src/affine_image.c` conflict regions and the test conflict resolved. For the trial, main's three functions were kept unchanged. The PR variant was added as `masked_bilinear_axis`, with `resample_mask_factor` avoiding the helper-name collision, and dispatched only after main's specialized paths declined. Both sets of tests were retained. The resolved trial is commit **`3e77007f33252961ac5efb181bc61de7fc1420b1`**; its production/test diff is preserved in [resolved-trial.patch](resolve-256/resolved-trial.patch).
+
+After measurement, production code was restored exactly to main. The final source/test diff against main is **32 added lines in `tests/test_pdf_image.c`, no production changes**. These 144 comparison cases add the 48-pixel strongly minified source span missing from main's existing axis tests, alongside nearest/interpolated masks, unequal grids, flips, off-target placement, transparency, clip coverage and alpha. A nested opaque unit mask supplies the independent generic reference. They now check both main's converted-row path and its generic fallback.
+
+### Alternating A/B against current main
+
+All new captures are under [resolve-256/](resolve-256/). Both arms used the same existing Release MinGW configuration, dependencies and build directory. Only `src/affine_image.c` changed between the main/trial DLL builds; the rest of production matched main. [Build identities](resolve-256/build-identity.json), [configuration](resolve-256/CMakeCache.txt), and the three build logs record the binaries and successful builds.
+
+The supplied standalone main measurement was not repeated as a separate benchmark. Main was measured only as the A arm of the required alternating comparisons. Historical captures above were not used in this decision.
+
+For p71–100, both DLLs were loaded in one process. Each page alternated AB/BA, reversing the initial order every sweep, with one excluded cold sweep and **nine accepted pairs per page**. Mean page time below is the mean of per-page medians; paired change uses the per-page median B-minus-A differences.
+
+| p71–100 @1200 | Main A, ms/page | B, ms/page | Paired timing change |
+| --- | ---: | ---: | ---: |
+| Resolved production trial | 33.383 | 34.341 | +1.13% |
+| Final tests-only branch | 31.646 | 31.703 | +0.03% |
+
+Records: [trial cohort](resolve-256/trial-cohort.json), [final cohort](resolve-256/final-cohort.json).
+
+Whole-document captures used fresh child processes in **AB / BA / AB / BA** order, each with one excluded cold round and five warm rounds. The table reports medians across the four repeats.
+
+| image-heavy-100 @1200 | Trial A main | Trial B resolved | Final A main | Final B tests-only |
+| --- | ---: | ---: | ---: | ---: |
+| p50, ms | 13.705 | 13.879 | 13.534 | 13.477 |
+| p95, ms | 53.469 | 54.259 | 54.079 | 54.374 |
+| Worst-page median, ms | 61.396 | 60.809 | 60.913 | 60.607 |
+| Maximum-sample median, ms | 67.357 | 79.433 | 77.104 | 92.388 |
+| Throughput, pages/s | 47.59 | 46.70 | 47.28 | 47.90 |
+| Peak RSS, MiB | 146.91 | 147.44 | 147.12 | 147.12 |
+
+The resolved trial's p95 changed **+1.48%**, worst-page median **−0.96%**, and throughput **−1.87%**. Neither tail metric improved by the required >10%. Its p95 repeat ranges overlap: main **52.340–54.510 ms**, trial **53.262–56.336 ms**. Worst-page median ranges also overlap: **60.242–62.990 ms** versus **60.641–62.842 ms**. The extra production fallback has no demonstrated benefit here and is removed.
+
+The final branch's p95 change is **+0.55%**, worst-page median **−0.50%**, throughput **+1.31%**. Its executable `.text` hash equals main's and all production sources match main, as recorded in [final-build-identity.json](resolve-256/final-build-identity.json). Maximum-sample timings also vary substantially in this identical-code comparison; those values are retained above rather than used as an optimization claim.
+
+Records: [trial fresh-process A/B](resolve-256/trial-paired.json), [final fresh-process A/B](resolve-256/final-paired.json). Their `.realdoc-*-paired/` directories retain every accepted child capture.
+
+The idle gate remained **fail closed at ≤15% CPU**: a timeout retries without accepting a sample. A separate process monitor waited for the other worktree's benchmark to finish and rejected overlapping captures. Two initial cohort captures were rejected; only the subsequent accepted capture is used above. Trial/final cohort initial prechecks were 14.06%/8.20%; maximum accepted sweep prechecks were 13.08%/13.44%. Accepted fresh-process prechecks were at most 12.89%. [Trial events](resolve-256/trial-events.json) and [final events](resolve-256/final-events.json) retain acceptance/rejection outcomes. No build or correctness test ran during accepted timings.
+
+### Correctness and reproduction
+
+Main, the resolved trial, and the final tests-only branch all built successfully. Before removing the trial code, [native-pdf-image](resolve-256/trial-native-image.txt) passed with both test sets, including the strongly minified fallback cases.
+
+The final branch's [active-row byte comparison](resolve-256/final-pixels.json) checked **353,143,200 large-fixture pixels + 111,897,000 small-fixture pixels = 465,040,200 pixels**, with **zero differences** against current main. It covers image-heavy, vector-heavy, real-mixed, pptx at 600/1200/2400, deck at 600/1200 and word-5 at 600/1200.
+
+**Final CTest: 577/577 passed**, exit 0, in 95.15 seconds ([full log](resolve-256/final-ctest.txt)). The PR remains a draft with a tests-only scope; its performance proposal is withdrawn.
+
+Reproduction on this branch with the recorded build configuration:
+
+```powershell
+python -X utf8 evidence/resample-path-20261118/build_resolve.py
+cmake --build build/perf --parallel 4
+Copy-Item build/perf/libexreader.dll evidence/resample-path-20261118/resolve-256/final.dll
+python -X utf8 evidence/resample-path-20261118/resolve_verify.py trial
+python -X utf8 evidence/resample-path-20261118/resolve_verify.py final
+```
+
+`build_resolve.py` pins both source revisions and restores the working source after building the two trial arms. The following build produces the final tests-only DLL. DLL copies remain local and are excluded from Git; hashes, source patch, logs and raw measurements are committed. PR #256's ownership is **tests only**; the superseded production performance proposal is withdrawn.

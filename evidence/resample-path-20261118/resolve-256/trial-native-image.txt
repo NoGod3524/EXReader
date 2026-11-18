@@ -1,0 +1,7 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-decode2/build/perf
+    Start 285: native-pdf-image
+1/1 Test #285: native-pdf-image .................   Passed    0.54 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.60 sec
