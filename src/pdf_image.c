@@ -1,8 +1,10 @@
-#include <stdio.h>
 /* SPDX-License-Identifier: MIT */
+/* The feature macro must precede every system header: including <stdio.h>
+   first fixes glibc's feature set and leaves clock_gettime undeclared. */
 #if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200809L
 #endif
+#include <stdio.h>
 #include "pdf_raster_internal.h"
 #include "pdf_jpx_internal.h"
 #include <errno.h>
