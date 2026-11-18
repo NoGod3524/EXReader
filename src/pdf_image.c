@@ -75,8 +75,8 @@ static int image_name_is(exr_pdf_file *file,uint32_t id,const char *name) {
   bytes=exr_pdf_bytes(file,id,&n);
   return bytes && n==strlen(name) && !memcmp(bytes,name,n);
 }
-/* A decoded pixel is a pure function of its raw samples, plus the co-located
-   soft-mask byte when a matte is reversed, so repeated keys reuse the bytes. */
+/* A decoded pixel is a pure function of its raw samples unless a matte mixes
+   in the soft mask, so repeated sample tuples can reuse the converted bytes. */
 typedef struct { uint64_t key; unsigned char valid,rgba[4],inks[4]; } pixel_memo;
 #define PIXEL_MEMO_SLOTS 1024u
 static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
@@ -229,32 +229,17 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     if((soft && mask_kind!=1) || (!soft && mask_kind!=0)) goto invalid;
   }
   if(matte && (!mask_texture || mask_texture->bitmap.width!=width || mask_texture->bitmap.height!=height || mask_texture->mask)) goto invalid;
-  if(channels*bits+(matte ? 8u : 0u)<=64) memo=calloc(PIXEL_MEMO_SLOTS,sizeof(*memo)); /* optional: NULL just disables reuse */
+  if(!matte && channels*bits<=64) memo=calloc(PIXEL_MEMO_SLOTS,sizeof(*memo)); /* optional: NULL just disables reuse */
   for(y=0;y<height;y++) {
-    /* Previous pixel of this row: with a memo every output is a pure function
-       of the packed raw samples, so an identical neighbour is copied directly. */
-    uint64_t last_packed=0;unsigned char *last=NULL;
-    const unsigned char *line=codec==EXR_PDF_STREAM_JPEG ? NULL : bytes+y*row;
     if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
     if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
     for(x=0;x<width;x++) {
       double values[EXR_PDF_MAX_COLORANTS]; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
       unsigned raws[EXR_PDF_MAX_COLORANTS]; pixel_memo *slot=NULL;
-      /* Byte-aligned depths read samples directly; same values as sample(). */
-      if(!line) for(k=0;k<channels;k++) raws[k]=p[k];
-      else if(bits==8) { const unsigned char *s=line+(size_t)x*channels; for(k=0;k<channels;k++) raws[k]=s[k]; }
-      else if(bits==16) { const unsigned char *s=line+(size_t)x*channels*2; for(k=0;k<channels;k++) raws[k]=((unsigned)s[2*k]<<8)|s[2*k+1]; }
-      else for(k=0;k<channels;k++) raws[k]=sample(line,(x*channels+k)*bits,bits);
+      for(k=0;k<channels;k++) raws[k]=codec==EXR_PDF_STREAM_JPEG ? p[k] : sample(bytes+y*row,(x*channels+k)*bits,bits);
       if(memo) {
         uint64_t packed=0;
         for(k=0;k<channels;k++) packed=(packed<<bits)|raws[k];
-        if(matte) packed=(packed<<8)|mask_texture->bitmap.pixels[y*mask_texture->bitmap.stride+x*4];
-        if(last && packed==last_packed) {
-          memcpy(p,last,4);
-          if(inks && inks->pixels) memcpy(inks->pixels+y*inks->stride+x*4,inks->pixels+y*inks->stride+(x-1)*4,4);
-          continue;
-        }
-        last_packed=packed;last=p;
         slot=memo+(size_t)(((packed^(packed>>32))*UINT64_C(0x9E3779B97F4A7C15))>>54);
         if(slot->valid && slot->key==packed) {
           memcpy(p,slot->rgba,4);
