@@ -1,0 +1,23 @@
+{
+  "committed_probe_text_sha256": "ebc0fe4c197d439504d708af616f31b267fb7dcec1880dcc746c2dd34b3b34c4",
+  "rebuilt_probe_text_sha256": "ebc0fe4c197d439504d708af616f31b267fb7dcec1880dcc746c2dd34b3b34c4",
+  "reset_counters": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "rebuilt_dll_sha256": "d2f726bc655479be05b32252af2f21fb53592756fc5c5381a83e92de90b250a4"
+}

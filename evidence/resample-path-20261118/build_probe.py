@@ -21,6 +21,9 @@ static inline double stamp(void) {
 }
 '''
 edits = {
+    # Restore the baseline sampler too: the surrounding build may already
+    # contain the candidate's affine_image object when this is reproduced.
+    'affine_image': [],
     'pdf_content': [('return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,', '''
       size_t len;
       const unsigned char *key=exr_pdf_bytes(arena,values[0],&len);
