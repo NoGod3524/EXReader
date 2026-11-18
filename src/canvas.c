@@ -409,9 +409,14 @@ exr_status exr_canvas_image_cmyk(exr_canvas *c,const exr_image_layer *image,cons
     c->blend,masked_state(c),&c->work,&c->control,e);
   return finish(c,status,e);
 }
+static int axial_columns_in_scale(double multiplier,double translation,int offset,unsigned x,double scale) {
+  double px0=(double)x+offset+.25,px1=px0+.5;
+  return fabs(multiplier*px0+translation)<=scale && fabs(multiplier*px1+translation)<=scale;
+}
 exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const double transform[6],double alpha,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0},*m=transform ? transform : identity;double inv[6],det,scale=0;
   exr_paint_source source;exr_composite_state *state;size_t cost;unsigned components,space;exr_error local={0};exr_status status;
+  unsigned axial_right=0;
   if(!e) e=&local;
   status=ready(c,e);if(status!=EXR_OK) return status;
   if(!input || input->struct_size<sizeof(source) || input->struct_size>4096 || !isfinite(alpha) || alpha<0 || alpha>1)
@@ -432,19 +437,24 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
   space=c->cmyk_groups ? EXR_GROUP_CMYK : EXR_GROUP_RGB;components=c->cmyk_groups ? 4 : 3;
   cost=32+(state ? 20+state->depth*4 : 0)+(c->blend==EXR_BLEND_NORMAL ? 16 : c->blend<EXR_BLEND_HUE ? 40 : 80);
   for(unsigned y=0;y<c->bitmap.height;y++) {
+    const unsigned char *clip_row=NULL;
     unsigned first=0,last=c->bitmap.width;size_t active=c->bitmap.width;
     status=exr_control_cancel(&c->control,e);if(status!=EXR_OK) return finish(c,status,e);
     if(c->clip) {
-      const unsigned char *row=c->clip->bitmap.pixels+(size_t)y*c->clip->bitmap.stride;
       if(!exr_vector_work(&c->work,c->bitmap.width)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source clip scan exceeds work budget"),e);
-      first=c->bitmap.width;last=0;active=0;
-      for(unsigned x=0;x<c->bitmap.width;x++) if(row[x]) {
-        if(!active) first=x;
-        last=x+1;active++;
+      if(y<c->clip->dirty_top || y>=c->clip->dirty_bottom) continue;
+      clip_row=c->clip->bitmap.pixels+(size_t)y*c->clip->bitmap.stride;
+      first=c->clip->dirty_left;last=c->clip->dirty_right;
+      while(first<last && !clip_row[first]) first++;
+      if(first>=last) continue;
+      while(!clip_row[last-1]) last--;
+      active=last-first;
+      if(memchr(clip_row+first,0,active)) {
+        active=0;
+        for(unsigned x=first;x<last;x++) active+=clip_row[x]!=0;
       }
-      if(!active) continue;
     }
-    if(!exr_vector_work(&c->work,active*cost+(c->clip ? last-first : 0))) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
+    if(!exr_vector_work(&c->work,active*cost+(clip_row ? last-first : 0))) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
     if(source.context && ((const exr_shading_paint_source *)source.context)->sample==source.sample &&
        ((const exr_shading_paint_source *)source.context)->magic==EXR_SHADING_SOURCE_MAGIC) {
       const exr_shading_paint_source *axial=source.context;
@@ -462,7 +472,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
           c->blend==EXR_BLEND_NORMAL && c->bitmap.channels==4 && (size_t)y<state->soft_mask_height;
         double in_colors[4]={0},in_alpha=0,in_shape=0;uint32_t in_color=0;float in_q[5]={0};int have_in=0;
         for(unsigned x=first;x<last;x++) {
-          unsigned coverage=c->clip ? c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x] : 255;
+          unsigned coverage=clip_row ? clip_row[x] : 255;
           double px0=(double)x+c->offset_x+.25,px1=px0+.5;
           int in_scale;
           double colors[4]={0},row_alpha,row_shape,object_alpha,object_shape;uint32_t pixel_color=0;
@@ -477,20 +487,40 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
             in_scale=fabs(u00)<=s && fabs(v00)<=s && fabs(u10)<=s && fabs(v10)<=s &&
                      fabs(u01)<=s && fabs(v01)<=s && fabs(u11)<=s && fabs(v11)<=s;
           }
-          /* Runs of the two fast stores below. Each pixel keeps the same
-             coverage, scale and budget tests in the same order; bounds and the
-             work counter live in locals until the run ends. */
+          /* The aligned column transform is monotone and independent of y.
+             Starting from an in-scale pixel, both samples stay in scale up
+             to the same right bound on every row. */
           if(aligned && in_scale && have_in && coverage==255 && in_alpha*alpha==1 &&
              ((fast_group && in_shape==1) || (fast_mask && in_shape>0 && (size_t)x<state->soft_mask_width))) {
-            const unsigned char *clip_row=c->clip ? c->clip->bitmap.pixels+(size_t)y*c->clip->bitmap.stride : NULL;
-            size_t budget=*axial->work;unsigned end=x;int over=0;
+            size_t budget=*axial->work;unsigned end;int over=0;
             unsigned limit=fast_group ? last : (unsigned)(state->soft_mask_width<last ? state->soft_mask_width : last);
-            for(;end<limit;end++) {
-              if(end>x) {
-                double run0=(double)end+c->offset_x+.25,run1=run0+.5;
-                if((clip_row && clip_row[end]!=255) || !(fabs(inv[0]*run0+inv[4])<=s && fabs(inv[0]*run1+inv[4])<=s)) break;
+            if(!axial_right) {
+              unsigned lo=x+1,hi=c->bitmap.width;
+              while(lo<hi) {
+                unsigned middle=lo+(hi-lo)/2;
+                if(axial_columns_in_scale(inv[0],inv[4],c->offset_x,middle,s)) lo=middle+1;
+                else hi=middle;
               }
-              if(!exr_vector_work(&budget,4)) { over=1;break; }
+              axial_right=lo;
+            }
+            if(limit>axial_right) limit=axial_right;
+            end=limit;
+            if(clip_row) {
+              end=x+1;
+              while(limit-end>=sizeof(uint64_t)) {
+                uint64_t coverage_word;
+                memcpy(&coverage_word,clip_row+end,sizeof(coverage_word));
+                if(coverage_word!=UINT64_MAX) break;
+                end+=sizeof(coverage_word);
+              }
+              while(end<limit && clip_row[end]==255) end++;
+            }
+            if(!exr_vector_work(&budget,(size_t)(end-x)*4)) {
+              /* Preserve the prefix writes and the original failure point. */
+              unsigned bound=end;
+              end=x;
+              while(end<bound && exr_vector_work(&budget,4)) end++;
+              over=1;
             }
             if(fast_group) {
               float *q=state->pixels+((size_t)y*c->bitmap.width+x)*5;
@@ -564,7 +594,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
       }
     }
     for(unsigned x=first;x<last;x++) {
-      unsigned coverage=c->clip ? c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x] : 255;
+      unsigned coverage=clip_row ? clip_row[x] : 255;
       double colors[4]={0},sum_alpha=0,sum_shape=0,object_alpha,object_shape;
       if(!coverage) continue;
       for(unsigned sy=0;sy<2;sy++) for(unsigned sx=0;sx<2;sx++) {
