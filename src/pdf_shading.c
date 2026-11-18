@@ -86,7 +86,20 @@ static exr_status sample(exr_pdf_function *function,exr_pdf_colorspace *space,un
 }
 
 typedef struct {
+  double x,y,ux,uy,length;
+} axial_projection;
+static axial_projection axial_normalize(const double coords[6],double scale) {
+  double x=coords[0]/scale,y=coords[1]/scale;
+  double dx=coords[2]/scale-x,dy=coords[3]/scale-y,len=hypot(dx,dy);
+  return (axial_projection){x,y,len ? dx/len : 0,len ? dy/len : 0,len};
+}
+static double clamp_sample(double value) {
+  /* Match fmax(0,fmin(1,value)), including the upper endpoint for NaN. */
+  return value<=0 ? 0 : value<1 ? value : 1;
+}
+typedef struct {
   double coords[6];const double *rgb;const unsigned char *inks;size_t *work;
+  double axial_scale;axial_projection axial;
   unsigned type,extend0,extend1;
 } shading_source;
 static exr_status source_sample(void *context,double x,double y,unsigned space,double color[4],double *shape,double *opacity,exr_error *e) {
@@ -94,22 +107,26 @@ static exr_status source_sample(void *context,double x,double y,unsigned space,d
   if(!exr_vector_work(s->work,s->type==2 ? 1 : 2)) return exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget");
   *shape=0;*opacity=1;
   if(s->type==2) {
-    double scale=fmax(fabs(x),fabs(y)),c[4],dx,dy,len;
-    for(unsigned k=0;k<4;k++) scale=fmax(scale,fabs(s->coords[k]));
-    for(unsigned k=0;k<4;k++) c[k]=s->coords[k]/scale;
-    dx=c[2]-c[0];dy=c[3]-c[1];len=hypot(dx,dy);
-    if(!len) return exr_fail(e,EXR_LIMIT,"PDF axial shading exceeds coordinate precision");
-    t=((x/scale-c[0])*(dx/len)+(y/scale-c[1])*(dy/len))/len;
+    double scale=s->axial_scale;
+    const axial_projection *p=&s->axial;
+    axial_projection local;
+    /* The original normalization depends on the sample only outside this range. */
+    if(!(fabs(x)<=scale && fabs(y)<=scale)) {
+      scale=fmax(scale,fmax(fabs(x),fabs(y)));
+      local=axial_normalize(s->coords,scale);p=&local;
+    }
+    if(!p->length) return exr_fail(e,EXR_LIMIT,"PDF axial shading exceeds coordinate precision");
+    t=((x/scale-p->x)*p->ux+(y/scale-p->y)*p->uy)/p->length;
     if(!isfinite(t)) return exr_fail(e,EXR_LIMIT,"PDF axial shading exceeds coordinate precision");
     if((t<0 && !s->extend0) || (t>1 && !s->extend1)) return EXR_OK;
   } else if(!radial_parameter(x,y,s->coords,s->extend0,s->extend1,&t)) return EXR_OK;
-  t=fmax(0,fmin(1,t))*(AXIAL_SAMPLES-1);index=(unsigned)floor(t);fraction=t-index;
+  t=clamp_sample(t)*(AXIAL_SAMPLES-1);index=(unsigned)floor(t);fraction=t-index;
   if(index==AXIAL_SAMPLES-1) { index--;fraction=1; }
   if(space==EXR_GROUP_CMYK && !s->inks) return exr_fail(e,EXR_UNSUPPORTED,"PDF shading source lacks native CMYK samples");
   for(unsigned k=0;k<count;k++) {
     double a=space==EXR_GROUP_CMYK ? s->inks[index*4+k]/255. : s->rgb[index*3+k];
     double b=space==EXR_GROUP_CMYK ? s->inks[(index+1)*4+k]/255. : s->rgb[(index+1)*3+k];
-    color[k]=fmax(0,fmin(1,a*(1-fraction)+b*fraction));
+    color[k]=clamp_sample(a*(1-fraction)+b*fraction);
   }
   *shape=1;return EXR_OK;
 }
@@ -139,6 +156,10 @@ static exr_status source_draw(exr_pdf_function *function,exr_pdf_colorspace *spa
   if(status==EXR_OK) status=exr_icc_deferred_status(profile,e);
   if(status==EXR_OK) {
     memcpy(data.coords,coords,sizeof(data.coords));data.type=type;data.extend0=extend0;data.extend1=extend1;
+    if(type==2) {
+      for(unsigned k=0;k<4;k++) data.axial_scale=fmax(data.axial_scale,fabs(coords[k]));
+      data.axial=axial_normalize(coords,data.axial_scale);
+    }
     data.work=work;data.rgb=rgb;data.inks=inks.pixels;
     status=emit(context,&source,matrix,paint,e);
   }
