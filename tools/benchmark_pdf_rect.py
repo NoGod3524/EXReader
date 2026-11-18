@@ -39,7 +39,39 @@ def write_json(path, value):
 def percentiles(values):
     ordered = sorted(values)
     return {'p50_ms': statistics.median(ordered),
-            'p95_ms': ordered[math.ceil(.95 * len(ordered)) - 1]}
+            'p95_ms': ordered[math.ceil(.95 * len(ordered)) - 1],
+            'max_ms': ordered[-1]}
+
+
+def process_memory_bytes():
+    """Return (working_set_bytes, peak_working_set_bytes) for the current process."""
+    if os.name == 'nt':
+        class PROCESS_MEMORY_COUNTERS(c.Structure):
+            _fields_ = [
+                ('cb', c.c_ulong),
+                ('PageFaultCount', c.c_ulong),
+                ('PeakWorkingSetSize', c.c_size_t),
+                ('WorkingSetSize', c.c_size_t),
+                ('QuotaPeakPagedPoolUsage', c.c_size_t),
+                ('QuotaPagedPoolUsage', c.c_size_t),
+                ('QuotaPeakNonPagedPoolUsage', c.c_size_t),
+                ('QuotaNonPagedPoolUsage', c.c_size_t),
+                ('PagefileUsage', c.c_size_t),
+                ('PeakPagefileUsage', c.c_size_t),
+            ]
+        pmc = PROCESS_MEMORY_COUNTERS(cb=c.sizeof(PROCESS_MEMORY_COUNTERS))
+        fn = getattr(c.windll.psapi, 'GetProcessMemoryInfo', None) or c.windll.kernel32.K32GetProcessMemoryInfo
+        fn.argtypes = [c.c_void_p, c.POINTER(PROCESS_MEMORY_COUNTERS), c.c_ulong]
+        fn.restype = c.c_int
+        handle = c.c_void_p(c.windll.kernel32.GetCurrentProcess())
+        if fn(handle, c.byref(pmc), pmc.cb):
+            return int(pmc.WorkingSetSize), int(pmc.PeakWorkingSetSize)
+    try:
+        import resource
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+        return peak, peak
+    except Exception:
+        return 0, 0
 
 
 def capture(args):
@@ -102,8 +134,9 @@ def capture(args):
                                       for y in range(bitmap.height))
                     signature = hashlib.sha256(pixels).hexdigest()
                     if iteration == 0:
+                        rss_now, rss_peak = process_memory_bytes()
                         page.update(dimensions=[bitmap.width, bitmap.height], rgba_sha256=signature,
-                                    first_render_ms=elapsed)
+                                    first_render_ms=elapsed, rss_bytes=rss_now, peak_rss_bytes=rss_peak)
                     elif signature != page['rgba_sha256']:
                         raise ValueError(f'Pixels changed between rounds on page {page["page"]}')
                     if iteration == 1:
@@ -121,6 +154,19 @@ def capture(args):
         for page in result['pages']:
             page.update(percentiles(page['render_ms']))
         result.update(percentiles([t for row in result['rounds'] for t in row]))
+        worst = max(result['pages'], key=lambda p: p['p50_ms'])
+        round_totals = [sum(row) for row in result['rounds']]
+        round_wall_p50 = statistics.median(round_totals)
+        _, final_peak_rss = process_memory_bytes()
+        result.update({
+            'worst_page': worst['page'],
+            'worst_page_p50_ms': worst['p50_ms'],
+            'worst_page_max_ms': max(p['max_ms'] for p in result['pages']),
+            'round_wall_ms_p50': round_wall_p50,
+            'throughput_pages_per_s': count.value * 1000.0 / round_wall_p50 if round_wall_p50 > 0 else 0.0,
+            'peak_rss_bytes': final_peak_rss,
+            'first_screen_ms': result['open_ms'] + result['pages'][0]['first_render_ms'],
+        })
     finally:
         engine.exr_fixed_free(document)
         if directory:

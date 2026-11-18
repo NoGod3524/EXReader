@@ -197,13 +197,24 @@ void exr_pixel_object(exr_bitmap *bitmap,int x,int y,uint32_t color,double alpha
   double back[4],source[3],out[4];unsigned k;
   if(!shape || (!alpha && !(state && (state->knockout || state->shape)))) return;
   if(state && state->gray) color=exr_gray_color(color);
+  if(!state || (!state->pixels && !state->cmyk_pixels)) {
+    color=(color&0xffffff00u)|(unsigned)fmin(255,floor(alpha*255+.5));exr_pixel_blend(bitmap,x,y,color,255,mode);return;
+  }
   for(k=0;k<3;k++) source[k]=((color>>(24-8*k))&255)/255.;
-  if(state && state->cmyk_pixels) {
+  if(state->cmyk_pixels) {
     double cmyk[4];exr_device_cmyk_from_rgb(state->cmyk_profile,source,cmyk);
     exr_pixel_object_cmyk(bitmap,x,y,cmyk,alpha,shape,mode,state);return;
   }
-  if(!state || !state->pixels) {
-    color=(color&0xffffff00u)|(unsigned)fmin(255,floor(alpha*255+.5));exr_pixel_blend(bitmap,x,y,color,255,mode);return;
+  if(!state->knockout && mode==EXR_BLEND_NORMAL && alpha==1 && shape==1 && !state->shape && bitmap->channels==4) {
+    float *q=state->pixels+buffer_index(state,bitmap->width,(size_t)x,(size_t)y)*5;
+    unsigned char *p=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)x*4;
+    for(k=0;k<3;k++) { q[k]=(float)source[k];p[k]=(unsigned char)(color>>(24-8*k)); }
+    q[3]=q[4]=1.0f;p[3]=255;
+    if((size_t)x<state->left) state->left=(uint32_t)x;
+    if((size_t)y<state->top) state->top=(uint32_t)y;
+    if((size_t)x>=state->right) state->right=(uint32_t)x+1;
+    if((size_t)y>=state->bottom) state->bottom=(uint32_t)y+1;
+    return;
   }
   if(state->knockout) {
     double base[4],painted[4],current[4];
@@ -448,9 +459,14 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         if(q) ag=q[4];
         if((!ag || !object_opacity) && !(target_state && target_state->shape)) continue;
         if(!exr_vector_work(work,cost+32+(target_state ? target_state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
+        if(q && ag==1 && object_opacity==1 && coverage==255 && mode==EXR_BLEND_NORMAL && !target_state && target->channels==4) {
+          unsigned char *dst=target->pixels+ty*target->stride+tx*4;
+          for(k=0;k<3;k++) dst[k]=(unsigned char)fmax(0,fmin(255,floor(fmax(0,fmin(1,(double)q[k]))*255+.5)));
+          dst[3]=255;continue;
+        }
         read_rgba(target,target_state,tx,ty,back);
-        { double initial[4];if(q) read_backdrop(source_state,x,y,initial);
-          for(k=0;k<3;k++) rgb[k]=q ? (ag>0 ? fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag)) : 0) : p[k]/255.; }
+        { double initial[4];if(q && ag<1) read_backdrop(source_state,x,y,initial);
+          for(k=0;k<3;k++) rgb[k]=q ? (ag>=1 ? fmax(0,fmin(1,(double)q[k])) : (ag>0 ? fmax(0,fmin(1,(q[k]-(1-ag)*initial[k])/ag)) : 0)) : p[k]/255.; }
         ag*=object_opacity*coverage/255.;over_rgba(back,rgb,ag,mode,out);write_rgba(target,target_state,tx,ty,out,ag,shape*coverage/255.);continue;
       }
       if(!a) continue;

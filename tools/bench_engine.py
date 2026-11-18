@@ -111,12 +111,32 @@ def main():
                         [width], args.runs, out_dir)
             capture_cpu = round(cpu_busy_percent(before, cpu_times()), 2)
             data = json.loads((out_dir / f'{width}.json').read_text(encoding='utf-8'))
+            page_p50s = [p.get('p50_ms', data['p50_ms']) for p in data['pages']]
+            worst_idx = max(range(len(page_p50s)), key=lambda idx: page_p50s[idx]) if page_p50s else 0
+            worst_p50 = data.get('worst_page_p50_ms', page_p50s[worst_idx] if page_p50s else data['p50_ms'])
+            worst_max = data.get('worst_page_max_ms', max(p.get('max_ms', p.get('p50_ms', data['p95_ms'])) for p in data['pages']))
+            wall_p50 = data.get('round_wall_ms_p50', sum(page_p50s))
+            throughput = data.get('throughput_pages_per_s', (len(data['pages']) * 1000.0 / wall_p50) if wall_p50 > 0 else 0.0)
+            peak_rss = data.get('peak_rss_bytes', 0)
+            first_render = data['pages'][0]['first_render_ms']
             repeats.append({'p50_ms': data['p50_ms'], 'p95_ms': data['p95_ms'],
                             'open_ms': data['open_ms'],
-                            'first_page_render_ms': data['pages'][0]['first_render_ms'],
+                            'first_page_render_ms': first_render,
+                            'first_screen_ms': data.get('first_screen_ms', data['open_ms'] + first_render),
+                            'worst_page': data.get('worst_page', worst_idx + 1),
+                            'worst_page_p50_ms': worst_p50,
+                            'worst_page_max_ms': worst_max,
+                            'round_wall_ms_p50': wall_p50,
+                            'throughput_pages_per_s': throughput,
+                            'peak_rss_bytes': peak_rss,
                             'pre_cpu_percent': pre_cpu, 'capture_cpu_percent': capture_cpu})
         p50s = sorted(r['p50_ms'] for r in repeats)
         p95s = sorted(r['p95_ms'] for r in repeats)
+        worst_p50s = sorted(r['worst_page_p50_ms'] for r in repeats)
+        worst_maxs = sorted(r['worst_page_max_ms'] for r in repeats)
+        throughputs = sorted(r['throughput_pages_per_s'] for r in repeats)
+        rss_values = sorted(r['peak_rss_bytes'] for r in repeats)
+        median_repeat = min(repeats, key=lambda r: abs(r['worst_page_p50_ms'] - statistics.median(worst_p50s)))
         report['widths'][str(width)] = {
             'p50_ms_repeats': [round(v, 3) for v in p50s],
             'p95_ms_repeats': [round(v, 3) for v in p95s],
@@ -126,17 +146,30 @@ def main():
             'spread_percent': round(100.0 * (p50s[-1] - p50s[0]) / p50s[0], 1) if p50s[0] else 0.0,
             'open_ms_median': round(statistics.median(r['open_ms'] for r in repeats), 3),
             'first_page_render_ms_median': round(statistics.median(r['first_page_render_ms'] for r in repeats), 3),
+            'first_screen_ms_median': round(statistics.median(r['first_screen_ms'] for r in repeats), 3),
+            'worst_page': median_repeat['worst_page'],
+            'worst_page_p50_ms_median': round(statistics.median(worst_p50s), 3),
+            'worst_page_max_ms_median': round(statistics.median(worst_maxs), 3),
+            'throughput_pages_per_s_median': round(statistics.median(throughputs), 2),
+            'peak_rss_bytes_median': int(statistics.median(rss_values)),
+            'peak_rss_mib_median': round(statistics.median(rss_values) / (1024.0 * 1024.0), 2),
             'repeats': repeats,
         }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     for width, row in report['widths'].items():
-        print('%6s px  p50 median %7.3f ms  best %7.3f  p95 %7.3f  spread %5.1f%%  open %6.3f ms'
+        print('%6s px  p50 median %7.3f ms  best %7.3f  p95 %7.3f  worst(p%d) %7.3f ms  '
+              'tput %6.2f p/s  RSS %6.2f MiB  first %6.3f ms  spread %5.1f%%  open %6.3f ms'
               % (width, row['p50_ms_median'], row['p50_ms_best'], row['p95_ms_median'],
-                 row['spread_percent'], row['open_ms_median']))
+                 row['worst_page'], row['worst_page_p50_ms_median'],
+                 row['throughput_pages_per_s_median'], row['peak_rss_mib_median'],
+                 row['first_page_render_ms_median'], row['spread_percent'], row['open_ms_median']))
         for index, repeat in enumerate(row['repeats'], 1):
             print(f'  repeat {index}: p50 {repeat["p50_ms"]:.3f} ms  p95 {repeat["p95_ms"]:.3f} ms'
+                  f'  worst(p{repeat["worst_page"]}) {repeat["worst_page_p50_ms"]:.3f} ms'
+                  f'  tput {repeat["throughput_pages_per_s"]:.2f} p/s'
+                  f'  RSS {repeat["peak_rss_bytes"] / (1024 * 1024):.2f} MiB'
                   f'  first page {repeat["first_page_render_ms"]:.3f} ms'
                   f'  CPU pre {repeat["pre_cpu_percent"]:.2f}% / capture {repeat["capture_cpu_percent"]:.2f}%')
 

@@ -114,7 +114,9 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
       status=exr_fail(e,EXR_LIMIT,"PDF soft mask samples exceed work budget");
     if(status!=EXR_OK) goto done;
     for(size_t x=0;x<width;x++) {
-      double a,value,output[4];i=y*width+x;a=pixels[i*4+3]/255.;
+      double a,value,output[4];i=y*width+x;
+      if(x && !memcmp(pixels+i*4,pixels+(i-1)*4,4)) { result[i]=result[i-1];continue; }
+      a=pixels[i*4+3]/255.;
       value=a;
       if(kind) {
         double v0=pixels[i*4]/255.*a+bc[0]*(1-a);

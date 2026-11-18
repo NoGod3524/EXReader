@@ -1,0 +1,20 @@
+{
+  "real-mixed-120": {
+    "file": "C:/Users/Oscar/Documents/Codex/EXReader-realdoc/tests/fixtures/pdf-large/real-mixed-120.pdf",
+    "pages": 120,
+    "bytes": 997915,
+    "sha256": "cdfc1ee6952652613c15fe91288450c6e168994e3b1792e52bb56db14ab8a693"
+  },
+  "image-heavy-100": {
+    "file": "C:/Users/Oscar/Documents/Codex/EXReader-realdoc/tests/fixtures/pdf-large/image-heavy-100.pdf",
+    "pages": 100,
+    "bytes": 2527625,
+    "sha256": "c027e8e78346b159e08d3a8c5313b0bd240403873e1c58de0e1b2c3f11b87cb2"
+  },
+  "vector-heavy-100": {
+    "file": "C:/Users/Oscar/Documents/Codex/EXReader-realdoc/tests/fixtures/pdf-large/vector-heavy-100.pdf",
+    "pages": 100,
+    "bytes": 451292,
+    "sha256": "72e72440fb9fe01e8c4c0c9171e80356ca05b627690b578db8a9cf2030dab207"
+  }
+}
