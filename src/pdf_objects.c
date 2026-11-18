@@ -800,17 +800,20 @@ static int tail_whitespace(const unsigned char *data,size_t size,size_t at) {
   return at==size;
 }
 static int decode_flate(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,size_t *end) {
-  size_t capacity;
+  tinfl_decompressor decomp; size_t capacity,consumed=0;
+  tinfl_init(&decomp);
   for(capacity=4096;capacity<=EXR_MAX_TEXT;capacity*=2) {
-    mz_ulong produced=(mz_ulong)capacity,consumed=(mz_ulong)size; int status;
-    if(!output_room(f,out,capacity,temporary) || !decode_work(f,capacity)) return 0;
-    status=mz_uncompress2(out->data,&produced,data,&consumed);
-    if(status==MZ_OK) {
-      if(end) *end=(size_t)consumed;
-      else if(!tail_whitespace(data,size,(size_t)consumed)) return failed(f,EXR_FORMAT,"Trailing bytes in PDF Flate stream");
-      out->size=(size_t)produced; return 1;
+    size_t in_bytes=size-consumed,out_bytes=capacity-out->size; tinfl_status status;
+    if(!output_room(f,out,capacity-out->size,temporary) || !decode_work(f,capacity)) return 0;
+    status=tinfl_decompress(&decomp,data+consumed,&in_bytes,out->data,out->data+out->size,&out_bytes,
+      TINFL_FLAG_PARSE_ZLIB_HEADER|TINFL_FLAG_COMPUTE_ADLER32|TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF);
+    consumed+=in_bytes; out->size+=out_bytes;
+    if(status==TINFL_STATUS_DONE) {
+      if(end) *end=consumed;
+      else if(!tail_whitespace(data,size,consumed)) return failed(f,EXR_FORMAT,"Trailing bytes in PDF Flate stream");
+      return 1;
     }
-    if(status!=MZ_BUF_ERROR) return failed(f,EXR_FORMAT,"Invalid PDF Flate stream");
+    if(status!=TINFL_STATUS_HAS_MORE_OUTPUT) return failed(f,EXR_FORMAT,"Invalid PDF Flate stream");
   }
   return failed(f,EXR_LIMIT,"PDF decoded stream exceeds 64 MiB");
 }

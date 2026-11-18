@@ -36,8 +36,12 @@ static int image_boolean(image_reader *r,uint32_t id,int *out) {
 static uint32_t resolve(image_reader *r,uint32_t id) {
   uint32_t out=EXR_PDF_NONE; if(r->error.code==EXR_OK) exr_pdf_resolve(r->file,id,&out,&r->error); return out;
 }
-static unsigned sample(const unsigned char *bytes,size_t bit,unsigned bits) {
-  unsigned i,v=0; for(i=0;i<bits;i++) v=(v<<1)|((bytes[(bit+i)/8]>>(7-(bit+i)%8))&1); return v;
+static unsigned sample_at(const unsigned char *bytes,size_t index,unsigned bits) {
+  if(bits==8) return bytes[index];
+  if(bits==16) return ((unsigned)bytes[index*2]<<8)|bytes[index*2+1];
+  if(bits==4) return (bytes[index>>1]>>((1-(index&1))<<2))&0x0fu;
+  if(bits==2) return (bytes[index>>2]>>((3-(index&3))<<1))&0x03u;
+  return (bytes[index>>3]>>(7-(index&7)))&0x01u;
 }
 static int jpeg_frame(const unsigned char *data,size_t size,uint32_t width,uint32_t height,unsigned channels) {
   size_t at=2;
@@ -229,48 +233,152 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     if((soft && mask_kind!=1) || (!soft && mask_kind!=0)) goto invalid;
   }
   if(matte && (!mask_texture || mask_texture->bitmap.width!=width || mask_texture->bitmap.height!=height || mask_texture->mask)) goto invalid;
-  if(!matte && channels*bits<=64) memo=calloc(PIXEL_MEMO_SLOTS,sizeof(*memo)); /* optional: NULL just disables reuse */
-  for(y=0;y<height;y++) {
-    if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
-    if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
-    for(x=0;x<width;x++) {
-      double values[EXR_PDF_MAX_COLORANTS]; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
-      unsigned raws[EXR_PDF_MAX_COLORANTS]; pixel_memo *slot=NULL;
-      for(k=0;k<channels;k++) raws[k]=codec==EXR_PDF_STREAM_JPEG ? p[k] : sample(bytes+y*row,(x*channels+k)*bits,bits);
-      if(memo) {
-        uint64_t packed=0;
-        for(k=0;k<channels;k++) packed=(packed<<bits)|raws[k];
-        slot=memo+(size_t)(((packed^(packed>>32))*UINT64_C(0x9E3779B97F4A7C15))>>54);
-        if(slot->valid && slot->key==packed) {
-          memcpy(p,slot->rgba,4);
-          if(inks && inks->pixels) memcpy(inks->pixels+y*inks->stride+x*4,slot->inks,4);
-          continue;
-        }
-        slot->valid=0; slot->key=packed;
-      }
+  {
+    exr_pdf_color_space dev_space=exr_pdf_colorspace_device(space);
+    int fast_device_8bit=(codec!=EXR_PDF_STREAM_JPEG && bits==8 && !stencil && (!inks || !inks->pixels) && !color_key &&
+                          (dev_space==EXR_PDF_DEVICE_GRAY || dev_space==EXR_PDF_DEVICE_RGB));
+    unsigned char (*matte_lut)[3][256]=NULL;
+    if(fast_device_8bit && matte) matte_lut=malloc(256*sizeof(*matte_lut));
+    if(fast_device_8bit && !matte) {
+      unsigned char lut[3][256];
+      uint32_t gray_rgba[256];
+      size_t row_cost=(size_t)width*exr_pdf_colorspace_cost(space);
       for(k=0;k<channels;k++) {
-        unsigned raw=raws[k];
-        double unit=(double)raw/((1u<<bits)-1);
-        if(color_key && (raw<key[2*k] || raw>key[2*k+1])) transparent=0;
-        values[k]=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
+        unsigned raw;
+        for(raw=0;raw<256;raw++) {
+          double unit=(double)raw/255.;
+          double val=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
+          val=fmax(0,fmin(1,val));
+          lut[k][raw]=(unsigned char)floor(val*255+.5);
+        }
       }
-      if(matte) {
-        double a=mask_texture->bitmap.pixels[y*mask_texture->bitmap.stride+x*4]/255.;
-        for(k=0;k<channels;k++) values[k]=a>0 ? fmax(0,fmin(1,matte_rgb[k]+(values[k]-matte_rgb[k])/a)) : 0;
+      if(channels==1) {
+        unsigned raw;
+        for(raw=0;raw<256;raw++) {
+          unsigned char g=lut[0][raw],px[4]={g,g,g,255};
+          memcpy(&gray_rgba[raw],px,4);
+        }
       }
-      if(inks && inks->pixels) for(k=0;k<4;k++)
-        inks->pixels[y*inks->stride+x*4+k]=(unsigned char)floor(fmax(0,fmin(1,values[k]))*255+.5);
-      if(stencil) { p[0]=(unsigned char)(color>>24); p[1]=(unsigned char)(color>>16); p[2]=(unsigned char)(color>>8); p[3]=(unsigned char)floor((1-values[0])*255+.5); }
-      else {
-        double rgb[3]; if(exr_pdf_colorspace_rgb_intent(space,values,rgb,intent,&r.error)!=EXR_OK) goto done;
-        for(k=0;k<3;k++) p[k]=(unsigned char)floor(rgb[k]*255+.5);
-        p[3]=exr_pdf_colorspace_no_paint(space) ? 0 : 255;
-        if(transparent) p[3]=0;
+      for(y=0;y<height;y++) {
+        const unsigned char *s=bytes+y*row;
+        unsigned char *p=bitmap.pixels+y*bitmap.stride;
+        if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
+        if(!exr_vector_work(work,row_cost)) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
+        if(channels==1) {
+          for(x=0;x<width;x++) memcpy(p+x*4,&gray_rgba[s[x]],4);
+        } else {
+          for(x=0;x<width;x++,s+=3,p+=4) {
+            p[0]=lut[0][s[0]]; p[1]=lut[1][s[1]]; p[2]=lut[2][s[2]]; p[3]=255;
+          }
+        }
       }
-      if(slot) {
-        memcpy(slot->rgba,p,4);
-        if(inks && inks->pixels) memcpy(slot->inks,inks->pixels+y*inks->stride+x*4,4);
-        slot->valid=1;
+    } else if(fast_device_8bit && matte && matte_lut) {
+      unsigned char matte_ready[256]={0};
+      uint32_t opaque_black;
+      size_t row_cost=(size_t)width*exr_pdf_colorspace_cost(space);
+      { unsigned char z[4]={0,0,0,255}; memcpy(&opaque_black,z,4); }
+      for(y=0;y<height;y++) {
+        const unsigned char *s=bytes+y*row;
+        const unsigned char *m=mask_texture->bitmap.pixels+y*mask_texture->bitmap.stride;
+        unsigned char *p=bitmap.pixels+y*bitmap.stride;
+        unsigned last_ma=256;
+        unsigned char (*mlut)[256]=NULL;
+        if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) { free(matte_lut); goto done; }
+        if(!exr_vector_work(work,row_cost)) { free(matte_lut); exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
+        if(channels==3) {
+          for(x=0;x<width;x++,s+=3,m+=4,p+=4) {
+            unsigned ma=m[0];
+            if(!ma) { memcpy(p,&opaque_black,4); continue; }
+            if(ma!=last_ma) {
+              if(!matte_ready[ma]) {
+                double a=ma/255.;
+                for(k=0;k<3;k++) {
+                  unsigned raw;
+                  for(raw=0;raw<256;raw++) {
+                    double unit=(double)raw/255.;
+                    double val=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
+                    val=fmax(0,fmin(1,matte_rgb[k]+(val-matte_rgb[k])/a));
+                    val=fmax(0,fmin(1,val));
+                    matte_lut[ma][k][raw]=(unsigned char)floor(val*255+.5);
+                  }
+                }
+                matte_ready[ma]=1;
+              }
+              last_ma=ma;
+              mlut=matte_lut[ma];
+            }
+            p[0]=mlut[0][s[0]]; p[1]=mlut[1][s[1]]; p[2]=mlut[2][s[2]]; p[3]=255;
+          }
+        } else {
+          for(x=0;x<width;x++,s++,m+=4,p+=4) {
+            unsigned ma=m[0],g;
+            if(!ma) { memcpy(p,&opaque_black,4); continue; }
+            if(ma!=last_ma) {
+              if(!matte_ready[ma]) {
+                double a=ma/255.; unsigned raw;
+                for(raw=0;raw<256;raw++) {
+                  double unit=(double)raw/255.;
+                  double val=decode[0]+unit*(decode[1]-decode[0]);
+                  val=fmax(0,fmin(1,matte_rgb[0]+(val-matte_rgb[0])/a));
+                  val=fmax(0,fmin(1,val));
+                  matte_lut[ma][0][raw]=(unsigned char)floor(val*255+.5);
+                }
+                matte_ready[ma]=1;
+              }
+              last_ma=ma;
+              mlut=matte_lut[ma];
+            }
+            g=mlut[0][s[0]];
+            p[0]=(unsigned char)g; p[1]=(unsigned char)g; p[2]=(unsigned char)g; p[3]=255;
+          }
+        }
+      }
+      free(matte_lut);
+    } else {
+      if(!matte && channels*bits<=64) memo=calloc(PIXEL_MEMO_SLOTS,sizeof(*memo)); /* optional: NULL just disables reuse */
+      for(y=0;y<height;y++) {
+        if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
+        if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
+        for(x=0;x<width;x++) {
+          double values[EXR_PDF_MAX_COLORANTS]; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
+          unsigned raws[EXR_PDF_MAX_COLORANTS]; pixel_memo *slot=NULL;
+          for(k=0;k<channels;k++) raws[k]=codec==EXR_PDF_STREAM_JPEG ? p[k] : sample_at(bytes+y*row,(size_t)x*channels+k,bits);
+          if(memo) {
+            uint64_t packed=0;
+            for(k=0;k<channels;k++) packed=(packed<<bits)|raws[k];
+            slot=memo+(size_t)(((packed^(packed>>32))*UINT64_C(0x9E3779B97F4A7C15))>>54);
+            if(slot->valid && slot->key==packed) {
+              memcpy(p,slot->rgba,4);
+              if(inks && inks->pixels) memcpy(inks->pixels+y*inks->stride+x*4,slot->inks,4);
+              continue;
+            }
+            slot->valid=0; slot->key=packed;
+          }
+          for(k=0;k<channels;k++) {
+            unsigned raw=raws[k];
+            double unit=(double)raw/((1u<<bits)-1);
+            if(color_key && (raw<key[2*k] || raw>key[2*k+1])) transparent=0;
+            values[k]=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
+          }
+          if(matte) {
+            double a=mask_texture->bitmap.pixels[y*mask_texture->bitmap.stride+x*4]/255.;
+            for(k=0;k<channels;k++) values[k]=a>0 ? fmax(0,fmin(1,matte_rgb[k]+(values[k]-matte_rgb[k])/a)) : 0;
+          }
+          if(inks && inks->pixels) for(k=0;k<4;k++)
+            inks->pixels[y*inks->stride+x*4+k]=(unsigned char)floor(fmax(0,fmin(1,values[k]))*255+.5);
+          if(stencil) { p[0]=(unsigned char)(color>>24); p[1]=(unsigned char)(color>>16); p[2]=(unsigned char)(color>>8); p[3]=(unsigned char)floor((1-values[0])*255+.5); }
+          else {
+            double rgb[3]; if(exr_pdf_colorspace_rgb_intent(space,values,rgb,intent,&r.error)!=EXR_OK) goto done;
+            for(k=0;k<3;k++) p[k]=(unsigned char)floor(rgb[k]*255+.5);
+            p[3]=exr_pdf_colorspace_no_paint(space) ? 0 : 255;
+            if(transparent) p[3]=0;
+          }
+          if(slot) {
+            memcpy(slot->rgba,p,4);
+            if(inks && inks->pixels) memcpy(slot->inks,inks->pixels+y*inks->stride+x*4,4);
+            slot->valid=1;
+          }
+        }
       }
     }
   }
