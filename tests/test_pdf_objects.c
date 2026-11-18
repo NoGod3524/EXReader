@@ -67,6 +67,11 @@ static void basic(const char *dir,const char *name) {
   value=get(file,root,"Flate"); OK(exr_pdf_stream_data(file,value,&stream,&n,&error));
   CHECK(n==strlen("BT /F1 12 Tf (Hello native PDF.) Tj ET\n") && !memcmp(stream,"BT /F1 12 Tf (Hello native PDF.) Tj ET\n",n));
   OK(exr_pdf_stream_data(file,value,&same,&again,&error)); CHECK(same==stream && again==n);
+  /* Retained decodes (font programs) survive the per-operation cache reset. */
+  OK(exr_pdf_stream_data_retained(file,value,&same,&again,&error)); CHECK(same==stream && again==n);
+  exr_pdf_operation_end(file);
+  OK(exr_pdf_stream_data(file,value,&same,&again,&error)); CHECK(same==stream && again==n);
+  CHECK(!memcmp(same,"BT /F1 12 Tf (Hello native PDF.) Tj ET\n",n));
   CHECK(exr_pdf_resolve(file,exr_pdf_get(file,root,"Cycle"),&value,&error)==EXR_FORMAT);
   exr_pdf_close(file); free(data);
 }
