@@ -279,7 +279,13 @@ static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,cons
       const int32_t *cx=columns+2*(size_t)(x-x0); unsigned coverage=mask ? mask[x] : 255,sy,sx; uint32_t s[4]={0},color=0;
       const unsigned char *first=NULL; int same=1;
       if(!coverage) continue;
-      for(sy=0;sy<2;sy++) {
+      /* Four valid taps at one texel: reuse the original one-texel pack
+         and alpha rounding below without gathering the same RGBA four times.
+         Both invalid rows were already skipped before entering this loop. */
+      if(ry[0]==ry[1] && cx[0]>=0 && cx[0]==cx[1]) {
+        first=line[0]+cx[0];
+        s[3]=4u*first[3];
+      } else for(sy=0;sy<2;sy++) {
         if(!line[sy]) continue;
         for(sx=0;sx<2;sx++) {
           const unsigned char *p; unsigned a;

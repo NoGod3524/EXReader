@@ -518,10 +518,37 @@ static void scanline_reference(void) {
     }
   }
 }
+/* Compare axis-aligned nearest painting to the general sampler. The tiny
+   shear disables the axis dispatch but never crosses a texel or image edge
+   at these quarter-pixel sample points. */
+static void nearest_coincident_taps(void) {
+  exr_bitmap src=bitmap(4,0),axis=bitmap(4,0),reference=bitmap(4,0),clip=bitmap(1,0);
+  for(unsigned i=0;i<64;i++) {
+    for(unsigned k=0;k<4;k++) src.pixels[4*i+k]=(unsigned char)(31*i+57*k);
+    if(i%4==0) src.pixels[4*i+3]=0;
+    if(i%4==1) src.pixels[4*i+3]=255;
+    clip.pixels[i]=(unsigned char)(i%3==0 ? 0 : i%3==1 ? 117 : 255);
+  }
+  for(unsigned trial=0;trial<16;trial++) {
+    /* Exact scale, then mixed/partial footprints (half-pixel translation).
+       A reflected transform also exercises descending column indices. */
+    double extent=trial&8 ? 8.125 : 8;
+    double m[6]={trial&2 ? -extent : extent,0,0,extent,(trial&2 ? 8 : 0)+(trial&1 ? .5 : 0),trial&1 ? .5 : 0};
+    double opacity=trial&1 ? .625 : 1;
+    exr_vector_texture texture={0}; texture.bitmap=src;
+    exr_blend_mode mode=trial&4 ? EXR_BLEND_MULTIPLY : EXR_BLEND_NORMAL;
+    for(unsigned i=0;i<256;i++) axis.pixels[i]=reference.pixels[i]=(unsigned char)(17*i+13);
+    OK(exr_vector_texture_blend(&axis,&texture,m,opacity,&clip,mode,NULL,NULL,NULL,&error));
+    m[2]=1.0/1073741824.0;
+    OK(exr_vector_texture_blend(&reference,&texture,m,opacity,&clip,mode,NULL,NULL,NULL,&error));
+    CHECK(!memcmp(axis.pixels,reference.pixels,256));
+  }
+  free(src.pixels);free(axis.pixels);free(reference.pixels);free(clip.pixels);
+}
 int main(void) {
   composite_rows(); scanline_reference();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); strokes(); dashes(); mask_fill_equivalence(); compound_spans(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  curves(); strokes(); dashes(); nearest_coincident_taps(); mask_fill_equivalence(); compound_spans(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);
