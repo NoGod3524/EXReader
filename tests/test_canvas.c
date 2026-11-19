@@ -127,6 +127,27 @@ static void group_churn(void) {
   OK(exr_canvas_end_layer(c,1,&error));pixel(exr_canvas_bitmap(c),4,4,255,255,255);
   exr_canvas_free(c);
 }
-int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }
+/* Check a sparse union with disjoint glyph-like islands; one crosses the
+   parent clip and one is entirely outside it. Use the dense intersection as
+   the oracle, including fractional edges and untouched rows/columns. */
+static void sparse_union_intersection(void) {
+  exr_canvas *c=create(0); exr_path_segment rect[5]; unsigned char expected[64];
+  unsigned x,y,partial=0,cleared=0;
+  rectangle(rect,2.25,1,3.5,5); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  rectangle(rect,1,2.25,3.5,1.5); OK(exr_canvas_union_add(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  rectangle(rect,6.25,5,1.5,1); OK(exr_canvas_union_add(c,rect,5,NULL,EXR_FILL_EVENODD,&error));
+  for(y=0;y<8;y++) for(x=0;x<8;x++) {
+    unsigned g=c->group->bitmap.pixels[y*c->group->bitmap.stride+x];
+    unsigned p=c->clip->bitmap.pixels[y*c->clip->bitmap.stride+x];
+    expected[y*8+x]=(unsigned char)((g*p+127)/255);
+    partial+=(expected[y*8+x]>0 && expected[y*8+x]<255);
+    cleared+=(g!=0 && p==0);
+  }
+  CHECK(partial && cleared);
+  OK(exr_canvas_union_commit(c,&error));
+  for(y=0;y<8;y++) CHECK(!memcmp(c->clip->bitmap.pixels+y*c->clip->bitmap.stride,expected+y*8,8));
+  exr_canvas_free(c);
+}
+int main(void) { sparse_union_intersection(); backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }
 
 

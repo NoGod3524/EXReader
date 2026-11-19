@@ -386,7 +386,12 @@ exr_status exr_canvas_union_commit(exr_canvas *c,exr_error *e) {
   if(c->group && c->clip) for(y=0;y<c->bitmap.height;y++) {
     if(!(y&63) && (status=exr_control_cancel(&c->control,e))!=EXR_OK) return finish(c,status,e);
     if(!exr_vector_work(&c->work,c->bitmap.width)) return finish(c,exr_fail(e,EXR_LIMIT,"Canvas clip union work exceeds budget"),e);
-    for(x=0;x<c->bitmap.width;x++) {
+    /* Only the union's support can change: zero group coverage stays zero
+       under intersection. Do not narrow to the parent clip's bounds: group
+       pixels outside the parent must still be cleared. Keep the row-level
+       cancellation checks and work charges unchanged. */
+    if(y<c->group->dirty_top || y>=c->group->dirty_bottom) continue;
+    for(x=c->group->dirty_left;x<c->group->dirty_right;x++) {
       unsigned char *p=c->group->bitmap.pixels+(size_t)y*c->group->bitmap.stride+x;
       *p=(unsigned char)(((unsigned)*p*c->clip->bitmap.pixels[(size_t)y*c->clip->bitmap.stride+x]+127)/255);
     }
