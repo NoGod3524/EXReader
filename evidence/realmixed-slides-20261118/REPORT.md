@@ -1,6 +1,6 @@
 # Real-mixed courseware slides at 1200 px
 
-On the matched Release run against `716ca5e22`, the candidate rendered pages 1–21 in a median **918.70 ms** versus **976.35 ms** on main. The median paired saving was **57.64 ms (5.90%)**, with **11/11** faster sweeps and **zero** differences across **22,680,000** active RGBA pixels. [Focused production samples](raw/production-slides-1200.json)
+On the matched Release run against `d8148bbd2`, the candidate rendered pages 1–21 in a median **878.61 ms** versus **956.80 ms** on main. The median paired saving was **66.08 ms (7.08%)**, with **11/11** faster sweeps and **zero** differences across **22,680,000** active RGBA pixels. [Focused production samples](raw/main266/production-slides-1200.json)
 
 ## Current-main baseline and #264
 
@@ -78,7 +78,7 @@ Each pilot compared all 22,680,000 active RGBA pixels on its first sweep and rec
 
 ## Production verification against #263-era main
 
-Both production DLLs came from the same Windows Release build directory. They include #263. A is `716ca5e22` with SHA-256 `2c7412eb0a6a47fc0e0c5e492011736123eaffb72fad35c4ad580288da398b09`. B adds the two changes in this branch and has SHA-256 `86cc5a6ca48d2072109738bd152b6c57b426722a06d19c0c13647ab39c019bd0`. The focused p1–21 run recorded CPU gate samples from 8.59% to 14.29%. The paired savings ranged from 15.69 to 102.67 ms.
+Both production DLLs came from the same Windows Release build directory. They include #263. A is `716ca5e22` with SHA-256 `2c7412eb0a6a47fc0e0c5e492011736123eaffb72fad35c4ad580288da398b09`. B adds the two changes in this branch and has SHA-256 `86cc5a6ca48d2072109738bd152b6c57b426722a06d19c0c13647ab39c019bd0`. For p1–21, main's median was 976.35 ms and the candidate's was 918.70 ms. The median paired saving was 57.64 ms (5.90%), with all 11 sweeps faster. Savings ranged from 15.69 to 102.67 ms. CPU gate samples ranged from 8.59% to 14.29%. [#263-era native samples](raw/production-slides-1200.json)
 
 | Other real-mixed pages | Main sum of page medians (ms) | Candidate sum of page medians (ms) | Change | Median paired sweep change |
 | --- | ---: | ---: | ---: | ---: |
@@ -111,17 +111,52 @@ CTest passed **577/577** in 86.98 seconds. [CTest output](raw/ctest.txt)
 
 The table uses the maximum of three fresh-process peaks per arm. Runs used AB, BA, and AB order, with two render passes per process. The largest growth within a matched process pair was 0.32%, below the 10% limit. [RSS captures](raw/rss.json)
 
+## Final verification against #266-era main
+
+Main is `d8148bbd2`, and the rebased production code is `d704cdacc`. Main DLL SHA-256 is `d6366a1e1aaaf593c7497af2f3ed0aa81456af73369941c2f71b89449bf444bc` and candidate DLL SHA-256 is `d7be9e348da70e1609cccc3a9843d667bce9363b44f4fb65dd68ac861e42392b`. The focused run passed the CPU gate at 5.08–14.84%, and paired savings ranged from 10.67 to 82.72 ms.
+
+| Other real-mixed pages | Main sum of page medians (ms) | Candidate sum of page medians (ms) | Change | Median paired sweep change |
+| --- | ---: | ---: | ---: | ---: |
+| 22–51, Deck | 379.61 | 378.58 | −0.27% | −0.70% |
+| 52–76, Word | 150.88 | 149.77 | −0.73% | +0.13% |
+| 77–116, PPTX | 67.68 | 66.87 | −1.19% | −1.54% |
+| 117 and 119, Excel | 24.71 | 24.02 | −2.80% | +0.18% |
+| 118 and 120, Chinese | 4.25 | 3.78 | −11.03% | −6.31% |
+
+Deck, Word, PPTX, and Excel fell within ±3% by both measures. The Chinese pages were faster in this full-corpus capture, outside the requested ±3% band on the faster side. [Full-corpus matched sample](raw/main266/production-real-mixed-120-1200.json)
+
+| Small fixture | Main p50 (ms) | Candidate p50 (ms) | Change | Ceiling (ms) | Candidate meets ceiling |
+| --- | ---: | ---: | ---: | ---: | --- |
+| PPTX @600 | 0.86950 | 0.86790 | −0.18% | 0.844 | No |
+| PPTX @1200 | 1.66170 | 1.66535 | +0.22% | 1.729 | Yes |
+| Deck @1200 | 12.88470 | 12.70270 | −1.41% | 15.4 | Yes |
+| Word @1200 | 5.89470 | 5.98820 | +1.59% | 5.75 | No |
+
+The four relative p50 changes fall within ±3%. Both builds again exceeded the PPTX @600 and Word @1200 absolute ceilings. The PR remains a draft. [Small-fixture samples](raw/main266/)
+
+The final byte comparison again found **zero differing pixels** across **353,143,200** large-fixture pixels and **111,897,000** small-fixture pixels. [Final parity captures](raw/main266/)
+
+CTest passed **577/577** in 92.53 seconds. [Final CTest output](raw/main266/ctest.txt)
+
+| Peak working set at 1200 px | Main (bytes) | Candidate (bytes) | Change |
+| --- | ---: | ---: | ---: |
+| image-heavy-100 | 153,292,800 | 153,686,016 | +0.257% |
+| real-mixed-120 | 112,574,464 | 112,582,656 | +0.007% |
+| vector-heavy-100 | 82,403,328 | 82,399,232 | −0.005% |
+
+The largest increase in any of the nine matched process pairs was **0.51%**, below the 10% limit. [Final RSS captures](raw/main266/rss.json)
+
 ## Measurement protocol
 
 All samples use the same Windows 11 machine, Intel Core Ultra 7 256V, Balanced power plan, and the Release GCC 16.2.0 toolchain. The benchmark fixture SHA-256 is `cdfc1ee6952652613c15fe91288450c6e168994e3b1792e52bb56db14ab8a693`. The PDF.js worker times page lookup, canvas creation, and the render promise. Native timing covers `exr_fixed_render`. Startup, pixel hashing, disposal, and dispatch are outside the timers.
 
 Each bilateral round opens fresh processes and documents, takes one cold sweep for hashes, and records five warm sweeps. Engines alternate AB/BA page by page, with the starting order reversing each warm sweep and each round. Ablations also vary which document arm starts on each pair of pages. The 15% machine CPU gate requires a valid half-second reading and retries closed windows. The bilateral runner discards attempts with detected competing builds or renders. Native A/B checks alternate by page and reverse the starting arm each sweep. Their cold pass compares the active RGBA bytes in each row.
 
-The main-versus-PDF.js baseline uses the median of five sweep totals within each round and then the median of the three round medians per engine. The ablations average paired differences in warm sweep totals and show the range of round means. Removing an operator can change the work of retained operators. Native candidate timing uses the median paired saving across sweeps. Small-fixture gates use the median across all warm page renders. Cohort comparisons report the sum of page medians and the median paired sweep change. [Ablation driver](ablate.py) · [Native matrix driver](validate.py) · [Summary script](summarize.py)
+The main-versus-PDF.js baseline uses the median of five sweep totals within each round and then the median of the three round medians per engine. The ablations average paired differences in warm sweep totals and show the range of round means. Removing an operator can change the work of retained operators. Native candidate timing uses the median paired saving across sweeps. The paired percentage divides each sweep's change by that sweep's main time before taking the median. Small-fixture gates use the median across all warm page renders. Cohort comparisons report the sum of page medians and the median paired sweep change. [Ablation driver](ablate.py) · [Native matrix driver](validate.py) · [Summary script](summarize.py)
 
 ## Reproduce
 
-Build `9a4f3ba0c`, `c01b82c2b`, `716ca5e22`, and the candidate as Windows Release builds with MinGW and Ninja. Use `EXR_BUILD_TESTS=ON`, `EXR_BUILD_TOOLS=OFF`, and `EXR_ENABLE_IMAGE_AVIF=OFF`. Build the diagnostic DLL in a separate checkout of `c01b82c2b` with [probe.patch](probe.patch). Set `$pre264`, `$main264`, `$probe`, `$main`, and `$candidate` to the corresponding DLLs, then run from the repository root.
+Build `9a4f3ba0c`, `c01b82c2b`, `716ca5e22`, `d8148bbd2`, and the two candidates as Windows Release builds with MinGW and Ninja. Apply the production commit to each corresponding base. Use `EXR_BUILD_TESTS=ON`, `EXR_BUILD_TOOLS=OFF`, and `EXR_ENABLE_IMAGE_AVIF=OFF`. Build the diagnostic DLL in a separate checkout of `c01b82c2b` with [probe.patch](probe.patch). Set the DLL variables below to the corresponding builds, and install the PDF.js dependencies in the sibling `pdfjs-bench2` directory. Run from the repository root.
 
 ```powershell
 $d = 'evidence/realmixed-slides-20261118'
@@ -131,8 +166,12 @@ python -B "$d/ablate.py" $main264 real-mixed-120 1 21
 python -B evidence/slides-gradient-20261118/paired_sweep.py $pre264 $main264 tests/fixtures/pdf-large/real-mixed-120.pdf 1200 11 "$d/raw/pre264-main.json" --pages 21
 python -B "$d/ablate.py" $main264 real-mixed-120 1 21 @classes group
 python -B "$d/probe.py" $main264 $probe
-python -B "$d/validate.py" $main $candidate
-python -B "$d/ablate.py" $main real-mixed-120 1 21 baseline page-group image candidate --candidate $candidate --raw "$d/raw/current"
+python -B "$d/validate.py" $main263 $candidate263
+python -B "$d/ablate.py" $main263 real-mixed-120 1 21 baseline page-group image candidate --candidate $candidate263 --raw "$d/raw/current"
+python -B "$d/validate.py" $main266 $candidate266 --raw "$d/raw/main266"
 ctest --test-dir build/realmixed-slides --parallel 6 --output-on-failure
+python -B "$d/validate.py" $main266 $candidate266 --raw "$d/raw/main266" --chinese-only
 python -B "$d/summarize.py"
+python -B "$d/summarize.py" "$d/raw/current"
+python -B "$d/summarize.py" "$d/raw/main266"
 ```
