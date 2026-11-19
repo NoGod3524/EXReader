@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Same-session PDF render comparator. Operator must own bench-lock throughout.
 --pdfjs-root is the installed pdfjs-dist 3.11.174 package; node-canvas required.
-Use at least 11 rounds; multiples of six balance all orderings exactly.
+Use at least 11 rounds; each six-page block contains all six orderings.
 """
 import argparse
 import ctypes as c
@@ -33,6 +33,22 @@ def schedule(rounds, reverse=False):
     orders = [('A','A0','P'), ('P','A0','A'), ('A0','P','A'),
               ('A','P','A0'), ('P','A','A0'), ('A0','A','P')]
     return [orders[i % 6][::-1] if reverse else orders[i % 6] for i in range(rounds)]
+
+
+def page_plan(round_index, page_count, reverse_start=False):
+    """Offset each round pair; mirror the second round at every page slot."""
+    orders = schedule(6)
+    mirror = bool(round_index % 2) != reverse_start
+    for page in range(1,page_count+1):
+        order = orders[(round_index//2 + page-1) % 6]
+        yield page, (order[::-1] if mirror else order)
+
+
+def dispatch_round(round_index, page_count, reverse_start, render, rows):
+    for page, order in page_plan(round_index, page_count, reverse_start):
+        for arm in order:
+            r = render(arm,page)
+            rows.append(dict(r, arm=arm,page=page,round=round_index+1))
 
 
 def summary(rows):
@@ -136,29 +152,30 @@ def capture(args, report):
                 if not n or any(count != n for count,_ in operands.values()):
                     raise ValueError("page count mismatch")
                 case['pages'] = n
-                for i, order in enumerate(schedule(args.rounds,args.reverse_start),1):
+                def render(arm,page):
+                    return (js(op='render',page=page,width=args.width) if arm == 'P'
+                            else operands[arm][1](page))
+                for i in range(1,args.rounds+1):
                     before = cpu_times()
                     time.sleep(0.2)
                     pre = cpu_busy_percent(before,cpu_times())
-                    block = dict(round=i,order=order,pre_cpu_percent=pre,rows=[])
+                    block = dict(round=i,pre_cpu_percent=pre,rows=[])
                     case['rounds'].append(block)
-                    for arm in order:
-                        for page in range(1,n+1):
-                            r = (js(op='render',page=page,width=args.width) if arm == 'P'
-                                 else operands[arm][1](page))
-                            block['rows'].append(dict(r, arm=arm,page=page,round=i))
+                    dispatch_round(i-1,n,args.reverse_start,render,block['rows'])
                     signatures = {r['page']: (r['dimensions'],r['sha256'])
                                   for r in block['rows'] if r['arm']=='A'}
                     if any((r['dimensions'],r['sha256']) != signatures[r['page']]
                            for r in block['rows'] if r['arm']=='A0'):
                         raise ValueError(f"null bitmap mismatch: {name} round {i}")
                 rows = [r for b in case['rounds'] for r in b['rows']]
-                case['summary'] = {arm:summary([r for r in rows if r['arm']==arm])
-                                   for arm in ('A','A0','P')}
                 dimensions = {}
                 for r in rows:
                     dimensions.setdefault((r['round'],r['page']),set()).add(tuple(r['dimensions']))
                 case['matched_dimensions'] = all(len(d)==1 for d in dimensions.values())
+                if not case['matched_dimensions']:
+                    raise ValueError(f"canvas dimensions differ: {name}; raw rows retained")
+                case['summary'] = {arm:summary([r for r in rows if r['arm']==arm])
+                                   for arm in ('A','A0','P')}
 
 
 def main():
@@ -182,8 +199,8 @@ def main():
                   python=sys.version, platform=sys.platform, library=str(args.library),
                   null_library=str(args.null_library), library_and_copy_sha256=identity(args.library,args.null_library),
                   pdfjs_root=str(args.pdfjs_root), status='incomplete', definitions={
-                      'clock':'ns per page: native render call; Node canvas allocation through render promise',
-                      'excluded':'open, page lookup, viewport, IPC, RGBA hashing/readback and cleanup',
+                      'clock':'ns per page: native render call; Node page.render call through render promise',
+                      'excluded':'open, page lookup, viewport, Node canvas allocation, IPC, RGBA hashing/readback and cleanup',
                       'state':'one open document per case per arm; all rounds reported including first pass',
                       'summary':'per case/arm across all page-round samples; median, nearest-rank p95, max; pages / summed render seconds',
                       'rss':'process scope, sampled after hashing; native A/A0 share supervisor, P is persistent Node; non-Windows native helper may return peak',
