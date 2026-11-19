@@ -131,11 +131,13 @@ static void group_churn(void) {
    parent clip and one is entirely outside it. Use the dense intersection as
    the oracle, including fractional edges and untouched rows/columns. */
 static void sparse_union_intersection(void) {
-  exr_canvas *c=create(0); exr_path_segment rect[5]; unsigned char expected[64];
+  exr_canvas *c=create(0); exr_path_segment rect[5]; exr_draw_sink sink={0}; unsigned char expected[64];
   unsigned x,y,partial=0,cleared=0;
   rectangle(rect,2.25,1,3.5,5); OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
-  rectangle(rect,1,2.25,3.5,1.5); OK(exr_canvas_union_add(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
-  rectangle(rect,6.25,5,1.5,1); OK(exr_canvas_union_add(c,rect,5,NULL,EXR_FILL_EVENODD,&error));
+  OK(exr_canvas_get_sink(c,&sink,&error));
+  OK(sink.state(sink.context,EXR_DRAW_BEGIN_CLIP,&error));
+  rectangle(rect,1,2.25,3.5,1.5); OK(sink.clip(sink.context,rect,5,NULL,EXR_FILL_NONZERO,1,&error));
+  rectangle(rect,6.25,5,1.5,1); OK(sink.clip(sink.context,rect,5,NULL,EXR_FILL_EVENODD,1,&error));
   for(y=0;y<8;y++) for(x=0;x<8;x++) {
     unsigned g=c->group->bitmap.pixels[y*c->group->bitmap.stride+x];
     unsigned p=c->clip->bitmap.pixels[y*c->clip->bitmap.stride+x];
@@ -144,7 +146,7 @@ static void sparse_union_intersection(void) {
     cleared+=(g!=0 && p==0);
   }
   CHECK(partial && cleared);
-  OK(exr_canvas_union_commit(c,&error));
+  OK(sink.state(sink.context,EXR_DRAW_END_CLIP,&error));
   for(y=0;y<8;y++) CHECK(!memcmp(c->clip->bitmap.pixels+y*c->clip->bitmap.stride,expected+y*8,8));
   exr_canvas_free(c);
 }
