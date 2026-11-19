@@ -47,6 +47,35 @@ static void compound_spans(void) {
   OK(exr_composite_compound(&slow,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&cm,NULL,&b,NULL,&error));
   CHECK(a==8+5*12 && b==limit && !memcmp(actual,reference,sizeof(actual)));
   CHECK(!memcmp(actual,"\xaa\xbb\xcc\xff\xaa\xbb\xcc\xff\x11\x22\x33\xff\x11\x22\x33\xff",16));
+  /* Exhaustive check of fast opaque normal-blend AA and offset masks against the slow path. */
+  {
+    const unsigned char vals[]={0,1,37,127,128,219,254,255};
+    unsigned char fbuf[64],sbuf[64],cbuf[16*8],fast_px[16*8*4],slow_px[16*8*4];
+    const exr_bitmap tight_f={8,8,8,fbuf,1},tight_s={8,8,8,sbuf,1};
+    unsigned char full_f[16*8],full_s[16*8];
+    const exr_bitmap big_f={16,8,16,full_f,1},big_s={16,8,16,full_s,1},big_c={16,8,16,cbuf,1};
+    const uint32_t bnds[]={5,0,13,8};
+    memset(full_f,0,sizeof(full_f)); memset(full_s,0,sizeof(full_s));
+    for(unsigned y=0;y<8;y++) for(unsigned x=0;x<8;x++) {
+      fbuf[y*8+x]=full_f[y*16+5+x]=vals[x];
+      sbuf[y*8+x]=full_s[y*16+5+x]=vals[y];
+    }
+    for(unsigned use_clip=0;use_clip<2;use_clip++) for(unsigned bg_a=0;bg_a<3;bg_a++) {
+      exr_bitmap fbm={16,8,64,fast_px,4},sbm={16,8,64,slow_px,4};
+      for(size_t i=0;i<16*8;i++) {
+        fast_px[i*4+0]=slow_px[i*4+0]=(unsigned char)(i*19+7);
+        fast_px[i*4+1]=slow_px[i*4+1]=(unsigned char)(i*31+3);
+        fast_px[i*4+2]=slow_px[i*4+2]=(unsigned char)(i*43+11);
+        fast_px[i*4+3]=slow_px[i*4+3]=bg_a==0 ? 255 : bg_a==1 ? 0 : (unsigned char)((i*29)%255);
+        cbuf[i]=vals[(i*3+use_clip)%8];
+      }
+      size_t wf=0,ws=0;
+      exr_composite_state slow_state={0};
+      OK(exr_composite_compound_at(&fbm,&tight_f,&tight_s,5,0,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &big_c : NULL,NULL,&wf,NULL,&error));
+      OK(exr_composite_compound(&sbm,&big_f,&big_s,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &big_c : NULL,&slow_state,&ws,NULL,&error));
+      CHECK(!memcmp(fast_px,slow_px,sizeof(fast_px)));
+    }
+  }
 }
 static void stable_clip_rows(void) {
   exr_vector_edge edges[8];

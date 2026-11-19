@@ -35,10 +35,17 @@ void exr_cmyk_from_rgb(const double rgb[3],double cmyk[4]);
 /* bounds = {left,top,right,bottom}: both coverage masks are zero outside it. */
 exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
   const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
-  const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
+  const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);
+exr_status exr_composite_compound_cmyk_at(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,uint32_t mask_x,uint32_t mask_y,
+  const uint32_t bounds[4],const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
+  const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);
+exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
   const exr_composite_state *parent_state,int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
+  size_t *work,const exr_control *control,exr_error *error);
+exr_status exr_composite_compound_at(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,uint32_t mask_x,uint32_t mask_y,
+  const uint32_t bounds[4],uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_bitmap_to_gray(exr_bitmap *bitmap,const exr_control *control,exr_error *error);
 exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,

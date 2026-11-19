@@ -5,7 +5,11 @@
 #include "buffer_pool_internal.h"
 /* Rows outside [dirty_top,dirty_bottom) are zero; recycling clears only the rest.
    Path coverage also keeps columns outside [dirty_left,dirty_right) at zero. */
-typedef struct { exr_bitmap bitmap; size_t refs; uint32_t dirty_top,dirty_bottom,dirty_left,dirty_right; } exr_clip_mask;
+typedef struct {
+  exr_bitmap bitmap; size_t refs;
+  uint32_t dirty_top,dirty_bottom,dirty_left,dirty_right;
+  uint16_t *solid_spans; uint32_t solid_top,solid_bottom;
+} exr_clip_mask;
 typedef struct {
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
   int parent_offset_x,parent_offset_y;
@@ -16,6 +20,9 @@ typedef struct {
   const unsigned char *soft_mask;unsigned char *soft_mask_owned;
   size_t soft_mask_width,soft_mask_height;
 } exr_canvas_layer;
+typedef struct exr_path_cache_entry exr_path_cache_entry;
+#define EXR_PATH_CACHE_SLOTS 8
+#define EXR_PATH_CACHE_SEEN 32
 struct exr_canvas {
   exr_buffer_pool local_pool,*pool;
   struct exr_icc *cmyk_profile;
@@ -32,6 +39,11 @@ struct exr_canvas {
   int offset_x,offset_y; /* canvas coordinate of the active working buffer's top-left */
   size_t canvas_width,canvas_height; /* device extent, independent of the active buffer */
   exr_clip_mask *spare_masks[4]; /* released masks kept for reuse within this canvas */
+  exr_vector_scratch vector_scratch; /* reusable scanline workspace freed with the canvas */
+  uint64_t path_seen[EXR_PATH_CACHE_SEEN];
+  unsigned path_seen_pos,path_cache_tick;
+  exr_path_cache_entry *path_cache[EXR_PATH_CACHE_SLOTS];
+  size_t path_cache_bytes;
 };
 exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_pool *pool,exr_canvas **out,exr_error *error);
 /* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */

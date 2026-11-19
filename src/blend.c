@@ -516,48 +516,141 @@ static exr_status compound_scan(const exr_bitmap *target,const uint32_t bounds[4
   if(!exr_vector_work(work,(size_t)target->width*(target->height-(*y1-*y0)))) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
   return EXR_OK;
 }
-exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
-  uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
+static inline unsigned char clamp_round_u8(double v) {
+  double r=v+0.5;
+  return r<=0.0 ? 0 : r>=255.0 ? 255 : (unsigned char)(unsigned)r;
+}
+exr_status exr_composite_compound_at(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,uint32_t mask_x,uint32_t mask_y,
+  const uint32_t bounds[4],uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *e) {
   size_t y,x,y0,y1,x0,x1;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
   int opaque=mode==EXR_BLEND_NORMAL && !state && target->channels==4 && ((fill_color&stroke_color)&255)==255;
   const unsigned char fill_rgba[4]={(unsigned char)(fill_color>>24),(unsigned char)(fill_color>>16),(unsigned char)(fill_color>>8),255};
   const unsigned char stroke_rgba[4]={(unsigned char)(stroke_color>>24),(unsigned char)(stroke_color>>16),(unsigned char)(stroke_color>>8),255};
+  uint32_t fill_px,stroke_px;
+  double fr_d=fill_rgba[0],fg_d=fill_rgba[1],fb_d=fill_rgba[2],sr_d=stroke_rgba[0],sg_d=stroke_rgba[1],sb_d=stroke_rgba[2];
   exr_status status=compound_scan(target,bounds,&y0,&y1,&x0,&x1,work,control,e);
+  memcpy(&fill_px,fill_rgba,4); memcpy(&stroke_px,stroke_rgba,4);
   if(status!=EXR_OK) return status;
   for(y=y0;y<y1;y++) {
-    const unsigned char *fill_row=fill->pixels+y*fill->stride,*stroke_row=stroke->pixels+y*stroke->stride;
-    const unsigned char *clip_row=clip ? clip->pixels+y*clip->stride : NULL;
-    size_t row_budget;
+    const unsigned char *fill_row=fill->pixels+(y-mask_y)*fill->stride+(x0-mask_x);
+    const unsigned char *stroke_row=stroke->pixels+(y-mask_y)*stroke->stride+(x0-mask_x);
+    const unsigned char *clip_row=clip ? clip->pixels+y*clip->stride+x0 : NULL;
+    size_t w=x1-x0,row_budget;
     int solid_spans;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
     /* Near the limit, keep the original pixel-by-pixel failure point. */
     row_budget=*work;
-    solid_spans=opaque && exr_vector_work(&row_budget,(x1-x0)*cost);
-    for(x=x0;x<x1;x++) {
-      if(solid_spans) {
-        unsigned f=fill_row[x],s=stroke_row[x],k=clip_row ? clip_row[x] : 255;
-        if(!k || !(f|s)) continue;
-        /* A fully covered opaque stroke replaces the fill. A fully covered
-           opaque fill with no stroke replaces the backdrop. */
-        if(k==255 && (s==255 || (f==255 && !s))) {
-          size_t end=x+1;
-          const unsigned char *rgba=s==255 ? stroke_rgba : fill_rgba;
-          unsigned char *pixel=target->pixels+y*target->stride+x*4;
-          if(s==255) {
-            while(end<x1 && stroke_row[end]==255 && (!clip_row || clip_row[end]==255)) end++;
-          } else {
-            while(end<x1 && fill_row[end]==255 && !stroke_row[end] && (!clip_row || clip_row[end]==255)) end++;
+    solid_spans=opaque && exr_vector_work(&row_budget,w*cost);
+    if(solid_spans && !clip_row) {
+      unsigned char *dst_row=target->pixels+y*target->stride+x0*4;
+      for(size_t i=0;i<w;) {
+        unsigned fv=fill_row[i],sv=stroke_row[i];
+        if(!(fv|sv)) {
+          i++;
+          while(i+8<=w) {
+            uint64_t fw64,sw64;
+            memcpy(&fw64,fill_row+i,8); memcpy(&sw64,stroke_row+i,8);
+            if(fw64|sw64) break;
+            i+=8;
           }
-          exr_vector_work(work,(end-x)*cost);
-          for(;x<end;x++,pixel+=4) memcpy(pixel,rgba,4);
-          x--;
           continue;
         }
+        if(sv==255) {
+          size_t end=i+1;
+          while(end+8<=w) {
+            uint64_t sw64; memcpy(&sw64,stroke_row+end,8);
+            if(sw64!=UINT64_MAX) break;
+            end+=8;
+          }
+          while(end<w && stroke_row[end]==255) end++;
+          exr_vector_work(work,(end-i)*cost);
+          unsigned char *pixel=dst_row+i*4;
+          size_t n=end-i;
+          for(size_t k=0;k<n;k++) memcpy(pixel+k*4,&stroke_px,4);
+          i=end; continue;
+        }
+        if(fv==255 && !sv) {
+          size_t end=i+1;
+          while(end+8<=w) {
+            uint64_t fw64,sw64;
+            memcpy(&fw64,fill_row+end,8); memcpy(&sw64,stroke_row+end,8);
+            if(fw64!=UINT64_MAX || sw64!=0) break;
+            end+=8;
+          }
+          while(end<w && fill_row[end]==255 && !stroke_row[end]) end++;
+          exr_vector_work(work,(end-i)*cost);
+          unsigned char *pixel=dst_row+i*4;
+          size_t n=end-i;
+          for(size_t k=0;k<n;k++) memcpy(pixel+k*4,&fill_px,4);
+          i=end; continue;
+        }
+        /* Opaque normal-blend AA pixel with exact same double formula as below. */
+        exr_vector_work(work,cost);
+        {
+          unsigned char *p=dst_row+i*4;
+          double f=fv/255.,s=sv/255.,fw=f*(1-s),sw=s,bw=1-fw-sw;
+          if(p[3]==255) {
+            double a=fw+sw+bw;
+            p[0]=clamp_round_u8((fw*fr_d+sw*sr_d+bw*p[0])/a);
+            p[1]=clamp_round_u8((fw*fg_d+sw*sg_d+bw*p[1])/a);
+            p[2]=clamp_round_u8((fw*fb_d+sw*sb_d+bw*p[2])/a);
+            p[3]=clamp_round_u8(a*255);
+          } else {
+            double ba=p[3]/255.,a=fw+sw+bw*ba;
+            p[0]=a>0 ? clamp_round_u8((fw*fr_d+sw*sr_d+bw*ba*p[0])/a) : 0;
+            p[1]=a>0 ? clamp_round_u8((fw*fg_d+sw*sg_d+bw*ba*p[1])/a) : 0;
+            p[2]=a>0 ? clamp_round_u8((fw*fb_d+sw*sb_d+bw*ba*p[2])/a) : 0;
+            p[3]=clamp_round_u8(a*255);
+          }
+        }
+        i++;
       }
+      continue;
+    }
+    if(solid_spans) {
+      unsigned char *dst_row=target->pixels+y*target->stride+x0*4;
+      for(size_t i=0;i<w;) {
+        unsigned fv=fill_row[i],sv=stroke_row[i],kv=clip_row[i];
+        if(!kv || !(fv|sv)) { i++; continue; }
+        if(kv==255 && (sv==255 || (fv==255 && !sv))) {
+          size_t end=i+1;
+          uint32_t px=sv==255 ? stroke_px : fill_px;
+          if(sv==255) while(end<w && stroke_row[end]==255 && clip_row[end]==255) end++;
+          else while(end<w && fill_row[end]==255 && !stroke_row[end] && clip_row[end]==255) end++;
+          exr_vector_work(work,(end-i)*cost);
+          unsigned char *pixel=dst_row+i*4;
+          size_t n=end-i;
+          for(size_t k=0;k<n;k++) memcpy(pixel+k*4,&px,4);
+          i=end; continue;
+        }
+        exr_vector_work(work,cost);
+        {
+          unsigned char *p=dst_row+i*4;
+          double f=fv/255.,s=sv/255.,k=kv/255.,fw=f*(1-s)*k,sw=s*k,bw=1-fw-sw;
+          if(p[3]==255) {
+            double a=fw+sw+bw;
+            p[0]=clamp_round_u8((fw*fr_d+sw*sr_d+bw*p[0])/a);
+            p[1]=clamp_round_u8((fw*fg_d+sw*sg_d+bw*p[1])/a);
+            p[2]=clamp_round_u8((fw*fb_d+sw*sb_d+bw*p[2])/a);
+            p[3]=clamp_round_u8(a*255);
+          } else {
+            double ba=p[3]/255.,a=fw+sw+bw*ba;
+            p[0]=a>0 ? clamp_round_u8((fw*fr_d+sw*sr_d+bw*ba*p[0])/a) : 0;
+            p[1]=a>0 ? clamp_round_u8((fw*fg_d+sw*sg_d+bw*ba*p[1])/a) : 0;
+            p[2]=a>0 ? clamp_round_u8((fw*fb_d+sw*sb_d+bw*ba*p[2])/a) : 0;
+            p[3]=clamp_round_u8(a*255);
+          }
+        }
+        i++;
+      }
+      continue;
+    }
+    for(size_t i=0;i<w;i++) {
+      x=x0+i;
       unsigned char *p=target->pixels+y*target->stride+x*target->channels,fp[4]={0},sp[4]={0};
-      double f=fill_row[x]/255.,s=stroke_row[x]/255.,k=clip_row ? clip_row[x]/255. : 1;
+      double f=fill_row[i]/255.,s=stroke_row[i]/255.,k=clip_row ? clip_row[i]/255. : 1;
       double fw,sw,bw,fa,sa,ba,a,m=1;unsigned channel;
       exr_bitmap first={1,1,target->channels,fp,target->channels},second={1,1,target->channels,sp,target->channels};
       if((fill_color&255) || (stroke_color&255) || !(state && (state->knockout || state->shape))) {
@@ -597,24 +690,32 @@ exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,cons
   }
   return EXR_OK;
 }
-exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
-  const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
+exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
+  uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_bitmap *clip,exr_composite_state *state,
+  size_t *work,const exr_control *control,exr_error *e) {
+  return exr_composite_compound_at(target,fill,stroke,0,0,bounds,fill_color,stroke_color,mode,clip,state,work,control,e);
+}
+exr_status exr_composite_compound_cmyk_at(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,uint32_t mask_x,uint32_t mask_y,
+  const uint32_t bounds[4],const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
   const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
   size_t y,x,y0,y1,x0,x1;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;exr_status status;
   if(!state || !state->cmyk_pixels) {
     double rf[3],rs[3];uint32_t fc=0,sc=0;unsigned c;
     exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,fill_cmyk,rf,1);exr_device_cmyk_rgb(state ? state->cmyk_profile : NULL,stroke_cmyk,rs,1);
     for(c=0;c<3;c++) { fc|=(uint32_t)fmin(255,floor(rf[c]*255+.5))<<(24-8*c);sc|=(uint32_t)fmin(255,floor(rs[c]*255+.5))<<(24-8*c); }
-    return exr_composite_compound(target,fill,stroke,bounds,fc|(uint32_t)fmin(255,floor(fill_alpha*255+.5)),
+    return exr_composite_compound_at(target,fill,stroke,mask_x,mask_y,bounds,fc|(uint32_t)fmin(255,floor(fill_alpha*255+.5)),
       sc|(uint32_t)fmin(255,floor(stroke_alpha*255+.5)),mode,clip,state,work,control,e);
   }
   status=compound_scan(target,bounds,&y0,&y1,&x0,&x1,work,control,e);
   if(status!=EXR_OK) return status;
   for(y=y0;y<y1;y++) {
+    const unsigned char *fill_row=fill->pixels+(y-mask_y)*fill->stride+(x0-mask_x);
+    const unsigned char *stroke_row=stroke->pixels+(y-mask_y)*stroke->stride+(x0-mask_x);
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,target->width)) return exr_fail(e,EXR_LIMIT,"Compound path scan exceeds budget");
-    for(x=x0;x<x1;x++) {
-      double f=fill->pixels[y*fill->stride+x]/255.,s=stroke->pixels[y*stroke->stride+x]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
+    for(size_t i=0;i<x1-x0;i++) {
+      x=x0+i;
+      double f=fill_row[i]/255.,s=stroke_row[i]/255.,k=clip ? clip->pixels[y*clip->stride+x]/255. : 1;
       double fw,sw,bw,m=1,back[5],base[5],fr[5],sr[5],out[5],af=fill_alpha,as=stroke_alpha,opacity_mask,shape_mask=1;unsigned c;
       if(fill_alpha>0 || stroke_alpha>0 || !(state->knockout || state->shape)) {
         if(fill_alpha<=0) f=0;
@@ -644,4 +745,9 @@ exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill
     }
   }
   return EXR_OK;
+}
+exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
+  const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
+  const exr_bitmap *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
+  return exr_composite_compound_cmyk_at(target,fill,stroke,0,0,bounds,fill_cmyk,stroke_cmyk,fill_alpha,stroke_alpha,mode,clip,state,work,control,e);
 }

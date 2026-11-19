@@ -127,6 +127,51 @@ static void group_churn(void) {
   OK(exr_canvas_end_layer(c,1,&error));pixel(exr_canvas_bitmap(c),4,4,255,255,255);
   exr_canvas_free(c);
 }
-int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); printf("%u native canvas checks passed\n",checks); return 0; }
+static int never_cancel(void *ctx) { (void)ctx; return 0; }
+static void path_cache_and_solid_clip(void) {
+  /* Compare cached path reuse + solid-clip elision against an uncached reference canvas
+     (control.cancelled != NULL bypasses the within-page path cache). */
+  exr_canvas_config cfg={0},ref_cfg={0};
+  exr_canvas *fast=NULL,*ref=NULL;
+  exr_path_segment clip[5]={{EXR_PATH_MOVE,{{10,12}}},{EXR_PATH_LINE,{{148,8}}},{EXR_PATH_LINE,{{152,110}}},{EXR_PATH_LINE,{{8,112}}},{EXR_PATH_CLOSE,{{0}}}};
+  exr_path_segment star[14]={
+    {EXR_PATH_MOVE,{{24,12}}},{EXR_PATH_LINE,{{18,15}}},{EXR_PATH_LINE,{{19,21}}},{EXR_PATH_LINE,{{14,17}}},
+    {EXR_PATH_LINE,{{9,21}}},{EXR_PATH_LINE,{{10,15}}},{EXR_PATH_LINE,{{4,12}}},{EXR_PATH_LINE,{{10,9}}},
+    {EXR_PATH_LINE,{{9,3}}},{EXR_PATH_LINE,{{14,7}}},{EXR_PATH_LINE,{{19,3}}},{EXR_PATH_LINE,{{18,9}}},
+    {EXR_PATH_LINE,{{24,12}}},{EXR_PATH_CLOSE,{{0}}}
+  };
+  exr_path_segment curve[2]={{EXR_PATH_MOVE,{{14,20}}},{EXR_PATH_CUBIC,{{54,32},{96,8},{136,20}}}};
+  const double dashes[2]={4,2};
+  exr_draw_style style=exr_draw_style_defaults();
+  cfg.width=160; cfg.height=120; cfg.background=0xfafaf8ffu;
+  ref_cfg=cfg; ref_cfg.control.cancelled=never_cancel;
+  OK(exr_canvas_create(&cfg,&fast,&error));
+  OK(exr_canvas_create(&ref_cfg,&ref,&error));
+  OK(exr_canvas_clip(fast,clip,5,NULL,EXR_FILL_NONZERO,&error));
+  OK(exr_canvas_clip(ref,clip,5,NULL,EXR_FILL_NONZERO,&error));
+  /* 1. Repeated dashed curves at integer y shifts (strike 1, 2, hits 3..5) and one crossing clip. */
+  style.flags=EXR_DRAW_STROKE; style.line.width=1.4; style.dashes=dashes; style.dash_count=2; style.dash_phase=1;
+  for(int i=0;i<6;i++) {
+    double m[6]={1,0,0,1,0,(double)(i==5 ? -14 : i*13)};
+    style.stroke=0x102030ffu+(uint32_t)(i*0x19130d00u);
+    OK(exr_canvas_path(fast,curve,2,m,&style,&error));
+    OK(exr_canvas_path(ref,curve,2,m,&style,&error));
+  }
+  /* 2. Repeated compound stars: integer x shifts, subpixel y shift, clip-edge overlap, and border-clip test. */
+  style.flags=EXR_DRAW_FILL|EXR_DRAW_STROKE; style.rule=EXR_FILL_EVENODD; style.line.width=0.9; style.dash_count=0; style.dashes=NULL;
+  {
+    const double shifts[][2]={{12,20},{44,20},{76,20},{108,20},{12,50.333},{44,50.333},{76,50.333},{-6,70},{140,70},{20,70}};
+    for(size_t i=0;i<sizeof(shifts)/sizeof(*shifts);i++) {
+      double m[6]={1,0,0,1,shifts[i][0],shifts[i][1]};
+      style.fill=0x224466ffu+(uint32_t)(i*0x170b1300u); style.stroke=0x333333ffu;
+      OK(exr_canvas_path(fast,star,14,m,&style,&error));
+      OK(exr_canvas_path(ref,star,14,m,&style,&error));
+    }
+  }
+  CHECK(fast->path_cache_bytes>0 && fast->path_cache_bytes<=512u*1024u);
+  CHECK(!memcmp(exr_canvas_bitmap(fast)->pixels,exr_canvas_bitmap(ref)->pixels,(size_t)160*120*4));
+  exr_canvas_free(fast); exr_canvas_free(ref);
+}
+int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); path_cache_and_solid_clip(); printf("%u native canvas checks passed\n",checks); return 0; }
 
 
