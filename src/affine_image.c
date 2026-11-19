@@ -491,7 +491,10 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
      (mt && !axis_layer_init(&mask,&mt->bitmap,(int)mt->interpolate,inv,x0,y0,width))) {
     axis_layer_free(&color);axis_layer_free(&mask); return 0;
   }
-  int flat=alpha==1 && inv[0]>0 && inv[0]*source->width<=1 && fabs(inv[3])*source->height<=1 &&
+  /* Equal opaque texels resolve to their bytes at any scale. Up to two texels
+     per pixel the footprint check stays short; taller footprints fall back
+     per row in axis_flat_row_paint. */
+  int flat=alpha==1 && inv[0]>0 && inv[0]*source->width<=2 && fabs(inv[3])*source->height<=2 &&
     (!mt || (mask_mode==1 && !mask.interpolate && mt->bitmap.width==source->width && mt->bitmap.height==source->height)) &&
     has_flat_footprints(source) && fegetround()==FE_TONEAREST;
   *result=EXR_OK;

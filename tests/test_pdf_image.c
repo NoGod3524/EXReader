@@ -203,6 +203,38 @@ static void affine(void) {
       CHECK(memcmp(drawn,initial,sizeof(drawn)) && !memcmp(drawn,reference,sizeof(drawn)));
     }
   }
+  /* Minified images with flat 8x8 opaque blocks take the uniform-span path
+     up to two texels per pixel. A nested unit mask forces the generic sampler,
+     so both renders must match byte for byte across scales, flips, fractional
+     placement, a noisy strip, transparent texels and clip coverage. */
+  { enum { W=160,H=140,TW=132,TH=124 };
+    static const double placements[][4]={{128,112,0,0},{100,87.5,1.3,.7},{80.4,70.1,.5,2.25},{84.2,-73.7,3.6,90.4},{128.6,-112.2,-.4,118.9},{80,70,40,40}};
+    static unsigned char colors[W*H*4],drawn[TW*TH*4],reference[TW*TH*4],initial[TW*TH*4],cover[TW*TH];
+    unsigned char white[4]={255,255,255,255};
+    exr_vector_texture color={0},unit={0},child={0};exr_bitmap out={0},other,coverage={0};unsigned trial,i,x,y;
+    out.width=TW;out.height=TH;out.channels=4;out.stride=TW*4;out.pixels=drawn;other=out;other.pixels=reference;
+    coverage.width=TW;coverage.height=TH;coverage.channels=1;coverage.stride=TW;coverage.pixels=cover;
+    for(i=0;i<sizeof(cover);i++) cover[i]=i%7 ? 255 : (unsigned char)(i*53);
+    unit.bitmap.width=unit.bitmap.height=1;unit.bitmap.channels=unit.bitmap.stride=4;unit.bitmap.pixels=white;
+    child=unit;child.mask=&unit;child.mask_mode=2;
+    color.bitmap.width=W;color.bitmap.height=H;color.bitmap.channels=4;color.bitmap.stride=W*4;color.bitmap.pixels=colors;color.interpolate=1;
+    for(trial=0;trial<24;trial++) {
+      const double *p=placements[trial%6],m[6]={p[0],0,0,p[1],p[2],p[3]};
+      const exr_bitmap *clip_used=(trial/6)&1 ? &coverage : NULL;
+      for(y=0;y<H;y++) for(x=0;x<W;x++) {
+        unsigned char *q=colors+((size_t)y*W+x)*4;unsigned block=(x/8)*7+(y/8)*13+trial*5;
+        q[0]=(unsigned char)(block*37);q[1]=(unsigned char)(block*59);q[2]=(unsigned char)(block*83);q[3]=255;
+        if(x>=140) { q[0]=(unsigned char)(x*31+y*17);q[1]=(unsigned char)(x*7+y*3);q[3]=(unsigned char)((trial/12) ? 255 : x*y); }
+      }
+      colors[3]=0;colors[7]=128;
+      for(i=0;i<sizeof(initial);i++) initial[i]=(unsigned char)(i*13+trial);
+      for(i=3;i<sizeof(initial);i+=12) initial[i]=0;
+      memcpy(drawn,initial,sizeof(drawn));memcpy(reference,initial,sizeof(reference));
+      color.mask=NULL;OK(exr_vector_texture_paint(&out,&color,m,1,clip_used,NULL,NULL,&error));
+      color.mask=&child;color.mask_mode=2;OK(exr_vector_texture_paint(&other,&color,m,1,clip_used,NULL,NULL,&error));
+      CHECK(memcmp(drawn,initial,sizeof(drawn)) && !memcmp(drawn,reference,sizeof(drawn)));
+    }
+  }
   /* A unit opacity mask forces the independent generic sampler. Exercise the
      sheared bilinear row cache, row crossings and image edges with reflections,
      transparent texels/destinations, fractional opacity and clip coverage. */
