@@ -409,8 +409,117 @@ static void composite_rows(void) {
   }
   free(source.pixels);free(target.pixels);free(expected.pixels);free(clip.pixels);
 }
+/* The scanline keeps an active edge list, coverage blocks and interior runs.
+   Each must reproduce a direct transcription of the all-edge scan, including
+   its work charge, for gray, mask and RGBA targets with and without a clip. */
+typedef struct { double x; int winding; } reference_crossing;
+static int reference_compare(const void *a,const void *b) {
+  const reference_crossing *x=a,*y=b; return x->x<y->x ? -1 : x->x>y->x;
+}
+static void reference_span(float *coverage,int origin,uint32_t width,double left,double right) {
+  int x,first,last; double end=origin+(double)width;
+  if(left<origin) left=origin;
+  if(right>end) right=end;
+  if(right<=left) return;
+  first=(int)left;last=(int)right;
+  if(right==last) last--;
+  if(first==last) { coverage[first-origin]+=(float)(right-left);return; }
+  coverage[first-origin]+=(float)(first+1-left);
+  for(x=first+1;x<last;x++) coverage[x-origin]+=1.f;
+  coverage[last-origin]+=(float)(right-last);
+}
+static void reference_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,exr_vector_rule rule,uint32_t color,
+                           const exr_bitmap *clip,size_t *work) {
+  double low=1e300,high=-1e300,left_bound=1e300,right_bound=-1e300; size_t i; int y,top,bottom,left,right; uint32_t row_width,x;
+  reference_crossing *crossings=malloc(count*sizeof(*crossings)); float *coverage;
+  for(i=0;i<count;i++) {
+    left_bound=fmin(left_bound,fmin(edges[i].x0,edges[i].x1)); right_bound=fmax(right_bound,fmax(edges[i].x0,edges[i].x1));
+    if(edges[i].y0!=edges[i].y1) { low=fmin(low,fmin(edges[i].y0,edges[i].y1)); high=fmax(high,fmax(edges[i].y0,edges[i].y1)); }
+  }
+  *work+=count;
+  if(high<=0 || low>=bitmap->height || low>=high || right_bound<=0 || left_bound>=bitmap->width || left_bound>=right_bound) { free(crossings); return; }
+  top=(int)fmax(0,floor(low)); bottom=(int)fmin(bitmap->height,ceil(high));
+  left=(int)fmax(0,floor(left_bound)); right=(int)fmin(bitmap->width,ceil(right_bound)); row_width=(uint32_t)(right-left);
+  coverage=calloc(row_width,sizeof(*coverage)); CHECK(crossings && coverage);
+  for(y=top;y<bottom;y++) {
+    unsigned sample;
+    memset(coverage,0,row_width*sizeof(*coverage));
+    for(sample=0;sample<4;sample++) {
+      double scan=y+(sample+.5)/4,previous=0; size_t n=0,at=0,levels=0; int winding=0;
+      *work+=count;
+      for(i=0;i<count;i++) {
+        const exr_vector_edge *e=&edges[i]; int upward=e->y1>e->y0;
+        double minimum=upward ? e->y0 : e->y1,maximum=upward ? e->y1 : e->y0;
+        if(scan>=minimum && scan<maximum) crossings[n++]=(reference_crossing){e->x0+(scan-e->y0)/(e->y1-e->y0)*(e->x1-e->x0),upward ? 1 : -1};
+      }
+      for(i=n;i>1;i=(i+1)/2) levels++;
+      *work+=n*(levels+1)+row_width;
+      qsort(crossings,n,sizeof(*crossings),reference_compare);
+      while(at<n) {
+        double current=crossings[at].x; int delta=0;
+        if(winding) reference_span(coverage,left,row_width,previous,current);
+        do { delta+=rule==EXR_VECTOR_EVENODD ? 1 : crossings[at].winding; at++; } while(at<n && crossings[at].x==current);
+        winding=rule==EXR_VECTOR_EVENODD ? (winding+delta)&1 : winding+delta;
+        previous=current;
+      }
+    }
+    *work+=row_width;
+    for(x=0;x<row_width;x++) {
+      unsigned alpha=coverage[x]>=4 ? 255u : (unsigned)(coverage[x]*255/4+.5);
+      if(clip) alpha=(alpha*clip->pixels[(size_t)y*clip->stride+(unsigned)left+x]+127)/255;
+      if(bitmap->channels==1 && color==0xffffffffu) {
+        unsigned char *t=bitmap->pixels+(size_t)y*bitmap->stride+(unsigned)left+x;
+        if(!*t || alpha==255) *t=(unsigned char)alpha; else *t=(unsigned char)(*t+((255-*t)*alpha+127)/255);
+      } else if(alpha) exr_pixel(bitmap,left+(int)x,y,color,alpha);
+    }
+  }
+  free(crossings); free(coverage);
+}
+static double scan_random(unsigned *state) { *state=*state*1103515245u+12345u; return (*state>>8)/16777216.; }
+static void scanline_reference(void) {
+  enum { W=70,H=30,MAX_EDGES=256 };
+  exr_vector_edge edges[MAX_EDGES]; unsigned state=7,shape;
+  unsigned char start[W*H*4],clip_pixels[W*H];
+  const uint32_t colors[]={0xffffffffu,0x2a6fd3ffu,0x80402080u,0x000000ffu};
+  for(size_t i=0;i<sizeof(start);i++) start[i]=(unsigned char)(scan_random(&state)*256);
+  for(size_t i=0;i<sizeof(clip_pixels);i++) clip_pixels[i]=i%5==0 ? 255 : i%7==0 ? 0 : (unsigned char)(scan_random(&state)*256);
+  for(shape=0;shape<400;shape++) {
+    size_t count=0,k; unsigned contours=1+shape%3,contour,variant;
+    for(contour=0;contour<contours;contour++) {
+      unsigned points=shape%4==3 ? 4+(unsigned)(scan_random(&state)*20) : 5+(unsigned)(scan_random(&state)*14);
+      double cx=-8+scan_random(&state)*(W+16),cy=-4+scan_random(&state)*(H+8),r=1+scan_random(&state)*30,inner=.2+scan_random(&state)*.7;
+      exr_vector_point p[64];
+      if(count+2*points>MAX_EDGES) break;
+      for(k=0;k<2*points && shape%4!=3;k++) {
+        double angle=k*3.14159265358979/points,rad=k%2 ? r*inner : r;
+        p[k]=(exr_vector_point){cx+rad*cos(angle),cy+rad*sin(angle)*(contour%2 ? -1 : 1)};
+        if(shape%5==1) p[k].x=floor(p[k].x),p[k].y=floor(p[k].y);
+        if(shape%7==2 && k%3==0 && k) p[k].x=p[k-1].x;
+      }
+      /* A thin band along a wave, shaped like a stroke outline. */
+      if(shape%4==3) for(k=0;k<points;k++) {
+        double t=k/(points-1.),x=cx-r+2*r*t,wave=cy+r*.3*sin(t*6.283);
+        p[k]=(exr_vector_point){x,wave-.4}; p[2*points-1-k]=(exr_vector_point){x,wave+.4+(shape%3)*.3};
+      }
+      for(k=0;k<2*points;k++) edges[count++]=(exr_vector_edge){p[k].x,p[k].y,p[(k+1)%(2*points)].x,p[(k+1)%(2*points)].y};
+    }
+    for(variant=0;variant<8;variant++) {
+      unsigned channels=variant<4 ? 1 : 4; uint32_t color=channels==1 ? (variant&2 ? 0x000000ffu : 0xffffffffu) : colors[variant&3];
+      exr_vector_rule rule=shape%2 ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO;
+      unsigned char actual_pixels[W*H*4],reference_pixels[W*H*4];
+      exr_bitmap actual={W,H,W*channels,actual_pixels,channels},reference={W,H,W*channels,reference_pixels,channels};
+      const exr_bitmap clip={W,H,W,clip_pixels,1};
+      size_t a=0,b=0;
+      memcpy(actual_pixels,start,sizeof(start)); memcpy(reference_pixels,start,sizeof(start));
+      if(channels==1 && color==0xffffffffu && variant&4) { memset(actual_pixels,0,W*H); memset(reference_pixels,0,W*H); }
+      OK(exr_vector_fill(&actual,edges,count,rule,color,variant&1 ? &clip : NULL,&a,NULL,&error));
+      reference_fill(&reference,edges,count,rule,color,variant&1 ? &clip : NULL,&b);
+      CHECK(a==b && !memcmp(actual_pixels,reference_pixels,(size_t)W*H*channels));
+    }
+  }
+}
 int main(void) {
-  composite_rows();
+  composite_rows(); scanline_reference();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
   curves(); strokes(); dashes(); mask_fill_equivalence(); compound_spans(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
