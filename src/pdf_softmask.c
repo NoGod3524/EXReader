@@ -113,12 +113,6 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     if(status==EXR_OK && !exr_vector_work(work,(size_t)width*sample_cost))
       status=exr_fail(e,EXR_LIMIT,"PDF soft mask samples exceed work budget");
     if(status!=EXR_OK) goto done;
-    /* Axial masks can render identical RGBA rows. Reuse the resolved row
-       after the usual cancellation check and work charge. */
-    if(y && !memcmp(pixels+y*width*4,pixels+(y-1)*width*4,(size_t)width*4)) {
-      memcpy(result+y*width,result+(y-1)*width,width);
-      continue;
-    }
     for(size_t x=0;x<width;x++) {
       double a,value,output[4];i=y*width+x;
       if(x && !memcmp(pixels+i*4,pixels+(i-1)*4,4)) { result[i]=result[i-1];continue; }
