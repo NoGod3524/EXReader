@@ -1,21 +1,23 @@
-"""Key-field mutation sweep for the path/stroke coverage cache (holder opus-Breg).
+"""Key-field mutation sweep for the path/stroke coverage cache (holder agy-Breg).
 
 For every field the cache key uses, temporarily remove it from src/canvas.c, rebuild the
 library + exreader-stroke-cache-key-test under build-gate, run the test, and restore the file.
-A mutation is KILLED when the test exits non-zero. Two flavours:
+A mutation is KILLED when the test exits non-zero. Four flavours:
   F-*  full removal: the field leaves both the hash and the exact comparison
-  C-*  compare-only: the hash still mixes the field (1e-6 quantised), only the comparison goes
+  C-*  compare-only: the hash still mixes the field (1e-6 quantised for floats), only the comparison goes
+  H-*  hash-collision comparator isolation: removes `e->hash!=k->hash || ` from path_key_matches
+       (leaving path_seen_check intact) plus one discrete exact check; H-hash-only removes only the hash check
   V-*  removes one of the hit-path validations added by the key fix
 Usage: python -I mutate_key.py OUTDIR [name ...]
 """
-import hashlib, subprocess, sys, time
+import hashlib, os, subprocess, sys, time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 SRC = REPO / "src" / "canvas.c"
 PERF = REPO / "build" / "perf"
 GATE = r"C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\build-gate.ps1"
-HOLDER = "opus-Breg"
+HOLDER = os.environ.get("EXR_HOLDER", "agy-Breg")
 
 H_FLAGS = ("h=fnv_u64(h,style->flags);", "")
 H_RULE = ("if(style->flags&EXR_DRAW_FILL) h=fnv_u64(h,(uint64_t)style->rule);", "")
@@ -29,6 +31,7 @@ H_JOIN = (" h=fnv_u64(h,(uint64_t)style->line.join);", "")
 H_DCOUNT = ("h=fnv_u64(h,style->dash_count); ", "")
 H_PHASE = (" h=hash_q6(h,style->dash_phase);", "")
 H_DASHES = (" h=hash_q6(h,style->dashes[i]);", "")
+M_HASH = ("e->hash!=k->hash || ", "")
 M_FLAGS = (" || e->flags!=k->flags", "")
 M_RULE = ("if((e->flags&EXR_DRAW_FILL) && e->rule!=k->rule) return 0;", "")
 M_SEG = (" || e->seg_count!=k->seg_count", "")
@@ -60,10 +63,16 @@ MUTATIONS = {
     "C-flags": [M_FLAGS], "C-rule": [M_RULE], "C-seg_count": [M_SEG], "C-verbs": [M_VERBS], "C-points": [M_PTS],
     "C-stroke_linear": [M_LINEAR], "C-width": [M_WIDTH], "C-miter_limit": [M_MITER], "C-cap": [M_CAP],
     "C-join": [M_JOIN], "C-dash_count": [M_DCOUNT], "C-dash_phase": [M_PHASE], "C-dashes": [M_DASHES],
+    "H-hash-only": [M_HASH],
+    "H-flags": [M_FLAGS, M_HASH], "H-rule": [M_RULE, M_HASH], "H-seg_count": [M_SEG, M_HASH],
+    "H-pt_count": [M_PTCOUNT, M_HASH], "H-verbs": [M_VERBS, M_HASH], "H-cap": [M_CAP, M_HASH],
+    "H-join": [M_JOIN, M_HASH], "H-dash_count": [M_DCOUNT, M_HASH],
     "V-inverse": [("if(!inverse(sm,inv)) return 0;", "if(!inverse(sm,inv)) memset(inv,0,sizeof(inv));")],
     "V-local-range": [("for(unsigned k=0;k<6;k++) if(!isfinite(local[k]) || fabs(local[k])>1e7) return 0;", ""),
                       ("if(!isfinite(qx) || !isfinite(qy) || fabs(qx)>1e7 || fabs(qy)>1e7) return 0;", "")],
-    "V-dash-period": [("if(style->dash_count && !period) return 0;", "")],
+    "V-dash-period": [("double inv[6],local[6],period=0;", "double inv[6],local[6];"),
+                      (" period+=style->dashes[i];", ""),
+                      ("if(style->dash_count && !period) return 0;", "")],
 }
 
 
@@ -126,7 +135,20 @@ def main():
     finally:
         gate("-Release", log)
     md = ["| mutation | result | failing cases (first line of each) |", "|---|---|---|"]
-    for name, res, fails, _ in rows:
+    all_rows = []
+    for name in MUTATIONS:
+        tf = out / f"{name}.test.txt"
+        lf = out / f"{name}.log"
+        if tf.exists():
+            txt = tf.read_text()
+            fails = [l for l in txt.splitlines() if l.startswith("FAIL ")]
+            rc_lines = [l for l in txt.splitlines() if l.startswith("exit=")]
+            rc = int(rc_lines[-1].split("=", 1)[1]) if rc_lines else (1 if fails else 0)
+            res = "KILLED" if rc else "SURVIVED"
+            all_rows.append((name, res, fails))
+        elif lf.exists():
+            all_rows.append((name, "BUILD-FAILED", []))
+    for name, res, fails in all_rows:
         cell = "<br>".join(f"`{l[:160]}`" for l in fails) if fails else ""
         md.append(f"| {name} | {res} | {cell} |")
     (out / "mutations.md").write_text("\n".join(md) + "\n")

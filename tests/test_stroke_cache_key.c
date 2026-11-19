@@ -83,7 +83,7 @@ static const exr_path_segment curve[]={
 };
 static const exr_path_segment closed[]={
   {EXR_PATH_MOVE,{{30,24}}},{EXR_PATH_CUBIC,{{70,4},{110,60},{128,30}}},{EXR_PATH_LINE,{{120,96}}},
-  {EXR_PATH_LINE,{{36,90}}},{EXR_PATH_CLOSE,{{{0}}}}
+  {EXR_PATH_LINE,{{36,90}}},{EXR_PATH_CLOSE,{{0,0}}}
 };
 #define N(a) (sizeof(a)/sizeof((a)[0]))
 static const double ctm[6]={1,.0625,-.125,1,3.25,4.5};
@@ -281,7 +281,7 @@ static void test_stroke_cache_matrix_product(void) {
   exr_draw_style s=stroke_style(),c=compound_style(); s.line.width=48; c.line.width=40;
   static const exr_path_segment line[]={{EXR_PATH_MOVE,{{24,32}}},{EXR_PATH_LINE,{{120,32}}},{EXR_PATH_LINE,{{96,88}}}};
   static const exr_path_segment box[]={{EXR_PATH_MOVE,{{32,24}}},{EXR_PATH_LINE,{{128,24}}},{EXR_PATH_LINE,{{128,96}}},
-                                       {EXR_PATH_LINE,{{32,96}}},{EXR_PATH_LINE,{{40,60}}},{EXR_PATH_CLOSE,{{{0}}}}};
+                                       {EXR_PATH_LINE,{{32,96}}},{EXR_PATH_LINE,{{40,60}}},{EXR_PATH_CLOSE,{{0,0}}}};
   validation("inverse(stroke) x path matrix > 1e7",&s,sm,tm,line,N(line),v_product,EXR_ARGUMENT);
   validation("inverse(stroke) x path matrix > 1e7",&c,sm,tm,box,N(box),v_product,EXR_ARGUMENT);
 }
@@ -313,7 +313,7 @@ static void test_stroke_cache_key_hairline(void) {
    exact field comparison is removed and the hash alone is left to tell entries apart. */
 static const exr_path_segment star[]={
   {EXR_PATH_MOVE,{{80,8}}},{EXR_PATH_LINE,{{110.6,102.1}}},{EXR_PATH_LINE,{{30.5,44.1}}},
-  {EXR_PATH_LINE,{{129.5,44.1}}},{EXR_PATH_LINE,{{49.4,102.1}}},{EXR_PATH_CLOSE,{{{0}}}}
+  {EXR_PATH_LINE,{{129.5,44.1}}},{EXR_PATH_LINE,{{49.4,102.1}}},{EXR_PATH_CLOSE,{{0,0}}}
 };
 static void test_stroke_cache_key_miter(void) {
   /* The corner's miter ratio is about 2.3: drawn as a miter at limit 10, beveled at limit 1.5. */
@@ -348,6 +348,17 @@ static void test_stroke_cache_key_verbs(void) {
   pair p=open_pair(); exr_draw_style s=stroke_style();
   prime(&p,qa,N(qa),NULL,&s);
   backdrop(&p); step(&p,"line+quad after cached quad+line",qb,N(qb),NULL,&s,NULL,EXR_OK,MISS);
+  close_pair(&p);
+}
+static void test_stroke_cache_key_seg_count(void) {
+  /* Same point count, same point list, same prefix verbs; differs only in trailing EXR_PATH_CLOSE (seg_count 3 vs 4). */
+  static const exr_path_segment open_tri[]={{EXR_PATH_MOVE,{{24,24}}},{EXR_PATH_LINE,{{128,36}}},{EXR_PATH_LINE,{{64,104}}}};
+  static const exr_path_segment closed_tri[]={{EXR_PATH_MOVE,{{24,24}}},{EXR_PATH_LINE,{{128,36}}},{EXR_PATH_LINE,{{64,104}}},{EXR_PATH_CLOSE,{{0,0}}}};
+  pair p=open_pair(); exr_draw_style s=stroke_style(); unsigned char base[W*H*4];
+  prime(&p,open_tri,N(open_tri),NULL,&s);
+  backdrop(&p); step(&p,"open triangle replay",open_tri,N(open_tri),NULL,&s,NULL,EXR_OK,HIT); snapshot(&p,base);
+  backdrop(&p); step(&p,"closed triangle after cached open triangle",closed_tri,N(closed_tri),NULL,&s,NULL,EXR_OK,MISS);
+  if(!differs_from(&p,base)) FAIL("trailing CLOSE did not change the stroke");
   close_pair(&p);
 }
 static void test_stroke_cache_key_flags(void) {
@@ -406,7 +417,8 @@ static const test_case cases[]={
   T(test_stroke_cache_matrix_translation),T(test_stroke_cache_matrix_conditioning),T(test_stroke_cache_matrix_product),
   T(test_stroke_cache_dash_validation),T(test_stroke_cache_key_hairline),
   T(test_stroke_cache_key_miter),T(test_stroke_cache_key_fill_rule),T(test_stroke_cache_key_verbs),
-  T(test_stroke_cache_key_flags),T(test_stroke_cache_key_dash_pattern),T(test_stroke_cache_key_sub_quantum),
+  T(test_stroke_cache_key_seg_count),T(test_stroke_cache_key_flags),T(test_stroke_cache_key_dash_pattern),
+  T(test_stroke_cache_key_sub_quantum),
 };
 int main(int argc,char **argv) {
   for(size_t i=0;i<N(cases);i++) {

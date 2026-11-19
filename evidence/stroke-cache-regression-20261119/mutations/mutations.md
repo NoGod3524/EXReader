@@ -30,6 +30,15 @@
 | C-dash_count | SURVIVED |  |
 | C-dash_phase | KILLED | `FAIL test_stroke_cache_key_dash_pattern: dash phase 1e-7 (sub-quantum): expected a cache miss but the cache hit` |
 | C-dashes | KILLED | `FAIL test_stroke_cache_key_dash_pattern: dash 7 3+1e-7 (sub-quantum): expected a cache miss but the cache hit` |
+| H-hash-only | SURVIVED |  |
+| H-flags | KILLED | `FAIL test_stroke_cache_key_flags: stroke after cached fill: expected a cache miss but the cache hit` |
+| H-rule | KILLED | `FAIL test_stroke_cache_key_fill_rule: nonzero fill of the same star: expected a cache miss but the cache hit` |
+| H-seg_count | KILLED | `FAIL test_stroke_cache_key_seg_count: closed triangle after cached open triangle: expected a cache miss but the cache hit` |
+| H-pt_count | SURVIVED |  |
+| H-verbs | KILLED | `FAIL test_stroke_cache_key_verbs: line+quad after cached quad+line: expected a cache miss but the cache hit` |
+| H-cap | KILLED | `FAIL test_stroke_cache_key_width: cap change: expected a cache miss but the cache hit` |
+| H-join | KILLED | `FAIL test_stroke_cache_key_width: join change: expected a cache miss but the cache hit` |
+| H-dash_count | KILLED | `FAIL test_stroke_cache_key_width: dash change: expected a cache miss but the cache hit`<br>`FAIL test_stroke_cache_key_dash_pattern: dash 7 3 3: expected a cache miss but the cache hit` |
 | V-inverse | KILLED | `FAIL test_stroke_cache_matrix_translation: stroke matrix e=NaN (stroke): cached draw returned 0 "" (cache HIT) but uncached draw returned 1 "Invalid or singular` |
 | V-local-range | KILLED | `FAIL test_stroke_cache_matrix_product: inverse(stroke) x path matrix > 1e7 (stroke): cached draw returned 0 "" (cache HIT) but uncached draw returned 1 "Invalid` |
-| V-dash-period | BUILD-FAILED |  |
+| V-dash-period | SURVIVED |  |

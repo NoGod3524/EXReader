@@ -5,7 +5,7 @@
 param([Parameter(Mandatory=$true)][ValidateSet('build','run','ctest')][string] $Phase,
       [Parameter(Mandatory=$true)][string] $Label, [switch] $TestOnly)
 $ErrorActionPreference = 'Stop'
-$holder = 'opus-Breg'
+$holder = if ($env:EXR_HOLDER) { $env:EXR_HOLDER } else { 'agy-Breg' }
 $gate = 'C:\Users\Oscar\OneDrive\Desktop\deepseekHarness\ops\build-gate.ps1'
 $repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $ev = $PSScriptRoot

@@ -12,8 +12,9 @@ PASS test_stroke_cache_key_hairline (8 draws)
 PASS test_stroke_cache_key_miter (6 draws)
 PASS test_stroke_cache_key_fill_rule (9 draws)
 PASS test_stroke_cache_key_verbs (4 draws)
+PASS test_stroke_cache_key_seg_count (5 draws)
 PASS test_stroke_cache_key_flags (5 draws)
 PASS test_stroke_cache_key_dash_pattern (8 draws)
 PASS test_stroke_cache_key_sub_quantum (26 draws)
-0 failure(s), 219 lockstep draws
+0 failure(s), 224 lockstep draws
 exit=0
