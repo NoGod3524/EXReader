@@ -466,9 +466,44 @@ static void cache_cases(const char *dir) {
   }
   exr_pdf_close(file);free(data);
 }
+/* A uniform footprint except for one interior lane. The neutral nested mask
+   forces the independent per-subsample path without changing opacity. */
+static void isolated_span_predicates(void) {
+  enum { S=128,N=160 };
+  static unsigned char c[S*S*4],m[S*S*4],a[N*N*4],b[N*N*4],cv[N*N];
+  unsigned char white[4]={255,255,255,255};
+  exr_vector_texture color={0},mask={0},unit={0};
+  color.bitmap=(exr_bitmap){S,S,S*4,c,4};color.interpolate=1;
+  mask.bitmap=(exr_bitmap){S,S,S*4,m,4};color.mask=&mask;color.mask_mode=1;
+  unit.bitmap=(exr_bitmap){1,1,4,white,4};
+  for(unsigned trial=0;trial<5;trial++) {
+    unsigned n=trial==1 ? 80 : N;
+    double mat[6]={n,0,0,n,0,0};
+    exr_bitmap dst={n,n,n*4,a,4},ref={n,n,n*4,b,4},clip={n,n,n,cv,1};
+    for(unsigned i=0;i<S*S;i++) {
+      c[4*i]=196;c[4*i+1]=83;c[4*i+2]=41;c[4*i+3]=255;
+      memset(m+4*i,trial==4 ? 119 : 255,3);m[4*i+3]=255;
+    }
+    if(trial==0) c[(63*S+69)*4+1]=231; /* #263 off-row chroma */
+    if(trial==1) memset(m+(63*S+69)*4,15,3); /* #269 minified mask footprint */
+    memset(cv,255,n*n);
+    if(trial==2) cv[70*n+49]=0; /* #271 interior hole, not first/last */
+    if(trial==3) cv[70*n+49]=127;
+    for(unsigned i=0;i<n*n;i++) {
+      a[4*i]=42;a[4*i+1]=113;a[4*i+2]=151;
+      a[4*i+3]=trial==4 && i%n==49 ? 77 : 255;
+    }
+    memcpy(b,a,n*n*4);
+    mask.mask=NULL;OK(exr_vector_texture_paint(&dst,&color,mat,1,&clip,NULL,NULL,&error));
+    mask.mask=&unit;mask.mask_mode=2;
+    OK(exr_vector_texture_paint(&ref,&color,mat,1,&clip,NULL,NULL,&error));
+    CHECK(!memcmp(a,b,n*n*4));
+  }
+}
 int main(int argc,char **argv) {
   const char *bad[]={"soft-color","explicit-type","matte-short","palette-short","palette-high","key-range","short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
   size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
+  isolated_span_predicates();
   CHECK(argc==2); cache_cases(argv[1]); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
   { exr_vector_texture *texture=NULL; OK(exr_pdf_image_load(file,image(file,"HighMask"),resources(file),0,&texture,NULL,NULL,&error));
     CHECK(texture && texture->bitmap.width==1 && texture->mask && texture->mask->bitmap.width==4); exr_pdf_image_release(texture); exr_pdf_image_release(NULL);

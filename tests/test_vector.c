@@ -518,7 +518,26 @@ static void scanline_reference(void) {
     }
   }
 }
+/* End one contour on a subsample as another starts two coverage blocks away.
+   Reverse input order relative to bucket order, with a clipped negative start. */
+static void active_edge_handoff(void) {
+  enum { W=64,H=9 };
+  exr_vector_edge edges[]={{36,3.375,45,7.875},{45,7.875,54,3.375},{54,3.375,36,3.375},
+                           {2,-1,4,3.375},{4,3.375,16,3.375},{16,3.375,2,-1}};
+  unsigned char a[W*H],b[W*H],m[W*H];
+  exr_bitmap dst={W,H,W,a,1},ref={W,H,W,b,1},clip={W,H,W,m,1};
+  for(size_t i=0;i<sizeof(m);i++) m[i]=(unsigned char)(i*19u);
+  for(unsigned rule=0;rule<2;rule++) {
+    size_t wa=0,wb=0;
+    memset(a,31,sizeof(a));memcpy(b,a,sizeof(b));
+    exr_vector_rule fill=rule ? EXR_VECTOR_NONZERO : EXR_VECTOR_EVENODD;
+    OK(exr_vector_fill(&dst,edges,6,fill,0xffffffffu,&clip,&wa,NULL,&error));
+    reference_fill(&ref,edges,6,fill,0xffffffffu,&clip,&wb);
+    CHECK(wa==wb && !memcmp(a,b,sizeof(a)));
+  }
+}
 int main(void) {
+  active_edge_handoff();
   composite_rows(); scanline_reference();
   exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
   curves(); strokes(); dashes(); mask_fill_equivalence(); compound_spans(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);

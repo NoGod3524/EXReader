@@ -28,6 +28,21 @@ static void scene(const char *name,const unsigned char expected[8]) {
   }
   exr_fixed_free(d);
 }
+/* Equal prefixes and equal alpha, but a single tail pixel changes luminance.
+   Four rows repeat on each side of the boundary. PDF Y is up. */
+static void changed_row_tail(void) {
+  char path[4096];exr_fixed_document *d=NULL;exr_bitmap b={0};
+  exr_fixed_render_options opt={0};opt.channels=4;opt.background=0xffffffffu;
+  snprintf(path,sizeof(path),"%s/pdf-blend/s5-mask-row-tail.pdf",directory);
+  OK(exr_fixed_open(path,NULL,&d,&error));OK(exr_fixed_render(d,0,1,&opt,&b,&error));
+  CHECK(b.width==16 && b.height==8 && b.channels==4);
+  for(unsigned y=0;y<b.height;y++) for(unsigned x=0;x<b.width;x++) {
+    const unsigned char *p=b.pixels+y*b.stride+x*4;
+    unsigned want=x==15 && y<4 ? 255 : 0;
+    CHECK(p[0]==want && p[1]==want && p[2]==want && p[3]==255);
+  }
+  exr_bitmap_free(&b);exr_fixed_free(d);
+}
 int main(int argc,char **argv) {
   const char *kinds[]={"alpha","luminosity"};const char *functions[]={"sampled","exponential","stitching","calculator","identity","domain","square"};
   const char *images[]={"none","soft","explicit","key-visible","key-hidden","both"};
@@ -35,6 +50,7 @@ int main(int argc,char **argv) {
   const char *bad[]={"name","scalar","outputs","domain","cycle","calculator","samples","missing-type"};
   unsigned i,j,k;unsigned char expected[72][8];char path[4096];FILE *f;size_t row=0;
   CHECK(argc==2);directory=argv[1];snprintf(path,sizeof(path),"%s/pdf-blend/mask-function-oracle.bin",directory);
+  changed_row_tail();
   f=fopen(path,"rb");CHECK(f);CHECK(fread(expected,1,sizeof(expected),f)==sizeof(expected));CHECK(fgetc(f)==EOF);fclose(f);
   for(i=0;i<2;i++) for(j=0;j<7;j++) for(k=64;k<=192;k+=64) {
     snprintf(path,sizeof(path),"mask-function-%s-%s-%u.pdf",kinds[i],functions[j],k);scene(path,expected[row++]);
