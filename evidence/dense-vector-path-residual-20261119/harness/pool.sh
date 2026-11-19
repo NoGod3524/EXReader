@@ -5,13 +5,13 @@ set -e
 E=evidence/dense-vector-path-residual-20261119; W=$E/harness; D=$E/_work/dlls
 LOCK=/c/Users/Oscar/OneDrive/Desktop/deepseekHarness/ops/bench-lock.ps1
 export EXR_IDLE_GATE=off
-pwsh -NoProfile -File $LOCK -Holder opus-B -Wait
-trap 'pwsh -NoProfile -File $LOCK -Holder opus-B -Release' EXIT
+pwsh -NoProfile -File $LOCK -Holder agy-B -Wait
+trap 'pwsh -NoProfile -File $LOCK -Holder agy-B -Release' EXIT
 mkdir -p $E/pool
 # Same-DLL empty control (two copies of the main DLL), the noise floor for every later code A/B.
-python -B -u $E/../dense-vector-residual-20261119/harness/ab.py $D/main.dll $D/main-copy.dll $E/pool/control-dll-copy.json --rounds 21 --holder opus-B
+python -B -u $W/ab.py $D/main.dll $D/main-copy.dll $E/pool/control-dll-copy.json --rounds 11 --min-clean 11 --max-rounds 25 --holder agy-B
 # Identity control for the omission method: original PDF vs a byte copy, same DLL.
 for c in absent path fill stroke polygon-paint polygon-fill polygon-stroke curve-stroke background clip; do
-  python -B -u $W/omit.py $D/main.dll $c $E/pool/omit-$c.json --rounds 21
+  python -B -u $W/omit.py $D/main.dll $c $E/pool/omit-$c.json --rounds 11 --min-clean 11 --max-rounds 25 --holder agy-B
 done
 echo POOL-DONE
