@@ -1,0 +1,190 @@
+{
+ "pdf_sha256": "cdfc1ee6952652613c15fe91288450c6e168994e3b1792e52bb56db14ab8a693",
+ "base_sha256": "54e374d53ff788793aa1a7fc9d91bfc9787966088d65ac2d60ced236b127bb65",
+ "probe_sha256": "99a7937a1af2811eabe9574729bebb8515343d32e7997c830c97e47b2a825968",
+ "tsc_hz": 3302347021.2307973,
+ "rounds": 11,
+ "mismatched_pages": [],
+ "per_sweep": {
+  "base_median_ms": 1389.8816,
+  "probe_median_ms": 1517.6914,
+  "probe_over_base_median": 1.0239231481558222,
+  "cpu_busy_pre_percent_range": [
+   49.9,
+   69.9
+  ]
+ },
+ "stage_ms_per_sweep": {
+  "mask build (inclusive)": 531.4613765984441,
+  "mask dict parse": 0.19591206866033975,
+  "mask canvas create": 74.92753785830928,
+  "mask BBox clip": 6.891713141386959,
+  "mask sink+begin_group": 62.482131989158006,
+  "mask paint content": 296.2885361891555,
+  "mask group commit": 50.80499357069007,
+  "mask take+free": 5.283578171581926,
+  "mask transfer+result take": 0.8544987384713582,
+  "mask luminosity extraction": 33.41226073998396,
+  "mask RGBA release": 0.24018011608406856,
+  "page mask install": 0.06010881974002842,
+  "page mask end": 0.3097568577097596,
+  "mask FT init+done": 1.404031536912279,
+  "begin_group buffer takes": 0.8989527142654407,
+  "begin_group backdrop copy": 47.872441900478904,
+  "begin_group clip bounds scan": 13.43328643820473,
+  "clip_path inside mask": 14.327553394159333
+ },
+ "stage_calls_per_sweep": {
+  "mask build (inclusive)": 21.0,
+  "mask dict parse": 21.0,
+  "mask canvas create": 21.0,
+  "mask BBox clip": 21.0,
+  "mask sink+begin_group": 21.0,
+  "mask paint content": 21.0,
+  "mask group commit": 21.0,
+  "mask take+free": 21.0,
+  "mask transfer+result take": 21.0,
+  "mask luminosity extraction": 21.0,
+  "mask RGBA release": 21.0,
+  "page mask install": 21.0,
+  "page mask end": 21.0,
+  "mask FT init+done": 42.0,
+  "begin_group buffer takes": 21.0,
+  "begin_group backdrop copy": 21.0,
+  "begin_group clip bounds scan": 21.0,
+  "clip_path inside mask": 42.0
+ },
+ "extraction_counts_per_sweep": {
+  "rows_computed": 5397.0,
+  "rows_reused": 13503.0,
+  "pixels_computed": 5397.0,
+  "pixels_reused": 6471003.0
+ },
+ "shading": {
+  "page": {
+   "ms": {
+    "shading_draw (inclusive)": 803.0174584776522,
+    "colour table build": 1.2475780712280236,
+    "emit (inclusive)": 800.874748748657,
+    "canvas paint (inclusive)": 268.6891671906694,
+    "fast span stores": 88.4873105079724,
+    "row prologue": 1.8761839977842287
+   },
+   "calls": {
+    "shading_draw (inclusive)": 22.0,
+    "colour table build": 22.0,
+    "emit (inclusive)": 22.0,
+    "canvas paint (inclusive)": 22.0,
+    "fast span stores": 11235.0,
+    "row prologue": 0.0
+   },
+   "rows": 19800.0,
+   "span_pixels": 13144950.0,
+   "span_pixels_mask_zero": 0.0,
+   "single_fast_pixels": 26040.0,
+   "generic_sampled_pixels": 339210.0
+  },
+  "mask": {
+   "ms": {
+    "shading_draw (inclusive)": 286.33295724994025,
+    "colour table build": 0.9810353823808065,
+    "emit (inclusive)": 284.4028395722225,
+    "canvas paint (inclusive)": 284.20228056062024,
+    "fast span stores": 144.69246371550844,
+    "row prologue": 2.6121036283911394
+   },
+   "calls": {
+    "shading_draw (inclusive)": 21.0,
+    "colour table build": 21.0,
+    "emit (inclusive)": 21.0,
+    "canvas paint (inclusive)": 21.0,
+    "fast span stores": 11235.0,
+    "row prologue": 0.0
+   },
+   "rows": 18900.0,
+   "span_pixels": 13144950.0,
+   "span_pixels_mask_zero": 0.0,
+   "single_fast_pixels": 24570.0,
+   "generic_sampled_pixels": 337680.0
+  }
+ },
+ "rounds_detail": [
+  {
+   "round": 1,
+   "cpu_busy_pre_percent": 69.9,
+   "base_ms": 2062.2973,
+   "probe_ms": 2178.7235,
+   "probe_over_base": 1.056454614957795
+  },
+  {
+   "round": 2,
+   "cpu_busy_pre_percent": 66.4,
+   "base_ms": 2025.5851999999998,
+   "probe_ms": 2073.5897,
+   "probe_over_base": 1.0236990771852008
+  },
+  {
+   "round": 3,
+   "cpu_busy_pre_percent": 53.0,
+   "base_ms": 2005.4278999999997,
+   "probe_ms": 2020.7739000000001,
+   "probe_over_base": 1.0076522322243548
+  },
+  {
+   "round": 4,
+   "cpu_busy_pre_percent": 49.9,
+   "base_ms": 1924.6408000000004,
+   "probe_ms": 1944.8540999999998,
+   "probe_over_base": 1.0105023753003675
+  },
+  {
+   "round": 5,
+   "cpu_busy_pre_percent": 61.0,
+   "base_ms": 2173.2971999999995,
+   "probe_ms": 2217.5314,
+   "probe_over_base": 1.0203534979017137
+  },
+  {
+   "round": 6,
+   "cpu_busy_pre_percent": 54.0,
+   "base_ms": 1332.6633000000002,
+   "probe_ms": 1387.2919,
+   "probe_over_base": 1.0409920495296898
+  },
+  {
+   "round": 7,
+   "cpu_busy_pre_percent": 58.0,
+   "base_ms": 1235.3468,
+   "probe_ms": 1369.8739999999998,
+   "probe_over_base": 1.108898327174199
+  },
+  {
+   "round": 8,
+   "cpu_busy_pre_percent": 51.2,
+   "base_ms": 1389.8816,
+   "probe_ms": 1299.8244000000002,
+   "probe_over_base": 0.9352051282641631
+  },
+  {
+   "round": 9,
+   "cpu_busy_pre_percent": 53.5,
+   "base_ms": 1314.7122,
+   "probe_ms": 1393.8704999999998,
+   "probe_over_base": 1.0602096032880808
+  },
+  {
+   "round": 10,
+   "cpu_busy_pre_percent": 58.8,
+   "base_ms": 1242.8380999999997,
+   "probe_ms": 1272.5707000000002,
+   "probe_over_base": 1.0239231481558222
+  },
+  {
+   "round": 11,
+   "cpu_busy_pre_percent": 66.3,
+   "base_ms": 1260.5335,
+   "probe_ms": 1517.6914,
+   "probe_over_base": 1.2040071921928295
+  }
+ ]
+}

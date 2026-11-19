@@ -1,0 +1,8 @@
+ACQUIRED opus-Cacc
+17:22:22 deck-1200 cand-vs-main 0 done
+FREE (nothing to release)
+Exception: C:\Users\Oscar\Documents\Codex\EXReader-rmgradmask\evidence\realmixed-gradient-mask-20261119\harness\gates6-deck-xproc-opus-Cacc.ps1:20
+Line |
+  20 |        if ($LASTEXITCODE) { throw "xab.py failed $k $($arm[0]) $rep" }
+     |                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | xab.py failed deck-1200 cand-vs-frozen 0

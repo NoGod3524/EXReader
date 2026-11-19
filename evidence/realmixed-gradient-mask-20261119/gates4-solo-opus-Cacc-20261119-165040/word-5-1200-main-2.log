@@ -1,0 +1,9 @@
+warm-up cpu=48.5% mismatched=[]
+Traceback (most recent call last):
+  File "C:\Users\Oscar\Documents\Codex\EXReader-rmgradmask\evidence\dense-vector-residual-20261119\harness\ab.py", line 34, in <module>
+    subprocess.run(['pwsh', '-NoProfile', '-File', LOCK, '-Holder', args.holder, '-Heartbeat'], check=True, capture_output=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['pwsh', '-NoProfile', '-File', 'C:\\Users\\Oscar\\OneDrive\\Desktop\\deepseekHarness\\ops\\bench-lock.ps1', '-Holder', 'opus-Cacc', '-Heartbeat']' returned non-zero exit status 1.

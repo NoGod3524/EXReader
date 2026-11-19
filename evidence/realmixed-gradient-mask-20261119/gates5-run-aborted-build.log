@@ -1,0 +1,7 @@
+ACQUIRED opus-Cacc
+released opus-Cacc
+Exception: C:\Users\Oscar\Documents\Codex\EXReader-rmgradmask\evidence\realmixed-gradient-mask-20261119\harness\gates5-xproc-opus-Cacc.ps1:17
+Line |
+  17 |  . -not ($s -match 'builds\s*:\s*0\s*/')) { throw "build activity: $s" }
+     |                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | build activity: bench  : HELD by opus-Cacc builds : 1 / 2  [.build.opus-Breg]

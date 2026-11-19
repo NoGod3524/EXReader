@@ -1,0 +1,11 @@
+pdf-large/image-heavy-100.pdf 1200 112872000 0
+pdf-large/real-mixed-120.pdf 1200 131317200 0
+pdf-large/vector-heavy-100.pdf 1200 108954000 0
+pdf-hybrid-real/pptx-20.pdf 600 4056000 0
+pdf-hybrid-real/pptx-20.pdf 1200 16200000 0
+pdf-hybrid-real/pptx-20.pdf 2400 64800000 0
+pdf-ppt/deck.pdf 600 3042000 0
+pdf-ppt/deck.pdf 1200 12150000 0
+pdf-hybrid-real/word-5.pdf 600 2331000 0
+pdf-hybrid-real/word-5.pdf 1200 9318000 0
+{'large': {'pixels': 353143200, 'differing_pixels': 0}, 'small': {'pixels': 111897000, 'differing_pixels': 0}}

@@ -1,0 +1,31 @@
+ACQUIRED opus-Cacc
+16:51:06 pptx-20-600 cand 0 done
+16:51:38 pptx-20-600 frozen 0 done
+16:52:01 pptx-20-600 main 0 done
+16:52:25 pptx-20-600 frozen 1 done
+16:52:50 pptx-20-600 main 1 done
+16:53:14 pptx-20-600 cand 1 done
+16:53:39 pptx-20-600 main 2 done
+16:54:03 pptx-20-600 cand 2 done
+16:54:28 pptx-20-600 frozen 2 done
+16:54:53 pptx-20-1200 cand 0 done
+16:55:18 pptx-20-1200 frozen 0 done
+16:55:42 pptx-20-1200 main 0 done
+16:56:06 pptx-20-1200 frozen 1 done
+16:56:32 pptx-20-1200 main 1 done
+16:57:01 pptx-20-1200 cand 1 done
+16:57:27 pptx-20-1200 main 2 done
+16:57:54 pptx-20-1200 cand 2 done
+16:58:20 pptx-20-1200 frozen 2 done
+16:58:45 word-5-1200 cand 0 done
+16:59:10 word-5-1200 frozen 0 done
+16:59:36 word-5-1200 main 0 done
+17:00:02 word-5-1200 frozen 1 done
+17:00:28 word-5-1200 main 1 done
+17:00:56 word-5-1200 cand 1 done
+FREE (nothing to release)
+Exception: C:\Users\Oscar\Documents\Codex\EXReader-rmgradmask\evidence\realmixed-gradient-mask-20261119\harness\gates4-solo-opus-Cacc.ps1:20
+Line |
+  20 |        if ($LASTEXITCODE) { throw "ab.py failed $k $($arm[0]) $rep" }
+     |                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | ab.py failed word-5-1200 main 2

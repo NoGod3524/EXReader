@@ -1,0 +1,13 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-rmgradmask/build/perf
+        Start 379: native-convert-corpus
+        Start 232: native-core
+        Start 236: native-flow
+        Start 159: native-hyphen-layout
+  1/577 Test #236: native-flow ........................................   Passed    0.16 sec
+        Start 189: native-inks
+  2/577 Test #232: native-core ........................................   Passed    0.37 sec
+        Start 356: native-line-boundary
+  3/577 Test #379: native-convert-corpus ..............................   Passed    1.28 sec
+        Start 361: native-chapter-reader
+  4/577 Test #361: native-chapter-reader ..............................   Passed   10.65 sec
+        Start 129: native-docx-realworld-matrix
