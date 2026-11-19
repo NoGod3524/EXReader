@@ -123,7 +123,7 @@ Main is `d8148bbd2`, and the rebased production code is `d704cdacc`. Main DLL SH
 | 117 and 119, Excel | 24.71 | 24.02 | −2.80% | +0.18% |
 | 118 and 120, Chinese | 4.25 | 3.78 | −11.03% | −6.31% |
 
-Deck, Word, PPTX, and Excel fell within ±3% by both measures. The Chinese pages were faster in this full-corpus capture, outside the requested ±3% band on the faster side. [Full-corpus matched sample](raw/main266/production-real-mixed-120-1200.json)
+Deck, Word, PPTX, and Excel fell within ±3% by both measures. The Chinese pages were faster in this full-corpus capture, outside the requested ±3% band on the faster side. A separate isolated retest produced no accepted timings because another benchmark kept the idle gate closed. [Full-corpus matched sample](raw/main266/production-real-mixed-120-1200.json)
 
 | Small fixture | Main p50 (ms) | Candidate p50 (ms) | Change | Ceiling (ms) | Candidate meets ceiling |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -170,7 +170,6 @@ python -B "$d/validate.py" $main263 $candidate263
 python -B "$d/ablate.py" $main263 real-mixed-120 1 21 baseline page-group image candidate --candidate $candidate263 --raw "$d/raw/current"
 python -B "$d/validate.py" $main266 $candidate266 --raw "$d/raw/main266"
 ctest --test-dir build/realmixed-slides --parallel 6 --output-on-failure
-python -B "$d/validate.py" $main266 $candidate266 --raw "$d/raw/main266" --chinese-only
 python -B "$d/summarize.py"
 python -B "$d/summarize.py" "$d/raw/current"
 python -B "$d/summarize.py" "$d/raw/main266"
