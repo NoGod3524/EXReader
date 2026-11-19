@@ -468,8 +468,24 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
         if(!exr_vector_work(work,cost+32+(target_state ? target_state->depth*4 : 0))) return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
         if(q && ag==1 && object_opacity==1 && coverage==255 && mode==EXR_BLEND_NORMAL && !target_state && target->channels==4) {
           unsigned char *dst=target->pixels+ty*target->stride+tx*4;
-          for(k=0;k<3;k++) dst[k]=unit_byte(q[k]);
-          dst[3]=255;continue;
+          const unsigned char *mask=clip ? clip->pixels+ty*clip->stride+(size_t)origin_x : NULL;
+          const unsigned char rgba[4]={unit_byte(q[0]),unit_byte(q[1]),unit_byte(q[2]),255};
+          const float *next=q+5;
+          size_t end=x+1;
+          /* Opaque spans from an aligned shading share the same RGB. Keep
+             the float-to-byte conversion and work charge of the first pixel. */
+          while(end<right && (!mask || mask[end]==255) && next[4]==1 &&
+                next[0]==q[0] && next[1]==q[1] && next[2]==q[2]) {
+            end++;next+=5;
+          }
+          if(!exr_vector_work(work,(end-x-1)*(cost+32))) {
+            /* The first pixel is already paid. Keep exactly the writable prefix. */
+            memcpy(dst,rgba,4);
+            while(++x<end && exr_vector_work(work,cost+32)) { dst+=4;memcpy(dst,rgba,4); }
+            return exr_fail(e,EXR_LIMIT,"Group backdrop removal exceeds work budget");
+          }
+          for(;x<end;x++,dst+=4) memcpy(dst,rgba,4);
+          x--;continue;
         }
         read_rgba(target,target_state,tx,ty,back);
         { double initial[4];if(q && ag<1) read_backdrop(source_state,x,y,initial);
