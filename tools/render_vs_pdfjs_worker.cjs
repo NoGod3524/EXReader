@@ -27,8 +27,8 @@ async function handle(m) {
   const page = await doc.getPage(m.page), base = page.getViewport({scale: 1});
   const vp = page.getViewport({scale: m.width/base.width});
   const w = m.width, h = Math.max(1, Math.ceil(vp.height - 1e-9));
-  const start = process.hrtime.bigint();
   const canvas = createCanvas(w,h), ctx = canvas.getContext('2d');
+  const start = process.hrtime.bigint();
   await page.render({canvasContext: ctx, viewport: vp, background:'rgb(255,255,255)'}).promise;
   const ns = Number(process.hrtime.bigint() - start);
   const data = ctx.getImageData(0,0,w,h).data;
