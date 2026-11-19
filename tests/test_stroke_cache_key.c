@@ -306,6 +306,98 @@ static void test_stroke_cache_key_hairline(void) {
   }
 }
 
+/* ---- Key fields the six scenarios above do not vary. Each case changes exactly one keyed input
+   with everything else fixed, so removing that field from the key turns an expected MISS into a
+   stale HIT (and, where the field changes coverage, into different pixels). The "sub-quantum"
+   variants differ by 1e-7, below the hash's 1e-6 quantisation, so they also fail when only the
+   exact field comparison is removed and the hash alone is left to tell entries apart. */
+static const exr_path_segment star[]={
+  {EXR_PATH_MOVE,{{80,8}}},{EXR_PATH_LINE,{{110.6,102.1}}},{EXR_PATH_LINE,{{30.5,44.1}}},
+  {EXR_PATH_LINE,{{129.5,44.1}}},{EXR_PATH_LINE,{{49.4,102.1}}},{EXR_PATH_CLOSE,{{{0}}}}
+};
+static void test_stroke_cache_key_miter(void) {
+  /* The corner's miter ratio is about 2.3: drawn as a miter at limit 10, beveled at limit 1.5. */
+  static const exr_path_segment vee[]={{EXR_PATH_MOVE,{{20,100}}},{EXR_PATH_LINE,{{80,20}}},{EXR_PATH_LINE,{{100,100}}}};
+  pair p=open_pair(); exr_draw_style s=stroke_style(),t; unsigned char base[W*H*4];
+  s.line.join=EXR_JOIN_MITER; s.line.width=8; s.line.miter_limit=10;
+  prime(&p,vee,N(vee),NULL,&s);
+  backdrop(&p); step(&p,"miter 10 replay",vee,N(vee),NULL,&s,NULL,EXR_OK,HIT); snapshot(&p,base);
+  t=s; t.line.miter_limit=1.5;
+  backdrop(&p); step(&p,"miter limit 1.5 (bevels the corner)",vee,N(vee),NULL,&t,NULL,EXR_OK,MISS);
+  if(!differs_from(&p,base)) FAIL("miter limit change did not change the stroke");
+  t=s; t.line.miter_limit=10+1e-7;
+  backdrop(&p); step(&p,"miter limit +1e-7 (sub-quantum)",vee,N(vee),NULL,&t,NULL,EXR_OK,MISS);
+  close_pair(&p);
+}
+static void test_stroke_cache_key_fill_rule(void) {
+  pair p=open_pair(); exr_draw_style f=exr_draw_style_defaults(),c=compound_style(),t; unsigned char base[W*H*4];
+  f.flags=EXR_DRAW_FILL; f.fill=0x2a7f3cff; f.rule=EXR_FILL_EVENODD; c.rule=EXR_FILL_EVENODD;
+  prime(&p,star,N(star),NULL,&f); prime(&p,star,N(star),ctm,&c);
+  backdrop(&p); step(&p,"even-odd fill replay",star,N(star),NULL,&f,NULL,EXR_OK,HIT); snapshot(&p,base);
+  t=f; t.rule=EXR_FILL_NONZERO;
+  backdrop(&p); step(&p,"nonzero fill of the same star",star,N(star),NULL,&t,NULL,EXR_OK,MISS);
+  if(!differs_from(&p,base)) FAIL("fill rule change did not change the fill");
+  t=c; t.rule=EXR_FILL_NONZERO;
+  backdrop(&p); step(&p,"nonzero compound of the same star",star,N(star),ctm,&t,NULL,EXR_OK,MISS);
+  close_pair(&p);
+}
+static void test_stroke_cache_key_verbs(void) {
+  /* Same segment count, same point list, different verbs. */
+  static const exr_path_segment qa[]={{EXR_PATH_MOVE,{{20,90}}},{EXR_PATH_QUAD,{{60,10},{100,90}}},{EXR_PATH_LINE,{{140,30}}}};
+  static const exr_path_segment qb[]={{EXR_PATH_MOVE,{{20,90}}},{EXR_PATH_LINE,{{60,10}}},{EXR_PATH_QUAD,{{100,90},{140,30}}}};
+  pair p=open_pair(); exr_draw_style s=stroke_style();
+  prime(&p,qa,N(qa),NULL,&s);
+  backdrop(&p); step(&p,"line+quad after cached quad+line",qb,N(qb),NULL,&s,NULL,EXR_OK,MISS);
+  close_pair(&p);
+}
+static void test_stroke_cache_key_flags(void) {
+  pair p=open_pair(); exr_draw_style s=stroke_style(),f=exr_draw_style_defaults(),c=compound_style();
+  f.flags=EXR_DRAW_FILL; f.fill=s.stroke; f.rule=EXR_FILL_NONZERO; c.rule=EXR_FILL_NONZERO; c.fill=s.stroke;
+  prime(&p,star,N(star),NULL,&f);
+  backdrop(&p); step(&p,"stroke after cached fill",star,N(star),NULL,&s,NULL,EXR_OK,MISS);
+  backdrop(&p); step(&p,"fill+stroke after cached fill",star,N(star),NULL,&c,NULL,EXR_OK,MISS);
+  close_pair(&p);
+}
+static void test_stroke_cache_key_dash_pattern(void) {
+  pair p=open_pair(); exr_draw_style s=stroke_style(),t; unsigned char base[W*H*4];
+  static const double d73[2]={7,3},d37[2]={3,7},d73e[2]={7,3+1e-7},d733[3]={7,3,3};
+  s.dashes=d73; s.dash_count=2;
+  prime(&p,curve,N(curve),ctm,&s);
+  backdrop(&p); step(&p,"dash 7 3 replay",curve,N(curve),ctm,&s,NULL,EXR_OK,HIT); snapshot(&p,base);
+  t=s; t.dashes=d37;
+  backdrop(&p); step(&p,"dash 3 7",curve,N(curve),ctm,&t,NULL,EXR_OK,MISS);
+  if(!differs_from(&p,base)) FAIL("dash pattern change did not change the stroke");
+  t=s; t.dashes=d733; t.dash_count=3;
+  backdrop(&p); step(&p,"dash 7 3 3",curve,N(curve),ctm,&t,NULL,EXR_OK,MISS);
+  t=s; t.dashes=d73e;
+  backdrop(&p); step(&p,"dash 7 3+1e-7 (sub-quantum)",curve,N(curve),ctm,&t,NULL,EXR_OK,MISS);
+  t=s; t.dash_phase=1e-7;
+  backdrop(&p); step(&p,"dash phase 1e-7 (sub-quantum)",curve,N(curve),ctm,&t,NULL,EXR_OK,MISS);
+  close_pair(&p);
+}
+static void test_stroke_cache_key_sub_quantum(void) {
+  pair p=open_pair(); exr_draw_style s=stroke_style(),c=compound_style();
+  const double sm[6]={1.5,0,0,1.5,0,0};
+  s.stroke_matrix=sm; c.stroke_matrix=sm;
+  prime(&p,curve,N(curve),ctm,&s); prime(&p,closed,N(closed),ctm,&c);
+  for(unsigned k=0;k<4;k++) {
+    double near[6]; exr_draw_style a=s,b=c;
+    memcpy(near,sm,sizeof(near)); near[k]+=1e-7; a.stroke_matrix=near; b.stroke_matrix=near;
+    backdrop(&p); step(&p,"stroke matrix term +1e-7",curve,N(curve),ctm,&a,NULL,EXR_OK,MISS);
+    backdrop(&p); step(&p,"compound matrix term +1e-7",closed,N(closed),ctm,&b,NULL,EXR_OK,MISS);
+    /* Sub-quantum variants share the original's hash, so they are admitted and inserted;
+       replaying the originals keeps them most recently used in the 8-slot LRU. */
+    step(&p,"original stroke still hits",curve,N(curve),ctm,&s,NULL,EXR_OK,HIT);
+    step(&p,"original compound still hits",closed,N(closed),ctm,&c,NULL,EXR_OK,HIT);
+  }
+  { exr_draw_style a=s; a.line.width+=1e-7; backdrop(&p); step(&p,"width +1e-7",curve,N(curve),ctm,&a,NULL,EXR_OK,MISS); }
+  step(&p,"original stroke still hits",curve,N(curve),ctm,&s,NULL,EXR_OK,HIT);
+  { exr_path_segment g[N(curve)]; memcpy(g,curve,sizeof(g)); g[1].points[1].y+=1e-7;
+    backdrop(&p); step(&p,"one control point +1e-7",g,N(g),ctm,&s,NULL,EXR_OK,MISS); }
+  backdrop(&p); step(&p,"original still hits",curve,N(curve),ctm,&s,NULL,EXR_OK,HIT);
+  close_pair(&p);
+}
+
 typedef struct { const char *name; void (*run)(void); } test_case;
 #define T(f) {#f,f}
 static const test_case cases[]={
@@ -313,6 +405,8 @@ static const test_case cases[]={
   T(test_stroke_cache_key_blend),T(test_stroke_cache_key_matrix_epsilon),T(test_stroke_cache_key_clip_change),
   T(test_stroke_cache_matrix_translation),T(test_stroke_cache_matrix_conditioning),T(test_stroke_cache_matrix_product),
   T(test_stroke_cache_dash_validation),T(test_stroke_cache_key_hairline),
+  T(test_stroke_cache_key_miter),T(test_stroke_cache_key_fill_rule),T(test_stroke_cache_key_verbs),
+  T(test_stroke_cache_key_flags),T(test_stroke_cache_key_dash_pattern),T(test_stroke_cache_key_sub_quantum),
 };
 int main(int argc,char **argv) {
   for(size_t i=0;i<N(cases);i++) {

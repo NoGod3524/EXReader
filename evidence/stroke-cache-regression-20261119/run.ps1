@@ -51,6 +51,8 @@ if ($Phase -eq 'build') {
       $defs = @('-G','Ninja','-S',$baseSrc,'-B',$baseBuild,'-DCMAKE_BUILD_TYPE=Release',"-DCMAKE_C_COMPILER=$gcc","-DCMAKE_MAKE_PROGRAM=$ninja",
                 '-DEXR_BUILD_TESTS=OFF','-DFETCHCONTENT_FULLY_DISCONNECTED=ON')
       $defs += $cache | Where-Object { $_ -match '^FETCHCONTENT_SOURCE_DIR_[A-Z0-9_]+:PATH=' } | ForEach-Object { $k,$v = $_ -split '=',2; "-D$(($k -split ':')[0])=$v" }
+      # Mirror the B build's feature switches (defaults enable AVIF, whose sources perf never fetched).
+      $defs += $cache | Where-Object { $_ -match '^EXR_[A-Z0-9_]+:BOOL=' -and $_ -notmatch '^EXR_BUILD_TESTS:' } | ForEach-Object { $k,$v = $_ -split '=',2; "-D$(($k -split ':')[0])=$v" }
       Native $cmake $defs (Join-Path $out 'build.log')
       Native $cmake @('--build',$baseBuild,'--target','exreader') (Join-Path $out 'build.log')
     }

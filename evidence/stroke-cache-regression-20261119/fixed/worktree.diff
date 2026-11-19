@@ -1,0 +1,62 @@
+diff --git a/src/canvas.c b/src/canvas.c
+index fd3935454..b18f1f330 100644
+--- a/src/canvas.c
++++ b/src/canvas.c
+@@ -376,9 +376,29 @@ static int build_path_key(const exr_canvas *c,const exr_path_segment *segments,s
+   }
+   key->pt_count=pt_count;
+   if(style->flags&EXR_DRAW_STROKE) {
++    /* A hit returns before path_impl's stroke validation, so a key exists only for input
++       that validation accepts: the whole stroke matrix (translation included) inverts in
++       range, inverse(stroke) x path is a valid flatten matrix, every stroke-space point
++       (and, for hairlines, its device image) is in range, and dashes have positive length. */
+     const double *sm=style->stroke_matrix ? style->stroke_matrix : m;
++    double inv[6],local[6],period=0;
++    if(!inverse(sm,inv)) return 0;
++    if(transform) multiply(inv,transform,local); else memcpy(local,inv,sizeof(local));
++    for(unsigned k=0;k<6;k++) if(!isfinite(local[k]) || fabs(local[k])>1e7) return 0;
++    for(size_t i=0;i<count;i++) {
++      unsigned verb=(unsigned)segments[i].verb;
++      unsigned npts=verb==EXR_PATH_CLOSE ? 0 : verb==EXR_PATH_QUAD ? 2 : verb==EXR_PATH_CUBIC ? 3 : 1;
++      for(unsigned k=0;k<npts;k++) {
++        exr_path_point p=segments[i].points[k];
++        double qx=local[0]*p.x+local[2]*p.y+local[4],qy=local[1]*p.x+local[3]*p.y+local[5];
++        if(!isfinite(qx) || !isfinite(qy) || fabs(qx)>1e7 || fabs(qy)>1e7) return 0;
++        if(!style->line.width) {
++          double dx=sm[0]*qx+sm[2]*qy+sm[4],dy=sm[1]*qx+sm[3]*qy+sm[5];
++          if(!isfinite(dx) || !isfinite(dy) || fabs(dx)>1e7 || fabs(dy)>1e7) return 0;
++        }
++      }
++    }
+     for(unsigned k=0;k<4;k++) {
+-      if(!isfinite(sm[k]) || fabs(sm[k])>1e7) return 0;
+       key->stroke_linear[k]=sm[k]; h=hash_q6(h,sm[k]);
+     }
+     key->line=style->line; key->dash_count=style->dash_count; key->dash_phase=style->dash_phase;
+@@ -387,8 +407,9 @@ static int build_path_key(const exr_canvas *c,const exr_path_segment *segments,s
+     h=fnv_u64(h,style->dash_count); h=hash_q6(h,style->dash_phase);
+     for(size_t i=0;i<style->dash_count;i++) {
+       if(!isfinite(style->dashes[i]) || style->dashes[i]<0 || style->dashes[i]>1e7) return 0;
+-      key->dashes[i]=style->dashes[i]; h=hash_q6(h,style->dashes[i]);
++      key->dashes[i]=style->dashes[i]; h=hash_q6(h,style->dashes[i]); period+=style->dashes[i];
+     }
++    if(style->dash_count && !period) return 0;
+   } else {
+     memset(&key->line,0,sizeof(key->line)); memset(key->stroke_linear,0,sizeof(key->stroke_linear));
+     key->dash_count=0; key->dash_phase=0;
+@@ -402,10 +423,11 @@ static int path_key_matches(const exr_path_cache_entry *e,const path_cache_key *
+   if(memcmp(e->verbs,k->verbs,e->seg_count)) return 0;
+   if(e->flags&EXR_DRAW_STROKE) {
+     if(e->line.cap!=k->line.cap || e->line.join!=k->line.join || e->dash_count!=k->dash_count) return 0;
+-    if(fabs(e->line.width-k->line.width)>1e-12 || fabs(e->line.miter_limit-k->line.miter_limit)>1e-12 ||
+-       fabs(e->dash_phase-k->dash_phase)>1e-12) return 0;
+-    for(unsigned i=0;i<4;i++) if(fabs(e->stroke_linear[i]-k->stroke_linear[i])>1e-12) return 0;
+-    for(size_t i=0;i<e->dash_count;i++) if(fabs(e->dashes[i]-k->dashes[i])>1e-12) return 0;
++    /* Exact: a tolerance would let width 0 (a device hairline) alias a tiny positive width,
++       or an all-zero dash pattern alias a valid one. */
++    if(e->line.width!=k->line.width || e->line.miter_limit!=k->line.miter_limit || e->dash_phase!=k->dash_phase) return 0;
++    for(unsigned i=0;i<4;i++) if(e->stroke_linear[i]!=k->stroke_linear[i]) return 0;
++    for(size_t i=0;i<e->dash_count;i++) if(e->dashes[i]!=k->dashes[i]) return 0;
+   }
+   for(size_t i=0;i<e->pt_count;i++)
+     if(fabs(e->pts[i].x-k->pts[i].x)>1e-9 || fabs(e->pts[i].y-k->pts[i].y)>1e-9) return 0;
