@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 165: native-float
+      Start 438: native-ppt-text-unicode
+      Start 400: native-library-epub-storage
+      Start  26: native-pptx-shape-limits
+      Start 155: native-pdf-shading-mesh7
+      Start 524: native-docx-real-12-list-restart-noop
+      Start  24: native-pptx-shape-fallback
+      Start 470: native-dictionary-dictd
+ 1/24 Test #470: native-dictionary-dictd ......................   Passed    0.45 sec
+      Start 553: native-docx-real-26-comment-anchors-edited
+ 2/24 Test #524: native-docx-real-12-list-restart-noop ........   Passed    0.64 sec
+      Start 124: native-docx-edit-e4
+ 3/24 Test  #24: native-pptx-shape-fallback ...................   Passed    0.76 sec
+      Start 505: native-docx-real-02-table-vertical-edited
+ 4/24 Test #155: native-pdf-shading-mesh7 .....................   Passed    1.01 sec
+      Start 120: native-docx-edit-x6-image-package
+ 5/24 Test #124: native-docx-edit-e4 ..........................   Passed    0.48 sec
+      Start   6: native-pptx-twenty
+ 6/24 Test #553: native-docx-real-26-comment-anchors-edited ...   Passed    0.65 sec
+      Start 187: native-pdf-color
+ 7/24 Test  #26: native-pptx-shape-limits .....................   Passed    1.26 sec
+      Start  98: native-docx-edit-io-properties
+ 8/24 Test #400: native-library-epub-storage ..................   Passed    1.79 sec
+      Start 221: native-mp3
+ 9/24 Test #120: native-docx-edit-x6-image-package ............   Passed    0.62 sec
+      Start 305: native-pdf-hybrid-edge-free-entry
+10/24 Test #187: native-pdf-color .............................   Passed    0.45 sec
+      Start 330: native-rtf-note
+11/24 Test #505: native-docx-real-02-table-vertical-edited ....   Passed    0.86 sec
+      Start 458: native-style-footnotes-anchors
+12/24 Test  #98: native-docx-edit-io-properties ...............   Passed    0.48 sec
+      Start 315: native-fixed-example
+13/24 Test   #6: native-pptx-twenty ...........................   Passed    0.62 sec
+      Start 321: native-viewport
+14/24 Test #438: native-ppt-text-unicode ......................   Passed    2.09 sec
+      Start 233: native-abi
+15/24 Test #458: native-style-footnotes-anchors ...............   Passed    0.18 sec
+16/24 Test #315: native-fixed-example .........................   Passed    0.12 sec
+      Start 461: native-ssml-chunks
+      Start 463: native-ssml-contracts
+17/24 Test #321: native-viewport ..............................   Passed    0.08 sec
+18/24 Test #330: native-rtf-note ..............................   Passed    0.24 sec
+19/24 Test #233: native-abi ...................................   Passed    0.05 sec
+20/24 Test #463: native-ssml-contracts ........................   Passed    0.02 sec
+21/24 Test #461: native-ssml-chunks ...........................   Passed    0.03 sec
+22/24 Test #221: native-mp3 ...................................   Passed    0.35 sec
+23/24 Test #305: native-pdf-hybrid-edge-free-entry ............   Passed    0.29 sec
+24/24 Test #165: native-float .................................   Passed    4.98 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =   5.00 sec

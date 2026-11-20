@@ -1,0 +1,55 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 381: native-convert-corpus
+      Start 363: native-chapter-reader
+      Start  90: native-pptx-real-oracle
+      Start 194: native-zero-opacity
+      Start 350: native-bidi
+      Start 452: native-ppt-table-indices
+      Start  84: native-pptx-table-cjk
+      Start 286: native-pdf-raster
+ 1/25 Test #286: native-pdf-raster ........................   Passed    0.55 sec
+      Start  15: native-pptx-shape-roundrect
+ 2/25 Test  #84: native-pptx-table-cjk ....................   Passed    0.68 sec
+      Start 563: native-docx-real-paragraph-markers
+ 3/25 Test #194: native-zero-opacity ......................   Passed    0.83 sec
+      Start 554: native-docx-real-27-bookmarks-noop
+ 4/25 Test #381: native-convert-corpus ....................   Passed    0.99 sec
+      Start 284: native-pdf-graphics
+ 5/25 Test #452: native-ppt-table-indices .................   Passed    0.96 sec
+      Start 104: native-docx-edit-io-section-boundaries
+ 6/25 Test #284: native-pdf-graphics ......................   Passed    0.14 sec
+      Start 499: native-vertical-expand-images
+ 7/25 Test #350: native-bidi ..............................   Passed    1.08 sec
+      Start 382: native-convert
+ 8/25 Test  #15: native-pptx-shape-roundrect ..............   Passed    0.65 sec
+      Start 586: sdk-doc-coverage
+ 9/25 Test #563: native-docx-real-paragraph-markers .......   Passed    0.55 sec
+      Start  35: native-pptx-fill-sink
+10/25 Test  #90: native-pptx-real-oracle ..................   Passed    1.34 sec
+      Start 280: native-pdf-cmap
+11/25 Test #554: native-docx-real-27-bookmarks-noop .......   Passed    0.58 sec
+      Start 573: sdk-doc-formats
+12/25 Test #280: native-pdf-cmap ..........................   Passed    0.11 sec
+      Start 291: native-wave
+13/25 Test #573: sdk-doc-formats ..........................   Passed    0.09 sec
+      Start 179: native-cbz
+14/25 Test #291: native-wave ..............................   Passed    0.11 sec
+      Start 460: native-ssml-structure
+15/25 Test #460: native-ssml-structure ....................   Passed    0.04 sec
+      Start 263: native-document-search-errors
+16/25 Test #499: native-vertical-expand-images ............   Passed    0.58 sec
+      Start 151: native-lcp-lifetime
+17/25 Test #179: native-cbz ...............................   Passed    0.17 sec
+      Start 141: native-docx-edit-mixed
+18/25 Test #104: native-docx-edit-io-section-boundaries ...   Passed    0.67 sec
+19/25 Test #263: native-document-search-errors ............   Passed    0.08 sec
+20/25 Test #151: native-lcp-lifetime ......................   Passed    0.06 sec
+21/25 Test #141: native-docx-edit-mixed ...................   Passed    0.06 sec
+22/25 Test  #35: native-pptx-fill-sink ....................   Passed    0.46 sec
+23/25 Test #382: native-convert ...........................   Passed    0.67 sec
+24/25 Test #586: sdk-doc-coverage .........................   Passed    0.66 sec
+25/25 Test #363: native-chapter-reader ....................   Passed    6.74 sec
+
+100% tests passed out of 25
+
+Total Test time (real) =   6.76 sec

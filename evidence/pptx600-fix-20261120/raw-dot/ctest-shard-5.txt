@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 161: native-hyphen-layout
+      Start 155: native-pdf-shading-mesh7
+      Start 152: native-render-audit
+      Start 158: native-hyphen
+      Start 146: native-lcp-normal
+      Start 150: native-lcp-malformed
+      Start 157: native-normalize
+      Start 153: native-table-dashed
+ 1/24 Test #146: native-lcp-normal ................   Passed    0.23 sec
+      Start 148: native-lcp-expired
+ 2/24 Test #157: native-normalize .................   Passed    0.15 sec
+      Start 160: native-case
+ 3/24 Test #148: native-lcp-expired ...............   Passed    0.09 sec
+      Start 154: native-pdf-shading-mesh
+ 4/24 Test #158: native-hyphen ....................   Passed    0.37 sec
+ 5/24 Test #153: native-table-dashed ..............   Passed    0.16 sec
+ 6/24 Test #150: native-lcp-malformed .............   Passed    0.20 sec
+      Start 162: native-hyphen-builtin-rules
+      Start 149: native-lcp-unsupported
+      Start 156: native-pdf-ccitt
+ 7/24 Test #160: native-case ......................   Passed    0.11 sec
+      Start 159: native-hyphen-replacements
+ 8/24 Test #154: native-pdf-shading-mesh ..........   Passed    0.14 sec
+ 9/24 Test #162: native-hyphen-builtin-rules ......   Passed    0.11 sec
+      Start 151: native-lcp-lifetime
+      Start 143: native-docx-edit-allocation
+10/24 Test #156: native-pdf-ccitt .................   Passed    0.12 sec
+11/24 Test #149: native-lcp-unsupported ...........   Passed    0.13 sec
+12/24 Test #159: native-hyphen-replacements .......   Passed    0.09 sec
+      Start 147: native-lcp-credentials
+      Start 141: native-docx-edit-mixed
+      Start 140: native-docx-edit-boundaries
+13/24 Test #151: native-lcp-lifetime ..............   Passed    0.07 sec
+      Start 142: native-docx-edit-benchmark
+14/24 Test #143: native-docx-edit-allocation ......   Passed    0.07 sec
+      Start 138: native-docx-edit-history
+15/24 Test #147: native-lcp-credentials ...........   Passed    0.04 sec
+      Start 139: native-docx-edit-preservation
+16/24 Test #140: native-docx-edit-boundaries ......   Passed    0.04 sec
+      Start 137: native-docx-edit-rollback
+17/24 Test #142: native-docx-edit-benchmark .......   Passed    0.04 sec
+18/24 Test #141: native-docx-edit-mixed ...........   Passed    0.05 sec
+19/24 Test #138: native-docx-edit-history .........   Passed    0.03 sec
+20/24 Test #152: native-render-audit ..............   Passed    0.62 sec
+21/24 Test #139: native-docx-edit-preservation ....   Passed    0.02 sec
+22/24 Test #137: native-docx-edit-rollback ........   Passed    0.02 sec
+23/24 Test #155: native-pdf-shading-mesh7 .........   Passed    0.82 sec
+24/24 Test #161: native-hyphen-layout .............   Passed   18.79 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =  18.82 sec

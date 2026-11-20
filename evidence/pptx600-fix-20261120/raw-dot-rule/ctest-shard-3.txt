@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start  88: native-pptx-real-matrix
+ 1/24 Test  #88: native-pptx-real-matrix ...................   Passed   13.58 sec
+      Start 123: native-docx-edit-e5
+      Start 176: native-chapter-window
+      Start 193: native-paint-source
+      Start 569: native-docx-real-oracle-mutations
+      Start  78: native-pptx-table-malformed
+      Start  14: native-pptx-shape-circle
+      Start 429: native-ppt-fill-gradient-fallback
+      Start  49: native-pptx-fill-background-inheritance
+ 2/24 Test  #49: native-pptx-fill-background-inheritance ...   Passed    0.37 sec
+      Start 441: native-ppt-text-wrap
+ 3/24 Test  #14: native-pptx-shape-circle ..................   Passed    0.50 sec
+      Start 395: native-color-png
+ 4/24 Test  #78: native-pptx-table-malformed ...............   Passed    0.61 sec
+      Start 403: native-pdf_edit-component
+ 5/24 Test #429: native-ppt-fill-gradient-fallback .........   Passed    0.83 sec
+ 6/24 Test #569: native-docx-real-oracle-mutations .........   Passed    0.86 sec
+      Start 115: native-docx-edit-x6-image-delete
+      Start   9: native-pptx-missing
+ 7/24 Test #403: native-pdf_edit-component .................   Passed    0.29 sec
+      Start 323: native-library-unique
+ 8/24 Test #441: native-ppt-text-wrap ......................   Passed    0.61 sec
+      Start  12: native-pptx-limit
+ 9/24 Test #395: native-color-png ..........................   Passed    0.51 sec
+10/24 Test #193: native-paint-source .......................   Passed    1.07 sec
+      Start 308: native-pdf-hybrid-edge-linearized
+      Start 317: native-font-path
+11/24 Test #317: native-font-path ..........................   Passed    0.10 sec
+      Start 349: native-text
+12/24 Test #176: native-chapter-window .....................   Passed    1.26 sec
+      Start 338: native-sevenz-safety
+13/24 Test #323: native-library-unique .....................   Passed    0.31 sec
+14/24 Test   #9: native-pptx-missing .......................   Passed    0.35 sec
+      Start 331: native-rtf-table
+      Start 255: native-publication-index-accents
+15/24 Test #308: native-pdf-hybrid-edge-linearized .........   Passed    0.27 sec
+16/24 Test #115: native-docx-edit-x6-image-delete ..........   Passed    0.44 sec
+17/24 Test #349: native-text ...............................   Passed    0.16 sec
+18/24 Test #331: native-rtf-table ..........................   Passed    0.08 sec
+      Start 163: native-hyphen-builtin-switches
+      Start 464: native-ssml-parts
+19/24 Test  #12: native-pptx-limit .........................   Passed    0.39 sec
+20/24 Test #255: native-publication-index-accents ..........   Passed    0.13 sec
+21/24 Test #338: native-sevenz-safety ......................   Passed    0.22 sec
+22/24 Test #163: native-hyphen-builtin-switches ............   Passed    0.10 sec
+23/24 Test #464: native-ssml-parts .........................   Passed    0.06 sec
+24/24 Test #123: native-docx-edit-e5 .......................   Passed    2.41 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =  16.00 sec

@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 440: native-ppt-text-indices
+      Start 432: native-ppt-text-sizes
+      Start 469: native-dictionary-contracts
+      Start 422: native-ppt-shape-styles
+      Start 107: native-docx-edit-x6-table-roundtrip
+      Start 434: native-ppt-text-cjk
+      Start  13: native-pptx-shape-rect
+      Start 167: native-table-border
+ 1/24 Test  #13: native-pptx-shape-rect .........................   Passed    0.59 sec
+      Start 515: native-docx-real-07-field-numpages-edited
+ 2/24 Test #167: native-table-border ............................   Passed    0.70 sec
+      Start 529: native-docx-real-14-style-inheritance-edited
+ 3/24 Test #434: native-ppt-text-cjk ............................   Passed    0.73 sec
+      Start 430: native-ppt-fill-scheme
+ 4/24 Test #469: native-dictionary-contracts ....................   Passed    1.03 sec
+      Start 490: native-book-mobi
+ 5/24 Test #422: native-ppt-shape-styles ........................   Passed    1.16 sec
+      Start  11: native-pptx-detection
+ 6/24 Test #107: native-docx-edit-x6-table-roundtrip ............   Passed    1.17 sec
+      Start 249: native-cfi-compat-roundtrip
+ 7/24 Test #515: native-docx-real-07-field-numpages-edited ......   Passed    0.65 sec
+      Start  42: native-pptx-fill-color-transforms
+ 8/24 Test #249: native-cfi-compat-roundtrip ....................   Passed    0.17 sec
+      Start 288: native-audio-library
+ 9/24 Test #529: native-docx-real-14-style-inheritance-edited ...   Passed    0.74 sec
+      Start 306: native-pdf-hybrid-edge-objstm
+10/24 Test #430: native-ppt-fill-scheme .........................   Passed    0.75 sec
+      Start 327: native-decoration
+11/24 Test #490: native-book-mobi ...............................   Passed    0.57 sec
+12/24 Test #327: native-decoration ..............................   Passed    0.11 sec
+      Start 571: sdk-doc-base
+      Start 260: native-document-search-basic
+13/24 Test  #11: native-pptx-detection ..........................   Passed    0.49 sec
+      Start 248: native-cfi-compat-mapping
+14/24 Test #571: sdk-doc-base ...................................   Passed    0.07 sec
+      Start 329: native-rtf-list
+15/24 Test #288: native-audio-library ...........................   Passed    0.37 sec
+      Start 143: native-docx-edit-allocation
+16/24 Test #260: native-document-search-basic ...................   Passed    0.08 sec
+17/24 Test  #42: native-pptx-fill-color-transforms ..............   Passed    0.47 sec
+18/24 Test #248: native-cfi-compat-mapping ......................   Passed    0.07 sec
+      Start 353: native-rtl-punctuation
+19/24 Test #329: native-rtf-list ................................   Passed    0.09 sec
+20/24 Test #143: native-docx-edit-allocation ....................   Passed    0.05 sec
+21/24 Test #306: native-pdf-hybrid-edge-objstm ..................   Passed    0.30 sec
+22/24 Test #353: native-rtl-punctuation .........................   Passed    0.07 sec
+23/24 Test #432: native-ppt-text-sizes ..........................   Passed    2.10 sec
+24/24 Test #440: native-ppt-text-indices ........................   Passed    5.16 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =   5.18 sec

@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 272: native-note-limit
+      Start 399: native-library-source
+      Start  21: native-pptx-shape-group-transforms
+      Start 435: native-ppt-text-alignment
+      Start 539: native-docx-real-19-section-columns-edited
+      Start 207: native-pdf-inline
+      Start 541: native-docx-real-20-footnote-restart-edited
+      Start 528: native-docx-real-14-style-inheritance-noop
+ 1/24 Test #207: native-pdf-inline .............................   Passed    0.59 sec
+      Start 557: native-docx-real-28-hidden-text-edited
+ 2/24 Test #539: native-docx-real-19-section-columns-edited ....   Passed    0.61 sec
+      Start 506: native-docx-real-03-table-nested-noop
+ 3/24 Test #541: native-docx-real-20-footnote-restart-edited ...   Passed    0.58 sec
+      Start  10: native-pptx-order
+ 4/24 Test #528: native-docx-real-14-style-inheritance-noop ....   Passed    0.65 sec
+      Start 387: native-case-reference
+ 5/24 Test #435: native-ppt-text-alignment .....................   Passed    1.23 sec
+      Start  86: native-pptx-table-invalid-spans
+ 6/24 Test  #10: native-pptx-order .............................   Passed    0.59 sec
+      Start  41: native-pptx-fill-theme-default
+ 7/24 Test #557: native-docx-real-28-hidden-text-edited ........   Passed    0.66 sec
+      Start 396: native-pdf-jpx
+ 8/24 Test #506: native-docx-real-03-table-nested-noop .........   Passed    0.72 sec
+      Start 304: native-pdf-hybrid-edge-incremental
+ 9/24 Test #272: native-note-limit .............................   Passed    1.77 sec
+      Start 203: native-locale-numbers
+10/24 Test  #21: native-pptx-shape-group-transforms ............   Passed    1.54 sec
+      Start 357: native-complex-layout
+11/24 Test #203: native-locale-numbers .........................   Passed    0.14 sec
+      Start 457: native-style-footnotes-footnotes
+12/24 Test #396: native-pdf-jpx ................................   Passed    0.37 sec
+      Start 181: native-cbz-formats
+13/24 Test #357: native-complex-layout .........................   Passed    0.16 sec
+      Start 213: native-combine-upright-modes
+14/24 Test #304: native-pdf-hybrid-edge-incremental ............   Passed    0.40 sec
+15/24 Test #181: native-cbz-formats ............................   Passed    0.10 sec
+16/24 Test  #41: native-pptx-fill-theme-default ................   Passed    0.49 sec
+      Start 164: native-hyphen-builtin-joiners
+      Start 369: native-reflow-anchors
+      Start 139: native-docx-edit-preservation
+17/24 Test #399: native-library-source .........................   Passed    2.02 sec
+18/24 Test #457: native-style-footnotes-footnotes ..............   Passed    0.14 sec
+19/24 Test #387: native-case-reference .........................   Passed    1.05 sec
+20/24 Test #213: native-combine-upright-modes ..................   Passed    0.08 sec
+21/24 Test #139: native-docx-edit-preservation .................   Passed    0.04 sec
+22/24 Test #164: native-hyphen-builtin-joiners .................   Passed    0.06 sec
+23/24 Test #369: native-reflow-anchors .........................   Passed    0.07 sec
+24/24 Test  #86: native-pptx-table-invalid-spans ...............   Passed    0.67 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =   2.22 sec

@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start  88: native-pptx-real-matrix
+ 1/24 Test  #88: native-pptx-real-matrix ..................   Passed   14.72 sec
+      Start  91: native-ppt-real-matrix
+ 2/24 Test  #91: native-ppt-real-matrix ...................   Passed    6.88 sec
+      Start  85: native-pptx-table-namespaces
+      Start  89: native-pptx-real-reproducible
+      Start  94: native-docx-edit-io-roundtrip
+      Start  84: native-pptx-table-cjk
+      Start  92: native-ppt-real-reproducible
+      Start 107: native-docx-edit-x6-table-roundtrip
+      Start  95: native-docx-edit-io-parts
+      Start  97: native-docx-edit-io-sections
+ 3/24 Test  #92: native-ppt-real-reproducible .............   Passed    0.32 sec
+      Start  96: native-docx-edit-io-unknown
+ 4/24 Test  #89: native-pptx-real-reproducible ............   Passed    0.50 sec
+      Start 100: native-docx-edit-io-split
+ 5/24 Test  #94: native-docx-edit-io-roundtrip ............   Passed    0.60 sec
+      Start 109: native-docx-edit-x6-table-preserve
+ 6/24 Test  #95: native-docx-edit-io-parts ................   Passed    0.59 sec
+      Start 108: native-docx-edit-x6-table-properties
+ 7/24 Test  #84: native-pptx-table-cjk ....................   Passed    0.77 sec
+      Start 102: native-docx-edit-io-section-scope
+ 8/24 Test  #96: native-docx-edit-io-unknown ..............   Passed    0.48 sec
+      Start 105: native-docx-edit-io-new
+ 9/24 Test  #97: native-docx-edit-io-sections .............   Passed    0.78 sec
+      Start 101: native-docx-edit-io-namespaces
+10/24 Test #100: native-docx-edit-io-split ................   Passed    0.45 sec
+      Start 104: native-docx-edit-io-section-boundaries
+11/24 Test  #85: native-pptx-table-namespaces .............   Passed    1.01 sec
+      Start  86: native-pptx-table-invalid-spans
+12/24 Test #109: native-docx-edit-x6-table-preserve .......   Passed    0.45 sec
+      Start 103: native-docx-edit-io-section-edits
+13/24 Test #108: native-docx-edit-x6-table-properties .....   Passed    0.47 sec
+      Start  99: native-docx-edit-io-edits
+14/24 Test #102: native-docx-edit-io-section-scope ........   Passed    0.38 sec
+      Start 106: native-docx-edit-io-errors
+15/24 Test #101: native-docx-edit-io-namespaces ...........   Passed    0.41 sec
+      Start  98: native-docx-edit-io-properties
+16/24 Test #107: native-docx-edit-x6-table-roundtrip ......   Passed    1.22 sec
+      Start  87: native-pptx-table-reproducible
+17/24 Test #105: native-docx-edit-io-new ..................   Passed    0.43 sec
+18/24 Test  #86: native-pptx-table-invalid-spans ..........   Passed    0.42 sec
+19/24 Test #103: native-docx-edit-io-section-edits ........   Passed    0.37 sec
+20/24 Test #104: native-docx-edit-io-section-boundaries ...   Passed    0.56 sec
+21/24 Test  #87: native-pptx-table-reproducible ...........   Passed    0.26 sec
+22/24 Test #106: native-docx-edit-io-errors ...............   Passed    0.37 sec
+23/24 Test  #99: native-docx-edit-io-edits ................   Passed    0.46 sec
+24/24 Test  #98: native-docx-edit-io-properties ...........   Passed    0.37 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =  23.23 sec

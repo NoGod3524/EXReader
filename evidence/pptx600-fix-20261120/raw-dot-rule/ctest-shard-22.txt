@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 414: native-ppt-shape-group
+      Start  52: native-pptx-text-sizes
+      Start  53: native-pptx-text-master
+      Start 446: native-ppt-table-fills
+      Start 415: native-ppt-shape-standard
+      Start 520: native-docx-real-10-field-toc-noop
+      Start 567: native-docx-real-text-validation
+      Start 519: native-docx-real-09-field-ref-edited
+ 1/24 Test #567: native-docx-real-text-validation .................   Passed    0.57 sec
+      Start 510: native-docx-real-05-table-multi-paragraph-noop
+ 2/24 Test #520: native-docx-real-10-field-toc-noop ...............   Passed    0.59 sec
+      Start 281: native-pdf-font
+ 3/24 Test #519: native-docx-real-09-field-ref-edited .............   Passed    0.64 sec
+      Start 299: native-pdf-hybrid-real-pptx-20
+ 4/24 Test #415: native-ppt-shape-standard ........................   Passed    0.87 sec
+      Start   8: native-pptx-defaults
+ 5/24 Test #281: native-pdf-font ..................................   Passed    0.28 sec
+      Start 117: native-docx-edit-x6-image-cell
+ 6/24 Test  #53: native-pptx-text-master ..........................   Passed    0.97 sec
+      Start 210: native-epub-metadata-write
+ 7/24 Test #299: native-pdf-hybrid-real-pptx-20 ...................   Passed    0.38 sec
+      Start 297: native-pdf-hybrid-deck
+ 8/24 Test #210: native-epub-metadata-write .......................   Passed    0.15 sec
+      Start  71: native-pptx-text-reproducible
+ 9/24 Test #446: native-ppt-table-fills ...........................   Passed    1.18 sec
+      Start 572: sdk-doc-document
+10/24 Test #572: sdk-doc-document .................................   Passed    0.12 sec
+      Start 333: native-docx
+11/24 Test #510: native-docx-real-05-table-multi-paragraph-noop ...   Passed    0.78 sec
+      Start 578: sdk-doc-textindex
+12/24 Test  #52: native-pptx-text-sizes ...........................   Passed    1.43 sec
+      Start 380: native-control
+13/24 Test   #8: native-pptx-defaults .............................   Passed    0.58 sec
+14/24 Test #117: native-docx-edit-x6-image-cell ...................   Passed    0.57 sec
+15/24 Test #333: native-docx ......................................   Passed    0.15 sec
+16/24 Test #297: native-pdf-hybrid-deck ...........................   Passed    0.41 sec
+      Start 336: native-export-epub
+      Start 352: native-rtl-numbers
+      Start 132: native-docx-edit-split
+      Start 135: native-docx-edit-delete
+17/24 Test #578: sdk-doc-textindex ................................   Passed    0.16 sec
+18/24 Test  #71: native-pptx-text-reproducible ....................   Passed    0.41 sec
+19/24 Test #380: native-control ...................................   Passed    0.12 sec
+20/24 Test #132: native-docx-edit-split ...........................   Passed    0.02 sec
+21/24 Test #135: native-docx-edit-delete ..........................   Passed    0.02 sec
+22/24 Test #336: native-export-epub ...............................   Passed    0.09 sec
+23/24 Test #352: native-rtl-numbers ...............................   Passed    0.06 sec
+24/24 Test #414: native-ppt-shape-group ...........................   Passed    2.79 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =   2.81 sec

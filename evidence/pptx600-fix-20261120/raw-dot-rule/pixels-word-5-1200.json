@@ -1,0 +1,63 @@
+{
+ "pdf": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-slides\\tests\\fixtures\\pdf-hybrid-real\\word-5.pdf",
+ "pdf_sha256": "5e7214f0700df85cdb96fbccdcb303461f0b43a08278893ba8fd098025e90aff",
+ "a_sha256": "06ca9f0e0f9d079ae80754af4a1d10c457d1f07e544b02e349a963f386a9d261",
+ "b_sha256": "931948aca8638cfe32db972ce06c36456d7e29991b64ee70f9093cb99c65ab67",
+ "width": 1200,
+ "runs": 0,
+ "order": "AB then optional C on even (round+page index), reverse on odd",
+ "pdfjs_root": null,
+ "idle_gates": [],
+ "gate_every": null,
+ "compared_pixels": 9318000,
+ "mismatched_pages": [],
+ "differing_pixels": 0,
+ "summary": {},
+ "pages": [
+  {
+   "page": 1,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "695f5e72a5743475dfedfcac2b3be67c1bd17bfb01907ebba2fe1a01a46ed5b5",
+    "B": "695f5e72a5743475dfedfcac2b3be67c1bd17bfb01907ebba2fe1a01a46ed5b5"
+   }
+  },
+  {
+   "page": 2,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "4c75050cd0dd2759f25809a6914f0aa1e093a908821652d05061c6a9dd574cbc",
+    "A": "4c75050cd0dd2759f25809a6914f0aa1e093a908821652d05061c6a9dd574cbc"
+   }
+  },
+  {
+   "page": 3,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "cbd701c95b2faec59c6a5502f18d6b2135dfc75d9276d1eb03289302266dca08",
+    "B": "cbd701c95b2faec59c6a5502f18d6b2135dfc75d9276d1eb03289302266dca08"
+   }
+  },
+  {
+   "page": 4,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "7bb8abf0f62405d75c4e16fec278ea398b5c5ff439cff8eb8d90890058c60d62",
+    "A": "7bb8abf0f62405d75c4e16fec278ea398b5c5ff439cff8eb8d90890058c60d62"
+   }
+  },
+  {
+   "page": 5,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "6a2adce311ae54b0586d50eae492a1376cbfd52df801f670269399d33b720adc",
+    "B": "6a2adce311ae54b0586d50eae492a1376cbfd52df801f670269399d33b720adc"
+   }
+  }
+ ]
+}

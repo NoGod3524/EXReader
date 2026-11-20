@@ -128,7 +128,7 @@ static void group_churn(void) {
   exr_canvas_free(c);
 }
 static int never_cancel(void *ctx) { (void)ctx; return 0; }
-static void path_cache_and_solid_clip(void) {
+static void path_cache_and_solid_clip(int full_span) {
   /* Compare cached path reuse + solid-clip elision against an uncached reference canvas
      (control.cancelled != NULL bypasses the within-page path cache). */
   exr_canvas_config cfg={0},ref_cfg={0};
@@ -144,15 +144,17 @@ static void path_cache_and_solid_clip(void) {
   const double dashes[2]={4,2};
   exr_draw_style style=exr_draw_style_defaults();
   cfg.width=160; cfg.height=120; cfg.background=0xfafaf8ffu;
+  if(full_span) rectangle(clip,0,.5,160,119);
   ref_cfg=cfg; ref_cfg.control.cancelled=never_cancel;
   OK(exr_canvas_create(&cfg,&fast,&error));
   OK(exr_canvas_create(&ref_cfg,&ref,&error));
   OK(exr_canvas_clip(fast,clip,5,NULL,EXR_FILL_NONZERO,&error));
   OK(exr_canvas_clip(ref,clip,5,NULL,EXR_FILL_NONZERO,&error));
+  if(full_span) CHECK(fast->clip && fast->clip->full_span && fast->clip->bitmap.height==4);
   /* 1. Repeated dashed curves at integer y shifts (strike 1, 2, hits 3..5) and one crossing clip. */
   style.flags=EXR_DRAW_STROKE; style.line.width=1.4; style.dashes=dashes; style.dash_count=2; style.dash_phase=1;
   for(int i=0;i<6;i++) {
-    double m[6]={1,0,0,1,0,(double)(i==5 ? -14 : i*13)};
+    double m[6]={1,0,0,1,0,(double)(i==5 ? (full_span ? 95 : -14) : i*13)};
     style.stroke=0x102030ffu+(uint32_t)(i*0x19130d00u);
     OK(exr_canvas_path(fast,curve,2,m,&style,&error));
     OK(exr_canvas_path(ref,curve,2,m,&style,&error));
@@ -160,7 +162,7 @@ static void path_cache_and_solid_clip(void) {
   /* 2. Repeated compound stars: integer x shifts, subpixel y shift, clip-edge overlap, and border-clip test. */
   style.flags=EXR_DRAW_FILL|EXR_DRAW_STROKE; style.rule=EXR_FILL_EVENODD; style.line.width=0.9; style.dash_count=0; style.dashes=NULL;
   {
-    const double shifts[][2]={{12,20},{44,20},{76,20},{108,20},{12,50.333},{44,50.333},{76,50.333},{-6,70},{140,70},{20,70}};
+    const double shifts[][2]={{12,20},{44,20},{76,20},{108,20},{12,50.333},{44,50.333},{76,50.333},{-6,70},{140,70},{20,full_span ? -2 : 70}};
     for(size_t i=0;i<sizeof(shifts)/sizeof(*shifts);i++) {
       double m[6]={1,0,0,1,shifts[i][0],shifts[i][1]};
       style.fill=0x224466ffu+(uint32_t)(i*0x170b1300u); style.stroke=0x333333ffu;
@@ -204,6 +206,9 @@ static void fractional_full_span_clip(void) {
   exr_draw_style style=exr_draw_style_defaults(); const exr_bitmap *b;
   config.width=8; config.height=6; config.mask_budget=1;
   OK(exr_canvas_create(&config,&c,&error));
+  rectangle(rect,.00001,0,8,6);
+  OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  CHECK(!c->clip && !c->mask_count);
   rectangle(rect,0,0,8,5.5);
   OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
   CHECK(c->clip && c->clip->full_span && !c->mask_bytes && c->full_span_bytes==32);
@@ -213,9 +218,10 @@ static void fractional_full_span_clip(void) {
   OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
   CHECK(exr_clip_row(c->clip,5)[0]==64 && exr_clip_row(c->clip,5)[1]==64);
   OK(exr_canvas_restore(c,&error));
+  exr_clip_mask *viewport=c->clip;
   rectangle(rect,0,0,8,6);
   OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
-  CHECK(c->clip && exr_clip_row(c->clip,5)[1]==128);
+  CHECK(c->clip==viewport && exr_clip_row(c->clip,5)[1]==128);
   OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_RGB,&error));
   rectangle(rect,.00001,0,8,5.5);
   OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
@@ -225,10 +231,17 @@ static void fractional_full_span_clip(void) {
   OK(exr_canvas_end_layer(c,1,&error));
   b=exr_canvas_bitmap(c);
   pixel(b,0,4,0x20,0x40,0x80);
-  CHECK(b->pixels[5*b->stride+3]==63 && b->pixels[5*b->stride+7]==64);
+  CHECK(b->pixels[4*b->stride+3]==255);
+  const unsigned char *fringe=b->pixels+5*b->stride;
+  CHECK(!memcmp(fringe,(const unsigned char[]){0x20,0x40,0x80,63,0x20,0x40,0x80,64},8));
   CHECK(exr_canvas_clip(c,rect,5,NULL,(exr_fill_rule)99,&error)==EXR_ARGUMENT);
   exr_canvas_free(c);
 }
-int main(void) { fractional_clip_rows(); fractional_full_span_clip(); backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); path_cache_and_solid_clip(); printf("%u native canvas checks passed\n",checks); return 0; }
+int main(void) {
+  fractional_clip_rows(); fractional_full_span_clip(); backgrounds(); clip_and_ownership();
+  stroke_and_images(); drawing_sink(); failures(); group_churn();
+  path_cache_and_solid_clip(0); path_cache_and_solid_clip(1);
+  printf("%u native canvas checks passed\n",checks); return 0;
+}
 
 
