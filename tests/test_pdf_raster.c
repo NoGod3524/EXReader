@@ -204,7 +204,7 @@ static void shading_cleanup(const char *dir) {
   sink.struct_size=sizeof(sink);sink.base.state=scope_state;sink.base.clip=scope_clip;sink.shading=scope_shading;
   for(unsigned fail=0;fail<3;fail++) {
     shading_scope s={0};s.fail=fail;sink.base.context=&s;
-    CHECK(exr_pdf_paint_content_ex(file,pages[0].resources,"/Sh sh",6,NULL,&sink,NULL,NULL,NULL,0,NULL,NULL,&error)==(fail ? EXR_CANCELLED : EXR_OK));
+    CHECK(exr_pdf_paint_content_ex(file,pages[0].resources,"/Sh sh",6,NULL,&sink,NULL,NULL,NULL,0,NULL,NULL,NULL,&error)==(fail ? EXR_CANCELLED : EXR_OK));
     CHECK(s.saves==1 && s.restores==1 && !s.depth && s.clips==1 && s.shadings==(fail!=1));
   }
   free(pages);exr_pdf_close(file);free(data);

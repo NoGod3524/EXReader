@@ -170,8 +170,14 @@ __declspec(noinline)
 #endif
 static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,const double inv[6],
                                   const exr_clip_mask *clip,int x0,int y0,int x1,int y1,int *columns,uint32_t rgb,
-                                  size_t cost,exr_raster_work *work,const exr_control *control,exr_error *e) {
+                                  const int cover[4],size_t cost,exr_raster_work *work,const exr_control *control,exr_error *e) {
   double px0=x0+.25,py0=y0+.25;
+  int omit_from=x1,omit_to=x1;
+  if(cover) {
+    omit_from=cover[0]>x0 ? cover[0] : x0;
+    omit_to=cover[2]<x1 ? cover[2] : x1;
+    if(omit_from>=omit_to) cover=NULL;
+  }
 #if defined(__SSE2__) || defined(_M_X64)
   const __m128i rgba=_mm_setr_epi16((short)(rgb>>24),(short)((rgb>>16)&255),(short)((rgb>>8)&255),255,0,0,0,0);
 #endif
@@ -187,39 +193,45 @@ static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,con
     const unsigned char *first=y_first<0 ? NULL : mask->pixels+(size_t)y_first*mask->stride;
     const unsigned char *second=y_second<0 ? NULL : mask->pixels+(size_t)y_second*mask->stride;
     const unsigned char *coverage=exr_clip_row(clip,(size_t)y);
-    const int *column=columns;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
+    /* Charge the original row even when the next fill overwrites its pixels. */
     if(!exr_vector_work(work,(size_t)(x1-x0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
     if(!first && !second) continue;
-    for(int x=x0;x<x1;x++,column+=2) {
-      unsigned opacity=0,covered=coverage ? coverage[x] : 255;
-      if(!covered) continue;
-      for(unsigned tap=0;tap<2;tap++) if(column[tap]>=0) {
-        int offset=column[tap]*4;
-        if(first) opacity+=first[offset];
-        if(second) opacity+=second[offset];
-      }
-      /* With opaque source and mask texels each quarter sample contributes
-         its gray byte exactly. Missing taps contribute zero. Every nonzero
-         premultiplied RGB sample has the same straight color. */
-      opacity=(opacity+2)/4;
-#if defined(__SSE2__) || defined(_M_X64)
-      if(opacity && target->channels==4) {
-        unsigned char *p=target->pixels+(size_t)y*target->stride+(size_t)x*4;
-        if(p[3]==255) {
-          unsigned a=opacity*covered/255;int packed;memcpy(&packed,p,4);
-          __m128i dst=_mm_unpacklo_epi8(_mm_cvtsi32_si128(packed),_mm_setzero_si128());
-          __m128i sum=_mm_add_epi16(_mm_mullo_epi16(dst,_mm_set1_epi16((short)(255-a))),_mm_mullo_epi16(rgba,_mm_set1_epi16((short)a)));
-          /* For 0 <= n <= 65025, (n+127)/255 equals (t+(t>>8))>>8,
-             t=n+128. All intermediate unsigned lanes fit in 16 bits. */
-          sum=_mm_add_epi16(sum,_mm_set1_epi16(128));
-          sum=_mm_srli_epi16(_mm_add_epi16(sum,_mm_srli_epi16(sum,8)),8);
-          packed=_mm_cvtsi128_si32(_mm_packus_epi16(sum,_mm_setzero_si128()));memcpy(p,&packed,4);
-          continue;
+    int start=x0,end=cover && y>=cover[1] && y<cover[3] ? omit_from : x1;
+    for(;;) {
+      const int *column=columns+2*(start-x0);
+      for(int x=start;x<end;x++,column+=2) {
+        unsigned opacity=0,covered=coverage ? coverage[x] : 255;
+        if(!covered) continue;
+        for(unsigned tap=0;tap<2;tap++) if(column[tap]>=0) {
+          int offset=column[tap]*4;
+          if(first) opacity+=first[offset];
+          if(second) opacity+=second[offset];
         }
-      }
+        /* With opaque source and mask texels each quarter sample contributes
+           its gray byte exactly. Missing taps contribute zero. Every nonzero
+           premultiplied RGB sample has the same straight color. */
+        opacity=(opacity+2)/4;
+#if defined(__SSE2__) || defined(_M_X64)
+        if(opacity && target->channels==4) {
+          unsigned char *p=target->pixels+(size_t)y*target->stride+(size_t)x*4;
+          if(p[3]==255) {
+            unsigned a=opacity*covered/255;int packed;memcpy(&packed,p,4);
+            __m128i dst=_mm_unpacklo_epi8(_mm_cvtsi32_si128(packed),_mm_setzero_si128());
+            __m128i sum=_mm_add_epi16(_mm_mullo_epi16(dst,_mm_set1_epi16((short)(255-a))),_mm_mullo_epi16(rgba,_mm_set1_epi16((short)a)));
+            /* For 0 <= n <= 65025, (n+127)/255 equals (t+(t>>8))>>8,
+               t=n+128. All intermediate unsigned lanes fit in 16 bits. */
+            sum=_mm_add_epi16(sum,_mm_set1_epi16(128));
+            sum=_mm_srli_epi16(_mm_add_epi16(sum,_mm_srli_epi16(sum,8)),8);
+            packed=_mm_cvtsi128_si32(_mm_packus_epi16(sum,_mm_setzero_si128()));memcpy(p,&packed,4);
+            continue;
+          }
+        }
 #endif
-      if(opacity) exr_pixel(target,x,y,rgb|opacity,covered);
+        if(opacity) exr_pixel(target,x,y,rgb|opacity,covered);
+      }
+      if(end==x1 || omit_to==x1) break;
+      start=omit_to;end=x1;
     }
   }
   return exr_fail(e,EXR_OK,"");
@@ -830,7 +842,8 @@ static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const doubl
 }
 
 exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_texture *source,const exr_bitmap *inks,const double m[6],double alpha,
-                                     const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *e) {
+                                     const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,const int cover[4],
+                                     exr_raster_work *work,const exr_control *control,exr_error *e) {
   exr_raster_work local_work={0}; size_t i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
   const exr_vector_texture *layers[16],*layer=source; size_t depth=0,cost=0; int paired_nearest;
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image blend mode");
@@ -901,7 +914,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
     if(columns) {
       const unsigned char *p=source->bitmap.pixels;
       uint32_t color=((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8);
-      exr_status status=solid_mask_blend(target,&source->mask->bitmap,inv,clip,x0,y0,x1,y1,columns,color,cost,work,control,e);
+      exr_status status=solid_mask_blend(target,&source->mask->bitmap,inv,clip,x0,y0,x1,y1,columns,color,cover,cost,work,control,e);
       free(columns);
       return status;
     }
@@ -979,7 +992,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
 }
 exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double m[6],double alpha,
   const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *e) {
-  return exr_vector_texture_blend_inks(target,source,NULL,m,alpha,clip ? &(exr_clip_mask){.bitmap=*clip} : NULL,mode,state,work,control,e);
+  return exr_vector_texture_blend_inks(target,source,NULL,m,alpha,clip ? &(exr_clip_mask){.bitmap=*clip} : NULL,mode,state,NULL,work,control,e);
 }
 exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double m[6],double alpha,
                              int interpolate,const exr_bitmap *clip,exr_raster_work *work,const exr_control *control,exr_error *e) {

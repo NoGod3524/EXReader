@@ -218,6 +218,7 @@ static exr_status fixed_render(exr_fixed_document *d,size_t page,double scale,
   config.width=(uint32_t)ceil(view.width); config.height=(uint32_t)ceil(view.height);
   status=exr_canvas_create_pooled(&config,&d->pool,&canvas,e); if(status!=EXR_OK) return status;
   exr_canvas_render_limits(canvas,layer_budget,work_budget);
+  canvas->fixed_bitmap=1;
   clip[0].verb=EXR_PATH_MOVE; clip[1].verb=EXR_PATH_LINE; clip[1].points[0]=(exr_path_point){view.width,0};
   clip[2].verb=EXR_PATH_LINE; clip[2].points[0]=(exr_path_point){view.width,view.height};
   clip[3].verb=EXR_PATH_LINE; clip[3].points[0]=(exr_path_point){0,view.height}; clip[4].verb=EXR_PATH_CLOSE;

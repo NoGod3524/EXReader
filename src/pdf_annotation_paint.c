@@ -100,9 +100,10 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
     if(status==EXR_OK) begun=1;
   }
   if(status==EXR_OK) {
-    const exr_canvas *canvas=exr_canvas_sink_target(sink);
+    exr_canvas *canvas=exr_canvas_sink_target(sink);
     size_t layer_budget=canvas ? canvas->layer_limit : 0;
-    status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,layer_budget,NULL,control,e);
+    exr_canvas *bitmap_canvas=canvas && canvas->fixed_bitmap && !box && !layer ? canvas : NULL;
+    status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,layer_budget,NULL,bitmap_canvas,control,e);
   }
   if(sink->base.state) {
     exr_error cleanup={0}; exr_status restored; size_t restore_count=scope.depth;

@@ -10,7 +10,7 @@ exr_status exr_pdf_paint_content(exr_pdf_file *file,uint32_t resources,const voi
                                   exr_raster_work *work,const exr_control *control,exr_error *error);
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
-  exr_raster_work *work,size_t layer_budget,size_t *mask_bytes,const exr_control *control,exr_error *error);
+  exr_raster_work *work,size_t layer_budget,size_t *mask_bytes,exr_canvas *bitmap_canvas,const exr_control *control,exr_error *error);
 exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
   exr_raster_work *work,const exr_control *control,exr_error *error);

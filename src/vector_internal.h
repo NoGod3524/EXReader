@@ -98,5 +98,6 @@ exr_status exr_vector_fill_blend_ex(exr_bitmap *bitmap,const exr_vector_edge *ed
 exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],
   double alpha,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *error);
 exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_texture *source,const exr_bitmap *inks,const double matrix[6],
-  double alpha,const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *error);
+  double alpha,const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,const int cover[4],
+  exr_raster_work *work,const exr_control *control,exr_error *error);
 #endif

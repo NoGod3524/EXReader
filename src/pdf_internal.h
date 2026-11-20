@@ -174,6 +174,7 @@ typedef struct {
   uint32_t smask; double smask_matrix[6]; /* 11.6.5.2 mask object and the CTM when it was set. */
   unsigned alpha_is_shape;
   unsigned intent; /* 8.6.5.8 rendering intent: 0 perceptual, 1 relative, 2 saturation, 3 absolute. */
+  const int *image_cover; /* Borrowed device pixel rectangle, for native image callbacks only. */
 } exr_pdf_paint_state;
 exr_status exr_pdf_soft_mask_kind(exr_pdf_file *file,uint32_t mask,int *kind,exr_error *error);
 exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double set_matrix[6],
@@ -210,7 +211,9 @@ typedef struct {
   exr_draw_image_space_fn image_space;
   exr_raster_work *work; /* Shared with the canvas and recursive soft-mask painters. */
   exr_pdf_source_fn source; /* Optional clip-wide procedural shading. */
+  unsigned image_coverage; /* Internal fixed bitmap renderer can skip fully overwritten pixels. */
 } exr_pdf_draw_callbacks;
+int exr_pdf_peek_image_cover(const exr_pdf_file *operands,double clip[4],double fill[4]);
 enum { EXR_PDF_GROUP_ISOLATED=1,EXR_PDF_GROUP_NONISOLATED=2,EXR_PDF_GROUP_KNOCKOUT=4,EXR_PDF_GROUP_GRAY=8,EXR_PDF_GROUP_CMYK=16,EXR_PDF_GROUP_RGB=32 };
 enum { EXR_PDF_GROUP_FORM_CONTEXT=0,EXR_PDF_GROUP_PAGE_CONTEXT=1,EXR_PDF_GROUP_MASK_CONTEXT=2 };
 exr_status exr_pdf_group_rgb(exr_pdf_file *file,uint32_t group,int page,int *present,exr_error *error);

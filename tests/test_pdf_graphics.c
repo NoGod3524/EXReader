@@ -8,6 +8,7 @@ typedef struct {
   exr_bitmap image,clip; unsigned char saved[160][64]; size_t depth,saves,restores,texts,paths,clips,glyphs,images;exr_raster_work work;
   exr_pdf_path_paint last; exr_vector_segment segments[64]; double dashes[1024];
   exr_pdf_text_glyph glyph; exr_pdf_paint_state image_paint;
+  int cover[4]; unsigned covered_images;
 } raster;
 static exr_bitmap bitmap(unsigned channels,unsigned value) {
   exr_bitmap out={0}; out.width=out.height=8; out.channels=channels; out.stride=8*channels; out.pixels=malloc((size_t)out.stride*8);
@@ -67,7 +68,9 @@ static exr_status state_event(void *context,exr_pdf_state_event event,exr_error 
 static exr_status glyph_event(void *context,const exr_pdf_text_glyph *glyph,exr_error *e) { raster *r=context; (void)e; r->glyph=*glyph; r->glyphs++; return EXR_OK; }
 static exr_status image_event(void *context,exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,const exr_pdf_paint_state *paint,exr_error *e) {
   (void)resource_file;
-  raster *r=context; (void)e; (void)resources; CHECK(exr_pdf_value_at(file,image)->kind==EXR_PDF_STREAM); r->image_paint=*paint; r->images++; return EXR_OK;
+  raster *r=context; (void)e; (void)resources; CHECK(exr_pdf_value_at(file,image)->kind==EXR_PDF_STREAM);
+  if(paint->image_cover) { memcpy(r->cover,paint->image_cover,sizeof(r->cover));r->covered_images++; }
+  r->image_paint=*paint; r->image_paint.image_cover=NULL; r->images++; return EXR_OK;
 }
 static exr_status stop_path(void *context,const exr_pdf_path_paint *path,exr_error *e) { (void)context; (void)path; (void)e; return EXR_CANCELLED; }
 static exr_pdf_draw_callbacks callbacks(void) { exr_pdf_draw_callbacks cb={glyph_event,path_event,state_event,image_event}; return cb; }
@@ -108,6 +111,21 @@ int main(int argc,char **argv) {
   CHECK(r.saves==1 && r.restores==1 && r.clips==1); pixel(&r,2,3,255,0,0); pixel(&r,0,0,0,255,0); pixel(&r,4,4,255,255,255); release(&r);
   run(file,resources,"1 1 m 2 1 l /Filled Do 1 2 l h f",NULL,&r); CHECK(r.last.count==4 && r.segments[0].points[0].x==1 && r.segments[1].points[0].x==2); release(&r);
   run(file,resources,"q 2 0 0 3 1 2 cm /Image Do Q",NULL,&r); CHECK(r.images==1 && r.image_paint.matrix[0]==2 && r.image_paint.matrix[3]==3 && r.image_paint.matrix[4]==1); release(&r);
+  {
+    const char *cover_streams[]={
+      "q /Image Do Q q 0 0 6 8 re W* n 1 0 0 rg .25 .25 7.5 7.5 re f* Q",
+      "/A gs q /Image Do Q q 0 0 6 8 re W* n 1 0 0 rg .25 .25 7.5 7.5 re f* Q",
+      "/Blend gs q /Image Do Q q 0 0 6 8 re W* n 1 0 0 rg .25 .25 7.5 7.5 re f* Q",
+      "q /Image Do Q q 0 0 6 8 re W* n 0 0 0 rg 1 0 0 rg .25 .25 7.5 7.5 re f* Q"
+    };
+    exr_pdf_draw_callbacks cb=callbacks();cb.image_coverage=1;
+    for(i=0;i<sizeof(cover_streams)/sizeof(*cover_streams);i++) {
+      reset(&r);OK(exr_pdf_draw_ops(file,resources,cover_streams[i],strlen(cover_streams[i]),NULL,&cb,&r,NULL,&error));
+      CHECK(r.images==1 && r.covered_images==(i==0));
+      if(!i) CHECK(r.cover[0]==1 && r.cover[1]==1 && r.cover[2]==6 && r.cover[3]==7);
+      release(&r);
+    }
+  }
   { const double matrix[6]={2,0,0,2,0,0}; run(file,resources,"1 w 1 2 m 3 2 l S",matrix,&r); pixel(&r,3,3,0,0,0); pixel(&r,3,2,255,255,255); CHECK(r.last.paint.matrix[0]==2); release(&r); }
   { const double matrix[6]={1,0,0,-1,0,8}; run(file,resources,"1 0 0 rg 0 0 1 2 re f",matrix,&r); pixel(&r,0,7,255,0,0); pixel(&r,0,0,255,255,255); release(&r); }
   run(file,resources,"/Blend gs 1 1 2 2 re f",NULL,&r);CHECK(r.last.paint.blend==EXR_BLEND_MULTIPLY);release(&r);
