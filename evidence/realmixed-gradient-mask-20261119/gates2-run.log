@@ -1,0 +1,23 @@
+ACQUIRED opus-Cacc
+16:28:55 pptx-20-600 cand-vs-main done
+16:29:20 pptx-20-600 cand-vs-frozen done
+16:29:43 pptx-20-600 frozen-null done
+16:30:07 pptx-20-600 main-null done
+16:30:55 pptx-20-1200 cand-vs-main done
+16:31:25 pptx-20-1200 cand-vs-frozen done
+16:31:51 pptx-20-1200 frozen-null done
+16:32:15 pptx-20-1200 main-null done
+16:32:39 word-5-600 cand-vs-main done
+16:33:02 word-5-600 cand-vs-frozen done
+16:33:26 word-5-600 frozen-null done
+16:33:49 word-5-600 main-null done
+16:34:13 word-5-1200 cand-vs-main done
+16:34:38 word-5-1200 cand-vs-frozen done
+16:35:02 word-5-1200 frozen-null done
+16:35:26 word-5-1200 main-null done
+16:35:54 deck-1200 cand-vs-main done
+16:36:22 deck-1200 cand-vs-frozen done
+16:36:52 deck-1200 frozen-null done
+16:37:23 deck-1200 main-null done
+released opus-Cacc
+OUT evidence/realmixed-gradient-mask-20261119/gates2-opus-Cacc-20261119-162828

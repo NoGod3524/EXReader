@@ -1,0 +1,47 @@
+warm-up cpu=44.6% mismatched=[]
+round 1 cpu=51.3% A=271.45 B=61.52 A-B=+209.93
+round 2 cpu=57.1% A=44.10 B=42.52 A-B=+1.58
+round 3 cpu=20.8% A=32.71 B=33.76 A-B=-1.06
+round 4 cpu=25.1% A=40.79 B=35.10 A-B=+5.69
+round 5 cpu=32.9% A=33.97 B=35.60 A-B=-1.63
+round 6 cpu=33.6% A=33.10 B=34.29 A-B=-1.18
+round 7 cpu=29.9% A=33.56 B=33.61 A-B=-0.05
+round 8 cpu=14.5% A=30.66 B=34.30 A-B=-3.64
+round 9 cpu=15.3% A=37.48 B=34.07 A-B=+3.41
+round 10 cpu=12.0% A=31.49 B=35.73 A-B=-4.24
+round 11 cpu=10.7% A=35.28 B=34.90 A-B=+0.37
+round 12 cpu=20.4% A=32.77 B=33.94 A-B=-1.16
+round 13 cpu=18.7% A=36.50 B=32.50 A-B=+3.99
+round 14 cpu=18.1% A=32.19 B=33.29 A-B=-1.10
+round 15 cpu=19.8% A=30.69 B=34.91 A-B=-4.22
+round 16 cpu=18.3% A=32.55 B=33.18 A-B=-0.64
+round 17 cpu=28.7% A=38.21 B=45.89 A-B=-7.67
+round 18 cpu=29.3% A=32.78 B=34.73 A-B=-1.95
+round 19 cpu=28.6% A=34.07 B=36.67 A-B=-2.60
+round 20 cpu=28.8% A=35.77 B=37.95 A-B=-2.18
+round 21 cpu=41.6% A=36.57 B=39.76 A-B=-3.19
+round 22 cpu=22.2% A=33.55 B=33.96 A-B=-0.41
+round 23 cpu=13.6% A=32.62 B=33.37 A-B=-0.75
+round 24 cpu=23.3% A=31.51 B=33.44 A-B=-1.93
+round 25 cpu=28.1% A=34.15 B=34.69 A-B=-0.54
+round 26 cpu=28.4% A=33.38 B=36.27 A-B=-2.88
+round 27 cpu=28.0% A=34.15 B=35.45 A-B=-1.30
+round 28 cpu=17.3% A=34.00 B=34.03 A-B=-0.03
+round 29 cpu=19.4% A=32.51 B=34.80 A-B=-2.29
+round 30 cpu=26.6% A=33.12 B=31.76 A-B=+1.35
+round 31 cpu=14.8% A=34.93 B=37.50 A-B=-2.56
+{
+ "A_median_ms": 33.5629,
+ "B_median_ms": 34.734700000000004,
+ "saving_median_ms": -1.1649999999999991,
+ "saving_min_ms": -7.6723,
+ "saving_max_ms": 209.9251,
+ "rounds_b_faster": 7,
+ "rounds": 31,
+ "A_page_p50_ms": 6.6493,
+ "B_page_p50_ms": 6.9789,
+ "cpu_busy_pre_percent_range": [
+  10.7,
+  57.1
+ ]
+}

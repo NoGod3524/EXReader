@@ -1,0 +1,376 @@
+diff --git a/src/canvas.c b/src/canvas.c
+index 315bfeb75..24ffc5d1f 100644
+--- a/src/canvas.c
++++ b/src/canvas.c
+@@ -3,6 +3,7 @@
+ #include "icc_internal.h"
+ #include "pixels_internal.h"
+ #include <stdio.h>
++#include "probe_internal.h"
+ static exr_status finish(exr_canvas *c,exr_status status,exr_error *e) {
+   if(c && status==EXR_OK) status=exr_icc_deferred_status(c->cmyk_profile,e);
+   if(c && status!=EXR_OK && c->failure.code==EXR_OK) {
+@@ -356,7 +357,12 @@ static int covers_canvas(const exr_canvas *c,const exr_vector_polyline *path) {
+   }
+   return 1;
+ }
++static exr_status clip_path_impl(exr_canvas *c,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,int group,exr_error *e);
+ static exr_status clip_path(exr_canvas *c,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,int group,exr_error *e) {
++  unsigned long long pt=PROBE_T();exr_status s=clip_path_impl(c,segments,count,matrix,rule,group,e);if(exr_probe_in_mask) PROBE_ADD(17,pt);
++  return s;
++}
++static exr_status clip_path_impl(exr_canvas *c,const exr_path_segment *segments,size_t count,const double matrix[6],exr_fill_rule rule,int group,exr_error *e) {
+   exr_vector_polyline flat={0}; exr_clip_mask *mask=NULL; exr_status status=ready(c,e);
+   if(status!=EXR_OK) return status;
+   { double local[6]; const double *use=shifted(c,matrix,local);
+@@ -413,7 +419,12 @@ static int axial_columns_in_scale(double multiplier,double translation,int offse
+   double px0=(double)x+offset+.25,px1=px0+.5;
+   return fabs(multiplier*px0+translation)<=scale && fabs(multiplier*px1+translation)<=scale;
+ }
++static exr_status canvas_paint_impl(exr_canvas *c,const exr_paint_source *input,const double transform[6],double alpha,exr_error *e);
+ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const double transform[6],double alpha,exr_error *e) {
++  int pb=PROBE_BASE();unsigned long long pt=PROBE_T();exr_status s=canvas_paint_impl(c,input,transform,alpha,e);PROBE_ADD(pb+3,pt);return s;
++}
++static exr_status canvas_paint_impl(exr_canvas *c,const exr_paint_source *input,const double transform[6],double alpha,exr_error *e) {
++  int pb=PROBE_BASE();
+   const double identity[6]={1,0,0,1,0,0},*m=transform ? transform : identity;double inv[6],det,scale=0;
+   exr_paint_source source;exr_composite_state *state;size_t cost;unsigned components,space;exr_error local={0};exr_status status;
+   unsigned axial_right=0;
+@@ -439,6 +450,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
+   for(unsigned y=0;y<c->bitmap.height;y++) {
+     const unsigned char *clip_row=NULL;
+     unsigned first=0,last=c->bitmap.width;size_t active=c->bitmap.width;
++    unsigned long long prow=PROBE_T();exr_probe_counts[pb+8]++;
+     status=exr_control_cancel(&c->control,e);if(status!=EXR_OK) return finish(c,status,e);
+     if(c->clip) {
+       if(!exr_vector_work(&c->work,c->bitmap.width)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source clip scan exceeds work budget"),e);
+@@ -455,6 +467,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
+       }
+     }
+     if(!exr_vector_work(&c->work,active*cost+(clip_row ? last-first : 0))) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
++    exr_probe_cycles[pb+5]+=PROBE_T()-prow;
+     if(source.context && ((const exr_shading_paint_source *)source.context)->sample==source.sample &&
+        ((const exr_shading_paint_source *)source.context)->magic==EXR_SHADING_SOURCE_MAGIC) {
+       const exr_shading_paint_source *axial=source.context;
+@@ -522,6 +535,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
+               while(end<bound && exr_vector_work(&budget,4)) end++;
+               over=1;
+             }
++            unsigned long long pspan=PROBE_T();
+             if(fast_group) {
+               float *q=state->pixels+((size_t)y*c->bitmap.width+x)*5;
+               unsigned char *p=c->bitmap.pixels+(size_t)y*c->bitmap.stride+(size_t)x*4;
+@@ -538,11 +552,14 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
+               const unsigned char *mask_row=state->soft_mask+(size_t)y*state->soft_mask_width;
+               for(unsigned i=x;i<end;i++) if(mask_row[i]) exr_pixel(&target,(int)i,(int)y,(in_color&0xffffff00u)|mask_row[i],255);
+             }
++            exr_probe_cycles[pb+4]+=PROBE_T()-pspan;exr_probe_counts[pb+4]++;exr_probe_counts[pb+9]+=end-x;
++            if(!fast_group) { const unsigned char *mr=state->soft_mask+(size_t)y*state->soft_mask_width;for(unsigned i=x;i<end;i++) exr_probe_counts[pb+10]+=!mr[i]; }
+             *axial->work=budget;
+             if(over) return finish(c,exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget"),e);
+             x=end-1;continue;
+           }
+           if(in_scale && have_in) {
++            exr_probe_counts[pb+11]++;
+             if(!exr_vector_work(axial->work,4)) return finish(c,exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget"),e);
+             if(fast_group && coverage==255 && in_alpha*alpha==1 && in_shape==1) {
+               float *q=state->pixels+((size_t)y*c->bitmap.width+x)*5;
+@@ -563,7 +580,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
+             for(unsigned k=0;k<components;k++) colors[k]=in_colors[k];
+             row_alpha=in_alpha;row_shape=in_shape;pixel_color=in_color;
+           } else {
+-            double sum_alpha=0,sum_shape=0;
++            double sum_alpha=0,sum_shape=0;exr_probe_counts[pb+12]++;
+             for(unsigned sy=0;sy<2;sy++) for(unsigned sx=0;sx<2;sx++) {
+               double px=sx ? px1 : px0,py=sy ? py1 : py0;
+               double u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],color[4]={0},shape=0,opacity=0,a;
+@@ -783,6 +800,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
+   if(cmyk && !c->cmyk_profile) { status=exr_icc_default_cmyk(&c->control,&c->cmyk_profile,e);if(status!=EXR_OK) return finish(c,status,e); }
+   needs_state=!(flags&EXR_GROUP_ISOLATED) || (flags&EXR_GROUP_KNOCKOUT) || cmyk || track_shape;
+   region_width=c->bitmap.width;region_height=c->bitmap.height;
++  unsigned long long pt=PROBE_T();
+   if(c->clip && !c->soft_mask && !(flags&EXR_GROUP_WHOLE_BUFFER)) {
+     size_t x0=region_width,y0=region_height,x1=0,y1=0,yy;
+     for(yy=0;yy<region_height;yy++) {
+@@ -805,6 +823,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
+     }
+     else if(x1==0 || y1==0) region_width=region_height=1;
+   }
++  if(exr_probe_in_mask) PROBE_ADD(16,pt);
+   count=region_width*region_height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4)+(cmyk ? count*6*sizeof(float) : 0)+
+     (track_shape ? count*sizeof(float) : 0);
+   if(c->layer_depth==32 || bytes>64*1024*1024 || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
+@@ -814,11 +833,13 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
+     if(!layer.pending_groups) return finish(c,exr_fail(e,EXR_MEMORY,"Layer clip state allocation failed"),e);
+     memcpy(layer.pending_groups,c->groups,c->group_depth*sizeof(*c->groups));
+   }
++  pt=PROBE_T();
+   pixels=exr_buffer_take(c->pool,count*4,1);if(needs_state) { state=calloc(1,sizeof(*state));if(state) { state->pixels=exr_buffer_take(c->pool,count*5*sizeof(float),1);if(cmyk) state->cmyk_pixels=exr_buffer_take(c->pool,count*6*sizeof(float),1); } }
+   if(state && track_shape) state->shape=exr_buffer_take(c->pool,count*sizeof(float),1);
+   if(!pixels || (needs_state && (!state || !state->pixels || (cmyk && !state->cmyk_pixels) || (track_shape && !state->shape)))) {
+     free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,exr_fail(e,EXR_MEMORY,"Group working buffer allocation failed"),e);
+   }
++  if(exr_probe_in_mask) PROBE_ADD(14,pt);
+   next=c->bitmap;next.channels=4;next.width=(uint32_t)region_width;next.height=(uint32_t)region_height;next.stride=(uint32_t)(region_width*4);next.pixels=pixels;
+   if(state) {
+     state->cmyk_profile=c->cmyk_profile;
+@@ -838,7 +859,9 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
+           backdrop_x+=c->composite->origin_x;backdrop_y+=c->composite->origin_y;
+         }
+       }
++      pt=PROBE_T();
+       status=exr_composite_initialize(&next,state,parent,parent_state,backdrop_x,backdrop_y,&c->work,&c->control,e);
++      if(exr_probe_in_mask) PROBE_ADD(15,pt);
+     }
+     else state->depth=1;
+   }
+diff --git a/src/pdf_paint.c b/src/pdf_paint.c
+index 3320439d2..1bfcf63dc 100644
+--- a/src/pdf_paint.c
++++ b/src/pdf_paint.c
+@@ -25,6 +25,10 @@ static double diag_ms(void) {
+ }
+ _Thread_local double diag_source_ms,diag_mask_ms,diag_image_ms;
+ _Thread_local size_t diag_sources,diag_masks;
++#include "probe_internal.h"
++__declspec(dllexport) unsigned long long exr_probe_cycles[96],exr_probe_counts[96];
++__declspec(dllexport) unsigned long long exr_probe_rdtsc(void) { return __rdtsc(); }
++int exr_probe_in_mask;
+ typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
+ typedef struct { unsigned char *pixels;size_t bytes; } paint_mask;
+ typedef struct {
+@@ -67,16 +71,18 @@ static exr_status mask_begin(pdf_painter *r,const exr_pdf_paint_state *paint,pai
+     return exr_fail(e,EXR_LIMIT,"PDF active soft masks exceed 64 MiB");
+   mask->bytes=(size_t)width*height;*r->mask_bytes+=mask->bytes;
+   double started=diag_ms();
++  unsigned long long pt=PROBE_T();exr_probe_in_mask++;
+   status=exr_pdf_soft_mask_build(r->file,paint->smask,paint->smask_matrix,width,height,&mask->pixels,r->work,r->mask_bytes,r->control,e);
++  exr_probe_in_mask--;PROBE_ADD(0,pt);
+   diag_mask_ms+=diag_ms()-started;diag_masks++;
+   if(status!=EXR_OK) { *r->mask_bytes-=mask->bytes;mask->bytes=0;return status; }
+-  return exr_sink_soft_mask(&r->sink,mask->pixels,width,height,e);
++  pt=PROBE_T();status=exr_sink_soft_mask(&r->sink,mask->pixels,width,height,e);PROBE_ADD(11,pt);return status;
+ }
+ static exr_status mask_end(pdf_painter *r,paint_mask *mask,exr_status prior,exr_error *e) {
+-  exr_status status=EXR_OK;
++  exr_status status=EXR_OK;unsigned long long pt=PROBE_T();
+   exr_error cleanup={0};
+   if(mask->pixels) status=exr_sink_soft_mask(&r->sink,NULL,0,0,prior==EXR_OK ? e : &cleanup);
+-  *r->mask_bytes-=mask->bytes;exr_buffer_put(exr_pdf_buffer_pool(r->file),mask->pixels,mask->bytes);memset(mask,0,sizeof(*mask));
++  *r->mask_bytes-=mask->bytes;exr_buffer_put(exr_pdf_buffer_pool(r->file),mask->pixels,mask->bytes);memset(mask,0,sizeof(*mask));PROBE_ADD(12,pt);
+   return prior==EXR_OK ? status : prior;
+ }
+ static exr_status blend_state(pdf_painter *r,exr_blend_mode mode,exr_error *e) {
+@@ -249,12 +255,15 @@ exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const
+   r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work; r.file=file;r.mask_bytes=mask_bytes ? mask_bytes : &local_mask_bytes;
+   callbacks.work=r.work;
+   callbacks.source=r.sink.paint ? source_event : NULL;
++  unsigned long long pft=PROBE_T();
+   if(FT_Init_FreeType(&r.library)) return exr_fail(e,EXR_MEMORY,"PDF font library initialization failed");
++  if(exr_probe_in_mask) PROBE_ADD(13,pft);
+   status=exr_pdf_draw_ops(file,resources,content,size,initial,&callbacks,&r,control,e);
+   while(r.group_depth) { exr_error cleanup={0};exr_status closed=end_layer_event(&r,0,&cleanup);if(status==EXR_OK && closed!=EXR_OK) { status=closed;if(e) *e=cleanup; } }
+   for(i=0;i<r.font_count;i++) exr_pdf_face_close(r.fonts[i].face);
+   if(status==EXR_OK) status=exr_icc_deferred_status(r.cmyk_profile,e);
+-  exr_icc_free(r.cmyk_profile);FT_Done_FreeType(r.library); return status;
++  pft=PROBE_T();exr_icc_free(r.cmyk_profile);FT_Done_FreeType(r.library);if(exr_probe_in_mask) PROBE_ADD(13,pft);
++  return status;
+ }
+ 
+ exr_status exr_pdf_paint_content(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
+diff --git a/src/pdf_raster.c b/src/pdf_raster.c
+index 39ae5ff28..952b2d98c 100644
+--- a/src/pdf_raster.c
++++ b/src/pdf_raster.c
+@@ -1,6 +1,7 @@
+ /* SPDX-License-Identifier: MIT */
+ #include "pdf_raster_internal.h"
+ #include "canvas_internal.h"
++#include "probe_internal.h"
+ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
+                                    const double initial[6],const exr_pdf_raster_config *config,
+                                    const exr_control *control,exr_bitmap *out,exr_error *e) {
+@@ -18,7 +19,9 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
+   settings.width=config->width; settings.height=config->height; settings.channels=config->channels; settings.background=config->background; settings.mask_budget=config->mask_budget;
+   if(config->channels==1) { gray=1;settings.channels=4;settings.background|=255; }
+   if(control) settings.control=*control;
++  unsigned long long pt=PROBE_T();int pm=exr_probe_in_mask;
+   status=exr_canvas_create_pooled(&settings,exr_pdf_buffer_pool(file),&canvas,e); if(status!=EXR_OK) return status;
++  if(pm) PROBE_ADD(2,pt);
+   if(config->work) canvas->work=*config->work;
+   if(config->background_cmyk) {
+     exr_path_segment rect[5]={ {.verb=EXR_PATH_MOVE,.points={{0,0}}},
+@@ -37,15 +40,24 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
+     rect[1].verb=EXR_PATH_LINE; rect[1].points[0]=(exr_path_point){b[2],b[1]};
+     rect[2].verb=EXR_PATH_LINE; rect[2].points[0]=(exr_path_point){b[2],b[3]};
+     rect[3].verb=EXR_PATH_LINE; rect[3].points[0]=(exr_path_point){b[0],b[3]}; rect[4].verb=EXR_PATH_CLOSE;
++    pt=PROBE_T();
+     status=exr_canvas_clip(canvas,rect,5,config->initial_clip_transform,EXR_FILL_NONZERO,e); if(status!=EXR_OK) goto done;
++    if(pm) PROBE_ADD(3,pt);
+   }
++  pt=PROBE_T();
+   sink.struct_size=sizeof(sink);status=exr_canvas_get_sink_ex(canvas,&sink,e);
+   if(status==EXR_OK) status=exr_canvas_begin_group(canvas,1,EXR_BLEND_NORMAL,
+     config->group_present ? config->group_flags : EXR_GROUP_ISOLATED,e);
+   if(status==EXR_OK) {
+     exr_error cleanup={0};exr_status ended;
++    if(pm) PROBE_ADD(4,pt);
++    pt=PROBE_T();
+     status=exr_pdf_paint_content_ex(file,resources,content,size,initial,&sink,config->program,config->context,&canvas->work,config->active_mask_bytes,control,e);
++    if(pm) PROBE_ADD(5,pt);
++    pt=PROBE_T();
+     ended=exr_canvas_end_layer(canvas,status==EXR_OK,&cleanup);
++    if(pm) PROBE_ADD(6,pt);
++    pt=PROBE_T();
+     if(status==EXR_OK && ended!=EXR_OK) { status=ended;if(e) *e=cleanup; }
+   }
+   if(status==EXR_OK && config->background_cmyk) status=exr_canvas_end_layer(canvas,1,e);
+@@ -54,5 +66,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
+   if(status!=EXR_OK) { free(out->pixels);memset(out,0,sizeof(*out)); }
+ done:
+   if(config->work) *config->work=canvas->work;
+-  exr_canvas_free(canvas); return status;
++  exr_canvas_free(canvas);
++  if(pm) PROBE_ADD(7,pt);
++  return status;
+ }
+diff --git a/src/pdf_shading.c b/src/pdf_shading.c
+index 2528bcb25..f25fc59b9 100644
+--- a/src/pdf_shading.c
++++ b/src/pdf_shading.c
+@@ -6,6 +6,7 @@
+ #include "icc_internal.h"
+ #include <limits.h>
+ #include <float.h>
++#include "probe_internal.h"
+ 
+ #define AXIAL_SAMPLES 512u
+ #define AXIAL_EXTEND_SPAN 1.0  /* one axis length of constant colour past each end */
+@@ -160,6 +161,7 @@ static exr_status source_draw(exr_pdf_function *function,exr_pdf_colorspace *spa
+     if(!inks.pixels) { free(rgb);return exr_fail(e,EXR_MEMORY,"PDF shading ink table allocation failed"); }
+   }
+   if(native_cmyk && device!=EXR_PDF_DEVICE_CMYK) status=exr_icc_default_cmyk(control,&profile,e);
++  unsigned long long pt=PROBE_T();int pb=PROBE_BASE();
+   for(unsigned i=0;i<AXIAL_SAMPLES && status==EXR_OK;i++) {
+     double t=(double)i/(AXIAL_SAMPLES-1),input=domain[0]*(1-t)+domain[1]*t;
+     status=exr_control_cancel(control,e);if(status!=EXR_OK) break;
+@@ -170,6 +172,7 @@ static exr_status source_draw(exr_pdf_function *function,exr_pdf_colorspace *spa
+       for(unsigned k=0;k<4;k++) inks.pixels[i*4+k]=(unsigned char)floor(fmax(0,fmin(1,cmyk[k]))*255+.5);
+     }
+   }
++  PROBE_ADD(pb+1,pt);
+   if(status==EXR_OK) status=exr_icc_deferred_status(profile,e);
+   if(status==EXR_OK) {
+     memcpy(data.coords,coords,sizeof(data.coords));data.type=type;data.extend0=extend0;data.extend1=extend1;
+@@ -184,14 +187,26 @@ static exr_status source_draw(exr_pdf_function *function,exr_pdf_colorspace *spa
+       else if(p.length>0 && !p.uy) data.cached_axis=2;
+     }
+     data.work=work;data.rgb=rgb;data.inks=inks.pixels;
+-    status=emit(context,&source,matrix,paint,e);
++    pt=PROBE_T();status=emit(context,&source,matrix,paint,e);PROBE_ADD(pb+2,pt);
+   }
+   exr_icc_free(profile);free(inks.pixels);free(rgb);return status;
+ }
++static exr_status shading_draw_impl(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
++                                uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
++                                exr_pdf_shading_fn emit,exr_pdf_source_fn source,void *context,unsigned native_cmyk,
++                                const exr_control *control,exr_error *e);
+ exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
+                                 uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
+                                 exr_pdf_shading_fn emit,exr_pdf_source_fn source,void *context,unsigned native_cmyk,
+                                 const exr_control *control,exr_error *e) {
++  int pb=PROBE_BASE();unsigned long long pt=PROBE_T();
++  exr_status s=shading_draw_impl(file,resource_file,resources,value,ctm,paint,work,emit,source,context,native_cmyk,control,e);
++  PROBE_ADD(pb,pt);return s;
++}
++static exr_status shading_draw_impl(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
++                                uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
++                                exr_pdf_shading_fn emit,exr_pdf_source_fn source,void *context,unsigned native_cmyk,
++                                const exr_control *control,exr_error *e) {
+   uint32_t id,coords_id,function_id,cs_id;const exr_pdf_value *v;double coords[6]={0},domain[4]={0,1,0,1},t;
+   double function_matrix[6]={1,0,0,1,0,0};
+   size_t local_work=0;int stream;
+diff --git a/src/pdf_softmask.c b/src/pdf_softmask.c
+index dd938b6bc..99ccd4e57 100644
+--- a/src/pdf_softmask.c
++++ b/src/pdf_softmask.c
+@@ -8,6 +8,7 @@
+ #include <math.h>
+ #include <string.h>
+ #include <stdio.h>
++#include "probe_internal.h"
+ 
+ static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, message); }
+ static int number(exr_pdf_file *file, uint32_t id, double *out) {
+@@ -55,6 +56,7 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
+   double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0},bc_cmyk[4]; unsigned char *pixels = NULL, *result = NULL;
+   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
+   exr_pdf_function *function=NULL;size_t sample_cost;int group;
++  unsigned long long pt=PROBE_T();
+   *out = NULL;
+   if(!work) work=&local_work;
+   status = exr_pdf_soft_mask_kind(file, mask, &kind, e); if (status != EXR_OK) return status;
+@@ -100,14 +102,17 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
+   }
+   config.work=work;config.active_mask_bytes=active_mask_bytes;
+   config.initial_clip=box;config.initial_clip_transform=matrix;config.mask_budget=0;
++  PROBE_ADD(1,pt);
+   status = exr_pdf_raster_content(file, resources, data, size, matrix, &config, control, &bitmap, e);
+   if (status != EXR_OK) return status;
++  pt=PROBE_T();
+   status=load_transfer(file,mask,control,&function,e);
+   if(status!=EXR_OK) { exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);return status; }
+   sample_cost=1+(kind ? 8 : 0)+exr_pdf_function_cost(function);
+   result = exr_buffer_take(exr_pdf_buffer_pool(file),(size_t)width * height,0);
+   if (!result) { exr_pdf_function_free(function);exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height); return fail(e, EXR_MEMORY, "PDF soft mask allocation failed"); }
+   pixels = bitmap.pixels;
++  PROBE_ADD(8,pt);pt=PROBE_T();
+   for(size_t y=0;y<height;y++) {
+     status=exr_control_cancel(control,e);
+     if(status==EXR_OK && !exr_vector_work(work,(size_t)width*sample_cost))
+@@ -117,11 +122,14 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
+        after the usual cancellation check and work charge. */
+     if(y && !memcmp(pixels+y*width*4,pixels+(y-1)*width*4,(size_t)width*4)) {
+       memcpy(result+y*width,result+(y-1)*width,width);
++      exr_probe_counts[21]++;
+       continue;
+     }
++    exr_probe_counts[20]++;
+     for(size_t x=0;x<width;x++) {
+       double a,value,output[4];i=y*width+x;
+-      if(x && !memcmp(pixels+i*4,pixels+(i-1)*4,4)) { result[i]=result[i-1];continue; }
++      if(x && !memcmp(pixels+i*4,pixels+(i-1)*4,4)) { result[i]=result[i-1];exr_probe_counts[23]++;continue; }
++      exr_probe_counts[22]++;
+       a=pixels[i*4+3]/255.;
+       value=a;
+       if(kind) {
+@@ -139,10 +147,11 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
+     }
+   }
+   status=EXR_OK;
++  PROBE_ADD(9,pt);
+ done:
+   exr_pdf_function_free(function);
+   if(status!=EXR_OK) { exr_buffer_put(exr_pdf_buffer_pool(file),result,(size_t)width*height);exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);return status; }
+-  exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);
++  pt=PROBE_T();exr_buffer_put(exr_pdf_buffer_pool(file),bitmap.pixels,(size_t)bitmap.stride*bitmap.height);PROBE_ADD(10,pt);
+   *out = result;
+   return EXR_OK;
+ }
+diff --git a/src/probe_internal.h b/src/probe_internal.h
+new file mode 100644
+index 000000000..41aad77e5
+--- /dev/null
++++ b/src/probe_internal.h
+@@ -0,0 +1,11 @@
++/* SPDX-License-Identifier: MIT */
++/* Temporary rdtsc stage probe; never committed. */
++#ifndef EXR_PROBE_INTERNAL_H
++#define EXR_PROBE_INTERNAL_H
++#include <x86intrin.h>
++extern unsigned long long exr_probe_cycles[96],exr_probe_counts[96];
++extern int exr_probe_in_mask;
++#define PROBE_T() __rdtsc()
++#define PROBE_ADD(slot,t0) (exr_probe_cycles[slot]+=__rdtsc()-(t0),exr_probe_counts[slot]++)
++#define PROBE_BASE() (exr_probe_in_mask ? 48 : 32)
++#endif

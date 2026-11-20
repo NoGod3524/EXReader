@@ -1,0 +1,44 @@
+ACQUIRED opus-Cacc
+17:02:51 waiting for build drain: bench  : HELD by opus-Cacc builds : 1 / 2  [.build.opus-Breg]
+17:03:35 pptx-20-600 cand-vs-main 0 done
+17:04:01 pptx-20-600 cand-vs-frozen 0 done
+17:04:26 pptx-20-600 main-null 0 done
+17:04:51 pptx-20-600 frozen-null 0 done
+17:05:16 pptx-20-1200 cand-vs-main 0 done
+17:05:42 pptx-20-1200 cand-vs-frozen 0 done
+17:06:08 pptx-20-1200 main-null 0 done
+17:06:36 pptx-20-1200 frozen-null 0 done
+17:07:00 word-5-600 cand-vs-main 0 done
+17:07:27 word-5-600 cand-vs-frozen 0 done
+17:07:51 word-5-600 main-null 0 done
+17:08:15 word-5-600 frozen-null 0 done
+17:08:40 word-5-1200 cand-vs-main 0 done
+17:09:05 word-5-1200 cand-vs-frozen 0 done
+17:09:30 word-5-1200 main-null 0 done
+17:09:54 word-5-1200 frozen-null 0 done
+17:10:24 deck-1200 cand-vs-main 0 done
+17:10:52 deck-1200 cand-vs-frozen 0 done
+17:11:20 deck-1200 main-null 0 done
+17:11:49 deck-1200 frozen-null 0 done
+17:12:14 pptx-20-600 main-null 1 done
+17:12:38 pptx-20-600 frozen-null 1 done
+17:13:01 pptx-20-600 cand-vs-main 1 done
+17:13:25 pptx-20-600 cand-vs-frozen 1 done
+17:13:51 pptx-20-1200 main-null 1 done
+17:14:19 pptx-20-1200 frozen-null 1 done
+17:14:44 pptx-20-1200 cand-vs-main 1 done
+17:15:09 pptx-20-1200 cand-vs-frozen 1 done
+17:15:33 word-5-600 main-null 1 done
+17:15:57 word-5-600 frozen-null 1 done
+17:16:21 word-5-600 cand-vs-main 1 done
+17:16:45 word-5-600 cand-vs-frozen 1 done
+17:17:09 word-5-1200 main-null 1 done
+17:17:35 word-5-1200 frozen-null 1 done
+17:18:00 word-5-1200 cand-vs-main 1 done
+17:18:26 word-5-1200 cand-vs-frozen 1 done
+17:18:55 deck-1200 main-null 1 done
+17:19:25 deck-1200 frozen-null 1 done
+17:19:57 deck-1200 cand-vs-main 1 done
+17:20:25 deck-1200 cand-vs-frozen 1 done
+released opus-Cacc
+OUT evidence/realmixed-gradient-mask-20261119/gates5-xproc-opus-Cacc-20261119-170250

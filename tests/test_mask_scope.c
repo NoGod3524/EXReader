@@ -83,7 +83,70 @@ static void aggregate_budget(void) {
   CHECK(strstr(error.message,"active soft masks exceed 64 MiB"));CHECK(state.begins==state.ends && state.begins==17);
   exr_fixed_free(d);
 }
+static size_t build_mask_pdf(char *buf,size_t cap,const char *subtype,const char *bc,const char *tr,
+                             const char *grp,const char *bbox,const char *mask_stream,
+                             const char *mask_sh,const char *page_sh) {
+  size_t off[9]={0},at=0,xref;unsigned i;
+  const char *objs[8];char o4[512],o5[512],o6[512],o7[512],o8[512];
+  snprintf(o4,sizeof(o4),"<< /Type /ExtGState /SMask << /Type /Mask /S /%s %s %s /G 5 0 R >> >>",subtype,bc,tr);
+  snprintf(o5,sizeof(o5),"<< /Type /XObject /Subtype /Form /BBox [%s] /Group << /S /Transparency /CS /DeviceRGB %s >> "
+           "/Resources << /Shading << /M 6 0 R >> >> /Length %zu >>\nstream\n%s\nendstream",
+           bbox,grp,strlen(mask_stream),mask_stream);
+  snprintf(o6,sizeof(o6),"%s",mask_sh);
+  snprintf(o7,sizeof(o7),"%s",page_sh);
+  const char *page_stream="q /GS1 gs 0.4 3.3 47.2 26.4 re W* n /P sh Q";
+  snprintf(o8,sizeof(o8),"<< /Length %zu >>\nstream\n%s\nendstream",strlen(page_stream),page_stream);
+  objs[0]="<< /Type /Catalog /Pages 2 0 R >>";
+  objs[1]="<< /Type /Pages /Kids [3 0 R] /Count 1 >>";
+  objs[2]="<< /Type /Page /Parent 2 0 R /MediaBox [0 0 48 32] /Resources << /ExtGState << /GS1 4 0 R >> /Shading << /P 7 0 R >> >> /Contents 8 0 R >>";
+  objs[3]=o4;objs[4]=o5;objs[5]=o6;objs[6]=o7;objs[7]=o8;
+  at+=(size_t)snprintf(buf+at,cap-at,"%%PDF-1.4\n");
+  for(i=0;i<8;i++) { off[i+1]=at;at+=(size_t)snprintf(buf+at,cap-at,"%u 0 obj\n%s\nendobj\n",i+1,objs[i]); }
+  xref=at;at+=(size_t)snprintf(buf+at,cap-at,"xref\n0 9\n0000000000 65535 f \n");
+  for(i=1;i<=8;i++) at+=(size_t)snprintf(buf+at,cap-at,"%010zu 00000 n \n",off[i]);
+  at+=(size_t)snprintf(buf+at,cap-at,"trailer\n<< /Size 9 /Root 1 0 R >>\nstartxref\n%zu\n%%%%EOF\n",xref);
+  return at;
+}
+static void direct_axial_mask_parity(void) {
+  static const struct {
+    const char *subtype,*bc,*tr,*grp,*bbox,*stream,*mask_sh,*page_sh;
+  } cases[]={
+    {"Luminosity","/BC [0 0 0]","","","0.4 3.3 47.6 29.7",
+     "q\n0.4 3.3 47.2 26.4 re\nW* n\n/M sh\nQ",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [10 35 10 3] /Extend [true true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0 0 0] /C1 [1 1 1] /N 1 >> >>",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [10 35 10 3] /Extend [true true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.87451 0.85882 0.83529] /C1 [0.87451 0.85882 0.83529] /N 1 >> >>"},
+    {"Luminosity","/BC [0.2 0.5 0.8]","/TR << /FunctionType 2 /Domain [0 1] /C0 [0.1] /C1 [0.9] /N 2 >>","/I true","0.4 3.3 47.6 29.7",
+     "q\n0.4 3.3 47.2 26.4 re\nW* n\n/M sh\nQ",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [10 30 10 4] /Extend [false true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.1 0.3 0.6] /C1 [0.9 0.7 0.2] /N 1 >> >>",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [10 20 10 4] /Extend [true true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.2 0.4 0.8] /C1 [0.8 0.5 0.3] /N 1 >> >>"},
+    {"Alpha","","","/I false","1.2 2.5 46.8 30.2",
+     "q\n0 3 48 25 re W* n\nq\n2 4 44 22 re W* n\n/M sh\nQ\nQ",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [12 24 12 8] /Extend [false false] /Function << /FunctionType 2 /Domain [0 1] /C0 [1 0 0] /C1 [0 0 1] /N 1 >> >>",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [12 24 12 8] /Extend [true true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.1 0.8 0.4] /C1 [0.9 0.2 0.5] /N 1 >> >>"},
+  };
+  const double scales[]={1.0,5.0/3.0};
+  size_t c,s;unsigned w;
+  for(c=0;c<sizeof(cases)/sizeof(*cases);c++) {
+    char pdf_a[4096],pdf_b[4096],fb_stream[512];
+    size_t len_a,len_b;exr_fixed_document *da=NULL,*db=NULL;
+    snprintf(fb_stream,sizeof(fb_stream),"q 0 0 0 0 re f Q\n%s",cases[c].stream);
+    len_a=build_mask_pdf(pdf_a,sizeof(pdf_a),cases[c].subtype,cases[c].bc,cases[c].tr,cases[c].grp,cases[c].bbox,cases[c].stream,cases[c].mask_sh,cases[c].page_sh);
+    len_b=build_mask_pdf(pdf_b,sizeof(pdf_b),cases[c].subtype,cases[c].bc,cases[c].tr,cases[c].grp,cases[c].bbox,fb_stream,cases[c].mask_sh,cases[c].page_sh);
+    OK(exr_fixed_open_memory(EXR_PDF,pdf_a,len_a,NULL,&da,&error));
+    OK(exr_fixed_open_memory(EXR_PDF,pdf_b,len_b,NULL,&db,&error));
+    for(s=0;s<2;s++) for(w=0;w<2;w++) {
+      exr_bitmap ba={0},bb={0};exr_fixed_render_options opt={0};
+      opt.channels=4;opt.background=w ? 0xffffffffu : 0u;
+      OK(exr_fixed_render(da,0,scales[s],&opt,&ba,&error));
+      OK(exr_fixed_render(db,0,scales[s],&opt,&bb,&error));
+      CHECK(ba.width==bb.width && ba.height==bb.height && ba.stride==bb.stride);
+      CHECK(memcmp(ba.pixels,bb.pixels,(size_t)ba.stride*ba.height)==0);
+      exr_bitmap_free(&ba);exr_bitmap_free(&bb);
+    }
+    exr_fixed_free(da);exr_fixed_free(db);
+  }
+}
 int main(int argc,char **argv) {
-  CHECK(argc==2);directory=argv[1];scenes();group_failure();aggregate_budget();
+  CHECK(argc==2);directory=argv[1];scenes();group_failure();aggregate_budget();direct_axial_mask_parity();
   printf("%u mask scope checks; maximum analytic probe difference %u/255\n",checks,maximum);return 0;
 }

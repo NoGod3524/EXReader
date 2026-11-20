@@ -1,0 +1,185 @@
+{
+  "fixture": "tests/fixtures/pdf-large/real-mixed-120.pdf",
+  "pages": [
+    1,
+    21
+  ],
+  "width": 1200,
+  "rounds": 15,
+  "order": "AB if (round+page index) even else BA; round 0 warm-up and pixel check",
+  "policy": "no CPU gate; no rounds dropped; pre-CPU recorded only",
+  "control_dll": "384B2098F283F8599418DAC5CB84CCFA2CC95A5150BDD46FD3A60FA3DC8B1051",
+  "candidate_dll": "D733D2FB4BFE98B1C0BD67F9CFA6754087BEE709DF8690837418C64D47C4F490",
+  "null_control": {
+    "summary": {
+      "A_median_ms": 806.3466000000001,
+      "B_median_ms": 813.9223000000001,
+      "saving_median_ms": -3.87929999999983,
+      "saving_min_ms": -42.00770000000023,
+      "saving_max_ms": 24.81859999999972,
+      "rounds_b_faster": 7,
+      "rounds": 15,
+      "A_page_p50_ms": 37.012,
+      "B_page_p50_ms": 37.2151,
+      "cpu_busy_pre_percent_range": [
+        19.5,
+        54.5
+      ]
+    },
+    "pre_cpu": {
+      "min": 19.5,
+      "median": 29.4,
+      "max": 54.5,
+      "per_round": [
+        19.5,
+        28.1,
+        35.8,
+        54.5,
+        29.4,
+        32.5,
+        24.5,
+        25.3,
+        24.0,
+        25.3,
+        29.4,
+        28.4,
+        40.8,
+        47.4,
+        36.6
+      ]
+    },
+    "per_round_saving_ms": [
+      -23.210800000000063,
+      -18.662199999999757,
+      -26.46040000000005,
+      -42.00770000000023,
+      24.384699999999953,
+      4.443700000000263,
+      -3.87929999999983,
+      14.544099999999958,
+      6.554800000000114,
+      12.287300000000187,
+      24.81859999999972,
+      3.1173,
+      -14.809200000000033,
+      -7.939000000000078,
+      -25.031399999999962
+    ]
+  },
+  "candidate": {
+    "summary": {
+      "A_median_ms": 851.1594999999999,
+      "B_median_ms": 489.50789999999995,
+      "saving_median_ms": 321.6719999999998,
+      "saving_min_ms": 276.9624999999999,
+      "saving_max_ms": 415.23339999999973,
+      "rounds_b_faster": 15,
+      "rounds": 15,
+      "A_page_p50_ms": 38.2048,
+      "B_page_p50_ms": 21.9604,
+      "cpu_busy_pre_percent_range": [
+        21.8,
+        55.5
+      ]
+    },
+    "pre_cpu": {
+      "min": 21.8,
+      "median": 34.8,
+      "max": 55.5,
+      "per_round": [
+        23.2,
+        23.3,
+        33.1,
+        21.8,
+        25.3,
+        22.7,
+        36.7,
+        37.9,
+        39.7,
+        34.9,
+        34.8,
+        39.4,
+        55.5,
+        31.2,
+        34.8
+      ]
+    },
+    "per_round_saving_ms": [
+      276.9624999999999,
+      291.1053999999999,
+      293.68270000000007,
+      277.88939999999997,
+      302.4886,
+      290.5857999999999,
+      277.50700000000006,
+      324.6791999999999,
+      393.74030000000005,
+      321.6719999999998,
+      415.23339999999973,
+      413.2328,
+      378.3099000000001,
+      406.0077000000001,
+      383.4463
+    ]
+  },
+  "criterion": "candidate median paired saving > 0 and > |null-control median|; candidate faster in a majority of rounds (null max |A-B| reported for context)",
+  "attribution_vs_2c27a907a": {
+    "note": "supplementary only, not used for verdict",
+    "summary": {
+      "A_median_ms": 1003.0318,
+      "B_median_ms": 597.4413,
+      "saving_median_ms": 429.0252999999999,
+      "saving_min_ms": 353.9127000000002,
+      "saving_max_ms": 513.7945000000002,
+      "rounds_b_faster": 15,
+      "rounds": 15,
+      "A_page_p50_ms": 47.1006,
+      "B_page_p50_ms": 26.4517,
+      "cpu_busy_pre_percent_range": [
+        24.5,
+        65.8
+      ]
+    },
+    "pre_cpu": {
+      "min": 24.5,
+      "median": 44.7,
+      "max": 65.8,
+      "per_round": [
+        65.8,
+        56.6,
+        44.7,
+        49.1,
+        25.8,
+        39.0,
+        33.0,
+        33.2,
+        29.8,
+        40.5,
+        54.4,
+        62.0,
+        53.2,
+        24.5,
+        47.5
+      ]
+    },
+    "per_round_saving_ms": [
+      436.24069999999983,
+      367.9689000000002,
+      376.35969999999986,
+      431.6420000000003,
+      379.62829999999985,
+      459.15509999999995,
+      421.7795,
+      429.0252999999999,
+      429.7048000000002,
+      495.2327999999999,
+      513.7945000000002,
+      387.0158999999999,
+      353.9127000000002,
+      385.2188000000001,
+      452.4220999999998
+    ]
+  },
+  "verdict": "PASS",
+  "null_max_abs_saving_ms": 42.00770000000023
+}

@@ -1,0 +1,6 @@
+# C lane (p1-21 gradient + soft mask) acceptance - opus-Cacc
+
+**Verdict: FAIL / incomplete: build control : C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/cmake.exe failed (exit 1); see evidence/realmixed-gradient-mask-20261119/opus-Cacc-20261119-154957/control-configure.log**
+
+Run directory: `evidence/realmixed-gradient-mask-20261119/opus-Cacc-20261119-154957`
+

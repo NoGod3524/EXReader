@@ -1,0 +1,456 @@
+{
+ "harness": "harness/xab.py (one worker process per DLL)",
+ "run_dir": "gates5-xproc-opus-Cacc-20261119-170250",
+ "items": {
+  "pptx-20-600": {
+   "item": "pptx-20-600",
+   "fixture": "tests/fixtures/pdf-hybrid-real/pptx-20.pdf",
+   "pages": [
+    1,
+    20
+   ],
+   "width": 600,
+   "margin": 1.03,
+   "frozen_baseline_ms": 0.80825,
+   "frozen_limit_ms": 0.8324975,
+   "ratio_cand_over_main": [
+    0.9902559286217422,
+    1.0150447821274027
+   ],
+   "ratio_cand_over_frozen": [
+    0.9936299631208393,
+    1.0135223118144938
+   ],
+   "null_ratio_main": [
+    0.9978210116731516,
+    0.9873115627858877
+   ],
+   "null_ratio_frozen": [
+    1.0220268819951959,
+    1.0145945407451684
+   ],
+   "pass_cand_over_main_le_margin_both_reps": true,
+   "pass_cand_over_frozen_le_margin_both_reps": true,
+   "frozen_dll_pooled_p50_today_ms": [
+    0.989125,
+    1.011125
+   ],
+   "candidate_p50_today_ms": [
+    1.26525,
+    1.00865
+   ],
+   "absolute_limit_met_by_frozen_dll_today": [
+    false,
+    false
+   ],
+   "pre_cpu_all_runs": {
+    "min": 10.1,
+    "median": 26.25,
+    "max": 60.9,
+    "n_rounds": 120
+   },
+   "pre_cpu_by_run": {
+    "cand-vs-main-0": {
+     "min": 34.7,
+     "median": 44.4,
+     "max": 60.9
+    },
+    "cand-vs-main-1": {
+     "min": 10.1,
+     "median": 15.8,
+     "max": 33.6
+    },
+    "cand-vs-frozen-0": {
+     "min": 22.3,
+     "median": 33.3,
+     "max": 49.0
+    },
+    "cand-vs-frozen-1": {
+     "min": 12.4,
+     "median": 17.1,
+     "max": 58.2
+    },
+    "main-null-0": {
+     "min": 19.9,
+     "median": 25.4,
+     "max": 48.4
+    },
+    "main-null-1": {
+     "min": 12.5,
+     "median": 27.4,
+     "max": 46.7
+    },
+    "frozen-null-0": {
+     "min": 14.6,
+     "median": 27.6,
+     "max": 37.0
+    },
+    "frozen-null-1": {
+     "min": 12.7,
+     "median": 18.7,
+     "max": 42.9
+    }
+   }
+  },
+  "pptx-20-1200": {
+   "item": "pptx-20-1200",
+   "fixture": "tests/fixtures/pdf-hybrid-real/pptx-20.pdf",
+   "pages": [
+    1,
+    20
+   ],
+   "width": 1200,
+   "margin": 1.03,
+   "frozen_baseline_ms": 1.6268500000000001,
+   "frozen_limit_ms": 1.6756555000000002,
+   "ratio_cand_over_main": [
+    0.9799422541329177,
+    0.9633699633699633
+   ],
+   "ratio_cand_over_frozen": [
+    1.0051079255231503,
+    0.97776223368599
+   ],
+   "null_ratio_main": [
+    1.0237220974772159,
+    0.9847720413758149
+   ],
+   "null_ratio_frozen": [
+    1.0116319671773384,
+    0.9901223380154056
+   ],
+   "pass_cand_over_main_le_margin_both_reps": true,
+   "pass_cand_over_frozen_le_margin_both_reps": true,
+   "frozen_dll_pooled_p50_today_ms": [
+    2.304425,
+    2.1961
+   ],
+   "candidate_p50_today_ms": [
+    1.9176,
+    1.5911499999999998
+   ],
+   "absolute_limit_met_by_frozen_dll_today": [
+    false,
+    false
+   ],
+   "pre_cpu_all_runs": {
+    "min": 5.2,
+    "median": 32.6,
+    "max": 69.9,
+    "n_rounds": 120
+   },
+   "pre_cpu_by_run": {
+    "cand-vs-main-0": {
+     "min": 5.2,
+     "median": 33.0,
+     "max": 49.6
+    },
+    "cand-vs-main-1": {
+     "min": 18.5,
+     "median": 27.0,
+     "max": 43.5
+    },
+    "cand-vs-frozen-0": {
+     "min": 17.7,
+     "median": 32.8,
+     "max": 47.3
+    },
+    "cand-vs-frozen-1": {
+     "min": 15.7,
+     "median": 26.8,
+     "max": 37.7
+    },
+    "main-null-0": {
+     "min": 17.3,
+     "median": 32.1,
+     "max": 54.7
+    },
+    "main-null-1": {
+     "min": 12.4,
+     "median": 38.3,
+     "max": 59.1
+    },
+    "frozen-null-0": {
+     "min": 23.8,
+     "median": 37.1,
+     "max": 48.9
+    },
+    "frozen-null-1": {
+     "min": 23.1,
+     "median": 40.2,
+     "max": 69.9
+    }
+   }
+  },
+  "word-5-600": {
+   "item": "word-5-600",
+   "fixture": "tests/fixtures/pdf-hybrid-real/word-5.pdf",
+   "pages": [
+    1,
+    5
+   ],
+   "width": 600,
+   "margin": 1.03,
+   "frozen_baseline_ms": 2.15505,
+   "frozen_limit_ms": 2.2197015,
+   "ratio_cand_over_main": [
+    0.9929565512559403,
+    1.0114750290360046
+   ],
+   "ratio_cand_over_frozen": [
+    0.9837395493835908,
+    0.9829337848676588
+   ],
+   "null_ratio_main": [
+    1.009258126350993,
+    0.9762132604237868
+   ],
+   "null_ratio_frozen": [
+    0.9824040850124206,
+    0.9715721163910405
+   ],
+   "pass_cand_over_main_le_margin_both_reps": true,
+   "pass_cand_over_frozen_le_margin_both_reps": true,
+   "frozen_dll_pooled_p50_today_ms": [
+    2.8729,
+    2.35455
+   ],
+   "candidate_p50_today_ms": [
+    2.3402,
+    2.1772
+   ],
+   "absolute_limit_met_by_frozen_dll_today": [
+    false,
+    false
+   ],
+   "pre_cpu_all_runs": {
+    "min": 8.5,
+    "median": 28.8,
+    "max": 63.9,
+    "n_rounds": 120
+   },
+   "pre_cpu_by_run": {
+    "cand-vs-main-0": {
+     "min": 8.5,
+     "median": 31.9,
+     "max": 61.9
+    },
+    "cand-vs-main-1": {
+     "min": 15.1,
+     "median": 24.9,
+     "max": 37.8
+    },
+    "cand-vs-frozen-0": {
+     "min": 11.4,
+     "median": 28.8,
+     "max": 63.9
+    },
+    "cand-vs-frozen-1": {
+     "min": 15.1,
+     "median": 28.5,
+     "max": 34.0
+    },
+    "main-null-0": {
+     "min": 14.3,
+     "median": 23.3,
+     "max": 48.4
+    },
+    "main-null-1": {
+     "min": 13.8,
+     "median": 25.6,
+     "max": 31.8
+    },
+    "frozen-null-0": {
+     "min": 19.9,
+     "median": 31.9,
+     "max": 61.3
+    },
+    "frozen-null-1": {
+     "min": 16.0,
+     "median": 32.8,
+     "max": 40.0
+    }
+   }
+  },
+  "word-5-1200": {
+   "item": "word-5-1200",
+   "fixture": "tests/fixtures/pdf-hybrid-real/word-5.pdf",
+   "pages": [
+    1,
+    5
+   ],
+   "width": 1200,
+   "margin": 1.03,
+   "frozen_baseline_ms": 6.74375,
+   "frozen_limit_ms": 6.946062500000001,
+   "ratio_cand_over_main": [
+    1.0110520319027725,
+    1.0111002719640534
+   ],
+   "ratio_cand_over_frozen": [
+    0.9634183504471678,
+    0.9808320972364234
+   ],
+   "null_ratio_main": [
+    1.0195625594348594,
+    1.0068305811113225
+   ],
+   "null_ratio_frozen": [
+    0.961472579085509,
+    1.0346109401757
+   ],
+   "pass_cand_over_main_le_margin_both_reps": true,
+   "pass_cand_over_frozen_le_margin_both_reps": true,
+   "frozen_dll_pooled_p50_today_ms": [
+    7.09955,
+    7.307
+   ],
+   "candidate_p50_today_ms": [
+    7.9863,
+    6.8407
+   ],
+   "absolute_limit_met_by_frozen_dll_today": [
+    false,
+    false
+   ],
+   "pre_cpu_all_runs": {
+    "min": 10.9,
+    "median": 22.049999999999997,
+    "max": 76.1,
+    "n_rounds": 120
+   },
+   "pre_cpu_by_run": {
+    "cand-vs-main-0": {
+     "min": 10.9,
+     "median": 25.2,
+     "max": 33.5
+    },
+    "cand-vs-main-1": {
+     "min": 20.5,
+     "median": 23.0,
+     "max": 76.1
+    },
+    "cand-vs-frozen-0": {
+     "min": 12.5,
+     "median": 25.2,
+     "max": 43.8
+    },
+    "cand-vs-frozen-1": {
+     "min": 14.9,
+     "median": 20.4,
+     "max": 53.7
+    },
+    "main-null-0": {
+     "min": 11.1,
+     "median": 15.4,
+     "max": 27.4
+    },
+    "main-null-1": {
+     "min": 14.1,
+     "median": 29.3,
+     "max": 32.2
+    },
+    "frozen-null-0": {
+     "min": 11.3,
+     "median": 16.9,
+     "max": 41.0
+    },
+    "frozen-null-1": {
+     "min": 14.5,
+     "median": 34.2,
+     "max": 44.4
+    }
+   }
+  },
+  "deck-1200": {
+   "item": "deck-1200",
+   "fixture": "tests/fixtures/pdf-ppt/deck.pdf",
+   "pages": [
+    1,
+    15
+   ],
+   "width": 1200,
+   "margin": 1.03,
+   "frozen_baseline_ms": 8.98625,
+   "frozen_limit_ms": 9.2558375,
+   "ratio_cand_over_main": [
+    1.0027599230126738,
+    0.9751141709301925
+   ],
+   "ratio_cand_over_frozen": [
+    1.0385397450947509,
+    1.006966434452185
+   ],
+   "null_ratio_main": [
+    1.0175987735156025,
+    1.006537754201703
+   ],
+   "null_ratio_frozen": [
+    1.0029718447769398,
+    0.9799073452045473
+   ],
+   "pass_cand_over_main_le_margin_both_reps": true,
+   "pass_cand_over_frozen_le_margin_both_reps": false,
+   "frozen_dll_pooled_p50_today_ms": [
+    11.6599,
+    11.34675
+   ],
+   "candidate_p50_today_ms": [
+    11.0452,
+    11.3593
+   ],
+   "absolute_limit_met_by_frozen_dll_today": [
+    false,
+    false
+   ],
+   "pre_cpu_all_runs": {
+    "min": 6.4,
+    "median": 25.65,
+    "max": 81.1,
+    "n_rounds": 120
+   },
+   "pre_cpu_by_run": {
+    "cand-vs-main-0": {
+     "min": 14.0,
+     "median": 26.3,
+     "max": 63.0
+    },
+    "cand-vs-main-1": {
+     "min": 13.6,
+     "median": 31.9,
+     "max": 81.1
+    },
+    "cand-vs-frozen-0": {
+     "min": 10.0,
+     "median": 18.7,
+     "max": 51.4
+    },
+    "cand-vs-frozen-1": {
+     "min": 6.4,
+     "median": 14.6,
+     "max": 67.3
+    },
+    "main-null-0": {
+     "min": 11.5,
+     "median": 18.6,
+     "max": 46.9
+    },
+    "main-null-1": {
+     "min": 16.5,
+     "median": 20.3,
+     "max": 46.4
+    },
+    "frozen-null-0": {
+     "min": 10.7,
+     "median": 27.0,
+     "max": 40.1
+    },
+    "frozen-null-1": {
+     "min": 13.8,
+     "median": 40.0,
+     "max": 73.6
+    }
+   }
+  }
+ }
+}

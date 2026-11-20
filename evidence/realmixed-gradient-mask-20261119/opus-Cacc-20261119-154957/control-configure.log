@@ -1,0 +1,68 @@
+-- The C compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+[1/9] Creating directories for 'freetype-populate'
+[1/9] Performing download step (download, verify and extract) for 'freetype-populate'
+-- Downloading...
+   dst='C:/Users/Oscar/AppData/Local/Temp/opus-Cacc-main-9c2443edf-20261119-154957/build/_deps/freetype-subbuild/freetype-populate-prefix/src/archive.tar'
+   timeout='none'
+   inactivity timeout='none'
+-- Using src='https://codeload.github.com/freetype/freetype/tar.gz/refs/tags/VER-2-15-0'
+CMake Error at freetype-subbuild/freetype-populate-prefix/src/freetype-populate-stamp/download-freetype-populate.cmake:163 (message):
+  Each download failed!
+
+    error: downloading 'https://codeload.github.com/freetype/freetype/tar.gz/refs/tags/VER-2-15-0' failed
+          status_code: 60
+          status_string: "SSL peer certificate or SSH remote key was not OK.  If this is due to https certificate verification failure, one may set environment variable CMAKE_TLS_VERIFY=0 to suppress it."
+          log:
+          --- LOG BEGIN ---
+          Host codeload.github.com:443 was resolved.
+
+  IPv6: (none)
+
+  IPv4: 140.82.112.10
+
+    Trying 140.82.112.10:443...
+
+  GnuTLS priority:
+  NORMAL:%PROFILE_MEDIUM:-ARCFOUR-128:-CTYPE-ALL:+CTYPE-X509:-VERS-SSL3.0:-VERS-TLS-ALL:+VERS-TLS1.3:+VERS-TLS1.2
+
+  ALPN: curl offers http/1.1
+
+  SSL Trust Anchors:
+
+    no trust anchors configured
+
+  SSL connection using TLS1.3 / ECDHE_RSA_AES_128_GCM_SHA256
+
+  SSL certificate verification failed: certificate signer not trusted.
+  (CAfile: none CRLfile: none)
+
+  closing connection #0
+
+
+
+          --- LOG END ---
+          
+    
+
+
+FAILED: [code=1] freetype-populate-prefix/src/freetype-populate-stamp/freetype-populate-download C:/Users/Oscar/AppData/Local/Temp/opus-Cacc-main-9c2443edf-20261119-154957/build/_deps/freetype-subbuild/freetype-populate-prefix/src/freetype-populate-stamp/freetype-populate-download 
+C:\Windows\system32\cmd.exe /C "cd /D C:\Users\Oscar\AppData\Local\Temp\opus-Cacc-main-9c2443edf-20261119-154957\build\_deps && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/AppData/Local/Temp/opus-Cacc-main-9c2443edf-20261119-154957/build/_deps/freetype-subbuild/freetype-populate-prefix/src/freetype-populate-stamp/download-freetype-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/AppData/Local/Temp/opus-Cacc-main-9c2443edf-20261119-154957/build/_deps/freetype-subbuild/freetype-populate-prefix/src/freetype-populate-stamp/verify-freetype-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/Oscar/AppData/Local/Temp/opus-Cacc-main-9c2443edf-20261119-154957/build/_deps/freetype-subbuild/freetype-populate-prefix/src/freetype-populate-stamp/extract-freetype-populate.cmake && C:\Users\Oscar\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -E touch C:/Users/Oscar/AppData/Local/Temp/opus-Cacc-main-9c2443edf-20261119-154957/build/_deps/freetype-subbuild/freetype-populate-prefix/src/freetype-populate-stamp/freetype-populate-download"
+ninja: build stopped: subcommand failed.
+
+CMake Error at C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1933 (message):
+  Build step for freetype failed: 1
+Call Stack (most recent call first):
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:1622 (__FetchContent_populateSubbuild)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160:EVAL:2 (__FetchContent_doPopulation)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2160 (cmake_language)
+  C:/Users/Oscar/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/share/cmake-4.4/Modules/FetchContent.cmake:2401 (__FetchContent_Populate)
+  cmake/deps.cmake:24 (FetchContent_MakeAvailable)
+  CMakeLists.txt:63 (include)
+
+
+-- Configuring incomplete, errors occurred!

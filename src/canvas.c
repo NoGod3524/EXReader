@@ -2,6 +2,7 @@
 #include "canvas_internal.h"
 #include "icc_internal.h"
 #include "pixels_internal.h"
+#include <float.h>
 #include <stdio.h>
 static exr_status finish(exr_canvas *c,exr_status status,exr_error *e) {
   if(c && status==EXR_OK) status=exr_icc_deferred_status(c->cmyk_profile,e);
@@ -165,7 +166,7 @@ exr_status exr_canvas_create(const exr_canvas_config *config,exr_canvas **out,ex
   return exr_canvas_create_pooled(config,NULL,out,e);
 }
 exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_pool *pool,exr_canvas **out,exr_error *e) {
-  exr_canvas *c; unsigned channels,k; size_t bytes,i;
+  exr_canvas *c; unsigned channels; size_t bytes,i;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing canvas output");
   *out=NULL;
   if(!config || !config->width || !config->height || config->width>16384 || config->height>16384 ||
@@ -187,7 +188,10 @@ exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_p
     memset(c->bitmap.pixels,(int)((r*77+g*150+b*29+128)>>8),bytes);
   } else if(config->background==(config->background&255u)*0x01010101u)
     memset(c->bitmap.pixels,(int)(config->background&255u),bytes);
-  else for(i=0;i<bytes;i+=4) for(k=0;k<4;k++) c->bitmap.pixels[i+k]=(unsigned char)(config->background>>(24-8*k));
+  else {
+    unsigned char px[4]={(unsigned char)(config->background>>24),(unsigned char)(config->background>>16),(unsigned char)(config->background>>8),(unsigned char)config->background};
+    for(i=0;i<bytes;i+=4) memcpy(c->bitmap.pixels+i,px,4);
+  }
   *out=c; return exr_fail(e,EXR_OK,"");
 }
 void exr_canvas_union_abort(exr_canvas *c) { if(c) { unref(c,c->group); c->group=NULL; } }
@@ -413,6 +417,51 @@ static int axial_columns_in_scale(double multiplier,double translation,int offse
   double px0=(double)x+offset+.25,px1=px0+.5;
   return fabs(multiplier*px0+translation)<=scale && fabs(multiplier*px1+translation)<=scale;
 }
+/* For a vertical axial shading (axial_ux == 0), changing the normalization
+   scale past axial_scale for out-of-scale x only perturbs t by rounding error.
+   Skip per-column renormalization when that bound cannot cross a colour-byte
+   quantization boundary on this row. */
+static int axial_row_scale_safe(const exr_shading_paint_source *axial,double v0,double v1,
+                                double u_max,const double colors[4]) {
+  const unsigned samples=512u;
+  double s=axial->axial_scale,ratio,max_dc[3]={0,0,0};
+  if(u_max<=s) return 1;
+  if(!isfinite(u_max) || s<=0 || axial->axial_length<=0 || !axial->rgb || u_max/s>1e6) return 0;
+  ratio=u_max/s;
+  for(unsigned sy=0;sy<2;sy++) {
+    double v=sy ? v1 : v0;
+    double t=((v/s-axial->axial_y)*axial->axial_uy)/axial->axial_length;
+    double dt,u_t,frac,du;unsigned idx;
+    if(!isfinite(t)) return 0;
+    dt=64.0*DBL_EPSILON*ratio/axial->axial_length*(1.0+fabs(t));
+    if(dt>=1e-6) return 0;
+    if(t<=-dt) { if(axial->extend0) continue; return 0; }
+    if(t>=1.0+dt) { if(axial->extend1) continue; return 0; }
+    if(t<=dt || t>=1.0-dt) return 0;
+    u_t=t*(samples-1u);idx=(unsigned)u_t;frac=u_t-idx;
+    if(idx>=samples-1u) { idx=samples-2u;frac=1.0; }
+    du=dt*(samples-1u);
+    for(unsigned k=0;k<3;k++) {
+      double slope=fabs(axial->rgb[(idx+1u)*3u+k]-axial->rgb[idx*3u+k]);
+      if(frac<=du*4.0 && idx>0) {
+        double prev=fabs(axial->rgb[idx*3u+k]-axial->rgb[(idx-1u)*3u+k]);
+        if(prev>slope) slope=prev;
+      }
+      if(frac>=1.0-du*4.0 && idx+2u<samples) {
+        double next=fabs(axial->rgb[(idx+2u)*3u+k]-axial->rgb[(idx+1u)*3u+k]);
+        if(next>slope) slope=next;
+      }
+      max_dc[k]+=0.5*slope*du;
+    }
+  }
+  for(unsigned k=0;k<3;k++) {
+    double scaled=colors[k]*255.0+0.5;
+    double dist=fabs(scaled-floor(scaled+0.5));
+    double margin=fmax(1e-7,255.0*max_dc[k]*16.0);
+    if(dist<=margin) return 0;
+  }
+  return 1;
+}
 exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const double transform[6],double alpha,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0},*m=transform ? transform : identity;double inv[6],det,scale=0;
   exr_paint_source source;exr_composite_state *state;size_t cost;unsigned components,space;exr_error local={0};exr_status status;
@@ -464,13 +513,17 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
         double v_row0=inv[3]*py0+inv[5],v_row1=inv[3]*py1+inv[5];
         int aligned=!inv[1] && !inv[2] && !axial->axial_ux;
         int v_ok=aligned && fabs(v_row0)<=s && fabs(v_row1)<=s;
+        double u_max=aligned && first<last ? fmax(fabs(inv[0]*((double)first+c->offset_x+.25)+inv[4]),
+                                                  fabs(inv[0]*((double)(last-1)+c->offset_x+.75)+inv[4])) : INFINITY;
         int fast_group=space!=EXR_GROUP_CMYK && state && state->pixels && !state->cmyk_pixels &&
           !state->knockout && !state->shape && !state->soft_mask && !state->gray &&
           c->blend==EXR_BLEND_NORMAL && c->bitmap.channels==4;
         int fast_mask=space!=EXR_GROUP_CMYK && state && !state->pixels && !state->cmyk_pixels &&
           !state->knockout && !state->shape && state->soft_mask && !state->gray &&
           c->blend==EXR_BLEND_NORMAL && c->bitmap.channels==4 && (size_t)y<state->soft_mask_height;
-        double in_colors[4]={0},in_alpha=0,in_shape=0;uint32_t in_color=0;float in_q[5]={0};int have_in=0;
+        int fast_opaque=space!=EXR_GROUP_CMYK && !state &&
+          c->blend==EXR_BLEND_NORMAL && c->bitmap.channels==4;
+        double in_colors[4]={0},in_alpha=0,in_shape=0;uint32_t in_color=0;float in_q[5]={0};int have_in=0,row_scale_safe=0;
         for(unsigned x=first;x<last;x++) {
           unsigned coverage=clip_row ? clip_row[x] : 255;
           double px0=(double)x+c->offset_x+.25,px1=px0+.5;
@@ -478,7 +531,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
           double colors[4]={0},row_alpha,row_shape,object_alpha,object_shape;uint32_t pixel_color=0;
           if(!coverage) continue;
           if(aligned) {
-            in_scale=v_ok && fabs(inv[0]*px0+inv[4])<=s && fabs(inv[0]*px1+inv[4])<=s;
+            in_scale=v_ok && (row_scale_safe || (fabs(inv[0]*px0+inv[4])<=s && fabs(inv[0]*px1+inv[4])<=s));
           } else {
             double u00=inv[0]*px0+inv[2]*py0+inv[4],v00=inv[1]*px0+v_row0;
             double u10=inv[0]*px1+inv[2]*py0+inv[4],v10=inv[1]*px1+v_row0;
@@ -488,22 +541,25 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
                      fabs(u01)<=s && fabs(v01)<=s && fabs(u11)<=s && fabs(v11)<=s;
           }
           /* The aligned column transform is monotone and independent of y.
-             Starting from an in-scale pixel, both samples stay in scale up
-             to the same right bound on every row. */
+             When row_scale_safe holds, out-of-scale columns cannot change the
+             quantized row colour; otherwise stop at axial_right. */
           if(aligned && in_scale && have_in && coverage==255 && in_alpha*alpha==1 &&
-             ((fast_group && in_shape==1) || (fast_mask && in_shape>0 && (size_t)x<state->soft_mask_width))) {
+             (((fast_group || fast_opaque) && in_shape==1) ||
+              (fast_mask && in_shape>0 && (size_t)x<state->soft_mask_width))) {
             size_t budget=*axial->work;unsigned end;int over=0;
-            unsigned limit=fast_group ? last : (unsigned)(state->soft_mask_width<last ? state->soft_mask_width : last);
-            if(!axial_right) {
-              unsigned lo=x+1,hi=c->bitmap.width;
-              while(lo<hi) {
-                unsigned middle=lo+(hi-lo)/2;
-                if(axial_columns_in_scale(inv[0],inv[4],c->offset_x,middle,s)) lo=middle+1;
-                else hi=middle;
+            unsigned limit=(fast_group || fast_opaque) ? last : (unsigned)(state->soft_mask_width<last ? state->soft_mask_width : last);
+            if(!row_scale_safe) {
+              if(!axial_right) {
+                unsigned lo=x+1,hi=c->bitmap.width;
+                while(lo<hi) {
+                  unsigned middle=lo+(hi-lo)/2;
+                  if(axial_columns_in_scale(inv[0],inv[4],c->offset_x,middle,s)) lo=middle+1;
+                  else hi=middle;
+                }
+                axial_right=lo;
               }
-              axial_right=lo;
+              if(limit>axial_right) limit=axial_right;
             }
-            if(limit>axial_right) limit=axial_right;
             end=limit;
             if(clip_row) {
               end=x+1;
@@ -533,6 +589,10 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
                 if(end>state->right) state->right=end;
                 if(y>=state->bottom) state->bottom=y+1;
               }
+            } else if(fast_opaque) {
+              unsigned char *p=c->bitmap.pixels+(size_t)y*c->bitmap.stride+(size_t)x*4;
+              unsigned char rgb[4]={(unsigned char)(in_color>>24),(unsigned char)(in_color>>16),(unsigned char)(in_color>>8),255};
+              for(unsigned i=x;i<end;i++,p+=4) memcpy(p,rgb,4);
             } else {
               exr_bitmap target=c->bitmap;
               const unsigned char *mask_row=state->soft_mask+(size_t)y*state->soft_mask_width;
@@ -583,6 +643,8 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
                 in_q[3]=in_q[4]=1.0f;
               }
               in_alpha=row_alpha;in_shape=row_shape;in_color=pixel_color;have_in=1;
+              if(aligned && v_ok && space!=EXR_GROUP_CMYK && in_shape==1)
+                row_scale_safe=axial_row_scale_safe(axial,v_row0,v_row1,u_max,in_colors);
             }
           }
           exr_pixel_alpha_shape(state,x,y,row_alpha,row_shape,alpha,coverage,&object_alpha,&object_shape);
