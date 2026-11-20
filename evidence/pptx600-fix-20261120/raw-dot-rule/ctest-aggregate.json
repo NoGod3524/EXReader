@@ -1,0 +1,11 @@
+{
+  "union_passed": 577,
+  "expected": 577,
+  "passing_rows": 578,
+  "shards": 24,
+  "missing": [],
+  "extra": [],
+  "fixture_prerequisite_duplicates": {
+    "native-convert-corpus": 2
+  }
+}

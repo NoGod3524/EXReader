@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start  21: native-pptx-shape-group-transforms
+      Start 197: native-mask-scope
+      Start  13: native-pptx-shape-rect
+      Start  14: native-pptx-shape-circle
+      Start  15: native-pptx-shape-roundrect
+      Start  17: native-pptx-shape-group
+      Start 283: native-vector
+      Start  16: native-pptx-shape-triangle
+ 1/24 Test #283: native-vector ........................   Passed    0.38 sec
+      Start  20: native-pptx-shape-zero-extent
+ 2/24 Test #197: native-mask-scope ....................   Passed    0.45 sec
+      Start  18: native-pptx-shape-standard
+ 3/24 Test  #13: native-pptx-shape-rect ...............   Passed    0.58 sec
+ 4/24 Test  #15: native-pptx-shape-roundrect ..........   Passed    0.57 sec
+      Start  10: native-pptx-order
+      Start   8: native-pptx-defaults
+ 5/24 Test  #14: native-pptx-shape-circle .............   Passed    0.61 sec
+      Start   6: native-pptx-twenty
+ 6/24 Test  #17: native-pptx-shape-group ..............   Passed    0.61 sec
+      Start   9: native-pptx-missing
+ 7/24 Test  #16: native-pptx-shape-triangle ...........   Passed    0.57 sec
+      Start  11: native-pptx-detection
+ 8/24 Test   #9: native-pptx-missing ..................   Passed    0.47 sec
+      Start   7: native-pptx-errors
+ 9/24 Test  #18: native-pptx-shape-standard ...........   Passed    0.67 sec
+      Start   3: native-pptx-layouts
+10/24 Test   #8: native-pptx-defaults .................   Passed    0.54 sec
+11/24 Test   #6: native-pptx-twenty ...................   Passed    0.52 sec
+      Start   4: native-pptx-wide
+      Start  12: native-pptx-limit
+12/24 Test  #10: native-pptx-order ....................   Passed    0.57 sec
+      Start   2: native-pptx-title
+13/24 Test  #20: native-pptx-shape-zero-extent ........   Passed    0.82 sec
+      Start   1: native-pptx-empty
+14/24 Test  #11: native-pptx-detection ................   Passed    0.57 sec
+      Start   5: native-pptx-standard
+15/24 Test  #21: native-pptx-shape-group-transforms ...   Passed    1.40 sec
+      Start 296: native-fixed-pdf
+16/24 Test   #4: native-pptx-wide .....................   Passed    0.37 sec
+17/24 Test  #12: native-pptx-limit ....................   Passed    0.36 sec
+18/24 Test   #3: native-pptx-layouts ..................   Passed    0.39 sec
+      Start 319: native-canvas
+19/24 Test   #7: native-pptx-errors ...................   Passed    0.42 sec
+20/24 Test #319: native-canvas ........................   Passed    0.03 sec
+21/24 Test   #2: native-pptx-title ....................   Passed    0.39 sec
+22/24 Test #296: native-fixed-pdf .....................   Passed    0.15 sec
+23/24 Test   #1: native-pptx-empty ....................   Passed    0.33 sec
+24/24 Test   #5: native-pptx-standard .................   Passed    0.32 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =   1.60 sec

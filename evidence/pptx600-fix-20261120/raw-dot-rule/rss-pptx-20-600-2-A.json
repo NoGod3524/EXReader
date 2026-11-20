@@ -1,0 +1,408 @@
+{
+  "width": 600,
+  "page_count": 20,
+  "runs": 1,
+  "open_ms": 0.3993,
+  "first_page_render_ms": 1.4666,
+  "first_screen_ms": 1.8659,
+  "cold_round_wall_ms": 27.735,
+  "p50_ms": 0.7883,
+  "p95_ms": 0.98,
+  "page_p50_median_ms": 0.7883,
+  "page_p95_ms": 0.98,
+  "worst_page": 11,
+  "worst_page_p50_ms": 1.1031,
+  "worst_page_max_ms": 1.1031,
+  "worst_max_page": 11,
+  "round_wall_ms_p50": 16.493,
+  "total_measured_wall_ms": 16.493,
+  "throughput_pages_per_s": 1212.63,
+  "rss_start_bytes": 26136576,
+  "rss_after_open_bytes": 26578944,
+  "rss_end_bytes": 28352512,
+  "peak_rss_bytes": 29634560,
+  "peak_rss_mib": 28.26,
+  "active_pixels_per_round": 4056000,
+  "pages": [
+    {
+      "page": 1,
+      "scale": 0.625,
+      "render_ms": [
+        0.789
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "72e20015019dc74ddb60094f98460b5e7e4bec9f4c062e408a3460bf920bc1b2",
+      "first_render_ms": 1.4666,
+      "rss_after_first_render_bytes": 29478912,
+      "peak_rss_after_first_render_bytes": 29478912,
+      "p50_ms": 0.789,
+      "p95_ms": 0.789,
+      "max_ms": 0.789
+    },
+    {
+      "page": 2,
+      "scale": 0.625,
+      "render_ms": [
+        0.7877
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "28d0b337697455c74503a2581a15da1cb45bba19dc96dc4828038107260cf4cb",
+      "first_render_ms": 0.8212,
+      "rss_after_first_render_bytes": 29454336,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.7877,
+      "p95_ms": 0.7877,
+      "max_ms": 0.7877
+    },
+    {
+      "page": 3,
+      "scale": 0.625,
+      "render_ms": [
+        0.7776
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "d1e589b2f365f2278f3f699932e18ac0a418d078ad1697cbf0aea5dd648a30f6",
+      "first_render_ms": 0.8117,
+      "rss_after_first_render_bytes": 29454336,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.7776,
+      "p95_ms": 0.7776,
+      "max_ms": 0.7776
+    },
+    {
+      "page": 4,
+      "scale": 0.625,
+      "render_ms": [
+        0.911
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "3714f171a4b4ef1e9a6ea36b27964e6fa16efb1e2cfdc2c60e28968fa32cb63b",
+      "first_render_ms": 0.7675,
+      "rss_after_first_render_bytes": 29454336,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.911,
+      "p95_ms": 0.911,
+      "max_ms": 0.911
+    },
+    {
+      "page": 5,
+      "scale": 0.625,
+      "render_ms": [
+        0.8277
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "a00f5b14ba758664208b045b5961f4690dbfa121e1b019a37f6878182249af63",
+      "first_render_ms": 0.9072,
+      "rss_after_first_render_bytes": 29454336,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.8277,
+      "p95_ms": 0.8277,
+      "max_ms": 0.8277
+    },
+    {
+      "page": 6,
+      "scale": 0.625,
+      "render_ms": [
+        0.8067
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "ffb3c9fcb80b8e9a1bbc3b6afa19c56acafcb40c2ca18dd8f3c6cf3f4894e485",
+      "first_render_ms": 0.8011,
+      "rss_after_first_render_bytes": 29462528,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.8067,
+      "p95_ms": 0.8067,
+      "max_ms": 0.8067
+    },
+    {
+      "page": 7,
+      "scale": 0.625,
+      "render_ms": [
+        0.7643
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "f28525318636b47255bd4f1414b699f1f5b1d58c9c49b3b840f8186ea398fafb",
+      "first_render_ms": 0.8044,
+      "rss_after_first_render_bytes": 29470720,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.7643,
+      "p95_ms": 0.7643,
+      "max_ms": 0.7643
+    },
+    {
+      "page": 8,
+      "scale": 0.625,
+      "render_ms": [
+        0.7457
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "3127d3e9dfa9940de331de995306543abdbba17e3c982512451e3b36bcb37646",
+      "first_render_ms": 0.7699,
+      "rss_after_first_render_bytes": 29503488,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.7457,
+      "p95_ms": 0.7457,
+      "max_ms": 0.7457
+    },
+    {
+      "page": 9,
+      "scale": 0.625,
+      "render_ms": [
+        0.7803
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "83806ee66aa8219d312d0cc07111109d4fc3c4ce0219d5a8e2aa4d52bed86d0b",
+      "first_render_ms": 0.8002,
+      "rss_after_first_render_bytes": 29499392,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.7803,
+      "p95_ms": 0.7803,
+      "max_ms": 0.7803
+    },
+    {
+      "page": 10,
+      "scale": 0.625,
+      "render_ms": [
+        0.8046
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "909ca78e8f2bf07b1b0d7b867b80dc10679942302f3ae1add6d6a90440866e3f",
+      "first_render_ms": 0.8946,
+      "rss_after_first_render_bytes": 29499392,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.8046,
+      "p95_ms": 0.8046,
+      "max_ms": 0.8046
+    },
+    {
+      "page": 11,
+      "scale": 0.625,
+      "render_ms": [
+        1.1031
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "29b1c737a2b161beff51c11b72ee6d7f27df7e9bbc372caae3deb72187a1a222",
+      "first_render_ms": 0.9692,
+      "rss_after_first_render_bytes": 29503488,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 1.1031,
+      "p95_ms": 1.1031,
+      "max_ms": 1.1031
+    },
+    {
+      "page": 12,
+      "scale": 0.625,
+      "render_ms": [
+        0.8554
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "5d194d317a109da17d92a5862d4427cce50c5ac6597e2e6d8770d8e6279d180a",
+      "first_render_ms": 0.822,
+      "rss_after_first_render_bytes": 29503488,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.8554,
+      "p95_ms": 0.8554,
+      "max_ms": 0.8554
+    },
+    {
+      "page": 13,
+      "scale": 0.625,
+      "render_ms": [
+        0.98
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "477fe65f13ef8c24a8bdc4953ff41dc7de0d67f3e13d0280bc6e8d838a34f93e",
+      "first_render_ms": 0.7797,
+      "rss_after_first_render_bytes": 29507584,
+      "peak_rss_after_first_render_bytes": 29507584,
+      "p50_ms": 0.98,
+      "p95_ms": 0.98,
+      "max_ms": 0.98
+    },
+    {
+      "page": 14,
+      "scale": 0.625,
+      "render_ms": [
+        0.7557
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "1d98b151df4894c2059604463f6d93199b20e352f328f426a0afb8941217f037",
+      "first_render_ms": 0.8193,
+      "rss_after_first_render_bytes": 29577216,
+      "peak_rss_after_first_render_bytes": 29577216,
+      "p50_ms": 0.7557,
+      "p95_ms": 0.7557,
+      "max_ms": 0.7557
+    },
+    {
+      "page": 15,
+      "scale": 0.625,
+      "render_ms": [
+        0.737
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "a7d644aac5a5f5c97054ee9a930d8d65b7490e5528e74ca9b4070ba3873d2a18",
+      "first_render_ms": 0.8022,
+      "rss_after_first_render_bytes": 29609984,
+      "peak_rss_after_first_render_bytes": 29609984,
+      "p50_ms": 0.737,
+      "p95_ms": 0.737,
+      "max_ms": 0.737
+    },
+    {
+      "page": 16,
+      "scale": 0.625,
+      "render_ms": [
+        0.7742
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "1fd3ce103239f9973d80c6e3bcc458908c6c300af744c485334ff285005954cf",
+      "first_render_ms": 1.1274,
+      "rss_after_first_render_bytes": 29618176,
+      "peak_rss_after_first_render_bytes": 29618176,
+      "p50_ms": 0.7742,
+      "p95_ms": 0.7742,
+      "max_ms": 0.7742
+    },
+    {
+      "page": 17,
+      "scale": 0.625,
+      "render_ms": [
+        0.7823
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "b96f96ba23765f514e86277d825ebd9aaced5c8d17030691496fe210e60c071f",
+      "first_render_ms": 0.8256,
+      "rss_after_first_render_bytes": 29626368,
+      "peak_rss_after_first_render_bytes": 29626368,
+      "p50_ms": 0.7823,
+      "p95_ms": 0.7823,
+      "max_ms": 0.7823
+    },
+    {
+      "page": 18,
+      "scale": 0.625,
+      "render_ms": [
+        0.7392
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "9be28e017c236374b5009b0dda9c780eae0c12c535c1b7ed159b72870b27f686",
+      "first_render_ms": 0.7955,
+      "rss_after_first_render_bytes": 29634560,
+      "peak_rss_after_first_render_bytes": 29634560,
+      "p50_ms": 0.7392,
+      "p95_ms": 0.7392,
+      "max_ms": 0.7392
+    },
+    {
+      "page": 19,
+      "scale": 0.625,
+      "render_ms": [
+        0.945
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "d8a592fc4c4513d8cd3bec3f97607936cd19e41d898789958804bdac4995205d",
+      "first_render_ms": 0.7707,
+      "rss_after_first_render_bytes": 29630464,
+      "peak_rss_after_first_render_bytes": 29634560,
+      "p50_ms": 0.945,
+      "p95_ms": 0.945,
+      "max_ms": 0.945
+    },
+    {
+      "page": 20,
+      "scale": 0.625,
+      "render_ms": [
+        0.8266
+      ],
+      "dimensions": [
+        600,
+        338
+      ],
+      "pixels": 202800,
+      "rgba_sha256": "a4d9612dbc213346f18c33d20b3bebbf387914ba33b522b6bd7d98a690b509a9",
+      "first_render_ms": 0.7836,
+      "rss_after_first_render_bytes": 29630464,
+      "peak_rss_after_first_render_bytes": 29634560,
+      "p50_ms": 0.8266,
+      "p95_ms": 0.8266,
+      "max_ms": 0.8266
+    }
+  ]
+}

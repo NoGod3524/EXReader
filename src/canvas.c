@@ -612,8 +612,10 @@ static void blit_coverage_mask(exr_canvas *c,const unsigned char *mask,uint32_t 
     return;
   }
   for(uint32_t ry=0;ry<h;ry++) {
+    uint32_t y=dy0+ry;
     const unsigned char *mrow=mask+(size_t)ry*w;
-    const unsigned char *crow=clip ? exr_clip_row(clip,(size_t)(dy0+ry))+dx0 : NULL;
+    const unsigned char *crow=clip && (!clip->full_span || !clip_covers_box(clip,dx0,y,dx0+w,y+1)) ?
+      exr_clip_row(clip,y)+dx0 : NULL;
     for(uint32_t rx=0;rx<w;) {
       unsigned alpha=mrow[rx];
       if(!alpha) {
@@ -626,7 +628,7 @@ static void blit_coverage_mask(exr_canvas *c,const unsigned char *mask,uint32_t 
         continue;
       }
       if(crow) { alpha=(alpha*crow[rx]+127)/255; if(!alpha) { rx++; continue; } }
-      exr_pixel(&c->bitmap,(int)(dx0+rx),(int)(dy0+ry),color,alpha);
+      exr_pixel(&c->bitmap,(int)(dx0+rx),(int)y,color,alpha);
       rx++;
     }
   }
@@ -936,6 +938,9 @@ static exr_status rectangle_mask(exr_canvas *c,const double box[4],int full_span
   if(left>=right || top>=bottom) return EXR_OK;
   mask->dirty_left=(uint32_t)left; mask->dirty_right=(uint32_t)right;
   mask->dirty_top=(uint32_t)top; mask->dirty_bottom=(uint32_t)bottom;
+  /* Both rectangles have constant coverage between their outer columns.
+     Fill the common interior as one run and round each fringe separately. */
+  const int columns[4]={left,left+1,left+1<right ? right-1 : right,right};
   int solid_left=left,solid_right=right,solid_top=bottom,solid_bottom=top;
   for(unsigned slot=1;slot<=3;slot++) {
     int y=slot==1 ? top : slot==2 ? top+1 : bottom-1;
@@ -943,14 +948,19 @@ static exr_status rectangle_mask(exr_canvas *c,const double box[4],int full_span
     double height=fmin(box[3],y+1)-fmax(box[1],y);
     const unsigned char *prior=exr_clip_row(parent,(size_t)y);
     unsigned char *row=mask->bitmap.pixels+(size_t)slot*w;
-    for(int x=left;x<right;x++) {
+    int x0=right,x1=left;
+    for(unsigned run=0;run<3;run++) {
+      int x=columns[run],end=columns[run+1];
+      if(x==end) continue;
       double width=fmin(box[2],x+1)-fmax(box[0],x);
       unsigned a=(unsigned)floor(width*height*255+.5);
-      row[x]=(unsigned char)(prior ? (a*prior[x]+127)/255 : a);
+      if(prior) a=(a*prior[x]+127)/255;
+      memset(row+x,(int)a,(size_t)(end-x));
+      if(a==255) {
+        if(x<x0) x0=x;
+        x1=end;
+      }
     }
-    int x0=left,x1=right;
-    while(x0<x1 && row[x0]!=255) x0++;
-    while(x0<x1 && row[x1-1]!=255) x1--;
     if(x0<x1) {
       if(x0>solid_left) solid_left=x0;
       if(x1<solid_right) solid_right=x1;

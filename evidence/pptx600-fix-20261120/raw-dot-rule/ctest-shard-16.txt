@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 198: native-pdf-shading
+      Start 166: native-table-fragments
+      Start  19: native-pptx-shape-rotation
+      Start  46: native-pptx-fill-background-gradient
+      Start 549: native-docx-real-24-shape-group-edited
+      Start  94: native-docx-edit-io-roundtrip
+      Start 279: native-pdf-pages
+      Start 130: native-docx-real-argon-reproducible
+ 1/24 Test #279: native-pdf-pages .........................   Passed    0.39 sec
+      Start  95: native-docx-edit-io-parts
+ 2/24 Test #130: native-docx-real-argon-reproducible ......   Passed    0.59 sec
+      Start 410: native-ppt-wrongformat
+ 3/24 Test #549: native-docx-real-24-shape-group-edited ...   Passed    0.78 sec
+      Start 298: native-pdf-hybrid-real-pptx-1
+ 4/24 Test  #94: native-docx-edit-io-roundtrip ............   Passed    0.79 sec
+      Start 208: native-stretch
+ 5/24 Test  #95: native-docx-edit-io-parts ................   Passed    0.55 sec
+      Start 486: native-pdf-deepening-scan
+ 6/24 Test  #46: native-pptx-fill-background-gradient .....   Passed    1.14 sec
+      Start  34: native-pptx-fill-fill-transforms
+ 7/24 Test #298: native-pdf-hybrid-real-pptx-1 ............   Passed    0.42 sec
+      Start 294: native-fixed-library
+ 8/24 Test #208: native-stretch ...........................   Passed    0.52 sec
+      Start 275: native-html-raw
+ 9/24 Test #275: native-html-raw ..........................   Passed    0.09 sec
+      Start 309: native-pdf-hybrid-edge-bad-truncated
+10/24 Test #486: native-pdf-deepening-scan ................   Passed    0.50 sec
+      Start 316: native-fixed
+11/24 Test #166: native-table-fragments ...................   Passed    1.59 sec
+      Start 296: native-fixed-pdf
+12/24 Test #316: native-fixed .............................   Passed    0.12 sec
+      Start 235: native-chapter-layout-chapter
+13/24 Test #294: native-fixed-library .....................   Passed    0.40 sec
+      Start 156: native-pdf-ccitt
+14/24 Test #410: native-ppt-wrongformat ...................   Passed    0.99 sec
+      Start 360: native-book-font
+15/24 Test #235: native-chapter-layout-chapter ............   Passed    0.11 sec
+      Start 339: native-sevenz-source
+16/24 Test #296: native-fixed-pdf .........................   Passed    0.19 sec
+17/24 Test #156: native-pdf-ccitt .........................   Passed    0.11 sec
+      Start 138: native-docx-edit-history
+18/24 Test #360: native-book-font .........................   Passed    0.08 sec
+19/24 Test  #34: native-pptx-fill-fill-transforms .........   Passed    0.60 sec
+20/24 Test #309: native-pdf-hybrid-edge-bad-truncated .....   Passed    0.33 sec
+21/24 Test #339: native-sevenz-source .....................   Passed    0.04 sec
+22/24 Test #138: native-docx-edit-history .................   Passed    0.03 sec
+23/24 Test  #19: native-pptx-shape-rotation ...............   Passed    2.04 sec
+24/24 Test #198: native-pdf-shading .......................   Passed    2.26 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =   2.29 sec

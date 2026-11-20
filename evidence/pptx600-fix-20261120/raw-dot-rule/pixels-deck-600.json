@@ -1,0 +1,153 @@
+{
+ "pdf": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-slides\\tests\\fixtures\\pdf-ppt\\deck.pdf",
+ "pdf_sha256": "b1549f6bdb6c3d51c456e5222ba8efaa7487558e6d2ace106bdb4059d8ef2204",
+ "a_sha256": "06ca9f0e0f9d079ae80754af4a1d10c457d1f07e544b02e349a963f386a9d261",
+ "b_sha256": "931948aca8638cfe32db972ce06c36456d7e29991b64ee70f9093cb99c65ab67",
+ "width": 600,
+ "runs": 0,
+ "order": "AB then optional C on even (round+page index), reverse on odd",
+ "pdfjs_root": null,
+ "idle_gates": [],
+ "gate_every": null,
+ "compared_pixels": 3042000,
+ "mismatched_pages": [],
+ "differing_pixels": 0,
+ "summary": {},
+ "pages": [
+  {
+   "page": 1,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "6cd3f17b802610bdb786127051ca24d1e39e57d7d8cc75fa938389efd0be8c3b",
+    "B": "6cd3f17b802610bdb786127051ca24d1e39e57d7d8cc75fa938389efd0be8c3b"
+   }
+  },
+  {
+   "page": 2,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "3da5f2a5a8b8dc0ce5313b0dfd65a90008e8f2ea2217c3c80916bfa587eaeaca",
+    "A": "3da5f2a5a8b8dc0ce5313b0dfd65a90008e8f2ea2217c3c80916bfa587eaeaca"
+   }
+  },
+  {
+   "page": 3,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "c7fbfb6c78da65f15c6b15e83fcbd9c2626c63ee6c2cb9fdb8a07d0b5b6e330b",
+    "B": "c7fbfb6c78da65f15c6b15e83fcbd9c2626c63ee6c2cb9fdb8a07d0b5b6e330b"
+   }
+  },
+  {
+   "page": 4,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "c5f6895ef6a225959334ec240b6331586c791ca273dc4abb35e88a40eace4bef",
+    "A": "c5f6895ef6a225959334ec240b6331586c791ca273dc4abb35e88a40eace4bef"
+   }
+  },
+  {
+   "page": 5,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "9ba52af2abc4053994ad535b84a099e8cb8dc9b422ca5cf2f45ff5ffc1728413",
+    "B": "9ba52af2abc4053994ad535b84a099e8cb8dc9b422ca5cf2f45ff5ffc1728413"
+   }
+  },
+  {
+   "page": 6,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "9265a9281f34f609e7b7236c3b00e61e86a8b01b8467cb04baca42ef88f9d85b",
+    "A": "9265a9281f34f609e7b7236c3b00e61e86a8b01b8467cb04baca42ef88f9d85b"
+   }
+  },
+  {
+   "page": 7,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "51f6e3ed497cc6fe3827f3b649baeb12d55302c0e6dd17bbca37bc33b50999df",
+    "B": "51f6e3ed497cc6fe3827f3b649baeb12d55302c0e6dd17bbca37bc33b50999df"
+   }
+  },
+  {
+   "page": 8,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "37489243658ecf968e75649d1b6d9a9e312d3ce0e62e7da2d8b9b4985b54eb13",
+    "A": "37489243658ecf968e75649d1b6d9a9e312d3ce0e62e7da2d8b9b4985b54eb13"
+   }
+  },
+  {
+   "page": 9,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "1e7990228157c349c408f990fe41beaead64e4965964d3b0485d7650896bfa0e",
+    "B": "1e7990228157c349c408f990fe41beaead64e4965964d3b0485d7650896bfa0e"
+   }
+  },
+  {
+   "page": 10,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "a0f1c9ff5a33c23bf5b7a910508526cf7c60118495147b0cbe96b963d6643c5c",
+    "A": "a0f1c9ff5a33c23bf5b7a910508526cf7c60118495147b0cbe96b963d6643c5c"
+   }
+  },
+  {
+   "page": 11,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "fc14494b26f2752b2c14459a984632d504226016c6e2f0c244dc73ae181faf60",
+    "B": "fc14494b26f2752b2c14459a984632d504226016c6e2f0c244dc73ae181faf60"
+   }
+  },
+  {
+   "page": 12,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "3c4cbce6d3c7e89c6af942e730939b27636af868fd23294ce842d97719a5470a",
+    "A": "3c4cbce6d3c7e89c6af942e730939b27636af868fd23294ce842d97719a5470a"
+   }
+  },
+  {
+   "page": 13,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "a3e27b396bf39c673be4b982558a3401cef6ab6cd81abf07caacd9e58098b9d7",
+    "B": "a3e27b396bf39c673be4b982558a3401cef6ab6cd81abf07caacd9e58098b9d7"
+   }
+  },
+  {
+   "page": 14,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "69087489479c2d38163cd6634374144b3b4daefddeb746a5536d8f310db85318",
+    "A": "69087489479c2d38163cd6634374144b3b4daefddeb746a5536d8f310db85318"
+   }
+  },
+  {
+   "page": 15,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "9a464adf6210df2a61afbaabde816e2992e8a0eec51058a249b623afaed5b59b",
+    "B": "9a464adf6210df2a61afbaabde816e2992e8a0eec51058a249b623afaed5b59b"
+   }
+  }
+ ]
+}

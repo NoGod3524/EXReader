@@ -1,0 +1,56 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 127: native-docx-footnotes-ui
+      Start 130: native-docx-real-argon-reproducible
+      Start 121: native-docx-editor-e2e
+      Start 122: native-docx-header-footer
+      Start 124: native-docx-edit-e4
+      Start 125: native-docx-edit-insert-run
+      Start 111: native-docx-edit-x6-table-new
+      Start 110: native-docx-edit-x6-table-rows
+ 1/24 Test #130: native-docx-real-argon-reproducible ...   Passed    0.54 sec
+      Start 118: native-docx-edit-x6-table-delete
+ 2/24 Test #111: native-docx-edit-x6-table-new .........   Passed    0.52 sec
+      Start 120: native-docx-edit-x6-image-package
+ 3/24 Test #125: native-docx-edit-insert-run ...........   Passed    0.57 sec
+      Start 114: native-docx-edit-x6-image-large
+ 4/24 Test #110: native-docx-edit-x6-table-rows ........   Passed    0.57 sec
+      Start 112: native-docx-edit-x6-history
+ 5/24 Test #122: native-docx-header-footer .............   Passed    0.62 sec
+      Start 119: native-docx-edit-x6-errors
+ 6/24 Test #124: native-docx-edit-e4 ...................   Passed    0.63 sec
+      Start 116: native-docx-edit-x6-image-shared
+ 7/24 Test #120: native-docx-edit-x6-image-package .....   Passed    0.58 sec
+      Start 128: native-docx-edit-e3
+ 8/24 Test #121: native-docx-editor-e2e ................   Passed    1.15 sec
+      Start 115: native-docx-edit-x6-image-delete
+ 9/24 Test #119: native-docx-edit-x6-errors ............   Passed    0.54 sec
+10/24 Test #112: native-docx-edit-x6-history ...........   Passed    0.55 sec
+      Start 126: native-docx-edit-footnotes
+      Start 117: native-docx-edit-x6-image-cell
+11/24 Test #114: native-docx-edit-x6-image-large .......   Passed    0.62 sec
+      Start 131: native-docx-edit-insert
+12/24 Test #116: native-docx-edit-x6-image-shared ......   Passed    0.63 sec
+      Start 135: native-docx-edit-delete
+13/24 Test #135: native-docx-edit-delete ...............   Passed    0.02 sec
+      Start 134: native-docx-edit-run-props
+14/24 Test #131: native-docx-edit-insert ...............   Passed    0.10 sec
+      Start 132: native-docx-edit-split
+15/24 Test #132: native-docx-edit-split ................   Passed    0.07 sec
+16/24 Test #134: native-docx-edit-run-props ............   Passed    0.09 sec
+      Start 133: native-docx-edit-para-props
+      Start 136: native-docx-edit-transaction
+17/24 Test #118: native-docx-edit-x6-table-delete ......   Passed    0.89 sec
+18/24 Test #133: native-docx-edit-para-props ...........   Passed    0.05 sec
+19/24 Test #136: native-docx-edit-transaction ..........   Passed    0.04 sec
+20/24 Test #117: native-docx-edit-x6-image-cell ........   Passed    0.53 sec
+21/24 Test #115: native-docx-edit-x6-image-delete ......   Passed    0.56 sec
+22/24 Test #126: native-docx-edit-footnotes ............   Passed    0.59 sec
+23/24 Test #128: native-docx-edit-e3 ...................   Passed    0.63 sec
+24/24 Test #127: native-docx-footnotes-ui ..............   Passed    2.31 sec
+
+100% tests passed out of 24
+
+Label Time Summary:
+headless    =   2.31 sec*proc (1 test)
+
+Total Test time (real) =   2.33 sec

@@ -1,0 +1,56 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 437: native-ppt-text-malformed
+      Start 127: native-docx-footnotes-ui
+      Start  65: native-pptx-text-autofit-invalid
+      Start  61: native-pptx-text-line-spacing
+      Start 121: native-docx-editor-e2e
+      Start 550: native-docx-real-25-textbox-noop
+      Start 427: native-ppt-fill-fallback
+      Start 540: native-docx-real-20-footnote-restart-noop
+ 1/24 Test #540: native-docx-real-20-footnote-restart-noop ...   Passed    0.61 sec
+      Start 474: native-font-manager-cache
+ 2/24 Test #550: native-docx-real-25-textbox-noop ............   Passed    0.66 sec
+      Start  83: native-pptx-table-sink
+ 3/24 Test #121: native-docx-editor-e2e ......................   Passed    0.76 sec
+      Start  92: native-ppt-real-reproducible
+ 4/24 Test #427: native-ppt-fill-fallback ....................   Passed    0.78 sec
+      Start 108: native-docx-edit-x6-table-properties
+ 5/24 Test  #92: native-ppt-real-reproducible ................   Passed    0.37 sec
+      Start 101: native-docx-edit-io-namespaces
+ 6/24 Test  #61: native-pptx-text-line-spacing ...............   Passed    1.16 sec
+      Start 362: native-chapter-bounds
+ 7/24 Test #474: native-font-manager-cache ...................   Passed    0.62 sec
+      Start 177: native-style-budget
+ 8/24 Test  #83: native-pptx-table-sink ......................   Passed    0.91 sec
+ 9/24 Test #108: native-docx-edit-x6-table-properties ........   Passed    0.78 sec
+      Start 253: native-publication-index-equivalence
+      Start 579: sdk-doc-audio
+10/24 Test #362: native-chapter-bounds .......................   Passed    0.53 sec
+      Start 239: native-construct
+11/24 Test #177: native-style-budget .........................   Passed    0.48 sec
+12/24 Test  #65: native-pptx-text-autofit-invalid ............   Passed    1.76 sec
+      Start 334: native-fb2
+      Start 178: native-chapter-source
+13/24 Test #579: sdk-doc-audio ...............................   Passed    0.29 sec
+14/24 Test #253: native-publication-index-equivalence ........   Passed    0.30 sec
+      Start 398: native-anchor-boundary
+      Start 168: native-border-edges
+15/24 Test #239: native-construct ............................   Passed    0.33 sec
+16/24 Test #101: native-docx-edit-io-namespaces ..............   Passed    0.87 sec
+17/24 Test #334: native-fb2 ..................................   Passed    0.27 sec
+      Start 376: native-reflow-disjoint
+      Start 136: native-docx-edit-transaction
+18/24 Test #178: native-chapter-source .......................   Passed    0.24 sec
+19/24 Test #398: native-anchor-boundary ......................   Passed    0.15 sec
+20/24 Test #168: native-border-edges .........................   Passed    0.09 sec
+21/24 Test #136: native-docx-edit-transaction ................   Passed    0.06 sec
+22/24 Test #376: native-reflow-disjoint ......................   Passed    0.09 sec
+23/24 Test #127: native-docx-footnotes-ui ....................   Passed    2.45 sec
+24/24 Test #437: native-ppt-text-malformed ...................   Passed    3.19 sec
+
+100% tests passed out of 24
+
+Label Time Summary:
+headless    =   2.45 sec*proc (1 test)
+
+Total Test time (real) =   3.21 sec

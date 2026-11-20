@@ -1,0 +1,53 @@
+Test project C:/Users/Oscar/Documents/Codex/EXReader-slides/build/p600
+      Start 195: native-alpha-source
+      Start 264: native-document-search-bounded
+      Start 439: native-ppt-text-bytes
+      Start 412: native-ppt-shape-blue
+      Start 232: native-text-index
+      Start 285: native-pdf-outline
+      Start 568: native-docx-real-text-transaction
+      Start  97: native-docx-edit-io-sections
+ 1/24 Test #195: native-alpha-source .......................   Passed    0.45 sec
+      Start 555: native-docx-real-27-bookmarks-edited
+ 2/24 Test #285: native-pdf-outline ........................   Passed    0.13 sec
+      Start 504: native-docx-real-02-table-vertical-noop
+ 3/24 Test #232: native-text-index .........................   Passed    0.43 sec
+      Start 476: native-xml-input
+ 4/24 Test #412: native-ppt-shape-blue .....................   Passed    0.63 sec
+      Start 423: native-ppt-fill-png
+ 5/24 Test #476: native-xml-input ..........................   Passed    0.26 sec
+      Start 498: native-vertical-expand-ruby
+ 6/24 Test #568: native-docx-real-text-transaction .........   Passed    0.62 sec
+      Start 106: native-docx-edit-io-errors
+ 7/24 Test #555: native-docx-real-27-bookmarks-edited ......   Passed    0.72 sec
+      Start   2: native-pptx-title
+ 8/24 Test #504: native-docx-real-02-table-vertical-noop ...   Passed    0.83 sec
+      Start 146: native-lcp-normal
+ 9/24 Test #264: native-document-search-bounded ............   Passed    1.36 sec
+      Start 302: native-pdf-hybrid-real-chinese
+10/24 Test #498: native-vertical-expand-ruby ...............   Passed    0.69 sec
+11/24 Test #146: native-lcp-normal .........................   Passed    0.14 sec
+      Start 337: native-sevenz-codecs
+      Start 365: native-reflow-basic
+12/24 Test #423: native-ppt-fill-png .......................   Passed    0.78 sec
+      Start 356: native-shaping
+13/24 Test  #97: native-docx-edit-io-sections ..............   Passed    1.14 sec
+      Start 265: native-document-search-mapping
+14/24 Test #439: native-ppt-text-bytes .....................   Passed    1.56 sec
+      Start 401: native-audio-component
+15/24 Test #337: native-sevenz-codecs ......................   Passed    0.21 sec
+      Start 370: native-reflow-failures
+16/24 Test #265: native-document-search-mapping ............   Passed    0.07 sec
+17/24 Test #356: native-shaping ............................   Passed    0.20 sec
+      Start 374: native-reflow-revision
+18/24 Test #365: native-reflow-basic .......................   Passed    0.22 sec
+19/24 Test #401: native-audio-component ....................   Passed    0.07 sec
+20/24 Test #374: native-reflow-revision ....................   Passed    0.02 sec
+21/24 Test #106: native-docx-edit-io-errors ................   Passed    0.63 sec
+22/24 Test   #2: native-pptx-title .........................   Passed    0.51 sec
+23/24 Test #370: native-reflow-failures ....................   Passed    0.05 sec
+24/24 Test #302: native-pdf-hybrid-real-chinese ............   Passed    0.34 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =   1.75 sec
