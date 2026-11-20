@@ -172,6 +172,63 @@ static void path_cache_and_solid_clip(void) {
   CHECK(!memcmp(exr_canvas_bitmap(fast)->pixels,exr_canvas_bitmap(ref)->pixels,(size_t)160*120*4));
   exr_canvas_free(fast); exr_canvas_free(ref);
 }
-int main(void) { backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); path_cache_and_solid_clip(); printf("%u native canvas checks passed\n",checks); return 0; }
+/* Compare every compact coverage byte with the dense union rasterizer.
+   Shared fractional edges compound, including a one-pixel intersection. */
+static void fractional_clip_rows(void) {
+  const double boxes[][4]={
+    {-5,-2,68.5,65.875},{2.25,3.125,57.5,55.625},{2.25,3.125,57.5,55.625},
+    {59.25,58.375,.625,2},{59.5,59.125,.375,.25},{-8,-4,2,3}
+  };
+  exr_canvas_config config={0}; exr_canvas *compact=NULL,*dense=NULL;
+  exr_path_segment path[5];
+  exr_draw_sink sink={0};
+  config.width=config.height=64;
+  OK(exr_canvas_create(&config,&compact,&error));
+  OK(exr_canvas_create(&config,&dense,&error));
+  OK(exr_canvas_get_sink(dense,&sink,&error));
+  for(size_t i=0;i<sizeof(boxes)/sizeof(*boxes);i++) {
+    rectangle(path,boxes[i][0],boxes[i][1],boxes[i][2],boxes[i][3]);
+    OK(exr_canvas_clip(compact,path,5,NULL,EXR_FILL_NONZERO,&error));
+    OK(sink.state(dense,EXR_DRAW_BEGIN_CLIP,&error));
+    OK(sink.clip(dense,path,5,NULL,EXR_FILL_NONZERO,1,&error));
+    OK(sink.state(dense,EXR_DRAW_END_CLIP,&error));
+    CHECK(compact->clip && compact->clip->bitmap.height==4);
+    for(unsigned y=0;y<config.height;y++)
+      CHECK(!memcmp(exr_clip_row(compact->clip,y),exr_clip_row(dense->clip,y),config.width));
+  }
+  exr_canvas_free(dense); exr_canvas_free(compact);
+}
+/* A fractional viewport keeps its fringe when intersected with an identity clip. */
+static void fractional_full_span_clip(void) {
+  exr_canvas_config config={0}; exr_canvas *c=NULL; exr_path_segment rect[5];
+  exr_draw_style style=exr_draw_style_defaults(); const exr_bitmap *b;
+  config.width=8; config.height=6; config.mask_budget=1;
+  OK(exr_canvas_create(&config,&c,&error));
+  rectangle(rect,0,0,8,5.5);
+  OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  CHECK(c->clip && c->clip->full_span && !c->mask_bytes && c->full_span_bytes==32);
+  CHECK(c->clip->solid_is_rect && c->clip->solid_rect[3]==5);
+  OK(exr_canvas_save(c,&error));
+  rectangle(rect,.00001,0,8,5.5);
+  OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  CHECK(exr_clip_row(c->clip,5)[0]==64 && exr_clip_row(c->clip,5)[1]==64);
+  OK(exr_canvas_restore(c,&error));
+  rectangle(rect,0,0,8,6);
+  OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  CHECK(c->clip && exr_clip_row(c->clip,5)[1]==128);
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_RGB,&error));
+  rectangle(rect,.00001,0,8,5.5);
+  OK(exr_canvas_clip(c,rect,5,NULL,EXR_FILL_NONZERO,&error));
+  CHECK(exr_clip_row(c->clip,5)[0]==127 && exr_clip_row(c->clip,5)[1]==128);
+  rectangle(rect,0,0,8,6); style.fill=0x204080ff;
+  OK(exr_canvas_path(c,rect,5,NULL,&style,&error));
+  OK(exr_canvas_end_layer(c,1,&error));
+  b=exr_canvas_bitmap(c);
+  pixel(b,0,4,0x20,0x40,0x80);
+  CHECK(b->pixels[5*b->stride+3]==63 && b->pixels[5*b->stride+7]==64);
+  CHECK(exr_canvas_clip(c,rect,5,NULL,(exr_fill_rule)99,&error)==EXR_ARGUMENT);
+  exr_canvas_free(c);
+}
+int main(void) { fractional_clip_rows(); fractional_full_span_clip(); backgrounds(); clip_and_ownership(); stroke_and_images(); drawing_sink(); failures(); group_churn(); path_cache_and_solid_clip(); printf("%u native canvas checks passed\n",checks); return 0; }
 
 

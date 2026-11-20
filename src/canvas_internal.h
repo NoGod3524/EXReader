@@ -3,15 +3,8 @@
 #define EXR_CANVAS_INTERNAL_H
 #include "vector_internal.h"
 #include "buffer_pool_internal.h"
-/* Rows outside [dirty_top,dirty_bottom) are zero; recycling clears only the rest.
-   Path coverage also keeps columns outside [dirty_left,dirty_right) at zero. */
 typedef struct {
-  exr_bitmap bitmap; size_t refs;
-  uint32_t dirty_top,dirty_bottom,dirty_left,dirty_right;
-  uint16_t *solid_spans; uint32_t solid_top,solid_bottom;
-  uint16_t solid_rect[4]; uint8_t solid_is_rect;
-} exr_clip_mask;
-typedef struct {
+  exr_layer_damage damage;
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
   int parent_offset_x,parent_offset_y;
   unsigned parent_gray_groups;
@@ -31,7 +24,7 @@ struct exr_canvas {
   exr_clip_mask *clip,*saved[160],*group,*groups[64];
   exr_canvas_layer *layers;size_t layer_depth,layer_capacity,layer_bytes,layer_budget;
   exr_blend_mode blend,saved_blend[160];
-  size_t depth,group_depth,mask_bytes,mask_count,mask_budget,work;
+  size_t depth,group_depth,mask_bytes,full_span_bytes,mask_count,mask_budget,work;
   const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;exr_composite_state mask_state;
   unsigned char *soft_mask_owned; /* cropped copy while a region buffer is active */
   unsigned alpha_flags,saved_alpha_flags[160];

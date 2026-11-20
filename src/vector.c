@@ -184,6 +184,19 @@ static int axis_rectangle(const exr_vector_edge edges[4],double left,double top,
   }
   return sides==15 && first!=previous;
 }
+int exr_vector_rectangle_bounds(const exr_vector_polyline *path,double bounds[4]) {
+  exr_vector_edge edges[4];
+  if(path->point_count!=4 || path->contour_count!=1) return 0;
+  bounds[0]=bounds[2]=path->points[0].x;
+  bounds[1]=bounds[3]=path->points[0].y;
+  for(unsigned i=0;i<4;i++) {
+    exr_vector_point a=path->points[i],b=path->points[(i+1)%4];
+    edges[i]=(exr_vector_edge){a.x,a.y,b.x,b.y};
+    bounds[0]=fmin(bounds[0],a.x); bounds[2]=fmax(bounds[2],a.x);
+    bounds[1]=fmin(bounds[1],a.y); bounds[3]=fmax(bounds[3],a.y);
+  }
+  return axis_rectangle(edges,bounds[0],bounds[1],bounds[2],bounds[3]);
+}
 static int axis_rectangles(const exr_vector_edge *edges,size_t count,exr_vector_rule rule,
                            double left,double top,double right,double bottom) {
   size_t i; int winding=0;
@@ -197,11 +210,14 @@ static int axis_rectangles(const exr_vector_edge *edges,size_t count,exr_vector_
   }
   return rule==EXR_VECTOR_EVENODD ? (count/4)%2!=0 : winding!=0;
 }
-static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned coverage,uint32_t color,
-                           const double *cmyk,double cmyk_alpha,const exr_bitmap *clip,
-                           exr_blend_mode mode,exr_composite_state *state) {
+static inline int compact_clip_solid_row(const exr_clip_mask *clip,int y) {
+  return clip && clip->compact_height && clip->solid_is_rect &&
+    y>=(int)clip->solid_rect[1] && y<(int)clip->solid_rect[3];
+}
+static void paint_rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned coverage,uint32_t color,
+                                 const double *cmyk,double cmyk_alpha,const unsigned char *mask,
+                                 exr_blend_mode mode,exr_composite_state *state) {
   int x;
-  const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
   if(!coverage || left>=right) return;
   if(!cmyk && !state && mode==EXR_BLEND_NORMAL && (color&255)==255 && coverage==255) {
     const unsigned char rgba[4]={(unsigned char)(color>>24),(unsigned char)(color>>16),(unsigned char)(color>>8),255};
@@ -231,6 +247,22 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
     else if(mode==EXR_BLEND_NORMAL) exr_pixel(bitmap,x,y,color,alpha);
     else exr_pixel_blend(bitmap,x,y,color,alpha,mode);
   }
+}
+static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned coverage,uint32_t color,
+                           const double *cmyk,double cmyk_alpha,const exr_clip_mask *clip,
+                           exr_blend_mode mode,exr_composite_state *state) {
+  const unsigned char *mask=exr_clip_row(clip,(size_t)y);
+  if(compact_clip_solid_row(clip,y)) {
+    int first=left>=(int)clip->solid_rect[0] ? left : (int)clip->solid_rect[0];
+    int last=right<=(int)clip->solid_rect[2] ? right : (int)clip->solid_rect[2];
+    if(first<last) {
+      if(left<first) paint_rectangle_span(bitmap,left,first,y,coverage,color,cmyk,cmyk_alpha,mask,mode,state);
+      paint_rectangle_span(bitmap,first,last,y,coverage,color,cmyk,cmyk_alpha,NULL,mode,state);
+      if(last<right) paint_rectangle_span(bitmap,last,right,y,coverage,color,cmyk,cmyk_alpha,mask,mode,state);
+      return;
+    }
+  }
+  paint_rectangle_span(bitmap,left,right,y,coverage,color,cmyk,cmyk_alpha,mask,mode,state);
 }
 static inline void record_solid_span(uint16_t *solid_spans,const exr_solid_clip *clip_solid,int y,int r0,int r1) {
   if(!solid_spans || r0>=r1) return;
@@ -262,7 +294,7 @@ static uint16_t *ensure_solid_spans(exr_solid_out *out,uint32_t height) {
 
 static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
                             exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,
-                            const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,
+                            const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,
                             exr_vector_scratch *scratch,exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
                             size_t *work,const exr_control *control,exr_error *error) {
   size_t local_work=0,i;
@@ -282,7 +314,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   if(!storage(bitmap,1) && !storage(bitmap,4)) return exr_fail(error,EXR_ARGUMENT,"Invalid vector target bitmap storage");
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(error,EXR_ARGUMENT,"Invalid vector blend mode");
   if((count && !edges) || (rule!=EXR_VECTOR_NONZERO && rule!=EXR_VECTOR_EVENODD) ||
-     (clip && (!storage(clip,1) || clip->width!=bitmap->width || clip->height!=bitmap->height || overlaps(clip,bitmap))))
+     (clip && (!storage(&clip->bitmap,1) || clip->bitmap.width!=bitmap->width || exr_clip_height(clip)!=bitmap->height || overlaps(&clip->bitmap,bitmap))))
     return exr_fail(error,EXR_ARGUMENT,"Invalid vector edges, fill rule or clip bitmap");
   if(count>1048576) return exr_fail(error,EXR_LIMIT,"Vector edge count exceeds one million");
   if(!work) work=&local_work;
@@ -610,12 +642,14 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
     if(!exr_vector_work(work,(size_t)row_width*((state ? 20+state->depth*4 : 0)+(mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64)))) goto limit;
     keep_coverage=write_mask && stable_until>y+.875;
     if(keep_coverage) coverage_dirty=1;
+    const exr_clip_mask *row_clip=clip;
+    if(compact_clip_solid_row(clip,y) && left>=(int)clip->solid_rect[0] && right<=(int)clip->solid_rect[2]) row_clip=NULL;
 
     /* Clip masks paint opaque white into one channel. Keep the identical
        source-over arithmetic in a row loop without per-pixel paint dispatch. */
     if(write_mask) {
       unsigned char *target=bitmap->pixels+(size_t)y*bitmap->stride+left;
-      const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride+left : NULL;
+      const unsigned char *mask=row_clip ? exr_clip_row(row_clip,(size_t)y)+left : NULL;
       if(!keep_coverage && build_coverage) {
         /* Common non-stable row: consume coverage directly without packing into
            opacity[], skipping zero-coverage pixels and zeroing on consume. */
@@ -710,7 +744,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
       const unsigned char rgba[4]={(unsigned char)r,(unsigned char)g,(unsigned char)b,255};
       uint32_t packed; memcpy(&packed,rgba,4);
       unsigned char *row_dst=bitmap->pixels+(size_t)y*bitmap->stride+(size_t)left*4;
-      if(!clip) {
+      if(!row_clip) {
         for(size_t w=0;w<touched_words;w++) {
           uint64_t m=touched_bits[w];
           if(!m) continue;
@@ -737,7 +771,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
           }
         }
       } else {
-        const unsigned char *clip_row=clip->pixels+(size_t)y*clip->stride+(unsigned)left;
+        const unsigned char *clip_row=exr_clip_row(row_clip,(size_t)y)+(unsigned)left;
         for(size_t w=0;w<touched_words;w++) {
           uint64_t m=touched_bits[w];
           if(!m) continue;
@@ -768,7 +802,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
         }
       }
     } else {
-      const unsigned char *clip_row=clip ? clip->pixels+(size_t)y*clip->stride+(unsigned)left : NULL;
+      const unsigned char *clip_row=row_clip ? exr_clip_row(row_clip,(size_t)y)+(unsigned)left : NULL;
       for(size_t w=0;w<touched_words;w++) {
         uint64_t m=touched_bits[w];
         if(!m) continue;
@@ -795,7 +829,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
       }
     }
     /* Run pixels kept coverage 0 above; each is painted once at alpha 255. */
-    for(i=0;i<run_count;i++) rectangle_span(bitmap,left+runs[2*i],left+runs[2*i+1],y,255,color,cmyk,cmyk_alpha,clip,mode,state);
+    for(i=0;i<run_count;i++) rectangle_span(bitmap,left+runs[2*i],left+runs[2*i+1],y,255,color,cmyk,cmyk_alpha,row_clip,mode,state);
   }
   status=exr_fail(error,EXR_OK,""); goto done;
 limit:
@@ -805,23 +839,23 @@ done:
 }
 
 exr_status exr_vector_fill_blend_ex(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-  exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,const exr_bitmap *clip,
+  exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,const exr_clip_mask *clip,
   exr_blend_mode mode,exr_composite_state *state,exr_vector_scratch *scratch,
   exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
   size_t *work,const exr_control *control,exr_error *error) {
   return fill_blend(bitmap,edges,count,rule,color,cmyk,cmyk_alpha,clip,mode,state,scratch,solid_out,clip_solid,work,control,error);
 }
 exr_status exr_vector_fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-                            exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,
+                            exr_vector_rule rule,uint32_t color,const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,
                             size_t *work,const exr_control *control,exr_error *error) {
   return fill_blend(bitmap,edges,count,rule,color,NULL,0,clip,mode,state,NULL,NULL,NULL,work,control,error);
 }
 exr_status exr_vector_fill_blend_cmyk(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-                            exr_vector_rule rule,const double cmyk[4],double alpha,const exr_bitmap *clip,exr_blend_mode mode,
+                            exr_vector_rule rule,const double cmyk[4],double alpha,const exr_clip_mask *clip,exr_blend_mode mode,
                             exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error) {
   return fill_blend(bitmap,edges,count,rule,0,cmyk,alpha,clip,mode,state,NULL,NULL,NULL,work,control,error);
 }
 exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
   exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error) {
-  return exr_vector_fill_blend(bitmap,edges,count,rule,color,clip,EXR_BLEND_NORMAL,NULL,work,control,error);
+  return exr_vector_fill_blend(bitmap,edges,count,rule,color,clip ? &(exr_clip_mask){.bitmap=*clip} : NULL,EXR_BLEND_NORMAL,NULL,work,control,error);
 }

@@ -1,0 +1,198 @@
+{
+ "pdf": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-vhslides\\tests\\fixtures\\pdf-hybrid-real\\pptx-20.pdf",
+ "pdf_sha256": "2bfb94aa6905f27915e309b3c820fef3ba13492dddedfb93d97a10e8d7679729",
+ "a_sha256": "89ee7f81953459f0633aa66fb6e8f8bd65cd80bb8870963414283a625ef2b0db",
+ "b_sha256": "48c2a0ad9aedf4763a33e907f3eef60705bf6e56773333ba3b7cf09e2394e2c7",
+ "width": 2400,
+ "runs": 0,
+ "order": "AB then optional C on even (round+page index), reverse on odd",
+ "pdfjs_root": null,
+ "idle_gates": [],
+ "gate_every": null,
+ "compared_pixels": 64800000,
+ "mismatched_pages": [],
+ "differing_pixels": 0,
+ "summary": {},
+ "pages": [
+  {
+   "page": 1,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "f5b7d538b0781fe755651bd376fa9b35ef1d7265b7605754f86929bfc1582a06",
+    "B": "f5b7d538b0781fe755651bd376fa9b35ef1d7265b7605754f86929bfc1582a06"
+   }
+  },
+  {
+   "page": 2,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "ddaa96fbbc8e3897646e3bba13a5475730888d156ffe4823a3f702a50e383bcd",
+    "A": "ddaa96fbbc8e3897646e3bba13a5475730888d156ffe4823a3f702a50e383bcd"
+   }
+  },
+  {
+   "page": 3,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "f9f24ea12dd463fd19d283798426638050ac922a722993a9b4ccf574fec28343",
+    "B": "f9f24ea12dd463fd19d283798426638050ac922a722993a9b4ccf574fec28343"
+   }
+  },
+  {
+   "page": 4,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "0ca9e135b8e6fbf619fff411214acd58a59b9cf2565b65c26f05552807214c43",
+    "A": "0ca9e135b8e6fbf619fff411214acd58a59b9cf2565b65c26f05552807214c43"
+   }
+  },
+  {
+   "page": 5,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "00e03ea9d73dc5f7603e3b9f3d25a0178adab375994a3a77a4480f56039304e0",
+    "B": "00e03ea9d73dc5f7603e3b9f3d25a0178adab375994a3a77a4480f56039304e0"
+   }
+  },
+  {
+   "page": 6,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "84a8a0bd88879ff8bbdc7f7d076fae259c546429c102dbc4dd17635026d7ebf2",
+    "A": "84a8a0bd88879ff8bbdc7f7d076fae259c546429c102dbc4dd17635026d7ebf2"
+   }
+  },
+  {
+   "page": 7,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "1287956d3b0135fb50c9b66adc9bdb0a9a19910aaa413a9f1e35eb407a94a2b4",
+    "B": "1287956d3b0135fb50c9b66adc9bdb0a9a19910aaa413a9f1e35eb407a94a2b4"
+   }
+  },
+  {
+   "page": 8,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "543ba97314e57b1157463f9af4ea1b8d1ee0afd69b99658d3d1ee9e18c310ded",
+    "A": "543ba97314e57b1157463f9af4ea1b8d1ee0afd69b99658d3d1ee9e18c310ded"
+   }
+  },
+  {
+   "page": 9,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "4d543ebbb38683bb87191defcd2f8489d468ce5c94be0fce658997d5a7ad79f9",
+    "B": "4d543ebbb38683bb87191defcd2f8489d468ce5c94be0fce658997d5a7ad79f9"
+   }
+  },
+  {
+   "page": 10,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "00c401fe5c2746f61fbbe6332ecfb644457e7434ea48608e96272e1c58ae8796",
+    "A": "00c401fe5c2746f61fbbe6332ecfb644457e7434ea48608e96272e1c58ae8796"
+   }
+  },
+  {
+   "page": 11,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "0865bb7f54622f0c9bc9790d2ae67aee2657666aa9531e01a1557613499529d8",
+    "B": "0865bb7f54622f0c9bc9790d2ae67aee2657666aa9531e01a1557613499529d8"
+   }
+  },
+  {
+   "page": 12,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "dd764886c7cbd47cd6ef6eabae8d46aff50d003e3e2e3af6678cba4a470012e3",
+    "A": "dd764886c7cbd47cd6ef6eabae8d46aff50d003e3e2e3af6678cba4a470012e3"
+   }
+  },
+  {
+   "page": 13,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "395b6870afe49c6e83108f6bccf35f5168059e8cc2b41c83ab016cfbb3d41b5a",
+    "B": "395b6870afe49c6e83108f6bccf35f5168059e8cc2b41c83ab016cfbb3d41b5a"
+   }
+  },
+  {
+   "page": 14,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "b3b40c66efae543853385ae721062b22e27ba6f75f8b3244d093f2902640c9a5",
+    "A": "b3b40c66efae543853385ae721062b22e27ba6f75f8b3244d093f2902640c9a5"
+   }
+  },
+  {
+   "page": 15,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "471b3a9d25fa88e9594708bad8351090f0e4d73603fbdd64a4b10d5c28117238",
+    "B": "471b3a9d25fa88e9594708bad8351090f0e4d73603fbdd64a4b10d5c28117238"
+   }
+  },
+  {
+   "page": 16,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "c4d5ca6674e1a18fa4f48de08aceb675f18aa1ac2d0a04ed8631c41c935ec7a7",
+    "A": "c4d5ca6674e1a18fa4f48de08aceb675f18aa1ac2d0a04ed8631c41c935ec7a7"
+   }
+  },
+  {
+   "page": 17,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "2a1ce356635e49c8637ac9abc79ea30f05be19692a97b00f3b801c527a34bca9",
+    "B": "2a1ce356635e49c8637ac9abc79ea30f05be19692a97b00f3b801c527a34bca9"
+   }
+  },
+  {
+   "page": 18,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "8dab92f5c734b0f382b9850a72ce50c4b11f0039c9cbfc1a4128fa0bf462e462",
+    "A": "8dab92f5c734b0f382b9850a72ce50c4b11f0039c9cbfc1a4128fa0bf462e462"
+   }
+  },
+  {
+   "page": 19,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "A": "b0ebfc54fd645583ff9f0b91bedf0a46cce190a5b4f740b378ca250b497f1012",
+    "B": "b0ebfc54fd645583ff9f0b91bedf0a46cce190a5b4f740b378ca250b497f1012"
+   }
+  },
+  {
+   "page": 20,
+   "A": [],
+   "B": [],
+   "hashes": {
+    "B": "ba7fbb8c0a6a1cef720543ec184390369c030cb03d7ccd571350dc9e1584e549",
+    "A": "ba7fbb8c0a6a1cef720543ec184390369c030cb03d7ccd571350dc9e1584e549"
+   }
+  }
+ ]
+}
