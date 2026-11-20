@@ -55,7 +55,7 @@ static void rasterized(exr_pdf_file *file) {
 static int cancel(void *context) { (void)context; return 1; }
 static void affine(void) {
   unsigned char pixels[16]={255,0,0,255,0,255,0,255,0,0,255,255,255,255,255,255},target[256],mask[64];
-  exr_bitmap src={0},dst={0},clip={0}; double matrix[6]={4,0,0,4,0,0}; size_t work=0;
+  exr_bitmap src={0},dst={0},clip={0}; double matrix[6]={4,0,0,4,0,0}; exr_raster_work work={0};
   src.width=src.height=2; src.channels=4; src.stride=8; src.pixels=pixels;
   dst.width=dst.height=8; dst.channels=4; dst.stride=32; dst.pixels=target;
   clip.width=clip.height=clip.stride=8; clip.channels=1; clip.pixels=mask; memset(mask,128,64);
@@ -65,7 +65,7 @@ static void affine(void) {
   memset(target,255,sizeof(target)); OK(exr_vector_image(&dst,&src,matrix,1,0,NULL,&work,NULL,&error)); pixel(&dst,3,0,255,0,0,255); pixel(&dst,0,0,0,0,255,255);
   CHECK(exr_vector_image(&dst,&dst,matrix,1,0,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
   matrix[0]=NAN; CHECK(exr_vector_image(&dst,&src,matrix,1,0,NULL,NULL,NULL,&error)==EXR_ARGUMENT); matrix[0]=0;
-  work=(size_t)256*1024*1024; CHECK(exr_vector_image(&dst,&src,matrix,1,0,NULL,&work,NULL,&error)==EXR_LIMIT);
+  work.used=(size_t)256*1024*1024; CHECK(exr_vector_image(&dst,&src,matrix,1,0,NULL,&work,NULL,&error)==EXR_LIMIT);
   { exr_control control={0}; control.cancelled=cancel; CHECK(exr_vector_image(&dst,&src,matrix,1,0,NULL,NULL,&control,&error)==EXR_CANCELLED); }
   /* A transparent red neighbor must not tint bilinear sampling of blue. */
   src.width=2; src.height=1; src.stride=8; pixels[3]=0; pixels[4]=0; pixels[5]=0; pixels[6]=255; pixels[7]=255;
@@ -304,7 +304,7 @@ static void affine(void) {
     unit.bitmap=(exr_bitmap){1,1,4,white,4};other.pixels=reference;
     for(unsigned trial=0;trial<96;trial++) {
       const double *m=placements[trial%6];double alpha=trial&1 ? .63 : 1;
-      const exr_bitmap *cover=trial&2 ? &clip : NULL;size_t a_work=0,b_work=0;
+      const exr_bitmap *cover=trial&2 ? &clip : NULL;exr_raster_work a_work={0},b_work={0};
       for(unsigned i=0;i<48;i++) colors[i]=(unsigned char)(i*37+trial*23);
       colors[3]=0;colors[7]=255;
       for(unsigned i=0;i<64;i++) mask[i]=(unsigned char)(i*53+trial);
@@ -318,7 +318,7 @@ static void affine(void) {
       OK(exr_vector_texture_paint(&other,&color,m,alpha,cover,&b_work,NULL,&error));
       CHECK(!memcmp(target,reference,256));
       /* The identity mask adds twelve work units per destination pixel. */
-      CHECK(b_work>=a_work && (b_work-a_work)%12==0);
+      CHECK(b_work.used>=a_work.used && (b_work.used-a_work.used)%12==0);
     }
   }
 
@@ -396,14 +396,14 @@ static void cmyk_jpeg_cases(const char *dir) {
   }
 }
 static void cache_cases(const char *dir) {
-  unsigned char *data;size_t size,work=0,cost;exr_pdf_file *file=NULL,*other=NULL;
+  unsigned char *data;size_t size,cost;exr_raster_work work={0};exr_pdf_file *file=NULL,*other=NULL;
   exr_vector_texture *a=NULL,*b=NULL,*c=NULL;exr_pdf_image_cache_stats stats,before;
   data=load(dir,"pdf-images.pdf",&size);OK(exr_pdf_open(data,size,&file,&error));
   OK(exr_pdf_open(data,size,&other,&error));
-  OK(exr_pdf_image_load(file,image(file,"Soft"),resources(file),0,&a,&work,NULL,&error));cost=work;
+  OK(exr_pdf_image_load(file,image(file,"Soft"),resources(file),0,&a,&work,NULL,&error));cost=work.used;
   exr_pdf_operation_end(file);
   OK(exr_pdf_image_load(file,image(file,"Soft"),resources(file),0,&b,&work,NULL,&error));
-  CHECK(a==b && a->mask && work==2*cost);exr_pdf_image_release(b);
+  CHECK(a==b && a->mask && work.used==2*cost);exr_pdf_image_release(b);
   exr_pdf_image_cache_report(file,&stats);CHECK(stats.hits==1 && stats.misses==1 && stats.entries==1 && stats.bytes>0);
   OK(exr_pdf_image_load(other,image(other,"Soft"),resources(other),0,&b,NULL,NULL,&error));CHECK(b!=a);
   exr_pdf_image_release(b);exr_pdf_close(other);
@@ -474,7 +474,7 @@ int main(int argc,char **argv) {
   { exr_vector_texture *texture=NULL; OK(exr_pdf_image_load(file,image(file,"HighMask"),resources(file),0,&texture,NULL,NULL,&error));
     CHECK(texture && texture->bitmap.width==1 && texture->mask && texture->mask->bitmap.width==4); exr_pdf_image_release(texture); exr_pdf_image_release(NULL);
   }
-  { exr_control control={0}; exr_bitmap b; int interp=1; size_t work=(size_t)256*1024*1024; control.cancelled=cancel;
+  { exr_control control={0}; exr_bitmap b; int interp=1; exr_raster_work work={.used=(size_t)256*1024*1024}; control.cancelled=cancel;
     CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,NULL,&control,&error)==EXR_CANCELLED && !b.pixels && !interp);
     CHECK(exr_pdf_image_decode(file,image(file,"RGB"),resources(file),0,&b,&interp,&work,NULL,&error)==EXR_LIMIT && !b.pixels);
   }

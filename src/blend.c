@@ -258,7 +258,7 @@ void exr_pixel_composite(exr_bitmap *bitmap,int x,int y,uint32_t color,unsigned 
   exr_pixel_object(bitmap,x,y,color,alpha,shape,mode,state);
 }
 exr_status exr_composite_initialize(exr_bitmap *child,exr_composite_state *state,const exr_bitmap *parent,
-  const exr_composite_state *parent_state,int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
+  const exr_composite_state *parent_state,int origin_x,int origin_y,exr_raster_work *work,const exr_control *control,exr_error *e) {
   size_t y,x;
   state->backdrop=*parent;state->backdrop_state=parent_state;state->depth=parent_state ? parent_state->depth+1 : 1;
   state->left=child->width;state->top=child->height;
@@ -300,7 +300,7 @@ exr_status exr_bitmap_to_gray(exr_bitmap *b,const exr_control *control,exr_error
 
 static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,
   const exr_clip_mask *clip,exr_composite_state *target_state,const exr_composite_state *source_state,
-  int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
+  int origin_x,int origin_y,exr_raster_work *work,const exr_control *control,exr_error *e) {
   size_t y,x,left=source_state->left,top=source_state->top,right=source_state->right,bottom=source_state->bottom;
   unsigned cost=mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64;
   int dst_cmyk=target_state && target_state->cmyk_pixels;
@@ -364,7 +364,7 @@ static exr_status frame_cmyk(exr_bitmap *target,const exr_bitmap *source,double 
 }
 exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,double opacity,exr_blend_mode mode,
   const exr_clip_mask *clip,exr_composite_state *target_state,const exr_composite_state *source_state,
-  const exr_layer_damage *damage,int origin_x,int origin_y,size_t *work,const exr_control *control,exr_error *e) {
+  const exr_layer_damage *damage,int origin_x,int origin_y,exr_raster_work *work,const exr_control *control,exr_error *e) {
   size_t y,x,left=0,top=0,right=source->width,bottom=source->height;unsigned cost=mode==EXR_BLEND_NORMAL ? 1 : mode<EXR_BLEND_HUE ? 24 : 64;
   const uint16_t *solid=clip && clip->solid_is_rect ? clip->solid_rect : NULL;
   const unsigned char *previous_mask=NULL;
@@ -412,11 +412,11 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
           size_t n=last-x<32 ? last-x : 32;
           unsigned any=0,all=255;
           for(size_t i=0;i<n;i++) { any|=p[4*i+3]; all&=p[4*i+3]; }
-          if(!any) *work-=n;
+          if(!any) work->used-=n;
           else if(all==255) memcpy(q,p,n*4);
           else for(size_t i=0;i<n;i++) {
             const unsigned char *src=p+4*i;
-            if(!src[3]) (*work)--;
+            if(!src[3]) work->used--;
             else if(src[3]==255) memcpy(q+4*i,src,4);
             else {
               uint32_t color=((uint32_t)src[0]<<24)|((uint32_t)src[1]<<16)|((uint32_t)src[2]<<8)|src[3];
@@ -529,7 +529,7 @@ exr_status exr_composite_frame(exr_bitmap *target,const exr_bitmap *source,doubl
    are left untouched, so only the coverage bounds are scanned; the skipped rows
    are still charged so the work budget matches a full-canvas scan. */
 static exr_status compound_scan(const exr_bitmap *target,const uint32_t bounds[4],size_t *y0,size_t *y1,size_t *x0,size_t *x1,
-  size_t *work,const exr_control *control,exr_error *e) {
+  exr_raster_work *work,const exr_control *control,exr_error *e) {
   *x0=bounds[0];*y0=bounds[1];*x1=bounds[2]<target->width ? bounds[2] : target->width;*y1=bounds[3]<target->height ? bounds[3] : target->height;
   if(*x0>=*x1 || *y0>=*y1) *x0=*x1=*y0=*y1=0;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -542,7 +542,7 @@ static inline unsigned char clamp_round_u8(double v) {
 }
 exr_status exr_composite_compound_at(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,uint32_t mask_x,uint32_t mask_y,
   const uint32_t bounds[4],uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_clip_mask *clip,exr_composite_state *state,
-  size_t *work,const exr_control *control,exr_error *e) {
+  exr_raster_work *work,const exr_control *control,exr_error *e) {
   size_t y,x,y0,y1,x0,x1;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;
   int opaque=mode==EXR_BLEND_NORMAL && !state && target->channels==4 && ((fill_color&stroke_color)&255)==255;
   const unsigned char fill_rgba[4]={(unsigned char)(fill_color>>24),(unsigned char)(fill_color>>16),(unsigned char)(fill_color>>8),255};
@@ -556,7 +556,8 @@ exr_status exr_composite_compound_at(exr_bitmap *target,const exr_bitmap *fill,c
     const unsigned char *fill_row=fill->pixels+(y-mask_y)*fill->stride+(x0-mask_x);
     const unsigned char *stroke_row=stroke->pixels+(y-mask_y)*stroke->stride+(x0-mask_x);
     const unsigned char *clip_row=exr_clip_row(clip,y);
-    size_t w=x1-x0,row_budget;
+    size_t w=x1-x0;
+    exr_raster_work row_budget;
     int solid_spans;
     if(clip_row) clip_row+=x0;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
@@ -713,12 +714,12 @@ exr_status exr_composite_compound_at(exr_bitmap *target,const exr_bitmap *fill,c
 }
 exr_status exr_composite_compound(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
   uint32_t fill_color,uint32_t stroke_color,exr_blend_mode mode,const exr_clip_mask *clip,exr_composite_state *state,
-  size_t *work,const exr_control *control,exr_error *e) {
+  exr_raster_work *work,const exr_control *control,exr_error *e) {
   return exr_composite_compound_at(target,fill,stroke,0,0,bounds,fill_color,stroke_color,mode,clip,state,work,control,e);
 }
 exr_status exr_composite_compound_cmyk_at(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,uint32_t mask_x,uint32_t mask_y,
   const uint32_t bounds[4],const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
-  const exr_clip_mask *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
+  const exr_clip_mask *clip,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *e) {
   size_t y,x,y0,y1,x0,x1;unsigned cost=mode==EXR_BLEND_NORMAL ? 12 : mode<EXR_BLEND_HUE ? 60 : 140;exr_status status;
   if(!state || !state->cmyk_pixels) {
     double rf[3],rs[3];uint32_t fc=0,sc=0;unsigned c;
@@ -770,6 +771,6 @@ exr_status exr_composite_compound_cmyk_at(exr_bitmap *target,const exr_bitmap *f
 }
 exr_status exr_composite_compound_cmyk(exr_bitmap *target,const exr_bitmap *fill,const exr_bitmap *stroke,const uint32_t bounds[4],
   const double fill_cmyk[4],const double stroke_cmyk[4],double fill_alpha,double stroke_alpha,exr_blend_mode mode,
-  const exr_clip_mask *clip,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
+  const exr_clip_mask *clip,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *e) {
   return exr_composite_compound_cmyk_at(target,fill,stroke,0,0,bounds,fill_cmyk,stroke_cmyk,fill_alpha,stroke_alpha,mode,clip,state,work,control,e);
 }

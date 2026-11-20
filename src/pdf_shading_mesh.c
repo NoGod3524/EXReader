@@ -20,7 +20,7 @@ typedef struct {
 
 typedef struct {
   exr_pdf_function *function;exr_pdf_colorspace *space;unsigned components,intent;
-  size_t *work;const exr_control *control;exr_error *error;
+  exr_raster_work *work;const exr_control *control;exr_error *error;
   unsigned native_cmyk;exr_bitmap inks;
 } mesh_painter;
 
@@ -294,7 +294,7 @@ static exr_status mesh_shading_patches(const double ctm[6],int type,mesh_stream 
   return status;
 }
 exr_status exr_pdf_shading_mesh(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,uint32_t value,int type,
-                                const double ctm[6],const exr_pdf_paint_state *state,size_t *work,
+                                const double ctm[6],const exr_pdf_paint_state *state,exr_raster_work *work,
                                 exr_pdf_shading_fn emit,void *context,unsigned native_cmyk,
                                 const exr_control *control,exr_error *error) {
   uint32_t id,stream_id,space_id,function_id=EXR_PDF_NONE;

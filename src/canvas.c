@@ -638,7 +638,7 @@ static EXR_NOINLINE exr_status path_impl_cached(exr_canvas *c,const exr_path_seg
                                                 const exr_draw_style *style,const double *cmyk_fill,const double *cmyk_stroke,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0};
   exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=EXR_OK;
-  path_cache_key key; int have_key=0,want_cache=0; size_t work_start=c->work;
+  path_cache_key key; int have_key=0,want_cache=0; size_t work_start=c->work.used;
   if(build_path_key(c,segments,count,transform,style,cmyk_fill,cmyk_stroke,&key)) {
     have_key=1;
     for(size_t i=0;i<EXR_PATH_CACHE_SLOTS;i++) {
@@ -647,11 +647,11 @@ static EXR_NOINLINE exr_status path_impl_cached(exr_canvas *c,const exr_path_seg
         int dx0=key.ox+entry->rel_x0,dy0=key.oy+entry->rel_y0;
         int dx1=dx0+(int)entry->w,dy1=dy0+(int)entry->h;
         size_t mask_need=(size_t)c->bitmap.width*c->bitmap.height;
-        int budget_ok=entry->work<(size_t)256*1024*1024 && c->work<=(size_t)256*1024*1024-entry->work-4096;
+        int budget_ok=entry->work<=SIZE_MAX-4096 && exr_vector_work_fits(&c->work,entry->work+4096);
         if(entry->stroke_mask) budget_ok=budget_ok && mask_need<=c->mask_budget-c->mask_bytes && mask_need<=c->mask_budget-c->mask_bytes-mask_need;
         if(dx0>=0 && dy0>=0 && dx1<=(int)c->bitmap.width && dy1<=(int)c->bitmap.height && budget_ok) {
           entry->last_used=++c->path_cache_tick;
-          c->work+=entry->work;
+          c->work.used+=entry->work;
           if(entry->stroke_mask) {
             uint32_t bounds[4]={(uint32_t)dx0,(uint32_t)dy0,(uint32_t)dx1,(uint32_t)dy1};
             const exr_bitmap fm_bm={entry->w,entry->h,entry->w,entry->fill_mask,1};
@@ -695,7 +695,7 @@ static EXR_NOINLINE exr_status path_impl_cached(exr_canvas *c,const exr_path_seg
     if(status==EXR_OK) status=new_mask(c,&sm,e);
     if(status==EXR_OK) status=mask_fill(c,&flat,style->rule,fm,NULL,0,e);
     if(status==EXR_OK) status=mask_fill(c,&outline,EXR_FILL_NONZERO,sm,NULL,0,e);
-    size_t mask_work=c->work-work_start;
+    size_t mask_work=c->work.used-work_start;
     if(status==EXR_OK) {
       bounds[0]=fm->dirty_left<sm->dirty_left ? fm->dirty_left : sm->dirty_left;
       bounds[1]=fm->dirty_top<sm->dirty_top ? fm->dirty_top : sm->dirty_top;
@@ -755,7 +755,7 @@ static EXR_NOINLINE exr_status path_impl_cached(exr_canvas *c,const exr_path_seg
             if(status==EXR_OK) {
               mark_area(c,tx0,ty0,tx1,ty1);
               blit_coverage_mask(c,mp,w,h,(uint32_t)tx0,(uint32_t)ty0,color);
-              path_cache_insert(c,&key,tx0,ty0,w,h,mp,NULL,c->work-work_start);
+              path_cache_insert(c,&key,tx0,ty0,w,h,mp,NULL,c->work.used-work_start);
               cached_now=1;
             } else free(mp);
           }
@@ -1187,7 +1187,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
           if(aligned && in_scale && have_in && coverage==255 && in_alpha*alpha==1 &&
              (((fast_group || fast_opaque) && in_shape==1) ||
               (fast_mask && in_shape>0 && (size_t)x<state->soft_mask_width))) {
-            size_t budget=*axial->work;unsigned end;int over=0;
+            exr_raster_work budget=*axial->work;unsigned end;int over=0;
             unsigned limit=(fast_group || fast_opaque) ? last : (unsigned)(state->soft_mask_width<last ? state->soft_mask_width : last);
             if(!row_scale_safe) {
               if(!axial_right) {
@@ -1465,6 +1465,13 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   sink.image_cmyk=sink_image_cmyk;sink.image_space=sink_image_space;sink.alpha_source=sink_alpha_source;sink.paint=sink_paint;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
+const exr_canvas *exr_canvas_sink_target(const exr_draw_sink_ex *sink) {
+  return sink->begin_group==sink_begin_group ? sink->base.context : NULL;
+}
+void exr_canvas_render_limits(exr_canvas *c,size_t layer_budget,size_t work_budget) {
+  if(layer_budget) c->layer_limit=c->layer_budget=layer_budget;
+  c->work.limit=work_budget;
+}
 exr_status exr_canvas_set_layer_budget(exr_canvas *c,size_t bytes,exr_error *e) {
   exr_status status=ready(c,e);if(status!=EXR_OK) return status;
   if(c->layer_depth) return finish(c,exr_fail(e,EXR_ARGUMENT,"Cannot change an active layer budget"),e);
@@ -1518,7 +1525,8 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
   }
   count=region_width*region_height;bytes=count*(needs_state ? 4+5*sizeof(float) : 4)+(cmyk ? count*6*sizeof(float) : 0)+
     (track_shape ? count*sizeof(float) : 0);
-  if(c->layer_depth==32 || bytes>64*1024*1024 || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
+  size_t layer_limit=c->layer_limit ? c->layer_limit : (size_t)64*1024*1024;
+  if(c->layer_depth==32 || bytes>layer_limit || bytes>c->layer_budget-c->layer_bytes) return finish(c,exr_fail(e,EXR_LIMIT,"Group depth/byte budget exceeded"),e);
   if(!exr_grow((void **)&c->layers,&c->layer_capacity,c->layer_depth+1,sizeof(*c->layers))) return finish(c,exr_fail(e,EXR_MEMORY,"Layer stack allocation failed"),e);
   if(c->group_depth) {
     layer.pending_groups=malloc(c->group_depth*sizeof(*layer.pending_groups));

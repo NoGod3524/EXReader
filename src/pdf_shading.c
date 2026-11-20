@@ -75,7 +75,7 @@ static void store(exr_bitmap *bitmap,size_t index,const double rgb[3],unsigned c
   p[3]=alpha;
 }
 static exr_status sample(exr_pdf_function *function,exr_pdf_colorspace *space,unsigned intent,
-                         const double *input,double rgb[3],exr_bitmap *inks,size_t index,size_t *work,exr_error *e) {
+                         const double *input,double rgb[3],exr_bitmap *inks,size_t index,exr_raster_work *work,exr_error *e) {
   double out[EXR_PDF_MAX_COLORANTS]={0};
   if(!exr_vector_work(work,exr_pdf_function_cost(function)+exr_pdf_colorspace_cost(space)))
     return exr_fail(e,EXR_LIMIT,"PDF shading samples exceed work budget");
@@ -149,7 +149,7 @@ static exr_status source_sample(void *context,double x,double y,unsigned space,d
 }
 static exr_status source_draw(exr_pdf_function *function,exr_pdf_colorspace *space,unsigned intent,
   unsigned type,const double coords[6],const double domain[4],int extend0,int extend1,
-  const double matrix[6],const exr_pdf_paint_state *paint,size_t *work,exr_pdf_source_fn emit,void *context,
+  const double matrix[6],const exr_pdf_paint_state *paint,exr_raster_work *work,exr_pdf_source_fn emit,void *context,
   unsigned native_cmyk,const exr_control *control,exr_error *e) {
   exr_shading_paint_source data={0};exr_paint_source source={sizeof(source),source_sample,&data};exr_bitmap inks={0};exr_status status=EXR_OK;exr_icc *profile=NULL;
   unsigned device=exr_pdf_colorspace_device(space);
@@ -189,12 +189,12 @@ static exr_status source_draw(exr_pdf_function *function,exr_pdf_colorspace *spa
   exr_icc_free(profile);free(inks.pixels);free(rgb);return status;
 }
 exr_status exr_pdf_shading_draw(exr_pdf_file *file,exr_pdf_file *resource_file,uint32_t resources,
-                                uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,size_t *work,
+                                uint32_t value,const double ctm[6],const exr_pdf_paint_state *paint,exr_raster_work *work,
                                 exr_pdf_shading_fn emit,exr_pdf_source_fn source,void *context,unsigned native_cmyk,
                                 const exr_control *control,exr_error *e) {
   uint32_t id,coords_id,function_id,cs_id;const exr_pdf_value *v;double coords[6]={0},domain[4]={0,1,0,1},t;
   double function_matrix[6]={1,0,0,1,0,0};
-  size_t local_work=0;int stream;
+  exr_raster_work local_work={0};int stream;
   unsigned intent=paint->intent;
   int extend0=0,extend1=0,type=0;unsigned i,components=1,ncoords;
   exr_pdf_colorspace *space=NULL;exr_pdf_function *function=NULL;

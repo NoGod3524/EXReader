@@ -153,7 +153,7 @@ static const exr_box *border_box(const exr_layout *l,const exr_paint *paints,siz
   return &l->boxes[paints ? paints[index].index : index];
 }
 static exr_status border_layer(exr_bitmap *out,const exr_layout *l,const exr_paint *paints,
-                               size_t first,size_t end,size_t *work,const exr_control *control,exr_error *e) {
+                               size_t first,size_t end,exr_raster_work *work,const exr_control *control,exr_error *e) {
   int left=(int)out->width,top=(int)out->height,right=0,bottom=0,x,y; size_t i,pixels;
   unsigned char *layer; size_t stride;
   for(i=first;i<end;i++) {
@@ -192,7 +192,7 @@ static exr_status border_layer(exr_bitmap *out,const exr_layout *l,const exr_pai
   }
   free(layer); return EXR_OK;
 }
-static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,int outline_only,size_t *work,const exr_control *control,exr_error *error) {
+static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,int outline_only,exr_raster_work *work,const exr_control *control,exr_error *error) {
   exr_face *selected; FT_Face face; FT_GlyphSlot slot; unsigned by,bx; int left,top; size_t charged=0,actual;
   FT_GlyphSlotRec cached_slot={0}; exr_cached_glyph *cached;
   unsigned cache_flags=(g->flags&(EXR_GLYPH_BOLD|EXR_GLYPH_ITALIC))|(outline_only ? 4u : 0u);
@@ -284,7 +284,7 @@ static exr_status draw_single_glyph(exr_bitmap *out,exr_font *font,const exr_gly
   }
   return EXR_OK;
 }
-static exr_status draw_bitmap_glyph(exr_bitmap *out,const exr_glyph *g,const exr_glyph_image *image,size_t *work,
+static exr_status draw_bitmap_glyph(exr_bitmap *out,const exr_glyph *g,const exr_glyph_image *image,exr_raster_work *work,
                                     const exr_control *control,exr_error *error) {
   const exr_bitmap *src=&image->bitmap; double width=src->width*image->scale,height=src->height*image->scale;
   int sideways=!!(g->flags&EXR_GLYPH_SIDEWAYS),x,y,left,top,right,bottom; double x0,y0;
@@ -308,7 +308,7 @@ static exr_status draw_bitmap_glyph(exr_bitmap *out,const exr_glyph *g,const exr
   return EXR_OK;
 }
 static exr_status draw_color_surface(exr_bitmap *out,const exr_glyph *g,const exr_color_surface *surface,
-                                     size_t *work,const exr_control *control,exr_error *error) {
+                                     exr_raster_work *work,const exr_control *control,exr_error *error) {
   const exr_bitmap *src=&surface->bitmap; unsigned fg=g->color&255,x,y;
   int sideways=!!(g->flags&EXR_GLYPH_SIDEWAYS);
   int left=sideways ? (int)lroundf(g->x+g->offset_y)-(int)lroundf(surface->top)-1
@@ -335,7 +335,7 @@ static exr_status draw_color_surface(exr_bitmap *out,const exr_glyph *g,const ex
   return EXR_OK;
 }
 static exr_status draw_glyph(exr_bitmap *out,exr_font *font,const exr_glyph *g,const exr_glyph *next,const exr_line *line,
-                             size_t *work,const exr_control *control,exr_error *error) {
+                             exr_raster_work *work,const exr_control *control,exr_error *error) {
   exr_font_color_layer layers[256]; exr_glyph_image image={0}; size_t n=0,i; exr_status status;
   if((g->flags&EXR_GLYPH_HIDDEN) || g->size<1.0f/64 || !(g->color&255)) return EXR_OK;
   if(g->font_index>=font->count) return EXR_FONT;
@@ -387,7 +387,7 @@ static const exr_line *glyph_line(const exr_layout *l,size_t glyph) {
 }
 static exr_status render(const exr_layout *l, exr_font *f, size_t page, unsigned channels,uint32_t background,
                          const exr_control *control, exr_bitmap *out, exr_error *e) {
-  size_t i, j, total,glyph_work=0; exr_status status=EXR_OK;
+  size_t i, j, total; exr_raster_work glyph_work={0}; exr_status status=EXR_OK;
   uint32_t width, height;
   const exr_page *p;
   if (l && l->font && (!f || f == l->font || f == l->font->fallback)) f = l->font;

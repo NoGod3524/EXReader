@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_raster_internal.h"
+#include "canvas_internal.h"
 typedef struct { const exr_draw_sink_ex *target; size_t depth; unsigned text; } paint_scope;
 static exr_status scope_path(void *context,const exr_path_segment *path,size_t count,const double matrix[6],const exr_draw_style *style,exr_error *e) {
   paint_scope *s=context; return s->target->base.path(s->target->base.context,path,count,matrix,style,e);
@@ -64,7 +65,7 @@ static exr_status scope_shading(void *context,const exr_bitmap *bitmap,const dou
 }
 static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,const double matrix[6],
                              const double *box,unsigned layer,const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
-                             size_t *work,const exr_control *control,exr_error *e) {
+                             exr_raster_work *work,const exr_control *control,exr_error *e) {
   paint_scope scope={sink,0,0}; exr_draw_sink_ex consumer=*sink; exr_status status=EXR_OK;int begun=0;
   consumer.base.context=&scope; consumer.base.path=sink->base.path ? scope_path : NULL; consumer.base.clip=sink->base.clip ? scope_clip : NULL;
   consumer.base.image=sink->base.image ? scope_image : NULL; consumer.base.state=sink->base.state ? scope_state : NULL;
@@ -98,7 +99,11 @@ static exr_status isolated(exr_pdf_file *file,uint32_t resources,const void *con
       (layer&EXR_PDF_GROUP_RGB ? EXR_GROUP_RGB : 0),e);
     if(status==EXR_OK) begun=1;
   }
-  if(status==EXR_OK) status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,NULL,control,e);
+  if(status==EXR_OK) {
+    const exr_canvas *canvas=exr_canvas_sink_target(sink);
+    size_t layer_budget=canvas ? canvas->layer_limit : 0;
+    status=exr_pdf_paint_content_ex(file,resources,content,size,matrix,&consumer,program,context,work,layer_budget,NULL,control,e);
+  }
   if(sink->base.state) {
     exr_error cleanup={0}; exr_status restored; size_t restore_count=scope.depth;
     while(scope.text--) {
@@ -161,7 +166,7 @@ static int multiply(double out[6],const double left[6],const double right[6]) {
 }
 static exr_status appearance(exr_pdf_file *file,uint32_t annotation,uint32_t resources,const double initial[6],
                                const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,size_t *bytes,
-                               size_t *work,const exr_control *control,exr_error *e) {
+                               exr_raster_work *work,const exr_control *control,exr_error *e) {
   uint32_t id,normal,value,state; const exr_pdf_value *v; exr_status status; unsigned flags=0; size_t i,size;int layer=0;
   double rect[4],box[4],matrix[6]={1,0,0,1,0,0},bounds[4]={0},fit[6]={0},transform[6]; const unsigned char *data;
   status=field(file,annotation,"F",&id,e); if(status!=EXR_OK) return status;
@@ -224,10 +229,14 @@ static exr_status appearance(exr_pdf_file *file,uint32_t annotation,uint32_t res
 }
 exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
                                const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *context,
-                               size_t *work,const exr_control *control,exr_error *e) {
-  const exr_pdf_value *v; uint32_t id,at; size_t count=0,bytes=0,local_work=0; exr_status status;
+                               exr_raster_work *work,const exr_control *control,exr_error *e) {
+  const exr_pdf_value *v; uint32_t id,at; size_t count=0,bytes=0; exr_raster_work local_work={0}; exr_status status;
   exr_draw_sink_ex consumer;status=exr_draw_sink_snapshot(sink,&consumer,e);if(status!=EXR_OK) return status;sink=&consumer;
-  if(!work) work=&local_work;
+  if(!work) {
+    const exr_canvas *canvas=exr_canvas_sink_target(sink);
+    if(canvas) local_work.limit=canvas->work.limit;
+    work=&local_work;
+  }
   unsigned page_flags=EXR_GROUP_ISOLATED;
   { int present;uint32_t group;
     status=exr_pdf_resolve(file,exr_pdf_get(file,page->object,"Group"),&group,e);
@@ -267,7 +276,7 @@ exr_status exr_pdf_paint_page_ex(exr_pdf_file *file,const exr_pdf_page_info *pag
 }
 
 exr_status exr_pdf_paint_page(exr_pdf_file *file,const exr_pdf_page_info *page,const void *content,size_t size,
-  const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,size_t *work,const exr_control *control,exr_error *e) {
+  const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,exr_raster_work *work,const exr_control *control,exr_error *e) {
   exr_draw_sink_ex extended={0};if(!sink) return exr_fail(e,EXR_ARGUMENT,"Missing PDF page consumer");
   extended.struct_size=sizeof(extended);extended.base=*sink;
   return exr_pdf_paint_page_ex(file,page,content,size,initial,&extended,program,context,work,control,e);

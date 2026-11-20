@@ -2,7 +2,7 @@
 #include "vector_internal.h"
 typedef struct {
   exr_vector_polyline path; const double *matrix; const exr_vector_stroke_style *style;
-  double radius,tolerance,stretch; size_t *work; const exr_control *control; exr_error *error; exr_status status;
+  double radius,tolerance,stretch; exr_raster_work *work; const exr_control *control; exr_error *error; exr_status status;
 } stroke_reader;
 static int failed(stroke_reader *r,exr_status status,const char *message) { r->status=exr_fail(r->error,status,"%s",message); return 0; }
 static int work(stroke_reader *r,size_t amount) {
@@ -75,8 +75,8 @@ static int cap(stroke_reader *r,exr_vector_point center,exr_vector_point directi
 }
 exr_status exr_vector_stroke(const exr_vector_polyline *path,const exr_vector_stroke_style *style,
                               const double matrix[6],double tolerance,exr_vector_polyline *out,
-                              size_t *shared_work,const exr_control *control,exr_error *error) {
-  const double identity[6]={1,0,0,1,0,0}; stroke_reader r={0}; size_t local_work=0,at=0,i,j;
+                              exr_raster_work *shared_work,const exr_control *control,exr_error *error) {
+  const double identity[6]={1,0,0,1,0,0}; stroke_reader r={0}; exr_raster_work local_work={0}; size_t at=0,i,j;
   if(path==out) return exr_fail(error,EXR_ARGUMENT,"Vector stroke input and output must be distinct");
   if(out) memset(out,0,sizeof(*out));
   if(!path || !style || !out || (path->point_count && !path->points) || (path->contour_count && !path->contours) ||

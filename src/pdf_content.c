@@ -21,7 +21,7 @@ typedef struct {
   double matrix[6],line[6]; unsigned inside,compatibility;
   unsigned type3,declared,uncolored;
   cached_font fonts[128];
-  cached_color colors[128]; size_t color_count,color_bytes,local_color_work,*color_work;
+  cached_color colors[128]; size_t color_count,color_bytes;exr_raster_work local_color_work,*color_work;
 } content_reader;
 static void identity(double matrix[6]) { memset(matrix,0,6*sizeof(double)); matrix[0]=matrix[3]=1; }
 static int multiply(double out[6],const double left[6],const double right[6]) {

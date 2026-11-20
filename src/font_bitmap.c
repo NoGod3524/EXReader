@@ -11,7 +11,7 @@ struct exr_sbix { FT_ULong size; unsigned flags,count; bitmap_strike strikes[]; 
 static unsigned be16(const unsigned char *p) { return (unsigned)p[0]<<8|p[1]; }
 static uint32_t be32(const unsigned char *p) { return (uint32_t)be16(p)<<16|be16(p+2); }
 static int signed16(const unsigned char *p) { unsigned n=be16(p); return n<32768 ? (int)n : (int)n-65536; }
-static exr_status field(exr_face *face,FT_ULong tag,FT_ULong size,FT_ULong offset,void *out,size_t n,size_t *work,const exr_control *control,exr_error *error) {
+static exr_status field(exr_face *face,FT_ULong tag,FT_ULong size,FT_ULong offset,void *out,size_t n,exr_raster_work *work,const exr_control *control,exr_error *error) {
   FT_ULong length=(FT_ULong)n;
   if(offset>size || n>size-offset) return exr_fail(error,EXR_FONT,"Font bitmap field exceeds table");
   if(!exr_vector_work(work,n)) return exr_fail(error,EXR_LIMIT,"Font bitmap read/work budget exceeded");
@@ -24,7 +24,7 @@ static int strike_order(const void *a,const void *b) {
   const bitmap_strike *x=a,*y=b; return x->at<y->at ? -1 : x->at>y->at ? 1 : x->order<y->order ? -1 : x->order>y->order;
 }
 void exr_font_bitmaps_free(exr_face *face) { free(face->sbix); free(face->cblc); face->sbix=NULL; face->cblc=NULL; face->sbix_checked=face->cblc_checked=0; }
-static exr_status directory(exr_face *face,size_t *work,const exr_control *control,exr_error *error) {
+static exr_status directory(exr_face *face,exr_raster_work *work,const exr_control *control,exr_error *error) {
   FT_ULong size=0; FT_Error code; struct exr_sbix *table=NULL; unsigned char header[8],offsets[1024];
   unsigned count,i,j; uint64_t minimum; exr_status status;
   if(face->sbix_checked) return EXR_OK;
@@ -52,7 +52,7 @@ static exr_status directory(exr_face *face,size_t *work,const exr_control *contr
 done:
   free(table); return status;
 }
-static exr_status span(exr_face *face,const bitmap_strike *strike,uint32_t glyph,uint32_t *begin,uint32_t *end,size_t *work,const exr_control *control,exr_error *error) {
+static exr_status span(exr_face *face,const bitmap_strike *strike,uint32_t glyph,uint32_t *begin,uint32_t *end,exr_raster_work *work,const exr_control *control,exr_error *error) {
   unsigned char bytes[8]; uint64_t minimum=4+((uint64_t)face->face->num_glyphs+1)*4;
   exr_status status=field(face,SBIX,face->sbix->size,strike->at+4+(FT_ULong)glyph*4,bytes,8,work,control,error);
   if(status!=EXR_OK) return status;
@@ -60,7 +60,7 @@ static exr_status span(exr_face *face,const bitmap_strike *strike,uint32_t glyph
   if(*begin>*end || *end>strike->end-strike->at || (*begin!=*end && (*begin<minimum || *end-*begin<8))) return exr_fail(error,EXR_FONT,"Invalid sbix glyph boundaries");
   return EXR_OK;
 }
-static exr_status sbix_image(exr_face *face,uint32_t glyph,float pixels,exr_glyph_image *out,size_t *work,const exr_control *control,exr_error *error) {
+static exr_status sbix_image(exr_face *face,uint32_t glyph,float pixels,exr_glyph_image *out,exr_raster_work *work,const exr_control *control,exr_error *error) {
   const bitmap_strike *selected=NULL; uint32_t begin=0,end=0,chosen_begin=0,chosen_end=0,active[16]; unsigned i,depth=0;
   unsigned char header[8],*encoded=NULL; int x,y; uint32_t original=glyph; exr_status status; double left=0,bottom=0,scale;
   memset(out,0,sizeof(*out));
@@ -119,7 +119,7 @@ typedef struct {
 static int signed8(unsigned char value) { return value<128 ? value : (int)value-256; }
 /* Validate arrays once, in bounded reads, before any binary search uses them. */
 static exr_status cblc_index(exr_face *face,const struct exr_cblc *table,const cblc_strike *strike,
-                            uint32_t at,unsigned first,unsigned last,size_t *work,const exr_control *control,exr_error *error) {
+                            uint32_t at,unsigned first,unsigned last,exr_raster_work *work,const exr_control *control,exr_error *error) {
   unsigned char b[1024]; unsigned format,width=0,codes=0; uint32_t base,count,previous=0,previous_code=0,i=0;
   uint64_t array=0,total=0; exr_status status;
 #define READ_INDEX(offset,n) do { if((uint64_t)(offset)>strike->end || (n)>strike->end-(uint64_t)(offset)) goto bad; status=field(face,CBLC,strike->end,(FT_ULong)(offset),b,(n),work,control,error); if(status!=EXR_OK) return status; } while(0)
@@ -158,7 +158,7 @@ static exr_status cblc_index(exr_face *face,const struct exr_cblc *table,const c
 bad:
   return exr_fail(error,EXR_FONT,"Invalid CBLC index data");
 }
-static exr_status cblc_directory(exr_face *face,size_t *work,const exr_control *control,exr_error *error) {
+static exr_status cblc_directory(exr_face *face,exr_raster_work *work,const exr_control *control,exr_error *error) {
   FT_ULong size=0,data_size=0; FT_Error code; unsigned char b[48]; unsigned count,i,j; struct exr_cblc *table; exr_status status;
   if(face->cblc_checked) return EXR_OK;
   code=FT_Load_Sfnt_Table(face->face,CBLC,0,NULL,&size);
@@ -202,7 +202,7 @@ static void record_metrics(bitmap_record *record,const unsigned char *bytes,int 
   if(big) { record->vertical=1; record->vx=signed8(bytes[5]); record->vy=signed8(bytes[6]); record->vadvance=bytes[7]; }
 }
 static exr_status cblc_record(exr_face *face,const cblc_strike *strike,uint32_t glyph,bitmap_record *record,
-                              size_t *work,const exr_control *control,exr_error *error) {
+                              exr_raster_work *work,const exr_control *control,exr_error *error) {
   uint32_t lo=0,hi=strike->count,at,base,image_size=0,count=0,index=0; unsigned char b[20]; unsigned first,last,format,image_format;
   uint64_t start=0,end=0; exr_status status; int constant_metrics=0;
   memset(record,0,sizeof(*record));
@@ -260,7 +260,7 @@ static exr_status cblc_record(exr_face *face,const cblc_strike *strike,uint32_t 
 bad:
   return exr_fail(error,EXR_FONT,"Invalid CBLC/CBDT glyph record");
 }
-static exr_status cblc_find(exr_face *face,uint32_t glyph,float pixels,bitmap_record *out,size_t *work,const exr_control *control,exr_error *error) {
+static exr_status cblc_find(exr_face *face,uint32_t glyph,float pixels,bitmap_record *out,exr_raster_work *work,const exr_control *control,exr_error *error) {
   unsigned i; exr_status status=cblc_directory(face,work,control,error); memset(out,0,sizeof(*out));
   if(status!=EXR_OK || !face->cblc) return status;
   for(i=0;i<face->cblc->count;i++) {
@@ -271,7 +271,7 @@ static exr_status cblc_find(exr_face *face,uint32_t glyph,float pixels,bitmap_re
   }
   return EXR_OK;
 }
-exr_status exr_font_image(exr_face *face,uint32_t glyph,float pixels,exr_glyph_image *out,size_t *work,const exr_control *control,exr_error *error) {
+exr_status exr_font_image(exr_face *face,uint32_t glyph,float pixels,exr_glyph_image *out,exr_raster_work *work,const exr_control *control,exr_error *error) {
   bitmap_record record={0}; unsigned char *png=NULL; double scale; exr_status status=sbix_image(face,glyph,pixels,out,work,control,error);
   if(status!=EXR_OK || out->bitmap.pixels) return status;
   status=cblc_find(face,glyph,pixels,&record,work,control,error); if(status!=EXR_OK || !record.size) return status;
@@ -288,7 +288,7 @@ done:
   free(png); if(status!=EXR_OK) { exr_bitmap_free(&out->bitmap); memset(out,0,sizeof(*out)); } return status;
 }
 exr_status exr_font_bitmap_vertical(exr_face *face,uint32_t glyph,float pixels,float *x,float *y,const exr_control *control,exr_error *error) {
-  bitmap_record record={0}; size_t work=0; float advance; exr_status status=cblc_find(face,glyph,pixels,&record,&work,control,error);
+  bitmap_record record={0}; exr_raster_work work={0}; float advance; exr_status status=cblc_find(face,glyph,pixels,&record,&work,control,error);
   *x=*y=0; if(status!=EXR_OK) return status;
   if(record.size) {
     float scale=pixels/record.ppem;
@@ -301,7 +301,7 @@ exr_status exr_font_bitmap_vertical(exr_face *face,uint32_t glyph,float pixels,f
   return EXR_OK;
 }
 exr_status exr_font_glyph_image(exr_font *font,size_t index,uint32_t glyph,float pixels,exr_glyph_image *out,const exr_control *control,exr_error *error) {
-  size_t work=0; exr_status status;
+  exr_raster_work work={0}; exr_status status;
   if(out) memset(out,0,sizeof(*out));
   if(!font || index>=font->count || !out || glyph>=(uint64_t)font->faces[index].face->num_glyphs || !isfinite(pixels) || pixels<1.0f/64 || pixels>4096) return exr_fail(error,EXR_ARGUMENT,"Invalid font glyph-image query");
   if(exr_control_cancel(control,error)!=EXR_OK) return EXR_CANCELLED;

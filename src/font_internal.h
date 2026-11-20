@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_FONT_INTERNAL_H
 #define EXR_FONT_INTERNAL_H
-#include "base_internal.h"
+#include "graphics_internal.h"
 #include "exr/text.h"
 #include "font_manager_internal.h"
 #include <ft2build.h>
@@ -65,19 +65,19 @@ size_t exr_font_order(const exr_font *font, const char *family, unsigned flags,
                        size_t chapter, size_t order[32]);
 int exr_font_size(exr_face *font, float size);
 exr_status exr_font_colr(exr_face *face,uint32_t glyph,size_t palette,uint32_t foreground,
-                         exr_font_color_layer layers[256],size_t *count,size_t *work);
+                         exr_font_color_layer layers[256],size_t *count,exr_raster_work *work);
 /* Owned straight-RGBA intrinsic color surface in device pixels. left/top follow
    exr_glyph_image (x right, y down, origin at the glyph origin). */
 typedef struct { exr_bitmap bitmap; float left,top; } exr_color_surface;
 exr_status exr_font_colrv1(exr_face *face,uint32_t glyph,float pixels,uint32_t foreground,
-                           exr_color_surface *out,size_t *work,const exr_control *control,exr_error *error);
+                           exr_color_surface *out,exr_raster_work *work,const exr_control *control,exr_error *error);
 exr_status exr_font_svg(exr_face *face,uint32_t glyph,float pixels,uint32_t foreground,
-                        exr_color_surface *out,size_t *work,const exr_control *control,exr_error *error);
+                        exr_color_surface *out,exr_raster_work *work,const exr_control *control,exr_error *error);
 void exr_font_svg_free(exr_face *face);
-exr_status exr_font_svg_covers(exr_face *face,uint32_t glyph,int *covers,size_t *work,const exr_control *control,exr_error *error);
+exr_status exr_font_svg_covers(exr_face *face,uint32_t glyph,int *covers,exr_raster_work *work,const exr_control *control,exr_error *error);
 void exr_font_bitmaps_free(exr_face *face);
 exr_status exr_font_image(exr_face *face,uint32_t glyph,float pixels,exr_glyph_image *out,
-                               size_t *work,const exr_control *control,exr_error *error);
+                               exr_raster_work *work,const exr_control *control,exr_error *error);
 exr_status exr_font_bitmap_vertical(exr_face *face,uint32_t glyph,float pixels,float *x,float *y,
                                     const exr_control *control,exr_error *error);
 static inline float exr_font_ascent(const exr_face *face) { return (float)face->face->size->metrics.ascender/64*face->bitmap_scale_y; }

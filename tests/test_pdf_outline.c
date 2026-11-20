@@ -20,7 +20,7 @@ static exr_pdf_character character(exr_pdf_font *font,const char *s,size_t n) {
 }
 static int cancelled(void *context) { (void)context; return 1; }
 static void glyph_selection(exr_pdf_file *file,FT_Library library) {
-  const char *names[]={"Names","Unicode","Symbol","Cubic","CID","GlyphOnly"}; size_t i,j,work=0,count; uint32_t glyph;
+  const char *names[]={"Names","Unicode","Symbol","Cubic","CID","GlyphOnly"}; size_t i,j,count;exr_raster_work work={0}; uint32_t glyph;
   for(i=0;i<sizeof(names)/sizeof(*names);i++) {
     exr_pdf_font *font=font_open(file,names[i]); exr_pdf_face *face=NULL; exr_pdf_character ch; exr_vector_segment *segments=NULL;
     OK(exr_pdf_face_open(library,font,NULL,&face,NULL,&error)); CHECK(exr_pdf_face_memory(face)>0);
@@ -55,7 +55,7 @@ static void glyph_selection(exr_pdf_file *file,FT_Library library) {
   }
   CHECK(!exr_pdf_face_memory(NULL)); exr_pdf_face_close(NULL);
 }
-typedef struct { FT_Library library; exr_bitmap bitmap; size_t work,glyphs; } raster;
+typedef struct { FT_Library library; exr_bitmap bitmap; size_t glyphs;exr_raster_work work; } raster;
 static exr_status draw_glyph(void *context,const exr_pdf_text_glyph *g,exr_error *e) {
   raster *r=context; exr_pdf_face *face=NULL; exr_vector_segment *segments=NULL; exr_vector_polyline path={0}; exr_vector_edge *edges=NULL; size_t count=0,edge_count=0;
   exr_status status=exr_pdf_face_open(r->library,g->font,NULL,&face,NULL,e);
@@ -75,11 +75,11 @@ static void rasterized(exr_pdf_file *file,FT_Library library) {
   CHECK(r.bitmap.pixels[12*10+6]==0 && r.bitmap.pixels[12+6]==255); free(r.bitmap.pixels);
 }
 static void generic_and_fallback(const char *dir,FT_Library library) {
-  size_t size,count=1,work=0; unsigned char *data=read_fixture(dir,"fonts/pdf-names.ttf",&size); FT_Face ft=NULL; exr_vector_segment *segments=NULL;
+  size_t size,count=1;exr_raster_work work={0}; unsigned char *data=read_fixture(dir,"fonts/pdf-names.ttf",&size); FT_Face ft=NULL; exr_vector_segment *segments=NULL;
   OK(FT_New_Memory_Face(library,data,(FT_Long)size,0,&ft));
   OK(exr_font_outline(ft,1,&segments,&count,&work,NULL,&error)); CHECK(count>=5 && segments[1].points[0].x==400); free(segments);
   CHECK(exr_font_outline(ft,9999,&segments,&count,NULL,NULL,&error)==EXR_ARGUMENT && !segments && !count);
-  work=(size_t)256*1024*1024; CHECK(exr_font_outline(ft,1,&segments,&count,&work,NULL,&error)==EXR_LIMIT && !segments && !count);
+  work.used=(size_t)256*1024*1024; CHECK(exr_font_outline(ft,1,&segments,&count,&work,NULL,&error)==EXR_LIMIT && !segments && !count);
   FT_Done_Face(ft);
   { exr_pdf_file *file=NULL; exr_pdf_font *font=NULL; exr_pdf_face *face=NULL; exr_pdf_character ch; uint32_t fonts,id,glyph; size_t pdf_size; unsigned char *pdf=read_fixture(dir,"pdf-font-fallback.pdf",&pdf_size);
     OK(exr_pdf_open(pdf,pdf_size,&file,&error)); OK(exr_pdf_resolve(file,exr_pdf_get(file,exr_pdf_root(file),"Fonts"),&fonts,&error)); id=exr_pdf_get(file,fonts,"Helvetica"); OK(exr_pdf_font_open(file,id,NULL,&font,&error));
@@ -109,7 +109,7 @@ static int cid_probe(FT_Library library,const char *path) {
 }
 static uint32_t be32(const unsigned char *p) { return (uint32_t)p[0]<<24|(uint32_t)p[1]<<16|(uint32_t)p[2]<<8|p[3]; }
 static void raw_cid(const char *directory,FT_Library library) {
-  size_t size,offset=0,length=0,used=0,objects[6],xref,count=0,work=0;unsigned char *wrapped=read_fixture(directory,"fonts/pdf-cid.otf",&size),*pdf;
+  size_t size,offset=0,length=0,used=0,objects[6],xref,count=0;exr_raster_work work={0};unsigned char *wrapped=read_fixture(directory,"fonts/pdf-cid.otf",&size),*pdf;
   exr_pdf_file *file=NULL;exr_pdf_font *font=NULL;exr_pdf_face *face=NULL;exr_pdf_character ch;exr_vector_segment *segments=NULL;uint32_t glyph;
   CHECK(size>=12);
   for(unsigned i=0;i<((unsigned)wrapped[4]<<8|wrapped[5]);i++) {

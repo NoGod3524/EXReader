@@ -12,7 +12,7 @@ exr_status exr_font_color_palettes(const exr_font *font,size_t index,size_t *pal
   if(code || FT_Palette_Data_Get(font->faces[index].face,&data)) return exr_fail(error,EXR_FONT,"Cannot read font color palettes");
   *palettes=data.num_palettes; *entries=data.num_palette_entries; return exr_fail(error,EXR_OK,"");
 }
-exr_status exr_font_colr(exr_face *face,uint32_t glyph,size_t palette_index,uint32_t foreground,exr_font_color_layer layers[256],size_t *count,size_t *work) {
+exr_status exr_font_colr(exr_face *face,uint32_t glyph,size_t palette_index,uint32_t foreground,exr_font_color_layer layers[256],size_t *count,exr_raster_work *work) {
   FT_LayerIterator iterator={0}; FT_UInt layer,color; FT_Palette_Data data; FT_Color *palette=NULL;
   *count=0;
   if(!FT_Get_Color_Glyph_Layer(face->face,glyph,&layer,&color,&iterator)) return EXR_OK;

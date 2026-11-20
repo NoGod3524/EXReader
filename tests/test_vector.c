@@ -16,7 +16,7 @@ static void rectangle(exr_vector_edge *edges,double left,double top,double right
 static unsigned pixel(const exr_bitmap *out,unsigned x,unsigned y,unsigned channel) { return out->pixels[(size_t)y*out->stride+x*out->channels+channel]; }
 static void mask_fill_equivalence(void) {
   exr_bitmap mask=bitmap(1,0),rgba=bitmap(4,0),clip=bitmap(1,0);
-  unsigned trial,i;size_t work;
+  unsigned trial,i;exr_raster_work work={0};
   for(trial=0;trial<100;trial++) {
     double shift=(trial-50.)/97.;
     exr_vector_edge edges[5]={{-1+shift,.1,5.7,1.3},{5.7,1.3,8.2,5.1},
@@ -26,8 +26,8 @@ static void mask_fill_equivalence(void) {
       memset(rgba.pixels+4*i,mask.pixels[i],3);rgba.pixels[4*i+3]=255;
       clip.pixels[i]=(unsigned char)(i*17+trial*3);
     }
-    work=0;OK(exr_vector_fill(&mask,edges,5,EXR_VECTOR_EVENODD,0xffffffff,trial&1 ? &clip : NULL,&work,NULL,&error));
-    work=0;OK(exr_vector_fill(&rgba,edges,5,EXR_VECTOR_EVENODD,0xffffffff,trial&1 ? &clip : NULL,&work,NULL,&error));
+    work.used=0;OK(exr_vector_fill(&mask,edges,5,EXR_VECTOR_EVENODD,0xffffffff,trial&1 ? &clip : NULL,&work,NULL,&error));
+    work.used=0;OK(exr_vector_fill(&rgba,edges,5,EXR_VECTOR_EVENODD,0xffffffff,trial&1 ? &clip : NULL,&work,NULL,&error));
     for(i=0;i<64;i++) CHECK(mask.pixels[i]==rgba.pixels[4*i] && mask.pixels[i]==rgba.pixels[4*i+1] && mask.pixels[i]==rgba.pixels[4*i+2]);
   }
   free(mask.pixels);free(rgba.pixels);free(clip.pixels);
@@ -41,11 +41,11 @@ static void compound_spans(void) {
   exr_bitmap fast={8,1,32,actual,4},slow={8,1,32,reference,4};
   const uint32_t bounds[]={0,0,8,1};
   const size_t limit=(size_t)256*1024*1024;
-  size_t a=0,b=limit-(8+5*12);
+  exr_raster_work a={0},b={.used=limit-(8+5*12)};
   for(size_t i=0;i<sizeof(actual);i++) actual[i]=reference[i]=(unsigned char)(i*13);
   OK(exr_composite_compound(&fast,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&(exr_clip_mask){.bitmap=cm},NULL,&a,NULL,&error));
   OK(exr_composite_compound(&slow,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&(exr_clip_mask){.bitmap=cm},NULL,&b,NULL,&error));
-  CHECK(a==8+5*12 && b==limit && !memcmp(actual,reference,sizeof(actual)));
+  CHECK(a.used==8+5*12 && b.used==limit && !memcmp(actual,reference,sizeof(actual)));
   CHECK(!memcmp(actual,"\xaa\xbb\xcc\xff\xaa\xbb\xcc\xff\x11\x22\x33\xff\x11\x22\x33\xff",16));
   /* Exhaustive check of fast opaque normal-blend AA and offset masks against the slow path. */
   {
@@ -69,7 +69,7 @@ static void compound_spans(void) {
         fast_px[i*4+3]=slow_px[i*4+3]=bg_a==0 ? 255 : bg_a==1 ? 0 : (unsigned char)((i*29)%255);
         cbuf[i]=vals[(i*3+use_clip)%8];
       }
-      size_t wf=0,ws=0;
+      exr_raster_work wf={0},ws={0};
       exr_composite_state slow_state={0};
       OK(exr_composite_compound_at(&fbm,&tight_f,&tight_s,5,0,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &(exr_clip_mask){.bitmap=big_c} : NULL,NULL,&wf,NULL,&error));
       OK(exr_composite_compound(&sbm,&big_f,&big_s,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &(exr_clip_mask){.bitmap=big_c} : NULL,&slow_state,&ws,NULL,&error));
@@ -90,11 +90,11 @@ static void stable_clip_rows(void) {
     for(unsigned rule=0;rule<2;rule++) {
       exr_vector_rule fill_rule=rule ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO;
       for(size_t remaining=0;remaining<=1024;remaining++) {
-        size_t a=(size_t)256*1024*1024-remaining,b=a;
+        exr_raster_work a={.used=(size_t)256*1024*1024-remaining},b=a;
         memset(actual.pixels,17,64);memset(reference.pixels,17,64);
         exr_status s=exr_vector_fill(&actual,edges,8,fill_rule,0xffffffff,&clip,&a,NULL,&error);
         exr_status t=exr_vector_fill(&reference,edges,8,fill_rule,0xffffffff,&clip,&b,&control,&error);
-        CHECK(s==t && a==b && !memcmp(actual.pixels,reference.pixels,64));
+        CHECK(s==t && a.used==b.used && !memcmp(actual.pixels,reference.pixels,64));
       }
     }
   }
@@ -119,7 +119,7 @@ static void curve_distance(const exr_vector_polyline *path,const exr_vector_poin
 static void curves(void) {
   const double transform[6]={2,.5,-.25,3,10,-2}; const exr_vector_point quadratic[3]={{1,7},{4,-3},{7,7}},cubic[4]={{0,0},{10,0},{-10,0},{1,0}};
   exr_vector_segment segments[4]={{EXR_VECTOR_MOVE,{{1,7}}},{EXR_VECTOR_QUAD,{{4,-3},{7,7}}},{EXR_VECTOR_CLOSE,{{0}}}};
-  exr_vector_polyline path={0}; exr_vector_edge *edges=NULL; size_t count=0,work=0,i;
+  exr_vector_polyline path={0}; exr_vector_edge *edges=NULL; size_t count=0,i;exr_raster_work work={0};
   OK(exr_vector_flatten(segments,3,transform,.125,&path,&work,NULL,&error));
   CHECK(path.contour_count==1 && path.contours[0].closed && path.point_count>2); curve_distance(&path,quadratic,2,transform,.125);
   OK(exr_vector_edges(&path,0,&edges,&count,&work,NULL,&error)); CHECK(count==path.point_count && edges[count-1].x1==path.points[0].x);
@@ -147,11 +147,11 @@ static void curves(void) {
   { exr_control control={0}; unsigned calls=2; control.cancelled=cancel; control.context=&calls;
     CHECK(exr_vector_flatten(segments,4,NULL,.25,&path,&work,&control,&error)==EXR_CANCELLED && !path.points);
   }
-  { size_t limited=(size_t)256*1024*1024; CHECK(exr_vector_flatten(segments,4,NULL,.25,&path,&limited,NULL,&error)==EXR_LIMIT && !path.points); }
+  { exr_raster_work limited={.used=(size_t)256*1024*1024}; CHECK(exr_vector_flatten(segments,4,NULL,.25,&path,&limited,NULL,&error)==EXR_LIMIT && !path.points); }
   OK(exr_vector_flatten(NULL,0,NULL,.25,&path,&work,NULL,&error)); CHECK(!path.point_count && !path.contour_count); exr_vector_polyline_free(&path);
 }
 static exr_bitmap stroked(const exr_vector_polyline *source,const exr_vector_stroke_style *style,const double *matrix,uint32_t color) {
-  exr_vector_polyline outline={0}; exr_vector_edge *edges=NULL; size_t count,work=0; exr_bitmap image=bitmap(1,255);
+  exr_vector_polyline outline={0}; exr_vector_edge *edges=NULL; size_t count;exr_raster_work work={0}; exr_bitmap image=bitmap(1,255);
   OK(exr_vector_stroke(source,style,matrix,.01,&outline,&work,NULL,&error));
   OK(exr_vector_edges(&outline,0,&edges,&count,&work,NULL,&error));
   OK(exr_vector_fill(&image,edges,count,EXR_VECTOR_NONZERO,color,NULL,&work,NULL,&error));
@@ -159,7 +159,7 @@ static exr_bitmap stroked(const exr_vector_polyline *source,const exr_vector_str
 }
 static void strokes(void) {
   exr_vector_segment commands[5]={{EXR_VECTOR_MOVE,{{2,4}}},{EXR_VECTOR_LINE,{{6,4}}}};
-  exr_vector_polyline line={0},out={0}; exr_vector_stroke_style style={2,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER}; exr_bitmap image; size_t work=0,i;
+  exr_vector_polyline line={0},out={0}; exr_vector_stroke_style style={2,10,EXR_VECTOR_BUTT,EXR_VECTOR_MITER}; exr_bitmap image; size_t i;exr_raster_work work={0};
   OK(exr_vector_flatten(commands,2,NULL,.1,&line,&work,NULL,&error));
   image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,1,3,0)==255 && pixel(&image,2,3,0)==0 && pixel(&image,5,4,0)==0 && pixel(&image,6,3,0)==255); free(image.pixels);
   style.cap=EXR_VECTOR_SQUARE; image=stroked(&line,&style,NULL,0x000000ff); CHECK(pixel(&image,1,3,0)==0 && pixel(&image,6,4,0)==0 && pixel(&image,0,4,0)==255); free(image.pixels);
@@ -193,7 +193,7 @@ static void strokes(void) {
     CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&work,&control,&error)==EXR_CANCELLED && !out.points);
   }
   CHECK(exr_vector_stroke(&line,&style,NULL,.1,&line,&work,NULL,&error)==EXR_ARGUMENT && line.points);
-  { size_t limited=(size_t)256*1024*1024; CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&limited,NULL,&error)==EXR_LIMIT && !out.points); }
+  { exr_raster_work limited={.used=(size_t)256*1024*1024}; CHECK(exr_vector_stroke(&line,&style,NULL,.1,&out,&limited,NULL,&error)==EXR_LIMIT && !out.points); }
   exr_vector_polyline_free(&line);
 }
 static void interval(const exr_vector_polyline *path,size_t index,double first,double last) {
@@ -202,7 +202,7 @@ static void interval(const exr_vector_polyline *path,size_t index,double first,d
 }
 static void dashes(void) {
   exr_vector_segment commands[5]={{EXR_VECTOR_MOVE,{{0,4}}},{EXR_VECTOR_LINE,{{12,4}}}};
-  exr_vector_polyline line={0},dashed={0}; size_t work=0,i; const double pattern[2]={2,1},odd[3]={2,1,1},dots[2]={0,2},zero_gap[2]={2,0};
+  exr_vector_polyline line={0},dashed={0}; size_t i;exr_raster_work work={0}; const double pattern[2]={2,1},odd[3]={2,1,1},dots[2]={0,2},zero_gap[2]={2,0};
   OK(exr_vector_flatten(commands,2,NULL,.1,&line,&work,NULL,&error));
   OK(exr_vector_dash(&line,pattern,2,0,&dashed,&work,NULL,&error)); CHECK(dashed.contour_count==4);
   for(i=0;i<4;i++) interval(&dashed,i,3*(double)i,3*(double)i+2); exr_vector_polyline_free(&dashed);
@@ -252,7 +252,7 @@ static void rectangle_fill_equivalence(void) {
   const uint32_t colors[]={0x123456ff,0xffffffff,0x000000ff,0xed5b27ff,0x49a2ef80};
   exr_vector_edge shapes[8][4],split[5],clip_edges[4];
   exr_bitmap clips[2]={bitmap(1,0),bitmap(1,0)};
-  size_t shape,color,background,mask,channels,work=0;
+  size_t shape,color,background,mask,channels;exr_raster_work work={0};
   rectangle(shapes[0],0,0,8,8,0); rectangle(shapes[1],1,2,6,7,0);
   rectangle(shapes[2],1,2,6,7,1); rectangle(shapes[3],-2,-1,5,6,0);
   rectangle(shapes[4],3,1,3,6,0); rectangle(shapes[5],1.25,1.25,6.75,6.75,0);
@@ -283,7 +283,7 @@ static void rectangle_fill_equivalence(void) {
           memcpy(actual.pixels+i*4,rgba,4); memcpy(reference.pixels+i*4,rgba,4);
         }
       }
-      work=0;
+      work.used=0;
       OK(exr_vector_fill(&actual,shapes[shape],4,EXR_VECTOR_NONZERO,colors[color],clip,&work,NULL,&error));
       /* A collinear midpoint preserves coverage while count=5 forces the
          ordinary scanline rasterizer, independently of the rectangle path. */
@@ -294,10 +294,10 @@ static void rectangle_fill_equivalence(void) {
   }
   for(channels=1;channels<=4;channels+=3) {
     exr_bitmap image=bitmap((unsigned)channels,255); exr_control control={0}; unsigned calls=0;
-    control.cancelled=cancel; control.context=&calls; work=0;
+    control.cancelled=cancel; control.context=&calls; work.used=0;
     CHECK(exr_vector_fill(&image,shapes[0],4,EXR_VECTOR_NONZERO,0x123456ff,NULL,&work,&control,&error)==EXR_CANCELLED);
     CHECK(pixel(&image,0,0,0)==(channels==1 ? 46 : 0x12) && pixel(&image,0,1,0)==255);
-    work=(size_t)256*1024*1024-4;
+    work.used=(size_t)256*1024*1024-4;
     CHECK(exr_vector_fill(&image,shapes[0],4,EXR_VECTOR_NONZERO,0x123456ff,NULL,&work,NULL,&error)==EXR_LIMIT);
     free(image.pixels);
   }
@@ -315,7 +315,7 @@ static void rectangle_area(void) {
                        {18,19,21,22},{7,7,9,9},{-8,1,3,5}};
   const uint32_t colors[]={0x123456ff,0xed5b2780,0x49a2ef00};
   const double inks[4]={.2,.4,.1,.3};
-  exr_bitmap clip=bitmap(1,0); size_t box,work=0; unsigned i,channels,reverse,kind,mode,mask,color;
+  exr_bitmap clip=bitmap(1,0); size_t box;exr_raster_work work={0}; unsigned i,channels,reverse,kind,mode,mask,color;
   for(i=0;i<64;i++) clip.pixels[i]=(unsigned char)(i*73);
   clip.pixels[3]=255;
   for(box=0;box<sizeof(boxes)/sizeof(*boxes);box++) for(channels=1;channels<=4;channels+=3)
@@ -328,7 +328,7 @@ static void rectangle_area(void) {
       if(kind==0 && mode!=EXR_BLEND_NORMAL) { free(actual.pixels); free(reference.pixels); continue; }
       state.soft_mask=clip.pixels; state.soft_mask_width=state.soft_mask_height=8; state.gray=kind==2;
       rectangle(edges,boxes[box][0]/8.,boxes[box][1]/8.,boxes[box][2]/8.,boxes[box][3]/8.,(int)reverse);
-      work=0;
+      work.used=0;
       if(kind==3) OK(exr_vector_fill_blend_cmyk(&actual,edges,4,reverse ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO,
                         inks,(colors[color]&255)/255.,mask_bitmap,(exr_blend_mode)mode,s,&work,NULL,&error));
       else OK(exr_vector_fill_blend(&actual,edges,4,reverse ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO,
@@ -348,15 +348,15 @@ static void rectangle_area(void) {
     }
   { exr_vector_edge edges[4]; exr_bitmap image=bitmap(1,0);
     rectangle(edges,1.0002,.9998,6.9998,7.0002,0);
-    work=0; OK(exr_vector_fill(&image,edges,4,EXR_VECTOR_NONZERO,0xffffffff,NULL,&work,NULL,&error));
+    work.used=0; OK(exr_vector_fill(&image,edges,4,EXR_VECTOR_NONZERO,0xffffffff,NULL,&work,NULL,&error));
     CHECK(pixel(&image,1,1,0)==255 && pixel(&image,6,6,0)==255 && pixel(&image,0,1,0)==0 && pixel(&image,1,7,0)==0);
     /* Sub-epsilon transform residuals qualify; a visible slant must not. */
     rectangle(edges,1.125,1.125,6.75,6.75,0); edges[0].y1+=1e-10; edges[1].y0+=1e-10;
-    memset(image.pixels,0,64); work=0;
+    memset(image.pixels,0,64); work.used=0;
     OK(exr_vector_fill(&image,edges,4,EXR_VECTOR_NONZERO,0xffffffff,NULL,&work,NULL,&error));
     CHECK(pixel(&image,2,1,0)==223);
     edges[0].y1+=1e-4; edges[1].y0+=1e-4;
-    memset(image.pixels,0,64); work=0;
+    memset(image.pixels,0,64); work.used=0;
     OK(exr_vector_fill(&image,edges,4,EXR_VECTOR_NONZERO,0xffffffff,NULL,&work,NULL,&error));
     CHECK(pixel(&image,2,1,0)==191);
     free(image.pixels);
@@ -371,7 +371,7 @@ static void rectangle_area(void) {
         unsigned reversed=pattern==2 || (pattern==1 && (i&1)); winding+=reversed ? -1 : 1;
         rectangle(edges+i*4,1.125,1.375,6.75,6.375,(int)reversed);
       }
-      filled=rule ? repeats%2 : winding!=0; work=0;
+      filled=rule ? repeats%2 : winding!=0; work.used=0;
       OK(exr_vector_fill(&actual,edges,repeats*4,rule ? EXR_VECTOR_EVENODD : EXR_VECTOR_NONZERO,
                          0xffffffff,NULL,&work,NULL,&error));
       if(filled) for(y=0;y<8;y++) for(x=0;x<8;x++)
@@ -386,7 +386,7 @@ static void composite_rows(void) {
   /* Every source/destination alpha pair, padded/unaligned rows and an offset
      destination. The existing integer pixel compositor is the pixel oracle. */
   exr_bitmap source={256,256,1027,NULL,4},target={260,260,1043,NULL,4},expected,clip={260,260,263,NULL,1};
-  size_t bytes=(size_t)target.stride*target.height,x,y,work,want;unsigned test;
+  size_t bytes=(size_t)target.stride*target.height,x,y,want;exr_raster_work work={0};unsigned test;
   float unused=0;exr_composite_state isolated={0},flags={0};
   source.pixels=malloc((size_t)source.stride*source.height);target.pixels=malloc(bytes);clip.pixels=malloc((size_t)clip.stride*clip.height);
   expected=target;expected.pixels=malloc(bytes);CHECK(source.pixels && target.pixels && clip.pixels && expected.pixels);
@@ -411,9 +411,9 @@ static void composite_rows(void) {
       uint32_t color=((uint32_t)s[0]<<24)|((uint32_t)s[1]<<16)|((uint32_t)s[2]<<8)|a;
       if(a && coverage) { want++;exr_pixel(&expected,(int)x+2,(int)y+2,color,coverage); }
     }
-    work=0;OK(exr_composite_frame(&target,&source,opacity,EXR_BLEND_NORMAL,test==3 || test==4 ? &(exr_clip_mask){.bitmap=clip} : NULL,
+    work.used=0;OK(exr_composite_frame(&target,&source,opacity,EXR_BLEND_NORMAL,test==3 || test==4 ? &(exr_clip_mask){.bitmap=clip} : NULL,
       test==6 ? &flags : NULL,state,NULL,2,2,&work,NULL,&error));
-    CHECK(work==want);CHECK(!memcmp(target.pixels,expected.pixels,bytes));
+    CHECK(work.used==want);CHECK(!memcmp(target.pixels,expected.pixels,bytes));
   }
   for(test=0;test<4;test++) {
     unsigned calls=0;exr_control control={0};size_t active=test%2 ? 256 : 255;
@@ -431,9 +431,9 @@ static void composite_rows(void) {
       exr_pixel(&expected,(int)x+2,(int)y+2,0x155dbb00u|s[3],255);
     }
     control.cancelled=cancel;control.context=&calls;
-    work=test<2 ? limit-256-active-256-10 : 0;
+    work.used=test<2 ? limit-256-active-256-10 : 0;
     CHECK(exr_composite_frame(&target,&source,1,EXR_BLEND_NORMAL,NULL,NULL,NULL,NULL,2,2,&work,test<2 ? NULL : &control,&error)==(test<2 ? EXR_LIMIT : EXR_CANCELLED));
-    CHECK(work==(test<2 ? limit : 256+active));CHECK(!memcmp(target.pixels,expected.pixels,bytes));
+    CHECK(work.used==(test<2 ? limit : 256+active));CHECK(!memcmp(target.pixels,expected.pixels,bytes));
     if(test>=2) CHECK(calls==3);
   }
   free(source.pixels);free(target.pixels);free(expected.pixels);free(clip.pixels);
@@ -538,19 +538,19 @@ static void scanline_reference(void) {
       unsigned char actual_pixels[W*H*4],reference_pixels[W*H*4];
       exr_bitmap actual={W,H,W*channels,actual_pixels,channels},reference={W,H,W*channels,reference_pixels,channels};
       const exr_bitmap clip={W,H,W,clip_pixels,1};
-      size_t a=0,b=0;
+      exr_raster_work a={0};size_t b=0;
       memcpy(actual_pixels,start,sizeof(start)); memcpy(reference_pixels,start,sizeof(start));
       if(channels==1 && color==0xffffffffu && variant&4) { memset(actual_pixels,0,W*H); memset(reference_pixels,0,W*H); }
       OK(exr_vector_fill(&actual,edges,count,rule,color,variant&1 ? &clip : NULL,&a,NULL,&error));
       reference_fill(&reference,edges,count,rule,color,variant&1 ? &clip : NULL,&b);
-      CHECK(a==b && !memcmp(actual_pixels,reference_pixels,(size_t)W*H*channels));
+      CHECK(a.used==b && !memcmp(actual_pixels,reference_pixels,(size_t)W*H*channels));
     }
   }
 }
 int main(void) {
   composite_rows(); scanline_reference();
-  exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t work=0,i; unsigned x,y;
-  curves(); strokes(); dashes(); mask_fill_equivalence(); compound_spans(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work>0);
+  exr_vector_edge edges[8]; exr_bitmap gray=bitmap(1,255),rgba=bitmap(4,0),clip=bitmap(1,255); size_t i;exr_raster_work work={0}; unsigned x,y;
+  curves(); strokes(); dashes(); mask_fill_equivalence(); compound_spans(); stable_clip_rows(); rectangle_fill_equivalence(); rectangle_area(); rectangle(edges,1,1,5,5,0); OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(work.used>0);
   for(y=0;y<8;y++) for(x=0;x<8;x++) CHECK(pixel(&gray,x,y,0)==(x>=1 && x<5 && y>=1 && y<5 ? 0 : 255));
   memset(gray.pixels,255,64); rectangle(edges,1.25,1.25,4.75,4.75,0);
   OK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,NULL,&error)); CHECK(pixel(&gray,1,1,0)==112 && pixel(&gray,2,2,0)==0 && pixel(&gray,0,0,0)==255);
@@ -579,7 +579,7 @@ int main(void) {
   { exr_control control={0}; unsigned calls=0; control.cancelled=cancel; control.context=&calls;
     CHECK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&work,&control,&error)==EXR_CANCELLED);
   }
-  { size_t limited=(size_t)256*1024*1024-1;
+  { exr_raster_work limited={.used=(size_t)256*1024*1024-1};
     CHECK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&limited,NULL,&error)==EXR_LIMIT);
   }
   edges[0].x0=NAN; CHECK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,NULL,NULL,&error)==EXR_ARGUMENT); edges[0].x0=0;
@@ -587,9 +587,9 @@ int main(void) {
   CHECK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,&gray,NULL,NULL,&error)==EXR_ARGUMENT);
   { exr_bitmap alias=gray; alias.pixels++; CHECK(exr_vector_fill(&gray,edges,4,EXR_VECTOR_NONZERO,0x000000ff,&alias,NULL,NULL,&error)==EXR_ARGUMENT); }
   OK(exr_vector_fill(&gray,NULL,0,EXR_VECTOR_NONZERO,0x000000ff,NULL,NULL,NULL,&error));
-  { exr_bitmap large={0}; size_t small_work=0; large.width=large.height=large.stride=512; large.channels=1; large.pixels=malloc(512*512); CHECK(large.pixels); memset(large.pixels,255,512*512);
+  { exr_bitmap large={0}; exr_raster_work small_work={0}; large.width=large.height=large.stride=512; large.channels=1; large.pixels=malloc(512*512); CHECK(large.pixels); memset(large.pixels,255,512*512);
     rectangle(edges,200,100,204,104,0); OK(exr_vector_fill(&large,edges,4,EXR_VECTOR_NONZERO,0x000000ff,NULL,&small_work,NULL,&error));
-    CHECK(small_work<1000 && pixel(&large,202,102,0)==0 && pixel(&large,100,100,0)==255); free(large.pixels);
+    CHECK(small_work.used<1000 && pixel(&large,202,102,0)==0 && pixel(&large,100,100,0)==255); free(large.pixels);
   }
   free(gray.pixels); free(rgba.pixels); free(clip.pixels); printf("%u native vector fill checks passed\n",checks); return 0;
 }

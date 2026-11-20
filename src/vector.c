@@ -296,8 +296,8 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
                             exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,
                             const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,
                             exr_vector_scratch *scratch,exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
-                            size_t *work,const exr_control *control,exr_error *error) {
-  size_t local_work=0,i;
+                            exr_raster_work *work,const exr_control *control,exr_error *error) {
+  exr_raster_work local_work={0}; size_t i;
   double low=DBL_MAX,high=-DBL_MAX,left_bound=DBL_MAX,right_bound=-DBL_MAX;
   double stable_until=-DBL_MAX; size_t stable_work=0;
   int y,top,bottom,left,right,write_mask,reuse_coverage,has_vertical=0,coverage_dirty=0;
@@ -509,7 +509,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
     }
     build_coverage=y+.875>=stable_until || !exr_vector_work(work,stable_work);
     if(build_coverage) {
-      size_t work_before=*work;
+      size_t work_before=work->used;
       size_t span_count=0,ends[4]={0,0,0,0};
       int row_use_runs=use_runs,wide_seen=0;
       run_count=0; runs=runs_a;
@@ -529,7 +529,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
       }
       /* Fast edge-major 4-sample crossing pass when safely below the work limit. */
       size_t max_row_work=4*(count+active_count*25+row_width);
-      int batch_ok=use_batch && max_row_work<=(size_t)256*1024*1024 && *work<=(size_t)256*1024*1024-max_row_work;
+      int batch_ok=use_batch && exr_vector_work_fits(work,max_row_work);
       if(batch_ok) {
         double s0=y+0.125,s1=y+0.375,s2=y+0.625,s3=y+0.875;
         crossing *c_arr[4]={crossings,crossings+active_count,crossings+2*active_count,crossings+3*active_count};
@@ -561,7 +561,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
         for(sample=0;sample<4;sample++) {
           crossing *cs=c_arr[sample]; size_t n=n_arr[sample],at=0,levels=0; double previous=0; int winding=0;
           for(i=n;i>1;i=(i+1)/2) levels++;
-          *work+=count+n*(levels+1)+row_width;
+          work->used+=count+n*(levels+1)+row_width;
           sort_crossings(cs,n);
           while(at<n) {
             double current=cs[at].x; int delta=0;
@@ -633,7 +633,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
         if(all_vertical) {
           double change=stable_crossings_until(edges,count,y+.125);
           stable_until=change>y+.875 ? change : -DBL_MAX;
-          stable_work=*work-work_before;
+          stable_work=work->used-work_before;
         } else {
           stable_until=-DBL_MAX;
         }
@@ -842,20 +842,20 @@ exr_status exr_vector_fill_blend_ex(exr_bitmap *bitmap,const exr_vector_edge *ed
   exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,const exr_clip_mask *clip,
   exr_blend_mode mode,exr_composite_state *state,exr_vector_scratch *scratch,
   exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
-  size_t *work,const exr_control *control,exr_error *error) {
+  exr_raster_work *work,const exr_control *control,exr_error *error) {
   return fill_blend(bitmap,edges,count,rule,color,cmyk,cmyk_alpha,clip,mode,state,scratch,solid_out,clip_solid,work,control,error);
 }
 exr_status exr_vector_fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
                             exr_vector_rule rule,uint32_t color,const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,
-                            size_t *work,const exr_control *control,exr_error *error) {
+                            exr_raster_work *work,const exr_control *control,exr_error *error) {
   return fill_blend(bitmap,edges,count,rule,color,NULL,0,clip,mode,state,NULL,NULL,NULL,work,control,error);
 }
 exr_status exr_vector_fill_blend_cmyk(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
                             exr_vector_rule rule,const double cmyk[4],double alpha,const exr_clip_mask *clip,exr_blend_mode mode,
-                            exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error) {
+                            exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *error) {
   return fill_blend(bitmap,edges,count,rule,0,cmyk,alpha,clip,mode,state,NULL,NULL,NULL,work,control,error);
 }
 exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-  exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error) {
+  exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,exr_raster_work *work,const exr_control *control,exr_error *error) {
   return exr_vector_fill_blend(bitmap,edges,count,rule,color,clip ? &(exr_clip_mask){.bitmap=*clip} : NULL,EXR_BLEND_NORMAL,NULL,work,control,error);
 }

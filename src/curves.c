@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #include "vector_internal.h"
 typedef struct {
-  exr_vector_polyline path; size_t *work; const exr_control *control; exr_error *error; exr_status status;
+  exr_vector_polyline path; exr_raster_work *work; const exr_control *control; exr_error *error; exr_status status;
 } flatten_reader;
 typedef struct { exr_vector_point p[4]; unsigned degree,depth; } curve_node;
 static int fail(flatten_reader *r,exr_status code,const char *message) { r->status=exr_fail(r->error,code,"%s",message); return 0; }
 static int step(flatten_reader *r) {
   if(!exr_vector_work(r->work,1)) return fail(r,EXR_LIMIT,"Vector flatten work budget exceeded");
-  if(!(*r->work&255) && (r->status=exr_control_cancel(r->control,r->error))!=EXR_OK) return 0;
+  if(!(r->work->used&255) && (r->status=exr_control_cancel(r->control,r->error))!=EXR_OK) return 0;
   return 1;
 }
 static int point(flatten_reader *r,exr_vector_point p) {
@@ -54,9 +54,9 @@ void exr_vector_polyline_free(exr_vector_polyline *path) {
   if(path) { free(path->points); free(path->contours); memset(path,0,sizeof(*path)); }
 }
 exr_status exr_vector_flatten(const exr_vector_segment *segments,size_t count,const double transform[6],
-                               double tolerance,exr_vector_polyline *out,size_t *work,
+                               double tolerance,exr_vector_polyline *out,exr_raster_work *work,
                                const exr_control *control,exr_error *error) {
-  const double identity[6]={1,0,0,1,0,0}; flatten_reader r={0}; size_t local_work=0,i;
+  const double identity[6]={1,0,0,1,0,0}; flatten_reader r={0}; exr_raster_work local_work={0}; size_t i;
   if(out) memset(out,0,sizeof(*out));
   if(!out || (count && !segments) || !isfinite(tolerance) || tolerance<=0 || tolerance>1e7) return exr_fail(error,EXR_ARGUMENT,"Invalid vector path input or tolerance");
   if(count>1048576) return exr_fail(error,EXR_LIMIT,"Vector path command budget exceeded");
@@ -91,8 +91,8 @@ done:
   exr_vector_polyline_free(&r.path); return r.status;
 }
 exr_status exr_vector_edges(const exr_vector_polyline *path,int close_open,exr_vector_edge **out,
-                             size_t *count,size_t *work,const exr_control *control,exr_error *error) {
-  exr_vector_edge *edges=NULL; size_t used=0,at=0,i,j,local_work=0; exr_status status;
+                             size_t *count,exr_raster_work *work,const exr_control *control,exr_error *error) {
+  exr_vector_edge *edges=NULL; size_t used=0,at=0,i,j; exr_raster_work local_work={0}; exr_status status;
   if(out) *out=NULL;
   if(count) *count=0;
   if(!path || !out || !count || (path->point_count && !path->points) || (path->contour_count && !path->contours)) return exr_fail(error,EXR_ARGUMENT,"Missing vector polyline input/output");
