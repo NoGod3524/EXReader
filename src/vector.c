@@ -380,7 +380,7 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   uint16_t *solid_spans=(write_mask && solid_out) ? ensure_solid_spans(solid_out,bitmap->height) : NULL;
   blocks=((size_t)row_width+COVERAGE_BLOCK-1)>>COVERAGE_SHIFT;
   touched_words=(blocks+63)>>6;
-  use_runs=count<=16384 && (write_mask || (!cmyk && !state));
+  use_runs=count<=16384 && (write_mask ? row_width>=4 : (!cmyk && !state && row_width>=8));
   use_batch=count<=4096;
   {
     size_t off=0;
@@ -422,37 +422,19 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   memset(coverage,0,(size_t)row_width*sizeof(*coverage));
   memset(touched_bits,0,touched_words*sizeof(*touched_bits));
 
-  /* Bucket edges by the first row whose samples [y+0.125, y+0.875] they can
-     cross. Edges ending at or above top+0.125 or starting past the last sample
-     never produce crossings and are skipped up front. */
   memset(starts,0,(height_rows+1)*sizeof(*starts));
-  {
-    double first_min=top+0.125,first_max=top+0.875,last_max=(double)(bottom-1)+0.875;
-    for(i=0;i<count;i++) {
-      const exr_vector_edge *edge=&edges[i];
-      if(edge->y0==edge->y1) continue;
-      double minimum=edge->y0<edge->y1 ? edge->y0 : edge->y1,maximum=edge->y0<edge->y1 ? edge->y1 : edge->y0;
-      if(maximum<=first_min || minimum>last_max) continue;
-      size_t row=0;
-      if(minimum>first_max) {
-        double d=minimum-0.875; size_t ci=(size_t)d;
-        row=(d>(double)ci ? ci+1 : ci)-(size_t)top;
-      }
-      if(row<height_rows) starts[row+1]++;
-    }
-    for(i=0;i<height_rows;i++) starts[i+1]+=starts[i];
-    for(i=0;i<count;i++) {
-      const exr_vector_edge *edge=&edges[i];
-      if(edge->y0==edge->y1) continue;
-      double minimum=edge->y0<edge->y1 ? edge->y0 : edge->y1,maximum=edge->y0<edge->y1 ? edge->y1 : edge->y0;
-      if(maximum<=first_min || minimum>last_max) continue;
-      size_t row=0;
-      if(minimum>first_max) {
-        double d=minimum-0.875; size_t ci=(size_t)d;
-        row=(d>(double)ci ? ci+1 : ci)-(size_t)top;
-      }
-      if(row<height_rows) bucketed[starts[row]++]=(uint32_t)i;
-    }
+  for(i=0;i<count;i++) {
+    const exr_vector_edge *edge=&edges[i];
+    double minimum=edge->y0<edge->y1 ? edge->y0 : edge->y1,maximum=edge->y0<edge->y1 ? edge->y1 : edge->y0;
+    size_t row=minimum<=top ? 0 : (size_t)minimum-(size_t)top;
+    if(minimum<maximum && maximum>top && row<height_rows) starts[row+1]++;
+  }
+  for(i=0;i<height_rows;i++) starts[i+1]+=starts[i];
+  for(i=0;i<count;i++) {
+    const exr_vector_edge *edge=&edges[i];
+    double minimum=edge->y0<edge->y1 ? edge->y0 : edge->y1,maximum=edge->y0<edge->y1 ? edge->y1 : edge->y0;
+    size_t row=minimum<=top ? 0 : (size_t)minimum-(size_t)top;
+    if(minimum<maximum && maximum>top && row<height_rows) bucketed[starts[row]++]=(uint32_t)i;
   }
   /* starts[row] now ends bucket row; bucket row begins at starts[row-1]. */
   reuse_coverage=write_mask && (!control || !control->cancelled);
