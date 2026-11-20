@@ -149,11 +149,12 @@ static void affine(void) {
     unit.bitmap.width=unit.bitmap.height=1;unit.bitmap.channels=unit.bitmap.stride=4;unit.bitmap.pixels=white;
     other.pixels=reference;
     for(i=0;i<64;i++) mask[i]=(unsigned char)(i*53);
-    for(trial=0;trial<48;trial++) {
+    for(trial=0;trial<96;trial++) {
       const double *p=placements[trial%6],m[6]={p[0],0,0,p[1],p[2],p[3]};const exr_bitmap *cover=(trial/6)&4 ? NULL : &clip;
       double alpha=(trial/6)&1 ? 1 : .63;exr_blend_mode mode=(trial/6)&2 ? EXR_BLEND_MULTIPLY : EXR_BLEND_NORMAL;
       for(i=0;i<48;i++) colors[i]=(unsigned char)(i*37+trial*23);
       colors[3]=0;colors[7]=255;
+      if(trial>=48) for(i=3;i<48;i+=4) colors[i]=255;
       for(i=0;i<256;i++) initial[i]=(unsigned char)(i*13+trial);
       for(i=3;i<256;i+=12) initial[i]=0;
       memcpy(target,initial,256);memcpy(reference,initial,256);

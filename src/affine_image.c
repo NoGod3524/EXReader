@@ -169,7 +169,7 @@ __attribute__((noinline))
 __declspec(noinline)
 #endif
 static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,const double inv[6],
-                                  const exr_bitmap *clip,int x0,int y0,int x1,int y1,int *columns,uint32_t rgb,
+                                  const exr_clip_mask *clip,int x0,int y0,int x1,int y1,int *columns,uint32_t rgb,
                                   size_t cost,size_t *work,const exr_control *control,exr_error *e) {
   double px0=x0+.25,py0=y0+.25;
 #if defined(__SSE2__) || defined(_M_X64)
@@ -186,7 +186,7 @@ static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,con
     int y_second=nearest_index(inv[1]*px0+inv[3]*(y+.75)+inv[5],mask->height);
     const unsigned char *first=y_first<0 ? NULL : mask->pixels+(size_t)y_first*mask->stride;
     const unsigned char *second=y_second<0 ? NULL : mask->pixels+(size_t)y_second*mask->stride;
-    const unsigned char *coverage=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    const unsigned char *coverage=exr_clip_row(clip,(size_t)y);
     const int *column=columns;
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,(size_t)(x1-x0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
@@ -243,6 +243,14 @@ static void ink_sample(const exr_vector_texture *source,const exr_bitmap *inks,d
   if(a) for(k=0;k<4;k++) out[k]*=rgba[3]/a;
   out[4]=rgba[3];
 }
+/* Four opaque nearest taps reduce to a rounded byte average. Each 16-bit
+   lane holds at most 4*255+2. Pair alternate bytes to keep carries local. */
+static inline uint32_t average_four_rgba(uint32_t a,uint32_t b,uint32_t c,uint32_t d) {
+  const uint32_t lanes=0x00ff00ffu,round=0x00020002u;
+  uint32_t even=((a&lanes)+(b&lanes)+(c&lanes)+(d&lanes)+round)>>2;
+  uint32_t odd=(((a>>8)&lanes)+((b>>8)&lanes)+((c>>8)&lanes)+((d>>8)&lanes)+round)>>2;
+  return (even&lanes)|((odd&lanes)<<8);
+}
 /* Axis-aligned, unmasked nearest-neighbor images without a composite state.
    With inv[1] and inv[2] zero, u depends only on the column and v only on the
    row, so the texel of every subsample is tabulated once with the generic
@@ -250,7 +258,7 @@ static void ink_sample(const exr_vector_texture *source,const exr_bitmap *inks,d
    path, so integer accumulation followed by the same divisions is identical.
    Returns 0 when the case does not apply; the generic loop then runs. */
 static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,const double inv[6],double alpha,
-                        const exr_bitmap *clip,exr_blend_mode mode,int x0,int y0,int x1,int y1,size_t cost,
+                        const exr_clip_mask *clip,exr_blend_mode mode,int x0,int y0,int x1,int y1,size_t cost,
                         size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
   const exr_bitmap *b=&source->bitmap; size_t width=(size_t)(x1-x0),height=(size_t)(y1-y0),k; int32_t *columns,*rows; int x,y;
   if(source->interpolate || source->mask || source->has_matte || target->channels!=4 || inv[1]!=0 || inv[2]!=0 || x1<=x0 || y1<=y0) return 0;
@@ -270,7 +278,7 @@ static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,cons
   }
   for(y=y0;y<y1;y++) {
     const int32_t *ry=rows+2*(size_t)(y-y0); const unsigned char *line[2];
-    const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    const unsigned char *mask=exr_clip_row(clip,(size_t)y);
     if(exr_control_cancel(control,e)!=EXR_OK) { free(columns); *result=EXR_CANCELLED; return 1; }
     if(!exr_vector_work(work,width*cost)) { free(columns); *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded"); return 1; }
     if(ry[0]<0 && ry[1]<0) continue;
@@ -279,6 +287,16 @@ static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,cons
       const int32_t *cx=columns+2*(size_t)(x-x0); unsigned coverage=mask ? mask[x] : 255,sy,sx; uint32_t s[4]={0},color=0;
       const unsigned char *first=NULL; int same=1;
       if(!coverage) continue;
+      if(alpha==1 && mode==EXR_BLEND_NORMAL && coverage==255 && line[0] && line[1] && cx[0]>=0 && cx[1]>=0) {
+        const unsigned char *p0=line[0]+cx[0],*p1=line[0]+cx[1],*p2=line[1]+cx[0],*p3=line[1]+cx[1];
+        if((p0[3]&p1[3]&p2[3]&p3[3])==255) {
+          uint32_t a,bv,c,d;
+          memcpy(&a,p0,4); memcpy(&bv,p1,4); memcpy(&c,p2,4); memcpy(&d,p3,4);
+          uint32_t rgba=average_four_rgba(a,bv,c,d);
+          memcpy(target->pixels+(size_t)y*target->stride+(size_t)x*4,&rgba,4);
+          continue;
+        }
+      }
       for(sy=0;sy<2;sy++) {
         if(!line[sy]) continue;
         for(sx=0;sx<2;sx++) {
@@ -606,7 +624,7 @@ static void axis_flat_row_paint(const axis_row *r,const image_tap ytaps[2]) {
    bilinear_axis always did. Returns 0 when the converted-row form does not
    apply. */
 static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vector_texture *mt,unsigned mask_mode,const double inv[6],double alpha,
-                      const exr_bitmap *clip,int x0,int y0,int x1,int y1,size_t cost,
+                      const exr_clip_mask *clip,int x0,int y0,int x1,int y1,size_t cost,
                       size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
   axis_layer color,mask; size_t width;
   if(target->channels!=4 || inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
@@ -630,7 +648,7 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
     if(!exr_vector_work(work,width*cost)) { *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break; }
     axis_row r; int cneed[4],mneed[4]; unsigned ccount=0,mcount=0; image_tap ctap[2]={{0,0,0},{0,0,0}},mtap[2]={{0,0,0},{0,0,0}};
     memset(&r,0,sizeof(r));
-    r.target=target;r.coverage=clip ? clip->pixels+(size_t)y*clip->stride : NULL;r.color=&color;r.mask=mt ? &mask : NULL;
+    r.target=target;r.coverage=exr_clip_row(clip,(size_t)y);r.color=&color;r.mask=mt ? &mask : NULL;
     r.alpha=alpha;r.y=y;r.x0=x0;r.x1=x1;r.luminosity=mask_mode==1;
     axis_clip_full_span(r.coverage,x0,x1,&r.full_x0,&r.full_x1);
     for(unsigned sy=0;sy<2;sy++) {
@@ -666,7 +684,7 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
    reuse their converted texels; crossing rows retain the scalar sampler.
    Coordinates, weights and four-sample accumulation keep their original order. */
 static int bilinear_shear(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
-                         const exr_bitmap *clip,int x0,int y0,int x1,int y1,size_t cost,
+                         const exr_clip_mask *clip,int x0,int y0,int x1,int y1,size_t cost,
                          size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
   /* The body below is SSE2-only; other targets take the scalar fallback, so
      these parameters must be explicitly discarded to keep -Werror quiet. */
@@ -701,7 +719,7 @@ static int bilinear_shear(exr_bitmap *target,const exr_bitmap *source,const doub
   for(int y=y0;y<y1;y++) {
     *result=exr_control_cancel(control,e);if(*result!=EXR_OK) break;
     if(!exr_vector_work(work,width*cost)) { *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break; }
-    const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    const unsigned char *mask=exr_clip_row(clip,(size_t)y);
     int need[4],stable=1;unsigned count=0;
     const converted_row *rows[2][2];
     for(unsigned sy=0;sy<2;sy++) {
@@ -749,7 +767,7 @@ static int bilinear_shear(exr_bitmap *target,const exr_bitmap *source,const doub
 /* The separable transform gives each column the same two horizontal taps
    on every row. Keep the generic tap, weight and summation order. */
 static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
-                         const exr_bitmap *clip,int x0,int y0,int x1,int y1,size_t cost,
+                         const exr_clip_mask *clip,int x0,int y0,int x1,int y1,size_t cost,
                          size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
   if(inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
   double x_first=inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4],x_last=inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4];
@@ -777,7 +795,7 @@ static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const doubl
     if(!exr_vector_work(work,width*cost)) {
       *result=exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");break;
     }
-    const unsigned char *mask=clip ? clip->pixels+(size_t)y*clip->stride : NULL;
+    const unsigned char *mask=exr_clip_row(clip,(size_t)y);
     const unsigned char *rows[2][2]={{NULL,NULL},{NULL,NULL}};
     double wy[2]={0,0};
     for(unsigned sy=0;sy<2;sy++) {
@@ -812,12 +830,12 @@ static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const doubl
 }
 
 exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_texture *source,const exr_bitmap *inks,const double m[6],double alpha,
-                                     const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
+                                     const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
   size_t local_work=0,i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
   const exr_vector_texture *layers[16],*layer=source; size_t depth=0,cost=0; int paired_nearest;
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image blend mode");
   if(!storage(target) || !source || !m || !isfinite(alpha) || alpha<0 || alpha>1 ||
-     (clip && (!storage(clip) || clip->channels!=1 || clip->width!=target->width || clip->height!=target->height || overlap(target,clip))))
+     (clip && (!storage(&clip->bitmap) || clip->bitmap.channels!=1 || clip->bitmap.width!=target->width || exr_clip_height(clip)!=target->height || overlap(target,&clip->bitmap))))
     return exr_fail(e,EXR_ARGUMENT,"Invalid affine image bitmap, alpha or clip");
   if(inks && (!storage(inks) || inks->channels!=4 || inks->width!=source->bitmap.width ||
       inks->height!=source->bitmap.height || overlap(target,inks) || source->has_matte))
@@ -852,6 +870,9 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
     left=fmin(left,px); right=fmax(right,px); top=fmin(top,py); bottom=fmax(bottom,py);
   }
   x0=(int)fmax(0,floor(left)); x1=(int)fmin(target->width,ceil(right)); y0=(int)fmax(0,floor(top)); y1=(int)fmin(target->height,ceil(bottom));
+  if(clip && clip->compact_height && clip->solid_is_rect && x0<x1 && y0<y1 &&
+     x0>=clip->solid_rect[0] && y0>=clip->solid_rect[1] && x1<=clip->solid_rect[2] && y1<=clip->solid_rect[3])
+    clip=NULL;
 #ifndef EXR_PROFILE_IMAGE
   if(!inks && !state) {
     exr_status fast;
@@ -892,8 +913,9 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
   for(y=y0;y<y1;y++) {
     if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
     if(!exr_vector_work(work,(size_t)(x1>x0 ? x1-x0 : 0)*cost)) return exr_fail(e,EXR_LIMIT,"Affine image work budget exceeded");
+    const unsigned char *mask_row=exr_clip_row(clip,(size_t)y);
     for(x=x0;x<x1;x++) {
-      double sums[5]={0},shape_sum=0; unsigned sx,sy,k,coverage=clip ? clip->pixels[(size_t)y*clip->stride+(unsigned)x] : 255; uint32_t color=0;
+      double sums[5]={0},shape_sum=0; unsigned sx,sy,k,coverage=mask_row ? mask_row[x] : 255; uint32_t color=0;
       if(!coverage) continue;
 #if defined(EXR_PROFILE_IMAGE) && EXR_PROFILE_IMAGE == 1
       image_profile.active=(image_profile.pixels++ % 256)==0;
@@ -945,7 +967,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
   { unsigned long long elapsed=image_tick()-loop_start; LARGE_INTEGER frequency; const char *path=getenv("EXR_PROFILE_IMAGE_OUT");
     QueryPerformanceFrequency(&frequency);
 #if EXR_PROFILE_IMAGE == 2
-    for(y=y0;y<y1;y++) for(x=x0;x<x1;x++) if(!clip || clip->pixels[(size_t)y*clip->stride+(unsigned)x]) image_profile.pixels++;
+    for(y=y0;y<y1;y++) for(x=x0;x<x1;x++) if(!clip || exr_clip_row(clip,(size_t)y)[x]) image_profile.pixels++;
 #endif
     if(path) { FILE *f=fopen(path,"a"); if(f) {
       fprintf(f,"%u,%u,%u,%u,%u,%u,%u,%u,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%.6f,%u,%u,%u,%u\n",target->width,source->bitmap.width,source->bitmap.height,source->interpolate,source->mask!=NULL,source->has_matte,state!=NULL,state ? state->depth : 0,image_profile.pixels,image_profile.sampled,image_profile.samples,image_profile.ticks[0],image_profile.ticks[1],image_profile.ticks[2],image_profile.ticks[3],elapsed,(unsigned long long)frequency.QuadPart,image_clock_overhead(),source->mask ? source->mask->interpolate : 0,source->mask ? source->mask->bitmap.width : 0,source->mask ? source->mask->bitmap.height : 0,(unsigned)mode);
@@ -957,7 +979,7 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
 }
 exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double m[6],double alpha,
   const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
-  return exr_vector_texture_blend_inks(target,source,NULL,m,alpha,clip,mode,state,work,control,e);
+  return exr_vector_texture_blend_inks(target,source,NULL,m,alpha,clip ? &(exr_clip_mask){.bitmap=*clip} : NULL,mode,state,work,control,e);
 }
 exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double m[6],double alpha,
                              int interpolate,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *e) {

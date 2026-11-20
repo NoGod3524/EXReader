@@ -43,8 +43,8 @@ static void compound_spans(void) {
   const size_t limit=(size_t)256*1024*1024;
   size_t a=0,b=limit-(8+5*12);
   for(size_t i=0;i<sizeof(actual);i++) actual[i]=reference[i]=(unsigned char)(i*13);
-  OK(exr_composite_compound(&fast,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&cm,NULL,&a,NULL,&error));
-  OK(exr_composite_compound(&slow,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&cm,NULL,&b,NULL,&error));
+  OK(exr_composite_compound(&fast,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&(exr_clip_mask){.bitmap=cm},NULL,&a,NULL,&error));
+  OK(exr_composite_compound(&slow,&fm,&sm,bounds,0xaabbccff,0x112233ff,EXR_BLEND_NORMAL,&(exr_clip_mask){.bitmap=cm},NULL,&b,NULL,&error));
   CHECK(a==8+5*12 && b==limit && !memcmp(actual,reference,sizeof(actual)));
   CHECK(!memcmp(actual,"\xaa\xbb\xcc\xff\xaa\xbb\xcc\xff\x11\x22\x33\xff\x11\x22\x33\xff",16));
   /* Exhaustive check of fast opaque normal-blend AA and offset masks against the slow path. */
@@ -71,8 +71,8 @@ static void compound_spans(void) {
       }
       size_t wf=0,ws=0;
       exr_composite_state slow_state={0};
-      OK(exr_composite_compound_at(&fbm,&tight_f,&tight_s,5,0,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &big_c : NULL,NULL,&wf,NULL,&error));
-      OK(exr_composite_compound(&sbm,&big_f,&big_s,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &big_c : NULL,&slow_state,&ws,NULL,&error));
+      OK(exr_composite_compound_at(&fbm,&tight_f,&tight_s,5,0,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &(exr_clip_mask){.bitmap=big_c} : NULL,NULL,&wf,NULL,&error));
+      OK(exr_composite_compound(&sbm,&big_f,&big_s,bnds,0x357bd1ff,0xd94e2aff,EXR_BLEND_NORMAL,use_clip ? &(exr_clip_mask){.bitmap=big_c} : NULL,&slow_state,&ws,NULL,&error));
       CHECK(!memcmp(fast_px,slow_px,sizeof(fast_px)));
     }
   }
@@ -322,7 +322,7 @@ static void rectangle_area(void) {
     for(reverse=0;reverse<2;reverse++) for(kind=0;kind<4;kind++)
     for(mode=0;mode<=EXR_BLEND_LUMINOSITY;mode++) for(mask=0;mask<2;mask++) for(color=0;color<3;color++) {
       exr_vector_edge edges[4]; exr_bitmap actual=bitmap(channels,128),reference=bitmap(channels,128);
-      exr_composite_state state={0}; const exr_bitmap *mask_bitmap=mask ? &clip : NULL;
+      exr_composite_state state={0}; const exr_clip_mask *mask_bitmap=mask ? &(exr_clip_mask){.bitmap=clip} : NULL;
       exr_composite_state *s=kind>=2 ? &state : NULL;
       unsigned x,y;
       if(kind==0 && mode!=EXR_BLEND_NORMAL) { free(actual.pixels); free(reference.pixels); continue; }
@@ -411,8 +411,8 @@ static void composite_rows(void) {
       uint32_t color=((uint32_t)s[0]<<24)|((uint32_t)s[1]<<16)|((uint32_t)s[2]<<8)|a;
       if(a && coverage) { want++;exr_pixel(&expected,(int)x+2,(int)y+2,color,coverage); }
     }
-    work=0;OK(exr_composite_frame(&target,&source,opacity,EXR_BLEND_NORMAL,test==3 || test==4 ? &clip : NULL,
-      test==6 ? &flags : NULL,state,2,2,&work,NULL,&error));
+    work=0;OK(exr_composite_frame(&target,&source,opacity,EXR_BLEND_NORMAL,test==3 || test==4 ? &(exr_clip_mask){.bitmap=clip} : NULL,
+      test==6 ? &flags : NULL,state,NULL,2,2,&work,NULL,&error));
     CHECK(work==want);CHECK(!memcmp(target.pixels,expected.pixels,bytes));
   }
   for(test=0;test<4;test++) {
@@ -432,7 +432,7 @@ static void composite_rows(void) {
     }
     control.cancelled=cancel;control.context=&calls;
     work=test<2 ? limit-256-active-256-10 : 0;
-    CHECK(exr_composite_frame(&target,&source,1,EXR_BLEND_NORMAL,NULL,NULL,NULL,2,2,&work,test<2 ? NULL : &control,&error)==(test<2 ? EXR_LIMIT : EXR_CANCELLED));
+    CHECK(exr_composite_frame(&target,&source,1,EXR_BLEND_NORMAL,NULL,NULL,NULL,NULL,2,2,&work,test<2 ? NULL : &control,&error)==(test<2 ? EXR_LIMIT : EXR_CANCELLED));
     CHECK(work==(test<2 ? limit : 256+active));CHECK(!memcmp(target.pixels,expected.pixels,bytes));
     if(test>=2) CHECK(calls==3);
   }

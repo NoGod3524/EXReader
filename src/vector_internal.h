@@ -66,11 +66,12 @@ typedef exr_image_layer exr_vector_texture;
 exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],
                                      double alpha,const exr_bitmap *clip,size_t *work,
                                      const exr_control *control,exr_error *error);
+int exr_vector_rectangle_bounds(const exr_vector_polyline *path,double bounds[4]);
 exr_status exr_vector_fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-  exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,
+  exr_vector_rule rule,uint32_t color,const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,
   size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_vector_fill_blend_cmyk(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-  exr_vector_rule rule,const double cmyk[4],double alpha,const exr_bitmap *clip,exr_blend_mode mode,
+  exr_vector_rule rule,const double cmyk[4],double alpha,const exr_clip_mask *clip,exr_blend_mode mode,
   exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);
 typedef struct { void *data; size_t capacity; } exr_vector_scratch;
 void exr_vector_scratch_free(exr_vector_scratch *scratch);
@@ -86,12 +87,12 @@ typedef struct {
   uint8_t is_rect,used_spans;
 } exr_solid_out;
 exr_status exr_vector_fill_blend_ex(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
-  exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,const exr_bitmap *clip,
+  exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,const exr_clip_mask *clip,
   exr_blend_mode mode,exr_composite_state *state,exr_vector_scratch *scratch,
   exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
   size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],
   double alpha,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_texture *source,const exr_bitmap *inks,const double matrix[6],
-  double alpha,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);
+  double alpha,const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);
 #endif

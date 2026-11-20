@@ -1,0 +1,30 @@
+2026-11-20T01:41:45.1091062-05:00 Waiting for earlier same-holder session or build slots=[.build.agy-2400]
+2026-11-20T01:42:01.8036607-05:00 Waiting for earlier same-holder session or build slots=[.build.agy-2400 .build.codex-P95c]
+2026-11-20T01:42:18.1359523-05:00 Waiting for earlier same-holder session or build slots=[.build.agy-2400 .build.codex-P95c]
+2026-11-20T01:42:33.9768190-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:42:50.3189626-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:43:07.0813654-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:43:23.1868488-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:43:39.8308851-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:43:56.6159130-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:44:12.8795721-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:44:29.1939512-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:44:45.3599247-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:45:00.9754573-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:45:16.6041911-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:45:32.1906415-05:00 Waiting for earlier same-holder session or build slots=[.build.codex-P95c]
+2026-11-20T01:45:47.7812489-05:00 Waiting for bench lock agy-W5
+ACQUIRED agy-W5
+2026-11-20T01:46:12.8389849-05:00 heartbeat agy-W5; build slots=[]; EXR_IDLE_GATE=off; starting attribution
+released agy-W5
+2026-11-20T01:46:25.5858421-05:00 Waiting for bench lock agy-W5
+ACQUIRED agy-W5
+2026-11-20T01:53:03.4967643-05:00 heartbeat agy-W5; build slots=[]; EXR_IDLE_GATE=off; starting attribution
+2026-11-20T01:53:24.3708842-05:00 Completed attribution
+2026-11-20T01:53:25.3114538-05:00 heartbeat agy-W5; build slots=[]; EXR_IDLE_GATE=off; starting paired-600
+2026-11-20T01:53:29.7425461-05:00 Completed paired-600
+2026-11-20T01:53:30.6929704-05:00 heartbeat agy-W5; build slots=[]; EXR_IDLE_GATE=off; starting paired-1200
+2026-11-20T01:53:36.9142201-05:00 Completed paired-1200
+2026-11-20T01:53:37.9723391-05:00 heartbeat agy-W5; build slots=[]; EXR_IDLE_GATE=off; starting paired-2400
+2026-11-20T01:53:50.0178742-05:00 Completed paired-2400
+released agy-W5
