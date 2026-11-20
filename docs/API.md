@@ -1979,13 +1979,27 @@ int main(void) {
 
 **ABI** 稳定；声明：[exr/document.h](../include/exr/document.h)。
 
-**参数** `document`：固定页文档句柄；`page`：零基页面索引；`scale`：原生页到输出像素的正比例；`options`：可 NULL（白色 RGBA）；channels 为 1 或 4，含 mask_budget/control；`out`：接收拥有像素的位图结构（先零初始化）；用 exr_bitmap_free 释放像素；`error`：可 NULL，接收 exr_status 和 UTF-8 错误说明
+**参数** `document`：固定页文档句柄；`page`：零基页面索引；`scale`：原生页到输出像素的正比例；`options`：可 NULL（白色 RGBA）；channels 为 1 或 4，含 mask_budget/control。该入口使用历史图层和光栅工作上限；`out`：接收拥有像素的位图结构（先零初始化）；用 exr_bitmap_free 释放像素；`error`：可 NULL，接收 exr_status 和 UTF-8 错误说明
 
 **返回与失败** EXR_OK：创建自然大小 viewport、裁剪并渲染指定页；参数/scale 无效为 EXR_ARGUMENT，内存/掩码或像素预算失败为 EXR_MEMORY/EXR_LIMIT；provider/取消错误透传，失败不返回部分位图。
 
 **线程** 同一对象的操作与销毁由宿主串行化；回调同步运行于调用线程，不得重入或销毁活动对象。
 
 **所有权** out 应零初始化；成功的 pixels 用 exr_bitmap_free(out)。
+
+### `exr_fixed_render_ex`
+
+**签名** `exr_status exr_fixed_render_ex(exr_fixed_document *document,size_t page,double scale, const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);`
+
+**ABI** 稳定，ABI 1 新增入口。声明见 [exr/document.h](../include/exr/document.h)。
+
+**参数** 与 `exr_fixed_render` 相同。`options` 可为 NULL，或传入当前版本的 `exr_fixed_render_options`，并将未设置的字段初始化为 0。`layer_budget` 以字节为单位，同时约束单个透明度图层和每个画布的活动图层总量，0 代表默认 64 MiB。`work_budget` 是单个光栅工作计数器的加权工作单位上限，0 代表默认 268,435,456 单位。上限只用于本次调用，包括 PDF 原生软蒙版绘制。
+
+**返回与失败** 与 `exr_fixed_render` 相同。超出任一上限时返回 EXR_LIMIT。
+
+**线程** 同一对象的操作与销毁由宿主串行化。回调在调用线程同步运行，不能重入活动对象。
+
+**所有权** `options` 在调用期间借用。成功时用 `exr_bitmap_free(out)` 释放像素。
 
 ### `exr_document_create`
 
