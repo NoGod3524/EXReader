@@ -27,6 +27,7 @@ typedef struct { size_t offset; uint32_t value,revision; unsigned generation,typ
 typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; uint32_t object; unsigned generation,unencrypted,retain; size_t cached; } pdf_stream;
 struct exr_pdf_file {
   const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
+  size_t content_position;
   exr_pdf_value *values; size_t value_count,value_capacity;
   exr_buffer strings;
   pdf_xref *xref; size_t xref_count,xref_capacity;
@@ -1266,6 +1267,34 @@ static uint32_t parse_inline(parser *p,exr_pdf_file *owner,uint32_t resources) {
 bad:
   failed(f,EXR_FORMAT,"Invalid PDF inline image dictionary, bounds or EI terminator"); return EXR_PDF_NONE;
 }
+static int cover_numbers(parser *p,double *out,size_t n) {
+  for(size_t i=0;i<n;i++) {
+    if(!skip(p) || p->at==p->size ||
+       !strchr("+-.0123456789",p->data[p->at])) return 0;
+    uint32_t id=parse_value(p,0);
+    const exr_pdf_value *v=exr_pdf_value_at(p->file,id);
+    if(!v || (v->kind!=EXR_PDF_INT && v->kind!=EXR_PDF_REAL)) return 0;
+    out[i]=v->kind==EXR_PDF_INT ? (double)v->u.integer : v->u.number;
+    if(!isfinite(out[i]) || fabs(out[i])>1e7) return 0;
+  }
+  return 1;
+}
+
+int exr_pdf_peek_image_cover(const exr_pdf_file *operands,double clip[4],double fill[4]) {
+  /* Bounded speculative lookahead. Use the same number parser and keep its
+     storage, work counter and errors separate from the streaming lexer. */
+  exr_pdf_file scratch={0}; double color[3];
+  size_t end=operands->content_position+256;
+  parser p={&scratch,operands->data,end<operands->size ? end : operands->size,operands->content_position};
+  int match=word(&p,"Q") && word(&p,"q") && cover_numbers(&p,clip,4) &&
+    word(&p,"re") && (word(&p,"W*") || word(&p,"W")) && word(&p,"n") &&
+    cover_numbers(&p,color,3) && word(&p,"rg") && cover_numbers(&p,fill,4) &&
+    word(&p,"re") && (word(&p,"f*") || word(&p,"f")) &&
+    (p.at<operands->size ? delimiter(operands->data[p.at]) : 1);
+  free(scratch.values); free(scratch.strings.data);
+  return match;
+}
+
 /* Content operands reuse the object lexer in a short-lived arena. */
 static exr_status syntax_ops(const void *data,size_t size,exr_pdf_operator_fn operation,void *context,
                               size_t maximum_operands,exr_pdf_file *owner,uint32_t resources,int inline_images,size_t *decode_budget,const exr_control *control,exr_error *error) {
@@ -1300,6 +1329,7 @@ static exr_status syntax_ops(const void *data,size_t size,exr_pdf_operator_fn op
         if(!inline_images || count) { failed(arena,EXR_FORMAT,"Unexpected PDF inline image"); break; }
         operands[0]=parse_inline(&p,owner,resources); if(operands[0]==EXR_PDF_NONE) break; count=1;
       }
+      arena->content_position=p.at;
       status=operation(context,arena,name,operands,count,&arena->error);
       if(status!=EXR_OK && arena->error.code==EXR_OK) failed(arena,status,"PDF content callback failed");
       if(status!=EXR_OK || arena->error.code!=EXR_OK) break;

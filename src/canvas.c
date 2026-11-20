@@ -1035,20 +1035,31 @@ exr_status exr_canvas_union_commit(exr_canvas *c,exr_error *e) {
   if(c->group) { unref(c,c->clip); c->clip=c->group; c->group=NULL; }
   return exr_fail(e,EXR_OK,"");
 }
-exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
+exr_status exr_canvas_image_excluding(exr_canvas *c,const exr_image_layer *image,const double matrix[6],
+                                     double alpha,const int cover[4],exr_error *e) {
   const double *use;double local[6];
   exr_status status=ready(c,e);if(status!=EXR_OK) return status;
   use=shifted(c,matrix,local);
-  status=exr_vector_texture_blend_inks(&c->bitmap,image,NULL,use,alpha,c->clip,c->blend,masked_state(c),&c->work,&c->control,e);
+  /* The following Q restores the inherited clip. Any uncertain backdrop or
+     clip falls back to the same draw without exclusion. */
+  if(cover && (!c->fixed_bitmap || !c->depth || c->saved[c->depth-1] ||
+     c->composite || c->soft_mask || c->gray_groups || c->cmyk_groups ||
+     c->group || c->group_depth || c->offset_x || c->offset_y || c->bitmap.channels!=4))
+    cover=NULL;
+  status=exr_vector_texture_blend_inks(&c->bitmap,image,NULL,use,alpha,c->clip,
+    c->blend,masked_state(c),cover,&c->work,&c->control,e);
   if(status==EXR_OK) mark_area(c,0,0,c->bitmap.width,c->bitmap.height);
   return finish(c,status,e);
+}
+exr_status exr_canvas_image(exr_canvas *c,const exr_image_layer *image,const double matrix[6],double alpha,exr_error *e) {
+  return exr_canvas_image_excluding(c,image,matrix,alpha,NULL,e);
 }
 exr_status exr_canvas_image_cmyk(exr_canvas *c,const exr_image_layer *image,const exr_bitmap *inks,const double matrix[6],double alpha,exr_error *e) {
   const double *use;double local[6];exr_status status=ready(c,e);if(status!=EXR_OK) return status;
   if(!inks) return finish(c,exr_fail(e,EXR_ARGUMENT,"Missing native CMYK image samples"),e);
   use=shifted(c,matrix,local);
   status=exr_vector_texture_blend_inks(&c->bitmap,image,inks,use,alpha,c->clip,
-    c->blend,masked_state(c),&c->work,&c->control,e);
+    c->blend,masked_state(c),NULL,&c->work,&c->control,e);
   if(status==EXR_OK) mark_area(c,0,0,c->bitmap.width,c->bitmap.height);
   return finish(c,status,e);
 }
@@ -1465,7 +1476,7 @@ exr_status exr_canvas_get_sink_ex(exr_canvas *c,exr_draw_sink_ex *out,exr_error 
   sink.image_cmyk=sink_image_cmyk;sink.image_space=sink_image_space;sink.alpha_source=sink_alpha_source;sink.paint=sink_paint;
   memset(out,0,out->struct_size);memcpy(out,&sink,size);return EXR_OK;
 }
-const exr_canvas *exr_canvas_sink_target(const exr_draw_sink_ex *sink) {
+exr_canvas *exr_canvas_sink_target(const exr_draw_sink_ex *sink) {
   return sink->begin_group==sink_begin_group ? sink->base.context : NULL;
 }
 void exr_canvas_render_limits(exr_canvas *c,size_t layer_budget,size_t work_budget) {

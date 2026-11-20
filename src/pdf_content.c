@@ -264,9 +264,40 @@ static exr_status append_path(content_reader *r,exr_vector_verb verb,const exr_v
   else { path->current=points[count-1]; if(verb==EXR_VECTOR_MOVE) { path->start=points[0]; path->has_point=1; } }
   return EXR_OK;
 }
-static int world_point(const content_reader *r,double x,double y,exr_vector_point *out) {
-  out->x=r->state.ctm[0]*x+r->state.ctm[2]*y+r->state.ctm[4]; out->y=r->state.ctm[1]*x+r->state.ctm[3]*y+r->state.ctm[5];
+static int transform_point(const double ctm[6],double x,double y,exr_vector_point *out) {
+  out->x=ctm[0]*x+ctm[2]*y+ctm[4]; out->y=ctm[1]*x+ctm[3]*y+ctm[5];
   return isfinite(out->x) && isfinite(out->y) && fabs(out->x)<=1e7 && fabs(out->y)<=1e7;
+}
+static int world_point(const content_reader *r,double x,double y,exr_vector_point *out) {
+  return transform_point(r->state.ctm,x,y,out);
+}
+static int rectangle_interior(const double ctm[6],const double rect[4],int box[4]) {
+  exr_vector_point a,b;
+  if(!transform_point(ctm,rect[0],rect[1],&a) ||
+     !transform_point(ctm,rect[0]+rect[2],rect[1]+rect[3],&b)) return 0;
+  box[0]=(int)ceil(fmin(a.x,b.x)); box[1]=(int)ceil(fmin(a.y,b.y));
+  box[2]=(int)floor(fmax(a.x,b.x)); box[3]=(int)floor(fmax(a.y,b.y));
+  return box[0]<box[2] && box[1]<box[3];
+}
+static int image_cover(const content_reader *r,const exr_pdf_file *operands,int box[4]) {
+  double clip[4],fill[4]; int bounds[4];
+  if(r->depth<=r->floor || r->form_depth || r->type3 || r->compatibility ||
+     r->path.count || r->path.pending_clip) return 0;
+  /* The lookahead begins with Q q. Prove the fill in the restored state. */
+  const content_state *next=&r->stack[r->depth-1];
+  if(next->ctm[1]!=0 || next->ctm[2]!=0 ||
+     next->paint.fill.alpha!=1 || next->paint.blend!=EXR_BLEND_NORMAL ||
+     next->paint.smask!=EXR_PDF_NONE || next->paint.alpha_is_shape ||
+     next->paint.stroke.space==EXR_PDF_DEVICE_CMYK ||
+     !exr_pdf_peek_image_cover(operands,clip,fill) ||
+     !rectangle_interior(next->ctm,clip,bounds) ||
+     !rectangle_interior(next->ctm,fill,box)) return 0;
+  /* Only fully covered device pixels qualify. Preserve the AA fringe. */
+  if(bounds[0]>box[0]) box[0]=bounds[0];
+  if(bounds[1]>box[1]) box[1]=bounds[1];
+  if(bounds[2]<box[2]) box[2]=bounds[2];
+  if(bounds[3]<box[3]) box[3]=bounds[3];
+  return box[0]<box[2] && box[1]<box[3];
 }
 static exr_status path_event(content_reader *r,const exr_vector_segment *segments,size_t count,unsigned flags,exr_vector_rule rule,exr_error *error) {
   exr_pdf_path_paint path={0}; exr_status status;
@@ -585,6 +616,7 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     type=exr_pdf_bytes(r->file,subtype,&n);
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==5 && !memcmp(type,"Image",5)) {
       exr_pdf_paint_state paint=paint_state(r);
+      int cover[4];
       if(r->graphics && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Image XObject is not a stream");
       if(r->uncolored) {
         uint32_t mask; const exr_pdf_value *v;
@@ -592,6 +624,7 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
         v=exr_pdf_value_at(r->file,mask);
         if(!v || v->kind!=EXR_PDF_BOOL || !v->u.number) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 image must be a stencil mask");
       }
+      if(r->callbacks.image_coverage && image_cover(r,arena,cover)) paint.image_cover=cover;
       return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,r->file,r->resources,&paint,error) : EXR_OK;
     }
     if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==4 && !memcmp(type,"Form",4)) return form(r,id,error);

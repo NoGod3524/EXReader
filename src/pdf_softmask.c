@@ -353,7 +353,7 @@ static exr_status try_direct_axial_mask(exr_pdf_file *file, uint32_t mask, uint3
                                         unsigned char **out, int *handled, exr_error *e) {
   direct_mask_probe probe;
   exr_pdf_draw_callbacks cb = { dm_glyph, dm_path, dm_state, dm_image, dm_shading,
-                                dm_begin_group, dm_end_layer, dm_image_space, NULL, dm_source };
+                                dm_begin_group, dm_end_layer, dm_image_space, NULL, dm_source, 0 };
   double bbox_rect[4], inter[4];
   exr_raster_work probe_work = *work;
   size_t sample_cost, active_pixels, group_bytes, shade_work;

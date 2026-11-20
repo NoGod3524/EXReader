@@ -31,6 +31,7 @@ struct exr_canvas {
   unsigned alpha_flags,saved_alpha_flags[160];
   unsigned gray_groups; /* active group blends in DeviceGray */
   unsigned cmyk_groups; /* active group blends in DeviceCMYK */
+  unsigned fixed_bitmap; /* Private canvas owned by fixed_render. */
   int offset_x,offset_y; /* canvas coordinate of the active working buffer's top-left */
   size_t canvas_width,canvas_height; /* device extent, independent of the active buffer */
   exr_clip_mask *spare_masks[4]; /* released masks kept for reuse within this canvas */
@@ -44,7 +45,9 @@ exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_p
 /* Sets render-scoped overrides on a newly created canvas. */
 void exr_canvas_render_limits(exr_canvas *canvas,size_t layer_budget,size_t work_budget);
 /* Returns the canvas for the native sink, or NULL for external consumers. */
-const exr_canvas *exr_canvas_sink_target(const exr_draw_sink_ex *sink);
+exr_canvas *exr_canvas_sink_target(const exr_draw_sink_ex *sink);
+exr_status exr_canvas_image_excluding(exr_canvas *canvas,const exr_image_layer *image,
+  const double matrix[6],double alpha,const int cover[4],exr_error *error);
 /* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */
 exr_status exr_canvas_soft_mask(exr_canvas *canvas,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 /* Clip-union construction is internal until the generic scene API is settled. */
