@@ -105,21 +105,21 @@ static void page_cases(const char *dir) {
   free(pages); exr_pdf_close(file); free(data);
 }
 static void mask_controls(const char *dir) {
-  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t count,size,work=0;uint32_t mask,states,id;
+  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t count,size;exr_raster_work work={0};uint32_t mask,states,id;
   unsigned char *data=load(dir,"pdf-blend/mask-function-alpha-calculator-128.pdf",&size),*pixels=NULL;
   exr_control control={0};double matrix[6]={1,0,0,1,0,0};
   OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));CHECK(count==1);
   OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"ExtGState"),&states,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,states,"M"),&id,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,id,"SMask"),&mask,&error));
-  OK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,NULL,NULL,&error));CHECK(work>256);free(pixels);pixels=NULL;
-  { size_t used=256u*1024u*1024u-work+1;
-    CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&used,NULL,NULL,&error)==EXR_LIMIT && !pixels);
+  OK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,0,NULL,NULL,&error));CHECK(work.used>256);free(pixels);pixels=NULL;
+  { exr_raster_work used={.used=256u*1024u*1024u-work.used+1};
+    CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&used,0,NULL,NULL,&error)==EXR_LIMIT && !pixels);
     CHECK(strstr(error.message,"soft mask samples exceed work budget"));
   }
-  work=256u*1024u*1024u;CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,NULL,NULL,&error)==EXR_LIMIT && !pixels);
-  control.cancelled=cancelled;work=0;
-  CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,NULL,&control,&error)==EXR_CANCELLED && !pixels);
+  work.used=256u*1024u*1024u;CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,0,NULL,NULL,&error)==EXR_LIMIT && !pixels);
+  control.cancelled=cancelled;work.used=0;
+  CHECK(exr_pdf_soft_mask_build(file,mask,matrix,16,16,&pixels,&work,0,NULL,&control,&error)==EXR_CANCELLED && !pixels);
   free(pages);exr_pdf_close(file);free(data);
 }
 static void mask_recursion_budget(const char *dir) {
@@ -131,8 +131,8 @@ static void mask_recursion_budget(const char *dir) {
   OK(exr_pdf_resolve(file,exr_pdf_get(file,states,"GS"),&id,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,id,"SMask"),&mask,&error));
   for(i=0;i<3;i++) {
-    size_t active=held[i],work=0;
-    CHECK(exr_pdf_soft_mask_build(file,mask,matrix,1024,1024,&pixels,&work,&active,NULL,&error)==EXR_LIMIT && !pixels);
+    size_t active=held[i];exr_raster_work work={0};
+    CHECK(exr_pdf_soft_mask_build(file,mask,matrix,1024,1024,&pixels,&work,0,&active,NULL,&error)==EXR_LIMIT && !pixels);
     CHECK(strstr(error.message,"active soft masks exceed 64 MiB"));CHECK(active==held[i]);
   }
   free(pages);exr_pdf_close(file);free(data);
@@ -142,26 +142,26 @@ static exr_status shading_count(void *ctx,const exr_bitmap *bitmap,const exr_bit
   CHECK(bitmap && bitmap->pixels);(*count)++;return EXR_OK;
 }
 static void shading_budget(const char *dir,const char *name) {
-  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t count,size,work=0;uint32_t shadings,id;
+  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t count,size;exr_raster_work work={0};uint32_t shadings,id;
   unsigned emits=0;exr_pdf_paint_state paint={0};exr_control control={0};double matrix[6]={1,0,0,1,0,0};
   unsigned char *data=load(dir,name,&size);
   OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));CHECK(count==1);
   OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"Shading"),&shadings,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,shadings,"Sh"),&id,&error));
-  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,NULL,&emits,0,NULL,&error));CHECK(emits==1 && work>512);
-  { size_t near_limit=256u*1024u*1024u-work/2;emits=0;
+  OK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,NULL,&emits,0,NULL,&error));CHECK(emits==1 && work.used>512);
+  { exr_raster_work near_limit={.used=256u*1024u*1024u-work.used/2};emits=0;
     CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&near_limit,shading_count,NULL,&emits,0,NULL,&error)==EXR_LIMIT);
     CHECK(!emits && strstr(error.message,"shading samples exceed work budget"));
   }
-  work=256u*1024u*1024u;emits=0;
+  work.used=256u*1024u*1024u;emits=0;
   CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,NULL,&emits,0,NULL,&error)==EXR_LIMIT && !emits);
-  control.cancelled=cancelled;work=0;
+  control.cancelled=cancelled;work.used=0;
   CHECK(exr_pdf_shading_draw(file,file,pages[0].resources,id,matrix,&paint,&work,shading_count,NULL,&emits,0,&control,&error)==EXR_CANCELLED && !emits);
-  { exr_pdf_raster_config config={0};exr_bitmap b={0};const char *content="/Sh sh";size_t total=0;
+  { exr_pdf_raster_config config={0};exr_bitmap b={0};const char *content="/Sh sh";exr_raster_work total={0};
     config.width=config.height=16;config.channels=4;config.work=&total;
     OK(exr_pdf_raster_content(file,pages[0].resources,content,strlen(content),NULL,&config,NULL,&b,&error));
-    CHECK(total>512);free(b.pixels);
-    total=256u*1024u*1024u-1;
+    CHECK(total.used>512);free(b.pixels);
+    total.used=256u*1024u*1024u-1;
     CHECK(exr_pdf_raster_content(file,pages[0].resources,content,strlen(content),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
     CHECK(strstr(error.message,"shading samples exceed work budget"));
   }
@@ -175,7 +175,7 @@ static exr_status shading_native_inks(void *ctx,const exr_bitmap *bitmap,const e
   (*emits)++;return EXR_OK;
 }
 static void function_inks(const char *dir) {
-  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t size,count,work=0;uint32_t shadings,id;unsigned emits=0;
+  exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;size_t size,count;exr_raster_work work={0};uint32_t shadings,id;unsigned emits=0;
   exr_pdf_paint_state paint={0};double matrix[6]={1,0,0,1,0,0};unsigned char *data=load(dir,"pdf-color/shading-function-inks.pdf",&size);
   OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));
   OK(exr_pdf_resolve(file,exr_pdf_get(file,pages[0].resources,"Shading"),&shadings,&error));
@@ -204,7 +204,7 @@ static void shading_cleanup(const char *dir) {
   sink.struct_size=sizeof(sink);sink.base.state=scope_state;sink.base.clip=scope_clip;sink.shading=scope_shading;
   for(unsigned fail=0;fail<3;fail++) {
     shading_scope s={0};s.fail=fail;sink.base.context=&s;
-    CHECK(exr_pdf_paint_content_ex(file,pages[0].resources,"/Sh sh",6,NULL,&sink,NULL,NULL,NULL,NULL,NULL,&error)==(fail ? EXR_CANCELLED : EXR_OK));
+    CHECK(exr_pdf_paint_content_ex(file,pages[0].resources,"/Sh sh",6,NULL,&sink,NULL,NULL,NULL,0,NULL,NULL,&error)==(fail ? EXR_CANCELLED : EXR_OK));
     CHECK(s.saves==1 && s.restores==1 && !s.depth && s.clips==1 && s.shadings==(fail!=1));
   }
   free(pages);exr_pdf_close(file);free(data);
@@ -218,9 +218,9 @@ int main(int argc,char **argv) {
   text_cases(file,resources); clip_cases(file,resources); fallback_cases(argv[1],file,resources); drawing_inspection(file,resources);
   config.width=config.height=12; config.channels=4; config.background=0;
   { const char *s="1 0 0 rg 1 1 2 2 re f"; OK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)); CHECK(b.pixels[13*4]==255 && b.pixels[13*4+3]==255 && !b.pixels[3]); free(b.pixels); }
-  { size_t aggregate=256u*1024u*1024u;const char *s="0 0 12 12 re f";config.work=&aggregate;
+  { exr_raster_work aggregate={.used=256u*1024u*1024u};const char *s="0 0 12 12 re f";config.work=&aggregate;
     CHECK(exr_pdf_raster_content(file,resources,s,strlen(s),NULL,&config,NULL,&b,&error)==EXR_LIMIT && !b.pixels);
-    CHECK(aggregate>=256u*1024u*1024u);config.work=NULL;
+    CHECK(aggregate.used>=256u*1024u*1024u);config.work=NULL;
   }
   config.width=0; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,NULL,&b,&error)==EXR_ARGUMENT && !b.pixels);
   config.width=12; control.cancelled=cancelled; CHECK(exr_pdf_raster_content(file,resources,"",0,NULL,&config,&control,&b,&error)==EXR_CANCELLED && !b.pixels);

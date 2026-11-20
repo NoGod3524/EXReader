@@ -127,7 +127,7 @@ exr_status exr_pdf_face_glyph(exr_pdf_face *face,const exr_pdf_character *ch,uin
   return EXR_OK;
 }
 exr_status exr_pdf_face_outline(exr_pdf_face *face,const exr_pdf_character *ch,exr_vector_segment **out,
-                                 size_t *count,size_t *work,const exr_control *control,exr_error *error) {
+                                 size_t *count,exr_raster_work *work,const exr_control *control,exr_error *error) {
   uint32_t glyph; exr_status status;
   if(out) *out=NULL;
   if(count) *count=0;

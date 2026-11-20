@@ -51,6 +51,38 @@ static void public_pages(const char *dir) {
   inspect.stop=1; CHECK(exr_fixed_draw(d,0,NULL,&sink,NULL,&error)==EXR_CANCELLED && error.code==EXR_CANCELLED);
   OK(exr_fixed_render(d,0,1,NULL,&b,&error)); exr_bitmap_free(&b); exr_fixed_free(d);
 }
+static void render_limits(const char *dir) {
+  exr_fixed_document *d=NULL; exr_bitmap ref={0},b={0}; size_t size;
+  exr_fixed_render_options options={0};
+  unsigned char *bytes=load(dir,"pdf-blend/mask-function-alpha-nonisolated.pdf",&size);
+  OK(exr_fixed_open_memory(EXR_PDF,bytes,size,NULL,&d,&error)); free(bytes);
+  OK(exr_fixed_render(d,0,1,NULL,&ref,&error));
+  CHECK(ref.width==16 && ref.height==16 && ref.channels==4);
+  options.channels=4; options.background=0xffffffff;
+  OK(exr_fixed_render_ex(d,0,1,&options,&b,&error));
+  CHECK(b.width==ref.width && b.height==ref.height && b.channels==ref.channels && b.stride==ref.stride);
+  CHECK(!memcmp(b.pixels,ref.pixels,(size_t)ref.stride*ref.height)); exr_bitmap_free(&b);
+  /* The RGBA surface fits, while the non-isolated mask group's float state requires 6144 bytes. */
+  options.layer_budget=16*16*4;
+  CHECK(exr_fixed_render_ex(d,0,1,&options,&b,&error)==EXR_LIMIT && !b.pixels);
+  CHECK(strstr(error.message,"Group depth/byte budget exceeded"));
+  options.layer_budget=16*16*24;
+  OK(exr_fixed_render_ex(d,0,1,&options,&b,&error));
+  CHECK(b.width==ref.width && b.height==ref.height && b.channels==ref.channels && b.stride==ref.stride);
+  CHECK(!memcmp(b.pixels,ref.pixels,(size_t)ref.stride*ref.height)); exr_bitmap_free(&b);
+  options.layer_budget=0; options.work_budget=1;
+  CHECK(exr_fixed_render_ex(d,0,1,&options,&b,&error)==EXR_LIMIT && !b.pixels);
+  CHECK(strstr(error.message,"work budget"));
+  OK(exr_fixed_render(d,0,1,&options,&b,&error));
+  CHECK(b.width==ref.width && b.height==ref.height && b.channels==ref.channels && b.stride==ref.stride);
+  CHECK(!memcmp(b.pixels,ref.pixels,(size_t)ref.stride*ref.height));
+  exr_bitmap_free(&b);
+  options.work_budget=0;
+  OK(exr_fixed_render_ex(d,0,1,&options,&b,&error));
+  CHECK(b.width==ref.width && b.height==ref.height && b.channels==ref.channels && b.stride==ref.stride);
+  CHECK(!memcmp(b.pixels,ref.pixels,(size_t)ref.stride*ref.height));
+  exr_bitmap_free(&b); exr_bitmap_free(&ref); exr_fixed_free(d);
+}
 static void fallback_and_options(const char *dir) {
   unsigned char *bytes,*font_bytes; size_t size,font_size; exr_font *font=NULL; exr_font_input source={0}; exr_fixed_open_options options={0}; exr_fixed_document *d=NULL; exr_bitmap b; int stopped=0;
   font_bytes=load(dir,"fonts/collection.ttc",&font_size); source.data=font_bytes; source.size=font_size; source.face_index=1; OK(exr_font_create_glyphs(&source,1,&font,&error)); free(font_bytes);
@@ -103,7 +135,7 @@ static void semantic_text(const char *dir) {
 }
 int main(int argc,char **argv) {
   char path[4096]; exr_fixed_document *d=NULL; exr_bitmap b;
-  CHECK(argc==2); semantic_text(argv[1]); public_pages(argv[1]); fallback_and_options(argv[1]);
+  CHECK(argc==2); semantic_text(argv[1]); public_pages(argv[1]); render_limits(argv[1]); fallback_and_options(argv[1]);
   { size_t size; unsigned char *bytes=load(argv[1],"pdf-jpeg-cmyk.pdf",&size);
     OK(exr_fixed_open_memory(EXR_PDF,bytes,size,NULL,&d,&error)); free(bytes);
     OK(exr_fixed_render(d,0,1,NULL,&b,&error)); CHECK(b.width==17 && b.height==9); { unsigned rgb[3];cmyk_reference((const double[4]){40/255.,80/255.,120/255.,32/255.},rgb);pixel(&b,8,4,rgb[0],rgb[1],rgb[2]); }

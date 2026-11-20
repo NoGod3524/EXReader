@@ -54,7 +54,7 @@ typedef struct {
   exr_face *face;
   exr_error *error;
   const exr_control *control;
-  size_t *work;
+  exr_raster_work *work;
   unsigned char *owned;
   const unsigned char *document;
   size_t document_size;
@@ -110,7 +110,7 @@ static void svg_matrix_point(const double m[6], double x, double y, double *ox, 
 
 /* ---------- SVG table directory ---------- */
 
-static exr_status svg_directory(exr_face *face, size_t *work, const exr_control *control, exr_error *error) {
+static exr_status svg_directory(exr_face *face, exr_raster_work *work, const exr_control *control, exr_error *error) {
   FT_ULong size = 0;
   (void)control;
   unsigned char header[12], *records = NULL;
@@ -978,7 +978,7 @@ static int svg_add_shape(svg_path *path, const svg_node *node) {
 /* ---------- document loading ---------- */
 
 static exr_status svg_load_document(svg_document *doc, exr_face *face, uint32_t glyph,
-                                    size_t *work, const exr_control *control, exr_error *error) {
+                                    exr_raster_work *work, const exr_control *control, exr_error *error) {
   svg_record *record;
   unsigned char *data = NULL;
   exr_status status;
@@ -1070,8 +1070,8 @@ static exr_status svg_load_document(svg_document *doc, exr_face *face, uint32_t 
   return EXR_OK;
 }
 
-exr_status exr_font_svg_covers(exr_face *face, uint32_t glyph, int *covers, size_t *work, const exr_control *control, exr_error *error) {
-  size_t local = 0;
+exr_status exr_font_svg_covers(exr_face *face, uint32_t glyph, int *covers, exr_raster_work *work, const exr_control *control, exr_error *error) {
+  exr_raster_work local = {0};
   exr_status status;
   *covers = 0;
   if (!face) return exr_fail(error, EXR_ARGUMENT, "Missing SVG font face");
@@ -1414,7 +1414,7 @@ static exr_status svg_render_document(svg_render *render, uint32_t glyph, double
 }
 
 exr_status exr_font_svg(exr_face *face, uint32_t glyph, float pixels, uint32_t foreground,
-                        exr_color_surface *out, size_t *work, const exr_control *control, exr_error *error) {
+                        exr_color_surface *out, exr_raster_work *work, const exr_control *control, exr_error *error) {
   svg_document doc;
   svg_render render;
   exr_status status;

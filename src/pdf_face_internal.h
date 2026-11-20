@@ -16,6 +16,6 @@ void exr_pdf_face_close(exr_pdf_face *face);
 size_t exr_pdf_face_memory(const exr_pdf_face *face);
 exr_status exr_pdf_face_glyph(exr_pdf_face *face,const exr_pdf_character *character,uint32_t *glyph,exr_error *error);
 exr_status exr_pdf_face_outline(exr_pdf_face *face,const exr_pdf_character *character,
-                                 exr_vector_segment **out,size_t *count,size_t *work,
+                                 exr_vector_segment **out,size_t *count,exr_raster_work *work,
                                  const exr_control *control,exr_error *error);
 #endif

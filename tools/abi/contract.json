@@ -131,6 +131,7 @@
     "exr_fixed_page_text",
     "exr_fixed_pages",
     "exr_fixed_render",
+    "exr_fixed_render_ex",
     "exr_fixed_text_create",
     "exr_fixed_text_find",
     "exr_fixed_text_free",
@@ -909,6 +910,10 @@
     },
     "exr_fixed_render": {
       "signature": "EXR_API exr_status exr_fixed_render(exr_fixed_document *document,size_t page,double scale, const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);",
+      "header": "include/exr/document.h"
+    },
+    "exr_fixed_render_ex": {
+      "signature": "EXR_API exr_status exr_fixed_render_ex(exr_fixed_document *document,size_t page,double scale, const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);",
       "header": "include/exr/document.h"
     },
     "exr_fixed_text_create": {

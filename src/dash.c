@@ -2,7 +2,7 @@
 #include "vector_internal.h"
 #include <float.h>
 typedef struct {
-  exr_vector_polyline path; const double *lengths; size_t length_count,effective,index,*work;
+  exr_vector_polyline path; const double *lengths; size_t length_count,effective,index; exr_raster_work *work;
   double remaining; int active;
   const exr_control *control; exr_error *error; exr_status status;
 } dash_reader;
@@ -65,9 +65,9 @@ static int seam(dash_reader *r,size_t base,exr_vector_point origin) {
   return 1;
 }
 exr_status exr_vector_dash(const exr_vector_polyline *source,const double *lengths,size_t length_count,
-                            double phase,exr_vector_polyline *out,size_t *shared_work,
+                            double phase,exr_vector_polyline *out,exr_raster_work *shared_work,
                             const exr_control *control,exr_error *error) {
-  dash_reader r={0}; double period=0; size_t local_work=0,at=0,i,j;
+  dash_reader r={0}; double period=0; exr_raster_work local_work={0}; size_t at=0,i,j;
   if(source==out) return exr_fail(error,EXR_ARGUMENT,"Vector dash input and output must be distinct");
   if(out) memset(out,0,sizeof(*out));
   if(!source || !out || (source->point_count && !source->points) || (source->contour_count && !source->contours) ||

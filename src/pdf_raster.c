@@ -19,6 +19,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
   if(config->channels==1) { gray=1;settings.channels=4;settings.background|=255; }
   if(control) settings.control=*control;
   status=exr_canvas_create_pooled(&settings,exr_pdf_buffer_pool(file),&canvas,e); if(status!=EXR_OK) return status;
+  exr_canvas_render_limits(canvas,config->layer_budget,0);
   if(config->work) canvas->work=*config->work;
   if(config->background_cmyk) {
     exr_path_segment rect[5]={ {.verb=EXR_PATH_MOVE,.points={{0,0}}},
@@ -44,7 +45,7 @@ exr_status exr_pdf_raster_content(exr_pdf_file *file,uint32_t resources,const vo
     config->group_present ? config->group_flags : EXR_GROUP_ISOLATED,e);
   if(status==EXR_OK) {
     exr_error cleanup={0};exr_status ended;
-    status=exr_pdf_paint_content_ex(file,resources,content,size,initial,&sink,config->program,config->context,&canvas->work,config->active_mask_bytes,control,e);
+    status=exr_pdf_paint_content_ex(file,resources,content,size,initial,&sink,config->program,config->context,&canvas->work,config->layer_budget,config->active_mask_bytes,control,e);
     ended=exr_canvas_end_layer(canvas,status==EXR_OK,&cleanup);
     if(status==EXR_OK && ended!=EXR_OK) { status=ended;if(e) *e=cleanup; }
   }

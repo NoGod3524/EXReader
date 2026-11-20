@@ -87,11 +87,11 @@ static int image_name_is(exr_pdf_file *file,uint32_t id,const char *name) {
 typedef struct { uint64_t key; unsigned char valid,rgba[4],inks[4]; } pixel_memo;
 #define PIXEL_MEMO_SLOTS 1024u
 static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
-                                 unsigned intent,exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e,
+                                 unsigned intent,exr_vector_texture **out,exr_raster_work *work,const exr_control *control,exr_error *e,
                                  image_chain *chain,unsigned *kind,exr_bitmap *inks) {
   image_reader r={0}; uint32_t width,height,bits=1,id,key[2*EXR_PDF_MAX_COLORANTS]={0}; unsigned channels=1,k,indexed=0,color_key=0;
   int stencil=0,interpolate=0; double decode[2*EXR_PDF_MAX_COLORANTS]={0,1}; exr_pdf_colorspace *space=NULL;
-  const unsigned char *bytes; unsigned char *jpx_samples=NULL; size_t size,row,y,x,local_work=0,owned=0,jpx_live=0; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
+  const unsigned char *bytes; unsigned char *jpx_samples=NULL; size_t size,row,y,x,owned=0,jpx_live=0; exr_raster_work local_work={0}; exr_bitmap bitmap={0}; exr_vector_texture *mask_texture=NULL; const exr_pdf_value *v;
   uint32_t mask=EXR_PDF_NONE; unsigned soft=0,entered=0,charged=0,matte=0,own_intent=0; double matte_rgb[4]={0};
   exr_pdf_stream_codec codec=EXR_PDF_STREAM_RAW; uint32_t parameters=EXR_PDF_NONE; pixel_memo *memo=NULL;
   if(out) *out=NULL;
@@ -416,7 +416,7 @@ done:
   return r.error.code;
 }
 exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
-                               exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e) {
+                               exr_vector_texture **out,exr_raster_work *work,const exr_control *control,exr_error *e) {
   return exr_pdf_image_load_from(file,image,file,resources,color,1,out,work,control,e);
 }
 typedef struct {
@@ -508,8 +508,8 @@ static exr_vector_texture *diag_placeholder(exr_pdf_file *file,uint32_t image,un
   return &t->texture;
 }
 static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
-  unsigned intent,exr_vector_texture **out,exr_bitmap *inks,size_t *work,const exr_control *control,exr_error *e) {
-  image_chain chain={0};unsigned kind=0;size_t local_work=0,before,i,bytes;exr_status status;
+  unsigned intent,exr_vector_texture **out,exr_bitmap *inks,exr_raster_work *work,const exr_control *control,exr_error *e) {
+  image_chain chain={0};unsigned kind=0;size_t before,i,bytes;exr_raster_work local_work={0};exr_status status;
   double started=0;
   image_cache *cache=NULL;image_cache_entry *entry=NULL;
   uint32_t length=0,length_id;const exr_pdf_value *length_value;
@@ -545,7 +545,7 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
       *out=diag_placeholder(file,image,0);
       return *out ? exr_fail(e,EXR_OK,"") : exr_fail(e,EXR_UNSUPPORTED,"image-decode ablation placeholder unavailable");
     } }
-  before=*work;
+  before=work->used;
   if(cache && cache->profile) started=image_time_ms();
   status=decode_image(file,image,resource_file,resources,color,intent,out,work,control,e,&chain,&kind,inks);
   if(cache && cache->profile) cache->stats.decode_ms+=image_time_ms()-started;
@@ -568,21 +568,21 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   if(inks && !bitmap_copy(inks,&entry->inks)) return status; /* optional cache */
   entry->image=image;entry->length=length;entry->native=inks!=NULL;
   entry->texture=*out;((pdf_texture *)*out)->refs++;
-  entry->bytes=bytes;entry->work=*work-before;entry->used=++cache->clock;
+  entry->bytes=bytes;entry->work=work->used-before;entry->used=++cache->clock;
   cache->stats.bytes+=bytes;cache->stats.entries++;
   return status;
 }
 exr_status exr_pdf_image_load_from(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
-                               unsigned intent,exr_vector_texture **out,size_t *work,const exr_control *control,exr_error *e) {
+                               unsigned intent,exr_vector_texture **out,exr_raster_work *work,const exr_control *control,exr_error *e) {
   return load_cached(file,image,resource_file,resources,color,intent,out,NULL,work,control,e);
 }
 exr_status exr_pdf_image_load_inks(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
-  unsigned intent,exr_vector_texture **out,exr_bitmap *inks,size_t *work,const exr_control *control,exr_error *e) {
+  unsigned intent,exr_vector_texture **out,exr_bitmap *inks,exr_raster_work *work,const exr_control *control,exr_error *e) {
   return load_cached(file,image,resource_file,resources,color,intent,out,inks,work,control,e);
 }
 exr_status exr_pdf_image_decode(exr_pdf_file *file,uint32_t image,uint32_t resources,uint32_t color,
-                                 exr_bitmap *out,int *interpolate,size_t *work,const exr_control *control,exr_error *e) {
-  exr_vector_texture *texture=NULL; exr_status status; size_t local_work=0;
+                                 exr_bitmap *out,int *interpolate,exr_raster_work *work,const exr_control *control,exr_error *e) {
+  exr_vector_texture *texture=NULL; exr_status status; exr_raster_work local_work={0};
   if(out) memset(out,0,sizeof(*out));
   if(interpolate) *interpolate=0;
   if(!out || !interpolate) return exr_fail(e,EXR_ARGUMENT,"Missing PDF decoded image output");

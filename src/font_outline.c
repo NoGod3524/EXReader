@@ -3,7 +3,7 @@
 #include FT_OUTLINE_H
 
 typedef struct {
-  exr_vector_segment *segments; size_t count,capacity,*work; double scale;
+  exr_vector_segment *segments; size_t count,capacity; exr_raster_work *work; double scale;
   const exr_control *control; exr_error *error; exr_status status; unsigned contour;
 } outline_reader;
 static int segment(outline_reader *r,exr_vector_verb verb,const FT_Vector *a,const FT_Vector *b,const FT_Vector *c) {
@@ -31,8 +31,8 @@ static int line_to(const FT_Vector *to,void *context) { return segment(context,E
 static int conic_to(const FT_Vector *control,const FT_Vector *to,void *context) { return segment(context,EXR_VECTOR_QUAD,control,to,NULL); }
 static int cubic_to(const FT_Vector *a,const FT_Vector *b,const FT_Vector *to,void *context) { return segment(context,EXR_VECTOR_CUBIC,a,b,to); }
 exr_status exr_font_outline(FT_Face face,uint32_t glyph,exr_vector_segment **out,size_t *count,
-                             size_t *work,const exr_control *control,exr_error *error) {
-  FT_Outline_Funcs callbacks={move_to,line_to,conic_to,cubic_to,0,0}; outline_reader r={0}; size_t local_work=0; int ft_error;
+                             exr_raster_work *work,const exr_control *control,exr_error *error) {
+  FT_Outline_Funcs callbacks={move_to,line_to,conic_to,cubic_to,0,0}; outline_reader r={0}; exr_raster_work local_work={0}; int ft_error;
   if(out) *out=NULL;
   if(count) *count=0;
   if(!out || !count || !face || !FT_IS_SCALABLE(face) || !face->units_per_EM || glyph>=(uint64_t)face->num_glyphs)

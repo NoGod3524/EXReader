@@ -5,7 +5,7 @@ static exr_error error; static unsigned checks;
 #define CHECK(x) do { checks++; if(!(x)) { fprintf(stderr,"line %d: %s (%d: %s)\n",__LINE__,#x,error.code,error.message); exit(1); } } while(0)
 #define OK(x) CHECK((x)==EXR_OK)
 typedef struct {
-  exr_bitmap image,clip; unsigned char saved[160][64]; size_t depth,saves,restores,texts,paths,clips,glyphs,images,work;
+  exr_bitmap image,clip; unsigned char saved[160][64]; size_t depth,saves,restores,texts,paths,clips,glyphs,images;exr_raster_work work;
   exr_pdf_path_paint last; exr_vector_segment segments[64]; double dashes[1024];
   exr_pdf_text_glyph glyph; exr_pdf_paint_state image_paint;
 } raster;

@@ -28,10 +28,10 @@ _Thread_local size_t diag_sources,diag_masks;
 typedef struct { const exr_pdf_font *key; exr_pdf_face *face; } paint_face;
 typedef struct { unsigned char *pixels;size_t bytes; } paint_mask;
 typedef struct {
-  exr_draw_sink_ex sink; FT_Library library; exr_pdf_program_fn program; void *program_context; const exr_control *control; size_t *work;
+  exr_draw_sink_ex sink; FT_Library library; exr_pdf_program_fn program; void *program_context; const exr_control *control; exr_raster_work *work;
   exr_icc *cmyk_profile;
   exr_pdf_file *file; /* mask rendering needs the object arena */
-  size_t font_count,font_bytes; paint_face fonts[128];
+  size_t font_count,font_bytes,layer_budget; paint_face fonts[128];
   paint_mask group_masks[32];size_t group_depth,*mask_bytes;
 } pdf_painter;
 static uint32_t rgba(pdf_painter *paint,const exr_pdf_color *c,unsigned intent) {
@@ -67,7 +67,7 @@ static exr_status mask_begin(pdf_painter *r,const exr_pdf_paint_state *paint,pai
     return exr_fail(e,EXR_LIMIT,"PDF active soft masks exceed 64 MiB");
   mask->bytes=(size_t)width*height;*r->mask_bytes+=mask->bytes;
   double started=diag_ms();
-  status=exr_pdf_soft_mask_build(r->file,paint->smask,paint->smask_matrix,width,height,&mask->pixels,r->work,r->mask_bytes,r->control,e);
+  status=exr_pdf_soft_mask_build(r->file,paint->smask,paint->smask_matrix,width,height,&mask->pixels,r->work,r->layer_budget,r->mask_bytes,r->control,e);
   diag_mask_ms+=diag_ms()-started;diag_masks++;
   if(status!=EXR_OK) { *r->mask_bytes-=mask->bytes;mask->bytes=0;return status; }
   return exr_sink_soft_mask(&r->sink,mask->pixels,width,height,e);
@@ -240,13 +240,14 @@ static exr_status source_event(void *context,const exr_paint_source *source,cons
 }
 exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
                                   const double initial[6],const exr_draw_sink_ex *sink,exr_pdf_program_fn program,void *program_context,
-                                  size_t *work,size_t *mask_bytes,const exr_control *control,exr_error *e) {
-  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space,NULL,NULL}; size_t i,local_work=0,local_mask_bytes=0; exr_status status;
+                                  exr_raster_work *work,size_t layer_budget,size_t *mask_bytes,const exr_control *control,exr_error *e) {
+  pdf_painter r={0}; exr_pdf_draw_callbacks callbacks={glyph_event,path_event,state_event,image_event,shading_event,begin_group_event,end_layer_event,image_space,NULL,NULL}; size_t i,local_mask_bytes=0; exr_raster_work local_work={0}; exr_status status;
   if(!file) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint input");
   status=exr_draw_sink_snapshot(sink,&r.sink,e);if(status!=EXR_OK) return status;
   if(!r.sink.base.path && !r.sink.base.image && !r.sink.base.clip && !r.sink.base.state && !r.sink.image_cmyk && !r.sink.path_cmyk && !r.sink.shading && !r.sink.paint) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   r.program=program; r.program_context=program_context; r.control=control; r.work=work ? work : &local_work; r.file=file;r.mask_bytes=mask_bytes ? mask_bytes : &local_mask_bytes;
+  r.layer_budget=layer_budget;
   callbacks.work=r.work;
   callbacks.source=r.sink.paint ? source_event : NULL;
   if(FT_Init_FreeType(&r.library)) return exr_fail(e,EXR_MEMORY,"PDF font library initialization failed");
@@ -258,8 +259,8 @@ exr_status exr_pdf_paint_content_ex(exr_pdf_file *file,uint32_t resources,const 
 }
 
 exr_status exr_pdf_paint_content(exr_pdf_file *file,uint32_t resources,const void *content,size_t size,
-  const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,size_t *work,const exr_control *control,exr_error *e) {
+  const double initial[6],const exr_draw_sink *sink,exr_pdf_program_fn program,void *context,exr_raster_work *work,const exr_control *control,exr_error *e) {
   exr_draw_sink_ex extended={0};if(!sink) return exr_fail(e,EXR_ARGUMENT,"Missing PDF paint consumer");
   extended.struct_size=sizeof(extended);extended.base=*sink;
-  return exr_pdf_paint_content_ex(file,resources,content,size,initial,&extended,program,context,work,NULL,control,e);
+  return exr_pdf_paint_content_ex(file,resources,content,size,initial,&extended,program,context,work,0,NULL,control,e);
 }

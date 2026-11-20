@@ -20,7 +20,7 @@ typedef struct {
   exr_face *face;
   exr_error *error;
   const exr_control *control;
-  size_t *work;
+  exr_raster_work *work;
   uint32_t foreground;
   double em;      /* 1000 / units_per_EM */
   double scale;   /* device pixels per 1000-em unit */
@@ -580,13 +580,13 @@ static void clear_context(colr_context *c) {
 }
 
 exr_status exr_font_colrv1(exr_face *face, uint32_t glyph, float pixels, uint32_t foreground,
-                           exr_color_surface *out, size_t *work, const exr_control *control, exr_error *error) {
+                           exr_color_surface *out, exr_raster_work *work, const exr_control *control, exr_error *error) {
   colr_context c;
   FT_OpaquePaint root = {0};
   exr_status status;
   double clip[4];
   int has_clip = 0;
-  size_t local_work = 0;
+  exr_raster_work local_work = {0};
   memset(out, 0, sizeof(*out));
   if (!face || !work) return exr_fail(error, EXR_ARGUMENT, "Invalid COLR v1 render input");
   if (!(pixels > 0) || !isfinite(pixels) || pixels > 4096) return exr_fail(error, EXR_ARGUMENT, "Invalid COLR v1 glyph size");
@@ -650,7 +650,7 @@ exr_status exr_font_color_info_get(exr_font *font, size_t index, uint32_t glyph,
   double clip[4];
   int has_clip = 0;
   exr_status status;
-  size_t local_work = 0;
+  exr_raster_work local_work = {0};
   if (!out || !out->struct_size) return exr_fail(error, EXR_ARGUMENT, "Missing font color info output");
   if (out->struct_size < sizeof(*out)) return exr_fail(error, EXR_ARGUMENT, "Font color info output is too small");
   if (out->struct_size > sizeof(*out)) {

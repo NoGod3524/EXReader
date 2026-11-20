@@ -349,13 +349,15 @@ static exr_status try_direct_axial_mask(exr_pdf_file *file, uint32_t mask, uint3
                                         const unsigned char *data, size_t size, const double matrix[6],
                                         const double box[4], unsigned width, unsigned height,
                                         int kind, int group, const double bc[3], uint32_t background,
-                                        size_t *work, const exr_control *control,
+                                        exr_raster_work *work, size_t layer_budget, const exr_control *control,
                                         unsigned char **out, int *handled, exr_error *e) {
   direct_mask_probe probe;
   exr_pdf_draw_callbacks cb = { dm_glyph, dm_path, dm_state, dm_image, dm_shading,
                                 dm_begin_group, dm_end_layer, dm_image_space, NULL, dm_source };
   double bbox_rect[4], inter[4];
-  size_t probe_work = *work, sample_cost, active_pixels, group_bytes, shade_work;
+  exr_raster_work probe_work = *work;
+  size_t sample_cost, active_pixels, group_bytes, shade_work;
+  size_t layer_limit = layer_budget ? layer_budget : (size_t)64 * 1024 * 1024;
   exr_error local_err = {0};
   exr_status status;
   exr_pdf_function *function = NULL;
@@ -369,7 +371,7 @@ static exr_status try_direct_axial_mask(exr_pdf_file *file, uint32_t mask, uint3
     return EXR_OK;
   if (group & (EXR_PDF_GROUP_CMYK | EXR_PDF_GROUP_GRAY | EXR_PDF_GROUP_KNOCKOUT)) return EXR_OK;
   group_bytes = (size_t)width * height * (isolated ? 4u : (4u + 5u * sizeof(float)));
-  if (group_bytes > (size_t)64 * 1024 * 1024) return EXR_OK;
+  if (group_bytes > layer_limit) return EXR_OK;
   if (!box_axis_rect(box, matrix, bbox_rect)) return EXR_OK;
   memset(&probe, 0, sizeof(probe));
   probe.width = width; probe.height = height;
@@ -442,7 +444,7 @@ static exr_status try_direct_axial_mask(exr_pdf_file *file, uint32_t mask, uint3
       double c0[4] = {0}, c1[4] = {0}, sh0 = 0, op0 = 0, sh1 = 0, op1 = 0;
       double colors[3] = {0}, sum_a = 0, sum_s = 0, row_a, row_s;
       unsigned char rgb_b[3], m_in = 0;
-      size_t sample_work = 0;
+      exr_raster_work sample_work = {0};
       unsigned k, sy, sx, bbox_row_cov, inner_row_cov, x;
       int row_uniform;
       if (exr_control_cancel(control, e) != EXR_OK) { status = EXR_CANCELLED; goto fail_direct; }
@@ -504,7 +506,7 @@ static exr_status try_direct_axial_mask(exr_pdf_file *file, uint32_t mask, uint3
           }
           for (sy = 0; sy < 2; sy++) for (sx = 0; sx < 2; sx++) {
             double sc[4] = {0}, ssh = 0, sop = 0, a;
-            sample_work = 0;
+            sample_work.used = 0;
             local_err.code = EXR_OK; local_err.message[0] = 0;
             status = probe.axial.sample(&probe.axial, sx ? u1 : u0, sy ? v1 : v0, EXR_GROUP_RGB, sc, &ssh, &sop, &local_err);
             if (status != EXR_OK || local_err.code != EXR_OK) goto fallback_direct;
@@ -533,8 +535,8 @@ fail_direct:
 }
 static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set_matrix[6],
                                    unsigned width, unsigned height, unsigned char **out,
-                                   size_t *work,size_t *active_mask_bytes, const exr_control *control, exr_error *e) {
-  uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i,local_work=0;
+                                   exr_raster_work *work,size_t layer_budget,size_t *active_mask_bytes, const exr_control *control, exr_error *e) {
+  uint32_t form, id, resources = EXR_PDF_NONE; const unsigned char *data = NULL; size_t size = 0, i; exr_raster_work local_work={0};
   double matrix[6], local[6], box[4], bc[4] = {0, 0, 0, 0},bc_cmyk[4]; unsigned char *pixels = NULL, *result = NULL;
   const exr_pdf_value *v; int kind = 0, count = 0; exr_bitmap bitmap = {0}; exr_pdf_raster_config config = {0}; exr_status status;
   exr_pdf_function *function=NULL;size_t sample_cost;int group;
@@ -581,12 +583,12 @@ static exr_status build_mask(exr_pdf_file *file, uint32_t mask, const double set
     config.background=255;
     for(unsigned k=0;k<3;k++) config.background|=(uint32_t)fmax(0,fmin(255,floor(bc[k]*255+.5)))<<(24-8*k);
   }
-  config.work=work;config.active_mask_bytes=active_mask_bytes;
+  config.work=work;config.layer_budget=layer_budget;config.active_mask_bytes=active_mask_bytes;
   config.initial_clip=box;config.initial_clip_transform=matrix;config.mask_budget=0;
   if (!config.background_cmyk) {
     int handled = 0;
     status = try_direct_axial_mask(file, mask, resources, data, size, matrix, box, width, height,
-                                   kind, group, bc, config.background, work, control, out, &handled, e);
+                                   kind, group, bc, config.background, work, layer_budget, control, out, &handled, e);
     if (status != EXR_OK || handled) return status;
   }
   status = exr_pdf_raster_content(file, resources, data, size, matrix, &config, control, &bitmap, e);
@@ -643,9 +645,9 @@ static __declspec(thread) unsigned mask_depth;
 static _Thread_local unsigned mask_depth;
 #endif
 exr_status exr_pdf_soft_mask_build(exr_pdf_file *file,uint32_t mask,const double matrix[6],
-  unsigned width,unsigned height,unsigned char **out,size_t *work,size_t *active_mask_bytes,const exr_control *control,exr_error *e) {
+  unsigned width,unsigned height,unsigned char **out,exr_raster_work *work,size_t layer_budget,size_t *active_mask_bytes,const exr_control *control,exr_error *e) {
   exr_status status;*out=NULL;
   if(mask_depth==16) return exr_fail(e,EXR_LIMIT,"PDF soft mask nesting exceeds 16");
-  mask_depth++;status=build_mask(file,mask,matrix,width,height,out,work,active_mask_bytes,control,e);mask_depth--;
+  mask_depth++;status=build_mask(file,mask,matrix,width,height,out,work,layer_budget,active_mask_bytes,control,e);mask_depth--;
   return status;
 }

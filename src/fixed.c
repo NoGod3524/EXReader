@@ -204,7 +204,8 @@ exr_status exr_fixed_draw_ex(exr_fixed_document *d,size_t page,const double matr
   if(status==EXR_OK) status=exr_control_poll(control,EXR_STAGE_RENDER,1,1,&local);
   return provider_end(d,status,&local,e);
 }
-exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const exr_fixed_render_options *options,exr_bitmap *out,exr_error *e) {
+static exr_status fixed_render(exr_fixed_document *d,size_t page,double scale,
+  const exr_fixed_render_options *options,size_t layer_budget,size_t work_budget,exr_bitmap *out,exr_error *e) {
   exr_canvas_config config={0}; exr_canvas *canvas=NULL; exr_draw_sink_ex sink={0}; exr_viewport view; exr_path_segment clip[5]={0}; exr_status status;int gray=0;
   if(out) memset(out,0,sizeof(*out));
   if(!d || page>=d->count || !out || d->busy) return exr_fail(e,EXR_ARGUMENT,"Invalid or reentrant fixed page render");
@@ -216,6 +217,7 @@ exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const
   if(view.width>16384 || view.height>16384) return exr_fail(e,EXR_LIMIT,"Fixed page bitmap dimensions exceed 16384");
   config.width=(uint32_t)ceil(view.width); config.height=(uint32_t)ceil(view.height);
   status=exr_canvas_create_pooled(&config,&d->pool,&canvas,e); if(status!=EXR_OK) return status;
+  exr_canvas_render_limits(canvas,layer_budget,work_budget);
   clip[0].verb=EXR_PATH_MOVE; clip[1].verb=EXR_PATH_LINE; clip[1].points[0]=(exr_path_point){view.width,0};
   clip[2].verb=EXR_PATH_LINE; clip[2].points[0]=(exr_path_point){view.width,view.height};
   clip[3].verb=EXR_PATH_LINE; clip[3].points[0]=(exr_path_point){0,view.height}; clip[4].verb=EXR_PATH_CLOSE;
@@ -227,6 +229,14 @@ exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const
   if(status==EXR_OK && gray) status=exr_bitmap_to_gray(out,&config.control,e);
   if(status!=EXR_OK) exr_bitmap_free(out);
   exr_canvas_free(canvas); return status;
+}
+
+exr_status exr_fixed_render(exr_fixed_document *d,size_t page,double scale,const exr_fixed_render_options *options,exr_bitmap *out,exr_error *e) {
+  return fixed_render(d,page,scale,options,0,0,out,e);
+}
+
+exr_status exr_fixed_render_ex(exr_fixed_document *d,size_t page,double scale,const exr_fixed_render_options *options,exr_bitmap *out,exr_error *e) {
+  return fixed_render(d,page,scale,options,options ? options->layer_budget : 0,options ? options->work_budget : 0,out,e);
 }
 
 exr_status exr_fixed_page_text(exr_fixed_document *d,size_t page,const exr_control *control,exr_fixed_text **out,exr_error *e) {

@@ -22,9 +22,10 @@ struct exr_canvas {
   struct exr_icc *cmyk_profile;
   exr_bitmap bitmap;exr_composite_state *composite; exr_control control; exr_error failure;
   exr_clip_mask *clip,*saved[160],*group,*groups[64];
-  exr_canvas_layer *layers;size_t layer_depth,layer_capacity,layer_bytes,layer_budget;
+  exr_canvas_layer *layers;size_t layer_depth,layer_capacity,layer_bytes,layer_budget,layer_limit;
   exr_blend_mode blend,saved_blend[160];
-  size_t depth,group_depth,mask_bytes,full_span_bytes,mask_count,mask_budget,work;
+  size_t depth,group_depth,mask_bytes,full_span_bytes,mask_count,mask_budget;
+  exr_raster_work work;
   const unsigned char *soft_mask;size_t soft_mask_width,soft_mask_height;exr_composite_state mask_state;
   unsigned char *soft_mask_owned; /* cropped copy while a region buffer is active */
   unsigned alpha_flags,saved_alpha_flags[160];
@@ -40,6 +41,10 @@ struct exr_canvas {
   size_t path_cache_bytes;
 };
 exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_pool *pool,exr_canvas **out,exr_error *error);
+/* Sets render-scoped overrides on a newly created canvas. */
+void exr_canvas_render_limits(exr_canvas *canvas,size_t layer_budget,size_t work_budget);
+/* Returns the canvas for the native sink, or NULL for external consumers. */
+const exr_canvas *exr_canvas_sink_target(const exr_draw_sink_ex *sink);
 /* Graphics-state soft mask: page-space, one byte per pixel; NULL clears it. */
 exr_status exr_canvas_soft_mask(exr_canvas *canvas,const unsigned char *mask,size_t width,size_t height,exr_error *error);
 /* Clip-union construction is internal until the generic scene API is settled. */

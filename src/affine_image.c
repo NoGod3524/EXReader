@@ -170,7 +170,7 @@ __declspec(noinline)
 #endif
 static exr_status solid_mask_blend(exr_bitmap *target,const exr_bitmap *mask,const double inv[6],
                                   const exr_clip_mask *clip,int x0,int y0,int x1,int y1,int *columns,uint32_t rgb,
-                                  size_t cost,size_t *work,const exr_control *control,exr_error *e) {
+                                  size_t cost,exr_raster_work *work,const exr_control *control,exr_error *e) {
   double px0=x0+.25,py0=y0+.25;
 #if defined(__SSE2__) || defined(_M_X64)
   const __m128i rgba=_mm_setr_epi16((short)(rgb>>24),(short)((rgb>>16)&255),(short)((rgb>>8)&255),255,0,0,0,0);
@@ -259,7 +259,7 @@ static inline uint32_t average_four_rgba(uint32_t a,uint32_t b,uint32_t c,uint32
    Returns 0 when the case does not apply; the generic loop then runs. */
 static int nearest_axis(exr_bitmap *target,const exr_vector_texture *source,const double inv[6],double alpha,
                         const exr_clip_mask *clip,exr_blend_mode mode,int x0,int y0,int x1,int y1,size_t cost,
-                        size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+                        exr_raster_work *work,const exr_control *control,exr_error *e,exr_status *result) {
   const exr_bitmap *b=&source->bitmap; size_t width=(size_t)(x1-x0),height=(size_t)(y1-y0),k; int32_t *columns,*rows; int x,y;
   if(source->interpolate || source->mask || source->has_matte || target->channels!=4 || inv[1]!=0 || inv[2]!=0 || x1<=x0 || y1<=y0) return 0;
   columns=malloc((2*width+2*height)*sizeof(*columns)); if(!columns) return 0;
@@ -625,7 +625,7 @@ static void axis_flat_row_paint(const axis_row *r,const image_tap ytaps[2]) {
    apply. */
 static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vector_texture *mt,unsigned mask_mode,const double inv[6],double alpha,
                       const exr_clip_mask *clip,int x0,int y0,int x1,int y1,size_t cost,
-                      size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+                      exr_raster_work *work,const exr_control *control,exr_error *e,exr_status *result) {
   axis_layer color,mask; size_t width;
   if(target->channels!=4 || inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
   if(!isfinite(inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4]) || !isfinite(inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4]) ||
@@ -685,7 +685,7 @@ static int axis_paint(exr_bitmap *target,const exr_bitmap *source,const exr_vect
    Coordinates, weights and four-sample accumulation keep their original order. */
 static int bilinear_shear(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
                          const exr_clip_mask *clip,int x0,int y0,int x1,int y1,size_t cost,
-                         size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+                         exr_raster_work *work,const exr_control *control,exr_error *e,exr_status *result) {
   /* The body below is SSE2-only; other targets take the scalar fallback, so
      these parameters must be explicitly discarded to keep -Werror quiet. */
   (void)target;(void)source;(void)inv;(void)alpha;(void)clip;
@@ -768,7 +768,7 @@ static int bilinear_shear(exr_bitmap *target,const exr_bitmap *source,const doub
    on every row. Keep the generic tap, weight and summation order. */
 static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const double inv[6],double alpha,
                          const exr_clip_mask *clip,int x0,int y0,int x1,int y1,size_t cost,
-                         size_t *work,const exr_control *control,exr_error *e,exr_status *result) {
+                         exr_raster_work *work,const exr_control *control,exr_error *e,exr_status *result) {
   if(inv[1] || inv[2] || x1<=x0 || y1<=y0) return 0;
   double x_first=inv[0]*(x0+.25)+inv[2]*(y0+.25)+inv[4],x_last=inv[0]*(x1-.25)+inv[2]*(y0+.25)+inv[4];
   double y_first=inv[1]*(x0+.25)+inv[3]*(y0+.25)+inv[5],y_last=inv[1]*(x0+.25)+inv[3]*(y1-.25)+inv[5];
@@ -830,8 +830,8 @@ static int bilinear_axis(exr_bitmap *target,const exr_bitmap *source,const doubl
 }
 
 exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_texture *source,const exr_bitmap *inks,const double m[6],double alpha,
-                                     const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
-  size_t local_work=0,i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
+                                     const exr_clip_mask *clip,exr_blend_mode mode,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *e) {
+  exr_raster_work local_work={0}; size_t i; double det,inv[6],left=1e7,top=1e7,right=-1e7,bottom=-1e7; int x0,y0,x1,y1,x,y;
   const exr_vector_texture *layers[16],*layer=source; size_t depth=0,cost=0; int paired_nearest;
   if(mode<EXR_BLEND_NORMAL || mode>EXR_BLEND_LUMINOSITY) return exr_fail(e,EXR_ARGUMENT,"Invalid affine image blend mode");
   if(!storage(target) || !source || !m || !isfinite(alpha) || alpha<0 || alpha>1 ||
@@ -978,16 +978,16 @@ exr_status exr_vector_texture_blend_inks(exr_bitmap *target,const exr_vector_tex
   return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double m[6],double alpha,
-  const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *e) {
+  const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,exr_raster_work *work,const exr_control *control,exr_error *e) {
   return exr_vector_texture_blend_inks(target,source,NULL,m,alpha,clip ? &(exr_clip_mask){.bitmap=*clip} : NULL,mode,state,work,control,e);
 }
 exr_status exr_vector_image(exr_bitmap *target,const exr_bitmap *source,const double m[6],double alpha,
-                             int interpolate,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *e) {
+                             int interpolate,const exr_bitmap *clip,exr_raster_work *work,const exr_control *control,exr_error *e) {
   exr_vector_texture texture={0}; if(source) texture.bitmap=*source; texture.interpolate=interpolate!=0;
   return exr_vector_texture_paint(target,&texture,m,alpha,clip,work,control,e);
 }
 
 exr_status exr_vector_texture_paint(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],double alpha,
-  const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error) {
+  const exr_bitmap *clip,exr_raster_work *work,const exr_control *control,exr_error *error) {
   return exr_vector_texture_blend(target,source,matrix,alpha,clip,EXR_BLEND_NORMAL,NULL,work,control,error);
 }

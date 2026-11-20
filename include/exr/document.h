@@ -215,6 +215,9 @@ typedef struct {
   uint32_t channels,background; /* channels 0 -> RGBA */
   size_t mask_budget;
   exr_control control;
+  /* exr_fixed_render_ex reads these fields. Zero-initialize options to use defaults. */
+  size_t layer_budget; /* Per group and per live canvas stack, in bytes. Zero selects 64 MiB. */
+  size_t work_budget; /* Per page raster counter, in work units. Zero selects 268,435,456. */
 } exr_fixed_render_options;
 /* Metadata is copied. Provider context ownership transfers only on success.
      Empty IDs become page-1, page-2, ...; effective IDs must be unique.
@@ -269,9 +272,14 @@ EXR_API exr_status exr_fixed_draw(exr_fixed_document *document,size_t page,const
 EXR_API exr_status exr_fixed_draw_ex(exr_fixed_document *document,size_t page,const double matrix[6],
   const exr_draw_sink_ex *sink,const exr_control *control,exr_error *error);
 /* Creates a natural-size viewport, clips to it, then paints just this page.
-   NULL options default to white RGBA. Failure returns no partial bitmap. */
+   NULL options default to white RGBA. Failure returns no partial bitmap.
+   This ABI entry point uses the historical layer and work ceilings. */
 EXR_API exr_status exr_fixed_render(exr_fixed_document *document,size_t page,double scale,
                                      const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);
+/* Same rendering contract, with optional call-scoped ceilings that also apply to
+   native PDF soft masks. Pass a current exr_fixed_render_options or NULL. */
+EXR_API exr_status exr_fixed_render_ex(exr_fixed_document *document,size_t page,double scale,
+  const exr_fixed_render_options *options,exr_bitmap *out,exr_error *error);
 /* Copies every input string/attribute/blob during this call. Failure leaves *out NULL. */
 EXR_API exr_status exr_document_create(const exr_document_input *input, exr_document **out,
                                        exr_error *error);

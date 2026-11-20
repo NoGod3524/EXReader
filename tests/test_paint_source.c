@@ -88,7 +88,7 @@ static void errors(void) {
     CHECK(exr_canvas_paint(c,&source,NULL,1,&error)==EXR_CANCELLED);CHECK(s.calls<=64);exr_canvas_free(c);
   }
   { sampler s={0,0,0,{0},1,1};exr_paint_source source={sizeof(source),sample,&s};exr_canvas *c=canvas(1,4,(exr_control){0});
-    c->work=256u*1024u*1024u;CHECK(exr_canvas_paint(c,&source,NULL,1,&error)==EXR_LIMIT);CHECK(!s.calls);exr_canvas_free(c);
+    c->work.used=256u*1024u*1024u;CHECK(exr_canvas_paint(c,&source,NULL,1,&error)==EXR_LIMIT);CHECK(!s.calls);exr_canvas_free(c);
   }
 }
 static void prefixes(void) {
@@ -107,8 +107,8 @@ static void clipped_budget(int verify) {
       rectangle(path,100,100,104,104);rectangle(path+5,101,101,103,103);
       OK(exr_canvas_clip(c,path,10,NULL,EXR_FILL_EVENODD,&error));
     }
-    c->work=0;start=clock();status=exr_canvas_paint(c,&source,NULL,1,&error);
-    cpu_ms=(double)(clock()-start)*1000/CLOCKS_PER_SEC;work=c->work;
+    c->work.used=0;start=clock();status=exr_canvas_paint(c,&source,NULL,1,&error);
+    cpu_ms=(double)(clock()-start)*1000/CLOCKS_PER_SEC;work=c->work.used;
     if(c->bitmap.pixels) {
       /* On LIMIT this is diagnostic working memory, never published output. */
       const exr_bitmap *b=&c->bitmap;
