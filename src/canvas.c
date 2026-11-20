@@ -4,6 +4,13 @@
 #include "pixels_internal.h"
 #include <float.h>
 #include <stdio.h>
+#if defined(__GNUC__) || defined(__clang__)
+#define EXR_NOINLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+#define EXR_NOINLINE __declspec(noinline)
+#else
+#define EXR_NOINLINE
+#endif
 static exr_status finish(exr_canvas *c,exr_status status,exr_error *e) {
   if(c && status==EXR_OK) status=exr_icc_deferred_status(c->cmyk_profile,e);
   if(c && status!=EXR_OK && c->failure.code==EXR_OK) {
@@ -559,74 +566,51 @@ static void blit_coverage_mask(exr_canvas *c,const unsigned char *mask,uint32_t 
   }
 }
 
-static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_t count,const double transform_arg[6],
-                            const exr_draw_style *style,const double *cmyk_fill,const double *cmyk_stroke,exr_error *e) {
-  const double identity[6]={1,0,0,1,0,0}; exr_draw_style defaults=exr_draw_style_defaults();
-  double offset_matrix[6];const double *transform=transform_arg;exr_draw_style gray_style;
-  exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=ready(c,e);
+static EXR_NOINLINE exr_status path_impl_cached(exr_canvas *c,const exr_path_segment *segments,size_t count,const double *transform,
+                                                const exr_draw_style *style,const double *cmyk_fill,const double *cmyk_stroke,exr_error *e) {
+  const double identity[6]={1,0,0,1,0,0};
+  exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=EXR_OK;
   path_cache_key key; int have_key=0,want_cache=0; size_t work_start=c->work;
-  if(status!=EXR_OK) return status;
-  if(!style) style=&defaults;
-  if((cmyk_fill || cmyk_stroke) && c->gray_groups)
-    return finish(c,exr_fail(e,EXR_UNSUPPORTED,"CMYK paints inside a DeviceGray group are not supported"),e);
-  if(c->gray_groups) {
-    /* A DeviceGray group blends luminance: reduce both paints before rasterising. */
-    exr_draw_style gray=*style; unsigned k;
-    const uint32_t colors[2]={gray.fill,gray.stroke};
-    uint32_t *targets[2]={&gray.fill,&gray.stroke};
-    for(k=0;k<2;k++) {
-      *targets[k]=exr_gray_color(colors[k]);
-    }
-    gray_style=gray;style=&gray_style;
-  }
-  transform=shifted(c,transform_arg,offset_matrix);
-  if((style->flags&~3u) || (style->rule!=EXR_FILL_NONZERO && style->rule!=EXR_FILL_EVENODD) || (count && !segments))
-    return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid canvas path flags/rule/input"),e);
-  {
-    int standalone_cache_ok=style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE) ||
-      (!cmyk_fill && !cmyk_stroke && !c->cmyk_groups && c->blend==EXR_BLEND_NORMAL && !masked_state(c));
-    if(standalone_cache_ok && build_path_key(c,segments,count,transform,style,cmyk_fill,cmyk_stroke,&key)) {
-      have_key=1;
-      for(size_t i=0;i<EXR_PATH_CACHE_SLOTS;i++) {
-        exr_path_cache_entry *entry=c->path_cache[i];
-        if(entry && path_key_matches(entry,&key)) {
-          int dx0=key.ox+entry->rel_x0,dy0=key.oy+entry->rel_y0;
-          int dx1=dx0+(int)entry->w,dy1=dy0+(int)entry->h;
-          size_t mask_need=(size_t)c->bitmap.width*c->bitmap.height;
-          int budget_ok=entry->work<(size_t)256*1024*1024 && c->work<=(size_t)256*1024*1024-entry->work-4096;
-          if(entry->stroke_mask) budget_ok=budget_ok && mask_need<=c->mask_budget-c->mask_bytes && mask_need<=c->mask_budget-c->mask_bytes-mask_need;
-          if(dx0>=0 && dy0>=0 && dx1<=(int)c->bitmap.width && dy1<=(int)c->bitmap.height && budget_ok) {
-            entry->last_used=++c->path_cache_tick;
-            c->work+=entry->work;
-            if(entry->stroke_mask) {
-              uint32_t bounds[4]={(uint32_t)dx0,(uint32_t)dy0,(uint32_t)dx1,(uint32_t)dy1};
-              const exr_bitmap fm_bm={entry->w,entry->h,entry->w,entry->fill_mask,1};
-              const exr_bitmap sm_bm={entry->w,entry->h,entry->w,entry->stroke_mask,1};
-              const exr_bitmap *clip_bm=(c->clip && !clip_covers_box(c->clip,bounds[0],bounds[1],bounds[2],bounds[3])) ? &c->clip->bitmap : NULL;
-              if(c->cmyk_groups) {
-                double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
-                if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,frgb,fc); }
-                if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,srgb,sc); }
-                status=exr_composite_compound_cmyk_at(&c->bitmap,&fm_bm,&sm_bm,(uint32_t)dx0,(uint32_t)dy0,bounds,fc,sc,
-                  (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
-              } else {
-                status=exr_composite_compound_at(&c->bitmap,&fm_bm,&sm_bm,(uint32_t)dx0,(uint32_t)dy0,bounds,
-                  style->fill,style->stroke,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
-              }
-              return finish(c,status,e);
+  if(build_path_key(c,segments,count,transform,style,cmyk_fill,cmyk_stroke,&key)) {
+    have_key=1;
+    for(size_t i=0;i<EXR_PATH_CACHE_SLOTS;i++) {
+      exr_path_cache_entry *entry=c->path_cache[i];
+      if(entry && path_key_matches(entry,&key)) {
+        int dx0=key.ox+entry->rel_x0,dy0=key.oy+entry->rel_y0;
+        int dx1=dx0+(int)entry->w,dy1=dy0+(int)entry->h;
+        size_t mask_need=(size_t)c->bitmap.width*c->bitmap.height;
+        int budget_ok=entry->work<(size_t)256*1024*1024 && c->work<=(size_t)256*1024*1024-entry->work-4096;
+        if(entry->stroke_mask) budget_ok=budget_ok && mask_need<=c->mask_budget-c->mask_bytes && mask_need<=c->mask_budget-c->mask_bytes-mask_need;
+        if(dx0>=0 && dy0>=0 && dx1<=(int)c->bitmap.width && dy1<=(int)c->bitmap.height && budget_ok) {
+          entry->last_used=++c->path_cache_tick;
+          c->work+=entry->work;
+          if(entry->stroke_mask) {
+            uint32_t bounds[4]={(uint32_t)dx0,(uint32_t)dy0,(uint32_t)dx1,(uint32_t)dy1};
+            const exr_bitmap fm_bm={entry->w,entry->h,entry->w,entry->fill_mask,1};
+            const exr_bitmap sm_bm={entry->w,entry->h,entry->w,entry->stroke_mask,1};
+            const exr_bitmap *clip_bm=(c->clip && !clip_covers_box(c->clip,bounds[0],bounds[1],bounds[2],bounds[3])) ? &c->clip->bitmap : NULL;
+            if(c->cmyk_groups) {
+              double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
+              if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,frgb,fc); }
+              if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,srgb,sc); }
+              status=exr_composite_compound_cmyk_at(&c->bitmap,&fm_bm,&sm_bm,(uint32_t)dx0,(uint32_t)dy0,bounds,fc,sc,
+                (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
+            } else {
+              status=exr_composite_compound_at(&c->bitmap,&fm_bm,&sm_bm,(uint32_t)dx0,(uint32_t)dy0,bounds,
+                style->fill,style->stroke,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
             }
-            blit_coverage_mask(c,entry->fill_mask,entry->w,entry->h,(uint32_t)dx0,(uint32_t)dy0,
-                               (style->flags&EXR_DRAW_STROKE) ? style->stroke : style->fill);
-            return finish(c,EXR_OK,e);
+            return finish(c,status,e);
           }
-          break;
+          blit_coverage_mask(c,entry->fill_mask,entry->w,entry->h,(uint32_t)dx0,(uint32_t)dy0,
+                             (style->flags&EXR_DRAW_STROKE) ? style->stroke : style->fill);
+          return finish(c,EXR_OK,e);
         }
+        break;
       }
-      want_cache=path_seen_check(c,key.hash);
     }
+    want_cache=path_seen_check(c,key.hash);
   }
   if(style->flags&EXR_DRAW_FILL) status=exr_vector_flatten(segments,count,transform,.125,&flat,&c->work,&c->control,e);
-
   if(status==EXR_OK && (style->flags&EXR_DRAW_STROKE)) {
     const double *stroke=style->stroke_matrix ? style->stroke_matrix : transform ? transform : identity;
     double inv[6],matrix[6],scale=hypot(stroke[0],stroke[1])+hypot(stroke[2],stroke[3]);
@@ -635,7 +619,6 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
     status=exr_vector_flatten(segments,count,matrix,.125/fmax(1,scale),&local,&c->work,&c->control,e);
     if(status==EXR_OK && style->dash_count) status=exr_vector_dash(&local,style->dashes,style->dash_count,style->dash_phase,&dashed,&c->work,&c->control,e);
     if(status==EXR_OK) status=exr_vector_stroke(style->dash_count ? &dashed : &local,&style->line,stroke,.125,&outline,&c->work,&c->control,e);
-
   }
   if(status==EXR_OK && style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE)) {
     exr_clip_mask *fm=NULL,*sm=NULL;uint32_t bounds[4];status=new_mask(c,&fm,e);
@@ -712,6 +695,79 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
       status=cmyk ? fill_cmyk(c,poly,rule,cmyk,(color&255)/255.,&c->bitmap,c->clip,e)
                   : fill(c,poly,rule,color,&c->bitmap,c->clip,e);
     }
+  }
+done:
+  exr_vector_polyline_free(&flat); exr_vector_polyline_free(&local); exr_vector_polyline_free(&dashed); exr_vector_polyline_free(&outline); return finish(c,status,e);
+}
+
+static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_t count,const double transform_arg[6],
+                            const exr_draw_style *style,const double *cmyk_fill,const double *cmyk_stroke,exr_error *e) {
+  const double identity[6]={1,0,0,1,0,0}; exr_draw_style defaults=exr_draw_style_defaults();
+  double offset_matrix[6];const double *transform=transform_arg;exr_draw_style gray_style;
+  exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=ready(c,e);
+  if(status!=EXR_OK) return status;
+  if(!style) style=&defaults;
+  if((cmyk_fill || cmyk_stroke) && c->gray_groups)
+    return finish(c,exr_fail(e,EXR_UNSUPPORTED,"CMYK paints inside a DeviceGray group are not supported"),e);
+  if(c->gray_groups) {
+    /* A DeviceGray group blends luminance: reduce both paints before rasterising. */
+    exr_draw_style gray=*style; unsigned k;
+    const uint32_t colors[2]={gray.fill,gray.stroke};
+    uint32_t *targets[2]={&gray.fill,&gray.stroke};
+    for(k=0;k<2;k++) {
+      *targets[k]=exr_gray_color(colors[k]);
+    }
+    gray_style=gray;style=&gray_style;
+  }
+  transform=shifted(c,transform_arg,offset_matrix);
+  if((style->flags&~3u) || (style->rule!=EXR_FILL_NONZERO && style->rule!=EXR_FILL_EVENODD) || (count && !segments))
+    return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid canvas path flags/rule/input"),e);
+  if(!c->control.cancelled && count>=2 && count<=EXR_PATH_CACHE_MAX_SEGS &&
+     (style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE) ||
+      (((style->flags&EXR_DRAW_STROKE) || (!transform_arg && count>5)) &&
+       !cmyk_fill && !cmyk_stroke && !c->cmyk_groups && c->blend==EXR_BLEND_NORMAL && !masked_state(c)))) {
+    return path_impl_cached(c,segments,count,transform,style,cmyk_fill,cmyk_stroke,e);
+  }
+  if(style->flags&EXR_DRAW_FILL) status=exr_vector_flatten(segments,count,transform,.125,&flat,&c->work,&c->control,e);
+
+  if(status==EXR_OK && (style->flags&EXR_DRAW_STROKE)) {
+    const double *stroke=style->stroke_matrix ? style->stroke_matrix : transform ? transform : identity;
+    double inv[6],matrix[6],scale=hypot(stroke[0],stroke[1])+hypot(stroke[2],stroke[3]);
+    if(!inverse(stroke,inv)) { status=exr_fail(e,EXR_ARGUMENT,"Invalid or singular canvas stroke matrix"); goto done; }
+    if(transform) multiply(inv,transform,matrix); else memcpy(matrix,inv,sizeof(matrix));
+    status=exr_vector_flatten(segments,count,matrix,.125/fmax(1,scale),&local,&c->work,&c->control,e);
+    if(status==EXR_OK && style->dash_count) status=exr_vector_dash(&local,style->dashes,style->dash_count,style->dash_phase,&dashed,&c->work,&c->control,e);
+    if(status==EXR_OK) status=exr_vector_stroke(style->dash_count ? &dashed : &local,&style->line,stroke,.125,&outline,&c->work,&c->control,e);
+
+  }
+  if(status==EXR_OK && style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE)) {
+    exr_clip_mask *fm=NULL,*sm=NULL;uint32_t bounds[4];status=new_mask(c,&fm,e);
+    if(status==EXR_OK) status=new_mask(c,&sm,e);
+    if(status==EXR_OK) status=mask_fill(c,&flat,style->rule,fm,NULL,0,e);
+    if(status==EXR_OK) status=mask_fill(c,&outline,EXR_FILL_NONZERO,sm,NULL,0,e);
+    if(status==EXR_OK) {
+      bounds[0]=fm->dirty_left<sm->dirty_left ? fm->dirty_left : sm->dirty_left;
+      bounds[1]=fm->dirty_top<sm->dirty_top ? fm->dirty_top : sm->dirty_top;
+      bounds[2]=fm->dirty_right>sm->dirty_right ? fm->dirty_right : sm->dirty_right;
+      bounds[3]=fm->dirty_bottom>sm->dirty_bottom ? fm->dirty_bottom : sm->dirty_bottom;
+    }
+    const exr_bitmap *clip_bm=(status==EXR_OK && c->clip && !clip_covers_box(c->clip,bounds[0],bounds[1],bounds[2],bounds[3])) ? &c->clip->bitmap : NULL;
+    if(status==EXR_OK && c->cmyk_groups) {
+      double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
+      if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,frgb,fc); }
+      if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,srgb,sc); }
+      status=exr_composite_compound_cmyk(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,fc,sc,
+        (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,clip_bm,
+        masked_state(c),&c->work,&c->control,e);
+    }
+    else if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,style->fill,style->stroke,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
+    unref(c,fm);unref(c,sm);
+  } else if(status==EXR_OK && (style->flags&EXR_DRAW_FILL)) {
+    status=cmyk_fill ? fill_cmyk(c,&flat,style->rule,cmyk_fill,(style->fill&255)/255.,&c->bitmap,c->clip,e)
+                     : fill(c,&flat,style->rule,style->fill,&c->bitmap,c->clip,e);
+  } else if(status==EXR_OK && (style->flags&EXR_DRAW_STROKE)) {
+    status=cmyk_stroke ? fill_cmyk(c,&outline,EXR_FILL_NONZERO,cmyk_stroke,(style->stroke&255)/255.,&c->bitmap,c->clip,e)
+                       : fill(c,&outline,EXR_FILL_NONZERO,style->stroke,&c->bitmap,c->clip,e);
   }
 
 done:
