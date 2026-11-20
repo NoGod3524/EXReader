@@ -1,0 +1,19 @@
+PASS test_stroke_cache_key_clip (15 draws)
+PASS test_stroke_cache_key_alpha (15 draws)
+PASS test_stroke_cache_key_width (24 draws)
+PASS test_stroke_cache_key_blend (19 draws)
+PASS test_stroke_cache_key_matrix_epsilon (24 draws)
+PASS test_stroke_cache_key_clip_change (8 draws)
+PASS test_stroke_cache_matrix_translation (32 draws)
+PASS test_stroke_cache_matrix_conditioning (4 draws)
+PASS test_stroke_cache_matrix_product (8 draws)
+PASS test_stroke_cache_dash_validation (4 draws)
+PASS test_stroke_cache_key_hairline (8 draws)
+PASS test_stroke_cache_key_miter (6 draws)
+PASS test_stroke_cache_key_fill_rule (9 draws)
+PASS test_stroke_cache_key_flags (5 draws)
+PASS test_stroke_cache_key_dash_pattern (8 draws)
+PASS test_stroke_cache_key_sub_quantum (26 draws)
+1 failure(s), 219 lockstep draws
+FAIL test_stroke_cache_key_verbs: line+quad after cached quad+line: expected a cache miss but the cache hit
+exit=1

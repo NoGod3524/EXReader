@@ -1,0 +1,19 @@
+PASS test_stroke_cache_key_clip (15 draws)
+PASS test_stroke_cache_key_alpha (15 draws)
+PASS test_stroke_cache_key_blend (19 draws)
+PASS test_stroke_cache_key_matrix_epsilon (24 draws)
+PASS test_stroke_cache_key_clip_change (8 draws)
+PASS test_stroke_cache_matrix_translation (32 draws)
+PASS test_stroke_cache_matrix_conditioning (4 draws)
+PASS test_stroke_cache_matrix_product (8 draws)
+PASS test_stroke_cache_dash_validation (4 draws)
+PASS test_stroke_cache_key_miter (6 draws)
+PASS test_stroke_cache_key_fill_rule (9 draws)
+PASS test_stroke_cache_key_verbs (4 draws)
+PASS test_stroke_cache_key_flags (5 draws)
+PASS test_stroke_cache_key_dash_pattern (8 draws)
+3 failure(s), 195 lockstep draws
+FAIL test_stroke_cache_key_width: stroke with another width: expected a cache miss but the cache hit
+FAIL test_stroke_cache_key_hairline: hairline after cached width 1e-13: cached and uncached RGBA differ in 338 px; first (12,13) cached=162,133,128,255 uncached=139,123,135,255
+FAIL test_stroke_cache_key_sub_quantum: width +1e-7: expected a cache miss but the cache hit
+exit=1

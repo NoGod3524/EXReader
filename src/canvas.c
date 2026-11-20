@@ -4,6 +4,13 @@
 #include "pixels_internal.h"
 #include <float.h>
 #include <stdio.h>
+#if defined(__GNUC__) || defined(__clang__)
+#define EXR_NOINLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+#define EXR_NOINLINE __declspec(noinline)
+#else
+#define EXR_NOINLINE
+#endif
 static exr_status finish(exr_canvas *c,exr_status status,exr_error *e) {
   if(c && status==EXR_OK) status=exr_icc_deferred_status(c->cmyk_profile,e);
   if(c && status!=EXR_OK && c->failure.code==EXR_OK) {
@@ -26,11 +33,11 @@ static void unref(exr_canvas *c,exr_clip_mask *mask) {
   /* Fresh masks start zeroed and come from large, page-faulting allocations;
      a released one is cheaper to clean, since only its written rows are dirty. */
   for(i=0;i<4;i++) if(!c->spare_masks[i]) { c->spare_masks[i]=mask; return; }
-  free(mask->bitmap.pixels); free(mask);
+  free(mask->solid_spans); free(mask->bitmap.pixels); free(mask);
 }
 static void free_spare_masks(exr_canvas *c) {
   size_t i;
-  for(i=0;i<4;i++) if(c->spare_masks[i]) { free(c->spare_masks[i]->bitmap.pixels); free(c->spare_masks[i]); c->spare_masks[i]=NULL; }
+  for(i=0;i<4;i++) if(c->spare_masks[i]) { free(c->spare_masks[i]->solid_spans); free(c->spare_masks[i]->bitmap.pixels); free(c->spare_masks[i]); c->spare_masks[i]=NULL; }
 }
 static void composite_free(exr_composite_state *state) {
   if(state) { free(state->shape);free(state->cmyk_pixels);free(state->pixels);free(state); }
@@ -47,14 +54,24 @@ static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
   if(bytes>c->mask_budget-c->mask_bytes) return exr_fail(e,EXR_LIMIT,"Canvas clip masks exceed byte budget");
   for(i=0;i<4;i++) if((mask=c->spare_masks[i]) && mask->bitmap.width==c->bitmap.width && mask->bitmap.height==c->bitmap.height) {
     c->spare_masks[i]=NULL;
-    if(mask->dirty_bottom>mask->dirty_top) memset(mask->bitmap.pixels+(size_t)mask->dirty_top*mask->bitmap.stride,0,(size_t)(mask->dirty_bottom-mask->dirty_top)*mask->bitmap.stride);
+    if(mask->dirty_bottom>mask->dirty_top && mask->dirty_right>mask->dirty_left) {
+      if(mask->dirty_left==0 && mask->dirty_right==mask->bitmap.stride)
+        memset(mask->bitmap.pixels+(size_t)mask->dirty_top*mask->bitmap.stride,0,(size_t)(mask->dirty_bottom-mask->dirty_top)*mask->bitmap.stride);
+      else {
+        size_t len=mask->dirty_right-mask->dirty_left;
+        for(uint32_t ry=mask->dirty_top;ry<mask->dirty_bottom;ry++)
+          memset(mask->bitmap.pixels+(size_t)ry*mask->bitmap.stride+mask->dirty_left,0,len);
+      }
+    }
     mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0; mask->dirty_left=mask->bitmap.width; mask->dirty_right=0;
+    mask->solid_top=mask->bitmap.height; mask->solid_bottom=0; mask->solid_is_rect=0;
     mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
   }
   mask=calloc(1,sizeof(*mask)); if(!mask) return exr_fail(e,EXR_MEMORY,"Canvas clip mask allocation failed");
   mask->bitmap=c->bitmap; mask->bitmap.channels=1; mask->bitmap.stride=c->bitmap.width; mask->bitmap.pixels=calloc(bytes,1);
   if(!mask->bitmap.pixels) { free(mask); return exr_fail(e,EXR_MEMORY,"Canvas clip pixel allocation failed"); }
   mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0; mask->dirty_left=mask->bitmap.width; mask->dirty_right=0;
+  mask->solid_top=mask->bitmap.height; mask->solid_bottom=0; mask->solid_is_rect=0;
   mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
 }
 /* The soft mask rides on the composite state so every pixel writer applies it. */
@@ -93,17 +110,40 @@ exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t w
   c->soft_mask=mask;c->soft_mask_width=mask ? width : 0;c->soft_mask_height=mask ? height : 0;
   return EXR_OK;
 }
+static inline const exr_solid_clip *solid_clip_info(const exr_clip_mask *clip,exr_solid_clip *buf) {
+  if(!clip || (!clip->solid_is_rect && !clip->solid_spans)) return NULL;
+  buf->spans=clip->solid_is_rect ? NULL : clip->solid_spans;
+  buf->top=clip->solid_top; buf->bottom=clip->solid_bottom;
+  memcpy(buf->rect,clip->solid_rect,sizeof(buf->rect));
+  buf->is_rect=clip->solid_is_rect;
+  return buf;
+}
+static int clip_covers_box(const exr_clip_mask *clip,uint32_t x0,uint32_t y0,uint32_t x1,uint32_t y1) {
+  if(!clip) return 1;
+  if(x0>=x1 || y0>=y1) return 0;
+  if(clip->solid_is_rect)
+    return x0>=clip->solid_rect[0] && x1<=clip->solid_rect[2] && y0>=clip->solid_rect[1] && y1<=clip->solid_rect[3];
+  if(!clip->solid_spans) return 0;
+  if(y0<clip->solid_top || y1>clip->solid_bottom) return 0;
+  for(uint32_t y=y0;y<y1;y++) if(x0<clip->solid_spans[2*y] || x1>clip->solid_spans[2*y+1]) return 0;
+  return 1;
+}
 static exr_status fill(exr_canvas *c,const exr_vector_polyline *path,exr_fill_rule rule,uint32_t color,
                          exr_bitmap *target,const exr_clip_mask *clip,exr_error *e) {
   exr_vector_edge *edges=NULL; size_t count=0; exr_status status=exr_vector_edges(path,1,&edges,&count,&c->work,&c->control,e);
-  if(status==EXR_OK) status=exr_vector_fill_blend(target,edges,count,rule,color,clip ? &clip->bitmap : NULL,target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->work,&c->control,e);
+  exr_solid_clip cs;
+  if(status==EXR_OK) status=exr_vector_fill_blend_ex(target,edges,count,rule,color,NULL,0,clip ? &clip->bitmap : NULL,
+    target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->vector_scratch,
+    NULL,solid_clip_info(clip,&cs),&c->work,&c->control,e);
   free(edges); return status;
 }
 static exr_status fill_cmyk(exr_canvas *c,const exr_vector_polyline *path,exr_fill_rule rule,const double cmyk[4],double alpha,
                               exr_bitmap *target,const exr_clip_mask *clip,exr_error *e) {
   exr_vector_edge *edges=NULL; size_t count=0; exr_status status=exr_vector_edges(path,1,&edges,&count,&c->work,&c->control,e);
-  if(status==EXR_OK) status=exr_vector_fill_blend_cmyk(target,edges,count,rule,cmyk,alpha,clip ? &clip->bitmap : NULL,
-    target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->work,&c->control,e);
+  exr_solid_clip cs;
+  if(status==EXR_OK) status=exr_vector_fill_blend_ex(target,edges,count,rule,0,cmyk,alpha,clip ? &clip->bitmap : NULL,
+    target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->vector_scratch,
+    NULL,solid_clip_info(clip,&cs),&c->work,&c->control,e);
   free(edges); return status;
 }
 /* Coverage into a clip mask. Rasterized pixels lie within the path's extent;
@@ -116,8 +156,11 @@ static void extent(double low,double high,uint32_t size,uint32_t *first,uint32_t
   *last=high<=0 ? 0 : high>=size ? size : (uint32_t)high;
 }
 static exr_status mask_fill(exr_canvas *c,const exr_vector_polyline *path,exr_fill_rule rule,exr_clip_mask *mask,
-                            const exr_clip_mask *clip,exr_error *e) {
+                            const exr_clip_mask *clip,int track_solid,exr_error *e) {
   double low=INFINITY,high=-INFINITY,left=INFINITY,right=-INFINITY; uint32_t top,bottom,first,last; size_t i;
+  exr_vector_edge *edges=NULL; size_t count=0; exr_status status;
+  exr_solid_clip cs; const exr_solid_clip *cs_ptr=solid_clip_info(clip,&cs);
+  exr_solid_out sout={0},*sout_ptr=NULL;
   for(i=0;i<path->point_count;i++) {
     low=fmin(low,path->points[i].y); high=fmax(high,path->points[i].y);
     left=fmin(left,path->points[i].x); right=fmax(right,path->points[i].x);
@@ -134,7 +177,35 @@ static exr_status mask_fill(exr_canvas *c,const exr_vector_polyline *path,exr_fi
     if(first<mask->dirty_left) mask->dirty_left=first;
     if(last>mask->dirty_right) mask->dirty_right=last;
   }
-  return fill(c,path,rule,0xffffffff,&mask->bitmap,clip,e);
+  if(track_solid && (!clip || cs_ptr)) {
+    sout.spans=&mask->solid_spans;
+    sout_ptr=&sout;
+  }
+  status=exr_vector_edges(path,1,&edges,&count,&c->work,&c->control,e);
+  if(status==EXR_OK) status=exr_vector_fill_blend_ex(&mask->bitmap,edges,count,rule,0xffffffff,NULL,0,clip ? &clip->bitmap : NULL,
+    EXR_BLEND_NORMAL,NULL,&c->vector_scratch,sout_ptr,cs_ptr,&c->work,&c->control,e);
+  free(edges);
+  if(status==EXR_OK && sout_ptr) {
+    if(sout.is_rect) {
+      memcpy(mask->solid_rect,sout.rect,sizeof(mask->solid_rect));
+      mask->solid_is_rect=1;
+      mask->solid_top=sout.rect[1]; mask->solid_bottom=sout.rect[3];
+    } else if(sout.used_spans && mask->solid_spans) {
+      uint32_t st=mask->bitmap.height,sb=0;
+      mask->solid_is_rect=0;
+      for(uint32_t ry=mask->dirty_top;ry<mask->dirty_bottom;ry++) {
+        if(mask->solid_spans[2*ry]<mask->solid_spans[2*ry+1]) {
+          if(ry<st) st=ry;
+          sb=ry+1;
+        }
+      }
+      mask->solid_top=st; mask->solid_bottom=sb;
+    } else {
+      mask->solid_is_rect=0;
+      mask->solid_top=mask->bitmap.height; mask->solid_bottom=0;
+    }
+  }
+  return status;
 }
 static int inverse(const double *m,double out[6]) {
   double d; size_t i;
@@ -194,6 +265,7 @@ exr_status exr_canvas_create_pooled(const exr_canvas_config *config,exr_buffer_p
   }
   *out=c; return exr_fail(e,EXR_OK,"");
 }
+static void path_cache_clear(exr_canvas *c);
 void exr_canvas_union_abort(exr_canvas *c) { if(c) { unref(c,c->group); c->group=NULL; } }
 void exr_canvas_free(exr_canvas *c) {
   if(!c) return;
@@ -207,7 +279,7 @@ void exr_canvas_free(exr_canvas *c) {
     free(l->pending_groups);composite_free(l->composite);free(l->bitmap.pixels);
     free(l->soft_mask_owned);
   }
-  free_spare_masks(c); exr_buffer_pool_clear(&c->local_pool);
+  path_cache_clear(c); free_spare_masks(c); exr_vector_scratch_free(&c->vector_scratch); exr_buffer_pool_clear(&c->local_pool);
   exr_icc_free(c->cmyk_profile);free(c->soft_mask_owned);free(c->layers);composite_free(c->composite);free(c->bitmap.pixels); free(c);
 }
 static size_t composite_size(const exr_bitmap *b,const exr_composite_state *state) {
@@ -217,7 +289,7 @@ static size_t composite_size(const exr_bitmap *b,const exr_composite_state *stat
 }
 size_t exr_canvas_memory_size(const exr_canvas *c) {
   size_t bytes,i;if(!c) return 0;
-  bytes=exr_icc_memory(c->cmyk_profile)+sizeof(*c)+c->pool->bytes+(c->composite ? sizeof(*c->composite) : 0)+composite_size(&c->bitmap,c->composite)+(c->bitmap.pixels ? (size_t)c->bitmap.stride*c->bitmap.height : 0)+c->mask_bytes+c->mask_count*sizeof(exr_clip_mask)+c->layer_capacity*sizeof(*c->layers);
+  bytes=exr_icc_memory(c->cmyk_profile)+sizeof(*c)+c->pool->bytes+c->path_cache_bytes+(c->composite ? sizeof(*c->composite) : 0)+composite_size(&c->bitmap,c->composite)+(c->bitmap.pixels ? (size_t)c->bitmap.stride*c->bitmap.height : 0)+c->mask_bytes+c->mask_count*sizeof(exr_clip_mask)+c->layer_capacity*sizeof(*c->layers);
   for(i=0;i<4;i++) if(c->spare_masks[i]) bytes+=sizeof(exr_clip_mask)+(size_t)c->spare_masks[i]->bitmap.stride*c->spare_masks[i]->bitmap.height;
   for(i=0;i<c->layer_depth;i++) bytes+=(size_t)c->layers[i].bitmap.stride*c->layers[i].bitmap.height+c->layers[i].group_depth*sizeof(exr_clip_mask *)+composite_size(&c->layers[i].bitmap,c->layers[i].composite)+(c->layers[i].composite ? sizeof(*c->layers[i].composite) : 0);
   return bytes;
@@ -243,6 +315,411 @@ exr_status exr_canvas_restore(exr_canvas *c,exr_error *e) {
   if(!c->depth || (c->layer_depth && c->depth<=c->layers[c->layer_depth-1].depth)) return finish(c,exr_fail(e,EXR_ARGUMENT,"Canvas clip stack underflow"),e);
   unref(c,c->clip); c->blend=c->saved_blend[c->depth-1];c->alpha_flags=c->saved_alpha_flags[c->depth-1];c->clip=c->saved[--c->depth]; c->saved[c->depth]=NULL; return exr_fail(e,EXR_OK,"");
 }
+#define EXR_PATH_CACHE_BUDGET (512u*1024u)
+#define EXR_PATH_CACHE_MAX_ENTRY (128u*1024u)
+#define EXR_PATH_CACHE_MAX_SEGS 64
+#define EXR_PATH_CACHE_MAX_PTS 192
+#define EXR_PATH_CACHE_MAX_DASHES 16
+struct exr_path_cache_entry {
+  uint64_t hash;
+  unsigned last_used,flags;
+  exr_fill_rule rule;
+  exr_path_stroke line;
+  double stroke_linear[4],dash_phase;
+  size_t dash_count,seg_count,pt_count,work,bytes;
+  double dashes[EXR_PATH_CACHE_MAX_DASHES];
+  uint8_t verbs[EXR_PATH_CACHE_MAX_SEGS];
+  exr_path_point *pts;
+  int rel_x0,rel_y0;
+  uint32_t w,h;
+  unsigned char *fill_mask,*stroke_mask;
+};
+typedef struct {
+  uint64_t hash;
+  int ox,oy;
+  unsigned flags;
+  exr_fill_rule rule;
+  exr_path_stroke line;
+  double stroke_linear[4],dash_phase;
+  size_t dash_count,seg_count,pt_count;
+  double dashes[EXR_PATH_CACHE_MAX_DASHES];
+  uint8_t verbs[EXR_PATH_CACHE_MAX_SEGS];
+  exr_path_point pts[EXR_PATH_CACHE_MAX_PTS];
+} path_cache_key;
+static void path_cache_entry_free(exr_path_cache_entry *entry) {
+  if(!entry) return;
+  free(entry->pts); free(entry->fill_mask); free(entry->stroke_mask); free(entry);
+}
+static void path_cache_clear(exr_canvas *c) {
+  for(size_t i=0;i<EXR_PATH_CACHE_SLOTS;i++) { path_cache_entry_free(c->path_cache[i]); c->path_cache[i]=NULL; }
+  c->path_cache_bytes=0;
+}
+static inline uint64_t fnv_u64(uint64_t h,uint64_t v) { return (h^v)*1099511628211ULL; }
+static inline uint64_t hash_q6(uint64_t h,double v) {
+  double s=v*1e6; int64_t q=(int64_t)(s>=0 ? s+0.5 : s-0.5);
+  return fnv_u64(h,(uint64_t)q);
+}
+static int build_path_key(const exr_canvas *c,const exr_path_segment *segments,size_t count,
+                          const double *transform,const exr_draw_style *style,
+                          const double *cmyk_fill,const double *cmyk_stroke,path_cache_key *key) {
+  const double identity[6]={1,0,0,1,0,0},*m=transform ? transform : identity;
+  uint64_t h=14695981039346656037ULL;
+  size_t pt_count=0; double x0,y0; int ox,oy;
+  if(c->control.cancelled || count<2 || count>EXR_PATH_CACHE_MAX_SEGS || !segments || !style->flags) return 0;
+  if(style->flags==EXR_DRAW_FILL && count<=5) return 0;
+  if(style->flags==EXR_DRAW_FILL && !cmyk_fill && !(style->fill&255)) return 0;
+  if(style->flags==EXR_DRAW_STROKE && !cmyk_stroke && !(style->stroke&255)) return 0;
+  if(segments[0].verb!=EXR_PATH_MOVE) return 0;
+  if((style->flags&EXR_DRAW_STROKE)) {
+    if(style->dash_count>EXR_PATH_CACHE_MAX_DASHES || (style->dash_count && !style->dashes)) return 0;
+    if(!isfinite(style->line.width) || style->line.width<0 || style->line.width>1e7 ||
+       !isfinite(style->line.miter_limit) || style->line.miter_limit<1 || style->line.miter_limit>1e7 ||
+       !isfinite(style->dash_phase) || fabs(style->dash_phase)>1e12) return 0;
+  }
+  for(unsigned k=0;k<6;k++) if(!isfinite(m[k]) || fabs(m[k])>1e7) return 0;
+  {
+    exr_path_point p=segments[0].points[0];
+    if(!isfinite(p.x) || !isfinite(p.y) || fabs(p.x)>1e7 || fabs(p.y)>1e7) return 0;
+    x0=m[0]*p.x+m[2]*p.y+m[4]; y0=m[1]*p.x+m[3]*p.y+m[5];
+    if(!isfinite(x0) || !isfinite(y0) || fabs(x0)>1e7 || fabs(y0)>1e7) return 0;
+    double sx=x0+1e-9,sy=y0+1e-9;
+    ox=(int)floor(sx); oy=(int)floor(sy);
+  }
+  key->ox=ox; key->oy=oy; key->flags=style->flags; key->rule=style->rule; key->seg_count=count;
+  h=fnv_u64(h,style->flags);
+  if(style->flags&EXR_DRAW_FILL) h=fnv_u64(h,(uint64_t)style->rule);
+  h=fnv_u64(h,count);
+  for(size_t i=0;i<count;i++) {
+    unsigned verb=(unsigned)segments[i].verb;
+    if(verb>EXR_PATH_CLOSE) return 0;
+    key->verbs[i]=(uint8_t)verb;
+    h=fnv_u64(h,verb);
+    unsigned npts=verb==EXR_PATH_CLOSE ? 0 : verb==EXR_PATH_QUAD ? 2 : verb==EXR_PATH_CUBIC ? 3 : 1;
+    for(unsigned k=0;k<npts;k++) {
+      exr_path_point p=segments[i].points[k];
+      if(!isfinite(p.x) || !isfinite(p.y) || fabs(p.x)>1e7 || fabs(p.y)>1e7) return 0;
+      double px=m[0]*p.x+m[2]*p.y+m[4],py=m[1]*p.x+m[3]*p.y+m[5];
+      if(!isfinite(px) || !isfinite(py) || fabs(px)>1e7 || fabs(py)>1e7) return 0;
+      double rx=px-(double)ox,ry=py-(double)oy;
+      key->pts[pt_count++]=(exr_path_point){rx,ry};
+      h=hash_q6(h,rx); h=hash_q6(h,ry);
+    }
+  }
+  key->pt_count=pt_count;
+  if(style->flags&EXR_DRAW_STROKE) {
+    /* A hit returns before path_impl's stroke validation, so a key exists only for input
+       that validation accepts: the whole stroke matrix (translation included) inverts in
+       range, inverse(stroke) x path is a valid flatten matrix, every stroke-space point
+       (and, for hairlines, its device image) is in range, and dashes have positive length. */
+    const double *sm=style->stroke_matrix ? style->stroke_matrix : m;
+    double inv[6],local[6],period=0;
+    if(!inverse(sm,inv)) return 0;
+    if(transform) multiply(inv,transform,local); else memcpy(local,inv,sizeof(local));
+    for(unsigned k=0;k<6;k++) if(!isfinite(local[k]) || fabs(local[k])>1e7) return 0;
+    for(size_t i=0;i<count;i++) {
+      unsigned verb=(unsigned)segments[i].verb;
+      unsigned npts=verb==EXR_PATH_CLOSE ? 0 : verb==EXR_PATH_QUAD ? 2 : verb==EXR_PATH_CUBIC ? 3 : 1;
+      for(unsigned k=0;k<npts;k++) {
+        exr_path_point p=segments[i].points[k];
+        double qx=local[0]*p.x+local[2]*p.y+local[4],qy=local[1]*p.x+local[3]*p.y+local[5];
+        if(!isfinite(qx) || !isfinite(qy) || fabs(qx)>1e7 || fabs(qy)>1e7) return 0;
+        if(!style->line.width) {
+          double dx=sm[0]*qx+sm[2]*qy+sm[4],dy=sm[1]*qx+sm[3]*qy+sm[5];
+          if(!isfinite(dx) || !isfinite(dy) || fabs(dx)>1e7 || fabs(dy)>1e7) return 0;
+        }
+      }
+    }
+    for(unsigned k=0;k<4;k++) {
+      key->stroke_linear[k]=sm[k]; h=hash_q6(h,sm[k]);
+    }
+    key->line=style->line; key->dash_count=style->dash_count; key->dash_phase=style->dash_phase;
+    h=hash_q6(h,style->line.width); h=hash_q6(h,style->line.miter_limit);
+    h=fnv_u64(h,(uint64_t)style->line.cap); h=fnv_u64(h,(uint64_t)style->line.join);
+    h=fnv_u64(h,style->dash_count); h=hash_q6(h,style->dash_phase);
+    for(size_t i=0;i<style->dash_count;i++) {
+      if(!isfinite(style->dashes[i]) || style->dashes[i]<0 || style->dashes[i]>1e7) return 0;
+      key->dashes[i]=style->dashes[i]; h=hash_q6(h,style->dashes[i]); period+=style->dashes[i];
+    }
+    if(style->dash_count && !period) return 0;
+  } else {
+    memset(&key->line,0,sizeof(key->line)); memset(key->stroke_linear,0,sizeof(key->stroke_linear));
+    key->dash_count=0; key->dash_phase=0;
+  }
+  key->hash=h ? h : 1;
+  return 1;
+}
+static int path_key_matches(const exr_path_cache_entry *e,const path_cache_key *k) {
+  if(e->hash!=k->hash || e->flags!=k->flags || e->seg_count!=k->seg_count || e->pt_count!=k->pt_count) return 0;
+  if((e->flags&EXR_DRAW_FILL) && e->rule!=k->rule) return 0;
+  if(memcmp(e->verbs,k->verbs,e->seg_count)) return 0;
+  if(e->flags&EXR_DRAW_STROKE) {
+    if(e->line.cap!=k->line.cap || e->line.join!=k->line.join || e->dash_count!=k->dash_count) return 0;
+    /* Exact: a tolerance would let width 0 (a device hairline) alias a tiny positive width,
+       or an all-zero dash pattern alias a valid one. */
+    if(e->line.width!=k->line.width || e->line.miter_limit!=k->line.miter_limit || e->dash_phase!=k->dash_phase) return 0;
+    for(unsigned i=0;i<4;i++) if(e->stroke_linear[i]!=k->stroke_linear[i]) return 0;
+    for(size_t i=0;i<e->dash_count;i++) if(e->dashes[i]!=k->dashes[i]) return 0;
+  }
+  for(size_t i=0;i<e->pt_count;i++)
+    if(fabs(e->pts[i].x-k->pts[i].x)>1e-9 || fabs(e->pts[i].y-k->pts[i].y)>1e-9) return 0;
+  return 1;
+}
+static int path_seen_check(exr_canvas *c,uint64_t hash) {
+  for(size_t i=0;i<EXR_PATH_CACHE_SEEN;i++) if(c->path_seen[i]==hash) return 1;
+  c->path_seen[c->path_seen_pos++&(EXR_PATH_CACHE_SEEN-1)]=hash;
+  return 0;
+}
+static void path_cache_insert(exr_canvas *c,const path_cache_key *key,int tx0,int ty0,uint32_t w,uint32_t h,
+                              unsigned char *fill_mask,unsigned char *stroke_mask,size_t work) {
+  size_t bytes=(size_t)w*h*(stroke_mask ? 2u : 1u);
+  if(!fill_mask || !bytes || bytes>EXR_PATH_CACHE_MAX_ENTRY) { free(fill_mask); free(stroke_mask); return; }
+  exr_path_cache_entry *entry=calloc(1,sizeof(*entry));
+  if(!entry) { free(fill_mask); free(stroke_mask); return; }
+  entry->pts=malloc(key->pt_count*sizeof(*entry->pts));
+  if(!entry->pts) { free(entry); free(fill_mask); free(stroke_mask); return; }
+  entry->hash=key->hash; entry->last_used=++c->path_cache_tick; entry->flags=key->flags; entry->rule=key->rule;
+  entry->line=key->line; memcpy(entry->stroke_linear,key->stroke_linear,sizeof(entry->stroke_linear));
+  entry->dash_phase=key->dash_phase; entry->dash_count=key->dash_count;
+  if(key->dash_count) memcpy(entry->dashes,key->dashes,key->dash_count*sizeof(double));
+  entry->seg_count=key->seg_count; entry->pt_count=key->pt_count;
+  memcpy(entry->verbs,key->verbs,key->seg_count); memcpy(entry->pts,key->pts,key->pt_count*sizeof(*entry->pts));
+  entry->rel_x0=tx0-key->ox; entry->rel_y0=ty0-key->oy; entry->w=w; entry->h=h;
+  entry->fill_mask=fill_mask; entry->stroke_mask=stroke_mask; entry->work=work; entry->bytes=bytes;
+  while(c->path_cache_bytes+bytes>EXR_PATH_CACHE_BUDGET) {
+    size_t victim=EXR_PATH_CACHE_SLOTS;
+    for(size_t i=0;i<EXR_PATH_CACHE_SLOTS;i++)
+      if(c->path_cache[i] && (victim==EXR_PATH_CACHE_SLOTS || c->path_cache[i]->last_used<c->path_cache[victim]->last_used)) victim=i;
+    if(victim==EXR_PATH_CACHE_SLOTS) break;
+    c->path_cache_bytes-=c->path_cache[victim]->bytes; path_cache_entry_free(c->path_cache[victim]); c->path_cache[victim]=NULL;
+  }
+  size_t slot=EXR_PATH_CACHE_SLOTS;
+  for(size_t i=0;i<EXR_PATH_CACHE_SLOTS;i++) if(!c->path_cache[i]) { slot=i; break; }
+  if(slot==EXR_PATH_CACHE_SLOTS) {
+    slot=0;
+    for(size_t i=1;i<EXR_PATH_CACHE_SLOTS;i++) if(c->path_cache[i]->last_used<c->path_cache[slot]->last_used) slot=i;
+    c->path_cache_bytes-=c->path_cache[slot]->bytes; path_cache_entry_free(c->path_cache[slot]); c->path_cache[slot]=NULL;
+  }
+  c->path_cache[slot]=entry; c->path_cache_bytes+=bytes;
+}
+static int polyline_in_canvas(const exr_canvas *c,const exr_vector_polyline *poly,double *minx,double *miny,double *maxx,double *maxy) {
+  if(!poly->point_count) return 0;
+  double lx=INFINITY,ly=INFINITY,hx=-INFINITY,hy=-INFINITY;
+  for(size_t i=0;i<poly->point_count;i++) {
+    double px=poly->points[i].x,py=poly->points[i].y;
+    if(!isfinite(px) || !isfinite(py)) return 0;
+    if(px<lx) lx=px;
+    if(px>hx) hx=px;
+    if(py<ly) ly=py;
+    if(py>hy) hy=py;
+  }
+  if(lx<0 || ly<0 || hx>c->bitmap.width || hy>c->bitmap.height) return 0;
+  if(minx) *minx=lx;
+  if(miny) *miny=ly;
+  if(maxx) *maxx=hx;
+  if(maxy) *maxy=hy;
+  return 1;
+}
+static void blit_coverage_mask(exr_canvas *c,const unsigned char *mask,uint32_t w,uint32_t h,
+                               uint32_t dx0,uint32_t dy0,uint32_t color) {
+  const exr_bitmap *clip=(c->clip && !clip_covers_box(c->clip,dx0,dy0,dx0+w,dy0+h)) ? &c->clip->bitmap : NULL;
+  if(c->bitmap.channels==4 && (color&255)==255 && !clip) {
+    unsigned r=color>>24,g=(color>>16)&255,b=(color>>8)&255;
+    const unsigned char rgba[4]={(unsigned char)r,(unsigned char)g,(unsigned char)b,255};
+    uint32_t packed; memcpy(&packed,rgba,4);
+    for(uint32_t ry=0;ry<h;ry++) {
+      const unsigned char *mrow=mask+(size_t)ry*w;
+      unsigned char *dst=c->bitmap.pixels+(size_t)(dy0+ry)*c->bitmap.stride+(size_t)dx0*4;
+      for(uint32_t rx=0;rx<w;) {
+        unsigned alpha=mrow[rx];
+        if(!alpha) {
+          rx++;
+          while(rx+8<=w) {
+            uint64_t m64; memcpy(&m64,mrow+rx,8);
+            if(m64) break;
+            rx+=8;
+          }
+          continue;
+        }
+        if(alpha==255u) {
+          uint32_t end=rx+1;
+          while(end+8<=w) {
+            uint64_t m64; memcpy(&m64,mrow+end,8);
+            if(m64!=UINT64_MAX) break;
+            end+=8;
+          }
+          while(end<w && mrow[end]==255u) end++;
+          unsigned char *p=dst+(size_t)rx*4;
+          size_t n=end-rx;
+          for(size_t k=0;k<n;k++) memcpy(p+k*4,&packed,4);
+          rx=end; continue;
+        }
+        unsigned char *p=dst+(size_t)rx*4;
+        if(p[3]==255u) {
+          unsigned inv=255u-alpha;
+          p[0]=(unsigned char)((p[0]*inv+r*alpha+127)/255);
+          p[1]=(unsigned char)((p[1]*inv+g*alpha+127)/255);
+          p[2]=(unsigned char)((p[2]*inv+b*alpha+127)/255);
+        } else exr_pixel(&c->bitmap,(int)(dx0+rx),(int)(dy0+ry),color,alpha);
+        rx++;
+      }
+    }
+    return;
+  }
+  for(uint32_t ry=0;ry<h;ry++) {
+    const unsigned char *mrow=mask+(size_t)ry*w;
+    const unsigned char *crow=clip ? clip->pixels+(size_t)(dy0+ry)*clip->stride+dx0 : NULL;
+    for(uint32_t rx=0;rx<w;) {
+      unsigned alpha=mrow[rx];
+      if(!alpha) {
+        rx++;
+        while(rx+8<=w) {
+          uint64_t m64; memcpy(&m64,mrow+rx,8);
+          if(m64) break;
+          rx+=8;
+        }
+        continue;
+      }
+      if(crow) { alpha=(alpha*crow[rx]+127)/255; if(!alpha) { rx++; continue; } }
+      exr_pixel(&c->bitmap,(int)(dx0+rx),(int)(dy0+ry),color,alpha);
+      rx++;
+    }
+  }
+}
+
+static EXR_NOINLINE exr_status path_impl_cached(exr_canvas *c,const exr_path_segment *segments,size_t count,const double *transform,
+                                                const exr_draw_style *style,const double *cmyk_fill,const double *cmyk_stroke,exr_error *e) {
+  const double identity[6]={1,0,0,1,0,0};
+  exr_vector_polyline flat={0},local={0},dashed={0},outline={0}; exr_status status=EXR_OK;
+  path_cache_key key; int have_key=0,want_cache=0; size_t work_start=c->work;
+  if(build_path_key(c,segments,count,transform,style,cmyk_fill,cmyk_stroke,&key)) {
+    have_key=1;
+    for(size_t i=0;i<EXR_PATH_CACHE_SLOTS;i++) {
+      exr_path_cache_entry *entry=c->path_cache[i];
+      if(entry && path_key_matches(entry,&key)) {
+        int dx0=key.ox+entry->rel_x0,dy0=key.oy+entry->rel_y0;
+        int dx1=dx0+(int)entry->w,dy1=dy0+(int)entry->h;
+        size_t mask_need=(size_t)c->bitmap.width*c->bitmap.height;
+        int budget_ok=entry->work<(size_t)256*1024*1024 && c->work<=(size_t)256*1024*1024-entry->work-4096;
+        if(entry->stroke_mask) budget_ok=budget_ok && mask_need<=c->mask_budget-c->mask_bytes && mask_need<=c->mask_budget-c->mask_bytes-mask_need;
+        if(dx0>=0 && dy0>=0 && dx1<=(int)c->bitmap.width && dy1<=(int)c->bitmap.height && budget_ok) {
+          entry->last_used=++c->path_cache_tick;
+          c->work+=entry->work;
+          if(entry->stroke_mask) {
+            uint32_t bounds[4]={(uint32_t)dx0,(uint32_t)dy0,(uint32_t)dx1,(uint32_t)dy1};
+            const exr_bitmap fm_bm={entry->w,entry->h,entry->w,entry->fill_mask,1};
+            const exr_bitmap sm_bm={entry->w,entry->h,entry->w,entry->stroke_mask,1};
+            const exr_bitmap *clip_bm=(c->clip && !clip_covers_box(c->clip,bounds[0],bounds[1],bounds[2],bounds[3])) ? &c->clip->bitmap : NULL;
+            if(c->cmyk_groups) {
+              double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
+              if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,frgb,fc); }
+              if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,srgb,sc); }
+              status=exr_composite_compound_cmyk_at(&c->bitmap,&fm_bm,&sm_bm,(uint32_t)dx0,(uint32_t)dy0,bounds,fc,sc,
+                (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
+            } else {
+              status=exr_composite_compound_at(&c->bitmap,&fm_bm,&sm_bm,(uint32_t)dx0,(uint32_t)dy0,bounds,
+                style->fill,style->stroke,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
+            }
+            return finish(c,status,e);
+          }
+          blit_coverage_mask(c,entry->fill_mask,entry->w,entry->h,(uint32_t)dx0,(uint32_t)dy0,
+                             (style->flags&EXR_DRAW_STROKE) ? style->stroke : style->fill);
+          return finish(c,EXR_OK,e);
+        }
+        break;
+      }
+    }
+    want_cache=path_seen_check(c,key.hash);
+  }
+  if(style->flags&EXR_DRAW_FILL) status=exr_vector_flatten(segments,count,transform,.125,&flat,&c->work,&c->control,e);
+  if(status==EXR_OK && (style->flags&EXR_DRAW_STROKE)) {
+    const double *stroke=style->stroke_matrix ? style->stroke_matrix : transform ? transform : identity;
+    double inv[6],matrix[6],scale=hypot(stroke[0],stroke[1])+hypot(stroke[2],stroke[3]);
+    if(!inverse(stroke,inv)) { status=exr_fail(e,EXR_ARGUMENT,"Invalid or singular canvas stroke matrix"); goto done; }
+    if(transform) multiply(inv,transform,matrix); else memcpy(matrix,inv,sizeof(matrix));
+    status=exr_vector_flatten(segments,count,matrix,.125/fmax(1,scale),&local,&c->work,&c->control,e);
+    if(status==EXR_OK && style->dash_count) status=exr_vector_dash(&local,style->dashes,style->dash_count,style->dash_phase,&dashed,&c->work,&c->control,e);
+    if(status==EXR_OK) status=exr_vector_stroke(style->dash_count ? &dashed : &local,&style->line,stroke,.125,&outline,&c->work,&c->control,e);
+  }
+  if(status==EXR_OK && style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE)) {
+    exr_clip_mask *fm=NULL,*sm=NULL;uint32_t bounds[4];status=new_mask(c,&fm,e);
+    if(status==EXR_OK) status=new_mask(c,&sm,e);
+    if(status==EXR_OK) status=mask_fill(c,&flat,style->rule,fm,NULL,0,e);
+    if(status==EXR_OK) status=mask_fill(c,&outline,EXR_FILL_NONZERO,sm,NULL,0,e);
+    size_t mask_work=c->work-work_start;
+    if(status==EXR_OK) {
+      bounds[0]=fm->dirty_left<sm->dirty_left ? fm->dirty_left : sm->dirty_left;
+      bounds[1]=fm->dirty_top<sm->dirty_top ? fm->dirty_top : sm->dirty_top;
+      bounds[2]=fm->dirty_right>sm->dirty_right ? fm->dirty_right : sm->dirty_right;
+      bounds[3]=fm->dirty_bottom>sm->dirty_bottom ? fm->dirty_bottom : sm->dirty_bottom;
+    }
+    if(status==EXR_OK && have_key && want_cache && bounds[2]>bounds[0] && bounds[3]>bounds[1] &&
+       polyline_in_canvas(c,&flat,NULL,NULL,NULL,NULL) && polyline_in_canvas(c,&outline,NULL,NULL,NULL,NULL)) {
+      uint32_t w=bounds[2]-bounds[0],h=bounds[3]-bounds[1];
+      if((size_t)w*h*2<=EXR_PATH_CACHE_MAX_ENTRY) {
+        unsigned char *fc=malloc((size_t)w*h),*sc=malloc((size_t)w*h);
+        if(fc && sc) {
+          for(uint32_t ry=0;ry<h;ry++) {
+            memcpy(fc+(size_t)ry*w,fm->bitmap.pixels+(size_t)(bounds[1]+ry)*fm->bitmap.stride+bounds[0],w);
+            memcpy(sc+(size_t)ry*w,sm->bitmap.pixels+(size_t)(bounds[1]+ry)*sm->bitmap.stride+bounds[0],w);
+          }
+          path_cache_insert(c,&key,(int)bounds[0],(int)bounds[1],w,h,fc,sc,mask_work);
+        } else { free(fc); free(sc); }
+      }
+    }
+    const exr_bitmap *clip_bm=(status==EXR_OK && c->clip && !clip_covers_box(c->clip,bounds[0],bounds[1],bounds[2],bounds[3])) ? &c->clip->bitmap : NULL;
+    if(status==EXR_OK && c->cmyk_groups) {
+      double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
+      if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,frgb,fc); }
+      if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,srgb,sc); }
+      status=exr_composite_compound_cmyk(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,fc,sc,
+        (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,clip_bm,
+        masked_state(c),&c->work,&c->control,e);
+    }
+    else if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,style->fill,style->stroke,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
+    unref(c,fm);unref(c,sm);
+  } else if(status==EXR_OK && ((style->flags&EXR_DRAW_FILL) || (style->flags&EXR_DRAW_STROKE))) {
+    int is_stroke=(style->flags&EXR_DRAW_STROKE)!=0;
+    const exr_vector_polyline *poly=is_stroke ? &outline : &flat;
+    exr_fill_rule rule=is_stroke ? EXR_FILL_NONZERO : style->rule;
+    uint32_t color=is_stroke ? style->stroke : style->fill;
+    const double *cmyk=is_stroke ? cmyk_stroke : cmyk_fill;
+    double minx,miny,maxx,maxy;
+    int cached_now=0;
+    if(have_key && want_cache && !cmyk && polyline_in_canvas(c,poly,&minx,&miny,&maxx,&maxy)) {
+      int tx0=(int)floor(minx),ty0=(int)floor(miny),tx1=(int)ceil(maxx),ty1=(int)ceil(maxy);
+      uint32_t w=tx1>tx0 ? (uint32_t)(tx1-tx0) : 0,h=ty1>ty0 ? (uint32_t)(ty1-ty0) : 0;
+      if(w && h && (size_t)w*h<=EXR_PATH_CACHE_MAX_ENTRY) {
+        exr_vector_edge *edges=NULL; size_t ecount=0;
+        status=exr_vector_edges(poly,1,&edges,&ecount,&c->work,&c->control,e);
+        if(status==EXR_OK) {
+          for(size_t i=0;i<ecount;i++) {
+            edges[i].x0-=tx0; edges[i].x1-=tx0;
+            edges[i].y0-=ty0; edges[i].y1-=ty0;
+          }
+          unsigned char *mp=calloc((size_t)w*h,1);
+          if(mp) {
+            exr_bitmap mb={w,h,w,mp,1};
+            status=exr_vector_fill_blend_ex(&mb,edges,ecount,rule,0xffffffffu,NULL,0,NULL,EXR_BLEND_NORMAL,NULL,
+              &c->vector_scratch,NULL,NULL,&c->work,&c->control,e);
+            if(status==EXR_OK) {
+              blit_coverage_mask(c,mp,w,h,(uint32_t)tx0,(uint32_t)ty0,color);
+              path_cache_insert(c,&key,tx0,ty0,w,h,mp,NULL,c->work-work_start);
+              cached_now=1;
+            } else free(mp);
+          }
+        }
+        free(edges);
+      }
+    }
+    if(status==EXR_OK && !cached_now) {
+      status=cmyk ? fill_cmyk(c,poly,rule,cmyk,(color&255)/255.,&c->bitmap,c->clip,e)
+                  : fill(c,poly,rule,color,&c->bitmap,c->clip,e);
+    }
+  }
+done:
+  exr_vector_polyline_free(&flat); exr_vector_polyline_free(&local); exr_vector_polyline_free(&dashed); exr_vector_polyline_free(&outline); return finish(c,status,e);
+}
+
 static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_t count,const double transform_arg[6],
                             const exr_draw_style *style,const double *cmyk_fill,const double *cmyk_stroke,exr_error *e) {
   const double identity[6]={1,0,0,1,0,0}; exr_draw_style defaults=exr_draw_style_defaults();
@@ -265,6 +742,12 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
   transform=shifted(c,transform_arg,offset_matrix);
   if((style->flags&~3u) || (style->rule!=EXR_FILL_NONZERO && style->rule!=EXR_FILL_EVENODD) || (count && !segments))
     return finish(c,exr_fail(e,EXR_ARGUMENT,"Invalid canvas path flags/rule/input"),e);
+  if(!c->control.cancelled && count>=2 && count<=EXR_PATH_CACHE_MAX_SEGS &&
+     (style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE) ||
+      (((style->flags&EXR_DRAW_STROKE) || (!transform_arg && count>5)) &&
+       !cmyk_fill && !cmyk_stroke && !c->cmyk_groups && c->blend==EXR_BLEND_NORMAL && !masked_state(c)))) {
+    return path_impl_cached(c,segments,count,transform,style,cmyk_fill,cmyk_stroke,e);
+  }
   if(style->flags&EXR_DRAW_FILL) status=exr_vector_flatten(segments,count,transform,.125,&flat,&c->work,&c->control,e);
 
   if(status==EXR_OK && (style->flags&EXR_DRAW_STROKE)) {
@@ -280,23 +763,24 @@ static exr_status path_impl(exr_canvas *c,const exr_path_segment *segments,size_
   if(status==EXR_OK && style->flags==(EXR_DRAW_FILL|EXR_DRAW_STROKE)) {
     exr_clip_mask *fm=NULL,*sm=NULL;uint32_t bounds[4];status=new_mask(c,&fm,e);
     if(status==EXR_OK) status=new_mask(c,&sm,e);
-    if(status==EXR_OK) status=mask_fill(c,&flat,style->rule,fm,NULL,e);
-    if(status==EXR_OK) status=mask_fill(c,&outline,EXR_FILL_NONZERO,sm,NULL,e);
+    if(status==EXR_OK) status=mask_fill(c,&flat,style->rule,fm,NULL,0,e);
+    if(status==EXR_OK) status=mask_fill(c,&outline,EXR_FILL_NONZERO,sm,NULL,0,e);
     if(status==EXR_OK) {
       bounds[0]=fm->dirty_left<sm->dirty_left ? fm->dirty_left : sm->dirty_left;
       bounds[1]=fm->dirty_top<sm->dirty_top ? fm->dirty_top : sm->dirty_top;
       bounds[2]=fm->dirty_right>sm->dirty_right ? fm->dirty_right : sm->dirty_right;
       bounds[3]=fm->dirty_bottom>sm->dirty_bottom ? fm->dirty_bottom : sm->dirty_bottom;
     }
+    const exr_bitmap *clip_bm=(status==EXR_OK && c->clip && !clip_covers_box(c->clip,bounds[0],bounds[1],bounds[2],bounds[3])) ? &c->clip->bitmap : NULL;
     if(status==EXR_OK && c->cmyk_groups) {
       double fc[4],sc[4],frgb[3],srgb[3];unsigned k;
       if(cmyk_fill) memcpy(fc,cmyk_fill,sizeof(fc));else { for(k=0;k<3;k++) frgb[k]=((style->fill>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,frgb,fc); }
       if(cmyk_stroke) memcpy(sc,cmyk_stroke,sizeof(sc));else { for(k=0;k<3;k++) srgb[k]=((style->stroke>>(24-8*k))&255)/255.;exr_device_cmyk_from_rgb(c->cmyk_profile,srgb,sc); }
       status=exr_composite_compound_cmyk(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,fc,sc,
-        (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,c->clip ? &c->clip->bitmap : NULL,
+        (style->fill&255)/255.,(style->stroke&255)/255.,c->blend,clip_bm,
         masked_state(c),&c->work,&c->control,e);
     }
-    else if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,style->fill,style->stroke,c->blend,c->clip ? &c->clip->bitmap : NULL,masked_state(c),&c->work,&c->control,e);
+    else if(status==EXR_OK) status=exr_composite_compound(&c->bitmap,&fm->bitmap,&sm->bitmap,bounds,style->fill,style->stroke,c->blend,clip_bm,masked_state(c),&c->work,&c->control,e);
     unref(c,fm);unref(c,sm);
   } else if(status==EXR_OK && (style->flags&EXR_DRAW_FILL)) {
     status=cmyk_fill ? fill_cmyk(c,&flat,style->rule,cmyk_fill,(style->fill&255)/255.,&c->bitmap,c->clip,e)
@@ -370,10 +854,10 @@ static exr_status clip_path(exr_canvas *c,const exr_path_segment *segments,size_
   }
   if(status==EXR_OK && group) {
     if(!c->group) status=new_mask(c,&c->group,e);
-    if(status==EXR_OK) status=mask_fill(c,&flat,rule,c->group,NULL,e);
+    if(status==EXR_OK) status=mask_fill(c,&flat,rule,c->group,NULL,0,e);
   } else if(status==EXR_OK) {
     status=new_mask(c,&mask,e);
-    if(status==EXR_OK) status=mask_fill(c,&flat,rule,mask,c->clip,e);
+    if(status==EXR_OK) status=mask_fill(c,&flat,rule,mask,c->clip,1,e);
     if(status==EXR_OK) { unref(c,c->clip); c->clip=mask; mask=NULL; }
   }
   unref(c,mask); exr_vector_polyline_free(&flat); return finish(c,status,e);

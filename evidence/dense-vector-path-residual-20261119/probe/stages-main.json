@@ -1,0 +1,88 @@
+{
+ "pdf": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-dvpath\\tests\\fixtures\\pdf-large\\vector-heavy-100.pdf",
+ "pages": [
+  66,
+  100
+ ],
+ "tsc_hz": 3302344690.509123,
+ "sweeps": 5,
+ "wall_ms_per_sweep": 819.7947999999999,
+ "mask": {
+  "alloc+bucket": 3.4565138014833368,
+  "active update": 10.32003627542158,
+  "coverage clear": 11.863490904688096,
+  "edge tests": 30.526027912749015,
+  "crossing sort": 25.823419537362923,
+  "span collect": 20.09325089252572,
+  "interior_runs": 22.157770086901188,
+  "span accumulate": 47.31705035185464,
+  "stable check": 9.983582542050488,
+  "mask/rgba touched": 76.17652485610664,
+  "rgba runs": 0.0,
+  "free": 2.1086353644466005
+ },
+ "rgba": {
+  "alloc+bucket": 6.960201963792096,
+  "active update": 12.409275723934849,
+  "coverage clear": 6.121690524341753,
+  "edge tests": 39.167061443261744,
+  "crossing sort": 21.805495291558533,
+  "span collect": 16.807809057461764,
+  "interior_runs": 22.08334526967773,
+  "span accumulate": 54.92898222324406,
+  "stable check": 0.7664967279989658,
+  "mask/rgba touched": 87.9156587240565,
+  "rgba runs": 6.6263733349489815,
+  "free": 2.9211159657936228
+ },
+ "canvas": {
+  "flatten fill": 1.1034507725594835,
+  "stroke flatten": 9.131083707482746,
+  "stroke dash": 7.720235102432463,
+  "stroke outline": 21.80996175444546,
+  "new_mask x2": 10.283400002912625,
+  "mask_fill fill": 89.89073322755857,
+  "mask_fill stroke": 148.14958686961708,
+  "compound composite": 88.02947555277223,
+  "unref": 0.07733135815105625,
+  "standalone fill": 53.000264055723505,
+  "standalone stroke": 289.80493270448204,
+  "clip_path": 28.24850272841084
+ },
+ "counts": {
+  "mask": {
+   "calls": 1785.0,
+   "rows": 233600.0,
+   "edges": 94640.0,
+   "active_tests": 3821300.0,
+   "crossings": 3445620.0,
+   "edge_hit_rate_pct": 90.16879072566928,
+   "touched_pixels": 43138422.0,
+   "nonzero_cov_pixels": 1448945.0,
+   "touched_nonzero_pct": 3.358827079952067,
+   "run_pixels": 36260190.0,
+   "full_cov_nonrun_pixels": 0.0
+  },
+  "rgba": {
+   "calls": 2100.0,
+   "rows": 42000.0,
+   "edges": 873600.0,
+   "active_tests": 6960800.0,
+   "crossings": 3446800.0,
+   "edge_hit_rate_pct": 49.5172968624296,
+   "touched_pixels": 7142100.0,
+   "nonzero_cov_pixels": 3472000.0,
+   "touched_nonzero_pct": 48.61315299421739,
+   "run_pixels": 2302300.0,
+   "full_cov_nonrun_pixels": 80500.0
+  },
+  "compounds": 875.0,
+  "standalone_strokes": 2100.0,
+  "compound_pixels": {
+   "bbox": 12760620.0,
+   "solid": 4160290.0,
+   "aa_slow": 871980.0,
+   "empty_skip": 7728350.0
+  }
+ }
+}
