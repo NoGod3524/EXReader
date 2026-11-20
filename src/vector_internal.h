@@ -74,10 +74,21 @@ exr_status exr_vector_fill_blend_cmyk(exr_bitmap *bitmap,const exr_vector_edge *
   exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);
 typedef struct { void *data; size_t capacity; } exr_vector_scratch;
 void exr_vector_scratch_free(exr_vector_scratch *scratch);
+typedef struct {
+  const uint16_t *spans;
+  uint32_t top,bottom;
+  uint16_t rect[4];
+  uint8_t is_rect;
+} exr_solid_clip;
+typedef struct {
+  uint16_t **spans;
+  uint16_t rect[4];
+  uint8_t is_rect,used_spans;
+} exr_solid_out;
 exr_status exr_vector_fill_blend_ex(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
   exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,const exr_bitmap *clip,
   exr_blend_mode mode,exr_composite_state *state,exr_vector_scratch *scratch,
-  uint16_t *solid_spans,const uint16_t *clip_solid,uint32_t clip_solid_top,uint32_t clip_solid_bottom,
+  exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
   size_t *work,const exr_control *control,exr_error *error);
 exr_status exr_vector_texture_blend(exr_bitmap *target,const exr_vector_texture *source,const double matrix[6],
   double alpha,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error);

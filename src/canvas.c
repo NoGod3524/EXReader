@@ -64,14 +64,14 @@ static exr_status new_mask(exr_canvas *c,exr_clip_mask **out,exr_error *e) {
       }
     }
     mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0; mask->dirty_left=mask->bitmap.width; mask->dirty_right=0;
-    mask->solid_top=mask->bitmap.height; mask->solid_bottom=0;
+    mask->solid_top=mask->bitmap.height; mask->solid_bottom=0; mask->solid_is_rect=0;
     mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
   }
   mask=calloc(1,sizeof(*mask)); if(!mask) return exr_fail(e,EXR_MEMORY,"Canvas clip mask allocation failed");
   mask->bitmap=c->bitmap; mask->bitmap.channels=1; mask->bitmap.stride=c->bitmap.width; mask->bitmap.pixels=calloc(bytes,1);
   if(!mask->bitmap.pixels) { free(mask); return exr_fail(e,EXR_MEMORY,"Canvas clip pixel allocation failed"); }
   mask->dirty_top=mask->bitmap.height; mask->dirty_bottom=0; mask->dirty_left=mask->bitmap.width; mask->dirty_right=0;
-  mask->solid_top=mask->bitmap.height; mask->solid_bottom=0;
+  mask->solid_top=mask->bitmap.height; mask->solid_bottom=0; mask->solid_is_rect=0;
   mask->refs=1; c->mask_bytes+=bytes; c->mask_count++; *out=mask; return EXR_OK;
 }
 /* The soft mask rides on the composite state so every pixel writer applies it. */
@@ -110,9 +110,20 @@ exr_status exr_canvas_soft_mask(exr_canvas *c,const unsigned char *mask,size_t w
   c->soft_mask=mask;c->soft_mask_width=mask ? width : 0;c->soft_mask_height=mask ? height : 0;
   return EXR_OK;
 }
+static inline const exr_solid_clip *solid_clip_info(const exr_clip_mask *clip,exr_solid_clip *buf) {
+  if(!clip || (!clip->solid_is_rect && !clip->solid_spans)) return NULL;
+  buf->spans=clip->solid_is_rect ? NULL : clip->solid_spans;
+  buf->top=clip->solid_top; buf->bottom=clip->solid_bottom;
+  memcpy(buf->rect,clip->solid_rect,sizeof(buf->rect));
+  buf->is_rect=clip->solid_is_rect;
+  return buf;
+}
 static int clip_covers_box(const exr_clip_mask *clip,uint32_t x0,uint32_t y0,uint32_t x1,uint32_t y1) {
   if(!clip) return 1;
-  if(!clip->solid_spans || x0>=x1 || y0>=y1) return 0;
+  if(x0>=x1 || y0>=y1) return 0;
+  if(clip->solid_is_rect)
+    return x0>=clip->solid_rect[0] && x1<=clip->solid_rect[2] && y0>=clip->solid_rect[1] && y1<=clip->solid_rect[3];
+  if(!clip->solid_spans) return 0;
   if(y0<clip->solid_top || y1>clip->solid_bottom) return 0;
   for(uint32_t y=y0;y<y1;y++) if(x0<clip->solid_spans[2*y] || x1>clip->solid_spans[2*y+1]) return 0;
   return 1;
@@ -120,17 +131,19 @@ static int clip_covers_box(const exr_clip_mask *clip,uint32_t x0,uint32_t y0,uin
 static exr_status fill(exr_canvas *c,const exr_vector_polyline *path,exr_fill_rule rule,uint32_t color,
                          exr_bitmap *target,const exr_clip_mask *clip,exr_error *e) {
   exr_vector_edge *edges=NULL; size_t count=0; exr_status status=exr_vector_edges(path,1,&edges,&count,&c->work,&c->control,e);
+  exr_solid_clip cs;
   if(status==EXR_OK) status=exr_vector_fill_blend_ex(target,edges,count,rule,color,NULL,0,clip ? &clip->bitmap : NULL,
     target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->vector_scratch,
-    NULL,clip ? clip->solid_spans : NULL,clip ? clip->solid_top : 0,clip ? clip->solid_bottom : 0,&c->work,&c->control,e);
+    NULL,solid_clip_info(clip,&cs),&c->work,&c->control,e);
   free(edges); return status;
 }
 static exr_status fill_cmyk(exr_canvas *c,const exr_vector_polyline *path,exr_fill_rule rule,const double cmyk[4],double alpha,
                               exr_bitmap *target,const exr_clip_mask *clip,exr_error *e) {
   exr_vector_edge *edges=NULL; size_t count=0; exr_status status=exr_vector_edges(path,1,&edges,&count,&c->work,&c->control,e);
+  exr_solid_clip cs;
   if(status==EXR_OK) status=exr_vector_fill_blend_ex(target,edges,count,rule,0,cmyk,alpha,clip ? &clip->bitmap : NULL,
     target==&c->bitmap ? c->blend : EXR_BLEND_NORMAL,target==&c->bitmap ? masked_state(c) : NULL,&c->vector_scratch,
-    NULL,clip ? clip->solid_spans : NULL,clip ? clip->solid_top : 0,clip ? clip->solid_bottom : 0,&c->work,&c->control,e);
+    NULL,solid_clip_info(clip,&cs),&c->work,&c->control,e);
   free(edges); return status;
 }
 /* Coverage into a clip mask. Rasterized pixels lie within the path's extent;
@@ -146,7 +159,8 @@ static exr_status mask_fill(exr_canvas *c,const exr_vector_polyline *path,exr_fi
                             const exr_clip_mask *clip,int track_solid,exr_error *e) {
   double low=INFINITY,high=-INFINITY,left=INFINITY,right=-INFINITY; uint32_t top,bottom,first,last; size_t i;
   exr_vector_edge *edges=NULL; size_t count=0; exr_status status;
-  uint16_t *solid_out=NULL;
+  exr_solid_clip cs; const exr_solid_clip *cs_ptr=solid_clip_info(clip,&cs);
+  exr_solid_out sout={0},*sout_ptr=NULL;
   for(i=0;i<path->point_count;i++) {
     low=fmin(low,path->points[i].y); high=fmax(high,path->points[i].y);
     left=fmin(left,path->points[i].x); right=fmax(right,path->points[i].x);
@@ -163,27 +177,33 @@ static exr_status mask_fill(exr_canvas *c,const exr_vector_polyline *path,exr_fi
     if(first<mask->dirty_left) mask->dirty_left=first;
     if(last>mask->dirty_right) mask->dirty_right=last;
   }
-  if(track_solid && (!clip || clip->solid_spans)) {
-    if(!mask->solid_spans) mask->solid_spans=malloc((size_t)mask->bitmap.height*2*sizeof(uint16_t));
-    if(mask->solid_spans) {
-      memset(mask->solid_spans,0,(size_t)mask->bitmap.height*2*sizeof(uint16_t));
-      solid_out=mask->solid_spans;
-    }
+  if(track_solid && (!clip || cs_ptr)) {
+    sout.spans=&mask->solid_spans;
+    sout_ptr=&sout;
   }
   status=exr_vector_edges(path,1,&edges,&count,&c->work,&c->control,e);
   if(status==EXR_OK) status=exr_vector_fill_blend_ex(&mask->bitmap,edges,count,rule,0xffffffff,NULL,0,clip ? &clip->bitmap : NULL,
-    EXR_BLEND_NORMAL,NULL,&c->vector_scratch,solid_out,clip ? clip->solid_spans : NULL,
-    clip ? clip->solid_top : 0,clip ? clip->solid_bottom : 0,&c->work,&c->control,e);
+    EXR_BLEND_NORMAL,NULL,&c->vector_scratch,sout_ptr,cs_ptr,&c->work,&c->control,e);
   free(edges);
-  if(status==EXR_OK && solid_out) {
-    uint32_t st=mask->bitmap.height,sb=0;
-    for(uint32_t ry=mask->dirty_top;ry<mask->dirty_bottom;ry++) {
-      if(solid_out[2*ry]<solid_out[2*ry+1]) {
-        if(ry<st) st=ry;
-        sb=ry+1;
+  if(status==EXR_OK && sout_ptr) {
+    if(sout.is_rect) {
+      memcpy(mask->solid_rect,sout.rect,sizeof(mask->solid_rect));
+      mask->solid_is_rect=1;
+      mask->solid_top=sout.rect[1]; mask->solid_bottom=sout.rect[3];
+    } else if(sout.used_spans && mask->solid_spans) {
+      uint32_t st=mask->bitmap.height,sb=0;
+      mask->solid_is_rect=0;
+      for(uint32_t ry=mask->dirty_top;ry<mask->dirty_bottom;ry++) {
+        if(mask->solid_spans[2*ry]<mask->solid_spans[2*ry+1]) {
+          if(ry<st) st=ry;
+          sb=ry+1;
+        }
       }
+      mask->solid_top=st; mask->solid_bottom=sb;
+    } else {
+      mask->solid_is_rect=0;
+      mask->solid_top=mask->bitmap.height; mask->solid_bottom=0;
     }
-    mask->solid_top=st; mask->solid_bottom=sb;
   }
   return status;
 }
@@ -680,7 +700,7 @@ static EXR_NOINLINE exr_status path_impl_cached(exr_canvas *c,const exr_path_seg
           if(mp) {
             exr_bitmap mb={w,h,w,mp,1};
             status=exr_vector_fill_blend_ex(&mb,edges,ecount,rule,0xffffffffu,NULL,0,NULL,EXR_BLEND_NORMAL,NULL,
-              &c->vector_scratch,NULL,NULL,0,0,&c->work,&c->control,e);
+              &c->vector_scratch,NULL,NULL,&c->work,&c->control,e);
             if(status==EXR_OK) {
               blit_coverage_mask(c,mp,w,h,(uint32_t)tx0,(uint32_t)ty0,color);
               path_cache_insert(c,&key,tx0,ty0,w,h,mp,NULL,c->work-work_start);

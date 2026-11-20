@@ -232,10 +232,17 @@ static void rectangle_span(exr_bitmap *bitmap,int left,int right,int y,unsigned 
     else exr_pixel_blend(bitmap,x,y,color,alpha,mode);
   }
 }
-static inline void record_solid_span(uint16_t *solid_spans,const uint16_t *clip_solid,int y,int r0,int r1) {
+static inline void record_solid_span(uint16_t *solid_spans,const exr_solid_clip *clip_solid,int y,int r0,int r1) {
   if(!solid_spans || r0>=r1) return;
   if(clip_solid) {
-    int c0=clip_solid[2*y],c1=clip_solid[2*y+1];
+    int c0,c1;
+    if(clip_solid->is_rect) {
+      if(y<(int)clip_solid->rect[1] || y>=(int)clip_solid->rect[3]) return;
+      c0=clip_solid->rect[0]; c1=clip_solid->rect[2];
+    } else if(clip_solid->spans) {
+      if(y<(int)clip_solid->top || y>=(int)clip_solid->bottom) return;
+      c0=clip_solid->spans[2*y]; c1=clip_solid->spans[2*y+1];
+    } else return;
     if(c0>r0) r0=c0;
     if(c1<r1) r1=c1;
     if(r0>=r1) return;
@@ -243,12 +250,20 @@ static inline void record_solid_span(uint16_t *solid_spans,const uint16_t *clip_
   solid_spans[2*y]=(uint16_t)r0;
   solid_spans[2*y+1]=(uint16_t)r1;
 }
+static uint16_t *ensure_solid_spans(exr_solid_out *out,uint32_t height) {
+  if(!out || !out->spans) return NULL;
+  if(!*out->spans) *out->spans=malloc((size_t)height*2*sizeof(uint16_t));
+  if(*out->spans) {
+    memset(*out->spans,0,(size_t)height*2*sizeof(uint16_t));
+    out->used_spans=1;
+  }
+  return *out->spans;
+}
 
 static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
                             exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,
                             const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,
-                            exr_vector_scratch *scratch,uint16_t *solid_spans,const uint16_t *clip_solid,
-                            uint32_t clip_solid_top,uint32_t clip_solid_bottom,
+                            exr_vector_scratch *scratch,exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
                             size_t *work,const exr_control *control,exr_error *error) {
   size_t local_work=0,i;
   double low=DBL_MAX,high=-DBL_MAX,left_bound=DBL_MAX,right_bound=-DBL_MAX;
@@ -299,12 +314,19 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
   height_rows=(size_t)(bottom-top);
   /* If the active clip is identically 255 across this draw's integer bbox,
      drop the clip pointer for this draw: (alpha*255+127)/255 == alpha. */
-  if(clip && clip_solid && (uint32_t)top>=clip_solid_top && (uint32_t)bottom<=clip_solid_bottom) {
-    int covered=1;
-    for(int ry=top;ry<bottom;ry++) {
-      if(left<(int)clip_solid[2*ry] || right>(int)clip_solid[2*ry+1]) { covered=0; break; }
+  if(clip && clip_solid) {
+    if(clip_solid->is_rect) {
+      if(left>=(int)clip_solid->rect[0] && right<=(int)clip_solid->rect[2] &&
+         top>=(int)clip_solid->rect[1] && bottom<=(int)clip_solid->rect[3]) {
+        clip=NULL; clip_solid=NULL;
+      }
+    } else if(clip_solid->spans && (uint32_t)top>=clip_solid->top && (uint32_t)bottom<=clip_solid->bottom) {
+      int covered=1;
+      for(int ry=top;ry<bottom;ry++) {
+        if(left<(int)clip_solid->spans[2*ry] || right>(int)clip_solid->spans[2*ry+1]) { covered=0; break; }
+      }
+      if(covered) { clip=NULL; clip_solid=NULL; }
     }
-    if(covered) { clip=NULL; clip_solid=NULL; }
   }
   write_mask=bitmap->channels==1 && color==0xffffffffu && !cmyk && !state && mode==EXR_BLEND_NORMAL;
   /* Exact rectangle/pixel intersection area: bulk interior, at most two edge
@@ -324,15 +346,38 @@ static exr_status fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,siz
       /* Keep the scanline path's conservative work budget and row cancellation. */
       if(!exr_vector_work(work,(size_t)row_width*(4+cost)+scan_work)) goto limit;
       rectangle_span(bitmap,inner_left,inner_right,y,alpha,color,cmyk,cmyk_alpha,clip,mode,state);
-      if(write_mask && solid_spans && alpha==255) record_solid_span(solid_spans,clip_solid,y,inner_left,inner_right);
       if(left<inner_left)
         rectangle_span(bitmap,left,left+1,y,(unsigned)floor(first_width*height*255+.5),color,cmyk,cmyk_alpha,clip,mode,state);
       if(right>inner_right && (right-left>1 || left>=inner_left))
         rectangle_span(bitmap,right-1,right,y,(unsigned)floor(last_width*height*255+.5),color,cmyk,cmyk_alpha,clip,mode,state);
     }
+    if(write_mask && solid_out) {
+      int sy0=top,sy1=bottom,sx0=inner_left,sx1=inner_right;
+      if(sy0<sy1 && (unsigned)floor((fmin(high,sy0+1)-fmax(low,sy0))*255+.5)!=255) sy0++;
+      if(sy1>sy0 && (unsigned)floor((fmin(high,sy1)-fmax(low,sy1-1))*255+.5)!=255) sy1--;
+      if(!clip_solid || clip_solid->is_rect) {
+        if(clip_solid) {
+          if((int)clip_solid->rect[0]>sx0) sx0=clip_solid->rect[0];
+          if((int)clip_solid->rect[1]>sy0) sy0=clip_solid->rect[1];
+          if((int)clip_solid->rect[2]<sx1) sx1=clip_solid->rect[2];
+          if((int)clip_solid->rect[3]<sy1) sy1=clip_solid->rect[3];
+        }
+        if(sx0<sx1 && sy0<sy1) {
+          solid_out->rect[0]=(uint16_t)sx0; solid_out->rect[1]=(uint16_t)sy0;
+          solid_out->rect[2]=(uint16_t)sx1; solid_out->rect[3]=(uint16_t)sy1;
+        } else {
+          solid_out->rect[0]=solid_out->rect[1]=solid_out->rect[2]=solid_out->rect[3]=0;
+        }
+        solid_out->is_rect=1;
+      } else if(sx0<sx1 && sy0<sy1) {
+        uint16_t *sp=ensure_solid_spans(solid_out,bitmap->height);
+        if(sp) for(int ry=sy0;ry<sy1;ry++) record_solid_span(sp,clip_solid,ry,sx0,sx1);
+      }
+    }
     return exr_fail(error,EXR_OK,"");
   }
 
+  uint16_t *solid_spans=(write_mask && solid_out) ? ensure_solid_spans(solid_out,bitmap->height) : NULL;
   blocks=((size_t)row_width+COVERAGE_BLOCK-1)>>COVERAGE_SHIFT;
   touched_words=(blocks+63)>>6;
   use_runs=count<=16384 && (write_mask || (!cmyk && !state));
@@ -780,19 +825,19 @@ done:
 exr_status exr_vector_fill_blend_ex(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
   exr_vector_rule rule,uint32_t color,const double *cmyk,double cmyk_alpha,const exr_bitmap *clip,
   exr_blend_mode mode,exr_composite_state *state,exr_vector_scratch *scratch,
-  uint16_t *solid_spans,const uint16_t *clip_solid,uint32_t clip_solid_top,uint32_t clip_solid_bottom,
+  exr_solid_out *solid_out,const exr_solid_clip *clip_solid,
   size_t *work,const exr_control *control,exr_error *error) {
-  return fill_blend(bitmap,edges,count,rule,color,cmyk,cmyk_alpha,clip,mode,state,scratch,solid_spans,clip_solid,clip_solid_top,clip_solid_bottom,work,control,error);
+  return fill_blend(bitmap,edges,count,rule,color,cmyk,cmyk_alpha,clip,mode,state,scratch,solid_out,clip_solid,work,control,error);
 }
 exr_status exr_vector_fill_blend(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
                             exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,exr_blend_mode mode,exr_composite_state *state,
                             size_t *work,const exr_control *control,exr_error *error) {
-  return fill_blend(bitmap,edges,count,rule,color,NULL,0,clip,mode,state,NULL,NULL,NULL,0,0,work,control,error);
+  return fill_blend(bitmap,edges,count,rule,color,NULL,0,clip,mode,state,NULL,NULL,NULL,work,control,error);
 }
 exr_status exr_vector_fill_blend_cmyk(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
                             exr_vector_rule rule,const double cmyk[4],double alpha,const exr_bitmap *clip,exr_blend_mode mode,
                             exr_composite_state *state,size_t *work,const exr_control *control,exr_error *error) {
-  return fill_blend(bitmap,edges,count,rule,0,cmyk,alpha,clip,mode,state,NULL,NULL,NULL,0,0,work,control,error);
+  return fill_blend(bitmap,edges,count,rule,0,cmyk,alpha,clip,mode,state,NULL,NULL,NULL,work,control,error);
 }
 exr_status exr_vector_fill(exr_bitmap *bitmap,const exr_vector_edge *edges,size_t count,
   exr_vector_rule rule,uint32_t color,const exr_bitmap *clip,size_t *work,const exr_control *control,exr_error *error) {

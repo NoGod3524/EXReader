@@ -9,6 +9,7 @@ typedef struct {
   exr_bitmap bitmap; size_t refs;
   uint32_t dirty_top,dirty_bottom,dirty_left,dirty_right;
   uint16_t *solid_spans; uint32_t solid_top,solid_bottom;
+  uint16_t solid_rect[4]; uint8_t solid_is_rect;
 } exr_clip_mask;
 typedef struct {
   int origin_x,origin_y; /* working-buffer origin in canvas coordinates */
