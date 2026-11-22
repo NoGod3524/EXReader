@@ -79,6 +79,7 @@ option(EXR_ENABLE_PDF_EDIT "Build the independent PDF editing component" ${EXR_E
 option(EXR_ENABLE_IMAGE_WEBP "Enable WebP still/animation decoding (libwebp)" ON)
 option(EXR_ENABLE_IMAGE_TIFF "Enable TIFF multi-page decoding (libtiff)" ON)
 option(EXR_ENABLE_IMAGE_AVIF "Enable AVIF decoding (libavif + libaom)" ON)
+option(EXR_ENABLE_AVIF_SIMD "libaom SIMD: faster AVIF decode, larger binary (x86 needs NASM/yasm)" OFF)
 option(EXR_BUILD_SHARED_COMPAT "Build the legacy aggregate shared library" ON)
 # ON by default: CI and host packagers build stage/examples and use its sample books and fonts.
 option(EXR_INSTALL_EXAMPLES "Install host examples with their sample books, fonts and media" ON)
