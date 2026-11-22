@@ -130,7 +130,7 @@ COMPONENTS = [
      'source': 'https://codeload.github.com/Mbed-TLS/mbedtls/tar.gz/refs/tags/mbedtls-3.6.7',
      'archive_sha256': '807f0a1cc7c63b571180e9efeb6236b677e550869eb0442ace33aa9c69055fcc',
      'license': 'Apache-2.0 OR GPL-2.0-or-later; Apache-2.0 selected in THIRD_PARTY_NOTICES.md',
-     'when': 'EXR_ENABLE_PDF&EXR_ENABLE_PDF_CRYPTO', 'fetch': True, 'vendor_files': ['exr_crypto'],
+     'when': 'EXR_ENABLE_PDF&EXR_ENABLE_PDF_CRYPTO|EXR_ENABLE_LCP', 'fetch': True, 'vendor_files': ['exr_crypto'],
      'notice_marker': 'Mbed TLS', 'linkage': 'seven upstream sources in exr_crypto; ARC4 adapted from '
      'mbedtls-2.28.10 into src/pdf_crypto.c',
      'files': [upstream('LICENSE', LICENSES + 'mbedtls/LICENSE',

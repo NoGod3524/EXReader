@@ -11,7 +11,7 @@ Open **x64 Native Tools Command Prompt for VS 2022**, then start `powershell`.
 The package uses the MSVC x64 C ABI and the static C runtime.
 
 ```powershell
-$env:PATH = "$PWD\lib;$env:PATH"
+$env:PATH = "$PWD\bin;$env:PATH"
 cl /nologo /W4 /Iinclude examples\minimal\main.c lib\exreader.lib /Feminimal.exe
 .\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
 ```
@@ -21,7 +21,7 @@ cl /nologo /W4 /Iinclude examples\minimal\main.c lib\exreader.lib /Feminimal.exe
 Use the MinGW-w64 compiler that built the SDK, with `gcc` available on PATH.
 
 ```powershell
-$env:PATH = "$PWD\lib;$env:PATH"
+$env:PATH = "$PWD\bin;$env:PATH"
 gcc -std=c11 -Wall -Wextra -Iinclude examples/minimal/main.c -Llib -lexreader -o minimal.exe
 .\minimal.exe examples\minimal\sample.epub examples\minimal\font.ttf page-1.pgm
 ```
@@ -62,8 +62,8 @@ The SDK layout is identical across platforms:
 ```text
 include/exr/*.h        15 API headers plus version.h
 include/exreader.h    compatibility umbrella header
-lib/                  exreader.dll + exreader.lib (MSVC), or libexreader.so/dylib
-bin/exr-info[.exe]     Windows also carries the DLL beside the CLI
+lib/                  exreader.lib (MSVC import library), or libexreader.so/dylib
+bin/exr-info[.exe]     Windows: the only exreader.dll copy, beside the CLI
 examples/minimal/     main.c, sample.epub, font.ttf, FONT-LICENSE.md
 share/exreader/       dependency license texts
 LICENSE  THIRD_PARTY_NOTICES.md  README.md  VERSION  SHA256SUMS
@@ -72,10 +72,11 @@ LICENSE  THIRD_PARTY_NOTICES.md  README.md  VERSION  SHA256SUMS
 The DLL name follows the compiler: MSVC uses `exreader.dll`/`exreader.lib`;
 MinGW uses `libexreader.dll`/`libexreader.dll.a` (compile with
 `gcc -std=c11 -Iinclude examples/minimal/main.c -Llib -lexreader -o minimal.exe`).
-Linux includes the SONAME files; macOS uses `@rpath` dylibs. Keep `lib` beside your
-application, or configure the platform's library search path. Headers are C11
-and usable from C++. The source-build commands below disable AAC; third-party
-licenses are under `share/exreader/licenses`.
+Linux and macOS (`@rpath` dylibs) keep the SONAME names as same-directory symlinks
+to one library file. Ship `bin\exreader.dll` beside your Windows application; on
+POSIX keep `lib` beside it, or configure the platform's library search path.
+Headers are C11 and usable from C++. The source-build commands below disable
+AAC; third-party licenses are under `share/exreader/licenses`.
 
 `SHA256SUMS` covers every package file except itself. On Linux run
 `sha256sum -c SHA256SUMS`; on macOS run `shasum -a 256 -c SHA256SUMS` before

@@ -44,7 +44,7 @@
       },
       {
         "name": "exr:user_guide_sha256",
-        "value": "f0b7debf67c7985b6816e0ebdb858f93374d6f968e445604a01ca2fb804c092b"
+        "value": "b628c238a8e08efc6924b65016e478a21257155a1d50545b6cd81798fb2222b3"
       },
       {
         "name": "exr:license_file",
@@ -706,7 +706,7 @@
         },
         {
           "name": "exr:when",
-          "value": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_CRYPTO"
+          "value": "EXR_ENABLE_PDF&EXR_ENABLE_PDF_CRYPTO|EXR_ENABLE_LCP"
         },
         {
           "name": "exr:linkage",
