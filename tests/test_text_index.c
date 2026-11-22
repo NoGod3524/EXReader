@@ -14,6 +14,35 @@ static size_t matches(exr_text_index *index,const char *source,const void *patte
   while(1) { OK(exr_text_query_next(q,&hit,&found,&error)); if(!found) break; CHECK(hit.start<hit.end && hit.end<=hit.text_size && hit.end-hit.start==size && !memcmp(hit.text+hit.start,pattern,size)); count++; }
   CHECK(!hit.source && !hit.part && !hit.text && !hit.text_size && hit.start==SIZE_MAX); OK(exr_text_query_next(q,&hit,&found,&error)); CHECK(!found); exr_text_query_free(q); return count;
 }
+static void legacy_index(const char *path) {
+  exr_text_index *index=NULL; sqlite3 *db=NULL; sqlite3_stmt *statement=NULL;
+  const char *parts[]={"after","before","plain","outside"};
+  sql(path,
+    "CREATE TABLE text_items(id INTEGER PRIMARY KEY,source TEXT NOT NULL,part TEXT NOT NULL,body TEXT NOT NULL,has_zero INTEGER NOT NULL CHECK(has_zero IN(0,1)),UNIQUE(source,part));"
+    "CREATE VIRTUAL TABLE text_fts USING fts5(body,content='text_items',content_rowid='id',tokenize='trigram case_sensitive 1');"
+    "INSERT INTO text_items VALUES (2,'legacy','after','x'||char(0)||'needle',1),"
+    "(4,'legacy','before','needle'||char(0)||'y',1),(6,'legacy','plain','needle',0),(8,'other','outside','needle',0);"
+    "INSERT INTO text_fts(rowid,body) SELECT id,body FROM text_items;"
+    "PRAGMA application_id=1163416137;PRAGMA user_version=1;PRAGMA journal_mode=WAL;");
+  OK(exr_text_index_open(path,&index,&error));
+  for(int scoped=0;scoped<2;scoped++) {
+    exr_text_query *query=NULL; exr_text_hit hit; int found;
+    OK(exr_text_index_query(index,scoped ? "legacy" : NULL,"needle",6,NULL,&query,&error));
+    for(int j=0;j<4-scoped;j++) {
+      OK(exr_text_query_next(query,&hit,&found,&error));
+      CHECK(found && !strcmp(hit.part,parts[j]) && hit.start==(j==0 ? 2u : 0u) && hit.end==hit.start+6);
+    }
+    OK(exr_text_query_next(query,&hit,&found,&error)); CHECK(!found);
+    exr_text_query_free(query);
+  }
+  exr_text_index_close(index);
+  CHECK(sqlite3_open(path,&db)==SQLITE_OK);
+  CHECK(sqlite3_prepare_v2(db,"SELECT name,(SELECT user_version FROM pragma_user_version) FROM sqlite_schema WHERE type='index' AND name='text_items_zero'",-1,&statement,NULL)==SQLITE_OK);
+  CHECK(sqlite3_step(statement)==SQLITE_ROW && sqlite3_column_int(statement,1)==1);
+  CHECK(sqlite3_finalize(statement)==SQLITE_OK);
+  CHECK(sqlite3_close(db)==SQLITE_OK);
+  CHECK(!remove(path));
+}
 static int cancel(void *context) { return *(int *)context; }
 static void stop(void *context,exr_stage stage,uint64_t done,uint64_t total) { (void)stage; (void)done; (void)total; *(int *)context=1; }
 int main(int argc,char **argv) {
@@ -21,6 +50,7 @@ int main(int argc,char **argv) {
   const char *chinese="中文阅读 中文阅读",*special="one \"A+B\" AND OR NEAR * ; ' two",*accent="café CAFE cafe",*emoji="😀中A 😀中A"; const char binary[]={'A',0,'B','C','D','E','F',0,'A'},nul[]={0},null_query[]={0,'B','C'};
   CHECK(argc==2); snprintf(path,sizeof(path),"%s/text-index.sqlite",argv[1]); snprintf(wrong,sizeof(wrong),"%s/wrong-index.sqlite",argv[1]); remove(path); remove(wrong);
   if(!exr_text_index_available()) { exr_document *doc=NULL; CHECK(exr_text_index_open(path,&i,&error)==EXR_FORMAT && !i); OK(exr_document_open_memory(EXR_TXT,"text",4,&doc,&error)); exr_document_free(doc); printf("disabled text index check passed\n"); return 0; }
+  legacy_index(path);
   OK(exr_text_index_open(path,&i,&error)); CHECK(matches(i,NULL,"ana",3)==0);
   OK(exr_text_index_put(i,"book1","a","banana",6,NULL,&error)); OK(exr_text_index_put(i,"book1","b",chinese,strlen(chinese),NULL,&error));
   OK(exr_text_index_put(i,"book2","x","Banana banana",13,NULL,&error)); OK(exr_text_index_put(i,"special","",special,strlen(special),NULL,&error));
@@ -30,6 +60,7 @@ int main(int argc,char **argv) {
   CHECK(matches(i,NULL,"中文",strlen("中文"))==2); CHECK(matches(i,NULL,"文阅读",strlen("文阅读"))==2); CHECK(matches(i,NULL,"中",strlen("中"))==4);
   CHECK(matches(i,NULL,"\"A+B\"",5)==1); CHECK(matches(i,NULL,"   ",3)==1); CHECK(matches(i,NULL,"café",strlen("café"))==1); CHECK(matches(i,NULL,"😀中A",strlen("😀中A"))==2);
   CHECK(matches(i,"binary","BCD",3)==1); CHECK(matches(i,NULL,nul,sizeof(nul))==2); CHECK(matches(i,NULL,null_query,sizeof(null_query))==1);
+  CHECK(matches(i,"binary",null_query,sizeof(null_query))==1);
   OK(exr_text_index_query(i,"book1","ana",3,NULL,&q,&error)); OK(exr_text_query_next(q,&hit,&found,&error)); CHECK(found && hit.start==1 && hit.end==4 && !strcmp(hit.source,"book1") && !strcmp(hit.part,"a"));
   CHECK(exr_text_index_put(i,"book1","a","replacement",11,NULL,&error)==EXR_ARGUMENT); CHECK(exr_text_index_query(i,NULL,"ana",3,NULL,&extra,&error)==EXR_ARGUMENT && !extra);
   OK(exr_text_index_open(path,&other,&error)); OK(exr_text_index_put(other,"new","part","ana",3,NULL,&error));
@@ -40,6 +71,7 @@ int main(int argc,char **argv) {
   sql(path,"CREATE TABLE fail_commit(parent INTEGER REFERENCES text_items(id) DEFERRABLE INITIALLY DEFERRED);CREATE TRIGGER defer_write AFTER INSERT ON text_items BEGIN INSERT INTO fail_commit VALUES(999999);END;");
   CHECK(exr_text_index_put(i,"rollback","","ana",3,NULL,&error)==EXR_DATABASE); CHECK(matches(i,"rollback","ana",3)==0); sql(path,"DROP TRIGGER defer_write;DROP TABLE fail_commit;");
   OK(exr_text_index_put(i,"book1","a","new text",8,NULL,&error)); CHECK(matches(i,"book1","banana",6)==0); CHECK(matches(i,"book1","new",3)==1);
+  CHECK(matches(i,"book1","中文",strlen("中文"))==2);
   OK(exr_text_index_remove(i,"book1","b",NULL,&error)); CHECK(matches(i,NULL,"中文",strlen("中文"))==0); OK(exr_text_index_remove(i,"book1",NULL,NULL,&error)); CHECK(matches(i,"book1","new",3)==0);
   CHECK(exr_text_index_query(i,NULL,"\xff",1,NULL,&q,&error)==EXR_ENCODING && !q); CHECK(exr_text_index_query(i,NULL,"x",4097,NULL,&q,&error)==EXR_LIMIT && !q);
   CHECK(exr_text_index_put(i,"bad","","\xff",1,NULL,&error)==EXR_ENCODING); CHECK(exr_text_index_put(i,"bad","","x",(size_t)64*1024*1024,NULL,&error)==EXR_LIMIT);

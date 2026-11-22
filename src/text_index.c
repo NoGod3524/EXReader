@@ -46,7 +46,10 @@ exr_status exr_text_index_open(const char *path,exr_text_index **out,exr_error *
   code=sqlite3_exec(i->db,"PRAGMA foreign_keys=ON;PRAGMA trusted_schema=OFF;",NULL,NULL,NULL);
   if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
   app=scalar(i->db,"PRAGMA application_id"); version=scalar(i->db,"PRAGMA user_version");
-  if(app!=1163416137 || version!=1) {
+  /* Add the advisory index to existing schema 1 files once. Normal WAL reopens
+     only read the schema, including when another connection is writing. */
+  if(app!=1163416137 || version!=1 ||
+      scalar(i->db,"SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE type='index' AND name='text_items_zero' AND tbl_name='text_items')")!=1) {
     code=sqlite3_exec(i->db,"BEGIN IMMEDIATE",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; } transaction=1;
     app=scalar(i->db,"PRAGMA application_id"); version=scalar(i->db,"PRAGMA user_version");
     if(!app && !version && scalar(i->db,"SELECT count(*) FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'")==0) {
@@ -55,6 +58,8 @@ exr_status exr_text_index_open(const char *path,exr_text_index **out,exr_error *
         "PRAGMA application_id=1163416137;PRAGMA user_version=1;",NULL,NULL,NULL);
       if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
     } else if(app!=1163416137 || version!=1) { status=exr_fail(e,EXR_DATABASE,"Not an EXReader text index or unsupported schema"); goto failed; }
+    code=sqlite3_exec(i->db,"CREATE INDEX IF NOT EXISTS text_items_zero ON text_items(id) WHERE has_zero=1",NULL,NULL,NULL);
+    if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; }
     code=sqlite3_exec(i->db,"COMMIT",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto failed; } transaction=0;
   }
   code=sqlite3_exec(i->db,"PRAGMA journal_mode=WAL;",NULL,NULL,NULL);
@@ -67,13 +72,22 @@ failed:
 static exr_status execute(exr_text_index *i,const char *sql,const char *source,const char *part,const void *text,size_t size,exr_error *e) {
   sqlite3_stmt *s=NULL; int code=sqlite3_prepare_v2(i->db,sql,-1,&s,NULL);
   if(code==SQLITE_OK) code=sqlite3_bind_text(s,1,source,-1,SQLITE_STATIC);
-  if(code==SQLITE_OK) code=part ? sqlite3_bind_text(s,2,part,-1,SQLITE_STATIC) : sqlite3_bind_null(s,2);
+  if(code==SQLITE_OK && part) code=sqlite3_bind_text(s,2,part,-1,SQLITE_STATIC);
   if(code==SQLITE_OK && sqlite3_bind_parameter_count(s)>2) {
     code=sqlite3_bind_text(s,3,text ? text : "",(int)size,SQLITE_STATIC);
     if(code==SQLITE_OK) code=sqlite3_bind_int(s,4,size && memchr(text,0,size)!=NULL);
   }
   if(code==SQLITE_OK) code=sqlite3_step(s);
   sqlite3_finalize(s); return code==SQLITE_DONE ? EXR_OK : db_error(i,code,e);
+}
+static exr_status clear_parts(exr_text_index *i,const char *source,const char *part,int remove,exr_error *e) {
+  exr_status status=execute(i,part ?
+    "INSERT INTO text_fts(text_fts,rowid,body) SELECT 'delete',id,body FROM text_items WHERE source=?1 AND part=?2" :
+    "INSERT INTO text_fts(text_fts,rowid,body) SELECT 'delete',id,body FROM text_items WHERE source=?1",source,part,NULL,0,e);
+  if(status==EXR_OK && remove) status=execute(i,part ?
+    "DELETE FROM text_items WHERE source=?1 AND part=?2" :
+    "DELETE FROM text_items WHERE source=?1",source,part,NULL,0,e);
+  return status;
 }
 static exr_status transaction_end(exr_text_index *i,const exr_control *control,exr_status status,int transaction,exr_error *e) {
   if(status==EXR_OK) status=exr_control_cancel(control,e);
@@ -93,11 +107,10 @@ static exr_status change(exr_text_index *i,const char *source,const char *part,c
   if(status!=EXR_OK) goto done;
   sqlite3_progress_handler(i->db,1000,cancelled,(void *)control);
   code=sqlite3_exec(i->db,"BEGIN IMMEDIATE",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto done; } transaction=1;
-  status=execute(i,"INSERT INTO text_fts(text_fts,rowid,body) SELECT 'delete',id,body FROM text_items WHERE source=?1 AND (?2 IS NULL OR part=?2)",source,part,NULL,0,e);
-  if(status==EXR_OK) {
-    status=remove ? execute(i,"DELETE FROM text_items WHERE source=?1 AND (?2 IS NULL OR part=?2)",source,part,NULL,0,e) :
-      execute(i,"INSERT INTO text_items(source,part,body,has_zero) VALUES(?1,?2,?3,?4) ON CONFLICT(source,part) DO UPDATE SET body=excluded.body,has_zero=excluded.has_zero",source,part,text,size,e);
-  }
+  status=clear_parts(i,source,part,remove,e);
+  if(status==EXR_OK && !remove) status=execute(i,
+    "INSERT INTO text_items(source,part,body,has_zero) VALUES(?1,?2,?3,?4) ON CONFLICT(source,part) DO UPDATE SET body=excluded.body,has_zero=excluded.has_zero",
+    source,part,text,size,e);
   if(status==EXR_OK && !remove) status=execute(i,"INSERT INTO text_fts(rowid,body) SELECT id,body FROM text_items WHERE source=?1 AND part=?2",source,part,NULL,0,e);
 done:
   return transaction_end(i,control,status,transaction,e);
@@ -116,8 +129,7 @@ exr_status exr_text_index_replace(exr_text_index *i,const char *source,exr_text_
   i->busy=1; status=exr_control_cancel(control,e); if(status!=EXR_OK) goto done;
   sqlite3_progress_handler(i->db,1000,cancelled,(void *)control);
   code=sqlite3_exec(i->db,"BEGIN IMMEDIATE",NULL,NULL,NULL); if(code!=SQLITE_OK) { status=db_error(i,code,e); goto done; } transaction=1;
-  status=execute(i,"INSERT INTO text_fts(text_fts,rowid,body) SELECT 'delete',id,body FROM text_items WHERE source=?1 AND (?2 IS NULL OR part=?2)",source,NULL,NULL,0,e);
-  if(status==EXR_OK) status=execute(i,"DELETE FROM text_items WHERE source=?1 AND (?2 IS NULL OR part=?2)",source,NULL,NULL,0,e);
+  status=clear_parts(i,source,NULL,1,e);
   if(status!=EXR_OK) goto done;
   for(;;at++) {
     exr_text_part part={0}; exr_error local={0}; int found=0;
@@ -161,11 +173,23 @@ exr_status exr_text_index_query(exr_text_index *i,const char *source,const void 
     if(!exr_append(&phrase,"\"",1)) goto limit;
     for(k=0;k<size;k++) if((q->pattern[k]=='"' && !exr_append(&phrase,"\"",1)) || !exr_append(&phrase,q->pattern+k,1)) goto limit;
     if(!exr_append(&phrase,"\"",1)) goto limit;
-    sql="SELECT source,part,body,has_zero FROM text_items WHERE (?2 IS NULL OR source=?2) AND (id IN(SELECT rowid FROM text_fts WHERE text_fts MATCH ?1) OR has_zero=1) ORDER BY id";
-  } else sql="SELECT source,part,body,has_zero FROM text_items WHERE (?2 IS NULL OR source=?2) AND instr(CAST(body AS BLOB),CAST(?1 AS BLOB))>0 ORDER BY id";
+    /* FTS may miss text after a NUL. Merge those rows separately in a
+       scoped query, driving the rowid lookups from FTS instead of the source. */
+    sql=source ?
+      "SELECT i.source,i.part,i.body,i.has_zero,text_fts.rowid AS id"
+      " FROM text_fts CROSS JOIN text_items AS i ON i.id=text_fts.rowid"
+      " WHERE text_fts MATCH ?1 AND i.has_zero IS NOT 1 AND i.source=?2"
+      " UNION ALL SELECT source,part,body,has_zero,id FROM text_items INDEXED BY text_items_zero"
+      " WHERE has_zero=1 AND source=?2 ORDER BY id" :
+      "SELECT source,part,body,has_zero FROM text_items WHERE id IN("
+      "SELECT rowid FROM text_fts WHERE text_fts MATCH ?1 UNION ALL SELECT id FROM text_items WHERE has_zero=1"
+      ") ORDER BY id";
+  } else sql=source ?
+    "SELECT source,part,body,has_zero FROM text_items WHERE source=?2 AND instr(CAST(body AS BLOB),CAST(?1 AS BLOB))>0 ORDER BY id" :
+    "SELECT source,part,body,has_zero FROM text_items WHERE instr(CAST(body AS BLOB),CAST(?1 AS BLOB))>0 ORDER BY id";
   code=sqlite3_prepare_v2(i->db,sql,-1,&q->statement,NULL);
   if(code==SQLITE_OK) code=trigram ? sqlite3_bind_text(q->statement,1,phrase.data,(int)phrase.size,SQLITE_TRANSIENT) : sqlite3_bind_blob(q->statement,1,query,(int)size,SQLITE_TRANSIENT);
-  if(code==SQLITE_OK) code=source ? sqlite3_bind_text(q->statement,2,source,-1,SQLITE_TRANSIENT) : sqlite3_bind_null(q->statement,2);
+  if(code==SQLITE_OK && source) code=sqlite3_bind_text(q->statement,2,source,-1,SQLITE_TRANSIENT);
   if(code!=SQLITE_OK) { status=db_error(i,code,e); goto done; }
   q->index=i; i->refs++; i->query=1; *out=q; q=NULL; status=exr_fail(e,EXR_OK,""); goto done;
 limit:

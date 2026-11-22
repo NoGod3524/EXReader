@@ -910,7 +910,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 
 `exr_text_index_replace(index,source,provider,context,control,...)` 在一个事务内替换整个来源。provider 按递增 ordinal 返回 `exr_text_part{id,text,size}`，found=0 结束；空序列清空该来源。最多 100000 个分段，分段 ID 必须唯一，文字/ID 上限与 put 相同。输入仅借用到下一次回调或 replace 返回，宿主可在下一次回调释放上一个章节，不必同时保留整本书。
 
-旧 FTS posting 和正文与新分段一并提交。provider 错误、错误详情中报告的失败、重复 ID、非法 found、UTF-8/字节限制、取消或提交失败均回滚，保留整个旧来源。最终进度回调仍可取消提交。回调不能重入当前 index；其他来源不受替换影响。现有 WAL 索引的打开不再申请写事务，只在初始化时加锁并再次核对 schema，因此独立连接可在重建期间打开并读取旧快照。
+旧 FTS posting 和正文与新分段一并提交。provider 错误、错误详情中报告的失败、重复 ID、非法 found、UTF-8/字节限制、取消或提交失败均回滚，保留整个旧来源。最终进度回调仍可取消提交。回调不能重入当前 index；其他来源不受替换影响。初始化和为旧 schema 1 文件首次补齐部分索引时会申请写事务。日常打开 WAL 索引只读取 schema，独立连接可在重建期间打开并读取旧快照。
 
 安装后的 `exreader-search-example input.epub index.sqlite literal-query` 演示按阅读顺序逐章加载、回收上一章、原子重建与最多 20 条搜索结果。source 使用调用方文件路径，part 采用示例自选的序号；这是宿主选择，不是索引模型对标识的限制。原始 C 接口可接任意格式和宿主解析器。
 
