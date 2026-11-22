@@ -56,6 +56,7 @@ option(EXR_ENABLE_PDF_EDIT "Build the independent PDF editing component" ${EXR_E
 option(EXR_ENABLE_IMAGE_WEBP "Enable WebP still/animation decoding (libwebp)" ON)
 option(EXR_ENABLE_IMAGE_TIFF "Enable TIFF multi-page decoding (libtiff)" ON)
 option(EXR_ENABLE_IMAGE_AVIF "Enable AVIF decoding (libavif + libaom)" ON)
+option(EXR_ENABLE_AVIF_SIMD "libaom SIMD: faster AVIF decode, larger binary (x86 needs NASM/yasm)" OFF)
 option(EXR_BUILD_SHARED_COMPAT "Build the legacy aggregate shared library" ON)
 if(EXR_ENABLE_PDF_EDIT AND NOT EXR_ENABLE_PDF)
   message(FATAL_ERROR "PDF editing requires EXR_ENABLE_PDF=ON")
