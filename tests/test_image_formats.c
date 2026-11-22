@@ -180,7 +180,13 @@ int main(int argc,char **argv) {
   { char path[4096];void *large=calloc(1,33*1024*1024);snprintf(path,sizeof(path),"%s/gif/expansion.gif",argv[1]);data=read_file(path,&size);
     CHECK(exr_image_page_count(data,size,&pages,&error)==EXR_OK && pages==4);
     { exr_bitmap capped={0};CHECK(exr_image_decode_page(data,size,0,&capped,&error)==EXR_LIMIT && !capped.pixels); }
-    free(data);CHECK(large);CHECK(exr_image_decode(large,33*1024*1024,&bitmap,&error)==EXR_LIMIT && !bitmap.pixels);free(large); }
+    free(data);CHECK(large);CHECK(exr_image_decode(large,33*1024*1024,&bitmap,&error)==EXR_LIMIT && !bitmap.pixels);
+    /* The multi-page calls share the 32 MiB encoded-input limit. */
+    { uint32_t w=1,h=1;exr_bitmap page={0};size_t over=32*1024*1024+1;
+      CHECK(exr_image_page_count(large,over,&pages,&error)==EXR_LIMIT && !pages);
+      CHECK(exr_image_page_dimensions(large,over,0,&w,&h,&error)==EXR_LIMIT && !w && !h);
+      CHECK(exr_image_decode_page(large,over,0,&page,&error)==EXR_LIMIT && !page.pixels); }
+    free(large); }
   { char path[4096];exr_status status;snprintf(path,sizeof(path),"%s/tiff/animation.tif",argv[1]);data=read_file(path,&size);
     status=exr_image_page_count(data,size,&pages,&error);
     if(status==EXR_OK) { CHECK(pages==4);OK(exr_image_page_dimensions(data,size,3,&bitmap.width,&bitmap.height,&error));

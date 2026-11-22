@@ -10,6 +10,7 @@ typedef struct {
   comic_page *pages; size_t count;
   exr_metadata_entry *metadata; size_t metadata_count;
   const exr_control *control; exr_error io_error; int borrowed;
+  uint64_t probed; /* archive bytes read while listing pages */
 } comic;
 static unsigned lower(unsigned c) { return c>='A' && c<='Z' ? c+32 : c; }
 static int equal(const char *a,const char *b) {
@@ -158,6 +159,13 @@ static exr_status member_bytes(comic *d,const mz_zip_archive_file_stat *st,size_
   if(!m.usize) return exr_fail(e,EXR_FORMAT,"Empty CBZ member");
   limit=m.usize<cap?m.usize:cap;
   if(!limit) return exr_fail(e,EXR_FORMAT,"Empty CBZ member");
+  if(!complete) {
+    /* Members of a valid ZIP never share data, so listing pages reads at most
+       the archive once. Directory entries aliasing one member exceed that. */
+    uint64_t read=m.method==0 ? limit : m.csize;
+    if(read>d->source.size-d->probed) return exr_fail(e,EXR_LIMIT,"CBZ members overlap: page headers exceed the archive size");
+    d->probed+=read;
+  }
   dst=malloc(limit);if(!dst) return exr_fail(e,EXR_MEMORY,"CBZ member allocation failed");
   if(m.method==0) {
     if(m.csize<m.usize) { free(dst);return exr_fail(e,EXR_FORMAT,"Truncated CBZ stored member"); }
@@ -203,13 +211,13 @@ static int full_header(const char *name) {
    frame is skipped. Page 0 keeps the member name as its ID. Later frames use
    "<name>#<n>" so existing single-page CBZ IDs remain stable. */
 static exr_status member_pages(comic *d,mz_uint index,const mz_zip_archive_file_stat *st,const char *name,size_t size,size_t *work,comic_page **out,size_t *count,exr_error *e) {
-  unsigned char *data=NULL;size_t n=0,limit,page_count=0,i;exr_status status;
+  unsigned char *data=NULL;uint32_t *sizes=NULL;size_t n=0,limit,page_count=0,i;exr_status status;
   *out=NULL;*count=0;
   limit=full_header(name) ? size : (size<1048576 ? size : 1048576);
   status=member_bytes(d,st,limit,0,&data,&n,work,e);
   if(status==EXR_OK && work && *work>(size_t)96*1024*1024) status=exr_fail(e,EXR_LIMIT,"CBZ image headers exceed 96 MiB work budget");
   if(status==EXR_OK) {
-    status=exr_image_page_count(data,n,&page_count,e);
+    status=exr_image_page_sizes(data,n,&sizes,&page_count,e);
     if(status==EXR_FORMAT && n==limit && limit<size) status=exr_fail(e,EXR_LIMIT,"CBZ image header exceeds 1 MiB");
   }
   if(status==EXR_OK && (!page_count || page_count>(size_t)4096)) status=exr_fail(e,EXR_LIMIT,"CBZ image exceeds 4096 frames");
@@ -219,12 +227,9 @@ static exr_status member_pages(comic *d,mz_uint index,const mz_zip_archive_file_
   }
   for(i=0;status==EXR_OK && i<page_count;i++) {
     comic_page *p=&(*out)[i];char suffix[32];
-    p->index=index; p->frame=(uint32_t)i;
-    status=exr_image_page_dimensions(data,n,i,&p->width,&p->height,e);
-    if(status==EXR_OK) {
-      p->name=exr_copy(name,strlen(name));
-      if(!p->name) status=exr_fail(e,EXR_MEMORY,"CBZ page name allocation failed");
-    }
+    p->index=index; p->frame=(uint32_t)i; p->width=sizes[2*i]; p->height=sizes[2*i+1];
+    p->name=exr_copy(name,strlen(name));
+    if(!p->name) status=exr_fail(e,EXR_MEMORY,"CBZ page name allocation failed");
     if(status==EXR_OK) {
       if(page_count==1) p->id=exr_copy(name,strlen(name));
       else if(!i) { size_t len=strlen(name)+24; p->id=malloc(len); if(p->id) snprintf(p->id,len,"%s",name); }
@@ -233,7 +238,7 @@ static exr_status member_pages(comic *d,mz_uint index,const mz_zip_archive_file_
     }
     if(status==EXR_OK) status=exr_control_poll(d->control,EXR_STAGE_READ,i,page_count,e);
   }
-  free(data);
+  free(data);free(sizes);
   if(status!=EXR_OK) {
     if(*out) for(i=0;i<page_count;i++) { free((*out)[i].name); free((*out)[i].id); }
     free(*out); *out=NULL; return status;
@@ -312,7 +317,7 @@ static exr_status metadata(void *context,const exr_control *control,const exr_me
 }
 static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e) {
   mz_uint i,total,info=UINT_MAX;size_t work=0,capacity;exr_fixed_page *pages=NULL;exr_fixed_input input={0};exr_status status=EXR_OK;
-  d->control=&options->control;
+  d->control=&options->control;d->probed=0;
   if(exr_control_cancel(d->control,e)!=EXR_OK) { status=EXR_CANCELLED;goto done; }
   if(d->data) { if(!mz_zip_reader_init_mem(&d->zip,d->data,(size_t)d->source.size,0)) { status=archive_error(d,e,"Invalid CBZ ZIP archive");goto done; } }
   else { d->zip.m_pRead=read_source;d->zip.m_pIO_opaque=d;if(!mz_zip_reader_init(&d->zip,d->source.size,0)) { status=archive_error(d,e,"Invalid CBZ ZIP source");goto done; } }

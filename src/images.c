@@ -131,26 +131,21 @@ done:
   }
   return exr_fail(e,EXR_OK,"");
 }
+void exr_image_budget_reset(void) { allocation_limited=allocation_failed=0; }
+exr_status exr_image_budget_status(exr_status status,exr_error *e) {
+  if(status==EXR_FORMAT && allocation_limited) return exr_fail(e,EXR_LIMIT,"Image decoding exceeds the working budget");
+  if(status==EXR_FORMAT && allocation_failed) return exr_fail(e,EXR_MEMORY,"Image decoding allocation failed");
+  return status;
+}
 exr_status exr_image_dimensions(const void *data,size_t n,uint32_t *width,uint32_t *height,exr_error *e) {
   uint32_t w=0,h=0; exr_status status;
   if(width) *width=0;
   if(height) *height=0;
-  if(!data || !n || !width || !height) return exr_fail(e,EXR_ARGUMENT,"Invalid image header input/output");
-  if(n>32*1024*1024) return exr_fail(e,EXR_LIMIT,"Encoded image exceeds 32 MiB");
-  allocation_limited=allocation_failed=0;
+  if(!width || !height) return exr_fail(e,EXR_ARGUMENT,"Invalid image header input/output");
   status=exr_image_page_dimensions(data,n,0,&w,&h,e);
   if(status!=EXR_OK) return status;
   *width=w; *height=h; return exr_fail(e,EXR_OK,"");
 }
 exr_status exr_image_decode(const void *data, size_t n, exr_bitmap *out, exr_error *e) {
-  exr_status status;
-  if (!out) return exr_fail(e, EXR_ARGUMENT, "Missing image output");
-  memset(out, 0, sizeof(*out));
-  if(!data || !n) return exr_fail(e,EXR_ARGUMENT,"Invalid image input");
-  if(n>32*1024*1024) return exr_fail(e,EXR_LIMIT,"Encoded image exceeds 32 MiB");
-  allocation_limited=allocation_failed=0;
-  status=exr_image_decode_page_control(data,n,0,NULL,out,e);
-  if(status==EXR_FORMAT && allocation_limited) status=exr_fail(e,EXR_LIMIT,"Image decoding exceeds the working budget");
-  else if(status==EXR_FORMAT && allocation_failed) status=exr_fail(e,EXR_MEMORY,"Image decoding allocation failed");
-  return status;
+  return exr_image_decode_page_control(data,n,0,NULL,out,e);
 }
