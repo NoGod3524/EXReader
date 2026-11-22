@@ -1063,62 +1063,6 @@ exr_status exr_canvas_image_cmyk(exr_canvas *c,const exr_image_layer *image,cons
   if(status==EXR_OK) mark_area(c,0,0,c->bitmap.width,c->bitmap.height);
   return finish(c,status,e);
 }
-static double axial_clamp_sample(double value) {
-  /* Match fmax(0,fmin(1,value)), including the upper endpoint for NaN. */
-  return value<=0 ? 0 : value<1 ? value : 1;
-}
-exr_status exr_axial_shading_sample(void *context,double x,double y,unsigned space,
-                                    double color[4],double *shape,double *opacity,exr_error *e) {
-  const unsigned samples=512u;
-  exr_shading_paint_source *s=context;double t=0,coord=0;unsigned index,count=space==EXR_GROUP_CMYK ? 4 : 3;double fraction;int cacheable=0;
-  double scale,px,py,ux,uy,length;
-  if(!exr_vector_work(s->work,1)) return exr_fail(e,EXR_LIMIT,"PDF shading scan exceeds work budget");
-  *shape=0;*opacity=1;
-  scale=s->axial_scale;px=s->axial_x;py=s->axial_y;ux=s->axial_ux;uy=s->axial_uy;length=s->axial_length;
-  /* The original normalization depends on the sample only outside this range. */
-  if(!(fabs(x)<=scale && fabs(y)<=scale)) {
-    double dx,dy;
-    scale=fmax(scale,fmax(fabs(x),fabs(y)));
-    px=s->coords[0]/scale;py=s->coords[1]/scale;
-    dx=s->coords[2]/scale-px;dy=s->coords[3]/scale-py;length=hypot(dx,dy);
-    ux=length ? dx/length : 0;uy=length ? dy/length : 0;
-  } else if(s->cached_axis) {
-    coord=s->cached_axis==1 ? y : x;
-    if(s->cached_space==space) {
-      for(unsigned slot=0;slot<2;slot++) if(coord==s->cached_coord[slot]) {
-        for(unsigned k=0;k<count;k++) color[k]=s->cached_color[slot][k];
-        *shape=s->cached_shape[slot];return EXR_OK;
-      }
-    }
-    cacheable=1;
-  }
-  if(!length) return exr_fail(e,EXR_LIMIT,"PDF axial shading exceeds coordinate precision");
-  t=((x/scale-px)*ux+(y/scale-py)*uy)/length;
-  if(!isfinite(t)) return exr_fail(e,EXR_LIMIT,"PDF axial shading exceeds coordinate precision");
-  if((t<0 && !s->extend0) || (t>1 && !s->extend1)) {
-    if(cacheable) {
-      unsigned slot=s->cached_slot++&1u;s->cached_space=space;s->cached_coord[slot]=coord;s->cached_shape[slot]=0;
-      for(unsigned k=0;k<count;k++) s->cached_color[slot][k]=0;
-    }
-    return EXR_OK;
-  }
-  t=axial_clamp_sample(t)*(samples-1u);index=(unsigned)t;fraction=t-index;
-  if(index==samples-1u) { index--;fraction=1; }
-  if(space==EXR_GROUP_CMYK && !s->inks) return exr_fail(e,EXR_UNSUPPORTED,"PDF shading source lacks native CMYK samples");
-  for(unsigned k=0;k<count;k++) {
-    double a=space==EXR_GROUP_CMYK ? s->inks[index*4+k]/255. : s->rgb[index*3+k];
-    double b=space==EXR_GROUP_CMYK ? s->inks[(index+1)*4+k]/255. : s->rgb[(index+1)*3+k];
-    color[k]=axial_clamp_sample(a*(1-fraction)+b*fraction);
-  }
-  *shape=1;
-  if(cacheable) {
-    unsigned slot=s->cached_slot++&1u;
-    if(s->cached_space!=space) { s->cached_space=space;s->cached_coord[0]=s->cached_coord[1]=NAN; }
-    s->cached_coord[slot]=coord;s->cached_shape[slot]=1;
-    for(unsigned k=0;k<count;k++) s->cached_color[slot][k]=color[k];
-  }
-  return EXR_OK;
-}
 static int axial_columns_in_scale(double multiplier,double translation,int offset,unsigned x,double scale) {
   double px0=(double)x+offset+.25,px1=px0+.5;
   return fabs(multiplier*px0+translation)<=scale && fabs(multiplier*px1+translation)<=scale;

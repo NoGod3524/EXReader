@@ -170,7 +170,7 @@ static exr_status member_bytes(comic *d,const mz_zip_archive_file_stat *st,size_
   if(m.method==0) {
     if(m.csize<m.usize) { free(dst);return exr_fail(e,EXR_FORMAT,"Truncated CBZ stored member"); }
     if(!read_at(d,m.data_ofs,dst,limit)) { free(dst);return archive_error(d,e,"Cannot read CBZ member data"); }
-    produced=limit;
+    produced=limit;if(work) *work+=limit;
   } else if(m.method==8) {
     tinfl_decompressor dec;size_t in_pos=0;
     if(m.csize>(uint32_t)64*1024*1024) { free(dst);return exr_fail(e,EXR_LIMIT,"CBZ compressed member exceeds 64 MiB"); }
