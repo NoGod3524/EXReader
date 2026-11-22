@@ -436,8 +436,9 @@ JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageRender(JNIEnv *en
 }
 JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageImage(JNIEnv *env,jclass cls,jlong handle,jint resource) {
   jni_page *p=pointer(env,handle); (void)cls;
+  if(!p) return NULL;
   if(resource<0) { argument(env,"Negative resource index"); return NULL; }
-  return p ? bitmap_value(env,exr_layout_image(p->layout,(size_t)resource)) : NULL;
+  return bitmap_value(env,exr_layout_image(p->layout,(size_t)resource));
 }
 JNIEXPORT jobject JNICALL Java_org_exreader_EXReader_nativePageFont(JNIEnv *env,jclass cls,jlong handle,jint index) {
   jni_page *p=pointer(env,handle); exr_font_input input={0}; exr_font_axis *axes=NULL; size_t count=0,i;
