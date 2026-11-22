@@ -18,7 +18,8 @@ static void object(unsigned id,const char *body) { offset[id]=length; fmt("%u 0 
    39 widgets, radio exports, pair options, multiple selection and two pages. */
 static void source(unsigned mode) {
   unsigned i,page; char text[8192]; size_t at,xref; length=0; memset(offset,0,sizeof(offset)); add("%PDF-1.7\n");
-  object(1,mode==17 ? "<< /Type /Catalog /Pages 2 0 R >>" : mode==9 ? "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [6 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 52 0 R 53 0 R 54 0 R 55 0 R] /NeedAppearances true >> >>" : mode==16 ? "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R /Perms << /DocMDP 54 0 R >> >>" : "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R >>");
+  if(mode==24) object(1,"<< /Type /Catalog /Pages 2 0 R /AcroForm 8 0 R >>");
+  else object(1,mode==17 ? "<< /Type /Catalog /Pages 2 0 R >>" : mode==9 ? "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [6 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 52 0 R 53 0 R 54 0 R 55 0 R] /NeedAppearances true >> >>" : mode==16 ? "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R /Perms << /DocMDP 54 0 R >> >>" : "<< /Type /Catalog /Pages 2 0 R /AcroForm 5 0 R >>");
   object(2,"<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>");
   for(page=0;page<2;page++) {
     at=(size_t)snprintf(text,sizeof(text),"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 120 80] /Annots [");
@@ -27,14 +28,15 @@ static void source(unsigned mode) {
   }
   snprintf(text,sizeof(text),"<< /Fields [6 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R 51 0 R 52 0 R 53 0 R 54 0 R 55 0 R] /NeedAppearances true %s >>",mode==6 ? "/XFA (record only)" : ""); object(5,text);
   at=(size_t)snprintf(text,sizeof(text),"<< /T (person) /FT /Tx /Ff 0 /MaxLen 12 /V (inherited) /DV (default) /DA (/Helv 10 Tf 0 g) /Q 1 %s /Kids [",mode==7 ? "/AA << /K << /S /JavaScript /JS (never executed) >> >>" : "");
-  for(i=20;i<44;i++) at+=(size_t)snprintf(text+at,sizeof(text)-at,"%u 0 R ",i);
+  for(i=20;i<44;i++) at+=(size_t)snprintf(text+at,sizeof(text)-at,"%u 0 R ",mode==24 && i==20 ? 60 : i);
   snprintf(text+at,sizeof(text)-at,"%s] >>",mode==2 ? "6 0 R" : mode==21 ? "<< /Parent 6 0 R /T (direct) /FT /Tx >>" : ""); object(6,text);
   object(7,"<< /Type /XObject /Subtype /Form /BBox [0 0 100 20] /Length 0 >>\nstream\nendstream");
+  if(mode==24) { object(8,"5 0 R"); object(60,"20 0 R"); object(61,"100 0 R"); }
   for(i=20;i<44;i++) {
     static const char *const unsupported[]={"/Ff 4096","/Ff 8192","/Ff 16777216","/Ff 33554432","/Ff 1048576"};
     const char *constraint=i==21 && mode==1 ? "/FT 42" : i==21 && mode==3 ? "/Ff 1" : i==21 && mode==4 ? "/Ff 2" : i==21 && mode==5 ? "/MaxLen 2" : i==21 && mode>=10 && mode<=14 ? unsupported[mode-10] : "";
     snprintf(text,sizeof(text),"<< /Parent %u 0 R /T (text%02u) %s %s %s >>",i==21 && mode==20 ? 5 : 6,i==21 && mode==19 ? 0 : i-20,
-      i==20 ? "/Kids [100 0 R 101 0 R]" : "/Type /Annot /Subtype /Widget /Rect [10 10 110 30] /AP << /N 7 0 R >>",
+      i==20 ? (mode==24 ? "/Kids [61 0 R 101 0 R]" : "/Kids [100 0 R 101 0 R]") : "/Type /Annot /Subtype /Widget /Rect [10 10 110 30] /AP << /N 7 0 R >>",
       constraint,
       i==21 && mode==8 ? "/MK << /R 90 >>" : ""); object(i,text);
   }
@@ -157,6 +159,25 @@ int main(int argc,char **argv) {
   for(i=1;i<=2;i++) { source((unsigned)i); fields=(exr_pdf_form_field *)1; n=99; CHECK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)==EXR_FORMAT && !fields && !n); }
   for(i=19;i<=20;i++) { source((unsigned)i); fields=(exr_pdf_form_field *)1; n=99; CHECK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)==EXR_FORMAT && !fields && !n); }
   source(17); fields=(exr_pdf_form_field *)1; n=99; OK(exr_pdf_form_read(pdf,length,NULL,&fields,&n,&error)); CHECK(!fields && !n);
+  OK(exr_pdf_form_write(pdf,length,NULL,0,NULL,&output,&output_size,&error));
+  CHECK(output_size==length && output!=pdf && !memcmp(output,pdf,length)); exr_free(output);
+  failure(17,"person.text00","A",EXR_ARGUMENT);
+  {
+    const char *value[]={"alias"};
+    exr_pdf_form_change change={"person.text00",value,1};
+    exr_pdf_file *file=NULL;
+    uint32_t form,id,generation;
+    source(24);
+    OK(exr_pdf_form_write(pdf,length,&change,1,NULL,&output,&output_size,&error));
+    fields=read_fields(output,output_size,&n); field=named(fields,n,change.name);
+    CHECK(field->value_count==1 && !strcmp(field->values[0],value[0]));
+    CHECK(field->widget_count==2 && field->widgets[0].page==0 && field->widgets[1].page==1);
+    exr_pdf_form_free(fields,n);
+    OK(exr_pdf_open(output,output_size,&file,&error));
+    form=get(file,exr_pdf_root(file),"AcroForm");
+    OK(exr_pdf_object_identity(file,form,&id,&generation,&error)); CHECK(id==5 && generation==0);
+    exr_pdf_close(file); exr_free(output);
+  }
   source(0);
   { exr_pdf_form_change duplicate[]={changes[0],changes[0]}; CHECK(exr_pdf_form_write(pdf,length,duplicate,2,NULL,&output,&output_size,&error)==EXR_ARGUMENT && !output && !output_size); }
   { const char *missing[]={"B"}; exr_pdf_form_change c={"person.text00",missing,1}; options=exr_pdf_form_write_defaults(); options.font=font;

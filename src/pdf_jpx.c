@@ -142,18 +142,27 @@ exr_status exr_pdf_jpx_decode(const void *data,size_t size,unsigned width,
   }
   /* All component dimensions and allocation products are bounded before decode. */
   if(jpx_cancel(&input) || !opj_decode(codec,stream,image) || !opj_end_decompress(codec,stream) || input.invalid) goto done;
-  packed=(unsigned char *)calloc(total,1);
+  packed=bits==8 ? malloc(total) : calloc(total,1);
   if(!packed) { status=EXR_MEMORY;goto done; }
+  for(c=0;c<components;c++) if(!image->comps[c].data) goto done;
   for(y=0;y<height;y++) {
-    size_t bit=y*row*8;
+    size_t offset=y*width;
     if(jpx_cancel(&input)) goto done;
-    for(x=0;x<width;x++) for(c=0;c<components;c++) {
-      OPJ_INT32 value;
-      unsigned b;
-      if(!image->comps[c].data) goto done;
-      value=image->comps[c].data[y*width+x];
-      if(value<0 || (uint32_t)value>=((uint32_t)1<<bits)) goto done;
-      for(b=bits;b;b--,bit++) packed[bit>>3]|=(unsigned char)(((uint32_t)value>>(b-1)&1)<<(7-(bit&7)));
+    if(bits==8) {
+      unsigned char *p=packed+y*row;
+      for(x=0;x<width;x++) for(c=0;c<components;c++) {
+        uint32_t value=(uint32_t)image->comps[c].data[offset+x];
+        if(value>255u) goto done;
+        *p++=(unsigned char)value;
+      }
+    } else {
+      size_t bit=y*row*8;
+      for(x=0;x<width;x++) for(c=0;c<components;c++) {
+        uint32_t value=(uint32_t)image->comps[c].data[offset+x];
+        unsigned b;
+        if(value>=((uint32_t)1<<bits)) goto done;
+        for(b=bits;b;b--,bit++) packed[bit>>3]|=(unsigned char)((value>>(b-1)&1)<<(7-(bit&7)));
+      }
     }
   }
   *samples=packed;*sample_size=total;packed=NULL;status=EXR_OK;

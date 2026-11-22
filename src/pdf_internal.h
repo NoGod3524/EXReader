@@ -68,6 +68,9 @@ typedef struct { size_t hybrid_sections,last_xrefstm,encrypt_conflicts; } exr_pd
 void exr_pdf_xref_report(const exr_pdf_file *file,exr_pdf_xref_diagnostics *out);
 exr_status exr_pdf_object_identity(const exr_pdf_file *file,uint32_t value,
   uint32_t *object,uint32_t *generation,exr_error *error);
+/* Match a previously resolved reference to its terminal object. */
+exr_status exr_pdf_resolved_identity(const exr_pdf_file *file,uint32_t raw,uint32_t value,
+  uint32_t *object,uint32_t *generation,exr_error *error);
 /* Appends a complete value without resolving references or copying streams.
    Keys are filtered only in the outermost dictionary. Failure restores size. */
 exr_status exr_pdf_serialize(const exr_pdf_file *file,uint32_t value,

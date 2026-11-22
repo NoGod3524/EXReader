@@ -80,8 +80,8 @@ foreach(layer IN LISTS exr_layers)
   list(APPEND exr_objects $<TARGET_OBJECTS:exr_${layer}_objects>)
 endforeach()
 if(NOT MSVC AND CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
-  # Cap style-matching code size while retaining the indexed cascade speedup.
-  set_property(SOURCE src/style.c APPEND PROPERTY COMPILE_OPTIONS "$<$<CONFIG:Release>:-O2>")
+  # Reduce Release code size for the stylesheet and PDF writers.
+  set_property(SOURCE src/style.c src/pdf_write.c APPEND PROPERTY COMPILE_OPTIONS "$<$<CONFIG:Release>:-O2>")
 endif()
 if(NOT EXR_HAS_EDIT_REFLOW)
   target_compile_definitions(exr_layout_objects PRIVATE EXR_NO_EDIT_MODEL)
