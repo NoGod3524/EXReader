@@ -286,6 +286,42 @@ static void metadata_case(const char *dir,const char *name,const char *title,con
     exr_books_free(books,n); exr_library_close(library);
   }
 }
+static void put_be16(unsigned char *p,unsigned v) { p[0]=(unsigned char)(v>>8); p[1]=(unsigned char)v; }
+static void put_be32(unsigned char *p,unsigned v) { p[0]=(unsigned char)(v>>24); p[1]=(unsigned char)(v>>16); p[2]=(unsigned char)(v>>8); p[3]=(unsigned char)v; }
+static void fdst_zero_extent(void) {
+  unsigned char buf[78+24+264+28];
+  unsigned char *h=buf+102,*f=buf+102+264;
+  exr_document *doc=(exr_document *)(uintptr_t)1;
+  exr_status status;
+  memset(buf,0,sizeof(buf));
+  memcpy(buf+60,"BOOKMOBI",8);
+  put_be16(buf+76,3);
+  put_be32(buf+78+0,102);
+  put_be32(buf+78+8,102+264); /* empty 0-byte record 1 */
+  put_be32(buf+78+16,102+264); /* record 2: FDST */
+  put_be16(h+0,2); /* PalmDOC */
+  put_be32(h+4,10); /* PalmDOC length matches flow 0 stop */
+  put_be16(h+8,1); /* text_count */
+  put_be16(h+10,4096);
+  memcpy(h+16,"MOBI",4);
+  put_be32(h+20,248); /* header_size */
+  put_be32(h+28,65001); /* UTF-8 */
+  put_be32(h+36,8); /* KF8 */
+  put_be32(h+192,2); /* FDST record index */
+  put_be32(h+196,2); /* flow count */
+  memcpy(f+0,"FDST",4);
+  put_be32(f+4,12);
+  put_be32(f+8,2);
+  put_be32(f+12,0); put_be32(f+16,10);
+  put_be32(f+20,0); put_be32(f+24,0); /* trailing zero extent */
+  status=exr_document_open_memory(EXR_MOBI,buf,sizeof(buf),&doc,&error);
+  CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
+  /* Non-monotonic FDST intervals with positive extent must also fail early. */
+  put_be32(f+20,5); put_be32(f+24,10);
+  doc=(exr_document *)(uintptr_t)1;
+  status=exr_document_open_memory(EXR_MOBI,buf,sizeof(buf),&doc,&error);
+  CHECK(status==EXR_FORMAT && !doc && error.code==EXR_FORMAT && error.message[0]);
+}
 int main(int argc,char **argv) {
   const char *bad[]={"indx","pointer","idxt","total","tagx","controls","mask","ordt","version","insert-before","insert-after","length","file","missing-fragment","extra-fragment","overlap","label","fdst","xml","orphan","fdst-gap","vwi","short-header","decreasing-idxt","embed-zero","embed-range","embed-overflow","embed-bad-number","flow-zero","flow-range","flow-mime","flow-conflict","asset-signature","asset-pointer","font-flags","font-offset","font-key","font-size","font-key-start","font-trailing","font-compressed","pos-fid","pos-off","pos-overflow","pos-separator","pos-trailing","pos-empty","pos-prefix","pos-length","pos-duplicate","pos-body-duplicate","nav-title","nav-level","nav-parent","nav-child","nav-last","nav-leaf","nav-target","cncx-truncated","cncx-padding","cncx-index","boundary-pointer","boundary-text","boundary-marker","boundary-version","boundary-encrypted","boundary-resource","exth-signature","exth-length","exth-count","exth-entry","exth-entry-size","exth-duplicate","exth-fallback-encoding","exth-fallback-compression","guide-label","guide-target","guide-kind","svg-xml","svg-root","svg-entity","svg-reference","svg-namespace","svg-fragment","ordt-count","ordt-entries","ordt-pointer","ordt-signature","ordt-value","ordt-overlap","ordt-label","ordt-missing","ordt-local-conflict","ordt-late-label","skel-repeats","cover-range","cover-font","cover-duplicate","cover-length","title-pointer","title-header","title-length"};
   const char *text="Chapter one\nA bold passage.\nChapter two\nSecond passage."; size_t i;
@@ -334,5 +370,6 @@ int main(int argc,char **argv) {
     for(k=0;k<2;k++) { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-encoding-title-%s.azw3",argv[1],names[k]); CHECK(exr_document_open(path,&doc,&error)==EXR_ENCODING && !doc); }
     { char path[4096]; exr_document *doc=NULL; snprintf(path,sizeof(path),"%s/kf8-limit-title.azw3",argv[1]); CHECK(exr_document_open(path,&doc,&error)==EXR_LIMIT && !doc); }
   }
+  fdst_zero_extent();
   printf("%u KF8 checks passed\n",checks); return 0;
 }

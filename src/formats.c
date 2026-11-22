@@ -1573,12 +1573,18 @@ static exr_status mobi_stream_open(exr_document *d, const void *data, size_t n, 
   status=EXR_FORMAT;
   extent=be32(h+4);
   if(be32(h+36)==8 && header_size>=248 && be32(h+196)>1) {
-    size_t fdst=be32(h+192),flows=be32(h+196); const unsigned char *f;
+    size_t fdst=be32(h+192),flows=be32(h+196),prev=0,j; const unsigned char *f;
     if(fdst>=count || flows>10000 || view[fdst].size<12 || flows>(view[fdst].size-12)/8) goto done;
     f=view[fdst].data;
-    if(memcmp(f,"FDST",4) || be32(f+8)!=flows) goto done;
+    if(memcmp(f,"FDST",4) || be32(f+4)!=12 || be32(f+8)!=flows) goto done;
     extent=be32(f+8+flows*8);
-    if((be32(h+4)!=extent && be32(h+4)!=be32(f+16)) || extent>EXR_MAX_TEXT) goto done;
+    if(!extent || (be32(h+4)!=extent && be32(h+4)!=be32(f+16)) || extent>EXR_MAX_TEXT) goto done;
+    for(j=0;j<flows;j++) {
+      size_t fstart=be32(f+12+j*8),fstop=be32(f+16+j*8);
+      if(fstart!=prev || fstart>fstop || fstop>extent) goto done;
+      prev=fstop;
+    }
+    if(prev!=extent) goto done;
   }
   if(header_size>=228 && be32(h+104)>=5) flags=be16(h+242);
   if(compression==0x4448) {
@@ -1646,7 +1652,7 @@ static exr_status mobi(exr_document *d,const void *data,size_t n,exr_error *e) {
   for(i=1;i<=m.text_count;i++) {
     status=mobi_decode_record(&m,i,&text,e); if(status!=EXR_OK) goto done;
   }
-  if(m.text_size>text.size) { status=exr_fail(e,EXR_FORMAT,"MOBI_TEXT_LENGTH: decoded bytes shorter than PalmDOC length"); goto done; }
+  if(m.text_size>text.size || !text.data) { status=exr_fail(e,EXR_FORMAT,"MOBI_TEXT_LENGTH: decoded bytes shorter than PalmDOC length"); goto done; }
   text.size=m.text_size; text.data[text.size]=0;
   if(m.version==8) {
     if(m.encoding!=65001) { status=exr_fail(e,EXR_ENCODING,"KF8_ENCODING: KF8 requires UTF-8"); goto done; }
