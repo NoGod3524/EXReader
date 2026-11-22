@@ -55,10 +55,16 @@ if(EXR_ENABLE_IMAGE_WEBP)
   set(WEBP_BUILD_IMG2WEBP OFF CACHE BOOL "" FORCE)
   set(WEBP_BUILD_VWEBP OFF CACHE BOOL "" FORCE)
   set(WEBP_BUILD_WEBPINFO OFF CACHE BOOL "" FORCE)
+  set(WEBP_BUILD_LIBWEBPMUX OFF CACHE BOOL "" FORCE)
   set(WEBP_BUILD_WEBPMUX OFF CACHE BOOL "" FORCE)
   set(WEBP_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
-  FetchContent_Declare(libwebp URL "https://codeload.github.com/webmproject/libwebp/tar.gz/refs/tags/v1.5.0" URL_HASH SHA256=668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37)
+  FetchContent_Declare(libwebp URL "https://codeload.github.com/webmproject/libwebp/tar.gz/refs/tags/v1.5.0" URL_HASH SHA256=668c9aba45565e24c27e17f7aaf7060a399f7f31dba6c97a044e1feacb930f37 SOURCE_SUBDIR exreader-populate-only)
   FetchContent_MakeAvailable(libwebp)
+  # The upstream default build and install include encoders and sharpyuv.
+  # Import only targets linked by EXReader and install the SDK archives ourselves.
+  add_subdirectory("${libwebp_SOURCE_DIR}" "${libwebp_BINARY_DIR}" EXCLUDE_FROM_ALL)
+  set_target_properties(webpdemux PROPERTIES
+    LINK_LIBRARIES webpdecoder INTERFACE_LINK_LIBRARIES webpdecoder)
 endif()
 if(EXR_ENABLE_IMAGE_TIFF)
   set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -82,7 +88,7 @@ if(EXR_ENABLE_IMAGE_TIFF)
   set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
   # The declared TIFF subset uses built-in codecs and the pinned zlib only.
   # Host codec discovery must not change SDK dependencies or its capabilities.
-  foreach(codec jpeg old-jpeg jpeg12 jbig lerc lzma zstd webp libdeflate)
+  foreach(codec jpeg old-jpeg jpeg12 jbig lerc lzma zstd webp libdeflate logluv pixarlog thunder next)
     set(${codec} OFF CACHE BOOL "" FORCE)
   endforeach()
   set(zlib ON CACHE BOOL "" FORCE)

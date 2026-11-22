@@ -30,7 +30,7 @@
         }
       ],
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "7c140dbb4ea938959cfd2ed39595a0ae20ac1f1d"
+        "packageVerificationCodeValue": "121f33e111f01fe24e36f300223648608c4e924d"
       },
       "hasFiles": [
         "SPDXRef-File-LICENSE",
@@ -971,11 +971,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "dc150d3d903278bbea909a8078eba5e284bef532"
+          "checksumValue": "f5edb233f059fc2e08a48ebf87e9dd2c5ae5ccf9"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "378249a2d64233972ee844ff8fc43e265c8fa33e58b085d7561e6d66d9837dba"
+          "checksumValue": "684f778c1b86ac4d07d1a676367e393c676d875b274642e35b4fe562deac86ad"
         }
       ]
     },

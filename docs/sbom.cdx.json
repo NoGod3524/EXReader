@@ -505,7 +505,7 @@
         },
         {
           "name": "exr:linkage",
-          "value": "private static archives"
+          "value": "private static archives (decoder and demux only)"
         },
         {
           "name": "exr:source",

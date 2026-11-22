@@ -132,7 +132,7 @@ patterns under `tests/fixtures/images` with MIT provenance and SHA-256 values in
 
 ## Mainline dependency configuration
 
-Mainline freezes TIFF to the declared built-in/Deflate/LZW/PackBits subset and
-pinned zlib. Host JPEG/JBIG/LERC/LZMA/ZSTD/WebP/libdeflate discovery is disabled;
-build and installed capabilities do not vary with host packages. The libaom
-source include path is a build interface and is excluded from install exports.
+WebP uses the private `webpdecoder` and `webpdemux` archives. TIFF uses the
+pinned zlib for Deflate and leaves LogLuv, PixarLog, ThunderScan and NeXT off.
+Host JPEG/JBIG/LERC/LZMA/ZSTD/WebP/libdeflate discovery is disabled. The libaom
+source include path is private to the build.
