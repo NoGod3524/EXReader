@@ -154,7 +154,8 @@ memory:
 /* ---- Atom parsing ---------------------------------------------------- */
 typedef enum { CAP_NONE, CAP_FEED_TITLE, CAP_TITLE, CAP_AUTHOR, CAP_SUMMARY, CAP_CONTENT } capture_kind;
 typedef struct {
-  char *title, *author, *summary, *content, *cover, *thumb, *detail, *download, *format;
+  char *title, *summary, *content, *cover, *thumb, *detail, *download, *format;
+  exr_buffer authors; /* "A, B, ..." built in place, at most OPDS_MAX_TEXT */
   uint64_t size;
   int rank;
 } entry_work;
@@ -262,7 +263,7 @@ static void feed_link(reader *r, const char **a) {
   }
 }
 static void entry_free(entry_work *w) {
-  free(w->title); free(w->author); free(w->summary); free(w->content); free(w->cover);
+  free(w->title); free(w->authors.data); free(w->summary); free(w->content); free(w->cover);
   free(w->thumb); free(w->detail); free(w->download); free(w->format);
   memset(w, 0, sizeof(*w));
 }
@@ -275,7 +276,7 @@ static void entry_finish(reader *r) {
       fail(r, EXR_MEMORY, "OPDS entries allocation failed");
     else {
       e = &r->feed->entries[r->feed->entry_count++];
-      e->title = w->title; e->author = w->author;
+      e->title = w->title; e->author = w->authors.data;
       e->summary = w->summary ? w->summary : w->content;
       if (w->summary) free(w->content);
       e->cover_url = w->cover ? w->cover : w->thumb;
@@ -320,7 +321,7 @@ static void XMLCALL start(void *context, const char *name, const char **a) {
   }
 }
 static void commit(reader *r) {
-  char *s, *t;
+  char *s;
   size_t n = r->text.size, lead = 0;
   if (!r->text.data) return;
   while (n && isspace((unsigned char)r->text.data[n - 1])) n--;
@@ -333,13 +334,15 @@ static void commit(reader *r) {
     case CAP_TITLE: if (!r->work.title) { r->work.title = s; return; } break;
     case CAP_SUMMARY: if (!r->work.summary) { r->work.summary = s; return; } break;
     case CAP_CONTENT: if (!r->work.content) { r->work.content = s; return; } break;
-    case CAP_AUTHOR:
-      if (!r->work.author) { r->work.author = s; return; }
-      t = malloc(strlen(r->work.author) + strlen(s) + 3);
-      if (!t) { free(s); fail(r, EXR_MEMORY, "OPDS author allocation failed"); return; }
-      sprintf(t, "%s, %s", r->work.author, s);
-      put(&r->work.author, t);
+    case CAP_AUTHOR: {
+      /* Names append in place; a list longer than the text limit is cut, like text. */
+      exr_buffer *a = &r->work.authors;
+      size_t length = strlen(s);
+      if (a->size + (a->size ? 2 : 0) + length <= OPDS_MAX_TEXT &&
+          ((a->size && !exr_append(a, ", ", 2)) || !exr_append(a, s, length)))
+        fail(r, EXR_MEMORY, "OPDS author allocation failed");
       break;
+    }
     default: break;
   }
   free(s);
@@ -372,6 +375,11 @@ void exr_opds_feed_free(exr_opds_feed *f) {
   free(f->entries); free(f->title); free(f->next_url); free(f->search_template); free(f->search_description_url);
   memset(f, 0, sizeof(*f));
 }
+static void XMLCALL feed_entity(void *context, const XML_Char *name, int parameter, const XML_Char *value, int length,
+                                const XML_Char *base, const XML_Char *system, const XML_Char *public_id, const XML_Char *notation) {
+  (void)name; (void)parameter; (void)value; (void)length; (void)base; (void)system; (void)public_id; (void)notation;
+  fail(context, EXR_FORMAT, "OPDS entity declarations are unsupported");
+}
 static XML_Parser new_parser(reader *r) {
   XML_Parser p = XML_ParserCreateNS(NULL, '|');
   if (p) {
@@ -379,6 +387,8 @@ static XML_Parser new_parser(reader *r) {
     XML_SetUserData(p, r);
     XML_SetElementHandler(p, start, end);
     XML_SetCharacterDataHandler(p, chars);
+    XML_SetEntityDeclHandler(p, feed_entity);
+    XML_SetParamEntityParsing(p, XML_PARAM_ENTITY_PARSING_NEVER);
   }
   return p;
 }
@@ -420,16 +430,27 @@ typedef struct {
   exr_error *error;
   char *tmpl;
   int opds_profile;
+  unsigned depth;
 } search_reader;
+static void search_fail(search_reader *s, exr_status status, const char *message) {
+  if (s->status == EXR_OK) { s->status = exr_fail(s->error, status, "%s", message); XML_StopParser(s->parser, XML_FALSE); }
+}
+static void XMLCALL search_entity(void *context, const XML_Char *name, int parameter, const XML_Char *value, int length,
+                                  const XML_Char *base, const XML_Char *system, const XML_Char *public_id, const XML_Char *notation) {
+  (void)name; (void)parameter; (void)value; (void)length; (void)base; (void)system; (void)public_id; (void)notation;
+  search_fail(context, EXR_FORMAT, "OpenSearch entity declarations are unsupported");
+}
+static void XMLCALL search_end(void *context, const char *name) { (void)name; ((search_reader *)context)->depth--; }
 static void XMLCALL search_start(void *context, const char *name, const char **a) {
   search_reader *s = context;
   const char *type, *tmpl;
+  if (++s->depth > OPDS_MAX_DEPTH) { search_fail(s, EXR_LIMIT, "OpenSearch nesting exceeds 64"); return; }
   if (s->status != EXR_OK || strcmp(local_name(name), "Url")) return;
   type = attr(a, "type"); tmpl = attr(a, "template");
   if (!tmpl || !has_ci(type, "atom+xml")) return;
   if (!s->tmpl || (!s->opds_profile && has_ci(type, "opds-catalog"))) {
     char *copy = exr_copy(tmpl, strlen(tmpl));
-    if (!copy) { s->status = exr_fail(s->error, EXR_MEMORY, "Search template allocation failed"); XML_StopParser(s->parser, XML_FALSE); return; }
+    if (!copy) { search_fail(s, EXR_MEMORY, "Search template allocation failed"); return; }
     free(s->tmpl);
     s->tmpl = copy;
     s->opds_profile = has_ci(type, "opds-catalog");
@@ -448,7 +469,9 @@ exr_status exr_opds_parse_search(const void *data, size_t size, const char *base
   s.parser = XML_ParserCreateNS(NULL, '|');
   if (!s.parser) return exr_fail(error, EXR_MEMORY, "XML parser allocation failed");
   XML_SetUserData(s.parser, &s);
-  XML_SetStartElementHandler(s.parser, search_start);
+  XML_SetElementHandler(s.parser, search_start, search_end);
+  XML_SetEntityDeclHandler(s.parser, search_entity);
+  XML_SetParamEntityParsing(s.parser, XML_PARAM_ENTITY_PARSING_NEVER);
   st = XML_Parse(s.parser, (const char *)data, (int)size, 1);
   if (s.status == EXR_OK && st != XML_STATUS_OK)
     s.status = exr_fail(error, EXR_FORMAT, "Malformed OpenSearch XML: %s", XML_ErrorString(XML_GetErrorCode(s.parser)));
