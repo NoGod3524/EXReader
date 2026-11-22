@@ -99,6 +99,8 @@ exr_status exr_image_page_sizes(const void *data,size_t size,uint32_t **sizes,si
    then report its exhaustion instead of the decoder's generic EXR_FORMAT. */
 void exr_image_budget_reset(void);
 exr_status exr_image_budget_status(exr_status status,exr_error *error);
+/* Consumes an stb pixel buffer and returns malloc-owned pixels on success. */
+unsigned char *exr_image_take_pixels(unsigned char *pixels,size_t size);
 
 int exr_image_format_detect(const void *data,size_t size);
 typedef struct {

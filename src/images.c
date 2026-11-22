@@ -71,6 +71,15 @@ static void *image_reallocate(void *memory, size_t n) {
 #define STBI_NO_STDIO
 #define STBI_MAX_DIMENSIONS INT_MAX /* Dimensions are checked after reading the header. */
 #include <stb_image.h>
+/* Remove the stb budget prefix in place so the caller owns a plain malloc
+   pointer. The move overlaps and leaves no second full-size allocation. */
+unsigned char *exr_image_take_pixels(unsigned char *pixels,size_t size) {
+  allocation *p=(allocation *)pixels-1;
+  if(p->size>working_bytes) { free(p);return NULL; }
+  working_bytes-=p->size;
+  if(size>p->size) { free(p);return NULL; }
+  return memmove(p,pixels,size);
+}
 /* Reuse the pinned stb entropy/IDCT and row resamplers. Its public JPEG loader
    converts CMYK to RGB too early for PDF Decode, color keys and ICCBased.
    Row reconstruction follows stb_image's load_jpeg_image (dual MIT/public domain). */

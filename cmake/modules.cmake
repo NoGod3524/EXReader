@@ -158,6 +158,11 @@ if(EXR_ENABLE_LCP)
   target_compile_definitions(exr_formats_objects PRIVATE EXR_ENABLE_LCP=1)
 endif()
 if(EXR_ENABLE_ICC)
+  # Size optimization for the color-conversion wrappers retained throughput
+  # and exact pixels in the MinGW Release comparison.
+  if(NOT MSVC AND CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+    set_property(SOURCE src/icc.c src/pdf_color.c APPEND PROPERTY COMPILE_OPTIONS "$<$<CONFIG:Release>:-Os>")
+  endif()
   exr_private_dependency(graphics exr_lcms)
   target_compile_definitions(exr_graphics_objects PRIVATE EXR_ENABLE_ICC=1)
   target_include_directories(exr_graphics_objects PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")

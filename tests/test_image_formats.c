@@ -147,6 +147,10 @@ static void matrix(const char *root,const char *format,const char *extension,uns
       }
       { exr_bitmap last={0};size_t bytes;OK(exr_image_decode_page(data,size,pages-1,&last,&error));bytes=last.stride*last.height;
         CHECK(memcmp(first,last.pixels,bytes)!=0);exr_bitmap_free(&last); }
+      { uint32_t w=1,h=1;
+        CHECK(exr_image_page_dimensions(data,size,pages,&w,&h,&error)==EXR_LIMIT && !w && !h);
+        CHECK(exr_image_decode_page(data,size,pages,&bitmap,&error)==EXR_LIMIT);
+        CHECK(!bitmap.pixels && !bitmap.width && !bitmap.height && !bitmap.stride && !bitmap.channels); }
       free(first);
     }
     free(data);

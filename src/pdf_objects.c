@@ -45,6 +45,7 @@ struct exr_pdf_file {
   size_t *decode_budget;
   exr_error error;
   void *image_cache;void (*image_cache_free)(void *);
+  void *cmyk_profile;void (*cmyk_profile_free)(void *);
   exr_buffer_pool buffer_pool;
 };
 typedef struct { exr_pdf_file *file; const unsigned char *data; size_t size,at; } parser;
@@ -526,6 +527,7 @@ bad:
 void exr_pdf_close(exr_pdf_file *f) {
   size_t i; if(!f) return;
   if(f->image_cache_free) f->image_cache_free(f->image_cache);
+  if(f->cmyk_profile_free) f->cmyk_profile_free(f->cmyk_profile);
   exr_buffer_pool_clear(&f->buffer_pool);
   for(i=0;i<f->stream_count;i++) { free(f->streams[i].decoded); free(f->streams[i].objects); free(f->streams[i].offsets); }
   free(f->streams); free(f->xref); free(f->values); free(f->strings.data); exr_pdf_secret_clear(&f->crypt,sizeof(f->crypt)); free(f);
@@ -772,6 +774,9 @@ void exr_pdf_control(exr_pdf_file *f,const exr_control *control) { if(f) f->cont
 void **exr_pdf_image_cache_slot(exr_pdf_file *f,void (*release)(void *)) {
   if(!f) return NULL;
   f->image_cache_free=release;return &f->image_cache;
+}
+void **exr_pdf_cmyk_profile_slot(exr_pdf_file *f,void (*release)(void *)) {
+  f->cmyk_profile_free=release;return &f->cmyk_profile;
 }
 exr_buffer_pool *exr_pdf_buffer_pool(exr_pdf_file *f) {
   if(f) { const char *enabled=getenv("EXR_BUFFER_POOL");f->buffer_pool.disabled=enabled && !strcmp(enabled,"0"); }

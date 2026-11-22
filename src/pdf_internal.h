@@ -32,6 +32,8 @@ typedef struct exr_pdf_file exr_pdf_file;
 /* Lazy, document-owned decoded image state. The callback avoids coupling the
    object parser (also built alone) to image codecs. */
 void **exr_pdf_image_cache_slot(exr_pdf_file *file,void (*release)(void *));
+/* Borrowed by color spaces for the duration of one render operation. */
+void **exr_pdf_cmyk_profile_slot(exr_pdf_file *file,void (*release)(void *));
 exr_buffer_pool *exr_pdf_buffer_pool(exr_pdf_file *file);
 /* The input is borrowed until close. IDs remain stable; value pointers may move
    when another indirect object is resolved. Public access uses the fixed-document adapter. */
@@ -161,13 +163,19 @@ size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *space);
 unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *space);
 exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *space);
 int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *space);
-/* Object-only image reuse excludes resource lookup and inherited intent. */
-int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *space,int own_intent);
+/* Resource-dependent colors cannot be reused by object ID alone. */
+int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *space);
+int exr_pdf_colorspace_uses_intent(const exr_pdf_colorspace *space);
 #define EXR_PDF_MAX_COLORANTS 32u
 void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double *ranges);
 void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double *values);
 exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double *values,double rgb[3],exr_error *error);
 exr_status exr_pdf_colorspace_rgb_intent(const exr_pdf_colorspace *space,const double *values,double rgb[3],unsigned intent,exr_error *error);
+#define EXR_PDF_COLOR_BATCH 64u
+int exr_pdf_colorspace_can_batch(const exr_pdf_colorspace *space);
+/* Input scratch is count tightly packed samples, output is count RGB triples. */
+exr_status exr_pdf_colorspace_rgb_batch(const exr_pdf_colorspace *space,double *samples,size_t count,double *rgb,
+  unsigned intent,exr_error *error);
 int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *space);
 size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *space);
 typedef struct {
