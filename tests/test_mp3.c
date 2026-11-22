@@ -371,6 +371,19 @@ int main(int argc,char **argv) {
   { unsigned char corrupt[sizeof(fixture_0)]; memcpy(corrupt,fixture_0,sizeof(corrupt)); corrupt[6]|=128;
     memset(&m,0,sizeof(m)); m.bytes=corrupt; m.size=sizeof(corrupt); s=source(&m); CHECK(exr_mp3_open_source(&s,&mp3,&error)==EXR_FORMAT && !mp3 && !m.released);
   }
+  { /* LAME trailing padding without Xing frame count cannot be trimmed while streaming. */
+    unsigned char no_frames[sizeof(fixture_0)]; memcpy(no_frames,fixture_0,sizeof(no_frames));
+    no_frames[87]&=~1u; memmove(no_frames+88,no_frames+92,144); memset(no_frames+232,0,4);
+    memset(&m,0,sizeof(m)); m.bytes=no_frames; m.size=sizeof(no_frames); s=source(&m);
+    CHECK(exr_mp3_open_source(&s,&mp3,&error)==EXR_FORMAT && !mp3 && !m.released);
+    CHECK(strstr(error.message,"Xing frame count"));
+    /* Zero effective trailing padding (529 == decoder delay) remains valid without Xing frame count. */
+    no_frames[196+22]=(unsigned char)((no_frames[196+22]&0xf0u)|2u); no_frames[196+23]=17u;
+    memset(&m,0,sizeof(m)); m.bytes=no_frames; m.size=sizeof(no_frames); s=source(&m);
+    OK(exr_mp3_open_source(&s,&mp3,&error)); CHECK(mp3 && exr_mp3_format(mp3)->frames==UINT64_MAX);
+    OK(exr_mp3_read(mp3,0,16,out,&got,NULL,&error)); CHECK(got==16);
+    exr_mp3_free(mp3); CHECK(m.released==1);
+  }
   CHECK(exr_mp3_open_source(NULL,&mp3,&error)==EXR_ARGUMENT && !mp3);
   CHECK(exr_mp3_read(NULL,0,1,out,&got,NULL,&error)==EXR_ARGUMENT && !got);
   printf("%u MP3 integration checks passed\n",checks); return 0;
