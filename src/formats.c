@@ -350,18 +350,7 @@ typedef struct {
   int in_meta,meta_kind,layout,spread_none;
   float viewport_width,viewport_height;
 } package;
-/* Space-separated property token test (OPF properties attribute). */
-static int has_token(const char *list,const char *token) {
-  size_t n=strlen(token);
-  while(list && *list) {
-    size_t k=0;
-    while(*list && space((unsigned char)*list)) list++;
-    while(list[k] && !space((unsigned char)list[k])) k++;
-    if(k==n && !strncmp(list,token,n)) return 1;
-    list+=k;
-  }
-  return 0;
-}
+#define has_token exr_has_token
 static void XMLCALL package_start(void *user, const char *full, const char **attrs) {
   package *p = user;
   const char *tag = local(full), *a, *b;

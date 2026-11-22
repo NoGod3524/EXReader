@@ -443,6 +443,8 @@ exr_status exr_image_decode_page_control(const void *data,size_t size,size_t pag
     return exr_fail(e,EXR_LIMIT,"GIF expanded frames exceed the 96 MiB decode budget");
   if(kind == EXR_IMAGE_WEBP && pages > 1 && (size_t)width * height * 4 > EXR_IMAGE_MAX_EXPANDED / pages)
     return exr_fail(e,EXR_LIMIT,"WebP expanded frames exceed the decode budget");
+  if(kind == EXR_IMAGE_AVIF && pages > 1 && (size_t)width * height * 4 > EXR_IMAGE_MAX_EXPANDED / pages)
+    return exr_fail(e,EXR_LIMIT,"AVIF expanded frames exceed the decode budget");
   switch(kind) {
     case EXR_IMAGE_PNG:
     case EXR_IMAGE_JPEG:

@@ -28,6 +28,7 @@ const char *exr_edit_xml_wa(const exr_node *n,const char *key);
 const char *exr_edit_xml_ns(const source_xml *x);
 size_t exr_edit_xml_child(const source_xml *x,size_t parent,const char *tag);
 int exr_edit_xml_integer(const char *s,int32_t *out);
+int exr_edit_xml_escape(exr_buffer *b,const char *s,size_t n);
 exr_status exr_edit_xml_parse(source_xml *x,const void *data,size_t size,const char *root,exr_error *e);
 void exr_edit_xml_free(source_xml *x);
 int exr_edit_xml_raw(exr_buffer *b,const source_xml *x,size_t n);

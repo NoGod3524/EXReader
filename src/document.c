@@ -17,20 +17,7 @@ const char *exr_html_tag(const exr_document *d, const exr_node *node) {
   return !strncmp(node->name, prefix, sizeof(prefix) - 1) ? node->name + sizeof(prefix) - 1 : "";
 }
 static int whitespace(unsigned char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; }
-static int token(const char *s, const char *word) {
-  size_t n = strlen(word);
-  while (s && *s) {
-    const char *start;
-    while (whitespace((unsigned char)*s))
-      s++;
-    start = s;
-    while (*s && !whitespace((unsigned char)*s))
-      s++;
-    if ((size_t)(s - start) == n && !memcmp(start, word, n))
-      return 1;
-  }
-  return 0;
-}
+#define token exr_has_token
 char *exr_model_copy(exr_document *d, const char *s, size_t n) {
   char *copy;
   if (n >= EXR_MAX_TEXT - d->model_bytes)

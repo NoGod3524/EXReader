@@ -137,10 +137,7 @@ static int missing(const exr_pdf_file *file,uint32_t id) {
 static exr_status field(exr_pdf_file *file,uint32_t dict,const char *name,uint32_t *out,exr_error *e) {
   return exr_pdf_resolve(file,exr_pdf_get(file,dict,name),out,e);
 }
-static int name_is(exr_pdf_file *file,uint32_t id,const char *name) {
-  const exr_pdf_value *v=exr_pdf_value_at(file,id); size_t n; const unsigned char *bytes=exr_pdf_bytes(file,id,&n);
-  return v && v->kind==EXR_PDF_NAME && bytes && n==strlen(name) && !memcmp(bytes,name,n);
-}
+#define name_is exr_pdf_name_is
 static exr_status numbers(exr_pdf_file *file,uint32_t id,double *out,size_t count,exr_error *e) {
   const exr_pdf_value *v=exr_pdf_value_at(file,id); uint32_t at; size_t i;
   if(!v || v->kind!=EXR_PDF_ARRAY) return exr_fail(e,EXR_FORMAT,"PDF annotation rectangle/matrix is not an array");

@@ -9,7 +9,11 @@
    (MSVC needs /experimental:c11atomics for <stdatomic.h>, and this build does
    not enable it). */
 static int diag_mode_snapshot(void) {
+#ifdef _MSC_VER
+  static __declspec(thread) int cached=-1;
+#else
   static _Thread_local int cached=-1;
+#endif
   if(cached<0) {
     static const char *const names[]={"","image","image-paint","image-decode","path","glyph","group","shading","softmask"};
     const char *name=getenv("EXR_ATTRIBUTION_SKIP");
@@ -241,6 +245,13 @@ const unsigned char *exr_pdf_bytes(const exr_pdf_file *f,uint32_t id,size_t *siz
   if(size) *size=v->u.bytes.length;
   return v->u.bytes.length ? (const unsigned char *)f->strings.data+v->u.bytes.offset : (const unsigned char *)"";
 }
+int exr_pdf_name_is(const exr_pdf_file *f,uint32_t id,const char *expected) {
+  const exr_pdf_value *v=exr_pdf_value_at(f,id); size_t n; const unsigned char *bytes;
+  if(!v || v->kind!=EXR_PDF_NAME) return 0;
+  bytes=exr_pdf_bytes(f,id,&n);
+  return bytes && n==strlen(expected) && !memcmp(bytes,expected,n);
+}
+#define name_is exr_pdf_name_is
 uint32_t exr_pdf_get(exr_pdf_file *f,uint32_t dict,const char *key) {
   const exr_pdf_value *d=exr_pdf_value_at(f,dict); uint32_t at,result=EXR_PDF_NONE; size_t length=strlen(key);
   if(!d || (d->kind!=EXR_PDF_DICT && d->kind!=EXR_PDF_STREAM)) return result;
@@ -289,16 +300,14 @@ static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
   id=parse_value(p,0); if(id==EXR_PDF_NONE) return id;
   last=f->value_count;
   if(f->crypt.revision && !f->loading_xref) {
-    uint32_t type=exr_pdf_get(f,id,"Type"); size_t n; const unsigned char *name=exr_pdf_bytes(f,type,&n);
-    int xref=name && f->values[type].kind==EXR_PDF_NAME && n==4 && !memcmp(name,"XRef",4);
+    int xref=name_is(f,exr_pdf_get(f,id,"Type"),"XRef");
     /* Signature Contents is an unencrypted byte string, even in a nested direct
        dictionary and when the optional /Type /Sig is absent. Mark it in the
        otherwise unused STRING.first field, then restore the scalar invariant. */
     for(i=first;!xref && i<last;i++) if(f->values[i].kind==EXR_PDF_DICT) {
       uint32_t contents=exr_pdf_get(f,(uint32_t)i,"Contents"),range=exr_pdf_get(f,(uint32_t)i,"ByteRange");
-      type=exr_pdf_get(f,(uint32_t)i,"Type"); name=exr_pdf_bytes(f,type,&n);
       if(contents!=EXR_PDF_NONE && f->values[contents].kind==EXR_PDF_STRING &&
-         ((name && f->values[type].kind==EXR_PDF_NAME && n==3 && !memcmp(name,"Sig",3)) ||
+         (name_is(f,exr_pdf_get(f,(uint32_t)i,"Type"),"Sig") ||
           (range!=EXR_PDF_NONE && f->values[range].kind==EXR_PDF_ARRAY))) f->values[contents].first=EXR_PDF_NONE-1;
     }
     for(i=first;!xref && i<last;i++) if(f->values[i].kind==EXR_PDF_STRING) {
@@ -320,8 +329,7 @@ static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
     if(!exr_grow((void **)&f->streams,&f->stream_capacity,f->stream_count+1,sizeof(*f->streams))) {
       failed(f,EXR_MEMORY,"PDF stream allocation failed"); return EXR_PDF_NONE;
     }
-    { uint32_t type=exr_pdf_get(f,id,"Type"); size_t n; const unsigned char *name=exr_pdf_bytes(f,type,&n);
-      unsigned xref=name && f->values[type].kind==EXR_PDF_NAME && n==4 && !memcmp(name,"XRef",4);
+    { unsigned xref=(unsigned)name_is(f,exr_pdf_get(f,id,"Type"),"XRef");
       index=f->stream_count++; f->streams[index]=(pdf_stream){.offset=start,.size=(size_t)length,.dict=id,.parameters=EXR_PDF_NONE,.object=object,.generation=generation,.unencrypted=f->loading_xref || xref};
     }
     f->values[id].kind=EXR_PDF_STREAM; f->values[id].u.ref.object=(uint32_t)index;
@@ -338,10 +346,6 @@ static int xref_room(exr_pdf_file *f,size_t count) {
   if(f->xref_capacity>previous) memset(f->xref+previous,0,(f->xref_capacity-previous)*sizeof(*f->xref));
   if(count>f->xref_count) f->xref_count=count;
   return 1;
-}
-static int name_is(exr_pdf_file *f,uint32_t id,const char *expected) {
-  size_t n; const unsigned char *bytes=exr_pdf_bytes(f,id,&n);
-  return bytes && f->values[id].kind==EXR_PDF_NAME && n==strlen(expected) && !memcmp(bytes,expected,n);
 }
 static int array_integers(exr_pdf_file *f,uint32_t id,uint64_t *values,size_t capacity,size_t *count) {
   const exr_pdf_value *v=exr_pdf_value_at(f,id); uint32_t at;

@@ -55,17 +55,7 @@ static int ssml_emit(ssml_writer *w,const char *text,size_t bytes,size_t charact
   w->result.characters+=characters;
   return 1;
 }
-static int ssml_token(const char *list,const char *token) {
-  size_t length=strlen(token);
-  if(!list) return 0;
-  while(*list) {
-    size_t n;while(*list==' ' || *list=='\t' || *list=='\n' || *list=='\r') list++;
-    n=strcspn(list," \t\r\n");
-    if(n==length && !memcmp(list,token,n)) return 1;
-    list+=n;
-  }
-  return 0;
-}
+#define ssml_token exr_has_token
 static unsigned ssml_omit(const exr_node *n) {
   const char *role=exr_node_attribute(n,"role");
   const char *type=exr_node_attribute(n,"http://www.idpf.org/2007/ops|type");

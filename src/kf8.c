@@ -710,15 +710,7 @@ static const cncx_string *cncx_find(const cncx_string *strings,size_t count,uint
   }
   return low<count && strings[low].key==key ? &strings[low] : NULL;
 }
-static int xml_escape(exr_buffer *out,const char *s,size_t size) {
-  size_t i;
-  for(i=0;i<size;i++) {
-    const char *replacement=s[i]=='&' ? "&amp;" : s[i]=='<' ? "&lt;" : s[i]=='>' ? "&gt;" :
-      s[i]=='"' ? "&quot;" : s[i]=='\r' ? "&#13;" : s[i]=='\n' ? "&#10;" : s[i]=='\t' ? "&#9;" : NULL;
-    if(!exr_append(out,replacement ? replacement : s+i,replacement ? strlen(replacement) : 1)) return 0;
-  }
-  return 1;
-}
+#define xml_escape exr_xml_escape
 static void to_base32(uint32_t value,char out[8]) {
   const char alphabet[]="0123456789ABCDEFGHIJKLMNOPQRSTUV"; char reversed[8]; size_t n=0,i;
   do { reversed[n++]=alphabet[value&31]; value>>=5; } while(value);

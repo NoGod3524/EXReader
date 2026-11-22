@@ -75,6 +75,7 @@ exr_status exr_pdf_serialize(const exr_pdf_file *file,uint32_t value,
 exr_status exr_pdf_real(exr_buffer *out,double value,exr_error *error);
 const exr_pdf_value *exr_pdf_value_at(const exr_pdf_file *file,uint32_t value);
 const unsigned char *exr_pdf_bytes(const exr_pdf_file *file,uint32_t value,size_t *size);
+int exr_pdf_name_is(const exr_pdf_file *file,uint32_t value,const char *name);
 uint32_t exr_pdf_get(exr_pdf_file *file,uint32_t dict,const char *key);
 exr_status exr_pdf_resolve(exr_pdf_file *file,uint32_t value,uint32_t *out,exr_error *error);
 exr_status exr_pdf_stream_data(exr_pdf_file *file,uint32_t stream,const unsigned char **data,

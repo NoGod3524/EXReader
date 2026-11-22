@@ -16,10 +16,7 @@ typedef struct {
   const exr_control *control; exr_error *error; int used_resources;
   struct { exr_pdf_file *file; uint32_t value; } active[16];
 } color_reader;
-static int name_is(exr_pdf_file *file,uint32_t id,const char *name) {
-  size_t size; const unsigned char *bytes=exr_pdf_bytes(file,id,&size); const exr_pdf_value *v=exr_pdf_value_at(file,id);
-  return v && v->kind==EXR_PDF_NAME && size==strlen(name) && !memcmp(bytes,name,size);
-}
+#define name_is exr_pdf_name_is
 static int resolve(color_reader *r,exr_pdf_file *file,uint32_t id,uint32_t *out) {
   return exr_pdf_resolve(file,id,out,r->error)==EXR_OK;
 }

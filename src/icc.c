@@ -7,7 +7,7 @@
 #include "default_cmyk_profile.h"
 #define ICC_BUDGET ((size_t)16*1024*1024)
 struct exr_icc {
-  cmsContext context;cmsHTRANSFORM transform;cmsHTRANSFORM intents[4];cmsColorSpaceSignature space;
+  cmsContext context;cmsHTRANSFORM intents[4];cmsColorSpaceSignature space;
   size_t bytes,cost;unsigned channels;int limited,failed,invalid,cancelled;
   exr_control control;cmsHTRANSFORM reverse;exr_error deferred;
 };
@@ -97,7 +97,6 @@ static exr_status open_profile(const void *data,size_t size,unsigned channels,co
          keeps CMYK output within a few levels of the reference. */
       p->intents[i]=cmsCreateTransformTHR(p->context,input,format,output,TYPE_RGB_DBL,table[i],
         cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE|(table[i]==INTENT_RELATIVE_COLORIMETRIC ? cmsFLAGS_BLACKPOINTCOMPENSATION : 0));
-    p->transform=p->intents[1];
     if(reverse) p->reverse=cmsCreateTransformTHR(p->context,output,TYPE_RGB_DBL,input,TYPE_CMYK_DBL,
       INTENT_RELATIVE_COLORIMETRIC,cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE|cmsFLAGS_BLACKPOINTCOMPENSATION);
   }
@@ -108,7 +107,7 @@ done:
   else if(p->limited) status=exr_fail(e,EXR_LIMIT,"ICC profile processing exceeds 16 MiB");
   else if(p->failed || !p->context) status=exr_fail(e,EXR_MEMORY,"ICC processing allocation failed");
   else if(status==EXR_OK) status=exr_control_cancel(control,e);
-  if(status==EXR_OK && p->transform && (!reverse || p->reverse) && !p->invalid) { *out=p;return EXR_OK; }
+  if(status==EXR_OK && p->intents[1] && (!reverse || p->reverse) && !p->invalid) { *out=p;return EXR_OK; }
   exr_icc_free(p);return status;
 }
 exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr_control *control,exr_icc **out,exr_error *e) {

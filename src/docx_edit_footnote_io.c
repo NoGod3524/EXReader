@@ -5,14 +5,7 @@
 #define CT "http://schemas.openxmlformats.org/package/2006/content-types"
 #define NOTE_TYPE "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml"
 static int put(exr_buffer *b,const char *s) { return exr_append(b,s,strlen(s)); }
-static int escape(exr_buffer *b,const char *s,size_t n) {
-  size_t i;
-  for (i=0;i<n;i++) {
-    const char *v=s[i]=='&' ? "&amp;" : s[i]=='<' ? "&lt;" : s[i]=='>' ? "&gt;" : s[i]=='\"' ? "&quot;" : s[i]=='\r' ? "&#13;" : NULL;
-    if (!(v ? put(b,v) : exr_append(b,s+i,1))) return 0;
-  }
-  return 1;
-}
+#define escape exr_edit_xml_escape
 static int relpath(const char *main,char path[2048]) {
   const char *slash=strrchr(main,'/'); size_t n=slash ? (size_t)(slash-main)+1 : 0;
   int length=snprintf(path,2048,"%.*s_rels/%s.rels",(int)n,main,main+n);

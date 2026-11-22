@@ -16,18 +16,7 @@ static const char *local(const char *name) {
   const char *p = name ? strrchr(name, '|') : NULL;
   return p ? p + 1 : name ? name : "";
 }
-static int has_token(const char *s, const char *word) {
-  size_t n = strlen(word);
-  while (s && *s) {
-    const char *e;
-    while (isspace((unsigned char)*s)) s++;
-    e = s;
-    while (*e && !isspace((unsigned char)*e)) e++;
-    if ((size_t)(e - s) == n && !strncmp(s, word, n)) return 1;
-    s = e;
-  }
-  return 0;
-}
+#define has_token exr_has_token
 static int ieq(const char *a, const char *b) {
   for (; *a && *b; a++, b++) if (tolower((unsigned char)*a) != tolower((unsigned char)*b)) return 0;
   return !*a && !*b;

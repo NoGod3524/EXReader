@@ -15,10 +15,7 @@ static int local(const exr_node *n,const char *space,const char *name) {
   size_t length=strlen(space);
   return n->name && !strncmp(n->name,space,length) && n->name[length]=='|' && !strcmp(n->name+length+1,name);
 }
-static int escape(exr_buffer *b,const char *s) {
-  for (;*s;s++) if (!put(b,*s=='&' ? "&amp;" : *s=='\"' ? "&quot;" : *s=='<' ? "&lt;" : *s=='>' ? "&gt;" : (char[2]){*s,0})) return 0;
-  return 1;
-}
+static int escape(exr_buffer *b,const char *s) { return exr_edit_xml_escape(b,s,strlen(s)); }
 exr_status exr_edit_insert_image(exr_edit_doc *d,exr_edit_id after,const void *bytes,size_t size,double width,double height,exr_edit_id *id) {
   exr_edit_image im={0}; exr_edit_block b={0}; exr_bitmap bitmap={0}; exr_status s=exr_edit_ready(d);
   if (id) *id=0;

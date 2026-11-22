@@ -103,6 +103,7 @@ static void roundtrip(const char *directory,int with_xmp,int hex) {
   exr_free(first); exr_free(second); exr_free(third);
 }
 static int cancelled(void *context) { return *(int *)context; }
+static int countdown_cancel(void *context) { int *left=context; return *left>0 ? (--*left==0) : 1; }
 static void final_stop(void *context,exr_stage stage,uint64_t done,uint64_t total) { if(stage==EXR_STAGE_EXPORT && done==total && done) *(int *)context=1; }
 static void fail(exr_status expected,const exr_metadata_entry *changes,size_t count,const exr_control *control) {
   void *bytes=(void *)(uintptr_t)1; size_t size=123;
@@ -118,6 +119,10 @@ static void invalid(void) {
   { exr_metadata_entry duplicates[]={{TITLE,"a"},{TITLE,NULL}}; fail(EXR_ARGUMENT,duplicates,2,NULL); }
   change.value="\xff"; fail(EXR_ENCODING,&change,1,NULL); change.value="new"; fail(EXR_CANCELLED,&change,1,&control);
   stop=0; control.progress=final_stop; fail(EXR_CANCELLED,&change,1,&control);
+  /* Cancellation inside exr_pdf_stream_data (4th cancel check, before XMP write) requires exr_pdf_control passthrough. */
+  { int left=4; exr_control stream_cancel={countdown_cancel,NULL,&left};
+    source(packet,sizeof(packet)-1,1,NULL,NULL); fail(EXR_CANCELLED,&change,1,&stream_cancel); source(NULL,0,0,NULL,NULL);
+  }
   { char large[32769]; memset(large,'A',sizeof(large)-1); large[sizeof(large)-1]=0; change.value=large; fail(EXR_LIMIT,&change,1,NULL); } change.value="new";
   source(NULL,0,0,"/Perms << /DocMDP 1 0 R >>",NULL); fail(EXR_FORMAT,&change,1,NULL);
   source(NULL,0,0,"/AcroForm << /XFA (unsupported) >>",NULL); fail(EXR_FORMAT,&change,1,NULL);

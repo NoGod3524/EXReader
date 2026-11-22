@@ -34,7 +34,7 @@ int exr_edit_xml_integer(const char *s,int32_t *out) {
   *out=(int32_t)v; return 1;
 }
 static unsigned on(const char *s) { return !s || (strcmp(s,"0") && strcmp(s,"false") && strcmp(s,"off")); }
-static int escaped(exr_buffer *b,const char *s,size_t n) {
+int exr_edit_xml_escape(exr_buffer *b,const char *s,size_t n) {
   size_t i;
   for (i=0;i<n;i++) {
     const char *r=s[i]=='&' ? "&amp;" : s[i]=='<' ? "&lt;" : s[i]=='>' ? "&gt;" :
@@ -43,6 +43,7 @@ static int escaped(exr_buffer *b,const char *s,size_t n) {
   }
   return 1;
 }
+#define escaped exr_edit_xml_escape
 static void XMLCALL span_start(void *context,const char *name,const char **attrs) {
   source_xml *x=context; size_t i=x->cursor; xml_span *s;
   (void)attrs;

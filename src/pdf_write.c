@@ -312,7 +312,7 @@ static exr_status edit(const void *data,size_t size,size_t page_index,const char
   size_t page_count=0,n=0,match=SIZE_MAX,i; uint32_t page_object_id,page_generation,annotation=0,generation=0,ap=0; exr_status status;
   w.status=EXR_OK; w.error=e; w.control=control; w.input_size=size;
   status=exr_control_poll(control,EXR_STAGE_READ,0,size,e); if(status!=EXR_OK) return status;
-  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status; exr_pdf_control(w.file,control);
   status=exr_pdf_pages(w.file,&pages,&page_count,e); if(status!=EXR_OK) goto done;
   if(page_index>=page_count) { status=exr_fail(e,EXR_ARGUMENT,"PDF annotation page is out of range"); goto done; }
   status=slots(w.file,pages[page_index].annotations,id,control,&items,&n,&match,e); if(status!=EXR_OK) goto done;
@@ -343,11 +343,10 @@ static exr_status edit(const void *data,size_t size,size_t page_index,const char
     items[match].remove=1;
     /* Some files only keep Popup -> Parent, without the reverse link. */
     for(i=0;i<n;i++) if(!items[i].remove) {
-      uint32_t subtype,parent; size_t length; const unsigned char *name; const exr_pdf_value *v;
+      uint32_t subtype,parent; const exr_pdf_value *v;
       v=exr_pdf_value_at(w.file,items[i].value); if(!v || v->kind!=EXR_PDF_DICT) continue;
       status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,items[i].value,"Subtype"),&subtype,e); if(status!=EXR_OK) goto done;
-      v=exr_pdf_value_at(w.file,subtype); name=exr_pdf_bytes(w.file,subtype,&length);
-      if(!v || v->kind!=EXR_PDF_NAME || length!=5 || !name || memcmp(name,"Popup",5)) continue;
+      if(!exr_pdf_name_is(w.file,subtype,"Popup")) continue;
       if(popup!=EXR_PDF_NONE && items[i].value==popup) { items[i].remove=1; continue; }
       status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,items[i].value,"Parent"),&parent,e); if(status!=EXR_OK) goto done;
       if(parent==items[match].value) items[i].remove=1;
@@ -494,7 +493,7 @@ exr_status exr_pdf_metadata_write(const void *data,size_t size,const exr_metadat
   }
   w.status=EXR_OK; w.error=e; w.control=control; w.input_size=size;
   status=exr_control_poll(control,EXR_STAGE_READ,0,size,e); if(status!=EXR_OK) return status;
-  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status; exr_pdf_control(w.file,control);
   if(!count) { status=output(&w,data,out,out_size); goto done; }
   status=permission(w.file,e); if(status!=EXR_OK) goto done;
   status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,exr_pdf_root(w.file),"AcroForm"),&form,e); if(status!=EXR_OK) goto done;
@@ -553,10 +552,7 @@ static exr_status form_get(form_reader *r,uint32_t dict,const char *key,uint32_t
 static int form_kind(form_reader *r,uint32_t id,exr_pdf_kind kind) {
   const exr_pdf_value *v=exr_pdf_value_at(r->file,id); return v && v->kind==kind;
 }
-static int form_name_is(form_reader *r,uint32_t id,const char *name) {
-  size_t n; const unsigned char *s=exr_pdf_bytes(r->file,id,&n);
-  return form_kind(r,id,EXR_PDF_NAME) && n==strlen(name) && !memcmp(s,name,n);
-}
+static int form_name_is(form_reader *r,uint32_t id,const char *name) { return exr_pdf_name_is(r->file,id,name); }
 static exr_status form_charge(form_reader *r,size_t n) {
   if(n>r->options.max_text_bytes-r->text_bytes) return exr_fail(r->error,EXR_LIMIT,"PDF form text budget exceeded");
   r->text_bytes+=n; return EXR_OK;

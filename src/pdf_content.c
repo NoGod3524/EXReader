@@ -97,10 +97,7 @@ static int new_line(content_reader *r,double x,double y) {
   if(!translate(r->line,x,y)) return 0;
   memcpy(r->matrix,r->line,sizeof(r->matrix)); return 1;
 }
-static int name_is(exr_pdf_file *arena,uint32_t id,const char *name) {
-  size_t size; const unsigned char *bytes=exr_pdf_bytes(arena,id,&size);
-  return bytes && exr_pdf_value_at(arena,id)->kind==EXR_PDF_NAME && size==strlen(name) && !memcmp(bytes,name,size);
-}
+#define name_is exr_pdf_name_is
 static int device_space(exr_pdf_file *arena,uint32_t id,exr_pdf_color_space *space) {
   if(name_is(arena,id,"DeviceGray")) *space=EXR_PDF_DEVICE_GRAY;
   else if(name_is(arena,id,"DeviceRGB")) *space=EXR_PDF_DEVICE_RGB;
@@ -610,11 +607,10 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     return select_font(r,id,size,error);
   }
   if(!strcmp(name,"Do")) {
-    uint32_t subtype; size_t n; const unsigned char *type;
+    uint32_t subtype;
     if(r->inside || count!=1 || resource(r,arena,values[0],"XObject",&id,error)!=EXR_OK) goto invalid;
     if(resolved(r->file,exr_pdf_get(r->file,id,"Subtype"),&subtype,error)!=EXR_OK) return error->code;
-    type=exr_pdf_bytes(r->file,subtype,&n);
-    if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==5 && !memcmp(type,"Image",5)) {
+    if(name_is(r->file,subtype,"Image")) {
       exr_pdf_paint_state paint=paint_state(r);
       int cover[4];
       if(r->graphics && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Image XObject is not a stream");
@@ -627,7 +623,7 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
       if(r->callbacks.image_coverage && image_cover(r,arena,cover)) paint.image_cover=cover;
       return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,r->file,r->resources,&paint,error) : EXR_OK;
     }
-    if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==4 && !memcmp(type,"Form",4)) return form(r,id,error);
+    if(name_is(r->file,subtype,"Form")) return form(r,id,error);
     return exr_fail(error,EXR_FORMAT,"Unsupported PDF text XObject subtype");
   }
   if(!strcmp(name,"Tf")) {

@@ -280,20 +280,12 @@ finish:
 }
 static exr_status import_cover(const exr_document *doc,void **data,size_t *size,exr_error *e) {
   size_t i; *data=NULL; *size=0;
-  for(i=0;i<doc->resource_count;i++) {
-    const char *p=doc->resources[i].properties;
-    while(p && *p) {
-      size_t length;
-      p+=strspn(p," \t\r\n"); length=strcspn(p," \t\r\n");
-      if(length==11 && !memcmp(p,"cover-image",11)) {
-        exr_status status=exr_document_resource(doc,i,data,size,e);
-        if(status!=EXR_OK) return status;
-        /* A large original stays in source; the quick-access cover column is bounded. */
-        if(*size>8*1024*1024) { free(*data); *data=NULL; *size=0; }
-        return EXR_OK;
-      }
-      p+=length;
-    }
+  for(i=0;i<doc->resource_count;i++) if(exr_has_token(doc->resources[i].properties,"cover-image")) {
+    exr_status status=exr_document_resource(doc,i,data,size,e);
+    if(status!=EXR_OK) return status;
+    /* A large original stays in source; the quick-access cover column is bounded. */
+    if(*size>8*1024*1024) { free(*data); *data=NULL; *size=0; }
+    return EXR_OK;
   }
   return EXR_OK;
 }

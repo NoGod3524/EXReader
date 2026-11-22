@@ -5,12 +5,7 @@
 #include <string.h>
 
 static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, message); }
-static int name_is(exr_pdf_file *file, uint32_t id, const char *name) {
-  const unsigned char *bytes; size_t size;
-  bytes = exr_pdf_bytes(file, id, &size);
-  const exr_pdf_value *v=exr_pdf_value_at(file,id);
-  return v && v->kind==EXR_PDF_NAME && bytes && strlen(name) == size && !memcmp(bytes, name, size);
-}
+#define name_is exr_pdf_name_is
 static int number(exr_pdf_file *file, uint32_t id, double *out) {
   const exr_pdf_value *v = exr_pdf_value_at(file, id);
   if (!v || (v->kind != EXR_PDF_INT && v->kind != EXR_PDF_REAL)) return 0;

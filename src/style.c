@@ -1109,16 +1109,7 @@ static void compete(winner *w, const declaration *a, size_t count, uint64_t base
     }
   }
 }
-static int class_token(const char *s,const char *word) {
-  size_t n=strlen(word);
-  while(s && *s) {
-    const char *a;
-    while(*s && isspace((unsigned char)*s)) s++;
-    a=s;while(*s && !isspace((unsigned char)*s)) s++;
-    if((size_t)(s-a)==n && !memcmp(a,word,n)) return 1;
-  }
-  return 0;
-}
+#define class_token exr_has_token
 static int title_node(const exr_node *n) {
   const char *classes=exr_node_attribute(n,"class");
   return n->kind==EXR_NODE_HEADING || class_token(exr_node_attribute(n,"role"),"heading") ||

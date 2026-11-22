@@ -69,6 +69,31 @@ int exr_append(exr_buffer *b, const void *s, size_t n) {
   b->data[b->size] = 0;
   return 1;
 }
+int exr_xml_escape(exr_buffer *b, const char *s, size_t n) {
+  size_t i, start = 0;
+  for (i = 0; i < n; i++) {
+    const char *r = s[i] == '&' ? "&amp;" : s[i] == '<' ? "&lt;" : s[i] == '>' ? "&gt;" :
+        s[i] == '"' ? "&quot;" : s[i] == '\r' ? "&#13;" : s[i] == '\n' ? "&#10;" :
+        s[i] == '\t' ? "&#9;" : NULL;
+    if (r) {
+      if (!exr_append(b, s + start, i - start) || !exr_append(b, r, strlen(r))) return 0;
+      start = i + 1;
+    }
+  }
+  return exr_append(b, s + start, n - start);
+}
+int exr_has_token(const char *list, const char *word) {
+  size_t n = strlen(word);
+  if (!list) return 0;
+  while (*list) {
+    size_t k;
+    list += strspn(list, " \t\r\n\f\v");
+    k = strcspn(list, " \t\r\n\f\v");
+    if (k == n && !memcmp(list, word, n)) return 1;
+    list += k;
+  }
+  return 0;
+}
 int exr_codepoint(exr_buffer *b, uint32_t cp) {
   unsigned char s[4];
   size_t n;

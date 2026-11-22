@@ -21,10 +21,6 @@ static uint32_t get(image_reader *r,uint32_t dict,const char *key) {
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NULL) id=EXR_PDF_NONE;
   return id;
 }
-static int name_is(image_reader *r,uint32_t id,const char *name) {
-  size_t n; const unsigned char *bytes=exr_pdf_bytes(r->file,id,&n);
-  return bytes && exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NAME && n==strlen(name) && !memcmp(bytes,name,n);
-}
 static int integer(image_reader *r,uint32_t id,uint32_t *out) {
   const exr_pdf_value *v=exr_pdf_value_at(r->file,id);
   if(!v || v->kind!=EXR_PDF_INT || v->u.integer<0 || (uint64_t)v->u.integer>UINT32_MAX) return 0;
@@ -76,12 +72,6 @@ static void release_texture(exr_vector_texture *texture,image_chain *chain) {
   free(texture->bitmap.pixels); free(texture);
 }
 void exr_pdf_image_release(exr_vector_texture *texture) { release_texture(texture,NULL); }
-static int image_name_is(exr_pdf_file *file,uint32_t id,const char *name) {
-  const exr_pdf_value *v=exr_pdf_value_at(file,id);size_t n;const unsigned char *bytes;
-  if(!v || v->kind!=EXR_PDF_NAME) return 0;
-  bytes=exr_pdf_bytes(file,id,&n);
-  return bytes && n==strlen(name) && !memcmp(bytes,name,n);
-}
 /* A decoded pixel is a pure function of its raw samples unless a matte mixes
    in the soft mask, so repeated sample tuples can reuse the converted bytes. */
 typedef struct { uint64_t key; unsigned char valid,rgba[4],inks[4]; } pixel_memo;
@@ -122,7 +112,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   id=get(&r,image,"SMaskInData");
   if(id!=EXR_PDF_NONE) { uint32_t value; if(!integer(&r,id,&value) || value) goto invalid; }
   mask=get(&r,image,"SMask");
-  if(mask!=EXR_PDF_NONE && name_is(&r,mask,"None")) mask=EXR_PDF_NONE;
+  if(mask!=EXR_PDF_NONE && exr_pdf_name_is(file,mask,"None")) mask=EXR_PDF_NONE;
   if(mask!=EXR_PDF_NONE && exr_pdf_diag_skip(EXR_DIAG_SOFTMASK)) {
     soft=1;
     mask=EXR_PDF_NONE;
@@ -216,7 +206,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
       exr_fail(&r.error,EXR_FORMAT,"PDF JPEG stencil/indexed/ColorTransform override is unsupported"); goto done;
     }
     if(!jpeg_frame(bytes,size,width,height,channels)) goto invalid;
-    status=channels==4 ? exr_jpeg_cmyk_decode(bytes,size,control,&bitmap,&r.error) : exr_image_decode(bytes,size,&bitmap,&r.error);
+    status=channels==4 ? exr_jpeg_cmyk_decode(bytes,size,control,&bitmap,&r.error) : exr_image_decode_control(bytes,size,control,&bitmap,&r.error);
     if(status!=EXR_OK) { if(r.error.code==EXR_OK) r.error.code=status; goto done; }
     if(bitmap.width!=width || bitmap.height!=height) goto invalid;
   } else {
@@ -230,7 +220,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     if(ri!=EXR_PDF_NONE && exr_pdf_value_at(file,ri)->kind!=EXR_PDF_NULL) {
       own_intent=1;
       const char *names[4]={"Perceptual","RelativeColorimetric","Saturation","AbsoluteColorimetric"}; unsigned n;int found=0;
-      for(n=0;n<4;n++) if(image_name_is(file,ri,names[n])) { intent=n;found=1;break; }
+      for(n=0;n<4;n++) if(exr_pdf_name_is(file,ri,names[n])) { intent=n;found=1;break; }
       if(!found) { exr_fail(&r.error,EXR_FORMAT,"Invalid PDF image rendering intent"); goto done; }
     }
   }
@@ -305,7 +295,6 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
                     double unit=(double)raw/255.;
                     double val=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
                     val=fmax(0,fmin(1,matte_rgb[k]+(val-matte_rgb[k])/a));
-                    val=fmax(0,fmin(1,val));
                     matte_lut[ma][k][raw]=(unsigned char)floor(val*255+.5);
                   }
                 }
@@ -327,7 +316,6 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
                   double unit=(double)raw/255.;
                   double val=decode[0]+unit*(decode[1]-decode[0]);
                   val=fmax(0,fmin(1,matte_rgb[0]+(val-matte_rgb[0])/a));
-                  val=fmax(0,fmin(1,val));
                   matte_lut[ma][0][raw]=(unsigned char)floor(val*255+.5);
                 }
                 matte_ready[ma]=1;

@@ -198,10 +198,7 @@ done:
 }
 
 static exr_status get(exr_pdf_file *f,uint32_t d,const char *name,uint32_t *out,exr_error *e) { return exr_pdf_resolve(f,exr_pdf_get(f,d,name),out,e); }
-static int named(exr_pdf_file *f,uint32_t value,const char *name) {
-  const exr_pdf_value *v=exr_pdf_value_at(f,value); size_t n; const unsigned char *p=exr_pdf_bytes(f,value,&n);
-  return v && v->kind==EXR_PDF_NAME && p && n==strlen(name) && !memcmp(p,name,n);
-}
+#define named exr_pdf_name_is
 static int number(exr_pdf_file *f,uint32_t d,const char *name,int64_t fallback,int64_t *out,exr_error *e) {
   uint32_t id; const exr_pdf_value *v; if(get(f,d,name,&id,e)!=EXR_OK) return 0;
   v=exr_pdf_value_at(f,id); if(!v) { *out=fallback; return 1; } if(v->kind!=EXR_PDF_INT) return 0; *out=v->u.integer; return 1;
