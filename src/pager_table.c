@@ -66,7 +66,8 @@ static int rows(flow *f, exr_table_cursor *t, size_t parent) {
   size_t child;
   for (child = (exr_doc_node(f->doc,parent)).first_child; child != SIZE_MAX;
        child = (exr_doc_node(f->doc,child)).next_sibling) {
-    if ((*exr_doc_style(f->doc,f->styles,child)).display == EXR_CSS_NONE)
+    if ((*exr_doc_style(f->doc,f->styles,child)).display == EXR_CSS_NONE ||
+        (exr_doc_node(f->doc,child)).start == SIZE_MAX)
       continue;
     if ((*exr_doc_style(f->doc,f->styles,child)).display == EXR_CSS_ROW) {
       if (t->row_count >= 4096 ||
@@ -521,7 +522,8 @@ exr_status exr_table_create(flow *f, size_t node, float x, float width,
          child = (exr_doc_node(f->doc,child)).next_sibling) {
       table_cell *c;
       size_t colspan, rowspan, k;
-      if ((*exr_doc_style(f->doc,f->styles,child)).display != EXR_CSS_CELL)
+      if ((*exr_doc_style(f->doc,f->styles,child)).display != EXR_CSS_CELL ||
+          (exr_doc_node(f->doc,child)).start == SIZE_MAX)
         continue;
       colspan = span((const exr_node[]){exr_doc_node(f->doc,child)}, "colspan", 65);
       rowspan = span((const exr_node[]){exr_doc_node(f->doc,child)}, "rowspan", t->row_count - i);
@@ -931,7 +933,7 @@ static exr_status split_row(flow *f,exr_table_cursor *t,int *done) {
   /* Commit only after every cell and the complete shared grid are valid. */
   for(i=0;i<n;i++) {
     table_cell *c=t->cells+t->first+i;trial *part=parts+i;c->finished=part->finished;
-    if(part->position>t->position) t->position=part->position;
+    if(part->position!=SIZE_MAX && part->position>t->position) t->position=part->position;
     if(part->cursor || part->finished) { exr_pager_free(c->cursor);c->cursor=part->cursor;part->cursor=NULL; }
     exr_layout_free(part->layout);part->layout=NULL;
   }
@@ -940,7 +942,11 @@ static exr_status split_row(flow *f,exr_table_cursor *t,int *done) {
   t->consumed+=height;f->y+=height;
   if(!last) return EXR_PAUSE;
   if(t->end==t->row_count) f->y+=boundary(t,t->end);
-  for(i=t->first;i<t->last;i++) { exr_pager_free(t->cells[i].cursor);t->cells[i].cursor=NULL;if((exr_doc_node(f->doc,t->cells[i].node)).end>t->position) t->position=(exr_doc_node(f->doc,t->cells[i].node)).end; }
+  for(i=t->first;i<t->last;i++) {
+    size_t end=(exr_doc_node(f->doc,t->cells[i].node)).end;
+    exr_pager_free(t->cells[i].cursor);t->cells[i].cursor=NULL;
+    if(end!=SIZE_MAX && end>t->position) t->position=end;
+  }
   t->row=t->end;t->first=t->last;t->measured=t->fragmented=0;t->consumed=0;*done=t->row==t->row_count;
   return EXR_OK;
 bad:
