@@ -1569,7 +1569,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
       }
       status=exr_composite_initialize(&next,state,parent,parent_state,backdrop_x,backdrop_y,&c->work,&c->control,e);
     }
-    else state->depth=1;
+    else { state->left=next.width;state->top=next.height;state->depth=1; }
   }
   if(status!=EXR_OK) { free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,status,e); }
   if(!needs_state && count>=4096) layer.damage.band_height=(uint32_t)((region_height+31)/32);

@@ -3,11 +3,14 @@
 #include "formats_internal.h"
 #include <ctype.h>
 
-typedef struct style_allocation {
-  void *pointer;
-  size_t size;
-  struct style_allocation *next;
-} style_allocation;
+typedef union style_allocation style_allocation;
+union style_allocation {
+  max_align_t alignment;
+  struct {
+    size_t size;
+    style_allocation *previous, *next;
+  } live;
+};
 typedef struct {
   size_t budget, bytes, peak;
   style_allocation *allocations;
@@ -28,53 +31,58 @@ static int style_reserve(size_t bytes) {
 static void *style_malloc(size_t size) {
   style_budget *b = active_budget;
   style_allocation *record;
-  void *data;
   if (!b) return malloc(size);
   if (!size) size = 1;
   if (size > SIZE_MAX - sizeof(*record)) { b->failed = EXR_LIMIT; return NULL; }
   if (!style_reserve(size + sizeof(*record))) return NULL;
-  data = malloc(size);
-  if (!data) { b->failed = EXR_MEMORY; return NULL; }
-  record = malloc(sizeof(*record));
-  if (!record) { free(data); b->failed = EXR_MEMORY; return NULL; }
-  *record = (style_allocation){data,size,b->allocations}; b->allocations = record;
-  b->bytes += size + sizeof(*record); return data;
+  record = malloc(sizeof(*record) + size);
+  if (!record) { b->failed = EXR_MEMORY; return NULL; }
+  record->live.size = size;
+  record->live.previous = NULL;
+  record->live.next = b->allocations;
+  if (b->allocations) b->allocations->live.previous = record;
+  b->allocations = record;
+  b->bytes += size + sizeof(*record);
+  return record + 1;
 }
 static void style_free(void *data) {
   style_budget *b = active_budget;
-  style_allocation **at;
-  if (!data) return;
-  if (b) {
-    for (at = &b->allocations; *at; at = &(*at)->next) if ((*at)->pointer == data) {
-      style_allocation *record = *at;
-      *at = record->next; b->bytes -= record->size + sizeof(*record); free(record); break;
-    }
+  if (data && b) {
+    style_allocation *record = (style_allocation *)data - 1;
+    if (record->live.previous) record->live.previous->live.next = record->live.next;
+    else b->allocations = record->live.next;
+    if (record->live.next) record->live.next->live.previous = record->live.previous;
+    b->bytes -= record->live.size + sizeof(*record);
+    data = record;
   }
   free(data);
 }
-static void *style_calloc(size_t count,size_t size) {
-  void *data;
-  if (size && count > SIZE_MAX / size) { if (active_budget) active_budget->failed = EXR_LIMIT; return NULL; }
-  data = style_malloc(count * size);
-  if (data) memset(data,0,count * size);
-  return data;
-}
 static void *style_realloc(void *data,size_t size) {
-  style_budget *b = active_budget;
   style_allocation *record;
   void *replacement;
-  if (!b) return realloc(data,size);
+  if (!active_budget) return realloc(data,size);
   if (!data) return style_malloc(size);
   if (!size) { style_free(data); return NULL; }
-  for (record = b->allocations; record && record->pointer != data; record = record->next) {}
-  if (!record) { b->failed = EXR_FORMAT; return NULL; }
-  /* Explicit old/new overlap keeps the charged peak exact and bounded. */
-  if (!style_reserve(size)) return NULL;
-  replacement = malloc(size);
-  if (!replacement) { b->failed = EXR_MEMORY; return NULL; }
-  memcpy(replacement,data,size < record->size ? size : record->size); free(data);
-  b->bytes = b->bytes - record->size + size; record->pointer = replacement; record->size = size;
+  record = (style_allocation *)data - 1;
+  /* Keep both allocations charged until the old block has been copied. */
+  replacement = style_malloc(size);
+  if (!replacement) return NULL;
+  memcpy(replacement,data,size < record->live.size ? size : record->live.size);
+  style_free(data);
   return replacement;
+}
+/* Styles, family names, and font rules remain ordinary allocations for callers. */
+static void *style_retained(size_t count,size_t size) {
+  style_budget *b = active_budget;
+  void *data;
+  if (count > SIZE_MAX / size) { if (b) b->failed = EXR_LIMIT; return NULL; }
+  if (!style_reserve(count * size)) return NULL;
+  data = calloc(count,size);
+  if (b) {
+    if (data) b->bytes += count * size;
+    else b->failed = EXR_MEMORY;
+  }
+  return data;
 }
 static int style_grow(void **data,size_t *capacity,size_t count,size_t unit) {
   size_t next = *capacity ? *capacity : 64;
@@ -192,12 +200,30 @@ typedef struct {
   size_t count, chapter;
   int user;
 } rule;
+enum { MAX_STYLE_FONTS = 64, SELECTOR_CHILD = 1 << 15, SELECTOR_PARTS = 16,
+       SELECTOR_BYTES = 512, SELECTOR_TAG = 1, SELECTOR_ID = 2, SELECTOR_CLASS = 4 };
+typedef struct {
+  uint16_t offset, length;
+} selector_part;
+typedef struct {
+  uint32_t first, next, specificity;
+  uint16_t rule;
+  unsigned char count;
+} selector;
+typedef struct {
+  uint32_t head, visited;
+} selector_bucket;
 typedef struct {
   rule *rules;
   size_t count, capacity, bytes, declarations, work;
   exr_status failed;
   exr_font_rule *fonts;
-  size_t font_count, font_capacity;
+  size_t font_count;
+  selector *selectors;
+  selector_part *parts;
+  selector_bucket *buckets;
+  size_t selector_count, selector_capacity, part_count, part_capacity, bucket_count;
+  unsigned selector_keys;
 } css;
 typedef struct {
   const char *value;
@@ -221,25 +247,34 @@ static int equal(const char *s, size_t n, const char *word) {
   return 1;
 }
 static int identifier(unsigned char c) { return isalnum(c) || c == '-' || c == '_' || c >= 128; }
-static int word_in(const char *s, const char *word, size_t length) {
-  while (s && *s) {
-    const char *a;
-    while (ws(*s))
-      s++;
-    a = s;
-    while (*s && !ws(*s))
-      s++;
-    if ((size_t)(s - a) == length && !memcmp(a, word, length))
-      return 1;
+static int selector_work(css *c, size_t amount) {
+  if (amount > 20000000 - c->work) {
+    c->failed = EXR_LIMIT;
+    return 0;
   }
+  c->work += amount;
+  return 1;
+}
+static int next_word(css *c, const char **cursor, const char **word, size_t *length) {
+  const char *s = *cursor;
+  if (!s || !*s) return 0;
+  while (ws(*s)) s++;
+  *word = s;
+  while (*s && !ws(*s)) s++;
+  if (c && !selector_work(c,1 + (size_t)(s - *cursor) / 64)) return 0;
+  *length = (size_t)(s - *word);
+  *cursor = s;
+  return *length != 0;
+}
+static int word_in(css *c, const char *s, const char *word, size_t length) {
+  const char *token;
+  size_t n;
+  while (next_word(c,&s,&token,&n))
+    if (n == length && !memcmp(token,word,n)) return 1;
   return 0;
 }
-typedef struct {
-  const char *text;
-  size_t size;
-  int child;
-} selector_part;
-static int selector_parse(const char *s, size_t n, selector_part parts[16], unsigned *specificity) {
+static int selector_parse(const char *s, size_t n, selector_part parts[SELECTOR_PARTS],
+                          unsigned *specificity) {
   size_t i = 0;
   int count = 0, child = 0;
   unsigned ids = 0, classes = 0, tags = 0;
@@ -247,7 +282,7 @@ static int selector_parse(const char *s, size_t n, selector_part parts[16], unsi
     i++;
   while (i < n) {
     size_t start = i;
-    if (count == 16)
+    if (count == SELECTOR_PARTS)
       return 0;
     if (s[i] == '*')
       i++;
@@ -270,9 +305,8 @@ static int selector_parse(const char *s, size_t n, selector_part parts[16], unsi
     }
     if (start == i || (i < n && !ws(s[i]) && s[i] != '>'))
       return 0;
-    parts[count].text = s + start;
-    parts[count].size = i - start;
-    parts[count++].child = child;
+    parts[count++] = (selector_part){(uint16_t)start,
+      (uint16_t)((i - start) | (child ? SELECTOR_CHILD : 0))};
     while (i < n && ws(s[i]))
       i++;
     child = i < n && s[i] == '>';
@@ -289,76 +323,118 @@ static int selector_parse(const char *s, size_t n, selector_part parts[16], unsi
   *specificity = (ids << 16) | (classes << 8) | tags;
   return count;
 }
-static int part_matches(const exr_node *node, selector_part part) {
+static int part_matches(css *c, const exr_node *node, const char *s, size_t size) {
   size_t i = 0, start;
-  const char *s = part.text, *value;
+  const char *value;
   if (node->kind == EXR_NODE_TEXT ||
       (!node->name && (node->kind == EXR_NODE_DOCUMENT || node->kind == EXR_NODE_CHAPTER)))
     return 0;
   if (s[0] == '*')
     i++;
   else if (identifier((unsigned char)s[0])) {
-    while (i < part.size && identifier((unsigned char)s[i]))
+    while (i < size && identifier((unsigned char)s[i]))
       i++;
     value = tag(node);
     if (strlen(value) != i || memcmp(value, s, i))
       return 0;
   }
-  while (i < part.size) {
+  while (i < size) {
     char type = s[i++];
     start = i;
-    while (i < part.size && identifier((unsigned char)s[i]))
+    while (i < size && identifier((unsigned char)s[i]))
       i++;
     value = exr_node_attribute(node, type == '#' ? "id" : "class");
     if (type == '#') {
       if (!value || strlen(value) != i - start || memcmp(value, s + start, i - start))
         return 0;
-    } else if (!word_in(value, s + start, i - start))
+    } else if (!word_in(c,value, s + start, i - start))
       return 0;
   }
   return 1;
 }
-static int selector_match(css *c, const exr_document *d, const selector_part *parts, int at,
-                          size_t node) {
+static int selector_match(css *c, const exr_document *d, const char *text,
+                          const selector_part *parts, int at, size_t node) {
   size_t parent;
-  if (++c->work > 20000000) {
-    c->failed = EXR_LIMIT;
-    return 0;
-  }
-  if (!part_matches(&d->nodes[node], parts[at]))
+  selector_part part = parts[at];
+  if (!selector_work(c,1) ||
+      !part_matches(c,&d->nodes[node],text + part.offset,part.length & ~SELECTOR_CHILD))
     return 0;
   if (!at)
     return 1;
   parent = d->nodes[node].parent;
   while (parent != SIZE_MAX) {
-    if (selector_match(c, d, parts, at - 1, parent))
+    if (selector_match(c,d,text,parts,at - 1,parent))
       return 1;
-    if (parts[at].child || c->failed)
+    if ((part.length & SELECTOR_CHILD) || c->failed)
       break;
     parent = d->nodes[parent].parent;
   }
   return 0;
 }
-static int match(css *c, const exr_document *d, size_t node, const char *selectors,
-                 unsigned *best) {
-  const char *p = selectors;
-  int found = 0;
-  *best = 0;
-  while (*p) {
-    selector_part parts[16];
-    unsigned specificity;
-    size_t n = strcspn(p, ",");
-    int count = selector_parse(p, n, parts, &specificity);
-    if (count && selector_match(c, d, parts, count - 1, node)) {
-      if (!found || specificity > *best)
-        *best = specificity;
-      found = 1;
-    }
-    p += n;
-    if (*p)
-      p++;
+static size_t selector_hash(const css *c, char type, const char *s, size_t size) {
+  uint32_t hash = UINT32_C(2166136261) ^ (unsigned char)type;
+  size_t i;
+  for (i = 0; i < size; i++) hash = (hash ^ (unsigned char)s[i]) * UINT32_C(16777619);
+  return 1 + (hash & (c->bucket_count - 1));
+}
+static size_t selector_key(css *c, const char *text, selector_part part) {
+  const char *s = text + part.offset;
+  size_t i = 0, first = 0, length = 0, size = part.length & ~SELECTOR_CHILD;
+  char type = 0;
+  if (s[0] == '*') i++;
+  else {
+    while (i < size && identifier((unsigned char)s[i])) i++;
+    if (i) { type = 't'; length = i; }
   }
-  return found;
+  while (i < size) {
+    const char key = s[i++];
+    size_t start = i;
+    while (i < size && identifier((unsigned char)s[i])) i++;
+    if (type != '#') { type = key; first = start; length = i - start; }
+  }
+  if (!type) return 0;
+  c->selector_keys |= type == '#' ? SELECTOR_ID : type == '.' ? SELECTOR_CLASS : SELECTOR_TAG;
+  return selector_hash(c,type,s + first,length);
+}
+static int selector_index(css *c) {
+  size_t r;
+  for (r = 0; r < c->count; r++) {
+    const char *text = c->rules[r].selector;
+    size_t start = 0;
+    while (text[start]) {
+      selector_part parts[SELECTOR_PARTS];
+      unsigned specificity;
+      size_t length = strcspn(text + start,",");
+      int count = selector_parse(text + start,length,parts,&specificity);
+      if (count) {
+        size_t j, bucket;
+        if (!c->buckets) {
+          c->bucket_count = 16;
+          while (c->bucket_count < c->count && c->bucket_count < 1024) c->bucket_count *= 2;
+          c->buckets = style_malloc((c->bucket_count + 1) * sizeof(*c->buckets));
+          if (!c->buckets) goto failed;
+          memset(c->buckets,0,(c->bucket_count + 1) * sizeof(*c->buckets));
+        }
+        if (!style_grow((void **)&c->selectors,&c->selector_capacity,c->selector_count + 1,sizeof(selector)) ||
+            !style_grow((void **)&c->parts,&c->part_capacity,c->part_count + (size_t)count,sizeof(selector_part)))
+          goto failed;
+        for (j = 0; j < (size_t)count; j++) parts[j].offset += (uint16_t)start;
+        bucket = selector_key(c,text,parts[count - 1]);
+        memcpy(c->parts + c->part_count,parts,(size_t)count * sizeof(*parts));
+        /* Counts fit these fields under the 1 MiB and 4096 rule limits. */
+        c->selectors[c->selector_count++] = (selector){(uint32_t)c->part_count,
+          c->buckets[bucket].head,specificity,(uint16_t)r,(unsigned char)count};
+        c->part_count += (size_t)count;
+        c->buckets[bucket].head = (uint32_t)c->selector_count;
+      }
+      start += length;
+      if (text[start]) start++;
+    }
+  }
+  return 1;
+failed:
+  c->failed = EXR_MEMORY;
+  return 0;
 }
 static int property(const char *s, size_t n) {
   static const struct { const char *alias, *canonical; } aliases[] = {
@@ -687,16 +763,20 @@ static int stylesheet(css *c, const char *source, size_t n, size_t chapter, int 
     if (embedded_fonts && equal(s + start, end - start, "@font-face")) {
       exr_font_rule font;
       if (exr_parse_font_rule(s + open + 1, close - open - 1, base, chapter, &font)) {
-        if (c->font_count >= 64 ||
-            !style_grow((void **)&c->fonts, &c->font_capacity, c->font_count + 1, sizeof(font))) {
+        if (c->font_count == MAX_STYLE_FONTS) {
           c->failed = EXR_LIMIT;
+          break;
+        }
+        if (!c->fonts) c->fonts = style_retained(MAX_STYLE_FONTS,sizeof(font));
+        if (!c->fonts) {
+          c->failed = EXR_MEMORY;
           break;
         }
         c->fonts[c->font_count++] = font;
       }
       continue;
     }
-    if (s[start] == '@' || open - start > 512)
+    if (s[start] == '@' || open - start > SELECTOR_BYTES)
       continue;
     if (c->count >= 4096 ||
         !style_grow((void **)&c->rules, &c->capacity, c->count + 1, sizeof(rule))) {
@@ -1109,6 +1189,55 @@ static void compete(winner *w, const declaration *a, size_t count, uint64_t base
     }
   }
 }
+static void compete_bucket(css *c, const exr_document *d, size_t node, size_t bucket,
+                           winner *w, const exr_style *s, const exr_style *parent, float root) {
+  selector_bucket *b = &c->buckets[bucket];
+  uint32_t i, visit = (uint32_t)node + 1;
+  /* Several node keys can reach the same bucket. Match each full selector once. */
+  if (!b->head || b->visited == visit) return;
+  b->visited = visit;
+  for (i = b->head; i && !c->failed;) {
+    const selector *item = &c->selectors[i - 1];
+    const rule *r = &c->rules[item->rule];
+    if (!selector_work(c,1)) return;
+    /* Ranks preserve the original cascade independently of bucket traversal. */
+    if ((r->chapter == SIZE_MAX || r->chapter == d->nodes[node].chapter) &&
+        selector_match(c,d,r->selector,c->parts + item->first,item->count - 1,node)) {
+      uint64_t rank = ((uint64_t)item->specificity << 24) | ((uint64_t)item->rule << 8);
+      if (r->user) rank |= UINT64_C(1) << 62;
+      compete(w,r->declarations,r->count,rank,s,parent,root);
+    }
+    i = item->next;
+  }
+}
+static void compete_selectors(css *c, const exr_document *d, size_t node, winner *w,
+                              const exr_style *s, const exr_style *parent, float root) {
+  const exr_node *n = &d->nodes[node];
+  const char *key, *classes;
+  size_t length;
+  if (!c->buckets || n->kind == EXR_NODE_TEXT ||
+      (!n->name && (n->kind == EXR_NODE_DOCUMENT || n->kind == EXR_NODE_CHAPTER)))
+    return;
+  compete_bucket(c,d,node,0,w,s,parent,root);
+  if ((c->selector_keys & SELECTOR_TAG) && !c->failed) {
+    key = tag(n);
+    length = strlen(key);
+    if (length && length <= SELECTOR_BYTES)
+      compete_bucket(c,d,node,selector_hash(c,'t',key,length),w,s,parent,root);
+  }
+  if ((c->selector_keys & SELECTOR_ID) && !c->failed) {
+    key = exr_node_attribute(n,"id");
+    length = key ? strlen(key) : 0;
+    if (length && length <= SELECTOR_BYTES)
+      compete_bucket(c,d,node,selector_hash(c,'#',key,length),w,s,parent,root);
+  }
+  if (c->selector_keys & SELECTOR_CLASS) {
+    classes = exr_node_attribute(n,"class");
+    while (!c->failed && next_word(c,&classes,&key,&length))
+      if (length <= SELECTOR_BYTES)
+        compete_bucket(c,d,node,selector_hash(c,'.',key,length),w,s,parent,root);
+  }
+}
 #define class_token exr_has_token
 static int title_node(const exr_node *n) {
   const char *classes=exr_node_attribute(n,"class");
@@ -1123,7 +1252,7 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
   css c = {0};
   exr_style *styles = NULL, initial = {0};
   const exr_layout_options *o = &config->page;
-  size_t i, r, family_bytes = 0;
+  size_t i, family_bytes = 0;
   int side;
   initial.font_size = o->font_size;
   initial.leading = o->line_height;
@@ -1154,7 +1283,7 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
                            config->embedded_fonts))
             goto done;
       } else if (!strcmp(exr_html_tag(d, n), "link") &&
-                 word_in(exr_node_attribute(n, "rel"), "stylesheet", 10)) {
+                 word_in(NULL,exr_node_attribute(n, "rel"), "stylesheet", 10)) {
         const char *href = exr_node_attribute(n, "href");
         size_t resource, target, size;
         void *bytes = NULL;
@@ -1181,7 +1310,8 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
   if (config->user_css && !stylesheet(&c, config->user_css, strlen(config->user_css), SIZE_MAX, 1,
                                       "", config->embedded_fonts))
     goto done;
-  styles = style_calloc(d->node_count, sizeof(*styles));
+  if (!selector_index(&c)) goto done;
+  styles = style_retained(d->node_count, sizeof(*styles));
   if (!styles) {
     c.failed = EXR_MEMORY;
     goto done;
@@ -1278,23 +1408,8 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
       if (attr)
         length(attr, s->font_size, o->font_size, 1, &s->height);
     }
-    for (r = 0; r < c.count; r++) {
-      rule *v = &c.rules[r];
-      unsigned specificity;
-      if (++c.work > 20000000) {
-        c.failed = EXR_LIMIT;
-        goto done;
-      }
-      if ((v->chapter == SIZE_MAX || v->chapter == n->chapter) &&
-          match(&c, d, i, v->selector, &specificity)) {
-        uint64_t rank = ((uint64_t)specificity << 24) | ((uint64_t)r << 8);
-        if (v->user)
-          rank |= UINT64_C(1) << 62;
-        compete(w, v->declarations, v->count, rank, s, parent, o->font_size);
-      }
-      if (c.failed)
-        goto done;
-    }
+    compete_selectors(&c,d,i,w,s,parent,o->font_size);
+    if (c.failed) goto done;
     attr = config->document_css ? exr_node_attribute(n, "style") : NULL;
     if (attr) {
       char *clean = clean_css(attr, strlen(attr));
@@ -1334,14 +1449,15 @@ static exr_status compute_styles(const exr_document *d, const exr_layout_config 
       if (parent->family && !strcmp(parent->family, s->family)) s->family = parent->family;
       else {
         size_t length = strlen(s->family) + 1;
-        const char *copy = NULL;
-        if (length <= 1024 * 1024 - family_bytes) copy = style_copy(s->family, length - 1);
+        char *copy = NULL;
+        if (length <= 1024 * 1024 - family_bytes) copy = style_retained(length,1);
         if (!copy) {
           s->family = NULL;
           style_free(inline_declarations);
           c.failed = length > 1024 * 1024 - family_bytes ? EXR_LIMIT : EXR_MEMORY;
           goto done;
         }
+        memcpy(copy,s->family,length);
         family_bytes += length;
         s->family = copy;
         s->family_owned = 1;
@@ -1359,9 +1475,12 @@ done:
     style_free(c.rules[i].declarations);
   }
   style_free(c.rules);
+  style_free(c.selectors);
+  style_free(c.parts);
+  style_free(c.buckets);
   if (c.failed) {
     exr_styles_free(styles, d->node_count);
-    style_free(c.fonts);
+    free(c.fonts);
     return exr_fail(e, c.failed, c.failed == EXR_CANCELLED ? "Operation cancelled" :
                      "Stylesheet decoding or complexity limit failed");
   }
@@ -1382,7 +1501,6 @@ exr_status exr_compute_styles_bounded(const exr_document *d,const exr_layout_con
   size_t budget,exr_style **styles,exr_font_rule **fonts,size_t *font_count,
   exr_style_memory *memory,exr_error *e) {
   style_budget state = {0}, *previous = active_budget;
-  style_allocation *record;
   exr_status status;
   if (memory) memset(memory,0,sizeof(*memory));
   if (!styles || !fonts || !font_count) return exr_fail(e,EXR_ARGUMENT,"Missing bounded style output");
@@ -1393,19 +1511,17 @@ exr_status exr_compute_styles_bounded(const exr_document *d,const exr_layout_con
   status = compute_styles(d,config,styles,fonts,font_count,e);
   if (state.failed) status = state.failed;
   if (status != EXR_OK) {
-    exr_styles_free(*styles,d->node_count); style_free(*fonts);
+    exr_styles_free(*styles,d->node_count); free(*fonts);
     *styles = NULL; *fonts = NULL; *font_count = 0;
     exr_fail(e,status,"Stylesheet decoding or allocation budget failed");
   }
-  if (memory) memory->peak_bytes = state.peak;
-  while ((record = state.allocations) != NULL) {
-    state.allocations = record->next;
-    if (status != EXR_OK) free(record->pointer);
-    else if (memory) {
-      memory->retained_bytes += record->size;
-      if (record->pointer == *fonts) memory->retained_fonts_bytes = record->size;
+  while (state.allocations) style_free(state.allocations + 1);
+  if (memory) {
+    memory->peak_bytes = state.peak;
+    if (status == EXR_OK) {
+      memory->retained_bytes = state.bytes - sizeof(state);
+      if (*fonts) memory->retained_fonts_bytes = MAX_STYLE_FONTS * sizeof(**fonts);
     }
-    free(record);
   }
   active_budget = previous; return status;
 }
@@ -1413,8 +1529,8 @@ void exr_styles_free(exr_style *styles, size_t count) {
   size_t i;
   if (!styles) return;
   for (i = 0; i < count; i++)
-    if (styles[i].family_owned) style_free((void *)styles[i].family);
-  style_free(styles);
+    if (styles[i].family_owned) free((void *)styles[i].family);
+  free(styles);
 }
 
 static int font_rule_ws(unsigned char c) { return c == ' ' || (c >= 9 && c <= 13); }

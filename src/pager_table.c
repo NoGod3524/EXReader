@@ -240,17 +240,19 @@ static exr_status column_hints(flow *f,exr_table_cursor *t,size_t parent,exr_len
   }
   return EXR_OK;
 }
+typedef struct { float pairs[128*128]; unsigned char known[128*128]; } table_kerning;
+
 /* Exact min/max-content scan for a plain Latin cell without OpenType shaping.
    Rich trees/scripts keep the general two-pass algorithm below. The pair cache
    is bounded independently of the amount of text. */
 static exr_status plain_widths(flow *f,const exr_table_cursor *t,const table_cell *cell,
-                                float *minimum,float *maximum,int *handled) {
+                                table_kerning **scratch,float *minimum,float *maximum,int *handled) {
   const exr_node *node=(const exr_node[]){exr_doc_node(f->doc,cell->node)},*text;
   const exr_style *style;
   struct { exr_face *face; uint32_t glyph; float advance; int ready; } metrics[128]={{0}};
   size_t child=node->first_child,at,order[32],ordered,i;
-  float *kern=NULL,word=0,first_indent,left,right;
-  unsigned char *known=NULL;unsigned previous=0,word_previous=0;int first=1;
+  table_kerning *kern=NULL;float word=0,first_indent,left,right;
+  unsigned previous=0;int in_word=0,first=1;
   double total;exr_status status=EXR_OK;
   *handled=0;
   if(f->intrinsic || f->writing_mode!=EXR_WRITING_HORIZONTAL_TB || f->auto_bases || child==SIZE_MAX) return EXR_OK;
@@ -274,13 +276,17 @@ static exr_status plain_widths(flow *f,const exr_table_cursor *t,const table_cel
   left=length_value((*exr_doc_style(f->doc,f->styles,cell->node)).padding[3],t->width)+(t->collapse ? cell->border[3] : exr_border_extent(exr_doc_style(f->doc,f->styles,cell->node),3));
   right=length_value((*exr_doc_style(f->doc,f->styles,cell->node)).padding[1],t->width)+(t->collapse ? cell->border[1] : exr_border_extent(exr_doc_style(f->doc,f->styles,cell->node),1));
   if(left+right+1>t->width) return EXR_OK;
-  kern=calloc(128*128,sizeof(*kern));known=calloc(128*128,1);
-  if(!kern || !known) { free(kern);free(known);return EXR_OK; }
+  if(text->end-text->start>64) {
+    if(!*scratch && !(*scratch=malloc(sizeof(**scratch)))) return EXR_OK;
+    kern=*scratch;
+    /* Pairs depend on the face and size used by this cell. */
+    memset(kern->known,0,sizeof(kern->known));
+  }
   *handled=1;*minimum=left+right;
   first_indent=fmaxf(0,(*exr_doc_style(f->doc,f->styles,cell->node)).indent);total=first_indent;
   ordered=exr_font_order(f->font,style->family,style->flags,text->chapter,order);
   for(at=text->start;at<text->end;at++) {
-    unsigned c=exr_doc_byte(f->doc,at);float spacing=0,word_spacing=0;
+    unsigned c=exr_doc_byte(f->doc,at);float spacing=0;
     if(c>=128 || !c) { status=exr_fail(f->error,EXR_ENCODING,"Unavailable intrinsic cell source");break; }
     if(++f->assets->work_glyphs>EXR_MAX_ITEMS) { status=exr_fail(f->error,EXR_LIMIT,"Text work limit exceeded");break; }
     if(!(f->assets->work_glyphs&255)) {
@@ -299,17 +305,18 @@ static exr_status plain_widths(flow *f,const exr_table_cursor *t,const table_cel
     }
     if(previous && metrics[previous].face==metrics[c].face) {
       size_t pair=previous*128+c;
-      if(!known[pair]) { kern[pair]=exr_kern(metrics[c].face,metrics[previous].glyph,metrics[c].glyph);known[pair]=1; }
-      spacing=kern[pair];
+      if(!kern || !kern->known[pair]) {
+        spacing=exr_kern(metrics[c].face,metrics[previous].glyph,metrics[c].glyph);
+        if(kern) { kern->pairs[pair]=spacing;kern->known[pair]=1; }
+      } else spacing=kern->pairs[pair];
     }
     total+=metrics[c].advance+spacing;
     if(c==' ') {
       *minimum=fmaxf(*minimum,left+word+(first ? first_indent : 0)+right);
-      if(word_previous) first=0;
-      word=0;word_previous=0;
+      if(in_word) first=0;
+      word=0;in_word=0;
     } else {
-      if(word_previous && metrics[word_previous].face==metrics[c].face) word_spacing=kern[word_previous*128+c];
-      word+=metrics[c].advance+word_spacing;word_previous=c;
+      word+=metrics[c].advance+(in_word ? spacing : 0);in_word=1;
     }
     previous=c;
   }
@@ -318,11 +325,12 @@ static exr_status plain_widths(flow *f,const exr_table_cursor *t,const table_cel
     *maximum=(float)(left+total+right);
     if(!isfinite(*maximum) || *maximum>1e9) status=exr_fail(f->error,EXR_LIMIT,"Intrinsic table width exceeds coordinate budget");
   }
-  free(kern);free(known);return status;
+  return status;
 }
 static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
   float widths[64]={0},preferred[64]={0},total=0,available=t->width; unsigned kinds[64]={0},lowest=2;
   size_t column=0,i,n,automatic=0; exr_status status;
+  table_kerning *kern=NULL;
   exr_style table=exr_flow_style(exr_doc_style(f->doc,f->styles,node),f->writing_mode);
   int fixed=table.table_fixed && table.width.value>=0 && (!f->intrinsic || !table.width.percent);
   exr_length empty={-1,0};
@@ -336,17 +344,17 @@ static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
     const table_cell *cell=&t->cells[i]; exr_style style; float width=0,minimum=0,maximum=0; flow local=cell_flow(f,t,cell);
     if(cell->colspan!=n) continue;
     if(fixed && cell->row) continue;
-    status=exr_control_cancel(&f->config->control,f->error); if(status!=EXR_OK) return status;
+    status=exr_control_cancel(&f->config->control,f->error); if(status!=EXR_OK) goto measured;
     style=exr_flow_style(exr_doc_style(f->doc,f->styles,cell->node),f->writing_mode);
     if(style.width.value>=0) width=length_value(style.width,t->width)+length_value(style.padding[1],t->width)+length_value(style.padding[3],t->width)+
       (t->collapse ? cell->border[1]+cell->border[3] : exr_border_extent(&style,1)+exr_border_extent(&style,3));
     width=fminf(width,t->width*64);
     if(!fixed) {
       int handled=0;
-      status=plain_widths(&local,t,cell,&minimum,&maximum,&handled);if(status!=EXR_OK) return status;
+      status=plain_widths(&local,t,cell,&kern,&minimum,&maximum,&handled);if(status!=EXR_OK) goto measured;
       if(!handled) {
-        if(f->intrinsic!=2) { status=exr_flow_intrinsic(&local,cell->node,t->width,1,&minimum); if(status!=EXR_OK) return status; }
-        if(f->intrinsic!=1) { status=exr_flow_intrinsic(&local,cell->node,t->width,2,&maximum); if(status!=EXR_OK) return status; }
+        if(f->intrinsic!=2) { status=exr_flow_intrinsic(&local,cell->node,t->width,1,&minimum); if(status!=EXR_OK) goto measured; }
+        if(f->intrinsic!=1) { status=exr_flow_intrinsic(&local,cell->node,t->width,2,&maximum); if(status!=EXR_OK) goto measured; }
       }
     }
     if(!fixed) {
@@ -369,6 +377,9 @@ static exr_status column_widths(flow *f,exr_table_cursor *t,size_t node) {
       hint(preferred,kinds,cell->column,cell->colspan,maximum);
     }
   }
+measured:
+  free(kern);
+  if(status!=EXR_OK) return status;
   {
     double min_total=0,max_total=0;
     for(i=0;i<t->columns;i++) {
