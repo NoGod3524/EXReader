@@ -178,7 +178,7 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     exr_pdf_colorspace_free(base); *out=s; return EXR_OK;
   }
   if(name_is(file,value,"DeviceN")) {
-    uint32_t at,names[EXR_PDF_MAX_COLORANTS]; size_t lengths[EXR_PDF_MAX_COLORANTS]; const unsigned char *labels[EXR_PDF_MAX_COLORANTS];
+    uint32_t at,names[EXR_PDF_MAX_COLORANTS];
     unsigned n=0,j,all_none=1;
     if(!array(r,file,id,ids,4)) {
       if(!array(r,file,id,ids,5)) goto bad;
@@ -186,15 +186,20 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     }
     v=exr_pdf_value_at(file,ids[1]); if(!v || v->kind!=EXR_PDF_ARRAY) goto bad;
     for(at=v->first;at!=EXR_PDF_NONE;) {
-      uint32_t next; const exr_pdf_value *entry=exr_pdf_value_at(file,at); if(!entry) goto bad; next=entry->next;
+      uint32_t next; const exr_pdf_value *entry=exr_pdf_value_at(file,at); const unsigned char *label; size_t length;
+      if(!entry) goto bad;
+      next=entry->next;
       if(n==EXR_PDF_MAX_COLORANTS) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN exceeds 32 colorants"); goto done; }
       if(!resolve(r,file,at,&names[n])) goto bad;
-      v=exr_pdf_value_at(file,names[n]); labels[n]=exr_pdf_bytes(file,names[n],&lengths[n]);
-      if(!v || v->kind!=EXR_PDF_NAME || !labels[n] || !lengths[n] || memchr(labels[n],0,lengths[n]) || name_is(file,names[n],"All")) goto bad;
-      if(lengths[n]>127) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN colorant name exceeds 127 bytes"); goto done; }
+      v=exr_pdf_value_at(file,names[n]); label=exr_pdf_bytes(file,names[n],&length);
+      if(!v || v->kind!=EXR_PDF_NAME || !label || !length || memchr(label,0,length) || name_is(file,names[n],"All")) goto bad;
+      if(length>127) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN colorant name exceeds 127 bytes"); goto done; }
       if(!name_is(file,names[n],"None")) {
         all_none=0;
-        for(j=0;j<n;j++) if(lengths[j]==lengths[n] && !memcmp(labels[j],labels[n],lengths[n])) goto bad;
+        for(j=0;j<n;j++) {
+          size_t prev_length; const unsigned char *prev=exr_pdf_bytes(file,names[j],&prev_length);
+          if(prev && prev_length==length && !memcmp(prev,label,length)) goto bad;
+        }
       }
       n++; at=next;
     }
