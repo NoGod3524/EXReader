@@ -44,6 +44,129 @@ static void concurrent(exr_library *a,exr_library *b,const char *text) {
   }
   CHECK(jobs[0].id==jobs[1].id && jobs[0].created+jobs[1].created==1);
 }
+typedef struct { const char *path; exr_library *library; exr_status status; exr_error error; } open_job;
+static WORKER open_worker(void *context) { open_job *j=context; j->status=exr_library_open(j->path,&j->library,&j->error); return 0; }
+static void concurrent_open(const char *dir) {
+  char path[4096]; unsigned round; size_t i;
+  snprintf(path,sizeof(path),"%s/concurrent-open.sqlite",dir);
+  for(round=0;round<8;round++) {
+    open_job jobs[4]={{0},{0},{0},{0}};
+#ifdef _WIN32
+    HANDLE threads[4];
+#else
+    pthread_t threads[4];
+#endif
+    remove(path);
+    for(i=0;i<4;i++) {
+      jobs[i].path=path;
+#ifdef _WIN32
+      threads[i]=CreateThread(NULL,0,open_worker,&jobs[i],0,NULL); CHECK(threads[i]);
+#else
+      CHECK(!pthread_create(&threads[i],NULL,open_worker,&jobs[i]));
+#endif
+    }
+    for(i=0;i<4;i++) {
+#ifdef _WIN32
+      CHECK(WaitForSingleObject(threads[i],INFINITE)==WAIT_OBJECT_0); CloseHandle(threads[i]);
+#else
+      CHECK(!pthread_join(threads[i],NULL));
+#endif
+      if(jobs[i].status!=EXR_OK) fprintf(stderr,"open round %u worker %zu: %s\n",round,i,jobs[i].error.message);
+      CHECK(jobs[i].status==EXR_OK && jobs[i].library);
+      exr_library_close(jobs[i].library);
+    }
+  }
+  /* Concurrent v6->v7 migration on the same file. */
+  sql(path,"DROP TABLE epub_notes;DROP TABLE epub_progress;DROP TABLE epub_bounded_books;PRAGMA user_version=6;");
+  { open_job jobs[4]={{0},{0},{0},{0}};
+#ifdef _WIN32
+    HANDLE threads[4];
+#else
+    pthread_t threads[4];
+#endif
+    for(i=0;i<4;i++) {
+      jobs[i].path=path;
+#ifdef _WIN32
+      threads[i]=CreateThread(NULL,0,open_worker,&jobs[i],0,NULL); CHECK(threads[i]);
+#else
+      CHECK(!pthread_create(&threads[i],NULL,open_worker,&jobs[i]));
+#endif
+    }
+    for(i=0;i<4;i++) {
+#ifdef _WIN32
+      CHECK(WaitForSingleObject(threads[i],INFINITE)==WAIT_OBJECT_0); CloseHandle(threads[i]);
+#else
+      CHECK(!pthread_join(threads[i],NULL));
+#endif
+      if(jobs[i].status!=EXR_OK) fprintf(stderr,"migrate worker %zu: %s\n",i,jobs[i].error.message);
+      CHECK(jobs[i].status==EXR_OK && jobs[i].library);
+      exr_library_close(jobs[i].library);
+    }
+  }
+  remove(path);
+}
+typedef struct {
+  exr_library *library; int mode; int64_t book_id;
+  int64_t ids[64]; exr_status failed; exr_error error;
+} mutator_job;
+static WORKER mutator_worker(void *context) {
+  mutator_job *j=context; unsigned i;
+  for(i=0;i<64;i++) {
+    exr_status st;
+    if(j->mode==0) {
+      st=exr_library_clear_audio(j->library,i&1 ? "k1" : "k2",&j->error);
+      if(st!=EXR_OK) { j->failed=st; return 0; }
+    } else if(j->mode==1) {
+      char body[32]; snprintf(body,sizeof(body),"row-%p-%u",(void *)j,i);
+      st=exr_library_import(j->library,EXR_TXT,body,strlen(body),body,&j->ids[i],&j->error);
+      if(st!=EXR_OK || j->ids[i]<=0) { j->failed=st==EXR_OK ? EXR_DATABASE : st; return 0; }
+    } else if(j->mode==2) {
+      st=exr_library_cover(j->library,j->book_id,"cvr",3,&j->error);
+      if(st!=EXR_OK) { j->failed=st; return 0; }
+    } else {
+      st=exr_library_cover(j->library,99999999,"cvr",3,&j->error);
+      if(st!=EXR_ARGUMENT) { j->failed=st==EXR_OK ? EXR_DATABASE : st; return 0; }
+    }
+  }
+  return 0;
+}
+static void concurrent_mutators(const char *dir) {
+  char path[4096]; exr_library *l=NULL; int64_t book_id=0;
+  mutator_job jobs[6]={{0}}; size_t i,a,b;
+#ifdef _WIN32
+  HANDLE threads[6];
+#else
+  pthread_t threads[6];
+#endif
+  snprintf(path,sizeof(path),"%s/concurrent-mutators.sqlite",dir); remove(path);
+  OK(exr_library_open(path,&l,&error));
+  OK(exr_library_import(l,EXR_TXT,"base",4,"Base",&book_id,&error));
+  jobs[0].library=l; jobs[0].mode=0;
+  jobs[1].library=l; jobs[1].mode=0;
+  jobs[2].library=l; jobs[2].mode=1;
+  jobs[3].library=l; jobs[3].mode=1;
+  jobs[4].library=l; jobs[4].mode=2; jobs[4].book_id=book_id;
+  jobs[5].library=l; jobs[5].mode=3;
+  for(i=0;i<6;i++) {
+#ifdef _WIN32
+    threads[i]=CreateThread(NULL,0,mutator_worker,&jobs[i],0,NULL); CHECK(threads[i]);
+#else
+    CHECK(!pthread_create(&threads[i],NULL,mutator_worker,&jobs[i]));
+#endif
+  }
+  for(i=0;i<6;i++) {
+#ifdef _WIN32
+    CHECK(WaitForSingleObject(threads[i],INFINITE)==WAIT_OBJECT_0); CloseHandle(threads[i]);
+#else
+    CHECK(!pthread_join(threads[i],NULL));
+#endif
+    if(jobs[i].failed!=EXR_OK) fprintf(stderr,"mutator %zu (mode %d): %d %s\n",i,jobs[i].mode,jobs[i].failed,jobs[i].error.message);
+    CHECK(jobs[i].failed==EXR_OK);
+  }
+  /* All 128 concurrent exr_library_import() calls on the shared handle must return distinct row IDs. */
+  for(a=0;a<64;a++) for(b=0;b<64;b++) CHECK(jobs[2].ids[a]!=jobs[3].ids[b]);
+  exr_library_close(l); remove(path);
+}
 int main(int argc,char **argv) {
   exr_library *l=NULL,*other=NULL; char path[4096],backup[4096]; int64_t a,b,id,note_id; int created; exr_note note={0},*notes=NULL; size_t n; exr_book *books=NULL; void *cover=NULL;
   const char source[]="Exact text",changed[]="Exact texT"; CHECK(argc==3);
@@ -83,5 +206,8 @@ int main(int argc,char **argv) {
   sql(path,"INSERT INTO books(id,format,title,text_size,source) VALUES(0,1,'Invalid ID',7,x'636f7272757074');");
   CHECK(exr_library_import_unique(l,EXR_TXT,"corrupt",7,NULL,&id,&created,&error)==EXR_DATABASE && !id && !created);
   sql(path,"DELETE FROM books WHERE id=0;");
-  exr_library_close(l); remove(path); remove(backup); printf("%u exact duplicate import checks passed\n",checks); return 0;
+  exr_library_close(l); remove(path); remove(backup);
+  concurrent_open(argv[2]);
+  concurrent_mutators(argv[2]);
+  printf("%u exact duplicate import checks passed\n",checks); return 0;
 }

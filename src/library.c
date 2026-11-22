@@ -32,7 +32,7 @@ static exr_status open_fixed(exr_format format,const void *data,size_t size,
   "start INTEGER NOT NULL CHECK(start>=0),end INTEGER NOT NULL CHECK(end>start)," \
   "exact TEXT NOT NULL,prefix TEXT,suffix TEXT,chapter TEXT,text TEXT NOT NULL);" \
   "CREATE INDEX epub_notes_book ON epub_notes(book_id,part,start,id);"
-#define SCHEMA_FINISH EPUB_BOUNDED_SCHEMA "PRAGMA user_version=7;COMMIT;"
+#define SCHEMA_FINISH EPUB_BOUNDED_SCHEMA "PRAGMA user_version=7;"
 typedef struct library_source library_source;
 struct exr_library {
   sqlite3 *db;
@@ -96,9 +96,9 @@ static exr_status require_global_storage(exr_library *l,int64_t id,exr_error *e)
 }
 exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
   exr_library *l;
-  int result;
-  const char *schema = "BEGIN IMMEDIATE;"
-                       "CREATE TABLE IF NOT EXISTS books(id INTEGER PRIMARY KEY,format INTEGER "
+  int result, app, version, transaction = 0;
+  const char *migration = NULL;
+  const char *schema = "CREATE TABLE IF NOT EXISTS books(id INTEGER PRIMARY KEY,format INTEGER "
                        "NOT NULL,title TEXT NOT NULL,author TEXT NOT NULL DEFAULT '',tags TEXT "
                        "NOT NULL DEFAULT '',favorite INTEGER NOT NULL DEFAULT 0 CHECK(favorite "
                        "IN(0,1)),status INTEGER NOT NULL DEFAULT 0 CHECK(status BETWEEN 0 AND "
@@ -131,78 +131,64 @@ exr_status exr_library_open(const char *path, exr_library **out, exr_error *e) {
   if (sqlite3_exec(l->db, "PRAGMA foreign_keys=ON;PRAGMA trusted_schema=OFF;", NULL, NULL, NULL) !=
       SQLITE_OK) {
     database_error(l, e);
-    exr_library_close(l);
-    return EXR_DATABASE;
+    goto failed;
   }
-  {
-    int app = scalar(l->db, "PRAGMA application_id"),
-        version = scalar(l->db, "PRAGMA user_version");
-    if (app == 1163416131 && version == 1) {
-      const char *migration =
-          "BEGIN IMMEDIATE;ALTER TABLE notes ADD COLUMN anchor_exact TEXT;"
-          "ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;"
-          "ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;"
-          "ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;"
-          FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH;
-      if (sqlite3_exec(l->db, migration, NULL, NULL, NULL) != SQLITE_OK) {
-        database_error(l, e);
-        sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
-        exr_library_close(l);
-        return EXR_DATABASE;
-      }
-      *out = l;
-      return EXR_OK;
-    }
-    if(app==1163416131 && version==2) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH,NULL,NULL,NULL)!=SQLITE_OK) {
-        database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
-      }
-      *out=l; return EXR_OK;
-    }
-    if(app==1163416131 && version==3) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH,NULL,NULL,NULL)!=SQLITE_OK) {
-        database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
-      }
-      *out=l; return EXR_OK;
-    }
-    if(app==1163416131 && version==4) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH,NULL,NULL,NULL)!=SQLITE_OK) {
-        database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE;
-      }
-      *out=l; return EXR_OK;
-    }
-    if(app==1163416131 && version==5) {
-      const char *migration="BEGIN IMMEDIATE;DROP TRIGGER books_progress_changed;ALTER TABLE book_progress RENAME TO book_progress_v5;"
-        PROGRESS_SCHEMA "INSERT INTO book_progress SELECT * FROM book_progress_v5;DROP TABLE book_progress_v5;" LOCATION_SCHEMA SCHEMA_FINISH;
-      if(sqlite3_exec(l->db,migration,NULL,NULL,NULL)!=SQLITE_OK) { database_error(l,e); sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); exr_library_close(l); return EXR_DATABASE; }
-      *out=l; return EXR_OK;
-    }
-    if (app == 1163416131 && version == 6) {
-      if(sqlite3_exec(l->db,"BEGIN IMMEDIATE;" SCHEMA_FINISH,NULL,NULL,NULL)!=SQLITE_OK) {
-        database_error(l,e);sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL);exr_library_close(l);return EXR_DATABASE;
-      }
-      *out=l;return EXR_OK;
-    }
-    if (app == 1163416131 && version == 7) {
-      *out = l;
-      return EXR_OK;
-    }
-    if (app != 0 || version != 0 ||
-        scalar(l->db, "SELECT count(*) FROM sqlite_master WHERE name NOT LIKE "
-                      "'sqlite_%'") != 0) {
-      exr_fail(e, EXR_DATABASE, "Not an EXReader library or unsupported schema version");
-      exr_library_close(l);
-      return EXR_DATABASE;
-    }
+  app = scalar(l->db, "PRAGMA application_id");
+  version = scalar(l->db, "PRAGMA user_version");
+  if (app == 1163416131 && version == 7) {
+    *out = l;
+    return EXR_OK;
   }
-  if (sqlite3_exec(l->db, schema, NULL, NULL, NULL) != SQLITE_OK) {
+  if (sqlite3_exec(l->db, "BEGIN IMMEDIATE;", NULL, NULL, NULL) != SQLITE_OK) {
     database_error(l, e);
-    sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
-    exr_library_close(l);
-    return EXR_DATABASE;
+    goto failed;
   }
+  transaction = 1;
+  app = scalar(l->db, "PRAGMA application_id");
+  version = scalar(l->db, "PRAGMA user_version");
+  if (app == 1163416131 && version == 7) {
+    migration = NULL;
+  } else if (app == 1163416131 && version == 1) {
+    migration = "ALTER TABLE notes ADD COLUMN anchor_exact TEXT;"
+                "ALTER TABLE notes ADD COLUMN anchor_prefix TEXT;"
+                "ALTER TABLE notes ADD COLUMN anchor_suffix TEXT;"
+                "ALTER TABLE notes ADD COLUMN anchor_chapter TEXT;"
+                FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH;
+  } else if (app == 1163416131 && version == 2) {
+    migration = FIXED_SCHEMA AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH;
+  } else if (app == 1163416131 && version == 3) {
+    migration = AUDIO_SCHEMA PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH;
+  } else if (app == 1163416131 && version == 4) {
+    migration = PROGRESS_SCHEMA LOCATION_SCHEMA SCHEMA_FINISH;
+  } else if (app == 1163416131 && version == 5) {
+    migration = "DROP TRIGGER books_progress_changed;ALTER TABLE book_progress RENAME TO book_progress_v5;"
+                PROGRESS_SCHEMA "INSERT INTO book_progress SELECT * FROM book_progress_v5;DROP TABLE book_progress_v5;"
+                LOCATION_SCHEMA SCHEMA_FINISH;
+  } else if (app == 1163416131 && version == 6) {
+    migration = SCHEMA_FINISH;
+  } else if (app == 0 && version == 0 &&
+             scalar(l->db, "SELECT count(*) FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'") == 0) {
+    migration = schema;
+  } else {
+    exr_fail(e, EXR_DATABASE, "Not an EXReader library or unsupported schema version");
+    goto failed;
+  }
+  if (migration && sqlite3_exec(l->db, migration, NULL, NULL, NULL) != SQLITE_OK) {
+    database_error(l, e);
+    goto failed;
+  }
+  if (sqlite3_exec(l->db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK) {
+    database_error(l, e);
+    goto failed;
+  }
+  transaction = 0;
   *out = l;
   return EXR_OK;
+failed:
+  if (transaction)
+    sqlite3_exec(l->db, "ROLLBACK", NULL, NULL, NULL);
+  exr_library_close(l);
+  return EXR_DATABASE;
 }
 void exr_library_close(exr_library *l) {
   if (l) {
@@ -337,20 +323,24 @@ exr_status exr_library_import(exr_library *l, exr_format format, const void *dat
   }
   if(result!=EXR_OK) goto cleanup;
   if(authors.data) source_author=authors.data;
-  if (!prepare(l, "INSERT INTO books(format,title,text_size,source,cover,author)VALUES(?1,?2,?3,?4,?5,?6)", &s)) {
-    result=database_error(l,e); goto cleanup;
+  { sqlite3_mutex *mutex=sqlite3_db_mutex(l->db);
+    sqlite3_mutex_enter(mutex);
+    if (!prepare(l, "INSERT INTO books(format,title,text_size,source,cover,author)VALUES(?1,?2,?3,?4,?5,?6)", &s)) {
+      result=database_error(l,e);
+    } else if(sqlite3_bind_int(s, 1, format)!=SQLITE_OK || !bind_text(s, 2,
+              title && title[0] ? title
+                                : (source_title[0] ? source_title : "Untitled")) ||
+       sqlite3_bind_int64(s, 3, (sqlite3_int64)extent)!=SQLITE_OK ||
+       sqlite3_bind_blob(s, 4, data, (int)n, SQLITE_TRANSIENT)!=SQLITE_OK ||
+       (cover ? sqlite3_bind_blob(s,5,cover,(int)cover_size,SQLITE_STATIC) : sqlite3_bind_null(s,5))!=SQLITE_OK || !bind_text(s,6,source_author)) {
+      result=database_error(l,e); sqlite3_finalize(s);
+    } else {
+      result = done(l, s, e);
+      if (result == EXR_OK)
+        *id = sqlite3_last_insert_rowid(l->db);
+    }
+    sqlite3_mutex_leave(mutex);
   }
-  if(sqlite3_bind_int(s, 1, format)!=SQLITE_OK || !bind_text(s, 2,
-            title && title[0] ? title
-                              : (source_title[0] ? source_title : "Untitled")) ||
-     sqlite3_bind_int64(s, 3, (sqlite3_int64)extent)!=SQLITE_OK ||
-     sqlite3_bind_blob(s, 4, data, (int)n, SQLITE_TRANSIENT)!=SQLITE_OK ||
-     (cover ? sqlite3_bind_blob(s,5,cover,(int)cover_size,SQLITE_STATIC) : sqlite3_bind_null(s,5))!=SQLITE_OK || !bind_text(s,6,source_author)) {
-    result=database_error(l,e); sqlite3_finalize(s); goto cleanup;
-  }
-  result = done(l, s, e);
-  if (result == EXR_OK)
-    *id = sqlite3_last_insert_rowid(l->db);
 cleanup:
   free(authors.data); exr_metadata_free(metadata,metadata_count); free(cover); exr_document_free(d); exr_fixed_free(fixed);
   return result;
@@ -715,9 +705,9 @@ exr_status exr_library_books(exr_library *l, const char *query, exr_book **out, 
                "SELECT id,format,title,author,tags,favorite,status,position "
                "FROM books WHERE title LIKE ?1 ESCAPE '!' OR author LIKE ?1 "
                "ESCAPE '!' OR tags LIKE ?1 ESCAPE '!' ORDER BY id DESC",
-               &s))
+               &s) ||
+      !bind_text(s, 1, pattern.data))
     goto database;
-  bind_text(s, 1, pattern.data);
   free(pattern.data);
   pattern.data = NULL;
   while ((result = sqlite3_step(s)) == SQLITE_ROW) {
@@ -760,28 +750,34 @@ database:
 }
 exr_status exr_library_update(exr_library *l, const exr_book *b, exr_error *e) {
   sqlite3_stmt *s = NULL;
+  sqlite3_mutex *mutex;
   exr_status result;int format,bounded;
   if (!l || !b || b->id <= 0 || !b->title || !b->title[0] || b->position > INT64_MAX ||
       (b->favorite != 0 && b->favorite != 1) || b->status < 0 || b->status > 2)
     return exr_fail(e, EXR_ARGUMENT, "Invalid metadata or position");
-  result=book_storage(l,b->id,&format,&bounded,1,e);if(result!=EXR_OK) return result;
-  if(bounded && b->position) return exr_fail(e,EXR_UNSUPPORTED,"Bounded EPUB position is chapter-local");
+  mutex = sqlite3_db_mutex(l->db);
+  sqlite3_mutex_enter(mutex);
+  result=book_storage(l,b->id,&format,&bounded,1,e);if(result!=EXR_OK) goto finish;
+  if(bounded && b->position) { result=exr_fail(e,EXR_UNSUPPORTED,"Bounded EPUB position is chapter-local"); goto finish; }
   if (!prepare(l,
                "UPDATE books SET "
                "title=?1,author=?2,tags=?3,favorite=?4,status=?5,position=?6 "
                "WHERE id=?7 AND ?6<=text_size",
-               &s))
-    return database_error(l, e);
-  bind_text(s, 1, b->title);
-  bind_text(s, 2, b->author);
-  bind_text(s, 3, b->tags);
-  sqlite3_bind_int(s, 4, b->favorite);
-  sqlite3_bind_int(s, 5, b->status);
-  sqlite3_bind_int64(s, 6, (sqlite3_int64)b->position);
-  sqlite3_bind_int64(s, 7, b->id);
+               &s) ||
+      !bind_text(s, 1, b->title) || !bind_text(s, 2, b->author) || !bind_text(s, 3, b->tags) ||
+      sqlite3_bind_int(s, 4, b->favorite) != SQLITE_OK ||
+      sqlite3_bind_int(s, 5, b->status) != SQLITE_OK ||
+      sqlite3_bind_int64(s, 6, (sqlite3_int64)b->position) != SQLITE_OK ||
+      sqlite3_bind_int64(s, 7, b->id) != SQLITE_OK) {
+    result = database_error(l, e);
+    sqlite3_finalize(s);
+    goto finish;
+  }
   result = done(l, s, e);
   if (result == EXR_OK && !sqlite3_changes(l->db))
-    return exr_fail(e, EXR_ARGUMENT, "Book missing or position outside text");
+    result = exr_fail(e, EXR_ARGUMENT, "Book missing or position outside text");
+finish:
+  sqlite3_mutex_leave(mutex);
   return result;
 }
 exr_status exr_library_blob(exr_library *l, int64_t id, int cover, void **data, size_t *n,
@@ -797,9 +793,12 @@ exr_status exr_library_blob(exr_library *l, int64_t id, int cover, void **data, 
   *n = 0;
   if (!prepare(
           l, cover ? "SELECT cover FROM books WHERE id=?1" : "SELECT source FROM books WHERE id=?1",
-          &s))
-    return database_error(l, e);
-  sqlite3_bind_int64(s, 1, id);
+          &s) ||
+      sqlite3_bind_int64(s, 1, id) != SQLITE_OK) {
+    exr_status err = database_error(l, e);
+    sqlite3_finalize(s);
+    return err;
+  }
   result = sqlite3_step(s);
   if (result != SQLITE_ROW) {
     sqlite3_finalize(s);
@@ -829,15 +828,21 @@ exr_status exr_library_blob(exr_library *l, int64_t id, int cover, void **data, 
 exr_status exr_library_document(exr_library *l, int64_t id, exr_document **doc, exr_error *e) {
   sqlite3_stmt *s = NULL;
   exr_status result;
+  int step;
   if (!l || id <= 0 || !doc)
     return exr_fail(e, EXR_ARGUMENT, "Invalid document lookup");
   *doc = NULL;
-  if (!prepare(l, "SELECT format,source FROM books WHERE id=?1", &s))
-    return database_error(l, e);
-  sqlite3_bind_int64(s, 1, id);
-  if (sqlite3_step(s) != SQLITE_ROW) {
+  if (!prepare(l, "SELECT format,source FROM books WHERE id=?1", &s) ||
+      sqlite3_bind_int64(s, 1, id) != SQLITE_OK) {
+    result = database_error(l, e);
     sqlite3_finalize(s);
-    return exr_fail(e, EXR_ARGUMENT, "Book missing");
+    return result;
+  }
+  step = sqlite3_step(s);
+  if (step != SQLITE_ROW) {
+    result = step == SQLITE_DONE ? exr_fail(e, EXR_ARGUMENT, "Book missing") : database_error(l, e);
+    sqlite3_finalize(s);
+    return result;
   }
   result = exr_document_open_memory((exr_format)sqlite3_column_int(s, 0), sqlite3_column_blob(s, 1),
                                     (size_t)sqlite3_column_bytes(s, 1), doc, e);
@@ -858,16 +863,23 @@ exr_status exr_library_fixed(exr_library *l,int64_t id,const exr_fixed_open_opti
 }
 exr_status exr_library_cover(exr_library *l, int64_t id, const void *data, size_t n, exr_error *e) {
   sqlite3_stmt *s = NULL;
+  sqlite3_mutex *mutex;
   exr_status result;
   if (!l || id <= 0 || (!data && n) || n > 8 * 1024 * 1024)
     return exr_fail(e, EXR_ARGUMENT, "Invalid cover or cover exceeds 8 MiB");
-  if (!prepare(l, "UPDATE books SET cover=?1 WHERE id=?2", &s))
-    return database_error(l, e);
-  sqlite3_bind_blob(s, 1, data, (int)n, SQLITE_TRANSIENT);
-  sqlite3_bind_int64(s, 2, id);
-  result = done(l, s, e);
-  if (result == EXR_OK && !sqlite3_changes(l->db))
-    return exr_fail(e, EXR_ARGUMENT, "Book missing");
+  mutex = sqlite3_db_mutex(l->db);
+  sqlite3_mutex_enter(mutex);
+  if (!prepare(l, "UPDATE books SET cover=?1 WHERE id=?2", &s) ||
+      sqlite3_bind_blob(s, 1, data, (int)n, SQLITE_TRANSIENT) != SQLITE_OK ||
+      sqlite3_bind_int64(s, 2, id) != SQLITE_OK) {
+    result = database_error(l, e);
+    sqlite3_finalize(s);
+  } else {
+    result = done(l, s, e);
+    if (result == EXR_OK && !sqlite3_changes(l->db))
+      result = exr_fail(e, EXR_ARGUMENT, "Book missing");
+  }
+  sqlite3_mutex_leave(mutex);
   return result;
 }
 /* SQLite values are checked before casts so damaged databases cannot wrap offsets. */
@@ -1378,12 +1390,18 @@ finish:
   sqlite3_mutex_leave(mutex);return status;
 }
 exr_status exr_library_note_text(exr_library *l,int64_t id,const char *text,exr_error *e) {
-  sqlite3_stmt *s=NULL; exr_status status;
+  sqlite3_stmt *s=NULL; sqlite3_mutex *mutex; exr_status status;
   if(!l || id<=0) return exr_fail(e,EXR_ARGUMENT,"Invalid note text update");
   status=annotation_input(text,e); if(status!=EXR_OK) return status;
-  if(!prepare(l,"UPDATE notes SET text=?1 WHERE id=?2",&s) || !bind_text(s,1,text) || sqlite3_bind_int64(s,2,id)!=SQLITE_OK) { sqlite3_finalize(s); return database_error(l,e); }
-  status=done(l,s,e); if(status!=EXR_OK) return status;
-  return sqlite3_changes(l->db) ? exr_fail(e,EXR_OK,"") : exr_fail(e,EXR_ARGUMENT,"Note missing");
+  mutex=sqlite3_db_mutex(l->db); sqlite3_mutex_enter(mutex);
+  if(!prepare(l,"UPDATE notes SET text=?1 WHERE id=?2",&s) || !bind_text(s,1,text) || sqlite3_bind_int64(s,2,id)!=SQLITE_OK) {
+    status=database_error(l,e); sqlite3_finalize(s);
+  } else {
+    status=done(l,s,e);
+    if(status==EXR_OK) status=sqlite3_changes(l->db) ? exr_fail(e,EXR_OK,"") : exr_fail(e,EXR_ARGUMENT,"Note missing");
+  }
+  sqlite3_mutex_leave(mutex);
+  return status;
 }
 void exr_notes_free(exr_note *notes, size_t n) {
   size_t i;
@@ -1440,9 +1458,12 @@ static exr_status remove_id(exr_library *l, int64_t id, int note, exr_error *e) 
   sqlite3_stmt *s = NULL;
   if (!l || id <= 0)
     return exr_fail(e, EXR_ARGUMENT, "Invalid deletion");
-  if (!prepare(l, note ? "DELETE FROM notes WHERE id=?1" : "DELETE FROM books WHERE id=?1", &s))
-    return database_error(l, e);
-  sqlite3_bind_int64(s, 1, id);
+  if (!prepare(l, note ? "DELETE FROM notes WHERE id=?1" : "DELETE FROM books WHERE id=?1", &s) ||
+      sqlite3_bind_int64(s, 1, id) != SQLITE_OK) {
+    exr_status err = database_error(l, e);
+    sqlite3_finalize(s);
+    return err;
+  }
   return done(l, s, e);
 }
 exr_status exr_library_delete(exr_library *l, int64_t id, exr_error *e) {
@@ -1461,15 +1482,18 @@ exr_status exr_library_backup(exr_library *l, const char *path, exr_error *e) {
   sqlite3_stmt *s = NULL;
   if (!l || !path || !path[0])
     return exr_fail(e, EXR_ARGUMENT, "Invalid backup path");
-  if (!prepare(l, "VACUUM INTO ?1", &s))
-    return database_error(l, e);
-  bind_text(s, 1, path);
+  if (!prepare(l, "VACUUM INTO ?1", &s) || !bind_text(s, 1, path)) {
+    exr_status err = database_error(l, e);
+    sqlite3_finalize(s);
+    return err;
+  }
   return done(l, s, e);
 }
 
 exr_status exr_library_fixed_note(exr_library *l,const exr_fixed_note *input,const exr_control *control,int64_t *id,exr_error *e) {
   exr_fixed_note note; exr_fixed_document *doc=NULL; exr_fixed_text *text=NULL; exr_fixed_anchor anchor={0};
-  exr_fixed_open_options options={0}; sqlite3_stmt *s=NULL; exr_status status; size_t count,n=0,at=0; uint32_t cp; const exr_fixed_page *pages;
+  exr_fixed_open_options options={0}; sqlite3_stmt *s=NULL; sqlite3_mutex *mutex=NULL; int locked=0;
+  exr_status status; size_t count,n=0,at=0; uint32_t cp; const exr_fixed_page *pages;
   if(input) note=*input; else memset(&note,0,sizeof(note)); /* Output ID may alias input.id. */
   if(id) *id=0;
   if(!l || !input || !id || note.id<0 || note.book_id<=0 || !note.text || note.start>note.end || note.end>EXR_MAX_TEXT)
@@ -1484,6 +1508,7 @@ exr_status exr_library_fixed_note(exr_library *l,const exr_fixed_note *input,con
   status=exr_fixed_load_text(doc,note.page,control,&text,e);
   if(status==EXR_OK) status=exr_fixed_anchor_create(pages[note.page].id,text,note.start,note.end,&anchor,e);
   if(status!=EXR_OK) goto finish;
+  mutex=sqlite3_db_mutex(l->db); sqlite3_mutex_enter(mutex); locked=1;
   if(!prepare(l,note.id ?
       "UPDATE fixed_notes SET page=?2,start=?3,end=?4,text=?5,page_id=?6,exact=?7,prefix=?8,suffix=?9 WHERE book_id=?1 AND id=?10" :
       "INSERT INTO fixed_notes(book_id,page,start,end,text,page_id,exact,prefix,suffix) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",&s)) { status=database_error(l,e); goto finish; }
@@ -1501,7 +1526,9 @@ exr_status exr_library_fixed_note(exr_library *l,const exr_fixed_note *input,con
     else *id=note.id ? note.id : sqlite3_last_insert_rowid(l->db);
   }
 finish:
-  sqlite3_finalize(s); exr_fixed_anchor_free(&anchor); exr_fixed_text_free(text); exr_fixed_free(doc); return status;
+  sqlite3_finalize(s);
+  if(locked) sqlite3_mutex_leave(mutex);
+  exr_fixed_anchor_free(&anchor); exr_fixed_text_free(text); exr_fixed_free(doc); return status;
 }
 void exr_fixed_notes_free(exr_fixed_note *notes,size_t count) {
   size_t i; if(!notes) return;
@@ -1619,19 +1646,24 @@ exr_status exr_library_audio_resume_get(exr_library *l,const char *key,exr_audio
   sqlite3_finalize(s); exr_audio_checkpoint_free(&p); return status;
 }
 exr_status exr_library_audio_bookmark(exr_library *l,const char *key,const exr_audio_bookmark *input,int64_t *id,exr_error *e) {
-  sqlite3_stmt *s=NULL; exr_audio_bookmark b; exr_status status;
+  sqlite3_stmt *s=NULL; sqlite3_mutex *mutex; exr_audio_bookmark b; exr_status status;
   if(input) b=*input; else memset(&b,0,sizeof(b));
   if(id) *id=0;
   if(!l || !input || !id || b.id<0) return exr_fail(e,EXR_ARGUMENT,"Invalid audio bookmark input");
   if(!b.label) b.label="";
   if((status=audio_string(key,4096,1,NULL,e))!=EXR_OK || (status=audio_string(b.label,65536,0,NULL,e))!=EXR_OK || (status=checkpoint_valid(&b.position,e))!=EXR_OK) return status;
-  if(!prepare(l,b.id ? "UPDATE audio_marks SET track_id=?2,offset=?3,rate=?4,label=?5 WHERE audio_id=?1 AND id=?6" : "INSERT INTO audio_marks(audio_id,track_id,offset,rate,label) VALUES(?1,?2,?3,?4,?5)",&s)) return database_error(l,e);
-  if(!bind_text(s,1,key) || !checkpoint_bind(s,2,&b.position) || !bind_text(s,5,b.label) || (b.id && sqlite3_bind_int64(s,6,b.id)!=SQLITE_OK)) { sqlite3_finalize(s); return database_error(l,e); }
-  status=done(l,s,e);
-  if(status==EXR_OK) {
-    if(b.id && !sqlite3_changes(l->db)) return exr_fail(e,EXR_ARGUMENT,"Audio bookmark missing or belongs to another audio key");
-    *id=b.id ? b.id : sqlite3_last_insert_rowid(l->db);
+  mutex=sqlite3_db_mutex(l->db); sqlite3_mutex_enter(mutex);
+  if(!prepare(l,b.id ? "UPDATE audio_marks SET track_id=?2,offset=?3,rate=?4,label=?5 WHERE audio_id=?1 AND id=?6" : "INSERT INTO audio_marks(audio_id,track_id,offset,rate,label) VALUES(?1,?2,?3,?4,?5)",&s) ||
+     !bind_text(s,1,key) || !checkpoint_bind(s,2,&b.position) || !bind_text(s,5,b.label) || (b.id && sqlite3_bind_int64(s,6,b.id)!=SQLITE_OK)) {
+    status=database_error(l,e); sqlite3_finalize(s);
+  } else {
+    status=done(l,s,e);
+    if(status==EXR_OK) {
+      if(b.id && !sqlite3_changes(l->db)) status=exr_fail(e,EXR_ARGUMENT,"Audio bookmark missing or belongs to another audio key");
+      else *id=b.id ? b.id : sqlite3_last_insert_rowid(l->db);
+    }
   }
+  sqlite3_mutex_leave(mutex);
   return status;
 }
 void exr_audio_bookmarks_free(exr_audio_bookmark *marks,size_t count) {
@@ -1674,19 +1706,24 @@ exr_status exr_library_remove_audio_bookmark(exr_library *l,int64_t id,exr_error
   return done(l,s,e);
 }
 exr_status exr_library_clear_audio(exr_library *l,const char *key,exr_error *e) {
-  sqlite3_stmt *s=NULL; exr_status status; unsigned i;
+  sqlite3_stmt *s=NULL; sqlite3_mutex *mutex; exr_status status; unsigned i; int transaction=0;
   const char *queries[2]={"DELETE FROM audio_resume WHERE audio_id=?1","DELETE FROM audio_marks WHERE audio_id=?1"};
   if(!l) return exr_fail(e,EXR_ARGUMENT,"Missing audio library");
   status=audio_string(key,4096,1,NULL,e); if(status!=EXR_OK) return status;
-  if(sqlite3_exec(l->db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK) return database_error(l,e);
+  mutex=sqlite3_db_mutex(l->db); sqlite3_mutex_enter(mutex);
+  if(sqlite3_exec(l->db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  transaction=1;
   for(i=0;i<2;i++) {
-    if(!prepare(l,queries[i],&s) || !bind_text(s,1,key)) { status=database_error(l,e); sqlite3_finalize(s); goto rollback; }
-    status=done(l,s,e); if(status!=EXR_OK) goto rollback;
+    if(!prepare(l,queries[i],&s) || !bind_text(s,1,key)) { status=database_error(l,e); goto finish; }
+    status=done(l,s,e); s=NULL; if(status!=EXR_OK) goto finish;
   }
-  if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)==SQLITE_OK) return exr_fail(e,EXR_OK,"");
-  status=database_error(l,e);
-rollback:
-  sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL); return status;
+  if(sqlite3_exec(l->db,"COMMIT",NULL,NULL,NULL)!=SQLITE_OK) { status=database_error(l,e); goto finish; }
+  transaction=0; status=exr_fail(e,EXR_OK,"");
+finish:
+  sqlite3_finalize(s);
+  if(transaction) sqlite3_exec(l->db,"ROLLBACK",NULL,NULL,NULL);
+  sqlite3_mutex_leave(mutex);
+  return status;
 }
 
 void exr_library_relocation_free(exr_library_relocation *r) { if(r) { free(r->notes); memset(r,0,sizeof(*r)); } }
