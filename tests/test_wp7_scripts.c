@@ -262,10 +262,28 @@ static void pagination_recovery(void) {
   free(starts); exr_pager_free(pager); exr_document_free(doc);
 }
 
+/* One Myanmar syllable of KA + 50000 x (AA, E): reordering is linear and keeps
+   the same order as the short syllable, all E before KA and all AA after it. */
+static void myanmar_long_syllable(void) {
+  exr_font *font = open_font("mymr-synthetic.ttf");
+  exr_shape_options o = exr_shape_defaults();
+  exr_shaped_glyph *one = NULL, *g = NULL;
+  size_t pairs = 50000, n = 0, i;
+  char *text = malloc(3 + 6*pairs), *p = text;
+  CHECK(text);
+  memcpy(p, "\xe1\x80\x80", 3); p += 3;
+  for (i = 0; i < pairs; i++) { memcpy(p, "\xe1\x80\xac\xe1\x80\xb1", 6); p += 6; }
+  o.script = 0x6d796d72u; /* mymr */
+  OK(exr_shape(font, 0, text, 9, &o, &one, &n, &error)); CHECK(n == 3);
+  OK(exr_shape(font, 0, text, (size_t)(p-text), &o, &g, &n, &error)); CHECK(n == 2*pairs+1);
+  for (i = 0; i < n; i++) CHECK(g[i].glyph == (i < pairs ? one[0].glyph : i == pairs ? one[1].glyph : one[2].glyph));
+  exr_free(one); exr_free(g); free(text);
+}
 int main(int argc, char **argv) {
   size_t i;
   CHECK(argc == 2); fixtures = argv[1];
   reference_cases();
+  myanmar_long_syllable();
   controls();
   bidi_and_breaks();
   hyphenation();
