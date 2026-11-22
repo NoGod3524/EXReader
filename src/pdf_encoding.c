@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
-typedef struct { uint16_t name,offset,count; } pdf_name_mapping;
+typedef struct { uint16_t name,value; } pdf_name_mapping;
+typedef struct { uint16_t offset,count; } pdf_glyph_sequence;
 typedef struct { const char *name; const uint16_t *glyphs; } pdf_encoding_vector;
 typedef struct { uint16_t name,width; } pdf_width_entry;
 typedef struct { const char *name; const pdf_width_entry *entries; size_t count; } pdf_standard_metrics;
@@ -86,7 +87,13 @@ size_t exr_pdf_glyph_unicode(const char *name,int dingbats,char out[256]) {
     id=name_id(part); m=mapping(pdf_agl,COUNT(pdf_agl),id);
     if(!m && dingbats) m=mapping(pdf_dingbats,COUNT(pdf_dingbats),id);
     if(m) {
-      for(i=0;i<m->count;i++) if(!append_scalar(pdf_name_scalars[m->offset+i],out,&used)) goto invalid;
+      uint16_t value=m->value;
+      /* The generator reserves the surrogate range for sequence indices. */
+      if(value>=PDF_GLYPH_SEQUENCE_BASE && value<=0xdfff) {
+        const pdf_glyph_sequence *sequence=&pdf_glyph_sequences[value-PDF_GLYPH_SEQUENCE_BASE];
+        for(i=0;i<sequence->count;i++)
+          if(!append_scalar(pdf_sequence_scalars[sequence->offset+i],out,&used)) goto invalid;
+      } else if(!append_scalar(value,out,&used)) goto invalid;
       continue;
     }
     len=strlen(part);

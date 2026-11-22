@@ -48,7 +48,7 @@ exr_status exr_normalize_nfc(const exr_normal_scalar *in,size_t count,
       size_t m=lo+(hi-lo)/2;
       if(cp<exr_canonical_decompositions[m].cp) hi=m;
       else if(cp>exr_canonical_decompositions[m].cp) lo=m+1;
-      else { parts=exr_canonical_decompositions[m].parts;length=exr_canonical_decompositions[m].length;break; }
+      else { parts=exr_decomposition_parts+exr_canonical_decompositions[m].offset;length=exr_canonical_decompositions[m].length;break; }
     }
     if(length>capacity-used) return exr_fail(e,EXR_LIMIT,"Canonical normalization output buffer exceeded");
     for(j=0;j<length;j++) {

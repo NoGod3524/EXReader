@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "exr/dictionary.h"
 #include "base_internal.h"
-#include "hyphen_unicode_data.h" /* Existing Unicode 17 full case-fold table. */
+#include "hyphen_internal.h"
 #include <ctype.h>
 #include <miniz.h>
 
@@ -124,12 +124,9 @@ static char *fold_word(const char *word) {
   exr_buffer out={0};size_t n=strlen(word),at=0;uint32_t cp;
   while(at<n) {
     if(!exr_next(word,n,&at,&cp) || !cp) { free(out.data);return NULL; }
-    size_t lo=0,hi=sizeof(exr_case_folds)/sizeof(*exr_case_folds);
-    while(lo<hi) {size_t mid=lo+(hi-lo)/2;if(exr_case_folds[mid].cp<cp)lo=mid+1;else hi=mid;}
-    if(lo<sizeof(exr_case_folds)/sizeof(*exr_case_folds) && exr_case_folds[lo].cp==cp) {
-      for(unsigned j=0;j<exr_case_folds[lo].count;j++)
-        if(!exr_codepoint(&out,exr_case_folds[lo].values[j])) {free(out.data);return NULL;}
-    } else if(!exr_codepoint(&out,cp)) {free(out.data);return NULL;}
+    uint32_t folded[3];unsigned count=exr_casefold_scalar(cp,folded);
+    for(unsigned j=0;j<count;j++)
+      if(!exr_codepoint(&out,folded[j])) {free(out.data);return NULL;}
   }
   if(!exr_append(&out,"",1)) {free(out.data);return NULL;} return out.data;
 }

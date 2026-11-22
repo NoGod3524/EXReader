@@ -162,15 +162,26 @@ int exr_hyphen_language(const char *language,char out[256]) {
   if(n && !component) return 0;
   out[n]=0; return 1;
 }
-static unsigned fold(uint32_t cp,const char *language,uint32_t values[3]) {
+unsigned exr_casefold_scalar(uint32_t cp,uint32_t output[3]) {
   size_t lo=0,hi=sizeof(exr_case_folds)/sizeof(*exr_case_folds);
+  if(cp<0x80) { output[0]=(cp>='A' && cp<='Z') ? cp+('a'-'A') : cp;return 1; }
+  while(lo<hi) { size_t mid=lo+(hi-lo)/2; if((exr_case_folds[mid].key>>2)<cp) lo=mid+1; else hi=mid; }
+  if(lo<sizeof(exr_case_folds)/sizeof(*exr_case_folds) && (exr_case_folds[lo].key>>2)==cp) {
+    const exr_case_fold *mapping=exr_case_folds+lo;
+    unsigned length=mapping->key&3u;
+    if(length) {
+      memcpy(output,exr_case_fold_expansions+mapping->delta_or_offset,length*sizeof(*output));
+      return length;
+    }
+    output[0]=(uint32_t)((int32_t)cp+mapping->delta_or_offset);
+    return 1;
+  }
+  output[0]=cp; return 1;
+}
+static unsigned fold(uint32_t cp,const char *language,uint32_t values[3]) {
   int turkic=(!strncmp(language,"tr",2) || !strncmp(language,"az",2)) && (!language[2] || language[2]=='-');
   if(turkic && (cp==0x49 || cp==0x130)) { values[0]=cp==0x49 ? 0x131 : 0x69; return 1; }
-  while(lo<hi) { size_t mid=lo+(hi-lo)/2; if(exr_case_folds[mid].cp<cp) lo=mid+1; else hi=mid; }
-  if(lo<sizeof(exr_case_folds)/sizeof(*exr_case_folds) && exr_case_folds[lo].cp==cp) {
-    memcpy(values,exr_case_folds[lo].values,sizeof(exr_case_folds[lo].values)); return exr_case_folds[lo].count;
-  }
-  values[0]=cp; return 1;
+  return exr_casefold_scalar(cp,values);
 }
 /* NFC -> full fold -> NFC, retaining intervals in the original scalar stream.
    ASCII dictionaries/words need no normalization table searches. */

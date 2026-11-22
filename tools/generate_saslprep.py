@@ -43,14 +43,40 @@ def table(name, declaration, rows):
     lines.append(f'static const {declaration} {name}[]={{')
     lines.extend('  {' + ','.join(hex(v) for v in row) + '},' for row in rows)
     lines.append('};')
-table('prep_flags', 'struct { uint32_t first,last; unsigned flags; }', flags)
-table('prep_decomp', 'struct { uint32_t cp,offset,length; }', decomp)
-lines.append('static const uint32_t prep_scalars[]={')
-for i in range(0, len(scalars), 12):
-    lines.append('  ' + ','.join(hex(v) for v in scalars[i:i+12]) + ',')
-lines.append('};')
-table('prep_combining', 'struct { uint32_t cp; unsigned value; }', combining)
-table('prep_compose', 'struct { uint32_t first,second,result; }', compose)
+
+def array(name, declaration, values):
+    lines.append(f'static const {declaration} {name}[]={{')
+    for i in range(0, len(values), 12):
+        lines.append('  ' + ','.join(hex(v) for v in values[i:i+12]) + ',')
+    lines.append('};')
+
+assert all(f < 32 for _, _, f in flags)
+table('prep_flags', 'struct { uint32_t first_flags,last; }',
+      ((first << 5 | f, last) for first, last, f in flags))
+# Each block points to the first entry with that high byte or greater.
+# The next scalar offset also gives the length of the current decomposition.
+blocks, at = [], 0
+for high in range((decomp[-1][0] >> 8) + 2):
+    while at < len(decomp) and decomp[at][0] >> 8 < high:
+        at += 1
+    blocks.append(at)
+offsets = [offset for _, offset, _ in decomp] + [len(scalars)]
+assert all(offsets[i+1] - offset == length for i, (_, offset, length) in enumerate(decomp))
+assert len(decomp) <= 0xffff and len(scalars) <= 0xffff
+lines.append(f'enum {{ PREP_MAX_EXPANSION = {max(n for _, _, n in decomp)}, PREP_SCALAR_INDEX = 0xd800 }};')
+array('prep_decomp_blocks', 'uint16_t', blocks)
+array('prep_decomp_keys', 'uint8_t', [cp & 255 for cp, _, _ in decomp])
+array('prep_decomp_offsets', 'uint16_t', offsets)
+# Surrogates cannot occur in normalization data, so use that range as indices.
+nonbmp = dict.fromkeys(cp for cp in scalars if cp > 0xffff)
+nonbmp = {cp: i + 0xd800 for i, cp in enumerate(nonbmp)}
+assert len(nonbmp) <= 0x800 and not any(0xd800 <= cp <= 0xdfff for cp in scalars)
+array('prep_scalars', 'uint16_t', [nonbmp.get(cp, cp) for cp in scalars])
+array('prep_scalars_nonbmp', 'uint32_t', list(nonbmp))
+assert all(cc < 256 for _, cc in combining)
+array('prep_combining', 'uint32_t', [cp << 8 | cc for cp, cc in combining])
+assert all(max(row) <= 0xffff for row in compose)
+table('prep_compose', 'struct { uint16_t first,second,result; }', compose)
 target = root/'src/pdf_saslprep_data.h'
-target.write_text('\n'.join(lines)+'\n', encoding='utf-8')
+target.write_text('\n'.join(lines)+'\n', encoding='utf-8', newline='\n')
 print(target.name, target.stat().st_size, 'bytes')

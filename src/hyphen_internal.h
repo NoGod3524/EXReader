@@ -4,6 +4,7 @@
 #include "base_internal.h"
 #include "exr/text.h"
 exr_status exr_hyphenator_ref(exr_hyphenator *hyphenator,exr_error *error);
+unsigned exr_casefold_scalar(uint32_t cp,uint32_t output[3]); /* Unicode default full fold. */
 unsigned exr_hyphen_word_kind(uint32_t cp); /* L=1, M/join-control=2, N=3, other=0. */
 int exr_hyphen_language(const char *language,char out[256]);
 unsigned exr_hyphenator_bidi_risk(exr_hyphenator *hyphenator,const char *language);

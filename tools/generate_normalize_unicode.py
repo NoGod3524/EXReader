@@ -33,9 +33,17 @@ def generate(data,exclusions):
     for name in ('UnicodeData.txt','CompositionExclusions.txt'):
         url,sha=shared.SOURCES[name];lines+=[' * '+url,' * '+sha]
     lines+=[' */','#ifndef EXR_NORMALIZE_DATA_H','#define EXR_NORMALIZE_DATA_H','#include <stdint.h>']
-    lines+=['static const struct { uint32_t cp,parts[4]; unsigned length; } exr_canonical_decompositions[] = {']
+    pool=[]; offsets={}
+    lines+=['static const struct { uint32_t cp; uint16_t offset,length; } exr_canonical_decompositions[] = {']
     for cp,parts in sorted(expanded.items()):
-        lines.append('  {0x%X,{%s},%u},'%(cp,','.join('0x%X'%x for x in parts+(0,)*(4-len(parts))),len(parts)))
+        if parts not in offsets:
+            offsets[parts]=len(pool)
+            pool.extend(parts)
+        lines.append('  {0x%X,%u,%u},'%(cp,offsets[parts],len(parts)))
+    assert len(pool)<=1<<16
+    lines+=['};','static const uint32_t exr_decomposition_parts[] = {']
+    for i in range(0,len(pool),8):
+        lines.append('  '+','.join('0x%X'%x for x in pool[i:i+8])+',')
     lines+=['};','static const struct { uint32_t first,last; unsigned value; } exr_canonical_classes[] = {']
     lines+=['  {0x%X,0x%X,%u},'%row for row in combining]
     lines+=['};','static const struct { uint32_t first,second,result; } exr_canonical_compositions[] = {']

@@ -42,10 +42,22 @@ def generate(data,unicode):
     for name in ('CaseFolding.txt','UnicodeData.txt'):
         url,sha=shared.SOURCES[name]; lines += [' * '+url,' * '+sha]
     lines+=[' */','#ifndef EXR_HYPHEN_UNICODE_DATA_H','#define EXR_HYPHEN_UNICODE_DATA_H',
-      '#include <stdint.h>','#define EXR_CANONICAL_FOLD_FACTOR 12u /* NFD <=4x; folded NFD <=3x its input NFD. */','typedef struct { uint32_t cp,values[3]; unsigned count; } exr_case_fold;',
+      '#include <stdint.h>','#define EXR_CANONICAL_FOLD_FACTOR 12u /* NFD <=4x; folded NFD <=3x its input NFD. */',
+      '/* Low two key bits hold the expansion length. Zero selects a signed delta. */',
+      'typedef struct { uint32_t key; int16_t delta_or_offset; } exr_case_fold;',
       'static const exr_case_fold exr_case_folds[] = {']
+    expansions=[]
     for key,values in sorted(mapping.items()):
-        lines.append('  {0x%X,{%s},%u},'%(key,','.join('0x%X'%v for v in values+[0]*(3-len(values))),len(values)))
+        delta=values[0]-key
+        if len(values)==1 and -32768<=delta<=32767:
+            lines.append('  {0x%X,%d},'%(key<<2,delta))
+        else:
+            assert len(expansions)<=32767
+            lines.append('  {0x%X,%d},'%((key<<2)|len(values),len(expansions)))
+            expansions+=values
+    lines+=['};','static const uint32_t exr_case_fold_expansions[] = {']
+    for i in range(0,len(expansions),8):
+        lines.append('  '+','.join('0x%X'%v for v in expansions[i:i+8])+',')
     lines+=['};','typedef struct { uint32_t first,last; unsigned kind; } exr_word_range;',
       'static const exr_word_range exr_word_ranges[] = {']
     lines += ['  {0x%X,0x%X,%u},'%r for r in ranges]
