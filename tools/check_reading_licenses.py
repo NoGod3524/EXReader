@@ -183,7 +183,7 @@ COMPONENTS = [
      'license': 'Public domain', 'when': 'EXR_ENABLE_ICC', 'fetch': False, 'vendor_files': [],
      'notice_marker': 'Argyll', 'linkage': 'embedded generated header in exr_graphics',
      'pinned_data': [['src/profiles/default_cmyk.icc.zlib',
-                      '20f63c910decd30bf87d7ce2461f133d0305f552279ccdc388cdcfc8762753b2']],
+                      '8f37c1dc8cb6f112eb3909e1d630c37cb2262482b3b0ced8bc035b357e892642']],
      'files': [repo('licenses/default-cmyk-profile.txt', LICENSES + 'default-cmyk-profile.txt',
                     '45d3e9b11893bcae1724cd0e6d377c2ed842269de495307ba6153e1b0b80e1da')]},
     {'id': 'adobe-glyph-list', 'name': 'Adobe Glyph List and ITC Zapf Dingbats Glyph List',

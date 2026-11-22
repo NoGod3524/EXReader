@@ -85,7 +85,7 @@ WP6已验收，冻结 SDK 候选的 WP16 五项登记出口已闭合，同源四
 | 文字几何/搜索/选择 | 支持 | 文字位置、搜索、选择、命中 | `native-pdf-text` |
 | 元数据 | 支持 | Info/XMP 读取与增量写回 | `native-pdf-metadata-write`、`native-metadata` |
 | 认证 | 部分 | Standard R2–R6、RC4/AES、Crypt filter；**证书 PubSec、EFOpen、加密写回未支持** | `native-pdf-crypto` |
-| 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；支持匹配尺寸软遮罩的原生分量Matte还原（先于ICC）；**OutputIntent 未支持**；默认DeviceCMYK完整Argyll ICC按zlib内嵌（414,609字节），不同于SWOP；关闭ICC时使用朴素换算 | `native-pdf-color`、`native-pdf-calculator`、`native-render-audit` |
+| 色彩 | 部分 | Device/Indexed/CalGray/CalRGB/Lab、ICCBased v2/v4→sRGB、Separation/All/None/DeviceN、Type 0 函数；支持匹配尺寸软遮罩的原生分量Matte还原（先于ICC）；**OutputIntent 未支持**；默认 DeviceCMYK 使用内嵌的 Argyll ICC（zlib 压缩后 170,094 字节，保留原变换表）；关闭 ICC 时使用朴素换算 | `native-pdf-color`、`native-pdf-calculator`、`native-render-audit` |
 | 合成 | 部分 | 16种混合、RGB/Gray/CMYK、隔离/非隔离/挖空及区域缓冲；128个嵌套探针、24组整图对照。DeviceCMYK路径/图像/1–7型渐变保留原生墨色；零opacity保留shape，64个PDF与192个画布组合覆盖。ICCBased/DeviceN到组空间及其他边界仍待扩展 | `native-blend`、`native-zero-opacity`、`native-nested-groups`、`native-inks` |
 | 图形状态软遮罩 | 部分 | Alpha/Luminosity、BC、Identity及Type 0/2/3/4 TR、精确变换BBox、K/I、q/Q/None和单次整组提交；活跃mask聚合64MiB，嵌套共享工作预算。原41场景+8拒绝、作用域27+3、新函数/图像/几何72+8。AIS及图片内在shape/opacity已接入，新增166场景+4拒绝值与192个画布组合；外部参考差异逐项记录 | `native-mask-scope`、`native-mask-functions`、`native-pdf-raster`；[对照口径](MASK_SEMANTICS.md) |
 | 标注 | 部分 | Text/Highlight/Underline/StrikeOut/Squiggly 增删改与外观；**其余类型未支持**；AcroForm 见下行 | `native-pdf-markup`、`native-pdf-appearance`、`native-pdf-write` |

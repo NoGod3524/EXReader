@@ -36,7 +36,7 @@ static void group_flags(void) {
 static void inverse_reference(const double rgb[3],double out[4]) {
   unsigned k;
 #ifdef EXR_ENABLE_ICC
-  mz_ulong size=961644;unsigned char *raw=malloc((size_t)size);
+  mz_ulong size=EXR_DEFAULT_CMYK_PROFILE_SIZE;unsigned char *raw=malloc((size_t)size);
   cmsHPROFILE cmyk,srgb;cmsHTRANSFORM transform;
   CHECK(raw && mz_uncompress(raw,&size,default_cmyk_data,sizeof(default_cmyk_data))==MZ_OK);
   cmyk=cmsOpenProfileFromMem(raw,(cmsUInt32Number)size);srgb=cmsCreate_sRGBProfile();

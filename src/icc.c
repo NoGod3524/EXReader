@@ -114,10 +114,10 @@ exr_status exr_icc_open(const void *data,size_t size,unsigned channels,const exr
   return open_profile(data,size,channels,control,0,out,e);
 }
 exr_status exr_icc_default_cmyk(const exr_control *control,exr_icc **out,exr_error *e) {
-  unsigned char *raw; mz_ulong size=961644;exr_status status;*out=NULL;
+  unsigned char *raw; mz_ulong size=EXR_DEFAULT_CMYK_PROFILE_SIZE;exr_status status;*out=NULL;
   if(exr_control_cancel(control,e)!=EXR_OK) return EXR_CANCELLED;
   raw=malloc((size_t)size);if(!raw) return exr_fail(e,EXR_MEMORY,"Default CMYK profile allocation failed");
-  if(mz_uncompress(raw,&size,default_cmyk_data,sizeof(default_cmyk_data))!=MZ_OK || size!=961644) {
+  if(mz_uncompress(raw,&size,default_cmyk_data,sizeof(default_cmyk_data))!=MZ_OK || size!=EXR_DEFAULT_CMYK_PROFILE_SIZE) {
     free(raw);return exr_fail(e,EXR_FORMAT,"Invalid bundled CMYK profile");
   }
   status=open_profile(raw,(size_t)size,4,control,1,out,e);free(raw);

@@ -67,7 +67,7 @@ python3 tests/check_reading_licenses.py
 | minimp3 | lieff/minimp3 `ea99364f…` | `5628166e…768f34` | `EXR_ENABLE_AUDIO` 且 `EXR_ENABLE_MP3` | — | `LICENSE` → `minimp3/LICENSE`（未构建，未核对） | 未固定 | 否 | 否 |
 | FAAD2 | knik0/faad2 `521d1059…` | `9284bd9c…dfd8` | `EXR_ENABLE_AUDIO` 且 `EXR_ENABLE_AAC` | — | `COPYING`、仓库 `licenses/faad2-notice.txt` → `faad2/`（未构建，未核对） | 未固定 | 否 | 否 |
 | Unicode 数据派生表 | UCD 17.0.0 与 3.2（各生成器固定输入散列） | — | 总是 | 生成的 C 表 | 仓库 `tests/fixtures/unicode/LICENSE.txt` → `unicode/LICENSE.txt` | `e7a93b00…bc53d96` | 是 | 是 |
-| Argyll 默认 CMYK 配置文件 | 仓库 `src/profiles/default_cmyk.icc.zlib`（`20f63c91…53b2`） | — | `EXR_ENABLE_ICC` | 内嵌生成头 | 仓库 `licenses/default-cmyk-profile.txt` → `default-cmyk-profile.txt` | `45d3e9b1…80e1da` | 是 | 是 |
+| Argyll 默认 CMYK 配置文件 | 仓库 `src/profiles/default_cmyk.icc.zlib`（`8f37c1dc…e892642`） | — | `EXR_ENABLE_ICC` | 内嵌生成头 | 仓库 `licenses/default-cmyk-profile.txt` → `default-cmyk-profile.txt` | `45d3e9b1…80e1da` | 是 | 是 |
 | Adobe Glyph List | adobe-type-tools/agl-aglfn `4036a9ca…` | — | 数据用于 `EXR_ENABLE_PDF`；文件总是安装 | `src/pdf_font_data.h` | 仓库 `licenses/adobe-glyph-list.txt` → `pdf-font-data/adobe-glyph-list.txt` | `c85f2b0d…6f3aa7` | 是 | 是 |
 | PDF.js 编码与度量事实 | mozilla/pdf.js `81525fd4…` | — | 同上 | `src/pdf_font_data.h` | 仓库 `licenses/pdfjs.txt` → `pdf-font-data/pdfjs.txt` | `8d1fb642…15ca53` | 是 | 是 |
 | PostScript 计算器操作名 | PDF 32000-1 表 42 | — | `EXR_ENABLE_PDF` | `src/pdf_calculator.c` | 仅 `THIRD_PARTY_NOTICES.md` 段落 | — | 是 | 是 |
