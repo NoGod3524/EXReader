@@ -22,6 +22,8 @@ FetchContent_Declare(expat URL "https://codeload.github.com/libexpat/libexpat/ta
 FetchContent_Declare(miniz URL "https://codeload.github.com/richgel999/miniz/tar.gz/refs/tags/3.1.2" URL_HASH SHA256=98468f8924934b723276680f85238b6c78bf1f8b49b4459cc9b7214a20e2e9fb)
 FetchContent_Declare(sqlite URL "https://www.sqlite.org/2026/sqlite-amalgamation-3540000.zip" URL_HASH SHA256=68e913b0fe8ec6b4e5f391c594a28872884e80d6cd042a1e50c957be46b5aa4d)
 FetchContent_MakeAvailable(freetype expat miniz)
+# Register only the FreeType modules EXReader uses; see cmake/freetype/freetype/config/ftmodule.h.
+target_include_directories(freetype BEFORE PRIVATE "${CMAKE_CURRENT_LIST_DIR}/freetype")
 if(EXR_ENABLE_LIBRARY OR EXR_BUILD_TEXT_INDEX)
   FetchContent_MakeAvailable(sqlite)
 endif()

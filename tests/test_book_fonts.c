@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "exreader.h"
 #include <math.h>
+#include <miniz.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,8 +134,46 @@ static void indexed(const char *dir) {
   g=exr_layout_glyphs(l,&n); CHECK(n==1 && g[0].font_index==1 && near(g[0].advance,10));
   exr_session_free(session); exr_publication_free(publication); exr_font_free(host);
 }
+/* WOFF 1.0 with zlib-compressed tables loads and shapes like its TrueType
+   source: the FreeType module table keeps the gzip code the sfnt driver uses. */
+static void woff(const char *dir) {
+  char path[4096]; FILE *f; unsigned char *ttf,*out; long size; unsigned count,i; size_t at;
+  exr_font *a,*b=NULL; exr_shape_options o=exr_shape_defaults(); exr_shaped_glyph *ga=NULL,*gb=NULL; size_t na=0,nb=0;
+  CHECK(snprintf(path,sizeof(path),"%s/fonts/primary.ttf",dir)>0);
+  f=fopen(path,"rb"); CHECK(f && !fseek(f,0,SEEK_END) && (size=ftell(f))>12); rewind(f);
+  ttf=malloc((size_t)size); CHECK(ttf && fread(ttf,1,(size_t)size,f)==(size_t)size && !fclose(f));
+  count=(unsigned)ttf[4]<<8|ttf[5]; at=44+20*(size_t)count;
+  out=calloc(1,at+2*(size_t)size+64*count); CHECK(out);
+  for(i=0;i<count;i++) {
+    const unsigned char *e=ttf+12+16*i; unsigned char *d=out+44+20*i;
+    uint32_t offset=(uint32_t)e[8]<<24|(uint32_t)e[9]<<16|(uint32_t)e[10]<<8|e[11];
+    uint32_t length=(uint32_t)e[12]<<24|(uint32_t)e[13]<<16|(uint32_t)e[14]<<8|e[15];
+    mz_ulong packed=(mz_ulong)(2*(size_t)size+64*count-at);
+    CHECK(offset<=(uint32_t)size && length<=(uint32_t)size-offset);
+    CHECK(mz_compress2(out+at,&packed,ttf+offset,length,9)==MZ_OK);
+    if(packed>=length) { memcpy(out+at,ttf+offset,length); packed=length; }
+    memcpy(d,e,4); /* tag */
+    d[4]=(unsigned char)(at>>24); d[5]=(unsigned char)(at>>16); d[6]=(unsigned char)(at>>8); d[7]=(unsigned char)at;
+    d[8]=(unsigned char)(packed>>24); d[9]=(unsigned char)(packed>>16); d[10]=(unsigned char)(packed>>8); d[11]=(unsigned char)packed;
+    memcpy(d+12,e+12,4); memcpy(d+16,e+4,4); /* original length, checksum */
+    at+=packed; while(at&3) at++;
+  }
+  memcpy(out,"wOFF",4); memcpy(out+4,ttf,4);
+  out[8]=(unsigned char)(at>>24); out[9]=(unsigned char)(at>>16); out[10]=(unsigned char)(at>>8); out[11]=(unsigned char)at;
+  out[12]=ttf[4]; out[13]=ttf[5];
+  { uint32_t total=12+16*count; for(i=0;i<count;i++) { const unsigned char *e=ttf+12+16*i; total+=(((uint32_t)e[12]<<24|(uint32_t)e[13]<<16|(uint32_t)e[14]<<8|e[15])+3)&~3u; }
+    out[16]=(unsigned char)(total>>24); out[17]=(unsigned char)(total>>16); out[18]=(unsigned char)(total>>8); out[19]=(unsigned char)total; }
+  out[20]=0; out[21]=1;
+  f=fopen("book-fonts-primary.woff","wb"); CHECK(f && fwrite(out,1,at,f)==at && !fclose(f));
+  a=font(dir,"primary.ttf");
+  OK(exr_font_open("book-fonts-primary.woff",&b,&error));
+  OK(exr_shape(a,0,"Hello",5,&o,&ga,&na,&error)); OK(exr_shape(b,0,"Hello",5,&o,&gb,&nb,&error));
+  CHECK(na==nb && na==5);
+  for(i=0;i<na;i++) CHECK(ga[i].glyph==gb[i].glyph && near(ga[i].advance_x,gb[i].advance_x));
+  exr_free(ga); exr_free(gb); exr_font_free(a); exr_font_free(b); remove("book-fonts-primary.woff"); free(out); free(ttf);
+}
 int main(int argc,char **argv) {
-  CHECK(argc==2); embedded(argv[1]); controls(argv[1]); host_matching(argv[1]);
+  CHECK(argc==2); woff(argv[1]); embedded(argv[1]); controls(argv[1]); host_matching(argv[1]);
   continuation(argv[1]); indexed(argv[1]);
   printf("Book fonts: %u checks passed\n",checks); return 0;
 }
