@@ -74,6 +74,13 @@ int main(int argc,char **argv) {
   OK(exr_library_books(restored,NULL,&books,&count,&error));CHECK(count==1 && books[0].position==3 && books[0].favorite);exr_books_free(books,count);exr_library_close(restored);
   invalid("empty.txt","",0,EXR_FORMAT);invalid("page.webp","bad",3,EXR_FORMAT);invalid("folder\\page.png",png,png_size,EXR_FORMAT);invalid("page.png","bad",3,EXR_FORMAT);
   invalid("page\xff.png",png,png_size,EXR_ENCODING);
+  { /* Traversal segments must be rejected even alongside valid pages, never skipped as dotfiles. */
+    const char *unsafe[]={"../evil.png","dir/../evil.png","./page.png","dir/./page.png"};
+    for(i=0;i<sizeof(unsafe)/sizeof(*unsafe);i++) {
+      void *bad;size_t n;begin(&zip);put(&zip,"page.png",png,png_size);put(&zip,unsafe[i],png,png_size);bad=finish(&zip,&n);
+      CHECK(exr_fixed_open_memory(EXR_CBZ,bad,n,NULL,&d,&error)==EXR_FORMAT && !d && strstr(error.message,"Unsafe"));mz_free(bad);
+    }
+  }
   { unsigned char *extended=calloc(1,jpeg_size+8194);void *large;size_t n;CHECK(extended && jpeg_size>2);
     memcpy(extended,"\xff\xd8\xff\xe1\x20\x00",6);memcpy(extended+8196,(unsigned char *)jpeg+2,jpeg_size-2);
     begin(&zip);put(&zip,"page.jpg",extended,jpeg_size+8194);large=finish(&zip,&n);free(extended);

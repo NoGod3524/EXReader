@@ -83,12 +83,18 @@ static exr_status check_normalized_paths(const comic_page *pages,size_t count,ex
   free(identities);
   return EXR_OK;
 }
+static void free_pages(comic_page *pages,size_t count) {
+  size_t i;
+  if(!pages) return;
+  for(i=0;i<count;i++) { free(pages[i].name); free(pages[i].id); }
+  free(pages);
+}
 static void release(void *context) {
-  comic *d=context;size_t i;if(!d) return;
+  comic *d=context;if(!d) return;
   mz_zip_reader_end(&d->zip);
   if(!d->borrowed && d->source.release) d->source.release(d->source.context);
-  for(i=0;i<d->count;i++) { free(d->pages[i].name); free(d->pages[i].id); }
-  exr_metadata_free(d->metadata,d->metadata_count);free(d->pages);free(d->data);free(d);
+  free_pages(d->pages,d->count);
+  exr_metadata_free(d->metadata,d->metadata_count);free(d->data);free(d);
 }
 static size_t read_source(void *context,mz_uint64 offset,void *buffer,size_t size) {
   comic *d=context;size_t done=0;
@@ -240,8 +246,7 @@ static exr_status member_pages(comic *d,mz_uint index,const mz_zip_archive_file_
   }
   free(data);free(sizes);
   if(status!=EXR_OK) {
-    if(*out) for(i=0;i<page_count;i++) { free((*out)[i].name); free((*out)[i].id); }
-    free(*out); *out=NULL; return status;
+    free_pages(*out,page_count); *out=NULL; return status;
   }
   *count=page_count; return EXR_OK;
 }
@@ -340,10 +345,10 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
        fail on the name below. */
     member=name;
     if(name[0]=='/') { memcpy(stored,name,length);memmove(name,name+1,length-1);length--;member=stored; }
+    if(!exr_canonical_path(name)) { status=exr_fail(e,EXR_FORMAT,"Unsafe CBZ member path");goto done; }
     if(!strncmp(name,"__MACOSX/",9) || name[0]=='.' || strstr(name,"/.")!=NULL) continue;
     kind=image_kind(name);
     if(!kind && !equal(name,"ComicInfo.xml")) continue;
-    if(!exr_canonical_path(name)) { status=exr_fail(e,EXR_FORMAT,"Unsafe CBZ member path");goto done; }
     while(at<length-1) if(!exr_next(name,length-1,&at,&cp)) { status=exr_fail(e,EXR_ENCODING,"CBZ member name is not UTF-8");goto done; }
     if(!mz_zip_reader_is_file_supported(&d->zip,i)) { status=exr_fail(e,EXR_FORMAT,"Encrypted or unsupported CBZ compression");goto done; }
     if(!kind) { if(info!=UINT_MAX) { status=exr_fail(e,EXR_FORMAT,"Duplicate ComicInfo.xml");goto done; }info=i;continue; }
@@ -351,10 +356,10 @@ static exr_status open_comic(comic *d,const char *title,const exr_fixed_open_opt
     { comic_page *expanded=NULL;size_t expanded_count=0;
       status=member_pages(d,i,&st,member,(size_t)st.m_uncomp_size,&work,&expanded,&expanded_count,e);
       if(status!=EXR_OK) goto done;
-      if(d->count>(size_t)10000-expanded_count) { free(expanded);status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 pages after frame expansion");goto done; }
+      if(d->count>(size_t)10000-expanded_count) { free_pages(expanded,expanded_count);status=exr_fail(e,EXR_LIMIT,"CBZ exceeds 10000 pages after frame expansion");goto done; }
       if(d->count+expanded_count>capacity) {
         comic_page *grown=realloc(d->pages,(d->count+expanded_count)*sizeof(*grown));
-        if(!grown) { free(expanded);status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
+        if(!grown) { free_pages(expanded,expanded_count);status=exr_fail(e,EXR_MEMORY,"CBZ page directory allocation failed");goto done; }
         d->pages=grown;capacity=d->count+expanded_count;
       }
       memcpy(d->pages+d->count,expanded,expanded_count*sizeof(*expanded));free(expanded);d->count+=expanded_count;
