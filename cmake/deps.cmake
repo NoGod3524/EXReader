@@ -256,7 +256,13 @@ add_library(exr_sqlite STATIC ${sqlite_SOURCE_DIR}/sqlite3.c)
 target_include_directories(exr_sqlite PUBLIC ${sqlite_SOURCE_DIR})
 # The default SQLITE_MAX_LENGTH (1e9) is below the 1 GiB streaming-import
 # evidence size. The ABI limit is INT_MAX; keep the library at that ceiling.
-target_compile_definitions(exr_sqlite PRIVATE SQLITE_THREADSAFE=1 SQLITE_DQS=0 SQLITE_DEFAULT_FOREIGN_KEYS=1 SQLITE_OMIT_LOAD_EXTENSION SQLITE_MAX_LENGTH=2147483647)
+target_compile_definitions(exr_sqlite PRIVATE
+  SQLITE_THREADSAFE=1 SQLITE_DQS=0 SQLITE_DEFAULT_FOREIGN_KEYS=1
+  SQLITE_OMIT_LOAD_EXTENSION SQLITE_MAX_LENGTH=2147483647
+  SQLITE_OMIT_DECLTYPE SQLITE_OMIT_DEPRECATED SQLITE_OMIT_JSON SQLITE_OMIT_SHARED_CACHE)
+if(NOT MSVC AND CMAKE_C_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+  target_compile_options(exr_sqlite PRIVATE "$<$<CONFIG:Release>:-O2>")
+endif()
 if(EXR_BUILD_TEXT_INDEX AND EXR_ENABLE_TEXT_INDEX)
   target_compile_definitions(exr_sqlite PRIVATE SQLITE_ENABLE_FTS5)
 endif()
