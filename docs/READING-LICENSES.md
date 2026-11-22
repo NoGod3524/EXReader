@@ -61,7 +61,7 @@ python3 tests/check_reading_licenses.py
 | libtiff | libsdl-org/libtiff `v4.7.0` | `8f568a0d…111e16` | `EXR_ENABLE_IMAGE_TIFF` | `tiff` | `LICENSE.md` → `libtiff/LICENSE.md` | `0780558a…e380d` | 是 | 是 |
 | libaom | arthenica/libaom `af3dc9aa…`（上游 `CHANGELOG` 实测 3.15.2） | `a606215e…baa62a` | `EXR_ENABLE_IMAGE_AVIF` | `aom`（仅解码器） | `LICENSE` → `libaom/LICENSE`；`PATENTS` → `libaom/PATENTS` | `4764a286…de7f2`；`661fb8e5…96e61` | 是 | 是 |
 | libavif | AOMediaCodec/libavif `v1.2.0` | `2182f490…7d8c` | `EXR_ENABLE_IMAGE_AVIF` | `avif` | `LICENSE` → `libavif/LICENSE` | `165abf92…8216f9` | 是 | 是 |
-| Mbed TLS 加密子集 | Mbed-TLS/mbedtls `mbedtls-3.6.7` | `807f0a1c…055fcc` | `EXR_ENABLE_PDF` 且 `EXR_ENABLE_PDF_CRYPTO` | `exr_crypto`（7 个上游源文件）；ARC4 改编自 2.28.10，位于 `src/pdf_crypto.c` | `LICENSE` → `mbedtls/LICENSE` | `9b405ef4…2ad09b` | 是 | 是 |
+| Mbed TLS 加密子集 | Mbed-TLS/mbedtls `mbedtls-3.6.7` | `807f0a1c…055fcc` | `EXR_ENABLE_PDF` 且 `EXR_ENABLE_PDF_CRYPTO`，或 `EXR_ENABLE_LCP` | `exr_crypto`（7 个上游源文件）；ARC4 改编自 2.28.10，位于 `src/pdf_crypto.c` | `LICENSE` → `mbedtls/LICENSE` | `9b405ef4…2ad09b` | 是 | 是 |
 | LittleCMS | mm2/Little-CMS `lcms2.19.1` | `267705e2…a709` | `EXR_ENABLE_ICC` | `exr_lcms` | `LICENSE` → `lcms/LICENSE` | `6dbd6043…484d31` | 是 | 是 |
 | SQLite | sqlite.org 3.54.0 amalgamation | `68e913b0…5aa4d` | `EXR_ENABLE_LIBRARY` 或 `EXR_BUILD_TEXT_INDEX` | `exr_sqlite` | 仓库 `licenses/sqlite-public-domain.txt` → `sqlite/sqlite-public-domain.txt`；与实际 `sqlite3.c` 开头 dedication 及 `sqlite3.h` 版本核对 | 完整固定值见检查器 | 否 | 是 |
 | minimp3 | lieff/minimp3 `ea99364f…` | `5628166e…768f34` | `EXR_ENABLE_AUDIO` 且 `EXR_ENABLE_MP3` | — | `LICENSE` → `minimp3/LICENSE`（未构建，未核对） | 未固定 | 否 | 否 |

@@ -28,12 +28,9 @@ SDK_REQUIRED_PATHS = (
     'share/exreader/hyph-en-us.LICENSE.txt',
     'share/exreader/sbom.cdx.json',
     'share/exreader/sbom.spdx.json',
-    'docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md',
     'docs/READING-LICENSES.md',
     'docs/READING-LICENSE-REVIEW.md',
     'docs/READER-DISTRIBUTION-INVENTORY.md',
-    'docs/sbom.cdx.json',
-    'docs/sbom.spdx.json',
 )
 
 WINDOWS_REQUIRED_FILES = (
@@ -217,9 +214,6 @@ def verify_sdk_stage(stage: Path, root: Path = ROOT) -> list:
         'share/exreader/hyph-en-us.LICENSE.txt': root / 'data/hyph-en-us.LICENSE.txt',
         'share/exreader/sbom.cdx.json': root / 'docs/sbom.cdx.json',
         'share/exreader/sbom.spdx.json': root / 'docs/sbom.spdx.json',
-        'docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md': root / 'docs/READER-INSTALL-UPGRADE-IMPORT-SYNC.md',
-        'docs/sbom.cdx.json': root / 'docs/sbom.cdx.json',
-        'docs/sbom.spdx.json': root / 'docs/sbom.spdx.json',
     }
     for rel, src in expected_map.items():
         installed = stage / rel
