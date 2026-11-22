@@ -92,6 +92,13 @@ exr_status exr_image_decode_page_control(const void *data,size_t size,size_t pag
   const exr_control *control,exr_bitmap *out,exr_error *error);
 exr_status exr_image_decode_control(const void *data,size_t size,const exr_control *control,
   exr_bitmap *out,exr_error *error);
+/* Width and height of every page, sizes[2*i] and sizes[2*i+1], from one probe.
+   The caller frees *sizes. */
+exr_status exr_image_page_sizes(const void *data,size_t size,uint32_t **sizes,size_t *count,exr_error *error);
+/* The stb allocation budget of the calling thread: reset it before a decode,
+   then report its exhaustion instead of the decoder's generic EXR_FORMAT. */
+void exr_image_budget_reset(void);
+exr_status exr_image_budget_status(exr_status status,exr_error *error);
 
 int exr_image_format_detect(const void *data,size_t size);
 #define EXR_SHADING_SOURCE_MAGIC 0x455852415849414cULL
