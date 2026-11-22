@@ -5,7 +5,11 @@
 
 typedef union style_allocation style_allocation;
 union style_allocation {
+#ifdef _MSC_VER
+  __declspec(align(16)) unsigned char alignment[16];
+#else
   max_align_t alignment;
+#endif
   struct {
     size_t size;
     style_allocation *previous, *next;

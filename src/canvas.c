@@ -1281,7 +1281,9 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
             double sum_alpha=0,sum_shape=0;
             for(unsigned sy=0;sy<2;sy++) for(unsigned sx=0;sx<2;sx++) {
               double px=sx ? px1 : px0,py=sy ? py1 : py0;
-              double u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],color[4]={0},shape=0,opacity=0,a;
+              double u=aligned ? inv[0]*px+inv[4] : inv[0]*px+inv[2]*py+inv[4];
+              double v=aligned ? (sy ? v_row1 : v_row0) : inv[1]*px+inv[3]*py+inv[5];
+              double color[4]={0},shape=0,opacity=0,a;
               if(!isfinite(u) || !isfinite(v)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source sample exceeds precision"),e);
               e->code=EXR_OK;e->message[0]=0;status=source.sample(source.context,u,v,space,color,&shape,&opacity,e);
               if(status!=EXR_OK || e->code!=EXR_OK) return finish(c,status!=EXR_OK ? status : e->code,e);

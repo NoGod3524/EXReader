@@ -80,9 +80,10 @@ def collect(build, package, target, config):
     else:
         filename = 'libexreader.so' if target == 'linux-x64' else 'libexreader.dylib'
         library = artifact(directories, [filename])
-        pattern = 'libexreader.so*' if target == 'linux-x64' else 'libexreader*.dylib'
-        for candidate in sorted(library.parent.glob(pattern)):
-            copy(candidate, package / 'lib' / candidate.name)
+        patterns = ('libexreader.so*',) if target == 'linux-x64' else ('libexreader.dylib', 'libexreader.*.dylib')
+        for pattern in patterns:
+            for candidate in sorted(library.parent.glob(pattern)):
+                copy(candidate, package / 'lib' / candidate.name)
         executable = 'exr-info'
     copy(artifact(directories, [executable]), package / 'bin' / executable)
     copy(ROOT / 'examples/minimal/main.c', package / 'examples/minimal/main.c')
