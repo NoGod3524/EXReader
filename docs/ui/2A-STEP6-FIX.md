@@ -86,6 +86,6 @@ python -X utf8 docs/ui/acceptance/check_step5.py docs/ui/acceptance/.build-real-
 
 第 100 / 800 页六档字号递增锚点 **12/12**，另有直接跳字号 **10/10**；双向翻页及窗口缩小后恢复均保留页首。非零首行位置 4529 在六次递增中保持不变。
 
-[完整回归 JSON](evidence/2a-step6-fix/record/real-exe-regression.json)、[进程记录](evidence/2a-step6-fix/record/real-exe-processes.json)、[原始回归测量](evidence/2a-step6-fix/record/real-exe-regression-measurements.tar.gz)。
+[完整回归 JSON](evidence/2a-step6-fix/record/real-exe-regression.json)、[进程记录](evidence/2a-step6-fix/record/real-exe-processes.json)、[原始回归测量](https://github.com/NoGod3524/EXReader/blob/bd1ff5e6ea229481b2eba28b52648a9c664c1c3c/docs/ui/evidence/2a-step6-fix/record/real-exe-regression-measurements.tar.gz)。
 
 只修改 examples/ 与 docs/ui/。未手动触发 CI，未取消任何 workflow run。

@@ -33,7 +33,7 @@ MSVC 安装完整，缺的是普通终端的开发者环境；脚本通过 `vswh
 
 该变化来自已合入的 [PR #96](https://github.com/NoGod3524/EXReader/pull/96)：MOBI 改用 `exr_mobi_html`，识别 pagebreak 并分章。用 SHA-256 验证过的原始合入前/后 DLL 重放同一本书，分别得到 **1 章 / 646 页**与 **43 章 / 666 页**；前者与旧基线逐页一致，后者与本轮三组构建逐页一致。[重放证据](../evidence/runtime-20261109/history-zami.json)、[旧基线匹配](../evidence/runtime-20261109/history-zami-before-match.json)、[当前结果匹配](../evidence/runtime-20261109/history-zami-after-match.json)。没有改原清单、替换 MOBI 或重写旧基线；“旧基线变化 0”这一绝对表述不成立。
 
-**覆盖率不退化。** 新建 GCC `-O1 --coverage -fprofile-update=atomic` 构建，228/228 ctest、19 本逐页渲染、1,761 个原始输入及 3 个 TXT 补充检查全部完成。合并 4,427 份 gcov 对象/进程记录的源码行执行并集后，**33,579 / 35,402 = 94.85%**，比原 **93.79% 提高 1.06 个百分点**；**116/116 源文件执行、2,412/2,450 函数执行**。新增的 5 个源码文件纳入分母，没有沿用旧 111 文件口径。[覆盖明细](../evidence/runtime-20261109/coverage.json)、[原始 gcov](../evidence/runtime-20261109/gcov-raw.jsonl.gz)、[采集命令](../evidence/runtime-20261109/gcov-commands.json)。
+**覆盖率不退化。** 新建 GCC `-O1 --coverage -fprofile-update=atomic` 构建，228/228 ctest、19 本逐页渲染、1,761 个原始输入及 3 个 TXT 补充检查全部完成。合并 4,427 份 gcov 对象/进程记录的源码行执行并集后，**33,579 / 35,402 = 94.85%**，比原 **93.79% 提高 1.06 个百分点**；**116/116 源文件执行、2,412/2,450 函数执行**。新增的 5 个源码文件纳入分母，没有沿用旧 111 文件口径。[覆盖明细](../evidence/runtime-20261109/coverage.json)、[原始 gcov](https://github.com/NoGod3524/EXReader/blob/bd1ff5e6ea229481b2eba28b52648a9c664c1c3c/evidence/runtime-20261109/gcov-raw.jsonl.gz)、[采集命令](../evidence/runtime-20261109/gcov-commands.json)。
 
 | 对比项 | 上轮 | 本轮 |
 |---|---:|---:|
@@ -111,7 +111,7 @@ wsl_exit=1
 
 - **总体行覆盖：31,737 / 33,840 = 93.79%。**
 - **源文件执行：111 / 111。函数执行：2,281 / 2,354 = 96.90%，73 个函数未执行。**
-- `exr_document_open`、`exr_publication_load`、`exr_pager_next`、`exr_render_page_color`、`exr_fixed_render` 和 `exr_font_open` 均有真实计数。逐个源文件、已执行/未执行行号、全部函数名称及执行状态见 [coverage.json](../evidence/quality-20261108/coverage.json)；[原始 gcov JSON](../evidence/quality-20261108/gcov-raw.jsonl.gz)与[每次命令/标准错误](../evidence/quality-20261108/gcov-commands.json)可复核数字。
+- `exr_document_open`、`exr_publication_load`、`exr_pager_next`、`exr_render_page_color`、`exr_fixed_render` 和 `exr_font_open` 均有真实计数。逐个源文件、已执行/未执行行号、全部函数名称及执行状态见 [coverage.json](../evidence/quality-20261108/coverage.json)；[原始 gcov JSON](https://github.com/NoGod3524/EXReader/blob/bd1ff5e6ea229481b2eba28b52648a9c664c1c3c/evidence/quality-20261108/gcov-raw.jsonl.gz)与[每次命令/标准错误](../evidence/quality-20261108/gcov-commands.json)可复核数字。
 
 | 关键文件 | 已执行 / 可执行行 | 行覆盖率 | 已执行 / 已编译函数 |
 |---|---:|---:|---:|

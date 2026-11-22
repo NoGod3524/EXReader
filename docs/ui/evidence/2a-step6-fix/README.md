@@ -12,6 +12,6 @@
 - [实际加载 DLL 路径](record/real-exe-loaded-dll.json)
 
 - [本轮既有 8/8、字号锚点 12/12、直接跳字号 10/10](record/real-exe-regression.json)
-- [本轮原始回归测量](record/real-exe-regression-measurements.tar.gz)
+- [本轮原始回归测量](https://github.com/NoGod3524/EXReader/blob/bd1ff5e6ea229481b2eba28b52648a9c664c1c3c/docs/ui/evidence/2a-step6-fix/record/real-exe-regression-measurements.tar.gz)
 
 本轮记录使用 `real-exe-` 前缀。其他图片、result.json、record/real-* 及历史记录保留自前轮验收；本轮以本页以上链接为准。书籍原件与书库数据库未纳入证据包。

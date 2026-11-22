@@ -1,5 +1,7 @@
 # B 线描边/路径覆盖缓存回归报告（合并前置条件）
 
+本报告对应的四份 DLL 原件见[归档索引](../../archive/EVIDENCE-20261122.md#描边回归-dll)。
+
 - **日期 / 机器**：2026-11-19，LAP25002，MinGW GCC 16.2.0 Release（`build/perf`）
 - **工作树 / 分支**：`C:\Users\Oscar\Documents\Codex\EXReader-dvpath`，分支 `perf/dense-vector-path-residual`
 - **对照基线**：

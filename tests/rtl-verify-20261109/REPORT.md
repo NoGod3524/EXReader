@@ -57,6 +57,8 @@
 
 ## 回归与测试
 
+四份原始测量文件见[归档索引](../../archive/EVIDENCE-20261122.md#rtl-原始测量)。
+
 - 修复前基线 `03ccf53e`，独立冻结的DLL；相同19本书、Reader.otf、tools/regress/layout.json。
 - **19/19、11,318页、8,648,571字形；页数/字形数/逐页像素SHA256变化全部为0**。见 books-before/after.json.gz、books.diff.json。
 - **MSVC Release + fuzz完整ctest 262/262全绿，79.74秒**，包括sdk-release。见 ctest-msvc.txt。
