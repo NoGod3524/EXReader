@@ -907,6 +907,14 @@ static int parameter(exr_pdf_file *f,uint32_t dict,const char *key,uint64_t maxi
   uint32_t id=exr_pdf_get(f,dict,key); *out=fallback;
   return id==EXR_PDF_NONE || direct_integer(f,resolve(f,id),maximum,out);
 }
+static int bool_parameter(exr_pdf_file *f,uint32_t dict,const char *key,int fallback,int *out) {
+  uint32_t id=exr_pdf_get(f,dict,key); const exr_pdf_value *v;
+  *out=fallback;
+  if(id==EXR_PDF_NONE) return 1;
+  v=exr_pdf_value_at(f,resolve(f,id));
+  if(!v || v->kind!=EXR_PDF_BOOL) return 0;
+  *out=v->u.number!=0; return 1;
+}
 static int decode_lzw(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,unsigned early,size_t *end) {
   uint16_t prefix[4096]; unsigned char suffix[4096],stack[4096];
   size_t bit=0; unsigned width=9,next=258,previous=UINT_MAX; int started=0;
@@ -1111,22 +1119,34 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
     else if(name_is(f,filters[i],"ASCII85Decode") || name_is(f,filters[i],"A85")) ok=decode_ascii85(f,input,input_size,&output,current.capacity,end);
     else if(name_is(f,filters[i],"RunLengthDecode") || name_is(f,filters[i],"RL")) ok=decode_runlength(f,input,input_size,&output,current.capacity,end);
     else if(name_is(f,filters[i],"CCITTFaxDecode") || name_is(f,filters[i],"CCF")) {
-      uint64_t columns=1728,rows=0,black=0,align=0; int64_t group=0;
-      uint32_t key_id=exr_pdf_get(f,parms[i],"K");
+      uint64_t columns=1728,rows=0; int group=0,black=0,align=0,eol=0;
+      uint32_t key_id; size_t stride,needed,*budget;
+      if(source.inline_image) { free(output.data); goto unsupported; }
+      key_id=exr_pdf_get(f,parms[i],"K");
       if(key_id!=EXR_PDF_NONE) {
-        uint32_t resolved_key=resolve(f,key_id);
-        const exr_pdf_value *kv=exr_pdf_value_at(f,resolved_key);
-        if(kv && (kv->kind==EXR_PDF_INT || kv->kind==EXR_PDF_REAL))
-          group=kv->kind==EXR_PDF_INT ? kv->u.integer : (int64_t)kv->u.number;
+        const exr_pdf_value *kv=exr_pdf_value_at(f,resolve(f,key_id));
+        if(!kv || kv->kind!=EXR_PDF_INT || kv->u.integer<INT_MIN || kv->u.integer>INT_MAX) {
+          failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done;
+        }
+        group=(int)kv->u.integer;
       }
       if(!parameter(f,parms[i],"Columns",65535,1728,&columns) ||
          !parameter(f,parms[i],"Rows",65535,0,&rows) ||
-         !parameter(f,parms[i],"BlackIs1",1,0,&black) ||
-         !parameter(f,parms[i],"EncodedByteAlign",1,0,&align)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
+         !bool_parameter(f,parms[i],"BlackIs1",0,&black) ||
+         !bool_parameter(f,parms[i],"EncodedByteAlign",0,&align) ||
+         !bool_parameter(f,parms[i],"EndOfLine",0,&eol)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
       /* A CCITT stream may omit /Rows; the image height is the row count then. */
-      if(!rows) parameter(f,id,"Height",65535,0,&rows);
+      if(!rows && !parameter(f,id,"Height",65535,0,&rows)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
+      if(!columns || !rows) { failed(f,EXR_FORMAT,"Invalid CCITT image dimensions"); goto done; }
+      stride=((size_t)columns+7)/8;
+      if((size_t)rows>EXR_MAX_TEXT/stride) { failed(f,EXR_LIMIT,"PDF decoded stream exceeds 64 MiB"); goto done; }
+      needed=stride*(size_t)rows;
+      if(current.capacity>EXR_MAX_INPUT-f->decoded_bytes || needed>EXR_MAX_INPUT-f->decoded_bytes-current.capacity) {
+        failed(f,EXR_LIMIT,"PDF decoded stream cache budget exceeded"); goto done;
+      }
+      budget=f->decode_budget ? f->decode_budget : &f->decode_work;
       { unsigned char *samples=NULL; size_t count=0;
-        if(exr_pdf_ccitt_decode(input,input_size,(long)group,(unsigned)columns,(unsigned)rows,(int)black,(int)align,&samples,&count,&f->error)!=EXR_OK) { free(samples); goto done; }
+        if(exr_pdf_ccitt_decode(input,input_size,group,(unsigned)columns,(unsigned)rows,black,align,eol,budget,f->control,&samples,&count,&f->error)!=EXR_OK) { free(samples); goto done; }
         free(output.data); output.data=samples; output.size=count; output.capacity=count; ok=1;
       }
     }
