@@ -495,7 +495,7 @@ static exr_status txt_failure(txt_view *v,exr_status status,const exr_error *err
 static exr_status txt_find_paragraph(txt_view *v,size_t paragraph,size_t *start,size_t *length,
                                      const char **text,exr_error *e) {
   size_t i,point=0;uint64_t offset;exr_status status;const char *line;size_t size;
-  if(v->failure.code) return exr_fail(e,v->failure.code,v->failure.message);
+  if(v->failure.code) return exr_fail(e,v->failure.code,"%s",v->failure.message);
   if(paragraph>=v->count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT paragraph"),e);
   if(v->cursor_paragraph==paragraph) {
     *start=v->cursor_start;*length=v->cursor_size;if(text) *text=v->cursor_text;
@@ -577,7 +577,7 @@ static exr_node txt_node(void *context,size_t node) {
 static exr_status txt_prepare(void *context,size_t node,const exr_control *control,exr_error *e) {
   txt_view *v=context;size_t paragraph,start,length;const char *line;char *copy;exr_status status;
   if(control) v->control=*control;
-  if(v->failure.code) return exr_fail(e,v->failure.code,v->failure.message);
+  if(v->failure.code) return exr_fail(e,v->failure.code,"%s",v->failure.message);
   status=exr_control_cancel(&v->wrapped.control,e);if(status!=EXR_OK) return txt_failure(v,status,e);
   if(node>=v->document.node_count) return txt_failure(v,exr_fail(e,EXR_FORMAT,"Invalid TXT node"),e);
   if(node<2) return EXR_OK;
@@ -631,7 +631,7 @@ static exr_status txt_writing(void *context,size_t node,int mode,exr_error *e) {
   return EXR_OK;
 }
 static exr_status txt_status(void *context,exr_error *e) {
-  txt_view *v=context;return v->failure.code ? exr_fail(e,v->failure.code,v->failure.message) : EXR_OK;
+  txt_view *v=context;return v->failure.code ? exr_fail(e,v->failure.code,"%s",v->failure.message) : EXR_OK;
 }
 static void txt_free(void *context) {
   txt_view *v=context;if(!v) return;

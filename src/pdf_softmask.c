@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 
-static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, message); }
+static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, "%s", message); }
 static int number(exr_pdf_file *file, uint32_t id, double *out) {
   const exr_pdf_value *v = exr_pdf_value_at(file, id);
   if (!v || (v->kind != EXR_PDF_INT && v->kind != EXR_PDF_REAL)) return 0;

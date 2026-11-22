@@ -4,7 +4,7 @@
 #include <math.h>
 #include <string.h>
 
-static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, message); }
+static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, "%s", message); }
 #define name_is exr_pdf_name_is
 static int number(exr_pdf_file *file, uint32_t id, double *out) {
   const exr_pdf_value *v = exr_pdf_value_at(file, id);
