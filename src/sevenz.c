@@ -1,5 +1,41 @@
 /* SPDX-License-Identifier: MIT */
 #include "exr/formats.h"
+#include "base_internal.h"
+
+exr_sevenz_options exr_sevenz_options_defaults(void) {
+  exr_sevenz_options options={sizeof(options),128u*1024*1024,16u*1024*1024}; return options;
+}
+
+#ifdef EXR_NO_SEVENZ
+exr_status exr_sevenz_open(const char *path,const exr_sevenz_options *options,exr_sevenz **out,exr_error *e) {
+  (void)options;
+  if(out) *out=NULL;
+  if(!path || !out) return exr_fail(e,EXR_ARGUMENT,"Missing 7Z path or output");
+  return exr_fail(e,EXR_UNSUPPORTED,"7Z reading is disabled in this build");
+}
+exr_status exr_sevenz_open_source(const exr_source *source,const exr_sevenz_options *options,
+  exr_sevenz **out,exr_error *e) {
+  if(out) *out=NULL;
+  if(!out || !source || !source->read_at ||
+     (options && (options->struct_size<sizeof(*options) || !options->max_unpack_size || !options->max_header_size)))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid 7Z open request");
+  return exr_fail(e,EXR_UNSUPPORTED,"7Z reading is disabled in this build");
+}
+const exr_sevenz_entry *exr_sevenz_entries(const exr_sevenz *z,size_t *count) {
+  (void)z;
+  if(count) *count=0;
+  return NULL;
+}
+exr_status exr_sevenz_extract(exr_sevenz *z,size_t index,void **out,size_t *size,exr_error *e) {
+  (void)index;
+  if(out) *out=NULL;
+  if(size) *size=0;
+  if(!z || !out || !size) return exr_fail(e,EXR_ARGUMENT,"Invalid 7Z file index or output");
+  return exr_fail(e,EXR_UNSUPPORTED,"7Z reading is disabled in this build");
+}
+void exr_sevenz_free(exr_sevenz *z) { (void)z; }
+
+#else
 #include "lzma_internal.h"
 #include <miniz.h>
 
@@ -338,9 +374,6 @@ void exr_sevenz_free(exr_sevenz *z) {
   if(z->entries) for(i=0;i<z->count;i++) free((void *)z->entries[i].path);
   free(z->entries); free(z->sub_index); free(z);
 }
-exr_sevenz_options exr_sevenz_options_defaults(void) {
-  exr_sevenz_options options={sizeof(options),128u*1024*1024,16u*1024*1024}; return options;
-}
 exr_status exr_sevenz_open_source(const exr_source *source,const exr_sevenz_options *options,
   exr_sevenz **out,exr_error *e) {
   exr_sevenz *z; exr_status status; unsigned char signature[32],*header=NULL;
@@ -439,3 +472,4 @@ exr_status exr_sevenz_extract(exr_sevenz *z,size_t index,void **out,size_t *size
   memmove(data,data+(size_t)sub->offset,(size_t)sub->size);
   *out=data; *size=(size_t)sub->size; return exr_fail(e,EXR_OK,"");
 }
+#endif

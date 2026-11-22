@@ -67,8 +67,12 @@ ctest --test-dir build/core --output-on-failure
 
 | preset | 用途 | 组件 |
 | --- | --- | --- |
-| `reading-core` | 多格式重排阅读与自有 PDF/CBZ 固定页，不带书库 | 保留 PDF、PDF 密码认证、ICC 及 WebP/TIFF/AVIF 图像开关；关闭音频（含 MP3/AAC）、书库、全文索引、PDF 编辑、旧共享总库、工具、测试、fuzz 和 JNI |
+| `reading-core` | 多格式重排阅读与自有 PDF/CBZ 固定页，不带书库 | 保留文档导出、PDF 密码认证、ICC 及 WebP/TIFF/AVIF。关闭音频、书库、全文索引、PDF 和 DOCX 编辑、OPDS、PPT/PPTX、7z、旧共享总库、工具、测试、fuzz 和 JNI |
 | `reading-library` | 需要 SQLite 书架、进度与笔记的宿主 | 继承 `reading-core`，只增加 `EXR_ENABLE_LIBRARY=ON` |
+
+默认构建保留所有这些文档功能。阅读配置可分别打开 `EXR_ENABLE_DOCX_EDIT`、
+`EXR_ENABLE_OPDS`、`EXR_ENABLE_POWERPOINT` 和 `EXR_ENABLE_SEVENZ`。
+只需读取文档时可设 `EXR_ENABLE_DOCUMENT_EXPORT=OFF`，同时裁掉转换 CLI。
 
 ```sh
 cmake --preset reading-core

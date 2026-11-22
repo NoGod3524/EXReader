@@ -118,11 +118,17 @@ def main():
     sources, edges = references(args.build, nm)
     active = args.build / 'exr-modules.json'
     if active.exists():
-        enabled = json.loads(active.read_text(encoding='utf-8'))['layers']
+        configured = json.loads(active.read_text(encoding='utf-8'))
+        enabled = configured['layers']
         files = {name: layer for name, layer in files.items() if layer in enabled}
-    if active.exists():
-        configured = json.loads(active.read_text(encoding='utf-8'))['files']
-        if any(configured.get(name) != owner for name, owner in files.items()):
+        for option, optional in config.get('optional_files', {}).items():
+            setting = re.search(rf'^{re.escape(option)}:[^=]+=(.*)$', cache, re.M)
+            if setting and (setting[1].upper() in {'', '0', 'OFF', 'NO', 'FALSE', 'N', 'IGNORE', 'NOTFOUND'}
+                            or setting[1].upper().endswith('-NOTFOUND')):
+                for name in optional:
+                    files.pop(name, None)
+        configured_files = {name: layer for name, layer in configured['files'].items() if layer in enabled}
+        if files != configured_files:
             parser.error('Configured object ownership differs; reconfigure/build first')
     if sources != files.keys():
         parser.error(f'Source inventory mismatch: new={sorted(sources-files.keys())}, '

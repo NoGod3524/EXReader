@@ -3,7 +3,9 @@
 #include <stdio.h>
 extern _Thread_local double diag_source_ms,diag_mask_ms,diag_image_ms;
 extern _Thread_local size_t diag_sources,diag_masks;
+#ifndef EXR_NO_POWERPOINT
 #include "ppt_internal.h"
+#endif
 #include "font_internal.h"
 #include "pdf_crypto.h"
 typedef struct {
@@ -285,10 +287,18 @@ static exr_status open_data(unsigned char *data,size_t size,const char *title,co
 done:
   free(pages); if(status!=EXR_OK) release(d); return status;
 }
+#ifdef EXR_NO_POWERPOINT
+static exr_status powerpoint_disabled(exr_error *e) {
+  return exr_fail(e,EXR_UNSUPPORTED,"PowerPoint reading is disabled in this build");
+}
+#endif
 exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,const exr_fixed_open_options *input,exr_fixed_document **out,exr_error *e) {
   exr_fixed_open_options options; unsigned char *copy; exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL;
+#ifdef EXR_NO_POWERPOINT
+  if(format==EXR_PPT || format==EXR_PPTX) return powerpoint_disabled(e);
+#else
   /* Let the PPT reader classify empty/truncated bytes as EXR_FORMAT and apply
      its own 256 MiB stream budget. A valid zero-slide PPT still has a CFB. */
   if(format==EXR_PPT) {
@@ -296,13 +306,16 @@ exr_status exr_fixed_open_memory(exr_format format,const void *data,size_t size,
     if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
     return exr_ppt_open_memory(data,size,&options,out,e);
   }
+#endif
   if(!data || !size || size>EXR_MAX_INPUT) return exr_fail(e,size>EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,"Invalid fixed document bytes");
   if(!exr_format_is_fixed(format)) return exr_fail(e,EXR_FORMAT,"No built-in fixed reader for this format");
   status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
   copy=malloc(size); if(!copy) return exr_fail(e,EXR_MEMORY,"Fixed input copy allocation failed"); memcpy(copy,data,size);
   if(format==EXR_CBZ) return exr_cbz_open_owned(copy,size,"",&options,out,e);
+#ifndef EXR_NO_POWERPOINT
   if(format==EXR_PPTX) return exr_pptx_open_owned(copy,size,"",&options,out,e);
+#endif
   return open_data(copy,size,"",&options,NULL,0,out,e);
 }
 /* Takes ownership of mapping on every path. Used by the streaming library for
@@ -320,47 +333,61 @@ exr_status exr_fixed_open_mapped(exr_format format,exr_mapping *mapping,const ex
 }
 exr_status exr_fixed_open(const char *path,const exr_fixed_open_options *input,exr_fixed_document **out,exr_error *e) {
   exr_fixed_open_options options; unsigned char *data=NULL; size_t size=0; exr_status status; const char *title,*at; exr_mapping mapping={0};
+  int pptx,mapped;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document output");
   *out=NULL; if(!path) return exr_fail(e,EXR_ARGUMENT,"Missing fixed document path");
   status=exr_fixed_open_options_copy(input,&options,e); if(status!=EXR_OK) return status;
   if(exr_control_cancel(&options.control,e)!=EXR_OK) return EXR_CANCELLED;
   title=path; for(at=path;*at;at++) if(*at=='/' || *at=='\\') title=at+1;
   at=strrchr(title,'.');
-  if(at && exr_link_case_equal(at,".pptx")) {
+  pptx=at && exr_link_case_equal(at,".pptx");
+  if(pptx || (at && exr_link_case_equal(at,".ppt"))) {
+#ifdef EXR_NO_POWERPOINT
+    return powerpoint_disabled(e);
+#else
+    if(!pptx) return exr_ppt_open_file(path,&options,out,e);
     status=exr_read(path,&data,&size,e);if(status!=EXR_OK) return status;
     return exr_pptx_open_owned(data,size,title,&options,out,e);
+#endif
   }
-  if(at && exr_link_case_equal(at,".ppt"))
-    return exr_ppt_open_file(path,&options,out,e);
   if(at && (at[0]=='.' && (at[1]=='c' || at[1]=='C') && (at[2]=='b' || at[2]=='B') && (at[3]=='z' || at[3]=='Z') && !at[4])) return exr_cbz_open_file(path,title,&options,out,e);
   status=exr_map_file(path,&mapping,e);
-  if(status==EXR_OK && mapping.size>=8 && !memcmp(mapping.address,"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",8)) {
-    status=exr_ppt_open_memory(mapping.address,mapping.size,&options,out,e);
-    exr_unmap(&mapping);return status;
-  }
-  if(status==EXR_OK) {
-    if(mapping.size>=2 && !memcmp(mapping.address,"PK",2)) {
-      exr_format format=EXR_CUSTOM;
-      status=exr_zip_format(mapping.address,mapping.size,&format,e);
-      if(status!=EXR_OK) { exr_unmap(&mapping);return status; }
-      if(format==EXR_PPTX) {
-        if(mapping.size>EXR_MAX_INPUT) { exr_unmap(&mapping);return exr_fail(e,EXR_LIMIT,"PPTX input exceeds 128 MiB"); }
-        size=mapping.size;data=malloc(size);
-        if(!data) { exr_unmap(&mapping);return exr_fail(e,EXR_MEMORY,"PPTX input allocation failed"); }
-        memcpy(data,mapping.address,size);exr_unmap(&mapping);
-        return exr_pptx_open_owned(data,size,title,&options,out,e);
-      }
+  mapped=status==EXR_OK;
+  if(mapped) {
+    data=mapping.address; size=mapping.size;
+    if(size>=8 && !memcmp(data,"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",8)) {
+#ifdef EXR_NO_POWERPOINT
+      status=powerpoint_disabled(e);
+#else
+      status=exr_ppt_open_memory(data,size,&options,out,e);
+#endif
+      exr_unmap(&mapping);return status;
     }
-    return open_data((unsigned char *)mapping.address,mapping.size,title,&options,&mapping,1,out,e);
+  } else {
+    status=exr_read(path,&data,&size,e); if(status!=EXR_OK) return status;
   }
-  status=exr_read(path,&data,&size,e); if(status!=EXR_OK) return status;
   if(size>=2 && !memcmp(data,"PK",2)) {
     exr_format format=EXR_CUSTOM;
     status=exr_zip_format(data,size,&format,e);
-    if(status!=EXR_OK) { free(data);return status; }
-    if(format==EXR_PPTX) return exr_pptx_open_owned(data,size,title,&options,out,e);
+    if(status==EXR_OK && format==EXR_PPTX) {
+#ifdef EXR_NO_POWERPOINT
+      status=powerpoint_disabled(e);
+#else
+      if(mapped) {
+        if(size>EXR_MAX_INPUT) { exr_unmap(&mapping);return exr_fail(e,EXR_LIMIT,"PPTX input exceeds 128 MiB"); }
+        data=malloc(size);
+        if(!data) { exr_unmap(&mapping);return exr_fail(e,EXR_MEMORY,"PPTX input allocation failed"); }
+        memcpy(data,mapping.address,size);exr_unmap(&mapping);
+      }
+      return exr_pptx_open_owned(data,size,title,&options,out,e);
+#endif
+    }
+    if(status!=EXR_OK) {
+      if(mapped) exr_unmap(&mapping); else free(data);
+      return status;
+    }
   }
-  return open_data(data,size,title,&options,NULL,0,out,e);
+  return open_data(data,size,title,&options,mapped ? &mapping : NULL,mapped,out,e);
 }
 
 

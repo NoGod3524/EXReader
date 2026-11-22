@@ -19,10 +19,12 @@ int main(int argc,char **argv) {
   CHECK(exr_text_analyze("abc",3,&boundaries,&e)==EXR_OK && (boundaries[3]&EXR_BOUNDARY_MANDATORY));exr_free(boundaries);
   CHECK(exr_bidi_analyze("abc",3,EXR_DIRECTION_AUTO,&bidi,&e)==EXR_OK);exr_bidi_free(bidi);
   CHECK(exr_document_open_memory(EXR_TXT,"abc",3,&doc,&e)==EXR_OK);
+#ifndef EXR_NO_DOCUMENT_EXPORT
   { void *text=NULL;size_t size=0;
     CHECK(exr_document_export_control(doc,EXR_TXT,NULL,&text,&size,&e)==EXR_OK && size==3);
     exr_free(text);
   }
+#endif
   CHECK(exr_font_open(argv[1],&font,&e)==EXR_OK);
   { exr_font_color_info info={0};info.struct_size=sizeof(info);
     CHECK(exr_font_color_info_get(font,0,0,&info,NULL,&e)==EXR_OK && info.kind==EXR_FONT_COLOR_NONE);

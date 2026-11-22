@@ -175,6 +175,16 @@
     "xmp.c": "formats",
     "xmp_write.c": "pdf_edit"
   },
+  "optional_files": {
+    "EXR_ENABLE_DOCX_EDIT": [
+      "docx_edit.c", "docx_edit_io.c", "docx_edit_footnote_io.c",
+      "docx_edit_table.c", "docx_edit_image.c"
+    ],
+    "EXR_ENABLE_DOCUMENT_EXPORT": ["epub_write.c", "export_text.c"],
+    "EXR_ENABLE_OPDS": ["opds.c"],
+    "EXR_ENABLE_POWERPOINT": ["ppt.c", "ppt_cfb.c", "ppt_records.c", "ppt_text.c", "pptx.c"],
+    "EXR_ENABLE_SEVENZ": ["lzma.c"]
+  },
   "exceptions": [],
   "headers": {
     "src/audio_internal.h": "audio",
