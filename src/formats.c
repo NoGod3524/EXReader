@@ -1336,7 +1336,7 @@ exr_status exr_epub_chapter_feed_bounded(const exr_document *index,size_t part,
 static exr_status docx_member(void *context, const char *path, int optional, void **data,
                                 size_t *size, exr_error *e) {
   archive *z = context; *data=NULL; *size=0;
-  if(optional && mz_zip_reader_locate_file(&z->archive,path,NULL,0)<0) return EXR_OK;
+  if(optional && mz_zip_reader_locate_file(&z->archive,path,NULL,MZ_ZIP_FLAG_CASE_SENSITIVE)<0) return EXR_OK;
   *data=member(z,path,size,e); return *data ? EXR_OK : z->status;
 }
 static exr_status zip_document(exr_document *d, const void *data, size_t n, exr_error *e) {

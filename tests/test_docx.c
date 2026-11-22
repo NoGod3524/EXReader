@@ -157,5 +157,16 @@ int main(int argc,char **argv) {
     "<w:abstractNum w:abstractNumId='11'><w:lvl w:ilvl='0'><w:start w:val='1'/><w:numFmt w:val='decimal'/><w:lvlRestart w:val='1'/><w:lvlText w:val='%1.'/></w:lvl></w:abstractNum>"
     "<w:num w:numId='1'><w:abstractNumId w:val='10'/></w:num><w:num w:numId='2'><w:abstractNumId w:val='11'/></w:num></w:numbering>",1);
   counter_case("unknownFormat",1,"%1.",NULL);
+  { /* Optional member lookup must match case-sensitively like member extraction. */
+    mz_zip_archive writer={0}; void *bytes=NULL; size_t size; exr_document *doc=NULL;
+    const char *doc_xml="<w:document xmlns:w='" W "'><w:body><w:p><w:r><w:t>Case</w:t></w:r></w:p></w:body></w:document>";
+    const char *styles_xml="<w:styles xmlns:w='" W "'/>";
+    CHECK(mz_zip_writer_init_heap(&writer,0,0));
+    CHECK(mz_zip_writer_add_mem(&writer,"word/document.xml",doc_xml,strlen(doc_xml),0));
+    CHECK(mz_zip_writer_add_mem(&writer,"word/Styles.xml",styles_xml,strlen(styles_xml),0));
+    CHECK(mz_zip_writer_finalize_heap_archive(&writer,&bytes,&size)); mz_zip_writer_end(&writer);
+    OK(exr_document_open_memory(EXR_DOCX,bytes,size,&doc,&error)); mz_free(bytes);
+    CHECK(strstr(exr_document_text(doc,NULL),"Case")); exr_document_free(doc);
+  }
   printf("%u rich DOCX checks passed\n",checks); return 0;
 }

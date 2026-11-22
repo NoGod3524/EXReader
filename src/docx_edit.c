@@ -1019,33 +1019,40 @@ exr_status exr_edit_footnote_set_text(exr_edit_doc *d,exr_edit_id id,const char 
 exr_status exr_edit_footnote_delete(exr_edit_doc *d,exr_edit_id id) {
   return footnote_change(d,id,NULL,0,1);
 }
-static exr_edit_run *mutable_anchor(exr_edit_block *b,exr_edit_id paragraph,size_t run) {
+static exr_edit_block *mutable_anchor(exr_edit_block *b,exr_edit_id paragraph,size_t run) {
   size_t i,j,k;
-  if (b->id==paragraph && run<b->run_count) return (exr_edit_run *)b->runs+run;
+  if (b->id==paragraph && run<b->run_count) return b;
   if (b->table) for (i=0;i<b->table->row_count;i++) for (j=0;j<b->table->rows[i].cell_count;j++) {
     exr_edit_cell *c=(exr_edit_cell *)b->table->rows[i].cells+j;
     for (k=0;k<c->block_count;k++) {
-      exr_edit_run *r=mutable_anchor((exr_edit_block *)c->blocks+k,paragraph,run);
-      if (r) { if (!(c->changed&CELL_REPLACED)) c->changed|=CELL_PATCHED; return r; }
+      exr_edit_block *p=mutable_anchor((exr_edit_block *)c->blocks+k,paragraph,run);
+      if (p) { if (!(c->changed&CELL_REPLACED)) c->changed|=CELL_PATCHED; return p; }
     }
   }
   return NULL;
 }
 static exr_status delete_anchor(exr_edit_doc *d,size_t index) {
   const exr_edit_block *image=&d->blocks[index]->view; exr_edit_id paragraph;
-  size_t run,offset,i; exr_status s; edit_block *owner=NULL; exr_edit_run *r=NULL; edit_change changes[2];
+  size_t run,offset,i; exr_status s; edit_block *owner=NULL; exr_edit_block *para=NULL; exr_edit_run *r; edit_change changes[2];
   s=exr_edit_image_position(d,image,&paragraph,&run,&offset); if (s) return command_failure(d,s);
   for (i=0;i<d->count;i++) {
     exr_edit_id p; size_t ri,o;
     if (anchor_position(&d->blocks[i]->view,image,&p,&ri,&o,0)) {
       owner=block_copy(d,&d->blocks[i]->view); if (!owner) return command_failure(d,EXR_MEMORY);
-      r=mutable_anchor(&owner->view,paragraph,run); break;
+      para=mutable_anchor(&owner->view,paragraph,run); break;
     }
   }
-  if (!r) { block_unref(d,owner); return command_failure(d,EXR_ARGUMENT); }
+  if (!para) { block_unref(d,owner); return command_failure(d,EXR_ARGUMENT); }
+  r=(exr_edit_run *)para->runs+run;
   /* The copied XML allocation is private to this version. */
   memmove((char *)r->opaque_xml+offset,(const char *)r->opaque_xml+offset+image->opaque_size,
     r->opaque_size-offset-image->opaque_size); r->opaque_size-=image->opaque_size;
+  if (!r->opaque_size && r->kind==EXR_EDIT_OPAQUE_RUN) {
+    release(d,r->text); release(d,r->opaque_xml);
+    memmove(r,r+1,(para->run_count-run-1)*sizeof(*r));
+    para->run_count--;
+    if (!para->run_count) { release(d,para->runs); para->runs=NULL; }
+  }
   changes[0]=(edit_change){i,d->blocks[i],owner};
   changes[1]=(edit_change){index,d->blocks[index],NULL};
   s=modify(d,changes,2); block_unref(d,owner); return s;

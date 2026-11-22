@@ -328,9 +328,7 @@ exr_status exr_edit_main_part(const exr_edit_part *parts,size_t n,char name[2048
     const exr_node *v=x.tree->nodes+i; const char *type=exr_node_attribute(v,"Type");
     if (type && (!strcmp(type,R "/officeDocument") || !strcmp(type,RS "/officeDocument"))) {
       const char *target=exr_node_attribute(v,"Target"),*mode=exr_node_attribute(v,"TargetMode");
-      if (!target || (mode && !strcmp(mode,"External"))) { status=EXR_FORMAT; break; }
-      if (*target=='/') target++;
-      if (!exr_resolve_path("",target,name)) status=EXR_FORMAT;
+      if (!target || (mode && !strcmp(mode,"External")) || !exr_edit_resolve_target("",target,name)) status=EXR_FORMAT;
       break;
     }
   }
@@ -1048,7 +1046,7 @@ static exr_status story_part(const exr_edit_doc *d,size_t section,unsigned foote
   if (!type || (footer ? strcmp(type,R "/footer") && strcmp(type,RS "/footer") :
       strcmp(type,R "/header") && strcmp(type,RS "/header"))) { s=EXR_FORMAT; goto done; }
   target=exr_node_attribute(rels.tree->nodes+node,"Target"); mode=exr_node_attribute(rels.tree->nodes+node,"TargetMode");
-  if (!target || (mode && !strcmp(mode,"External")) || !exr_resolve_path(main,target,path)) { s=EXR_FORMAT; goto done; }
+  if (!target || (mode && !strcmp(mode,"External")) || !exr_edit_resolve_target(main,target,path)) { s=EXR_FORMAT; goto done; }
   *out=exr_edit_part_named(parts,n,path); s=*out ? EXR_OK : EXR_FORMAT;
 done:
   exr_edit_xml_free(&rels); return s;
@@ -1277,7 +1275,7 @@ exr_status exr_edit_header_footer_flags(const exr_edit_doc *d,exr_edit_id sectio
   node=story_relationship(&rels,NULL,"settings");
   if (node!=NONE) {
     const char *target=exr_node_attribute(rels.tree->nodes+node,"Target");
-    if (!target || !exr_resolve_path(main,target,path)) { s=EXR_FORMAT; goto done; }
+    if (!target || !exr_edit_resolve_target(main,target,path)) { s=EXR_FORMAT; goto done; }
     part=exr_edit_part_named(parts,n,path);
     if (!part) { s=EXR_FORMAT; goto done; }
     exr_edit_xml_free(&x); s=exr_edit_xml_parse(&x,part->data,part->size,"settings",NULL); if (s) goto done;
@@ -1317,7 +1315,7 @@ exr_status exr_edit_set_header_footer_flags(exr_edit_doc *d,exr_edit_id section,
   parts=exr_edit_parts(d,&n); node=story_relationship(&rels,NULL,"settings");
   if (node!=NONE) {
     const char *target=exr_node_attribute(rels.tree->nodes+node,"Target");
-    if (!target || !exr_resolve_path(main,target,path) || !(part=exr_edit_part_named(parts,n,path))) { s=EXR_FORMAT; goto done; }
+    if (!target || !exr_edit_resolve_target(main,target,path) || !(part=exr_edit_part_named(parts,n,path))) { s=EXR_FORMAT; goto done; }
   } else {
     const char *slash=strrchr(main,'/'); size_t prefix=slash ? (size_t)(slash-main)+1 : 0; char target[64];
     for (k=1;;k++) {

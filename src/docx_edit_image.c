@@ -217,7 +217,7 @@ static exr_status decode_paragraph_images(const source_xml *x,const source_xml *
         const char *type=exr_node_attribute(v,"Type"),*target=exr_node_attribute(v,"Target"),*mode=exr_node_attribute(v,"TargetMode"); char path[2048];
         if (local(v,REL,"Relationship") && id && !strcmp(id,rid) && type &&
             (!strcmp(type,R "/image") || !strcmp(type,RS "/image")) && target &&
-            (!mode || strcmp(mode,"External")) && exr_resolve_path(main,target,path)) media=exr_edit_part_named(parts,np,path);
+            (!mode || strcmp(mode,"External")) && exr_edit_resolve_target(main,target,path)) media=exr_edit_part_named(parts,np,path);
       }
       if (!media) continue;
       im.format=(unsigned)exr_image_format_detect(media->data,media->size);
@@ -412,7 +412,7 @@ exr_status exr_edit_images_package(mz_zip_archive *zip,const exr_edit_part *part
       if (local(n,REL,"Relationship") && id && target && type && (!strcmp(type,R "/image") || !strcmp(type,RS "/image")) &&
           referenced(&old,id) && !referenced(&now,id)) {
         removed[nr].id=id;
-        if ((!mode || strcmp(mode,"External")) && !exr_resolve_path(main,target,removed[nr].target)) { s=EXR_FORMAT; goto done; }
+        if ((!mode || strcmp(mode,"External")) && !exr_edit_resolve_target(main,target,removed[nr].target)) { s=EXR_FORMAT; goto done; }
         nr++;
       }
     }
@@ -447,7 +447,7 @@ exr_status exr_edit_images_package(mz_zip_archive *zip,const exr_edit_part *part
       s=exr_edit_xml_parse(&rx,bytes,size,"Relationships",e); if (s) goto done;
       for (j=0;j<rx.tree->node_count;j++) if (local(rx.tree->nodes+j,REL,"Relationship")) {
         const char *target=exr_node_attribute(rx.tree->nodes+j,"Target"),*mode=exr_node_attribute(rx.tree->nodes+j,"TargetMode"); char resolved[2048]; size_t k;
-        if (target && (!mode || strcmp(mode,"External")) && exr_resolve_path(owner,target,resolved))
+        if (target && (!mode || strcmp(mode,"External")) && exr_edit_resolve_target(owner,target,resolved))
           for (k=0;k<nr;k++) if (!strcmp(resolved,removed[k].target)) keep[k]=1;
       }
       exr_edit_xml_free(&rx);

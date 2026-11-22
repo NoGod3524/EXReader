@@ -25,7 +25,7 @@ static exr_status open_notes(const exr_edit_part *parts,size_t count,const char 
     s=exr_edit_xml_parse(&rels,p->data,p->size,"Relationships",e); if (s) return s;
     for (i=0;i<rels.tree->node_count;i++) if (note_type(rels.tree->nodes+i)) {
       const char *target=exr_node_attribute(rels.tree->nodes+i,"Target"),*mode=exr_node_attribute(rels.tree->nodes+i,"TargetMode");
-      if (!target || (mode && !strcmp(mode,"External")) || !exr_resolve_path(main,target,path)) s=EXR_FORMAT;
+      if (!target || (mode && !strcmp(mode,"External")) || !exr_edit_resolve_target(main,target,path)) s=EXR_FORMAT;
       break;
     }
     exr_edit_xml_free(&rels); if (s) return s;

@@ -139,6 +139,22 @@ static void test_delete(void) {
   OK(exr_edit_delete_block(d,22)); CHECK(!exr_edit_find_block(d,22));
   CHECK(exr_edit_delete_block(d,21)==EXR_UNSUPPORTED);
   exr_edit_doc_free(before); exr_edit_doc_free(d);
+  { /* Deleting an image that occupied an entire opaque run must remove the 0-byte run. */
+    const unsigned char png[8]={137,80,78,71,13,10,26,10};
+    exr_edit_run runs[2]={{0},{0}}; exr_edit_image im={0}; exr_edit_block blocks[2]={{0},{0}};
+    exr_edit_para_props pp={0}; exr_edit_doc *ad=NULL;
+    runs[0].id=40; runs[0].kind=EXR_EDIT_OPAQUE_RUN; runs[0].opaque_xml="<w:drawing/>"; runs[0].opaque_size=12;
+    runs[1].id=41; runs[1].kind=EXR_EDIT_TEXT; runs[1].text="tail"; runs[1].text_size=4;
+    blocks[0].id=50; blocks[0].kind=EXR_EDIT_PARAGRAPH; blocks[0].runs=runs; blocks[0].run_count=2;
+    im.data=png; im.size=sizeof(png); im.format=EXR_EDIT_IMAGE_PNG; im.width_emu=9525; im.height_emu=9525; im.anchor_run_id=40;
+    blocks[1].id=51; blocks[1].kind=EXR_EDIT_IMAGE; blocks[1].image=&im; blocks[1].opaque_xml="<w:drawing/>"; blocks[1].opaque_size=12;
+    OK(exr_edit_doc_create(NULL,0,blocks,2,NULL,0,NULL,&ad));
+    OK(exr_edit_delete_block(ad,51));
+    CHECK(exr_edit_block_count(ad)==1 && exr_edit_find_block(ad,50)->run_count==1 && exr_edit_find_block(ad,50)->runs[0].id==41);
+    pp.present=1; pp.alignment=EXR_EDIT_CENTER;
+    OK(exr_edit_set_paragraph_props(ad,50,&pp));
+    exr_edit_doc_free(ad);
+  }
 }
 static void test_transaction(void) {
   size_t i; exr_edit_doc *d=empty(NULL),*after; exr_edit_tx *t=exr_edit_begin(d); exr_edit_id id=0;
