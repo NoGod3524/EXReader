@@ -185,9 +185,12 @@ static int64_t vml_size(const char *style,const char *key) {
   }
   return 0;
 }
+/* One decode per media part however many drawings reference it:
+   state 0 unchecked, 1 decodable (width/height kept), 2 not decodable. */
+typedef struct { unsigned char state; uint32_t width,height; } media_check;
 static exr_status decode_paragraph_images(const source_xml *x,const source_xml *rels,
     const exr_edit_part *parts,size_t np,const char *main,const exr_edit_block *p,
-    exr_edit_block **out,size_t *count,size_t *capacity) {
+    media_check *checks,exr_edit_block **out,size_t *count,size_t *capacity) {
   size_t r,n,j,k;
   for (r=0;r<p->run_count;r++) {
     const exr_edit_run *run=p->runs+r; size_t start=NONE;
@@ -198,7 +201,7 @@ static exr_status decode_paragraph_images(const source_xml *x,const source_xml *
     if (start==NONE) continue;
     for (n=start;n<x->tree->node_count && x->spans[n].start<x->spans[start].end;n++) {
       exr_edit_image im={0}; exr_edit_block b={0}; const char *rid=NULL; size_t refs=0;
-      const exr_edit_part *media=NULL; exr_bitmap bitmap={0}; exr_status status;
+      const exr_edit_part *media=NULL; media_check *check; exr_bitmap bitmap={0}; exr_status status;
       if (!exr_edit_xml_word(x->tree->nodes+n,"drawing") && !exr_edit_xml_word(x->tree->nodes+n,"pict")) continue;
       for (j=n+1;j<x->tree->node_count && x->spans[j].start<x->spans[n].end;j++) {
         const exr_node *v=x->tree->nodes+j;
@@ -222,11 +225,16 @@ static exr_status decode_paragraph_images(const source_xml *x,const source_xml *
       if (!media) continue;
       im.format=(unsigned)exr_image_format_detect(media->data,media->size);
       if (im.format<EXR_EDIT_IMAGE_PNG || im.format>EXR_EDIT_IMAGE_BMP) continue;
-      status=exr_image_decode(media->data,media->size,&bitmap,NULL);
-      if (status) { if (status==EXR_MEMORY) return status; continue; }
-      if (!im.width_emu) im.width_emu=(int64_t)bitmap.width*9525;
-      if (!im.height_emu) im.height_emu=(int64_t)bitmap.height*9525;
-      exr_bitmap_free(&bitmap);
+      check=checks+(media-parts);
+      if (!check->state) {
+        status=exr_image_decode(media->data,media->size,&bitmap,NULL);
+        if (status==EXR_MEMORY) return status;
+        check->state=status ? 2 : 1; check->width=bitmap.width; check->height=bitmap.height;
+        exr_bitmap_free(&bitmap);
+      }
+      if (check->state!=1) continue;
+      if (!im.width_emu) im.width_emu=(int64_t)check->width*9525;
+      if (!im.height_emu) im.height_emu=(int64_t)check->height*9525;
       im.data=media->data; im.size=media->size; im.jpeg=im.format==EXR_EDIT_IMAGE_JPEG; im.anchor_run_id=run->id;
       im.anchor_offset=x->spans[n].start-x->spans[start].start;
       b.kind=EXR_EDIT_IMAGE; b.section_id=p->section_id;
@@ -241,14 +249,14 @@ static exr_status decode_paragraph_images(const source_xml *x,const source_xml *
 }
 static exr_status decode_owner_images(const source_xml *x,const source_xml *rels,
     const exr_edit_part *parts,size_t np,const char *main,const exr_edit_block *b,
-    exr_edit_block **out,size_t *count,size_t *capacity) {
+    media_check *checks,exr_edit_block **out,size_t *count,size_t *capacity) {
   size_t i,j,k; exr_status status;
-  if (b->kind==EXR_EDIT_PARAGRAPH) return decode_paragraph_images(x,rels,parts,np,main,b,out,count,capacity);
+  if (b->kind==EXR_EDIT_PARAGRAPH) return decode_paragraph_images(x,rels,parts,np,main,b,checks,out,count,capacity);
   if (b->table) for (i=0;i<b->table->row_count;i++) for (j=0;j<b->table->rows[i].cell_count;j++) {
     const exr_edit_cell *c=b->table->rows[i].cells+j;
     for (k=0;k<c->block_count;k++) {
       exr_edit_block p=c->blocks[k]; p.section_id=b->section_id;
-      status=decode_owner_images(x,rels,parts,np,main,&p,out,count,capacity); if (status) return status;
+      status=decode_owner_images(x,rels,parts,np,main,&p,checks,out,count,capacity); if (status) return status;
     }
   }
   return EXR_OK;
@@ -257,15 +265,17 @@ exr_status exr_edit_images_decode(const source_xml *x,const exr_edit_part *parts
     const char *main,exr_edit_block **blocks,size_t *count,size_t sections) {
   exr_edit_block *out=NULL; size_t n=0,capacity=0,i; exr_edit_id next=sections+1;
   source_xml rels={0}; char rp[2048]; const exr_edit_part *part; exr_status status=EXR_OK;
+  media_check *checks=calloc(np ? np : 1,sizeof(*checks));
+  if (!checks) return EXR_MEMORY;
   relpath(main,rp); part=exr_edit_part_named(parts,np,rp);
-  if (part) { status=exr_edit_xml_parse(&rels,part->data,part->size,"Relationships",NULL); if (status) return status; }
+  if (part) { status=exr_edit_xml_parse(&rels,part->data,part->size,"Relationships",NULL); if (status) { free(checks); return status; } }
   for (i=0;i<*count;i++) source_ids(*blocks+i,&next);
   for (i=0;i<*count;i++) {
     if (!exr_grow((void **)&out,&capacity,n+1,sizeof(*out))) { status=EXR_MEMORY; break; }
     out[n++]=(*blocks)[i];
-    status=decode_owner_images(x,&rels,parts,np,main,*blocks+i,&out,&n,&capacity); if (status) break;
+    status=decode_owner_images(x,&rels,parts,np,main,*blocks+i,checks,&out,&n,&capacity); if (status) break;
   }
-  exr_edit_xml_free(&rels);
+  exr_edit_xml_free(&rels); free(checks);
   if (status) { for (i=0;i<n;i++) free((void *)out[i].image); free(out); return status; }
   free(*blocks); *blocks=out; *count=n; return EXR_OK;
 }

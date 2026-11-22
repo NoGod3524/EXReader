@@ -6,11 +6,12 @@ import hashlib
 import re
 import struct
 import time
+import zlib
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from test_docx_edit_io import Block, ID, package, repack, unzip
-from test_docx_edit_table_image import API, png, paragraph, SECT, WP, A
+from test_docx_edit_table_image import API, DRAWING, png, paragraph, SECT, WP, A
 
 
 class Image(c.Structure):
@@ -229,6 +230,33 @@ def main(library):
     finally:
         api.doc_free(doc)
     print(f'5 unsupported EMF: opaque run retained; {len(emf)} original payload bytes and all OPC parts unchanged')
+
+    # One decode per media part: 200 drawings of one 3840x2160 PNG used to
+    # decode it 200 times (about 9 s here); a damaged PNG drawn twice stays opaque.
+    def damaged_png():
+        def chunk(kind, data):
+            return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
+        return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 4, 4, 8, 2, 0, 0, 0))
+                + chunk(b'IDAT', b'not a zlib stream') + chunk(b'IEND', b''))
+    body = (''.join(paragraph('p', DRAWING) for _ in range(200))
+            + ''.join(paragraph('q', DRAWING.replace('image1', 'image2')) for _ in range(2)) + SECT)
+    parts = unzip(package(body=body))
+    parts['word/media/image1.png'] = png(3840, 2160)
+    parts['word/media/image2.png'] = damaged_png()
+    parts['word/_rels/document.xml.rels'] = parts['word/_rels/document.xml.rels'].replace(
+        b'</Relationships>', b'<Relationship Id="image2" Type="http://schemas.openxmlformats.org/officeDocument'
+        b'/2006/relationships/image" Target="media/image2.png"/></Relationships>')
+    started = time.perf_counter()
+    doc = api.read(repack(parts))
+    elapsed = time.perf_counter() - started
+    try:
+        assert len(images(api, doc)) == 200
+        assert sum(b'image2' in c.string_at(p.runs[i].xml, p.runs[i].xml_size)
+                   for p in api.paragraphs(doc) for i in range(p.count) if p.runs[i].kind == 1) == 2
+    finally:
+        api.doc_free(doc)
+    assert elapsed < 5, elapsed  # one decode; generous for sanitizer builds
+    print(f'6 repeated media: 200 drawings of one 3840x2160 PNG read in {elapsed:.3f} s; damaged PNG kept opaque twice')
 
 
 if __name__ == '__main__':
