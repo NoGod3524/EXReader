@@ -1,4 +1,0 @@
-[1/4] Building C object CMakeFiles\EXReaderProduct.dir\C_\<workspace>\examples\reader.c.obj
-[2/4] Building C object CMakeFiles\EXReaderShelfReview.dir\C_\<workspace>\examples\reader.c.obj
-[3/4] Linking CXX executable EXReaderShelfReview.exe
-[4/4] Linking CXX executable EXReaderProduct.exe

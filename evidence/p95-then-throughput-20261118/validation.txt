@@ -1,2 +1,0 @@
-PASS: 6 cases, 36 child JSON files, AB/BA/AB, 36 idle gates <=15%, all fixture hashes match #250, DLL hash matches results, four benchmark files unchanged from #250.
-PASS: Every raw page has 5 warm samples; all 12 side/case summaries reproduce exactly from the 36 raw child JSON records with the unchanged summarizer.

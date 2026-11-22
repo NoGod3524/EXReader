@@ -1,5 +1,0 @@
-source=d2b0be6b4e2059bdbb33f0c8f53b137a20189188 scope=host render path, independent processes, 8 warmups + 64 alternating page 0/1 samples display_present_frame=missing first_interactive=missing accepted=False
-pg1.epub n=192 p50_ms=0.389750 p95_ms=0.458400 peak_ws=20299776 exits=[0, 0, 0, 0, 0, 0]
-pg10.epub n=192 p50_ms=0.366000 p95_ms=0.370800 peak_ws=30494720 exits=[0, 0, 0, 0, 0, 0]
-pg11.epub n=192 p50_ms=0.416400 p95_ms=0.478400 peak_ws=13615104 exits=[0, 0, 0, 0, 0, 0]
-exit=0

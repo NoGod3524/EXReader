@@ -1,8 +1,0 @@
-ctest --test-dir build/perf -j 6 --output-on-failure
-
-100% tests passed out of 577
-
-Label Time Summary:
-headless    =   1.44 sec*proc (1 test)
-
-Total Test time (real) =  87.71 sec

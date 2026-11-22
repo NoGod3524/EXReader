@@ -1,5 +1,0 @@
-[1/5] Building CXX object CMakeFiles/reader_revisions.dir/src/organization_projection.cpp.obj
-[2/5] Building C object CMakeFiles/reader_revision_hash.dir/C_/<workspace>/extras/opds/src/opds_core.c.obj
-[3/5] Linking C static library libreader_revision_hash.a
-[4/5] Building CXX object CMakeFiles/reader_revisions.dir/src/revisions.cpp.obj
-[5/5] Linking CXX static library libreader_revisions.a

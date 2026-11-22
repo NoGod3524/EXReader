@@ -1,9 +1,0 @@
-[
-  "<workspace>\\out\\EXReader.exe",
-  "--self-test",
-  "<workspace>\\out\\Reader.otf",
-  "<workspace>\\out\\selftest-final\\Sample.epub",
-  "<workspace>\\tests\\fixtures\\pdf-public.pdf",
-  "<workspace>\\out\\selftest-final\\report.json",
-  "<workspace>\\out\\selftest-final\\page.png"
-]

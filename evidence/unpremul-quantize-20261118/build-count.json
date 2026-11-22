@@ -1,7 +1,0 @@
-{
-  "tag": "count",
-  "dll_sha256": "a795ec48ec10a49c597fb820e1448cf7b0ba760db38714bd6ac7c8b64ce761b2",
-  "sources": {
-    "src\\affine_image.c": "5b425d58a73f2fca27230b7ff4ae907b4bec44c1fdd7f62b20fc75c876754940"
-  }
-}

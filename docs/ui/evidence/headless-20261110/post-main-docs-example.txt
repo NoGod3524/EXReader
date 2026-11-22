@@ -1,2 +1,0 @@
-format=2
-OPDS entries=1 title=Catalog

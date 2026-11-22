@@ -1,7 +1,0 @@
-Test project <temp>/exreader-s3-release-dae5da1b/ctest-consumer
-    Start 1: installed-consumer-contract
-1/1 Test #1: installed-consumer-contract ......   Passed   69.42 sec
-
-100% tests passed out of 1
-
-Total Test time (real) =  69.50 sec

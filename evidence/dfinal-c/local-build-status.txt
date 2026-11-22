@@ -1,1 +1,0 @@
-Stopped only D-FINAL-C local Ninja; full build and CTest run in Actions.

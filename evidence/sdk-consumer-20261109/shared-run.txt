@@ -1,3 +1,0 @@
-{"name": "shared-run", "cwd": "<temp>\\exreader-consumer-n4hry411\\build-shared", "argv": ["<temp>\\exreader-consumer-n4hry411\\build-shared\\consumer.exe", "<temp>\\exreader-consumer-n4hry411\\assets\\smoke.epub", "<temp>\\exreader-consumer-n4hry411\\assets\\font.otf", "<temp>\\exreader-consumer-n4hry411\\shared.png"], "exit_code": 0}
-PASS version header=3.42.0 library=3.42.0 abi=1
-PASS mode=shared title="Platform delivery smoke" pages=216 render=<temp>\exreader-consumer-n4hry411\shared.png

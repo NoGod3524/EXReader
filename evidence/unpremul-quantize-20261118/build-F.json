@@ -1,7 +1,0 @@
-{
-  "tag": "F",
-  "dll_sha256": "37239e9734612e9f7b181a475038461c27c40f0ad14ad4b690a5aa9e950f9904",
-  "sources": {
-    "src\\affine_image.c": "8872796ec1014a9b4769975f2fb8e51c4e143ddb9109da3b03f0ccad729cc50e"
-  }
-}

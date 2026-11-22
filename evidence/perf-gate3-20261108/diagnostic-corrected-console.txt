@@ -1,5 +1,0 @@
-Exception: <workspace>\tools\perf\load_session.ps1:35
-Line |
-  35 |  … EXITCODE) { throw "$name capture failed; all attempted raw files reta …
-     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     | medium capture failed; all attempted raw files retained

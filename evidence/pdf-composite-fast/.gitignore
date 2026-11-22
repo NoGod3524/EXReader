@@ -1,6 +1,0 @@
-# Initial capture retained locally; final evidence uses the rebuilt, pinned HEAD.
-/before/
-/diff/
-/benchmark-before.log
-/pixel-diff.log
-/profile-before-*

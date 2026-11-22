@@ -1,2 +1,0 @@
-[1/2] C:\Windows\system32\cmd.exe /C "cd /D <workspace>\build\s1-consumer && <app-data>\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -E make_directory <workspace>/build/s1-consumer && <app-data>\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -E copy_if_different <workspace>/build/s1-sdk/bin/libexreader.dll <workspace>/build/s1-consumer"
-[2/2] Linking C executable bench_batch.exe

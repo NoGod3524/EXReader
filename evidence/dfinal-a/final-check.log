@@ -1,3 +1,0 @@
-changed=['F01', 'F03', 'F05']
-fixed denominator=108; counts={'verified': 99, 'partial': 1, 'pending': 8}
-all other entries/top-level fields unchanged; states pending; protected release checker unchanged; no signed download URLs; exit=0

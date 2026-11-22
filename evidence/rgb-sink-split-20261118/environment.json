@@ -1,8 +1,0 @@
-{
-  "platform": "Windows-11-10.0.26200-SP0",
-  "cpu": "Intel64 Family 6 Model 189 Stepping 1, GenuineIntel",
-  "power": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)",
-  "runs": 4,
-  "repeat": 3,
-  "base": "C:\\Users\\Oscar\\Documents\\Codex\\EXReader-p95b\\build\\perf\\libexreader.dll"
-}

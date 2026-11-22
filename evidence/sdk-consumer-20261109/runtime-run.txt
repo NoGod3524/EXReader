@@ -1,4 +1,0 @@
-{"name": "runtime-run", "cwd": "<temp>\\exreader-consumer-n4hry411\\build-runtime", "argv": ["<temp>\\exreader-consumer-n4hry411\\build-runtime\\consumer.exe", "<temp>\\exreader-consumer-n4hry411\\assets\\smoke.epub", "<temp>\\exreader-consumer-n4hry411\\assets\\font.otf", "<temp>\\exreader-consumer-n4hry411\\runtime.png", "<temp>\\exreader-consumer-n4hry411\\sdk\\lib\\libexreader.dll"], "exit_code": 0}
-PASS version header=3.42.0 library=3.42.0 abi=1
-PASS runtime symbols=389
-PASS mode=runtime title="Platform delivery smoke" pages=216 render=<temp>\exreader-consumer-n4hry411\runtime.png

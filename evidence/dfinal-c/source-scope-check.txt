@@ -1,2 +1,0 @@
-tests/check_reading_release.py unchanged
-Current SDK/app/test/workflow source equals tested c0b07a699b4a829d310782f0297099a98d5b0519

@@ -1,7 +1,0 @@
-{
-  "baseline_commit": "48f46bea24198b24a2fa416aeaf7f4ad31e14184",
-  "origin_main_at_start": "48f46bea24198b24a2fa416aeaf7f4ad31e14184",
-  "branch": "perf/pdf-fast-rect",
-  "vector_sha256": "3fd04ba48176446e40215758f4c424a15486571164341110565b37ef1037ad67",
-  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0"
-}

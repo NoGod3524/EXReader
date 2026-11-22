@@ -1,3 +1,0 @@
-shelf_observations=61 distinct_stops=10 longest_same_element_run=1
-cycle=['系列、标签与阅读统计', '网格视图', '列表视图', '阅读统计', '返回阅读', '书源', '打开书籍', '标签筛选：全部（已选）', '标签筛选：未分类', "书籍：Alice's Adventures in Wonderland"]
-wraps=False

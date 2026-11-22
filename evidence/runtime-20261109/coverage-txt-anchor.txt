@@ -1,2 +1,0 @@
-["<workspace>\\evidence\\runtime-20261109\\local\\g\\txt-anchor.exe"]
-TXT anchor matches public resolver, bounded scan and cancellation

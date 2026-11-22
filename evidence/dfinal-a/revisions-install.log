@@ -1,9 +1,0 @@
--- Install configuration: "Release"
--- Installing: <workspace>/build/dfinal-a/stage/lib/libreader_revisions.a
--- Installing: <workspace>/build/dfinal-a/stage/lib/libreader_revision_hash.a
--- Installing: <workspace>/build/dfinal-a/stage/include/reader_revisions.h
--- Installing: <workspace>/build/dfinal-a/stage/include/reader_projection.h
--- Installing: <workspace>/build/dfinal-a/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets.cmake
--- Installing: <workspace>/build/dfinal-a/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsTargets-release.cmake
--- Installing: <workspace>/build/dfinal-a/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsConfig.cmake
--- Installing: <workspace>/build/dfinal-a/stage/lib/cmake/EXReaderRevisions/EXReaderRevisionsConfigVersion.cmake

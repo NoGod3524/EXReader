@@ -1,3 +1,0 @@
-catalog scope: only F11/F12/H.ipad.annotation_exchange state/evidence/note changed; registered evidence references valid
-denominator=108; group totals= {'foundation': 12, 'host': 84, 'final': 12}
-state counts= {'verified': 99, 'pending': 9}

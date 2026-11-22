@@ -1,7 +1,0 @@
-no_site=1
-site-packages imports=0
-[]
-stdlib import exit=0
-git diff --check exit=0
-check_reading_release.py unchanged exit=0
-git diff --cached --check exit=0

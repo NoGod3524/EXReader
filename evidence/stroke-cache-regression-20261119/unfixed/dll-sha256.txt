@@ -1,2 +1,0 @@
-5048067849241F7981C9C595D1B87AF7AD8BC572AD0591BED72FEE01DC17E557  C:\Users\Oscar\Documents\Codex\EXReader-dvpath\evidence\stroke-cache-regression-20261119\unfixed\bin-B\libexreader.dll
-8BE84D818FA15D6A96D2C1C2F07E28276CE629E873D5D4D23717C08A6AEB77AA  C:\Users\Oscar\Documents\Codex\EXReader-dvpath\evidence\stroke-cache-regression-20261119\unfixed\bin-C\libexreader.dll

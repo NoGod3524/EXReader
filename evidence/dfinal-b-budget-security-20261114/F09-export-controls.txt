@@ -1,2 +1,0 @@
-{"rows": 193, "named": 192, "valid_roles": 193, "observed_keyboard": 0}
-Name/role=False; complete keyboard/speech=false

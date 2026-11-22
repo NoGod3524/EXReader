@@ -1,3 +1,0 @@
-shelf_observations=61 distinct_stops=1 longest_same_element_run=61
-cycle=['系列、标签与阅读统计']
-wraps=True

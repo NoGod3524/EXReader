@@ -1,9 +1,0 @@
-{
-  "id": 43831439309,
-  "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/43831439309",
-  "head_branch": "codex/ledger-f10-fable",
-  "head_sha": "02c5cd578d2a585ffa39a196a7e48d15114c9a98",
-  "run_attempt": 1,
-  "conclusion": "success",
-  "name": "Ledger F10 verify (Windows credential identity and public TLS)"
-}

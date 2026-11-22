@@ -1,2 +1,0 @@
-{"name": "fixtures", "cwd": "<temp>\\exreader-consumer-n4hry411", "argv": ["C:\\Python314\\python.exe", "-B", "<workspace>\\tools\\abi\\prepare_smoke.py", "<temp>\\exreader-consumer-n4hry411\\assets", "--font", "C:\\Windows\\Fonts\\arial.ttf"], "exit_code": 0}
-<temp>\exreader-consumer-n4hry411\assets

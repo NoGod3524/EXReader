@@ -1,3 +1,0 @@
-F10CHECK {"name":"accept https://exr-f10.test:60830/dav/","pass":true,"detail":"http_status=207 winhttp_error=0 class=other"}
-F10CHECK {"name":"refuse https://exr-f10-other.test:60830/dav/","pass":true,"detail":"http_status=0 winhttp_error=12175 class=SY_TLS"}
-F10RESULT {"mode":"tls","checks":2,"failed":0,"accepted":true}

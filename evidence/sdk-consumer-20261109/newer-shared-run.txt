@@ -1,2 +1,0 @@
-{"name": "newer-shared-run", "cwd": "<temp>\\exreader-consumer-n4hry411\\build-newer-shared", "argv": ["<temp>\\exreader-consumer-n4hry411\\build-newer-shared\\consumer.exe", "<temp>\\exreader-consumer-n4hry411\\assets\\smoke.epub", "<temp>\\exreader-consumer-n4hry411\\assets\\font.otf", "<temp>\\exreader-consumer-n4hry411\\newer-shared.png"], "exit_code": 4}
-SDK_VERSION_MISMATCH: header=3.43.0 library=3.42.0; headers require a newer SDK library

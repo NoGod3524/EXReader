@@ -1,2 +1,0 @@
-[1281/1282] Building CXX object _deps/libaom-build/CMakeFiles/yuv.dir/third_party/libyuv/source/row_common.cc.obj
-BUILD exit=0 errors=0 warnings=0

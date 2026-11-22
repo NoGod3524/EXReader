@@ -1,9 +1,0 @@
-activating window for focus checks
-Traceback (most recent call last):
-  File "<workspace>\docs\ui\acceptance\check_a11y_c2.py", line 581, in <module>
-    main()
-    ~~~~^^
-  File "<workspace>\docs\ui\acceptance\check_a11y_c2.py", line 343, in main
-    selection = page.GetCurrentPattern(10014).QueryInterface(UC.IUIAutomationTextPattern).GetSelection()
-                ^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'GetCurrentPattern'

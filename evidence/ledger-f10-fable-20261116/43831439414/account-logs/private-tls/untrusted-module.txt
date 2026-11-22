@@ -1,1 +1,0 @@
-{"probe":"argument-tls","client":"EXReaderWebDAV 0.2.0","cases":[{"url":"https://exr-f10.test:42985/dav/","expect":"tls_refused","why":"command line","create":"OK","list":"TLS","http_status":0,"message":"Native HTTPS transfer failed","pass":true}],"passed":1,"total":1,"accepted":true}

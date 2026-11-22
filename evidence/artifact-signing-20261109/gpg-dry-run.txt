@@ -1,1 +1,0 @@
-DRY-RUN: "C:\Program Files\Git\usr\bin\gpg.exe" --batch --armor --detach-sign --local-user <GPG_KEY_FINGERPRINT> --output /<workspace>/build/c4-complete-proof/run-2/artifacts/SHA256SUMS.asc /<workspace>/build/c4-complete-proof/run-2/artifacts/SHA256SUMS

@@ -1,7 +1,0 @@
-{
-  "tag": "C",
-  "dll_sha256": "34ee41b4f6460409329b0a673102c0017958cf4fddb5c88cfacb7482f1ea6d51",
-  "sources": {
-    "src\\affine_image.c": "930460daabd10483180b3ae4214ecb5ddf72b9efc81e6f3ab79763a1ebc9cb00"
-  }
-}

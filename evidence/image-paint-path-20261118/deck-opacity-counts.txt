@@ -1,9 +1,0 @@
-SOLIDCOUNTS total=810000 zero=0 opaque=0 direct=0
-SOLIDCOUNTS total=3598 zero=1291 opaque=0 direct=0
-SOLIDCOUNTS total=168 zero=168 opaque=0 direct=0
-SOLIDCOUNTS total=3598 zero=1291 opaque=0 direct=0
-SOLIDCOUNTS total=168 zero=168 opaque=0 direct=0
-SOLIDCOUNTS total=3598 zero=1291 opaque=0 direct=0
-SOLIDCOUNTS total=168 zero=168 opaque=0 direct=0
-SOLIDCOUNTS total=3598 zero=1291 opaque=0 direct=0
-SOLIDCOUNTS total=168 zero=168 opaque=0 direct=0

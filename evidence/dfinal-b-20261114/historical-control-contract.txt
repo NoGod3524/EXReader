@@ -1,5 +1,0 @@
-PASS UIA contract: all nested controls; missing name/role, truncated/empty tree rejected; focus/speech never inferred
-docs\ui\evidence\a11y-uia-20261110\run5\uia-closed.json: controls=11 name_role_passed=True errors=0; keyboard/speech=missing
-docs\ui\evidence\a11y-uia-20261110\run5\uia-search-open.json: controls=20 name_role_passed=True errors=0; keyboard/speech=missing
-docs\ui\evidence\a11y-uia-20261110\run5\uia-settings-open.json: controls=47 name_role_passed=True errors=0; keyboard/speech=missing
-docs\ui\evidence\a11y-uia-20261110\run5\uia-toc-open.json: controls=154 name_role_passed=True errors=0; keyboard/speech=missing
