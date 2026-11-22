@@ -185,7 +185,7 @@ static exr_status dm_path(void *ctx, const exr_pdf_path_paint *path, exr_error *
   (void)e;
   if ((path->flags & (EXR_PDF_FILL | EXR_PDF_STROKE)) || !(path->flags & EXR_PDF_CLIP)) return dm_abort(p);
   if (!path_axis_rect(path->segments, path->count, r)) return dm_abort(p);
-  if (rect_covers_canvas(r, p->width, p->height)) { p->clip.count = 0; return EXR_OK; }
+  if (rect_covers_canvas(r, p->width, p->height)) return EXR_OK;
   if (p->clip.count == 4u) return dm_abort(p);
   memcpy(p->clip.rects[p->clip.count++], r, sizeof(r));
   return EXR_OK;

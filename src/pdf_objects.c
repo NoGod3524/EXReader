@@ -182,7 +182,7 @@ static uint32_t parse_value(parser *p,unsigned depth) {
     return parse_string(p,0,1);
   }
   if(word(p,"null")) return value_new(f,EXR_PDF_NULL);
-  if(word(p,"true")) { id=value_new(f,EXR_PDF_BOOL); if(id!=EXR_PDF_NONE) f->values[id].u.number=1; return id; }
+  if(word(p,"true")) { id=value_new(f,EXR_PDF_BOOL); if(id!=EXR_PDF_NONE) f->values[id].u.integer=1; return id; }
   if(word(p,"false")) return value_new(f,EXR_PDF_BOOL);
   first=p->at;
   if(p->data[p->at]=='-' || p->data[p->at]=='+') negative=p->data[p->at++]=='-';
@@ -629,7 +629,7 @@ static exr_status serialize_value(pdf_serializer *s,uint32_t id,unsigned depth) 
   if(depth>128 || ++s->nodes>EXR_PDF_MAX_VALUES) return exr_fail(s->error,EXR_LIMIT,"PDF serialization traversal exceeds limits");
   switch(v->kind) {
     case EXR_PDF_NULL: return serialized(s,"null",4);
-    case EXR_PDF_BOOL: return serialized(s,v->u.number ? "true" : "false",v->u.number ? 4 : 5);
+    case EXR_PDF_BOOL: return serialized(s,v->u.integer ? "true" : "false",v->u.integer ? 4 : 5);
     case EXR_PDF_INT:
       length=snprintf(number,sizeof(number),"%" PRId64,v->u.integer); break;
     case EXR_PDF_REAL:
@@ -917,7 +917,7 @@ static int bool_parameter(exr_pdf_file *f,uint32_t dict,const char *key,int fall
   if(id==EXR_PDF_NONE) return 1;
   v=exr_pdf_value_at(f,resolve(f,id));
   if(!v || v->kind!=EXR_PDF_BOOL) return 0;
-  *out=v->u.number!=0; return 1;
+  *out=v->u.integer!=0; return 1;
 }
 static int decode_lzw(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,unsigned early,size_t *end) {
   uint16_t prefix[4096]; unsigned char suffix[4096],stack[4096];
@@ -1265,7 +1265,7 @@ static uint32_t parse_inline(parser *p,exr_pdf_file *owner,uint32_t resources) {
   if(!direct_integer(f,exr_pdf_get(f,dict,"Width"),UINT32_MAX,&width) || !width ||
      !direct_integer(f,exr_pdf_get(f,dict,"Height"),UINT32_MAX,&height) || !height) goto bad;
   if(width>8192 || height>8192 || width>16*1024*1024/height) { failed(f,EXR_LIMIT,"PDF inline image exceeds dimension or pixel limits"); return EXR_PDF_NONE; }
-  id=exr_pdf_get(f,dict,"ImageMask"); if(id!=EXR_PDF_NONE) { if(f->values[id].kind!=EXR_PDF_BOOL) goto bad; stencil=f->values[id].u.number!=0; }
+  id=exr_pdf_get(f,dict,"ImageMask"); if(id!=EXR_PDF_NONE) { if(f->values[id].kind!=EXR_PDF_BOOL) goto bad; stencil=f->values[id].u.integer!=0; }
   id=exr_pdf_get(f,dict,"BitsPerComponent");
   if((id==EXR_PDF_NONE && !stencil) || (id!=EXR_PDF_NONE && !direct_integer(f,id,16,&bits)) ||
      (bits!=1 && bits!=2 && bits!=4 && bits!=8 && bits!=16) || (stencil && bits!=1)) goto bad;

@@ -277,7 +277,7 @@ exr_status exr_pdf_crypt_init(exr_pdf_file *f,uint32_t dict,uint32_t id,const vo
   if(length<40 || length%8 || (version==5 ? length!=256 : length>128) || permissions<INT32_MIN || permissions>UINT32_MAX) goto bad;
   c.version=(unsigned)version; c.revision=(unsigned)revision; c.length=(unsigned)length/8; c.permissions=(uint32_t)permissions; c.metadata=1;
   status=get(f,dict,"EncryptMetadata",&value,e); if(status!=EXR_OK) goto done;
-  v=exr_pdf_value_at(f,value); if(v) { if(v->kind!=EXR_PDF_BOOL) goto bad; c.metadata=v->u.number!=0; }
+  v=exr_pdf_value_at(f,value); if(v) { if(v->kind!=EXR_PDF_BOOL) goto bad; c.metadata=v->u.integer!=0; }
   if(!entry(f,dict,"O",o,revision>=5 ? 48 : 32,e) || !entry(f,dict,"U",u,revision>=5 ? 48 : 32,e)) goto bad;
   c.strings=c.streams=c.embedded=EXR_CRYPT_RC4;
   if(version>=4) {

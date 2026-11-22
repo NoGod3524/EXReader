@@ -52,7 +52,7 @@ static void basic(const char *dir,const char *name) {
   value=get(file,dict,"I64"); CHECK(exr_pdf_value_at(file,value)->u.integer==INT64_MAX);
   value=get(file,dict,"Min"); CHECK(exr_pdf_value_at(file,value)->u.integer==INT64_MIN);
   value=get(file,dict,"Null"); CHECK(exr_pdf_value_at(file,value)->kind==EXR_PDF_NULL);
-  value=get(file,dict,"Bool"); CHECK(exr_pdf_value_at(file,value)->kind==EXR_PDF_BOOL && exr_pdf_value_at(file,value)->u.number==1);
+  value=get(file,dict,"Bool"); CHECK(exr_pdf_value_at(file,value)->kind==EXR_PDF_BOOL && exr_pdf_value_at(file,value)->u.integer==1);
   array=get(file,dict,"Values"); v=exr_pdf_value_at(file,array); CHECK(v->kind==EXR_PDF_ARRAY);
   value=v->first; v=exr_pdf_value_at(file,value); CHECK(v->kind==EXR_PDF_INT && v->u.integer==-2);
   value=v->next; v=exr_pdf_value_at(file,value); CHECK(v->kind==EXR_PDF_REAL && v->u.number==0.5);
