@@ -95,6 +95,48 @@ int main(void) {
     STR(url, "http://host/x");
     exr_free(url);
   }
+  {
+    /* 200000 names in one author: appended in place and cut at 64 KiB. */
+    static const char name[] = "<name>ab</name>";
+    static const char head[] = FEED_HEAD "<entry><title>Many</title><author>", tail[] = "</author></entry></feed>";
+    size_t count = 200000, size = sizeof(head) - 1 + count * (sizeof(name) - 1) + sizeof(tail) - 1, at;
+    char *xml = malloc(size);
+    exr_opds_feed f;
+    exr_error e = {0};
+    CHECK(xml);
+    memcpy(xml, head, sizeof(head) - 1); at = sizeof(head) - 1;
+    for (size_t i = 0; i < count; i++) { memcpy(xml + at, name, sizeof(name) - 1); at += sizeof(name) - 1; }
+    memcpy(xml + at, tail, sizeof(tail) - 1);
+    CHECK(exr_opds_parse(xml, size, "http://h/", &f, &e) == EXR_OK && f.entry_count == 1);
+    CHECK(f.entries[0].author && strlen(f.entries[0].author) <= 64 * 1024 && !strncmp(f.entries[0].author, "ab, ab, ", 8));
+    exr_opds_feed_free(&f);
+    free(xml);
+  }
+  {
+    /* DTD entity declarations are refused by both parsers, like every other XML reader. */
+    static const char feed[] = "<?xml version=\"1.0\"?><!DOCTYPE feed [<!ENTITY t \"Declared\">]>"
+      "<feed xmlns=\"http://www.w3.org/2005/Atom\"><title>&t;</title></feed>";
+    static const char description[] = "<?xml version=\"1.0\"?><!DOCTYPE d [<!ENTITY t \"x\">]>"
+      "<OpenSearchDescription xmlns=\"http://a9.com/-/spec/opensearch/1.1/\"><Url type=\"application/atom+xml\" template=\"/q?{searchTerms}&t;\"/></OpenSearchDescription>";
+    exr_opds_feed f;
+    exr_error e = {0};
+    char *url = NULL;
+    CHECK(exr_opds_parse(feed, sizeof(feed) - 1, "http://h/", &f, &e) == EXR_FORMAT && !f.title);
+    CHECK(exr_opds_parse_search(description, sizeof(description) - 1, "http://h/", &url, &e) == EXR_FORMAT && !url);
+  }
+  {
+    /* OpenSearch nesting is bounded like the feed parser. */
+    static const char head[] = "<OpenSearchDescription xmlns=\"http://a9.com/-/spec/opensearch/1.1/\">", tail[] = "</OpenSearchDescription>";
+    char xml[2048];
+    size_t at = 0;
+    char *url = NULL;
+    exr_error e = {0};
+    memcpy(xml, head, sizeof(head) - 1); at += sizeof(head) - 1;
+    for (int i = 0; i < 100; i++) { memcpy(xml + at, "<a>", 3); at += 3; }
+    for (int i = 0; i < 100; i++) { memcpy(xml + at, "</a>", 4); at += 4; }
+    memcpy(xml + at, tail, sizeof(tail) - 1); at += sizeof(tail) - 1;
+    CHECK(exr_opds_parse_search(xml, at, "http://h/", &url, &e) == EXR_LIMIT && !url);
+  }
   puts("opds ok");
   return 0;
 }
