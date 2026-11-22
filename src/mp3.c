@@ -130,6 +130,7 @@ static exr_status mp3_xing(exr_mp3 *m,const unsigned char *frame,const mp3_heade
     unsigned delay=(unsigned)frame[at+21]*16+(frame[at+22]>>4),padding=(unsigned)(frame[at+22]&15)*256+frame[at+23];
     if(padding<529) return exr_fail(e,EXR_FORMAT,"Unsupported LAME padding shorter than decoder delay");
     m->delay=delay+529; m->padding=padding-529;
+    if(m->padding && !m->encoded_frames) return exr_fail(e,EXR_FORMAT,"LAME trailing padding requires Xing frame count");
   }
   if(m->encoded_frames) {
     raw=m->encoded_frames*h->samples;

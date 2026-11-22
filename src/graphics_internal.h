@@ -92,14 +92,23 @@ exr_status exr_image_decode_page_control(const void *data,size_t size,size_t pag
   const exr_control *control,exr_bitmap *out,exr_error *error);
 exr_status exr_image_decode_control(const void *data,size_t size,const exr_control *control,
   exr_bitmap *out,exr_error *error);
+/* Width and height of every page, sizes[2*i] and sizes[2*i+1], from one probe.
+   The caller frees *sizes. */
+exr_status exr_image_page_sizes(const void *data,size_t size,uint32_t **sizes,size_t *count,exr_error *error);
+/* The stb allocation budget of the calling thread: reset it before a decode,
+   then report its exhaustion instead of the decoder's generic EXR_FORMAT. */
+void exr_image_budget_reset(void);
+exr_status exr_image_budget_status(exr_status status,exr_error *error);
+/* Consumes an stb pixel buffer and returns malloc-owned pixels on success. */
+unsigned char *exr_image_take_pixels(unsigned char *pixels,size_t size);
 
 int exr_image_format_detect(const void *data,size_t size);
-#define EXR_SHADING_SOURCE_MAGIC 0x455852415849414cULL
 typedef struct {
-  exr_paint_sample_fn sample;uint64_t magic;
   double coords[6];const double *rgb;const unsigned char *inks;exr_raster_work *work;
   double axial_scale,axial_x,axial_y,axial_ux,axial_uy,axial_length;
   double cached_coord[2],cached_color[2][4],cached_shape[2];
   unsigned type,extend0,extend1,cached_space,cached_axis,cached_slot;
 } exr_shading_paint_source;
+exr_status exr_axial_shading_sample(void *context,double x,double y,unsigned space,
+                                    double color[4],double *shape,double *opacity,exr_error *error);
 #endif

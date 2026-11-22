@@ -60,7 +60,6 @@ static void *xml_realloc(void *data,size_t size) {
 static const char *local(const char *name) {
   const char *p = strrchr(name, '|'); return p ? p + 1 : name;
 }
-static int white(unsigned char c) { return c == ' ' || c == '\n' || c == '\r' || c == '\t'; }
 static void stop(exr_chapter_index *p, exr_status status, const char *message) {
   if (!p->failed) p->failed = exr_fail(p->error, status, "%s", message);
   if(p->parser) XML_StopParser(p->parser, XML_FALSE);
@@ -132,16 +131,7 @@ static void flush_text(exr_chapter_index *p) {
   }
   p->text_node = EXR_CHAPTER_NONE;
 }
-static int has_token(const char *s, const char *wanted) {
-  size_t length = strlen(wanted);
-  while (*s) {
-    const char *start;
-    while (white((unsigned char)*s)) s++;
-    start = s; while (*s && !white((unsigned char)*s)) s++;
-    if ((size_t)(s - start) == length && !memcmp(start, wanted, length)) return 1;
-  }
-  return 0;
-}
+#define has_token exr_has_token
 static void XMLCALL start_element(void *context, const char *name, const char **attrs) {
   exr_chapter_index *p = context;
   exr_node_kind kind = exr_xml_element_kind(name);

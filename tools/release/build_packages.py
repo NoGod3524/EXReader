@@ -3,6 +3,7 @@
 """Collect a native CMake build into the small, relocatable shared-library SDK."""
 import argparse
 import hashlib
+import os
 from pathlib import Path
 import platform
 import re
@@ -20,8 +21,12 @@ from check_reading_licenses import COMPONENTS, enabled, read_cache, switch
 
 def copy(source, destination):
     destination.parent.mkdir(parents=True, exist_ok=True)
-    # Dereference SONAME links: every checksum describes ordinary file bytes.
-    shutil.copy2(source, destination)
+    link = os.readlink(source) if source.is_symlink() else ''
+    if link and '/' not in link and '\\' not in link:
+        # Keep SONAME links as same-directory links instead of duplicate library bytes.
+        destination.symlink_to(link)
+    else:
+        shutil.copy2(source, destination)
 
 
 def artifact(directories, names):
@@ -44,9 +49,6 @@ def copy_licenses(build, package, cache):
                           deps / f'{name}-src')
         for item in component['files']:
             condition = component['when'] if item['when'] is None else item['when']
-            # The same crypto dependency is also linked by LCP without PDF.
-            if name == 'mbedtls':
-                condition += '|EXR_ENABLE_LCP'
             if enabled(condition, switches):
                 base = source_dir if item['origin'] == 'upstream' else ROOT
                 copy(base / item['path'], package / item['installed'])
@@ -71,17 +73,17 @@ def collect(build, package, target, config):
     if target == 'win-x64':
         library = artifact(directories, ['libexreader.dll', 'exreader.dll'])
         import_lib = artifact(directories, ['libexreader.dll.a', 'exreader.lib', 'libexreader.lib'])
-        copy(library, package / 'lib' / library.name)
-        copy(import_lib, package / 'lib' / import_lib.name)
-        # Windows searches beside the executable; consumers can also add lib to PATH.
+        # One DLL, beside the CLI as in `cmake --install`; the import library stays in lib.
         copy(library, package / 'bin' / library.name)
+        copy(import_lib, package / 'lib' / import_lib.name)
         executable = 'exr-info.exe'
     else:
         filename = 'libexreader.so' if target == 'linux-x64' else 'libexreader.dylib'
         library = artifact(directories, [filename])
-        pattern = 'libexreader.so*' if target == 'linux-x64' else 'libexreader*.dylib'
-        for candidate in sorted(library.parent.glob(pattern)):
-            copy(candidate, package / 'lib' / candidate.name)
+        patterns = ('libexreader.so*',) if target == 'linux-x64' else ('libexreader.dylib', 'libexreader.*.dylib')
+        for pattern in patterns:
+            for candidate in sorted(library.parent.glob(pattern)):
+                copy(candidate, package / 'lib' / candidate.name)
         executable = 'exr-info'
     copy(artifact(directories, [executable]), package / 'bin' / executable)
     copy(ROOT / 'examples/minimal/main.c', package / 'examples/minimal/main.c')
@@ -94,7 +96,7 @@ def collect(build, package, target, config):
     copy_licenses(build, package, cache)
     lines = []
     for path in sorted(package.rglob('*')):
-        if path.is_file():
+        if path.is_file() and not path.is_symlink():
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             lines.append(f'{digest}  {path.relative_to(package).as_posix()}\n')
     (package / 'SHA256SUMS').write_text(''.join(lines), encoding='utf-8', newline='\n')

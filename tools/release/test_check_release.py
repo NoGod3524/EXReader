@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 """Small acceptance/rejection regression for the release gate; no compiler needed."""
 import hashlib
+import io
 from pathlib import Path
 import shutil
 import struct
@@ -60,7 +61,6 @@ def main():
         for name in ('sample.epub', 'font.ttf', 'FONT-LICENSE.md'):
             (package / 'examples/minimal' / name).write_bytes(b'regression fixture\n')
         binary = pe(389)
-        (package / 'lib/exreader.dll').write_bytes(binary)
         (package / 'lib/exreader.lib').write_bytes(b'!<arch>\n')
         (package / 'bin/exreader.dll').write_bytes(binary)
         (package / 'bin/exr-info.exe').write_bytes(binary)
@@ -97,30 +97,58 @@ def main():
         rejected('examples/minimal/font.ttf', None, 'required SDK files')
         rejected('VERSION', b'0.0.0\n', 'version identity')
         rejected('examples/minimal/main.c', b'/* line */\n' * 81, 'minimal example line limit')
-        rejected('lib/exreader.dll', pe(388), 'public export count')
+        rejected('bin/exreader.dll', pe(388), 'public export count')
         wrong_cpu = binary[:68] + struct.pack('<H', 0xaa64) + binary[70:]
         rejected('bin/exr-info.exe', wrong_cpu, 'library and CLI architecture')
+        (package / 'lib/exreader.dll').write_bytes(binary)
+        seal(package)
+        report = check_package(package, source)
+        assert any(not row['passed'] and row['check'] == 'CLI runtime layout and import library'
+                   for row in report['checks']), report
+        (package / 'lib/exreader.dll').unlink()
         seal(package)
         with zipfile.ZipFile(root / (package.name + '.zip'), 'w') as archive:
             archive.writestr(package.name + '/../escape', 'unsafe')
         assert not check_package(root / (package.name + '.zip'), source)['passed']
         assert check_package(package, source)['passed']
-        for relative in ('lib/exreader.dll', 'lib/exreader.lib', 'bin/exreader.dll', 'bin/exr-info.exe'):
+        for relative in ('lib/exreader.lib', 'bin/exreader.dll', 'bin/exr-info.exe'):
             (package / relative).unlink()
         package = package.rename(root / f'exreader-{version}-macos-arm64')
         binary = macho([(f'exr_fixture_{i}', 0xf) for i in range(389)])
-        (package / 'lib/libexreader.dylib').write_bytes(binary)
+        (package / 'lib/libexreader.1.2.3.dylib').write_bytes(binary)
         (package / 'bin/exr-info').write_bytes(binary)
         seal(package)
         def executable(member):
             if member.name.endswith('/bin/exr-info'):
                 member.mode = 0o755
             return member
-        archive_path = root / (package.name + '.tar.gz')
-        with tarfile.open(archive_path, 'w:gz') as archive:
-            archive.add(package, arcname=package.name, filter=executable)
-        assert check_package(archive_path, source)['passed']
-    print('PASS release gate: directory/ZIP/tar.gz, LF/CRLF header; rejects tampering, missing header, version mismatch, 81 lines, 388 exports, wrong CPU, traversal')
+
+        def posix_archive(links, extra=None):
+            # Symlinks are written as tar members, so this also runs without OS symlink rights.
+            archive_path = root / (package.name + '.tar.gz')
+            with tarfile.open(archive_path, 'w:gz') as archive:
+                archive.add(package, arcname=package.name, filter=executable)
+                for name, target in links.items():
+                    member = tarfile.TarInfo(f'{package.name}/lib/{name}')
+                    member.type, member.linkname = tarfile.SYMTYPE, target
+                    archive.addfile(member)
+                if extra:
+                    member = tarfile.TarInfo(f'{package.name}/lib/{extra}')
+                    member.size = len(binary)
+                    archive.addfile(member, io.BytesIO(binary))
+            return check_package(archive_path, source)
+
+        chain = {'libexreader.dylib': 'libexreader.1.dylib', 'libexreader.1.dylib': 'libexreader.1.2.3.dylib'}
+        assert posix_archive(chain)['passed']
+        assert not posix_archive({'libexreader.dylib': '../bin/exr-info'})['passed']
+        assert not posix_archive({'libexreader.dylib': 'missing.dylib'})['passed']
+        assert not posix_archive({'libexreader.dylib': 'libexreader.dylib'})['passed']
+        report = posix_archive(chain, extra='libexreader.1.2.4.dylib')
+        assert any(not row['passed'] and row['check'] == 'CLI runtime layout and import library'
+                   for row in report['checks']), report
+    print('PASS release gate: directory/ZIP/tar.gz, LF/CRLF header, SONAME link chain; rejects tampering, '
+          'missing header, version mismatch, 81 lines, 388 exports, wrong CPU, traversal, duplicate DLL, '
+          'escaping/dangling/cyclic link, duplicate shared library')
 
 
 if __name__ == '__main__':

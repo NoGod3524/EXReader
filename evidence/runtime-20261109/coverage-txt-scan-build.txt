@@ -1,1 +1,0 @@
-["gcc", "-g", "-O1", "-IC:<workspace>\\include", "<workspace>\\tests\\bounded_txt_scan\\check.c", "-o", "<workspace>\\evidence\\runtime-20261109\\local\\g\\txt-scan.exe", "-LC:<workspace>\\evidence\\runtime-20261109\\local\\g", "-lexreader"]

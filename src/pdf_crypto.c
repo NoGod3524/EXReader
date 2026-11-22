@@ -13,12 +13,22 @@ void exr_pdf_secret_clear(void *data,size_t size) {
 
 static unsigned prep_flag(uint32_t cp) {
   size_t lo=0,hi=sizeof(prep_flags)/sizeof(*prep_flags);
-  while(lo<hi) { size_t m=lo+(hi-lo)/2; if(cp<prep_flags[m].first) hi=m; else if(cp>prep_flags[m].last) lo=m+1; else return prep_flags[m].flags; }
+  while(lo<hi) {
+    size_t m=lo+(hi-lo)/2; uint32_t first_flags=prep_flags[m].first_flags;
+    if(cp<(first_flags>>5)) hi=m;
+    else if(cp>prep_flags[m].last) lo=m+1;
+    else return first_flags&31;
+  }
   return 0;
 }
 static unsigned combining(uint32_t cp) {
   size_t lo=0,hi=sizeof(prep_combining)/sizeof(*prep_combining);
-  while(lo<hi) { size_t m=lo+(hi-lo)/2; if(cp<prep_combining[m].cp) hi=m; else if(cp>prep_combining[m].cp) lo=m+1; else return prep_combining[m].value; }
+  while(lo<hi) {
+    size_t m=lo+(hi-lo)/2; uint32_t value=prep_combining[m];
+    if(cp<(value>>8)) hi=m;
+    else if(cp>(value>>8)) lo=m+1;
+    else return value&255;
+  }
   return 0;
 }
 static uint32_t compose(uint32_t a,uint32_t b) {
@@ -38,25 +48,41 @@ static uint32_t compose(uint32_t a,uint32_t b) {
 static exr_status prepare(const unsigned char *input,size_t size,unsigned char output[127],size_t *length,exr_error *e) {
   uint32_t *cp; size_t count=0,at=0,i,j,n=0,starter=0,work=0; unsigned last=0,bidi=0;
   exr_status status=EXR_OK; *length=0;
-  cp=malloc((size+1)*18*sizeof(*cp)); if(!cp) return exr_fail(e,EXR_MEMORY,"PDF password normalization allocation failed");
+  cp=malloc((size+1)*PREP_MAX_EXPANSION*sizeof(*cp)); if(!cp) return exr_fail(e,EXR_MEMORY,"PDF password normalization allocation failed");
   while(at<size) {
-    uint32_t c,parts[3]; unsigned f; const uint32_t *d=&c; size_t dn=1,lo=0,hi=sizeof(prep_decomp)/sizeof(*prep_decomp);
+    uint32_t c,parts[3]; unsigned f; const uint32_t *d=&c;
+    const uint16_t *packed=NULL; size_t dn=1;
     if(!exr_next((const char *)input,size,&at,&c)) { status=exr_fail(e,EXR_ENCODING,"PDF password is not UTF-8"); goto done; }
     f=prep_flag(c); if(f&1) continue; if(f&2) c=32;
     if(c>=0xac00 && c<=0xd7a3) {
       uint32_t s=c-0xac00; parts[0]=0x1100+s/588; parts[1]=0x1161+(s%588)/28; parts[2]=0x11a7+s%28; d=parts; dn=s%28 ? 3 : 2;
-    } else while(lo<hi) {
-      size_t m=lo+(hi-lo)/2;
-      if(c<prep_decomp[m].cp) hi=m; else if(c>prep_decomp[m].cp) lo=m+1;
-      else { d=prep_scalars+prep_decomp[m].offset; dn=prep_decomp[m].length; break; }
+    } else if((c>>8)+1<sizeof(prep_decomp_blocks)/sizeof(*prep_decomp_blocks)) {
+      uint32_t block=c>>8, key=c&255;
+      size_t lo=prep_decomp_blocks[block],hi=prep_decomp_blocks[block+1];
+      while(lo<hi) {
+        size_t m=lo+(hi-lo)/2;
+        if(key<prep_decomp_keys[m]) hi=m;
+        else if(key>prep_decomp_keys[m]) lo=m+1;
+        else {
+          size_t offset=prep_decomp_offsets[m];
+          dn=prep_decomp_offsets[m+1]-offset;
+          packed=prep_scalars+offset;
+          break;
+        }
+      }
     }
     for(i=0;i<dn;i++) {
-      unsigned cc=combining(d[i]); j=count++;
+      uint32_t scalar;
+      if(packed) {
+        uint16_t v=packed[i];
+        scalar=(v>=PREP_SCALAR_INDEX && v<=0xdfff) ? prep_scalars_nonbmp[v-PREP_SCALAR_INDEX] : v;
+      } else scalar=d[i];
+      unsigned cc=combining(scalar); j=count++;
       while(j && cc && combining(cp[j-1])>cc) {
         if(++work>1048576) { status=exr_fail(e,EXR_LIMIT,"PDF password normalization work budget exceeded"); goto done; }
         cp[j]=cp[j-1]; j--;
       }
-      cp[j]=d[i];
+      cp[j]=scalar;
     }
   }
   for(i=0;i<count;i++) {
@@ -77,7 +103,7 @@ static exr_status prepare(const unsigned char *input,size_t size,unsigned char o
   if((bidi&8) && ((bidi&16) || !(prep_flag(cp[0])&8) || !(prep_flag(cp[n-1])&8)))
     status=exr_fail(e,EXR_ENCODING,"PDF password violates SASLprep bidirectional rules");
 done:
-  exr_pdf_secret_clear(cp,(size+1)*18*sizeof(*cp)); free(cp); return status;
+  exr_pdf_secret_clear(cp,(size+1)*PREP_MAX_EXPANSION*sizeof(*cp)); free(cp); return status;
 }
 
 static const unsigned char padding[32]={0x28,0xbf,0x4e,0x5e,0x4e,0x75,0x8a,0x41,0x64,0,0x4e,0x56,0xff,0xfa,1,8,0x2e,0x2e,0,0xb6,0xd0,0x68,0x3e,0x80,0x2f,0x0c,0xa9,0xfe,0x64,0x53,0x69,0x7a};
@@ -198,10 +224,7 @@ done:
 }
 
 static exr_status get(exr_pdf_file *f,uint32_t d,const char *name,uint32_t *out,exr_error *e) { return exr_pdf_resolve(f,exr_pdf_get(f,d,name),out,e); }
-static int named(exr_pdf_file *f,uint32_t value,const char *name) {
-  const exr_pdf_value *v=exr_pdf_value_at(f,value); size_t n; const unsigned char *p=exr_pdf_bytes(f,value,&n);
-  return v && v->kind==EXR_PDF_NAME && p && n==strlen(name) && !memcmp(p,name,n);
-}
+#define named exr_pdf_name_is
 static int number(exr_pdf_file *f,uint32_t d,const char *name,int64_t fallback,int64_t *out,exr_error *e) {
   uint32_t id; const exr_pdf_value *v; if(get(f,d,name,&id,e)!=EXR_OK) return 0;
   v=exr_pdf_value_at(f,id); if(!v) { *out=fallback; return 1; } if(v->kind!=EXR_PDF_INT) return 0; *out=v->u.integer; return 1;
@@ -254,7 +277,7 @@ exr_status exr_pdf_crypt_init(exr_pdf_file *f,uint32_t dict,uint32_t id,const vo
   if(length<40 || length%8 || (version==5 ? length!=256 : length>128) || permissions<INT32_MIN || permissions>UINT32_MAX) goto bad;
   c.version=(unsigned)version; c.revision=(unsigned)revision; c.length=(unsigned)length/8; c.permissions=(uint32_t)permissions; c.metadata=1;
   status=get(f,dict,"EncryptMetadata",&value,e); if(status!=EXR_OK) goto done;
-  v=exr_pdf_value_at(f,value); if(v) { if(v->kind!=EXR_PDF_BOOL) goto bad; c.metadata=v->u.number!=0; }
+  v=exr_pdf_value_at(f,value); if(v) { if(v->kind!=EXR_PDF_BOOL) goto bad; c.metadata=v->u.integer!=0; }
   if(!entry(f,dict,"O",o,revision>=5 ? 48 : 32,e) || !entry(f,dict,"U",u,revision>=5 ? 48 : 32,e)) goto bad;
   c.strings=c.streams=c.embedded=EXR_CRYPT_RC4;
   if(version>=4) {

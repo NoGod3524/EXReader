@@ -1,2 +1,0 @@
-Accounted for 76 native construction sites and 35 shared-helper call sites.
-All unmapped runtime sites, unopened surfaces, keyboard and speech remain explicitly missing.

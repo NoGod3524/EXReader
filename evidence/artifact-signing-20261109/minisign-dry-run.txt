@@ -1,1 +1,0 @@
-DRY-RUN: minisign -S -s <MINISIGN_SECRET_KEY> -m <workspace>\build\c4-complete-proof\run-2\artifacts\SHA256SUMS -x <workspace>\build\c4-complete-proof\run-2\artifacts\SHA256SUMS.minisig

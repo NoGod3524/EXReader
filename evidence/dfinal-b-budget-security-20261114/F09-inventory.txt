@@ -1,2 +1,0 @@
-PASS inventory: 238 constructor/helper/painted-target sites, 33 name registration sites; unnamed/dynamic sites retained
-PASS negative controls: unnamed EDIT, shared-helper calls and painted hit targets retained, comments/declarations ignored; runtime UIA/keyboard/speech remain missing

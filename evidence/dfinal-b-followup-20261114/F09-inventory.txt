@@ -1,2 +1,0 @@
-PASS inventory: 76 creation sites, 31 name registration sites; unnamed/dynamic sites retained
-PASS negative controls: unnamed EDIT retained, comments ignored; runtime UIA/keyboard/speech remain missing

@@ -91,9 +91,50 @@ static void external(void) {
     exr_document_free(d);
   }
 }
+static void selector_cascade(void) {
+  exr_layout_config config=exr_layout_config_defaults();
+  exr_document *d=document(
+    "<html><head><style>"
+    "*{background-color:#123456}"
+    "div .x{color:#ff0000}"
+    "div p, div div #order{color:#00ff00}"
+    "div .x{line-height:2}"
+    ".ancestor p{line-height:3}"
+    "div > p.x.more{font-size:26px;font-family:Selected}"
+    "#invalid:unsupported, .more{font-weight:bold}"
+    ".other, #order{font-style:italic}"
+    "div p.x{font-style:normal}"
+    "#order{font-style:invalid}"
+    "</style></head><body><div class='ancestor'>"
+    "<p id='order' class='x more more' style='font-size:31px'>Text</p>"
+    "<section><p id='invalid' class='x'>More</p></section>"
+    "</div></body></html>");
+  exr_style *styles=NULL;
+  exr_font_rule *fonts=NULL;
+  size_t n=0,i;
+  int found=0;
+  config.user_css="#invalid{color:#0000ff}";
+  compare(d,&config);
+  OK(exr_compute_styles(d,&config,&styles,&fonts,&n,&error));
+  for(i=0;i<d->node_count;i++) {
+    const char *id=exr_node_attribute(&d->nodes[i],"id");
+    if(id && !strcmp(id,"order")) {
+      CHECK(styles[i].color==0xff0000ff && styles[i].background==0x123456ff);
+      CHECK(styles[i].font_size==31 && styles[i].leading==3);
+      CHECK((styles[i].flags & 3)==3 && styles[i].family && !strcmp(styles[i].family,"Selected"));
+      found++;
+    } else if(id && !strcmp(id,"invalid")) {
+      CHECK(styles[i].color==0x0000ffff && styles[i].background==0x123456ff);
+      CHECK(!(styles[i].flags & 3) && !styles[i].family);
+      found++;
+    }
+  }
+  CHECK(found==2);
+  exr_styles_free(styles,d->node_count);free(fonts);exr_document_free(d);
+}
 int main(void) {
   exr_layout_config config=exr_layout_config_defaults();
   exr_document *d=document("<html><head><style>@font-face{font-family:Example;src:url(font.ttf)}p{color:red;font-family:Example}body > p.x{font-size:21px}</style></head><body><p class='x' style='margin:2px;border:1px solid blue'>text <em>more</em></p><table><tr><td>cell</td></tr></table></body></html>");
-  compare(d,&config);exr_document_free(d);external();
+  compare(d,&config);exr_document_free(d);external();selector_cascade();
   printf("%u bounded style checks passed\n",checks);return 0;
 }

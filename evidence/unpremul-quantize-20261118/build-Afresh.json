@@ -1,7 +1,0 @@
-{
-  "tag": "Afresh",
-  "dll_sha256": "a2c6f3d8a7f88c5570c9b5263b511ce6cdd19e91df48d08f7877c48f9d289525",
-  "sources": {
-    "src\\affine_image.c": "eac173402bd1aaec76c9135196e39cfccc298d17a7ff0896b99065638e2805f2"
-  }
-}

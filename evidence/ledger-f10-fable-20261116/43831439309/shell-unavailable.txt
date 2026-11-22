@@ -1,8 +1,0 @@
-F10CHECK {"name":"network_logon","pass":true,"detail":"LogonUserW error=0"}
-F10CHECK {"name":"network_token_impersonated","pass":true,"detail":"ImpersonateLoggedOnUser=1"}
-F10CHECK {"name":"effective_token_is_network_logon","pass":true,"detail":"LogonType=3 (3=Network) user=S-1-5-21-1280602335-643053282-3184619455-1003"}
-F10CHECK {"name":"credential_manager_write_refused_by_platform","pass":true,"detail":"CredWriteW=0 GetLastError=1312 (1312=ERROR_NO_SUCH_LOGON_SESSION)"}
-F10CHECK {"name":"shell_save_wrote_no_credential_manager_record","pass":true,"detail":"CredReadW(EXReader/WebDAV) present=0 error=1312"}
-F10CHECK {"name":"shell_refused_without_writing_anything","pass":true,"detail":"sy_cred_save=0 sync.cred present=0; DPAPI in this session error=5"}
-F10CHECK {"name":"cleanup_left_no_credential","pass":true,"detail":"sync.cred and CM record absent after sy_cred_delete"}
-F10RESULT {"mode":"unavailable","checks":7,"failed":0,"accepted":true}

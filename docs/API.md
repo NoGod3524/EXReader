@@ -1067,7 +1067,7 @@ int main(int argc, char **argv) {
 
 **参数** `left_min/right_min`：两边最少 grapheme，0=3；`auto_default`：非零让未声明 hyphens 的英语块默认为 auto；`out`：内置英语断词器。 `control`：可选的同步取消/进度回调，context 按本条所有权约定保活。 `error`：可选诊断输出（code/message），以返回值判断成功。
 
-**返回与失败** EXR_OK；只处理 en/en-us；显式 manual/none 和其他语言不被覆盖。非法最小值 EXR_ARGUMENT，预算/分配/取消返回非 OK。
+**返回与失败** EXR_OK；英语语言标签按 RFC 4647 回退到 en；显式 manual/none 和其他语言不被覆盖。非法最小值 EXR_ARGUMENT，预算/分配/取消返回非 OK。
 
 **线程** 同一对象的调用与释放须串行；不在回调中重入。
 
@@ -5844,7 +5844,7 @@ int main(void) {
 
 **参数** `archive`：已打开的 7Z 归档；`index`：entries 数组中的零基文件索引；`data`：接收独立解压字节；`size`：接收字节数；`error`：可 NULL；接收状态码和诊断文本，不分配内存。
 
-**返回与失败** EXR_OK 返回文件字节；越界/目录索引 ARGUMENT，预算 LIMIT，不支持编码 UNSUPPORTED，损坏/CRC FORMAT，读取 IO；可 MEMORY/CANCELLED。固实块每次完整解码。
+**返回与失败** EXR_OK 返回文件字节；越界/目录索引 ARGUMENT，预算 LIMIT，不支持编码 UNSUPPORTED，损坏/CRC FORMAT，读取 IO；可 MEMORY/CANCELLED。缓存未命中时完整解码固实块。每个归档最多缓存一个不超过 8 MiB 的多成员固实块。
 
 **线程** 同一对象及共享回调上下文的操作由宿主串行；同步回调在调用线程运行，不要重入当前对象。
 

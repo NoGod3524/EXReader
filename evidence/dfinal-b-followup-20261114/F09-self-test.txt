@@ -1,1 +1,0 @@
-PASS UIA contract: nested/action-pattern controls; malformed/incomplete trees rejected; exact observed focus identity only; complete keyboard/speech remain missing

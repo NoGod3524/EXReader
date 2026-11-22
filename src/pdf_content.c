@@ -97,10 +97,7 @@ static int new_line(content_reader *r,double x,double y) {
   if(!translate(r->line,x,y)) return 0;
   memcpy(r->matrix,r->line,sizeof(r->matrix)); return 1;
 }
-static int name_is(exr_pdf_file *arena,uint32_t id,const char *name) {
-  size_t size; const unsigned char *bytes=exr_pdf_bytes(arena,id,&size);
-  return bytes && exr_pdf_value_at(arena,id)->kind==EXR_PDF_NAME && size==strlen(name) && !memcmp(bytes,name,size);
-}
+#define name_is exr_pdf_name_is
 static int device_space(exr_pdf_file *arena,uint32_t id,exr_pdf_color_space *space) {
   if(name_is(arena,id,"DeviceGray")) *space=EXR_PDF_DEVICE_GRAY;
   else if(name_is(arena,id,"DeviceRGB")) *space=EXR_PDF_DEVICE_RGB;
@@ -162,7 +159,7 @@ static exr_status group_space(exr_pdf_file *file,uint32_t group,int page,int par
     if(resolved(file,exr_pdf_get(file,group,keys[i]),&id,e)!=EXR_OK) return e->code;
     v=exr_pdf_value_at(file,id);if(!v || v->kind==EXR_PDF_NULL) continue;
     if(v->kind!=EXR_PDF_BOOL) return exr_fail(e,EXR_FORMAT,"PDF group flag is not boolean");
-    if(!i) isolated=v->u.number!=0;else knockout=v->u.number!=0;
+    if(!i) isolated=v->u.integer!=0;else knockout=v->u.integer!=0;
   }
   if(resolved(file,exr_pdf_get(file,group,"CS"),&id,e)!=EXR_OK) return e->code;
   v=exr_pdf_value_at(file,id);
@@ -207,6 +204,12 @@ static exr_status blend_mode(content_reader *r,uint32_t id,exr_error *error) {
   }
   return EXR_OK;
 }
+static int rendering_intent(exr_pdf_file *file,uint32_t id,unsigned *out) {
+  static const char *names[4]={"Perceptual","RelativeColorimetric","Saturation","AbsoluteColorimetric"};
+  unsigned k;
+  for(k=0;k<4;k++) if(name_is(file,id,names[k])) { *out=k;return 1; }
+  return 0;
+}
 static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_error *error) {
   const char *keys[]={"LW","LC","LJ","ML","CA","ca"}; size_t i; uint32_t id; double value;
   for(i=0;i<6;i++) {
@@ -226,9 +229,8 @@ static exr_status apply_ext_state(content_reader *r,uint32_t dictionary,exr_erro
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL && blend_mode(r,id,error)!=EXR_OK) return error->code;
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"RI"),&id,error)!=EXR_OK) return error->code;
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL) {
-    const char *names[4]={"Perceptual","RelativeColorimetric","Saturation","AbsoluteColorimetric"}; unsigned k;int found=0;
-    for(k=0;k<4;k++) if(name_is(r->file,id,names[k])) { r->state.paint.intent=k;found=1;break; }
-    if(!found) return exr_fail(error,EXR_FORMAT,"Invalid PDF rendering intent");
+    if(!rendering_intent(r->file,id,&r->state.paint.intent))
+      return exr_fail(error,EXR_FORMAT,"Invalid PDF rendering intent");
   }
   if(resolved(r->file,exr_pdf_get(r->file,dictionary,"AIS"),&id,error)!=EXR_OK) return error->code;
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_NULL) {
@@ -320,6 +322,12 @@ static exr_status graphics_operation(content_reader *r,exr_pdf_file *arena,const
     return EXR_OK;
   }
   if(!strcmp(name,"d")) { if(count!=2) goto invalid; return set_dash(r,arena,values[0],values[1],error); }
+  if(!strcmp(name,"ri")) {
+    const exr_pdf_value *v; unsigned intent;
+    if(count!=1 || !(v=exr_pdf_value_at(arena,values[0])) || v->kind!=EXR_PDF_NAME) goto invalid;
+    r->state.paint.intent=rendering_intent(arena,values[0],&intent) ? intent : 1;
+    return EXR_OK;
+  }
   if(!strcmp(name,"G") || !strcmp(name,"g") || !strcmp(name,"RG") || !strcmp(name,"rg") || !strcmp(name,"K") || !strcmp(name,"k") ||
      !strcmp(name,"SC") || !strcmp(name,"sc") || !strcmp(name,"SCN") || !strcmp(name,"scn")) {
     int stroke=name[0]>='A' && name[0]<='Z'; exr_pdf_color *color=stroke ? &r->state.paint.stroke : &r->state.paint.fill;
@@ -580,7 +588,7 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     if(r->inside || count!=1 || exr_pdf_value_at(arena,values[0])->kind!=EXR_PDF_STREAM) goto invalid;
     if(r->uncolored) {
       const exr_pdf_value *mask=exr_pdf_value_at(arena,exr_pdf_get(arena,values[0],"ImageMask"));
-      if(!mask || mask->kind!=EXR_PDF_BOOL || !mask->u.number) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 inline image must be a stencil mask");
+      if(!mask || mask->kind!=EXR_PDF_BOOL || !mask->u.integer) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 inline image must be a stencil mask");
     }
     return r->callbacks.image ? r->callbacks.image(r->context,arena,values[0],r->file,r->resources,&paint,error) : EXR_OK;
   }
@@ -610,11 +618,10 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
     return select_font(r,id,size,error);
   }
   if(!strcmp(name,"Do")) {
-    uint32_t subtype; size_t n; const unsigned char *type;
+    uint32_t subtype;
     if(r->inside || count!=1 || resource(r,arena,values[0],"XObject",&id,error)!=EXR_OK) goto invalid;
     if(resolved(r->file,exr_pdf_get(r->file,id,"Subtype"),&subtype,error)!=EXR_OK) return error->code;
-    type=exr_pdf_bytes(r->file,subtype,&n);
-    if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==5 && !memcmp(type,"Image",5)) {
+    if(name_is(r->file,subtype,"Image")) {
       exr_pdf_paint_state paint=paint_state(r);
       int cover[4];
       if(r->graphics && exr_pdf_value_at(r->file,id)->kind!=EXR_PDF_STREAM) return exr_fail(error,EXR_FORMAT,"PDF Image XObject is not a stream");
@@ -622,12 +629,12 @@ static exr_status content_operation(void *context,exr_pdf_file *arena,const char
         uint32_t mask; const exr_pdf_value *v;
         if(resolved(r->file,exr_pdf_get(r->file,id,"ImageMask"),&mask,error)!=EXR_OK) return error->code;
         v=exr_pdf_value_at(r->file,mask);
-        if(!v || v->kind!=EXR_PDF_BOOL || !v->u.number) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 image must be a stencil mask");
+        if(!v || v->kind!=EXR_PDF_BOOL || !v->u.integer) return exr_fail(error,EXR_FORMAT,"Uncolored PDF Type3 image must be a stencil mask");
       }
       if(r->callbacks.image_coverage && image_cover(r,arena,cover)) paint.image_cover=cover;
       return r->callbacks.image ? r->callbacks.image(r->context,r->file,id,r->file,r->resources,&paint,error) : EXR_OK;
     }
-    if(type && exr_pdf_value_at(r->file,subtype)->kind==EXR_PDF_NAME && n==4 && !memcmp(type,"Form",4)) return form(r,id,error);
+    if(name_is(r->file,subtype,"Form")) return form(r,id,error);
     return exr_fail(error,EXR_FORMAT,"Unsupported PDF text XObject subtype");
   }
   if(!strcmp(name,"Tf")) {

@@ -1,7 +1,0 @@
-2026-11-15T02:12:04.1775717Z 100% tests passed, 0 tests failed out of 2
-2026-11-15T02:13:25.5056524Z 100% tests passed, 0 tests failed out of 580
-2026-11-15T02:13:58.5349794Z CMake Error at CMakeLists.txt:16 (target_link_libraries):
-2026-11-15T02:13:58.5350312Z   Target "dfinal-c-catalog-upgrade" links to:
-2026-11-15T02:13:58.5350806Z     EXReaderProductCatalog::reader_catalog
-2026-11-15T02:13:58.5351260Z   but the target was not found.  Possible reasons include:
-2026-11-15T02:13:58.5380500Z CMake Generate step failed.  Build files cannot be regenerated correctly.

@@ -541,7 +541,8 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
     if(level>4) { level=4;r->drawing->text_malformed++; }
     p=levels[level];
     if(!text_pf(r,&at,style.end,&p)) { bad=1;break; }
-    start=total;total+=count;if(total>units+1) r->drawing->text_runs++;
+    start=total;
+    if(count>units+1-start) { total=units+2;r->drawing->text_runs++; } else total=start+count;
     if(!text_span_add(&pf,&pc,&pcap,start,total>units+1 ? units+1 : total,p)) goto memory;
   }
   if(style.end && total<units+1) { r->drawing->text_runs++;bad=1; }
@@ -550,7 +551,8 @@ static exr_status read_text(drawing_reader *r,const art_shape *s,exr_ppt_text **
     uint32_t count;text_props p={0};
     if((status=exr_control_cancel(r->control,e))!=EXR_OK) goto done;
     if(!text_u32(r,&at,style.end,&count) || !count || !text_cf(r,&at,style.end,&p)) { bad=1;break; }
-    start=total;total+=count;if(total>units+1) r->drawing->text_runs++;
+    start=total;
+    if(count>units+1-start) { total=units+2;r->drawing->text_runs++; } else total=start+count;
     if(!text_span_add(&cf,&cc,&ccap,start,total>units+1 ? units+1 : total,p)) goto memory;
   }
   if(style.end && (total!=units+1 || at!=style.end)) r->drawing->text_runs++;

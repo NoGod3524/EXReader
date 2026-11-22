@@ -1,9 +1,0 @@
-Test project <workspace>/build/perf
-    Start 217: native-pdf-markup
-1/2 Test #217: native-pdf-markup ................   Passed    0.13 sec
-    Start 283: native-vector
-2/2 Test #283: native-vector ....................   Passed    0.12 sec
-
-100% tests passed out of 2
-
-Total Test time (real) =   0.29 sec

@@ -99,7 +99,17 @@ installed under `share/exreader/licenses`.
 libaom's CMake requires Perl for its RTCD/version generation. The configure
 step searches `PATH`, then Git for Windows' `usr/bin/perl.exe` on Windows. If
 Perl is unavailable, configure fails with an explicit instruction to install
-Perl or pass `-DEXR_ENABLE_IMAGE_AVIF=OFF`. libaom appends its warning flags to
+Perl or pass `-DEXR_ENABLE_IMAGE_AVIF=OFF`. libaom is decoder-only
+(`CONFIG_AV1_ENCODER=0`) and by default uses its portable C path
+(`AOM_TARGET_CPU=generic`), which is the smallest build. `-DEXR_ENABLE_AVIF_SIMD=ON`
+adds runtime-dispatched SIMD: SSE2..AVX2 on x86/x86-64 (requires `nasm` or
+`yasm`; configure fails otherwise) or NEON on 64-bit ARM (non-MSVC); other
+targets stay on C. Configure prints `libaom target CPU: ...`. AV1 decoding is
+bit-exact, so pixels are identical; only speed and size change. Measured on
+x86-64 MinGW GCC (stripped `libexreader.dll`): AVIF itself costs 2.07 MB
+(8.41 -> 10.49 MB); SIMD adds 1.28 MB (-> 11.77 MB) and decodes 3840x2160
+4:4:4 about 4x and 2048x2048 4:2:0 about 2x faster.
+libaom appends its warning flags to
 the directory `CMAKE_*_FLAGS`; `cmake/deps.cmake` snapshots and restores
 EXReader's flags so third-party warnings do not become EXReader warnings.
 
@@ -122,7 +132,7 @@ patterns under `tests/fixtures/images` with MIT provenance and SHA-256 values in
 
 ## Mainline dependency configuration
 
-Mainline freezes TIFF to the declared built-in/Deflate/LZW/PackBits subset and
-pinned zlib. Host JPEG/JBIG/LERC/LZMA/ZSTD/WebP/libdeflate discovery is disabled;
-build and installed capabilities do not vary with host packages. The libaom
-source include path is a build interface and is excluded from install exports.
+WebP uses the private `webpdecoder` and `webpdemux` archives. TIFF uses the
+pinned zlib for Deflate and leaves LogLuv, PixarLog, ThunderScan and NeXT off.
+Host JPEG/JBIG/LERC/LZMA/ZSTD/WebP/libdeflate discovery is disabled. The libaom
+source include path is private to the build.

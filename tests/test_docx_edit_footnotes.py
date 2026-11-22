@@ -175,6 +175,33 @@ def model_boundaries(api):
         api.doc_free(doc)
 
 
+def root_relative_target(api):
+    parts = unzip(package(
+        body='<w:p><w:r><w:t>Root</w:t></w:r><w:r><w:footnoteReference w:id="1"/></w:r></w:p>',
+    ))
+    parts['word/_rels/document.xml.rels'] = (
+        b'<?xml version="1.0" encoding="UTF-8"?>'
+        b'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        b'<Relationship Id="rFn" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes" Target="/word/footnotes.xml"/>'
+        b'</Relationships>'
+    )
+    parts['word/footnotes.xml'] = (
+        b'<?xml version="1.0" encoding="UTF-8"?>'
+        b'<w:footnotes xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        b'<w:footnote w:id="1"><w:p><w:r><w:t>from root</w:t></w:r></w:p></w:footnote>'
+        b'</w:footnotes>'
+    )
+    doc = api.read(repack(parts))
+    try:
+        notes = api.notes(doc)
+        assert len(notes) == 1 and notes[0][4] == b'from root'
+        assert api.note_set_text(doc, notes[0][0], b'updated', 7) == 0
+        audit(api, doc, ['updated'])
+        print('PASS root-relative /word/footnotes.xml target')
+    finally:
+        api.doc_free(doc)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--library', type=Path, required=True)
@@ -182,3 +209,4 @@ if __name__ == '__main__':
     acceptance(api)
     cells_and_validation(api)
     model_boundaries(api)
+    root_relative_target(api)

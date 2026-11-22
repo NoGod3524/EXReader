@@ -1,1 +1,0 @@
-DFINAL-C evidence checker: 2 positive, 17 negative checks passed

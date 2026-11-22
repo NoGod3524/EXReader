@@ -9,7 +9,11 @@
    (MSVC needs /experimental:c11atomics for <stdatomic.h>, and this build does
    not enable it). */
 static int diag_mode_snapshot(void) {
+#ifdef _MSC_VER
+  static __declspec(thread) int cached=-1;
+#else
   static _Thread_local int cached=-1;
+#endif
   if(cached<0) {
     static const char *const names[]={"","image","image-paint","image-decode","path","glyph","group","shading","softmask"};
     const char *name=getenv("EXR_ATTRIBUTION_SKIP");
@@ -27,13 +31,13 @@ typedef struct { size_t offset; uint32_t value,revision; unsigned generation,typ
 typedef struct { size_t offset,size; unsigned char *decoded; size_t decoded_size; uint32_t dict; int ready; uint32_t *objects,*offsets; size_t object_count,first; exr_pdf_stream_codec codec; uint32_t parameters; unsigned inline_image; uint32_t object; unsigned generation,unencrypted,retain; size_t cached; } pdf_stream;
 struct exr_pdf_file {
   const unsigned char *data; size_t size,work,decoded_bytes,decode_work,declared_size,index_bytes;
-  size_t content_position;
+  size_t content_position,borrowed_real_bytes;
   exr_pdf_value *values; size_t value_count,value_capacity;
   exr_buffer strings;
   pdf_xref *xref; size_t xref_count,xref_capacity;
   pdf_stream *streams; size_t stream_count,stream_capacity;
   uint32_t root,info,revision,raw_root,trailer_id; size_t startxref;
-  unsigned resolving,loading_xref;
+  unsigned resolving,loading_xref,borrow_real_text;
   uint32_t encrypt; unsigned encrypt_seen;
   exr_pdf_xref_diagnostics xref_diagnostics;
   exr_pdf_crypt crypt;
@@ -41,6 +45,7 @@ struct exr_pdf_file {
   size_t *decode_budget;
   exr_error error;
   void *image_cache;void (*image_cache_free)(void *);
+  void *cmyk_profile;void (*cmyk_profile_free)(void *);
   exr_buffer_pool buffer_pool;
 };
 typedef struct { exr_pdf_file *file; const unsigned char *data; size_t size,at; } parser;
@@ -89,8 +94,11 @@ static uint32_t value_new(exr_pdf_file *f,exr_pdf_kind kind) {
   id=(uint32_t)f->value_count++; v=&f->values[id]; memset(v,0,sizeof(*v));
   v->kind=kind; v->first=v->next=EXR_PDF_NONE; return id;
 }
+static int strings_room(exr_pdf_file *f,size_t used,size_t size) {
+  return size<=PDF_MAX_STRINGS-used || failed(f,EXR_LIMIT,"PDF string payload exceeds 32 MiB");
+}
 static int append(exr_pdf_file *f,exr_buffer *b,const void *data,size_t size) {
-  if(size>PDF_MAX_STRINGS-b->size) return failed(f,EXR_LIMIT,"PDF string payload exceeds 32 MiB");
+  if(!strings_room(f,b->size+(b==&f->strings ? f->borrowed_real_bytes : 0),size)) return 0;
   return exr_append(b,data,size) || failed(f,EXR_MEMORY,"PDF string allocation failed");
 }
 static uint32_t string_new(exr_pdf_file *f,exr_pdf_kind kind,const void *data,size_t size) {
@@ -102,8 +110,19 @@ static uint32_t string_new(exr_pdf_file *f,exr_pdf_kind kind,const void *data,si
 static int hex(unsigned c) {
   return c>='0' && c<='9' ? (int)c-'0' : c>='A' && c<='F' ? (int)c-'A'+10 : c>='a' && c<='f' ? (int)c-'a'+10 : -1;
 }
+enum { PDF_TOKEN_STACK = 256 };
+static int token_byte(exr_pdf_file *f,exr_buffer *b,unsigned char local[PDF_TOKEN_STACK],unsigned char c) {
+  if(b->size<PDF_TOKEN_STACK) { local[b->size++]=c; return 1; }
+  if(b->data==(char *)local) {
+    exr_buffer spill={0};
+    if(!append(f,&spill,local,b->size)) return 0;
+    *b=spill;
+  }
+  return append(f,b,&c,1);
+}
 static uint32_t parse_string(parser *p,int name,int hexadecimal) {
-  exr_buffer b={0}; exr_pdf_file *f=p->file; unsigned depth=1; uint32_t id=EXR_PDF_NONE; int high=-1,closed=name;
+  unsigned char local[PDF_TOKEN_STACK]; exr_buffer b={(char *)local,0,sizeof(local)};
+  exr_pdf_file *f=p->file; unsigned depth=1; uint32_t id=EXR_PDF_NONE; int high=-1,closed=name;
   p->at++;
   while(p->at<p->size) {
     unsigned char c=p->data[p->at++];
@@ -133,13 +152,14 @@ static uint32_t parse_string(parser *p,int name,int hexadecimal) {
       if(++depth>128) { failed(f,EXR_LIMIT,"PDF literal string nesting exceeds 128"); goto done; }
     } else if(c==')') { if(!--depth) { closed=1; break; } }
     else if(c==13) { c=10; if(p->at<p->size && p->data[p->at]==10) p->at++; }
-    if(!append(f,&b,&c,1)) goto done;
+    if(!token_byte(f,&b,local,c)) goto done;
   }
   if(!closed) { failed(f,EXR_FORMAT,"Unterminated PDF string"); goto done; }
-  if(hexadecimal && high>=0) { unsigned char c=(unsigned char)(high<<4); if(!append(f,&b,&c,1)) goto done; }
+  if(hexadecimal && high>=0 && !token_byte(f,&b,local,(unsigned char)(high<<4))) goto done;
   id=string_new(f,name ? EXR_PDF_NAME : EXR_PDF_STRING,b.data,b.size);
 done:
-  free(b.data); return id;
+  if(b.data!=(char *)local) free(b.data);
+  return id;
 }
 static uint32_t parse_value(parser *p,unsigned depth);
 static uint32_t parse_collection(parser *p,int dict,unsigned depth) {
@@ -178,7 +198,7 @@ static uint32_t parse_value(parser *p,unsigned depth) {
     return parse_string(p,0,1);
   }
   if(word(p,"null")) return value_new(f,EXR_PDF_NULL);
-  if(word(p,"true")) { id=value_new(f,EXR_PDF_BOOL); if(id!=EXR_PDF_NONE) f->values[id].u.number=1; return id; }
+  if(word(p,"true")) { id=value_new(f,EXR_PDF_BOOL); if(id!=EXR_PDF_NONE) f->values[id].u.integer=1; return id; }
   if(word(p,"false")) return value_new(f,EXR_PDF_BOOL);
   first=p->at;
   if(p->data[p->at]=='-' || p->data[p->at]=='+') negative=p->data[p->at++]=='-';
@@ -212,12 +232,19 @@ static uint32_t parse_value(parser *p,unsigned depth) {
   id=value_new(f,real ? EXR_PDF_REAL : EXR_PDF_INT);
   if(id!=EXR_PDF_NONE) {
     if(real) {
-      unsigned char length[2]={(unsigned char)(end-first),(unsigned char)((end-first)>>8)};
       f->values[id].u.number=negative ? -n : n;
-      /* Retain the spelling: serializing the decoded double alone can change
-         unknown dictionary numbers after repeated incremental edits. */
-      f->values[id].first=(uint32_t)f->strings.size;
-      if(!append(f,&f->strings,length,2) || !append(f,&f->strings,p->data+first,end-first)) return EXR_PDF_NONE;
+      if(f->borrow_real_text) {
+        size_t size=end-first+2;
+        if(!strings_room(f,f->strings.size+f->borrowed_real_bytes,size)) return EXR_PDF_NONE;
+        f->borrowed_real_bytes+=size;
+        /* Content callbacks borrow the input and may still serialize an operand. */
+        f->values[id].first=(uint32_t)first;
+      } else {
+        unsigned char length[2]={(unsigned char)(end-first),(unsigned char)((end-first)>>8)};
+        /* Preserve the spelling of unknown dictionary numbers in incremental edits. */
+        f->values[id].first=(uint32_t)f->strings.size;
+        if(!append(f,&f->strings,length,2) || !append(f,&f->strings,p->data+first,end-first)) return EXR_PDF_NONE;
+      }
     }
     else {
       uint64_t whole=0,maximum=negative ? (UINT64_C(1)<<63) : INT64_MAX; size_t at=first;
@@ -241,6 +268,13 @@ const unsigned char *exr_pdf_bytes(const exr_pdf_file *f,uint32_t id,size_t *siz
   if(size) *size=v->u.bytes.length;
   return v->u.bytes.length ? (const unsigned char *)f->strings.data+v->u.bytes.offset : (const unsigned char *)"";
 }
+int exr_pdf_name_is(const exr_pdf_file *f,uint32_t id,const char *expected) {
+  const exr_pdf_value *v=exr_pdf_value_at(f,id); size_t n; const unsigned char *bytes;
+  if(!v || v->kind!=EXR_PDF_NAME) return 0;
+  bytes=exr_pdf_bytes(f,id,&n);
+  return bytes && n==strlen(expected) && !memcmp(bytes,expected,n);
+}
+#define name_is exr_pdf_name_is
 uint32_t exr_pdf_get(exr_pdf_file *f,uint32_t dict,const char *key) {
   const exr_pdf_value *d=exr_pdf_value_at(f,dict); uint32_t at,result=EXR_PDF_NONE; size_t length=strlen(key);
   if(!d || (d->kind!=EXR_PDF_DICT && d->kind!=EXR_PDF_STREAM)) return result;
@@ -289,16 +323,14 @@ static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
   id=parse_value(p,0); if(id==EXR_PDF_NONE) return id;
   last=f->value_count;
   if(f->crypt.revision && !f->loading_xref) {
-    uint32_t type=exr_pdf_get(f,id,"Type"); size_t n; const unsigned char *name=exr_pdf_bytes(f,type,&n);
-    int xref=name && f->values[type].kind==EXR_PDF_NAME && n==4 && !memcmp(name,"XRef",4);
+    int xref=name_is(f,exr_pdf_get(f,id,"Type"),"XRef");
     /* Signature Contents is an unencrypted byte string, even in a nested direct
        dictionary and when the optional /Type /Sig is absent. Mark it in the
        otherwise unused STRING.first field, then restore the scalar invariant. */
     for(i=first;!xref && i<last;i++) if(f->values[i].kind==EXR_PDF_DICT) {
       uint32_t contents=exr_pdf_get(f,(uint32_t)i,"Contents"),range=exr_pdf_get(f,(uint32_t)i,"ByteRange");
-      type=exr_pdf_get(f,(uint32_t)i,"Type"); name=exr_pdf_bytes(f,type,&n);
       if(contents!=EXR_PDF_NONE && f->values[contents].kind==EXR_PDF_STRING &&
-         ((name && f->values[type].kind==EXR_PDF_NAME && n==3 && !memcmp(name,"Sig",3)) ||
+         (name_is(f,exr_pdf_get(f,(uint32_t)i,"Type"),"Sig") ||
           (range!=EXR_PDF_NONE && f->values[range].kind==EXR_PDF_ARRAY))) f->values[contents].first=EXR_PDF_NONE-1;
     }
     for(i=first;!xref && i<last;i++) if(f->values[i].kind==EXR_PDF_STRING) {
@@ -320,8 +352,7 @@ static uint32_t indirect(parser *p,uint32_t object,unsigned generation) {
     if(!exr_grow((void **)&f->streams,&f->stream_capacity,f->stream_count+1,sizeof(*f->streams))) {
       failed(f,EXR_MEMORY,"PDF stream allocation failed"); return EXR_PDF_NONE;
     }
-    { uint32_t type=exr_pdf_get(f,id,"Type"); size_t n; const unsigned char *name=exr_pdf_bytes(f,type,&n);
-      unsigned xref=name && f->values[type].kind==EXR_PDF_NAME && n==4 && !memcmp(name,"XRef",4);
+    { unsigned xref=(unsigned)name_is(f,exr_pdf_get(f,id,"Type"),"XRef");
       index=f->stream_count++; f->streams[index]=(pdf_stream){.offset=start,.size=(size_t)length,.dict=id,.parameters=EXR_PDF_NONE,.object=object,.generation=generation,.unencrypted=f->loading_xref || xref};
     }
     f->values[id].kind=EXR_PDF_STREAM; f->values[id].u.ref.object=(uint32_t)index;
@@ -338,10 +369,6 @@ static int xref_room(exr_pdf_file *f,size_t count) {
   if(f->xref_capacity>previous) memset(f->xref+previous,0,(f->xref_capacity-previous)*sizeof(*f->xref));
   if(count>f->xref_count) f->xref_count=count;
   return 1;
-}
-static int name_is(exr_pdf_file *f,uint32_t id,const char *expected) {
-  size_t n; const unsigned char *bytes=exr_pdf_bytes(f,id,&n);
-  return bytes && f->values[id].kind==EXR_PDF_NAME && n==strlen(expected) && !memcmp(bytes,expected,n);
 }
 static int array_integers(exr_pdf_file *f,uint32_t id,uint64_t *values,size_t capacity,size_t *count) {
   const exr_pdf_value *v=exr_pdf_value_at(f,id); uint32_t at;
@@ -522,6 +549,7 @@ bad:
 void exr_pdf_close(exr_pdf_file *f) {
   size_t i; if(!f) return;
   if(f->image_cache_free) f->image_cache_free(f->image_cache);
+  if(f->cmyk_profile_free) f->cmyk_profile_free(f->cmyk_profile);
   exr_buffer_pool_clear(&f->buffer_pool);
   for(i=0;i<f->stream_count;i++) { free(f->streams[i].decoded); free(f->streams[i].objects); free(f->streams[i].offsets); }
   free(f->streams); free(f->xref); free(f->values); free(f->strings.data); exr_pdf_secret_clear(&f->crypt,sizeof(f->crypt)); free(f);
@@ -551,6 +579,15 @@ exr_status exr_pdf_object_identity(const exr_pdf_file *f,uint32_t value,
     *object=(uint32_t)i; *generation=f->xref[i].generation; return exr_fail(e,EXR_OK,"");
   }
   return exr_fail(e,EXR_FORMAT,"PDF value has no active indirect object identity");
+}
+exr_status exr_pdf_resolved_identity(const exr_pdf_file *f,uint32_t raw,uint32_t value,
+  uint32_t *object,uint32_t *generation,exr_error *e) {
+  const exr_pdf_value *v=exr_pdf_value_at(f,raw);
+  if(v && v->kind==EXR_PDF_REF && v->u.ref.object<f->xref_count) {
+    const pdf_xref *x=&f->xref[v->u.ref.object];
+    if(x->state==2 && x->value==value) return exr_pdf_object_identity(f,raw,object,generation,e);
+  }
+  return exr_pdf_object_identity(f,value,object,generation,e);
 }
 exr_status exr_pdf_real(exr_buffer *out,double value,exr_error *e) {
   char formatted[64],digits[32],text[384]; size_t count=0,point=SIZE_MAX,at=0,i=0;
@@ -625,13 +662,19 @@ static exr_status serialize_value(pdf_serializer *s,uint32_t id,unsigned depth) 
   if(depth>128 || ++s->nodes>EXR_PDF_MAX_VALUES) return exr_fail(s->error,EXR_LIMIT,"PDF serialization traversal exceeds limits");
   switch(v->kind) {
     case EXR_PDF_NULL: return serialized(s,"null",4);
-    case EXR_PDF_BOOL: return serialized(s,v->u.number ? "true" : "false",v->u.number ? 4 : 5);
+    case EXR_PDF_BOOL: return serialized(s,v->u.integer ? "true" : "false",v->u.integer ? 4 : 5);
     case EXR_PDF_INT:
       length=snprintf(number,sizeof(number),"%" PRId64,v->u.integer); break;
     case EXR_PDF_REAL:
       status=exr_control_cancel(s->control,s->error); if(status!=EXR_OK) return status;
       if(v->first!=EXR_PDF_NONE) {
         size_t size; const unsigned char *raw;
+        if(s->file->borrow_real_text) {
+          size_t end=v->first;
+          if(end>=s->file->size) return exr_fail(s->error,EXR_FORMAT,"Invalid retained PDF number");
+          while(end<s->file->size && !delimiter(s->file->data[end])) end++;
+          return serialized(s,s->file->data+v->first,end-v->first);
+        }
         if(v->first>s->file->strings.size || s->file->strings.size-v->first<2)
           return exr_fail(s->error,EXR_FORMAT,"Invalid retained PDF number");
         raw=(const unsigned char *)s->file->strings.data+v->first; size=raw[0]+((size_t)raw[1]<<8);
@@ -698,7 +741,7 @@ exr_status exr_pdf_resolve(exr_pdf_file *f,uint32_t id,uint32_t *out,exr_error *
 static exr_status open_pdf(const void *data,size_t size,const void *password,size_t password_size,const exr_pdf_crypt *saved,
   const exr_control *control,int allow_encrypted,exr_pdf_file **out,exr_error *e) {
   const unsigned char *bytes=data; exr_pdf_file *f; parser p; size_t end=size,at,visited[10000],count=0,i; uint64_t offset;
-  uint32_t root=EXR_PDF_NONE;
+  uint32_t root=EXR_PDF_NONE; const char *pool;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing PDF output");
   *out=NULL;
   if(!data || size<8 || size>EXR_MAX_INPUT) return exr_fail(e,size>EXR_MAX_INPUT ? EXR_LIMIT : EXR_ARGUMENT,"Invalid PDF input bytes");
@@ -706,6 +749,7 @@ static exr_status open_pdf(const void *data,size_t size,const void *password,siz
      (bytes[5]=='2' && bytes[6]=='.' && bytes[7]=='0'))) return exr_fail(e,EXR_FORMAT,"Invalid PDF header version");
   f=calloc(1,sizeof(*f)); if(!f) return exr_fail(e,EXR_MEMORY,"PDF file allocation failed");
   f->data=bytes; f->size=size; f->root=f->info=f->raw_root=f->trailer_id=f->encrypt=EXR_PDF_NONE; f->control=control;
+  pool=getenv("EXR_BUFFER_POOL"); f->buffer_pool.disabled=pool && !strcmp(pool,"0");
   while(end && whitespace(bytes[end-1])) end--;
   if(end<5 || memcmp(bytes+end-5,"%%EOF",5)) goto bad;
   at=end-5;
@@ -769,8 +813,10 @@ void **exr_pdf_image_cache_slot(exr_pdf_file *f,void (*release)(void *)) {
   if(!f) return NULL;
   f->image_cache_free=release;return &f->image_cache;
 }
+void **exr_pdf_cmyk_profile_slot(exr_pdf_file *f,void (*release)(void *)) {
+  f->cmyk_profile_free=release;return &f->cmyk_profile;
+}
 exr_buffer_pool *exr_pdf_buffer_pool(exr_pdf_file *f) {
-  if(f) { const char *enabled=getenv("EXR_BUFFER_POOL");f->buffer_pool.disabled=enabled && !strcmp(enabled,"0"); }
   return f ? &f->buffer_pool : NULL;
 }
 void exr_pdf_operation_end(exr_pdf_file *f) {
@@ -907,6 +953,14 @@ static int parameter(exr_pdf_file *f,uint32_t dict,const char *key,uint64_t maxi
   uint32_t id=exr_pdf_get(f,dict,key); *out=fallback;
   return id==EXR_PDF_NONE || direct_integer(f,resolve(f,id),maximum,out);
 }
+static int bool_parameter(exr_pdf_file *f,uint32_t dict,const char *key,int fallback,int *out) {
+  uint32_t id=exr_pdf_get(f,dict,key); const exr_pdf_value *v;
+  *out=fallback;
+  if(id==EXR_PDF_NONE) return 1;
+  v=exr_pdf_value_at(f,resolve(f,id));
+  if(!v || v->kind!=EXR_PDF_BOOL) return 0;
+  *out=v->u.integer!=0; return 1;
+}
 static int decode_lzw(exr_pdf_file *f,const unsigned char *data,size_t size,pdf_output *out,size_t temporary,unsigned early,size_t *end) {
   uint16_t prefix[4096]; unsigned char suffix[4096],stack[4096];
   size_t bit=0; unsigned width=9,next=258,previous=UINT_MAX; int started=0;
@@ -964,7 +1018,11 @@ static int undo_predictor(exr_pdf_file *f,uint32_t parameters,pdf_output *out) {
   row=(size_t)((colors*bits*columns+7)/8); pixel=(size_t)((colors*bits+7)/8);
   if(predictor==2) {
     if(out->size%row || !decode_work(f,(out->size/row)*(size_t)(columns*colors))) goto bad;
-    for(at=0;at<out->size;at+=row) for(x=(size_t)colors;x<(size_t)(columns*colors);x++) {
+    if(bits==8) {
+      size_t stride=(size_t)colors;
+      for(at=0;at<out->size;at+=row) for(x=stride;x<row;x++)
+        out->data[at+x]=(unsigned char)(out->data[at+x]+out->data[at+x-stride]);
+    } else for(at=0;at<out->size;at+=row) for(x=(size_t)colors;x<(size_t)(columns*colors);x++) {
       unsigned value=sample_get(out->data+at,x*(size_t)bits,(unsigned)bits)+sample_get(out->data+at,(x-(size_t)colors)*(size_t)bits,(unsigned)bits);
       sample_set(out->data+at,x*(size_t)bits,(unsigned)bits,value);
     }
@@ -1111,22 +1169,34 @@ static exr_status stream_payload(exr_pdf_file *f,uint32_t id,const unsigned char
     else if(name_is(f,filters[i],"ASCII85Decode") || name_is(f,filters[i],"A85")) ok=decode_ascii85(f,input,input_size,&output,current.capacity,end);
     else if(name_is(f,filters[i],"RunLengthDecode") || name_is(f,filters[i],"RL")) ok=decode_runlength(f,input,input_size,&output,current.capacity,end);
     else if(name_is(f,filters[i],"CCITTFaxDecode") || name_is(f,filters[i],"CCF")) {
-      uint64_t columns=1728,rows=0,black=0,align=0; int64_t group=0;
-      uint32_t key_id=exr_pdf_get(f,parms[i],"K");
+      uint64_t columns=1728,rows=0; int group=0,black=0,align=0,eol=0;
+      uint32_t key_id; size_t stride,needed,*budget;
+      if(source.inline_image) { free(output.data); goto unsupported; }
+      key_id=exr_pdf_get(f,parms[i],"K");
       if(key_id!=EXR_PDF_NONE) {
-        uint32_t resolved_key=resolve(f,key_id);
-        const exr_pdf_value *kv=exr_pdf_value_at(f,resolved_key);
-        if(kv && (kv->kind==EXR_PDF_INT || kv->kind==EXR_PDF_REAL))
-          group=kv->kind==EXR_PDF_INT ? kv->u.integer : (int64_t)kv->u.number;
+        const exr_pdf_value *kv=exr_pdf_value_at(f,resolve(f,key_id));
+        if(!kv || kv->kind!=EXR_PDF_INT || kv->u.integer<INT_MIN || kv->u.integer>INT_MAX) {
+          failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done;
+        }
+        group=(int)kv->u.integer;
       }
       if(!parameter(f,parms[i],"Columns",65535,1728,&columns) ||
          !parameter(f,parms[i],"Rows",65535,0,&rows) ||
-         !parameter(f,parms[i],"BlackIs1",1,0,&black) ||
-         !parameter(f,parms[i],"EncodedByteAlign",1,0,&align)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
+         !bool_parameter(f,parms[i],"BlackIs1",0,&black) ||
+         !bool_parameter(f,parms[i],"EncodedByteAlign",0,&align) ||
+         !bool_parameter(f,parms[i],"EndOfLine",0,&eol)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
       /* A CCITT stream may omit /Rows; the image height is the row count then. */
-      if(!rows) parameter(f,id,"Height",65535,0,&rows);
+      if(!rows && !parameter(f,id,"Height",65535,0,&rows)) { failed(f,EXR_FORMAT,"Invalid CCITT parameters"); goto done; }
+      if(!columns || !rows) { failed(f,EXR_FORMAT,"Invalid CCITT image dimensions"); goto done; }
+      stride=((size_t)columns+7)/8;
+      if((size_t)rows>EXR_MAX_TEXT/stride) { failed(f,EXR_LIMIT,"PDF decoded stream exceeds 64 MiB"); goto done; }
+      needed=stride*(size_t)rows;
+      if(current.capacity>EXR_MAX_INPUT-f->decoded_bytes || needed>EXR_MAX_INPUT-f->decoded_bytes-current.capacity) {
+        failed(f,EXR_LIMIT,"PDF decoded stream cache budget exceeded"); goto done;
+      }
+      budget=f->decode_budget ? f->decode_budget : &f->decode_work;
       { unsigned char *samples=NULL; size_t count=0;
-        if(exr_pdf_ccitt_decode(input,input_size,(long)group,(unsigned)columns,(unsigned)rows,(int)black,(int)align,&samples,&count,&f->error)!=EXR_OK) { free(samples); goto done; }
+        if(exr_pdf_ccitt_decode(input,input_size,group,(unsigned)columns,(unsigned)rows,black,align,eol,budget,f->control,&samples,&count,&f->error)!=EXR_OK) { free(samples); goto done; }
         free(output.data); output.data=samples; output.size=count; output.capacity=count; ok=1;
       }
     }
@@ -1241,7 +1311,7 @@ static uint32_t parse_inline(parser *p,exr_pdf_file *owner,uint32_t resources) {
   if(!direct_integer(f,exr_pdf_get(f,dict,"Width"),UINT32_MAX,&width) || !width ||
      !direct_integer(f,exr_pdf_get(f,dict,"Height"),UINT32_MAX,&height) || !height) goto bad;
   if(width>8192 || height>8192 || width>16*1024*1024/height) { failed(f,EXR_LIMIT,"PDF inline image exceeds dimension or pixel limits"); return EXR_PDF_NONE; }
-  id=exr_pdf_get(f,dict,"ImageMask"); if(id!=EXR_PDF_NONE) { if(f->values[id].kind!=EXR_PDF_BOOL) goto bad; stencil=f->values[id].u.number!=0; }
+  id=exr_pdf_get(f,dict,"ImageMask"); if(id!=EXR_PDF_NONE) { if(f->values[id].kind!=EXR_PDF_BOOL) goto bad; stencil=f->values[id].u.integer!=0; }
   id=exr_pdf_get(f,dict,"BitsPerComponent");
   if((id==EXR_PDF_NONE && !stencil) || (id!=EXR_PDF_NONE && !direct_integer(f,id,16,&bits)) ||
      (bits!=1 && bits!=2 && bits!=4 && bits!=8 && bits!=16) || (stencil && bits!=1)) goto bad;
@@ -1283,7 +1353,7 @@ static int cover_numbers(parser *p,double *out,size_t n) {
 int exr_pdf_peek_image_cover(const exr_pdf_file *operands,double clip[4],double fill[4]) {
   /* Bounded speculative lookahead. Use the same number parser and keep its
      storage, work counter and errors separate from the streaming lexer. */
-  exr_pdf_file scratch={0}; double color[3];
+  exr_pdf_file scratch={.data=operands->data,.size=operands->size,.borrow_real_text=1}; double color[3];
   size_t end=operands->content_position+256;
   parser p={&scratch,operands->data,end<operands->size ? end : operands->size,operands->content_position};
   int match=word(&p,"Q") && word(&p,"q") && cover_numbers(&p,clip,4) &&
@@ -1303,7 +1373,7 @@ static exr_status syntax_ops(const void *data,size_t size,exr_pdf_operator_fn op
   if(size>EXR_MAX_TEXT) return exr_fail(error,EXR_LIMIT,"PDF content exceeds 64 MiB");
   arena=calloc(1,sizeof(*arena)); if(!arena) return exr_fail(error,EXR_MEMORY,"PDF operand arena allocation failed");
   arena->data=data; arena->size=size; arena->root=EXR_PDF_NONE; arena->control=control; p=(parser){arena,data,size,0};
-  arena->decode_budget=decode_budget;
+  arena->decode_budget=decode_budget; arena->borrow_real_text=1;
   status=exr_control_poll(control,EXR_STAGE_READ,0,size,&arena->error);
   while(status==EXR_OK && skip(&p) && p.at<p.size) {
     unsigned c=p.data[p.at]; parser probe=p;
@@ -1335,7 +1405,7 @@ static exr_status syntax_ops(const void *data,size_t size,exr_pdf_operator_fn op
       if(status!=EXR_OK || arena->error.code!=EXR_OK) break;
       for(i=0;i<arena->stream_count;i++) free(arena->streams[i].decoded);
       arena->stream_count=0; arena->decoded_bytes=0;
-      count=0; arena->value_count=0; arena->strings.size=0;
+      count=0; arena->value_count=0; arena->strings.size=0; arena->borrowed_real_bytes=0;
       if(!(operations&255)) status=exr_control_poll(control,EXR_STAGE_READ,p.at,size,&arena->error);
     }
   }

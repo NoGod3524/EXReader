@@ -71,10 +71,16 @@ unsigned exr_case_map(const uint32_t *text,size_t count,size_t at,unsigned mode,
       }
     }
   }
-  while(lo<hi) { size_t mid=lo+(hi-lo)/2;if(exr_case_mappings[mid].cp<cp) lo=mid+1;else hi=mid; }
-  if(lo<sizeof(exr_case_mappings)/sizeof(*exr_case_mappings) && exr_case_mappings[lo].cp==cp) {
+  while(lo<hi) { size_t mid=lo+(hi-lo)/2;if((exr_case_mappings[mid].key>>3)<cp) lo=mid+1;else hi=mid; }
+  if(lo<sizeof(exr_case_mappings)/sizeof(*exr_case_mappings) && (exr_case_mappings[lo].key>>3)==cp) {
     const exr_case_mapping *m=exr_case_mappings+lo;
-    memcpy(output,m->values[mode],m->size[mode]*sizeof(*output));return m->size[mode];
+    unsigned modes=m->key&7u;
+    if(!modes) {
+      const exr_case_exception *exception=exr_case_exceptions+m->delta_or_index;
+      memcpy(output,exception->values[mode],exception->size[mode]*sizeof(*output));
+      return exception->size[mode];
+    }
+    if(modes&(1u<<mode)) output[0]=(uint32_t)((int32_t)cp+m->delta_or_index);
   }
   return 1;
 }

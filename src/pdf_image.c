@@ -15,15 +15,11 @@
 typedef struct { exr_pdf_file *file; exr_error error; } image_reader;
 typedef struct { uint32_t active[16]; size_t depth,live; } image_chain;
 /* All PDF-owned textures have this private header, including mask children. */
-typedef struct { exr_vector_texture texture;size_t refs;unsigned uncacheable; } pdf_texture;
+typedef struct { exr_vector_texture texture;size_t refs;unsigned uncacheable,uses_intent; } pdf_texture;
 static uint32_t get(image_reader *r,uint32_t dict,const char *key) {
   uint32_t id=EXR_PDF_NONE; if(r->error.code==EXR_OK) exr_pdf_resolve(r->file,exr_pdf_get(r->file,dict,key),&id,&r->error);
   if(id!=EXR_PDF_NONE && exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NULL) id=EXR_PDF_NONE;
   return id;
-}
-static int name_is(image_reader *r,uint32_t id,const char *name) {
-  size_t n; const unsigned char *bytes=exr_pdf_bytes(r->file,id,&n);
-  return bytes && exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NAME && n==strlen(name) && !memcmp(bytes,name,n);
 }
 static int integer(image_reader *r,uint32_t id,uint32_t *out) {
   const exr_pdf_value *v=exr_pdf_value_at(r->file,id);
@@ -76,16 +72,48 @@ static void release_texture(exr_vector_texture *texture,image_chain *chain) {
   free(texture->bitmap.pixels); free(texture);
 }
 void exr_pdf_image_release(exr_vector_texture *texture) { release_texture(texture,NULL); }
-static int image_name_is(exr_pdf_file *file,uint32_t id,const char *name) {
-  const exr_pdf_value *v=exr_pdf_value_at(file,id);size_t n;const unsigned char *bytes;
-  if(!v || v->kind!=EXR_PDF_NAME) return 0;
-  bytes=exr_pdf_bytes(file,id,&n);
-  return bytes && n==strlen(name) && !memcmp(bytes,name,n);
-}
 /* A decoded pixel is a pure function of its raw samples unless a matte mixes
    in the soft mask, so repeated sample tuples can reuse the converted bytes. */
 typedef struct { uint64_t key; unsigned char valid,rgba[4],inks[4]; } pixel_memo;
 #define PIXEL_MEMO_SLOTS 1024u
+static pixel_memo *memo_slot(pixel_memo *memo,uint64_t packed) {
+  return memo+(size_t)(((packed^(packed>>32))*UINT64_C(0x9E3779B97F4A7C15))>>54);
+}
+static exr_status convert_color_row(const exr_pdf_colorspace *space,const unsigned char *samples,unsigned char *pixels,
+  size_t width,unsigned channels,unsigned bits,const double *decode,unsigned intent,pixel_memo *memo,exr_error *error) {
+  double values[EXR_PDF_COLOR_BATCH*4],rgb[EXR_PDF_COLOR_BATCH*3];
+  struct { unsigned char *pixel; pixel_memo *slot; uint64_t key; } pending[EXR_PDF_COLOR_BATCH];
+  size_t x=0;
+  while(x<width) {
+    size_t count=0,i;
+    for(;x<width && count<EXR_PDF_COLOR_BATCH;x++) {
+      unsigned char *p=pixels+x*4;
+      unsigned k,raws[4];uint64_t packed=0;pixel_memo *slot=NULL;
+      for(k=0;k<channels;k++) raws[k]=samples ? sample_at(samples,x*channels+k,bits) : p[k];
+      if(memo) {
+        for(k=0;k<channels;k++) packed=(packed<<bits)|raws[k];
+        slot=memo_slot(memo,packed);
+        if(slot->valid && slot->key==packed) { memcpy(p,slot->rgba,4);continue; }
+      }
+      for(k=0;k<channels;k++) {
+        double unit=(double)raws[k]/((1u<<bits)-1);
+        values[count*channels+k]=decode[k*2]+unit*(decode[k*2+1]-decode[k*2]);
+      }
+      pending[count].pixel=p;pending[count].slot=slot;pending[count].key=packed;count++;
+    }
+    if(count) {
+      exr_status status=exr_pdf_colorspace_rgb_batch(space,values,count,rgb,intent,error);
+      if(status!=EXR_OK) return status;
+      for(i=0;i<count;i++) {
+        unsigned char *p=pending[i].pixel;pixel_memo *slot=pending[i].slot;unsigned k;
+        for(k=0;k<3;k++) p[k]=(unsigned char)floor(rgb[i*3+k]*255+.5);
+        p[3]=255;
+        if(slot) { slot->key=pending[i].key;memcpy(slot->rgba,p,4);slot->valid=1; }
+      }
+    }
+  }
+  return EXR_OK;
+}
 static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *resource_file,uint32_t resources,uint32_t color,
                                  unsigned intent,exr_vector_texture **out,exr_raster_work *work,const exr_control *control,exr_error *e,
                                  image_chain *chain,unsigned *kind,exr_bitmap *inks) {
@@ -122,7 +150,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   id=get(&r,image,"SMaskInData");
   if(id!=EXR_PDF_NONE) { uint32_t value; if(!integer(&r,id,&value) || value) goto invalid; }
   mask=get(&r,image,"SMask");
-  if(mask!=EXR_PDF_NONE && name_is(&r,mask,"None")) mask=EXR_PDF_NONE;
+  if(mask!=EXR_PDF_NONE && exr_pdf_name_is(file,mask,"None")) mask=EXR_PDF_NONE;
   if(mask!=EXR_PDF_NONE && exr_pdf_diag_skip(EXR_DIAG_SOFTMASK)) {
     soft=1;
     mask=EXR_PDF_NONE;
@@ -216,7 +244,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
       exr_fail(&r.error,EXR_FORMAT,"PDF JPEG stencil/indexed/ColorTransform override is unsupported"); goto done;
     }
     if(!jpeg_frame(bytes,size,width,height,channels)) goto invalid;
-    status=channels==4 ? exr_jpeg_cmyk_decode(bytes,size,control,&bitmap,&r.error) : exr_image_decode(bytes,size,&bitmap,&r.error);
+    status=channels==4 ? exr_jpeg_cmyk_decode(bytes,size,control,&bitmap,&r.error) : exr_image_decode_control(bytes,size,control,&bitmap,&r.error);
     if(status!=EXR_OK) { if(r.error.code==EXR_OK) r.error.code=status; goto done; }
     if(bitmap.width!=width || bitmap.height!=height) goto invalid;
   } else {
@@ -230,7 +258,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     if(ri!=EXR_PDF_NONE && exr_pdf_value_at(file,ri)->kind!=EXR_PDF_NULL) {
       own_intent=1;
       const char *names[4]={"Perceptual","RelativeColorimetric","Saturation","AbsoluteColorimetric"}; unsigned n;int found=0;
-      for(n=0;n<4;n++) if(image_name_is(file,ri,names[n])) { intent=n;found=1;break; }
+      for(n=0;n<4;n++) if(exr_pdf_name_is(file,ri,names[n])) { intent=n;found=1;break; }
       if(!found) { exr_fail(&r.error,EXR_FORMAT,"Invalid PDF image rendering intent"); goto done; }
     }
   }
@@ -242,14 +270,23 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
   if(matte && (!mask_texture || mask_texture->bitmap.width!=width || mask_texture->bitmap.height!=height || mask_texture->mask)) goto invalid;
   {
     exr_pdf_color_space dev_space=exr_pdf_colorspace_device(space);
-    int fast_device_8bit=(codec!=EXR_PDF_STREAM_JPEG && bits==8 && !stencil && (!inks || !inks->pixels) && !color_key &&
-                          (dev_space==EXR_PDF_DEVICE_GRAY || dev_space==EXR_PDF_DEVICE_RGB));
+    int device_8bit=(bits==8 && !stencil && !color_key && (dev_space==EXR_PDF_DEVICE_GRAY || dev_space==EXR_PDF_DEVICE_RGB));
+    int jpeg_rgba=codec==EXR_PDF_STREAM_JPEG && device_8bit && !matte;
+    int fast_device_8bit=codec!=EXR_PDF_STREAM_JPEG && device_8bit;
+    size_t row_cost=(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space));
     unsigned char (*matte_lut)[3][256]=NULL;
+    if(jpeg_rgba) for(k=0;k<channels;k++) if(decode[k*2]!=0 || decode[k*2+1]!=1) { jpeg_rgba=0;break; }
     if(fast_device_8bit && matte) matte_lut=malloc(256*sizeof(*matte_lut));
-    if(fast_device_8bit && !matte) {
+    if(jpeg_rgba) {
+      /* The decoder has already produced the exact pixels. Masks are attached
+         separately; sample work and cancellation still apply to each row. */
+      for(y=0;y<height;y++) {
+        if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
+        if(!exr_vector_work(work,row_cost)) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
+      }
+    } else if(fast_device_8bit && !matte) {
       unsigned char lut[3][256];
       uint32_t gray_rgba[256];
-      size_t row_cost=(size_t)width*exr_pdf_colorspace_cost(space);
       for(k=0;k<channels;k++) {
         unsigned raw;
         for(raw=0;raw<256;raw++) {
@@ -282,7 +319,6 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     } else if(fast_device_8bit && matte && matte_lut) {
       unsigned char matte_ready[256]={0};
       uint32_t opaque_black;
-      size_t row_cost=(size_t)width*exr_pdf_colorspace_cost(space);
       { unsigned char z[4]={0,0,0,255}; memcpy(&opaque_black,z,4); }
       for(y=0;y<height;y++) {
         const unsigned char *s=bytes+y*row;
@@ -305,7 +341,6 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
                     double unit=(double)raw/255.;
                     double val=decode[2*k]+unit*(decode[2*k+1]-decode[2*k]);
                     val=fmax(0,fmin(1,matte_rgb[k]+(val-matte_rgb[k])/a));
-                    val=fmax(0,fmin(1,val));
                     matte_lut[ma][k][raw]=(unsigned char)floor(val*255+.5);
                   }
                 }
@@ -327,7 +362,6 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
                   double unit=(double)raw/255.;
                   double val=decode[0]+unit*(decode[1]-decode[0]);
                   val=fmax(0,fmin(1,matte_rgb[0]+(val-matte_rgb[0])/a));
-                  val=fmax(0,fmin(1,val));
                   matte_lut[ma][0][raw]=(unsigned char)floor(val*255+.5);
                 }
                 matte_ready[ma]=1;
@@ -342,10 +376,16 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
       }
       free(matte_lut);
     } else {
+      int batch=!stencil && !matte && !color_key && (!inks || !inks->pixels) && exr_pdf_colorspace_can_batch(space);
       if(!matte && channels*bits<=64) memo=calloc(PIXEL_MEMO_SLOTS,sizeof(*memo)); /* optional: NULL just disables reuse */
       for(y=0;y<height;y++) {
         if(!(y&63) && exr_control_cancel(control,&r.error)!=EXR_OK) goto done;
-        if(!exr_vector_work(work,(size_t)width*(stencil ? 1 : exr_pdf_colorspace_cost(space)))) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
+        if(!exr_vector_work(work,row_cost)) { exr_fail(&r.error,EXR_LIMIT,"PDF image sample/function work exceeds budget"); goto done; }
+        if(batch) {
+          if(convert_color_row(space,codec==EXR_PDF_STREAM_JPEG ? NULL : bytes+y*row,bitmap.pixels+y*bitmap.stride,
+            width,channels,bits,decode,intent,memo,&r.error)!=EXR_OK) goto done;
+          continue;
+        }
         for(x=0;x<width;x++) {
           double values[EXR_PDF_MAX_COLORANTS]; unsigned char *p=bitmap.pixels+y*bitmap.stride+x*4; unsigned transparent=color_key;
           unsigned raws[EXR_PDF_MAX_COLORANTS]; pixel_memo *slot=NULL;
@@ -353,7 +393,7 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
           if(memo) {
             uint64_t packed=0;
             for(k=0;k<channels;k++) packed=(packed<<bits)|raws[k];
-            slot=memo+(size_t)(((packed^(packed>>32))*UINT64_C(0x9E3779B97F4A7C15))>>54);
+            slot=memo_slot(memo,packed);
             if(slot->valid && slot->key==packed) {
               memcpy(p,slot->rgba,4);
               if(inks && inks->pixels) memcpy(inks->pixels+y*inks->stride+x*4,slot->inks,4);
@@ -393,10 +433,12 @@ static exr_status decode_image(exr_pdf_file *file,uint32_t image,exr_pdf_file *r
     pdf_texture *owned_texture=calloc(1,sizeof(*owned_texture));
     exr_vector_texture *texture=(exr_vector_texture *)owned_texture;
     if(!texture) { exr_fail(&r.error,EXR_MEMORY,"PDF image layer allocation failed"); goto done; }
-    /* Matte has already been reversed above using this object's decoded mask.
-       Stencils and contextual color conversion still depend on caller state. */
+    /* Matte was reversed using this object's decoded mask. A local intent
+       replaces the caller's intent for both the image and its descendants. */
+    owned_texture->uses_intent=!own_intent && (exr_pdf_colorspace_uses_intent(space) ||
+      (mask_texture && ((pdf_texture *)mask_texture)->uses_intent));
     owned_texture->refs=1;owned_texture->uncacheable=(channels*bits>64 ? 2u : 0u)|
-      (!exr_pdf_colorspace_cacheable(space,(int)own_intent) ? 4u : 0u)|(stencil ? 8u : 0u)|
+      (!exr_pdf_colorspace_cacheable(space) ? 4u : 0u)|(stencil ? 8u : 0u)|
       /* A child stencil is decoded with fixed white, independent of fill color. */
       (mask_texture ? ((pdf_texture *)mask_texture)->uncacheable&~8u : 0u);
     texture->bitmap=bitmap; texture->mask=mask_texture; texture->interpolate=interpolate!=0;
@@ -420,7 +462,7 @@ exr_status exr_pdf_image_load(exr_pdf_file *file,uint32_t image,uint32_t resourc
   return exr_pdf_image_load_from(file,image,file,resources,color,1,out,work,control,e);
 }
 typedef struct {
-  uint32_t image,length;unsigned native;
+  uint32_t image,length;unsigned native,intent;
   exr_vector_texture *texture;exr_bitmap inks;size_t bytes,work,used;
 } image_cache_entry;
 typedef struct {
@@ -531,7 +573,8 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   if(cache && cache->byte_limit && cache->entry_limit) {
     for(i=0;i<128;i++) {
       image_cache_entry *candidate=cache->entries+i;
-      if(candidate->texture && candidate->image==image && candidate->length==length && candidate->native==(inks!=NULL)) {
+      if(candidate->texture && candidate->image==image && candidate->length==length && candidate->native==(inks!=NULL) &&
+         (!((pdf_texture *)candidate->texture)->uses_intent || candidate->intent==intent)) {
         if(!exr_vector_work(work,candidate->work)) return exr_fail(e,EXR_LIMIT,"PDF image sample/function work exceeds budget");
         if(inks && !bitmap_copy(&candidate->inks,inks)) return exr_fail(e,EXR_MEMORY,"PDF cached ink allocation failed");
         candidate->used=++cache->clock;cache->stats.hits++;
@@ -566,7 +609,7 @@ static exr_status load_cached(exr_pdf_file *file,uint32_t image,exr_pdf_file *re
   }
   for(i=0;i<128;i++) if(!cache->entries[i].texture) { entry=cache->entries+i;break; }
   if(inks && !bitmap_copy(inks,&entry->inks)) return status; /* optional cache */
-  entry->image=image;entry->length=length;entry->native=inks!=NULL;
+  entry->image=image;entry->length=length;entry->native=inks!=NULL;entry->intent=intent;
   entry->texture=*out;((pdf_texture *)*out)->refs++;
   entry->bytes=bytes;entry->work=work->used-before;entry->used=++cache->clock;
   cache->stats.bytes+=bytes;cache->stats.entries++;

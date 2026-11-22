@@ -53,6 +53,7 @@ static void rasterized(exr_pdf_file *file) {
   b=render(file,"8 0 0 2 0 0 cm /HighMask Do"); pixel(&b,0,0,255,255,255,255); pixel(&b,2,0,255,170,170,255); pixel(&b,4,0,255,85,85,255); pixel(&b,6,0,255,0,0,255); free(b.pixels);
 }
 static int cancel(void *context) { (void)context; return 1; }
+static int cancel_after_image_work(void *context) { return ((const exr_raster_work *)context)->used!=0; }
 static void affine(void) {
   unsigned char pixels[16]={255,0,0,255,0,255,0,255,0,0,255,255,255,255,255,255},target[256],mask[64];
   exr_bitmap src={0},dst={0},clip={0}; double matrix[6]={4,0,0,4,0,0}; exr_raster_work work={0};
@@ -325,16 +326,36 @@ static void affine(void) {
 }
 static void jpeg_cases(const char *dir) {
   const char *bad[]={"dimensions","channels","not-jpeg","truncated","color-transform","middle"};
+  const char *names[]={"Baseline","Progressive","Wrapped","Gray"};
   unsigned char *data; size_t size,i; exr_pdf_file *file=NULL; exr_bitmap b;
   data=load(dir,"pdf-jpeg.pdf",&size); OK(exr_pdf_open(data,size,&file,&error));
-  for(i=0;i<3;i++) {
-    const char *names[]={"Baseline","Progressive","Wrapped"}; b=decode(file,names[i]); CHECK(b.width==16 && b.height==16);
-    CHECK(b.pixels[0]>250 && b.pixels[1]<5 && b.pixels[2]<5 && b.pixels[3]==255);
-    CHECK(b.pixels[15*4]<5 && b.pixels[15*4+1]>250); free(b.pixels);
+  for(i=0;i<sizeof(names)/sizeof(*names);i++) {
+    const unsigned char *payload;size_t length;exr_pdf_stream_codec codec;uint32_t parameters;exr_bitmap expected;
+    b=decode(file,names[i]);
+    OK(exr_pdf_image_payload(file,image(file,names[i]),&payload,&length,&codec,&parameters,&error));
+    CHECK(codec==EXR_PDF_STREAM_JPEG);
+    OK(exr_image_decode(payload,length,&expected,&error));
+    CHECK(b.width==expected.width && b.height==expected.height && b.stride==expected.stride && b.channels==4);
+    CHECK(!memcmp(b.pixels,expected.pixels,(size_t)b.stride*b.height));
+    if(i==3) { CHECK(b.width==8 && b.height==8);pixel(&b,0,0,64,64,64,255); }
+    else {
+      CHECK(b.width==16 && b.height==16);
+      CHECK(b.pixels[0]>250 && b.pixels[1]<5 && b.pixels[2]<5 && b.pixels[3]==255);
+      CHECK(b.pixels[15*4]<5 && b.pixels[15*4+1]>250);
+    }
+    free(expected.pixels);free(b.pixels);
   }
-  b=decode(file,"Gray"); CHECK(b.width==8 && b.height==8); pixel(&b,0,0,64,64,64,255); free(b.pixels);
   b=decode(file,"Inverted"); pixel(&b,0,0,191,191,191,255); free(b.pixels);
   b=render(file,"4 0 0 4 0 0 cm /Baseline Do"); CHECK(b.pixels[3*b.stride]>250 && b.pixels[3*b.stride+1]<5 && b.pixels[0]<5 && b.pixels[2]>250); free(b.pixels);
+  { exr_raster_work work={.limit=16*3};exr_control control={0};int interpolate=1;
+    uint32_t id=image(file,"Baseline"),res=resources(file);
+    exr_pdf_image_cache_limits(file,0,0);
+    CHECK(exr_pdf_image_decode(file,id,res,0,&b,&interpolate,&work,NULL,&error)==EXR_LIMIT);
+    CHECK(!b.pixels && !interpolate && work.used==16*3);
+    memset(&work,0,sizeof(work));control.cancelled=cancel_after_image_work;control.context=&work;interpolate=1;
+    CHECK(exr_pdf_image_decode(file,id,res,0,&b,&interpolate,&work,&control,&error)==EXR_CANCELLED);
+    CHECK(!b.pixels && !interpolate && work.used==16*16*3);
+  }
   { const unsigned char *plain,*wrapped,*again; size_t n,m,repeat; exr_pdf_stream_codec codec; uint32_t parameters;
     OK(exr_pdf_image_payload(file,image(file,"Baseline"),&plain,&n,&codec,&parameters,&error)); CHECK(codec==EXR_PDF_STREAM_JPEG);
     OK(exr_pdf_image_payload(file,image(file,"Wrapped"),&wrapped,&m,&codec,&parameters,&error)); CHECK(codec==EXR_PDF_STREAM_JPEG && n==m && !memcmp(plain,wrapped,n));
@@ -382,6 +403,13 @@ static void cmyk_jpeg_cases(const char *dir) {
       CHECK(p[3]==255);
     }
     free(b.pixels);
+  }
+  { exr_vector_texture *batch=NULL,*scalar=NULL;exr_bitmap inks={0};uint32_t id=image(file,"Quad"),res=resources(file);
+    OK(exr_pdf_image_load_from(file,id,file,res,0,1,&batch,NULL,NULL,&error));
+    OK(exr_pdf_image_load_inks(file,id,file,res,0,1,&scalar,&inks,NULL,NULL,&error));
+    CHECK(batch!=scalar && inks.pixels && !memcmp(batch->bitmap.pixels,scalar->bitmap.pixels,
+      (size_t)batch->bitmap.stride*batch->bitmap.height));
+    exr_pdf_image_release(scalar);exr_pdf_image_release(batch);free(inks.pixels);
   }
   b=render(file,"8 0 0 8 0 0 cm /CMYK Do"); pixel(&b,4,4,reference[0],reference[1],reference[2],255); free(b.pixels);
   { exr_control control={0}; int interpolate=1; control.cancelled=cancel;
@@ -448,12 +476,17 @@ static void cache_cases(const char *dir) {
   { exr_bitmap ink_a={0},ink_b={0};uint32_t id=image(file,"CMYK2"),res=resources(file);
     OK(exr_pdf_image_load_inks(file,id,file,res,0,1,&a,&ink_a,NULL,NULL,&error));
     OK(exr_pdf_image_load_inks(file,id,file,res,0,1,&b,&ink_b,NULL,NULL,&error));
-    CHECK(a!=b && ink_a.pixels && ink_b.pixels && ink_a.pixels!=ink_b.pixels);
+    CHECK(a==b && ink_a.pixels && ink_b.pixels && ink_a.pixels!=ink_b.pixels);
     CHECK(!memcmp(ink_a.pixels,ink_b.pixels,(size_t)ink_a.stride*ink_a.height));
     free(ink_a.pixels);free(ink_b.pixels);exr_pdf_image_release(a);exr_pdf_image_release(b);
     OK(exr_pdf_image_load_from(file,id,file,res,0,0,&a,NULL,NULL,&error));
-    OK(exr_pdf_image_load_from(file,id,file,res,0,1,&b,NULL,NULL,&error));CHECK(a!=b);
-    OK(exr_pdf_image_load_from(file,id,file,EXR_PDF_NONE,0,1,&c,NULL,NULL,&error));CHECK(c!=b);
+    OK(exr_pdf_image_load_from(file,id,file,res,0,1,&b,NULL,NULL,&error));
+#ifdef EXR_ENABLE_ICC
+    CHECK(a!=b);
+#else
+    CHECK(a==b);
+#endif
+    OK(exr_pdf_image_load_from(file,id,file,EXR_PDF_NONE,0,1,&c,NULL,NULL,&error));CHECK(c==b);
     exr_pdf_image_release(a);exr_pdf_image_release(b);exr_pdf_image_release(c);
   }
   { const char *content="q 4 0 0 4 0 0 cm /RGB Do Q q 4 0 0 4 4 4 cm /Soft Do Q q 0 1 0 rg 4 0 0 2 0 4 cm /Stencil Do Q q 2 0 0 2 4 0 cm /Matte Do Q";
@@ -467,10 +500,40 @@ static void cache_cases(const char *dir) {
   }
   exr_pdf_close(file);free(data);
 }
+static void intent_cache_cases(const char *dir) {
+  const char *names[]={"pdf-color/image-intent-default.pdf","pdf-color/image-intent-perceptual.pdf"};
+  for(size_t i=0;i<sizeof(names)/sizeof(*names);i++) {
+    size_t size,count;unsigned char *data=load(dir,names[i],&size);exr_pdf_file *file=NULL;exr_pdf_page_info *pages=NULL;
+    exr_vector_texture *textures[2]={NULL,NULL},*again=NULL;uint32_t res,xobjects,id;
+    OK(exr_pdf_open(data,size,&file,&error));OK(exr_pdf_pages(file,&pages,&count,&error));CHECK(count==1);
+    res=pages[0].resources;free(pages);
+    OK(exr_pdf_resolve(file,exr_pdf_get(file,res,"XObject"),&xobjects,&error));id=exr_pdf_get(file,xobjects,"Im");
+    for(unsigned intent=0;intent<2;intent++) {
+      OK(exr_pdf_image_load_from(file,id,file,res,0,intent,&textures[intent],NULL,NULL,&error));
+      exr_pdf_operation_end(file);
+      OK(exr_pdf_image_load_from(file,id,file,res,0,intent,&again,NULL,NULL,&error));
+      CHECK(again==textures[intent]);exr_pdf_image_release(again);
+    }
+#ifdef EXR_ENABLE_ICC
+    if(!i) CHECK(textures[0]!=textures[1] && memcmp(textures[0]->bitmap.pixels,textures[1]->bitmap.pixels,3));
+    else CHECK(textures[0]==textures[1]);
+#else
+    CHECK(textures[0]==textures[1]);
+#endif
+    exr_pdf_image_cache_limits(file,0,0);
+    for(unsigned intent=0;intent<2;intent++) {
+      const exr_bitmap *cached=&textures[intent]->bitmap;
+      OK(exr_pdf_image_load_from(file,id,file,res,0,intent,&again,NULL,NULL,&error));
+      CHECK(!memcmp(cached->pixels,again->bitmap.pixels,(size_t)cached->stride*cached->height));
+      exr_pdf_image_release(again);exr_pdf_image_release(textures[intent]);
+    }
+    exr_pdf_close(file);free(data);
+  }
+}
 int main(int argc,char **argv) {
   const char *bad[]={"soft-color","explicit-type","matte-short","palette-short","palette-high","key-range","short","extra","bits","decode-short","decode-extra","space","mask","soft","stencil-space","stencil-bits","stencil-decode","interpolate","zero"};
   size_t size,i; unsigned char *data; exr_pdf_file *file=NULL;
-  CHECK(argc==2); cache_cases(argv[1]); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
+  CHECK(argc==2); cache_cases(argv[1]); intent_cache_cases(argv[1]); jpeg_cases(argv[1]); cmyk_jpeg_cases(argv[1]); data=load(argv[1],"pdf-images.pdf",&size); OK(exr_pdf_open(data,size,&file,&error)); decoded(file); rasterized(file); affine();
   { exr_vector_texture *texture=NULL; OK(exr_pdf_image_load(file,image(file,"HighMask"),resources(file),0,&texture,NULL,NULL,&error));
     CHECK(texture && texture->bitmap.width==1 && texture->mask && texture->mask->bitmap.width==4); exr_pdf_image_release(texture); exr_pdf_image_release(NULL);
   }

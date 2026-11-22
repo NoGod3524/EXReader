@@ -1,9 +1,0 @@
-F10CHECK {"name":"network_logon","pass":true,"detail":"LogonUserW error=0"}
-F10CHECK {"name":"network_token_impersonated","pass":true,"detail":"ImpersonateLoggedOnUser=1"}
-F10CHECK {"name":"effective_token_is_network_logon","pass":true,"detail":"LogonType=3 (3=Network) user=S-1-5-21-1280602335-643053282-3184619455-1003"}
-F10CHECK {"name":"platform_credwrite_refused","pass":true,"detail":"CredWriteW=0 GetLastError=1312 (1312=ERROR_NO_SUCH_LOGON_SESSION)"}
-F10CHECK {"name":"module_open","pass":true,"detail":"open=OK"}
-F10CHECK {"name":"module_put_reports_unavailable","pass":true,"detail":"put=UNAVAILABLE"}
-F10CHECK {"name":"module_get_reports_unavailable","pass":true,"detail":"get=UNAVAILABLE"}
-F10CHECK {"name":"module_delete_reports_unavailable","pass":true,"detail":"delete=UNAVAILABLE"}
-F10RESULT {"mode":"unavailable","checks":8,"failed":0,"accepted":true}

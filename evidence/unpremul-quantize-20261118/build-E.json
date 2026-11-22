@@ -1,7 +1,0 @@
-{
-  "tag": "E",
-  "dll_sha256": "43e96ad4e5a595fa3da457240a0ed665e73a345f62f185eb6281e1d9ebe24b33",
-  "sources": {
-    "src\\affine_image.c": "9e1e709d2514873dd3511e7107f46be1fa0d46c2834951bb8f80ffd895e0b021"
-  }
-}

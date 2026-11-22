@@ -5,14 +5,7 @@
 #define CT "http://schemas.openxmlformats.org/package/2006/content-types"
 #define NOTE_TYPE "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml"
 static int put(exr_buffer *b,const char *s) { return exr_append(b,s,strlen(s)); }
-static int escape(exr_buffer *b,const char *s,size_t n) {
-  size_t i;
-  for (i=0;i<n;i++) {
-    const char *v=s[i]=='&' ? "&amp;" : s[i]=='<' ? "&lt;" : s[i]=='>' ? "&gt;" : s[i]=='\"' ? "&quot;" : s[i]=='\r' ? "&#13;" : NULL;
-    if (!(v ? put(b,v) : exr_append(b,s+i,1))) return 0;
-  }
-  return 1;
-}
+#define escape exr_edit_xml_escape
 static int relpath(const char *main,char path[2048]) {
   const char *slash=strrchr(main,'/'); size_t n=slash ? (size_t)(slash-main)+1 : 0;
   int length=snprintf(path,2048,"%.*s_rels/%s.rels",(int)n,main,main+n);
@@ -32,7 +25,7 @@ static exr_status open_notes(const exr_edit_part *parts,size_t count,const char 
     s=exr_edit_xml_parse(&rels,p->data,p->size,"Relationships",e); if (s) return s;
     for (i=0;i<rels.tree->node_count;i++) if (note_type(rels.tree->nodes+i)) {
       const char *target=exr_node_attribute(rels.tree->nodes+i,"Target"),*mode=exr_node_attribute(rels.tree->nodes+i,"TargetMode");
-      if (!target || (mode && !strcmp(mode,"External")) || !exr_resolve_path(main,target,path)) s=EXR_FORMAT;
+      if (!target || (mode && !strcmp(mode,"External")) || !exr_edit_resolve_target(main,target,path)) s=EXR_FORMAT;
       break;
     }
     exr_edit_xml_free(&rels); if (s) return s;

@@ -406,15 +406,7 @@ exr_status exr_publication_load(exr_publication *p, size_t part, exr_document **
   return exr_fail(e, EXR_OK, "");
 }
 
-static int note_token(const char *s,const char *word) {
-  size_t n=strlen(word);
-  while(s && *s) {
-    while(isspace((unsigned char)*s)) s++;
-    if(!strncmp(s,word,n) && (!s[n] || isspace((unsigned char)s[n]))) return 1;
-    while(*s && !isspace((unsigned char)*s)) s++;
-  }
-  return 0;
-}
+#define note_token exr_has_token
 static int note_semantic(const exr_node *n) {
   const char *type=exr_node_attribute(n,"http://www.idpf.org/2007/ops|type");
   if(!type) type=exr_node_attribute(n,"epub:type");

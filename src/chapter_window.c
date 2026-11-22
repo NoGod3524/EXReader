@@ -176,16 +176,7 @@ static int ancestor(const window_parser *p,size_t id) {
   return 0;
 }
 static const char *local(const char *name) { const char *at = strrchr(name,'|'); return at ? at + 1 : name; }
-static int token(const char *text,const char *wanted) {
-  size_t size = strlen(wanted);
-  while (text && *text) {
-    const char *first;
-    while (*text && strchr(" \t\r\n",*text)) text++;
-    first = text; while (*text && !strchr(" \t\r\n",*text)) text++;
-    if ((size_t)(text - first) == size && !memcmp(first,wanted,size)) return 1;
-  }
-  return 0;
-}
+#define token exr_has_token
 static int match(window_parser *p,size_t id,exr_node_kind kind,const char *name,uint32_t parent) {
   const exr_chapter_entry *n = exr_chapter_index_entry(p->index,id);
   const char *expected = exr_chapter_index_name(p->index,id);

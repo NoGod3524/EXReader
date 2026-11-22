@@ -1,5 +1,0 @@
-gpg: keybox '/<workspace>/build/c4-resumed-public-keyring/pubring.kbx' created
-gpg: /<workspace>/build/c4-resumed-public-keyring/trustdb.gpg: trustdb created
-gpg: key 19FC78ABA24F4924: public key "EXReader C4 TEST ONLY <c4-test@example.invalid>" imported
-gpg: Total number processed: 1
-gpg:               imported: 1

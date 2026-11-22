@@ -1135,6 +1135,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
   inv[4]=-(inv[0]*m[4]+inv[2]*m[5]);inv[5]=-(inv[1]*m[4]+inv[3]*m[5]);
   for(unsigned k=0;k<6;k++) if(!isfinite(inv[k])) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source inverse exceeds precision"),e);
   space=c->cmyk_groups ? EXR_GROUP_CMYK : EXR_GROUP_RGB;components=c->cmyk_groups ? 4 : 3;
+  const exr_shading_paint_source *axial=source.sample==exr_axial_shading_sample ? source.context : NULL;
   cost=32+(state ? 20+state->depth*4 : 0)+(c->blend==EXR_BLEND_NORMAL ? 16 : c->blend<EXR_BLEND_HUE ? 40 : 80);
   for(unsigned y=0;y<c->bitmap.height;y++) {
     const unsigned char *clip_row=NULL;
@@ -1156,9 +1157,7 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
       }
     }
     if(!exr_vector_work(&c->work,active*cost+(c->clip ? last-first : 0))) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source work budget exceeded"),e);
-    if(source.context && ((const exr_shading_paint_source *)source.context)->sample==source.sample &&
-       ((const exr_shading_paint_source *)source.context)->magic==EXR_SHADING_SOURCE_MAGIC) {
-      const exr_shading_paint_source *axial=source.context;
+    if(axial) {
       if(axial->type==2 && axial->axial_length>0 && !(space==EXR_GROUP_CMYK && !axial->inks) &&
          ((!inv[1] && !axial->axial_ux) || (!inv[0] && !axial->axial_uy))) {
         double py0=(double)y+c->offset_y+.25,py1=py0+.5,s=axial->axial_scale;
@@ -1282,7 +1281,9 @@ exr_status exr_canvas_paint(exr_canvas *c,const exr_paint_source *input,const do
             double sum_alpha=0,sum_shape=0;
             for(unsigned sy=0;sy<2;sy++) for(unsigned sx=0;sx<2;sx++) {
               double px=sx ? px1 : px0,py=sy ? py1 : py0;
-              double u=inv[0]*px+inv[2]*py+inv[4],v=inv[1]*px+inv[3]*py+inv[5],color[4]={0},shape=0,opacity=0,a;
+              double u=aligned ? inv[0]*px+inv[4] : inv[0]*px+inv[2]*py+inv[4];
+              double v=aligned ? (sy ? v_row1 : v_row0) : inv[1]*px+inv[3]*py+inv[5];
+              double color[4]={0},shape=0,opacity=0,a;
               if(!isfinite(u) || !isfinite(v)) return finish(c,exr_fail(e,EXR_LIMIT,"Paint source sample exceeds precision"),e);
               e->code=EXR_OK;e->message[0]=0;status=source.sample(source.context,u,v,space,color,&shape,&opacity,e);
               if(status!=EXR_OK || e->code!=EXR_OK) return finish(c,status!=EXR_OK ? status : e->code,e);
@@ -1570,7 +1571,7 @@ exr_status exr_canvas_begin_group(exr_canvas *c,double opacity,exr_blend_mode mo
       }
       status=exr_composite_initialize(&next,state,parent,parent_state,backdrop_x,backdrop_y,&c->work,&c->control,e);
     }
-    else state->depth=1;
+    else { state->left=next.width;state->top=next.height;state->depth=1; }
   }
   if(status!=EXR_OK) { free(pixels);composite_free(state);free(layer.pending_groups);return finish(c,status,e); }
   if(!needs_state && count>=4096) layer.damage.band_height=(uint32_t)((region_height+31)/32);

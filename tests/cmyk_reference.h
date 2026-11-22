@@ -12,7 +12,7 @@
 static void cmyk_reference(const double values[4],unsigned out[3]) {
   unsigned k;
 #ifdef EXR_ENABLE_ICC
-  mz_ulong size=961644;unsigned char *raw=malloc((size_t)size);
+  mz_ulong size=EXR_DEFAULT_CMYK_PROFILE_SIZE;unsigned char *raw=malloc((size_t)size);
   cmsHPROFILE source,dest;cmsHTRANSFORM transform;double cmyk[4],rgb[3];
   if(!raw || mz_uncompress(raw,&size,default_cmyk_data,sizeof(default_cmyk_data))!=MZ_OK) abort();
   source=cmsOpenProfileFromMem(raw,(cmsUInt32Number)size);dest=cmsCreate_sRGBProfile();

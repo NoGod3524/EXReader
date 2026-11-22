@@ -1,13 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 #include "formats_internal.h"
 #include "graphics_internal.h"
-#include <miniz.h>
 #include <expat.h>
 
+#ifndef EXR_NO_DOCUMENT_EXPORT
+#include <miniz.h>
 typedef struct {
   const char *path, *media, *properties;
   size_t chapter, resource;
 } member;
+#endif
 typedef struct {
   const exr_document *doc;
   const exr_control *control;
@@ -122,6 +124,7 @@ static int tree(writer *w, exr_buffer *b, size_t index, unsigned depth) {
     if (!tree(w, b, child, depth + 1)) return 0;
   return put(b, "</") && put(b, local) && put(b, ">");
 }
+#ifndef EXR_NO_DOCUMENT_EXPORT
 static int chapter(writer *w, exr_buffer *b, size_t index) {
   size_t root = w->doc->chapters[index].root, child = w->doc->nodes[root].first_child;
   const char *tag = child == SIZE_MAX ? "" : exr_html_tag(w->doc, &w->doc->nodes[child]);
@@ -143,7 +146,8 @@ static int chapter(writer *w, exr_buffer *b, size_t index) {
   }
 }
 static int compare(const void *a, const void *b) { return strcmp(((const member *)a)->path, ((const member *)b)->path); }
-/* A generic XML fragment preserves named elements' expanded namespaces. */
+#endif
+/* KF8 reading also serializes SVG XML after rewriting its resource links. */
 exr_status exr_xml_serialize(const exr_document *doc,size_t root,exr_buffer *out,exr_error *e) {
   exr_document view; writer w={0}; XML_Parser parser; int valid; size_t child;
   if(!doc || root>=doc->node_count || !out) return exr_fail(e,EXR_ARGUMENT,"Invalid XML serialization input");
@@ -161,6 +165,7 @@ exr_status exr_xml_serialize(const exr_document *doc,size_t root,exr_buffer *out
 failed:
   return exr_fail(e,w.status==EXR_OK ? EXR_LIMIT : w.status,"XML serialization failed");
 }
+#ifndef EXR_NO_DOCUMENT_EXPORT
 static size_t find(const member *m, size_t count, const char *path) {
   size_t lo = 0, hi = count;
   while (lo < hi) { size_t mid = lo + (hi-lo)/2; if (strcmp(m[mid].path,path)<0) lo=mid+1; else hi=mid; }
@@ -443,3 +448,4 @@ exr_status exr_document_export_html_bundle(const exr_document *d,const exr_contr
   if(!entry) { if(out) *out=NULL; if(size) *size=0; return exr_fail(e,EXR_ARGUMENT,"Missing HTML entry path output"); }
   return export_package(d,control,out,size,entry,e);
 }
+#endif

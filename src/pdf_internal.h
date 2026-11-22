@@ -32,13 +32,16 @@ typedef struct exr_pdf_file exr_pdf_file;
 /* Lazy, document-owned decoded image state. The callback avoids coupling the
    object parser (also built alone) to image codecs. */
 void **exr_pdf_image_cache_slot(exr_pdf_file *file,void (*release)(void *));
+/* Borrowed by color spaces for the duration of one render operation. */
+void **exr_pdf_cmyk_profile_slot(exr_pdf_file *file,void (*release)(void *));
 exr_buffer_pool *exr_pdf_buffer_pool(exr_pdf_file *file);
 /* The input is borrowed until close. IDs remain stable; value pointers may move
    when another indirect object is resolved. Public access uses the fixed-document adapter. */
 exr_status exr_pdf_open(const void *data,size_t size,exr_pdf_file **out,exr_error *error);
 /* CCITT Group 3/4 decode to packed 1-bpp rows (ISO 32000-1 7.4.6). */
-exr_status exr_pdf_ccitt_decode(const unsigned char *data,size_t size,long k,unsigned columns,unsigned rows,
-  int black_is_1,int byte_align,unsigned char **out,size_t *out_size,exr_error *error);
+exr_status exr_pdf_ccitt_decode(const unsigned char *data,size_t size,int k,unsigned columns,unsigned rows,
+  int black_is_1,int byte_align,int end_of_line,size_t *work,const exr_control *control,
+  unsigned char **out,size_t *out_size,exr_error *error);
 void exr_pdf_close(exr_pdf_file *file);
 /* Borrowed only for the duration of one synchronous adapter operation. */
 void exr_pdf_control(exr_pdf_file *file,const exr_control *control);
@@ -65,6 +68,9 @@ typedef struct { size_t hybrid_sections,last_xrefstm,encrypt_conflicts; } exr_pd
 void exr_pdf_xref_report(const exr_pdf_file *file,exr_pdf_xref_diagnostics *out);
 exr_status exr_pdf_object_identity(const exr_pdf_file *file,uint32_t value,
   uint32_t *object,uint32_t *generation,exr_error *error);
+/* Match a previously resolved reference to its terminal object. */
+exr_status exr_pdf_resolved_identity(const exr_pdf_file *file,uint32_t raw,uint32_t value,
+  uint32_t *object,uint32_t *generation,exr_error *error);
 /* Appends a complete value without resolving references or copying streams.
    Keys are filtered only in the outermost dictionary. Failure restores size. */
 exr_status exr_pdf_serialize(const exr_pdf_file *file,uint32_t value,
@@ -74,6 +80,7 @@ exr_status exr_pdf_serialize(const exr_pdf_file *file,uint32_t value,
 exr_status exr_pdf_real(exr_buffer *out,double value,exr_error *error);
 const exr_pdf_value *exr_pdf_value_at(const exr_pdf_file *file,uint32_t value);
 const unsigned char *exr_pdf_bytes(const exr_pdf_file *file,uint32_t value,size_t *size);
+int exr_pdf_name_is(const exr_pdf_file *file,uint32_t value,const char *name);
 uint32_t exr_pdf_get(exr_pdf_file *file,uint32_t dict,const char *key);
 exr_status exr_pdf_resolve(exr_pdf_file *file,uint32_t value,uint32_t *out,exr_error *error);
 exr_status exr_pdf_stream_data(exr_pdf_file *file,uint32_t stream,const unsigned char **data,
@@ -159,13 +166,19 @@ size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *space);
 unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *space);
 exr_pdf_color_space exr_pdf_colorspace_device(const exr_pdf_colorspace *space);
 int exr_pdf_colorspace_indexed(const exr_pdf_colorspace *space);
-/* Object-only image reuse excludes resource lookup and inherited intent. */
-int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *space,int own_intent);
+/* Resource-dependent colors cannot be reused by object ID alone. */
+int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *space);
+int exr_pdf_colorspace_uses_intent(const exr_pdf_colorspace *space);
 #define EXR_PDF_MAX_COLORANTS 32u
 void exr_pdf_colorspace_ranges(const exr_pdf_colorspace *space,double *ranges);
 void exr_pdf_colorspace_initial(const exr_pdf_colorspace *space,double *values);
 exr_status exr_pdf_colorspace_rgb(const exr_pdf_colorspace *space,const double *values,double rgb[3],exr_error *error);
 exr_status exr_pdf_colorspace_rgb_intent(const exr_pdf_colorspace *space,const double *values,double rgb[3],unsigned intent,exr_error *error);
+#define EXR_PDF_COLOR_BATCH 64u
+int exr_pdf_colorspace_can_batch(const exr_pdf_colorspace *space);
+/* Input scratch is count tightly packed samples, output is count RGB triples. */
+exr_status exr_pdf_colorspace_rgb_batch(const exr_pdf_colorspace *space,double *samples,size_t count,double *rgb,
+  unsigned intent,exr_error *error);
 int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *space);
 size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *space);
 typedef struct {

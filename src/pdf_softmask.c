@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 
-static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, message); }
+static exr_status fail(exr_error *e, exr_status code, const char *message) { return exr_fail(e, code, "%s", message); }
 static int number(exr_pdf_file *file, uint32_t id, double *out) {
   const exr_pdf_value *v = exr_pdf_value_at(file, id);
   if (!v || (v->kind != EXR_PDF_INT && v->kind != EXR_PDF_REAL)) return 0;
@@ -185,7 +185,7 @@ static exr_status dm_path(void *ctx, const exr_pdf_path_paint *path, exr_error *
   (void)e;
   if ((path->flags & (EXR_PDF_FILL | EXR_PDF_STROKE)) || !(path->flags & EXR_PDF_CLIP)) return dm_abort(p);
   if (!path_axis_rect(path->segments, path->count, r)) return dm_abort(p);
-  if (rect_covers_canvas(r, p->width, p->height)) { p->clip.count = 0; return EXR_OK; }
+  if (rect_covers_canvas(r, p->width, p->height)) return EXR_OK;
   if (p->clip.count == 4u) return dm_abort(p);
   memcpy(p->clip.rects[p->clip.count++], r, sizeof(r));
   return EXR_OK;
@@ -200,11 +200,11 @@ static exr_status dm_source(void *ctx, const exr_paint_source *source, const dou
   if (p->have_source || paint->smask != EXR_PDF_NONE || paint->blend != EXR_BLEND_NORMAL ||
       paint->alpha_is_shape || paint->fill.alpha != 1.0)
     return dm_abort(p);
-  if (!source || source->struct_size != sizeof(*source) || !source->context || !source->sample)
+  if (!source || source->struct_size != sizeof(*source) || !source->context ||
+      source->sample != exr_axial_shading_sample)
     return dm_abort(p);
   axial = source->context;
-  if (axial->magic != EXR_SHADING_SOURCE_MAGIC || axial->sample != source->sample ||
-      axial->type != 2u || axial->axial_length <= 0.0 || !axial->rgb)
+  if (axial->type != 2u || axial->axial_length <= 0.0 || !axial->rgb)
     return dm_abort(p);
   for (k = 0; k < 6; k++) if (!isfinite(m[k]) || fabs(m[k]) > 1e7) return dm_abort(p);
   for (k = 0; k < 4; k++) scale = fmax(scale, fabs(m[k]));
@@ -451,9 +451,9 @@ static exr_status try_direct_axial_mask(exr_pdf_file *file, uint32_t mask, uint3
       if (!isfinite(v0) || !isfinite(v1)) goto fallback_direct;
       probe.axial.work = &sample_work;
       local_err.code = EXR_OK; local_err.message[0] = 0;
-      status = probe.axial.sample(&probe.axial, 0.0, v0, EXR_GROUP_RGB, c0, &sh0, &op0, &local_err);
+      status = exr_axial_shading_sample(&probe.axial, 0.0, v0, EXR_GROUP_RGB, c0, &sh0, &op0, &local_err);
       if (status != EXR_OK || local_err.code != EXR_OK) goto fallback_direct;
-      status = probe.axial.sample(&probe.axial, 0.0, v1, EXR_GROUP_RGB, c1, &sh1, &op1, &local_err);
+      status = exr_axial_shading_sample(&probe.axial, 0.0, v1, EXR_GROUP_RGB, c1, &sh1, &op1, &local_err);
       if (status != EXR_OK || local_err.code != EXR_OK) goto fallback_direct;
       for (sy = 0; sy < 2; sy++) {
         double a = sy ? sh1 * op1 : sh0 * op0;
@@ -508,7 +508,7 @@ static exr_status try_direct_axial_mask(exr_pdf_file *file, uint32_t mask, uint3
             double sc[4] = {0}, ssh = 0, sop = 0, a;
             sample_work.used = 0;
             local_err.code = EXR_OK; local_err.message[0] = 0;
-            status = probe.axial.sample(&probe.axial, sx ? u1 : u0, sy ? v1 : v0, EXR_GROUP_RGB, sc, &ssh, &sop, &local_err);
+            status = exr_axial_shading_sample(&probe.axial, sx ? u1 : u0, sy ? v1 : v0, EXR_GROUP_RGB, sc, &ssh, &sop, &local_err);
             if (status != EXR_OK || local_err.code != EXR_OK) goto fallback_direct;
             a = ssh * sop; pa += a; ps += ssh;
             for (k = 0; k < 3; k++) pc[k] += a * sc[k];

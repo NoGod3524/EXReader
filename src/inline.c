@@ -1873,7 +1873,8 @@ static exr_status hyphenate_scalar(flow *f,exr_line_buffer *b,exr_glyph *g) {
   if(g->start<b->blocked_until || !auto_hyphens(f,g->node) || !(g->boundaries&EXR_BOUNDARY_GRAPHEME) ||
       (g->boundaries&EXR_BOUNDARY_GLUE) || !exr_hyphen_language(node_language(f,g->node),key)) return EXR_OK;
   if(!b->word) {
-    if(sizeof(*b->word)>16*1024*1024-line_payload(b)) return exr_fail(f->error,EXR_LIMIT,"Hyphenation word exceeds line budget");
+    size_t used=line_payload(b);
+    if(used>16*1024*1024 || sizeof(*b->word)>16*1024*1024-used) return exr_fail(f->error,EXR_LIMIT,"Hyphenation word exceeds line budget");
     b->word=calloc(1,sizeof(*b->word)); if(!b->word) return exr_fail(f->error,EXR_MEMORY,"Hyphenation word cache allocation failed"); }
   if(b->word->start==b->word_start && b->word->until==SIZE_MAX) return EXR_OK;
   if(b->word->start!=b->word_start || b->word->until<=g->start || strcmp(b->word->language,key)) {

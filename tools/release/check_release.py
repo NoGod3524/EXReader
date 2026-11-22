@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import stat
@@ -36,14 +37,24 @@ def portable_path(name):
 
 
 def read_package(path):
-    """Read ordinary files only; archives are never extracted."""
-    files, modes = {}, {}
+    """Read ordinary files and same-directory symlinks; archives are never extracted.
+
+    Links (relative path -> resolved ordinary file) only serve POSIX SONAME chains.
+    """
+    files, modes, links = {}, {}, {}
+
+    def link(relative, target):
+        portable_path(relative)
+        if not target or '/' in target or '\\' in target or target in ('.', '..') or relative in links:
+            raise ValueError(f'unsafe or duplicate package link: {relative} -> {target!r}')
+        links[relative] = str(PurePosixPath(relative).parent / target)
+
     if path.is_dir():
         name = path.name
         for item in sorted(path.rglob('*')):
             if item.is_symlink():
-                raise ValueError(f'package contains a symlink: {item}')
-            if item.is_file():
+                link(item.relative_to(path).as_posix(), os.readlink(item))
+            elif item.is_file():
                 relative = item.relative_to(path).as_posix()
                 portable_path(relative)
                 files[relative], modes[relative] = item.read_bytes(), item.stat().st_mode
@@ -83,13 +94,26 @@ def read_package(path):
                     member_path(member.name)
                     if member.isdir():
                         continue
+                    if member.issym():
+                        link('/'.join(member_path(member.name)[1:]), member.linkname)
+                        continue
                     if not member.isfile():
                         raise ValueError(f'archive contains a nonregular member: {member.name}')
                     with archive.extractfile(member) as stream:
                         add(member.name, stream.read(), member.mode)
-    if len({p.casefold() for p in files}) != len(files):
+    names = list(files) + list(links)
+    if len({p.casefold() for p in names}) != len(names):
         raise ValueError('package contains case-colliding filenames')
-    return name, files, modes
+    for relative in links:
+        target = links[relative]
+        for _ in range(len(links)):
+            if target not in links:
+                break
+            target = links[target]
+        if target not in files:
+            raise ValueError(f'package link does not resolve to an ordinary file: {relative}')
+        links[relative] = target
+    return name, files, modes, links
 
 
 def check_package(path, source_root=ROOT):
@@ -109,12 +133,13 @@ def check_package(path, source_root=ROOT):
             raise ValueError(detail)
 
     try:
-        name, files, modes = read_package(Path(path))
+        name, files, modes, links = read_package(Path(path))
     except (OSError, ValueError, tarfile.TarError, zipfile.BadZipFile) as error:
         report['checks'].append({'check': 'package files and safe paths', 'passed': False, 'detail': str(error)})
         return report
     report['checks'].append({'check': 'package files and safe paths', 'passed': True,
-                             'detail': f'{len(files)} ordinary files; {sum(map(len, files.values()))} bytes'})
+                             'detail': f'{len(files)} ordinary files; {sum(map(len, files.values()))} bytes; '
+                                       f'{len(links)} same-directory links'})
     identity = PACKAGE_NAME.fullmatch(name)
     if not identity:
         report['checks'].append({'check': 'package name', 'passed': False, 'detail': f'invalid package name: {name}'})
@@ -128,9 +153,10 @@ def check_package(path, source_root=ROOT):
                 f'{platform} release archive must use {suffix}')
         return name
     check('package name and archive format', archive_name)
-    library_names = ('lib/exreader.dll', 'lib/libexreader.dll') if windows else (
+    library_names = ('bin/exreader.dll', 'bin/libexreader.dll') if windows else (
         ('lib/libexreader.so',) if platform == 'linux-x64' else ('lib/libexreader.dylib',))
-    library = next((p for p in library_names if p in files), library_names[0])
+    library = next((p for p in library_names if p in files or p in links), library_names[0])
+    library = links.get(library, library)  # the SONAME chain's real file
     cli = 'bin/exr-info.exe' if windows else 'bin/exr-info'
 
     def required_files():
@@ -211,11 +237,13 @@ def check_package(path, source_root=ROOT):
             imports = [p for p in ('lib/exreader.lib', 'lib/libexreader.lib', 'lib/libexreader.dll.a') if p in files]
             require(bool(imports), 'Windows import library is missing')
             require(all(files[p].startswith(b'!<arch>\n') for p in imports), 'invalid Windows import archive')
-            runtime_path = 'bin/' + PurePosixPath(library).name
-            require(files.get(runtime_path) == files[library], 'bin DLL must match lib DLL for standalone CLI loading')
-            return f'import library {imports[0]}; bin DLL matches lib DLL'
+            duplicates = [p for p in files if p.startswith('lib/') and p.endswith('.dll')]
+            require(not duplicates, f'DLL must ship once, in bin beside the CLI: {duplicates}')
+            return f'import library {imports[0]}; single DLL {library} beside the CLI'
         require(modes[cli] & 0o111, f'{cli} is not executable')
-        return 'POSIX CLI has executable permission'
+        copies = [p for p in files if p.startswith('lib/libexreader')]
+        require(copies == [library], f'shared library must ship once; SONAME names are links: {copies}')
+        return f'POSIX CLI has executable permission; {library} plus {len(links)} SONAME links'
     check('CLI runtime layout and import library', runtime)
     report['passed'] = all(row['passed'] for row in report['checks'])
     return report

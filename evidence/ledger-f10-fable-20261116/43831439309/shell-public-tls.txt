@@ -1,8 +1,0 @@
-F10CHECK {"name":"accept https://www.github.com/","pass":true,"detail":"http_status=301 winhttp_error=0 class=other"}
-F10CHECK {"name":"accept https://example.com/","pass":true,"detail":"http_status=405 winhttp_error=0 class=other"}
-F10CHECK {"name":"accept https://badssl.com/","pass":true,"detail":"http_status=405 winhttp_error=0 class=other"}
-F10CHECK {"name":"refuse https://expired.badssl.com/","pass":true,"detail":"http_status=0 winhttp_error=12175 class=SY_TLS"}
-F10CHECK {"name":"refuse https://wrong.host.badssl.com/","pass":true,"detail":"http_status=0 winhttp_error=12175 class=SY_TLS"}
-F10CHECK {"name":"refuse https://self-signed.badssl.com/","pass":true,"detail":"http_status=0 winhttp_error=12175 class=SY_TLS"}
-F10CHECK {"name":"refuse https://untrusted-root.badssl.com/","pass":true,"detail":"http_status=0 winhttp_error=12175 class=SY_TLS"}
-F10RESULT {"mode":"public-tls","checks":7,"failed":0,"accepted":true}

@@ -72,16 +72,25 @@ def generate(data):
         out.append('};')
 
     array('uint16_t', 'pdf_glyph_offsets', [str(offsets[n]) for n in names])
-    scalars = []
+    sequences, scalars = [], []
+    sequence_base = 0xd800
+    out.append(f'enum {{ PDF_GLYPH_SEQUENCE_BASE = {hex(sequence_base)} }};')
     for table, mapping in zip(('agl', 'dingbats'), maps):
         rows = []
         for name in sorted(mapping):
             values = mapping[name]
-            rows.append('{%d,%d,%d}' % (ids[name], len(scalars), len(values)))
-            scalars.extend(values)
+            assert values and all(0 <= v <= 0xffff and not 0xd800 <= v <= 0xdfff for v in values)
+            if len(values) == 1:
+                value = values[0]
+            else:
+                value = sequence_base + len(sequences)
+                sequences.append('{%d,%d}' % (len(scalars), len(values)))
+                scalars.extend(values)
+            rows.append('{%d,%s}' % (ids[name], hex(value)))
         array('pdf_name_mapping', 'pdf_'+table, rows)
-    assert len(scalars) < 65536
-    array('uint32_t', 'pdf_name_scalars', [hex(v) for v in scalars])
+    assert len(sequences) <= 0x800 and len(scalars) < 65536
+    array('pdf_glyph_sequence', 'pdf_glyph_sequences', sequences)
+    array('uint16_t', 'pdf_sequence_scalars', [hex(v) for v in scalars])
     for name, values in sorted(encodings.items()):
         array('uint16_t', 'pdf_'+name, [str(ids[n]) for n in values])
     array('pdf_encoding_vector', 'pdf_encodings', ['{"%s",pdf_%s}' % (n, n) for n in sorted(encodings)])

@@ -98,13 +98,20 @@ static void safety(const char *dir) {
 }
 static void source_contract(const char *dir) {
   memory m=load(dir,"lzma2-solid"); exr_source s=source(&m); exr_sevenz *z=NULL;
-  size_t n; const exr_sevenz_entry *entries; void *data;
+  const char expected[]="Single requested file.\n";
+  size_t n; const exr_sevenz_entry *entries; void *data,*owned=NULL;
   m.short_read=1; OK(exr_sevenz_open_source(&s,NULL,&z,&error));
   CHECK(m.reads>3 && !m.body_reads && !m.released);
   entries=exr_sevenz_entries(z,&n); CHECK(n==2 && !strcmp(entries[1].path,"second.txt"));
-  member(z,1,"Single requested file.\n"); CHECK(m.body_reads==1); member(z,0,NULL);
+  OK(exr_sevenz_extract(z,1,&owned,&n,&error));
+  CHECK(owned && n==sizeof(expected)-1 && !memcmp(owned,expected,n) && m.body_reads==1);
+  ((char *)owned)[0]='X';
+  member(z,0,NULL); member(z,1,expected); CHECK(m.body_reads==1);
   m.cancel=1; CHECK(exr_sevenz_extract(z,0,&data,&n,&error)==EXR_CANCELLED && !data && !n);
+  CHECK(m.body_reads==1);
   exr_sevenz_free(z); CHECK(m.released==1);
+  CHECK(((const char *)owned)[0]=='X' && !memcmp((const char *)owned+1,expected+1,sizeof(expected)-2));
+  exr_free(owned);
   m.released=0; CHECK(exr_sevenz_open_source(&s,NULL,&z,&error)==EXR_CANCELLED && !z && !m.released);
   free(m.data);
 }

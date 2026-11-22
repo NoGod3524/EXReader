@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef EXR_PPT_INTERNAL_H
 #define EXR_PPT_INTERNAL_H
-#include "base_internal.h"
+#include "formats_internal.h"
+#include "style_internal.h"
 #include "exr/pdf.h"
 #include "exr/font_manager.h"
 #include "font_manager_internal.h"
@@ -87,4 +88,16 @@ exr_status exr_ppt_read_drawing(const exr_ppt_streams *streams,const exr_ppt_inf
 void exr_ppt_drawing_free(exr_ppt_drawing *drawing);
 exr_status exr_ppt_open_memory(const void *data,size_t size,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e);
 exr_status exr_ppt_open_file(const char *path,const exr_fixed_open_options *options,exr_fixed_document **out,exr_error *e);
+int exr_ppt_text_warning(exr_buffer *list,const char *name);
+void exr_ppt_multiply(const double a[6],const double b[6],double out[6]);
+exr_status exr_ppt_select_font(exr_font_manager **manager,exr_ppt_text_font **fonts,size_t *font_count,
+  size_t *font_capacity,exr_font_blob_cache *files,exr_buffer *font_fallbacks,exr_buffer *glyph_fallbacks,
+  exr_document *model,exr_style *styles,int allow_carlito,const char *tag,exr_font **out,
+  const exr_control *control,exr_error *e);
+exr_status exr_ppt_paragraph_model(const char *tag,exr_document **out,exr_error *e);
+exr_status exr_ppt_text_model_finish(exr_document *model,const char *tag,exr_error *e);
+exr_status exr_ppt_append_bullet(exr_layout *layout,const exr_shaped_glyph *glyphs,size_t count,
+  size_t face,double size,uint32_t color,unsigned flags,double x,const char *tag,exr_error *e);
+exr_status exr_ppt_layout_draw(const exr_layout *layout,const double matrix[6],const exr_draw_sink *sink,
+  const exr_control *control,exr_error *e);
 #endif

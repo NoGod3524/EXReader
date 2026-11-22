@@ -1,3 +1,0 @@
-Authorization required, but no authorization protocol specified
-
-(exreader-linux:12032): Gtk-WARNING **: 08:17:37.129: cannot open display: :99

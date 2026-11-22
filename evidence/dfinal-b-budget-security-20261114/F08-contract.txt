@@ -1,4 +1,0 @@
-PASS fresh-process budget contract: raw p50/p95 verified; missing/duplicate/nonfinite/zero/mismatched samples rejected; memory/time regressions rejected
-downloaded and SHA-256 verified: original.epub 15
-verified cached original: original.epub
-PASS fixed production spine path; corpus fetch/cached hash checks; changed original and overwrite refused

@@ -38,13 +38,10 @@ static char *summary_title(const unsigned char *p,size_t size) {
       if(!exr_codepoint(&text,cp)) goto invalid;
     }
   } else if(type==30 && (codepage==1252 || codepage==65001)) {
-    static const uint16_t cp1252[32]={0x20ac,0x81,0x201a,0x192,0x201e,0x2026,0x2020,0x2021,
-      0x2c6,0x2030,0x160,0x2039,0x152,0x8d,0x17d,0x8f,0x90,0x2018,0x2019,0x201c,
-      0x201d,0x2022,0x2013,0x2014,0x2dc,0x2122,0x161,0x203a,0x153,0x9d,0x17e,0x178};
     if(n>extent || n>65536) return NULL;
     for(i=0;i<n && p[i];i++) {
       if(codepage==65001) { if(!exr_append(&text,p+i,1)) goto invalid; }
-      else if(!exr_codepoint(&text,p[i]>=128 && p[i]<160 ? cp1252[p[i]-128] : p[i])) goto invalid;
+      else if(!exr_codepoint(&text,exr_windows1252(p[i]))) goto invalid;
     }
     if(codepage==65001) {
       size_t at=0;uint32_t cp;

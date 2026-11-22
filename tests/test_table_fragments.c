@@ -178,8 +178,33 @@ static void float_budgets(const char *directory) {
     exr_pager_free(p);exr_document_free(d);
   }
 }
+static void hidden_object_cell(void) {
+  static const char html[]=
+    "<html><body><table>"
+    "<object style=\"display:table-row\">ignored</object>"
+    "<tr><object style=\"display:table-cell\">ignored</object>"
+    "<td><p>alpha beta gamma delta epsilon zeta</p><p>alpha beta gamma delta epsilon zeta</p>"
+    "<p>alpha beta gamma delta epsilon zeta</p><p>alpha beta gamma delta epsilon zeta</p></td></tr>"
+    "</table><p>tail</p></body></html>";
+  exr_document *d=NULL;exr_layout *l=NULL;exr_pager *p=NULL;exr_layout_config c=config();
+  size_t text_size=0,np=0,i;const exr_page *pages;
+  c.page.width=120;c.page.height=90;c.page.margin=10;
+  OK(exr_document_open_memory(EXR_HTML,html,sizeof(html)-1,&d,&error));
+  exr_document_text(d,&text_size);
+  OK(exr_layout_create_ex(d,font,&c,&l,&error));
+  pages=exr_layout_pages(l,&np);CHECK(np>=2);
+  for(i=0;i<np;i++) CHECK(pages[i].start<=text_size && pages[i].end<=text_size);
+  OK(exr_pager_create(d,font,&c,&p,&error));
+  for(;;) {
+    exr_layout *page=NULL;size_t cnt=0;
+    OK(exr_pager_next(p,&page,&error));if(!page) break;
+    pages=exr_layout_pages(page,&cnt);CHECK(cnt==1 && pages[0].start<=text_size && pages[0].end<=text_size);
+    exr_layout_free(page);
+  }
+  exr_pager_free(p);exr_layout_free(l);exr_document_free(d);
+}
 int main(int argc,char **argv) {
   char path[4096];CHECK(argc==2 || argc==3 || (argc==4 && !strcmp(argv[2],"--font")));
   snprintf(path,sizeof(path),"%s/fonts/primary.ttf",argv[1]);OK(exr_font_open(argc==4 ? argv[3] : path,&font,&error));
-  if(argc==4) cases(argv[1]);else if(argc==3) large_fixed(argv[1]);else { alpha_borders();cases(argv[1]);float_budgets(argv[1]);recovery(argv[1]);large_fixed(argv[1]); }exr_font_free(font);printf("%u table fragment checks passed\n",checks);return 0;
+  if(argc==4) cases(argv[1]);else if(argc==3) large_fixed(argv[1]);else { alpha_borders();hidden_object_cell();cases(argv[1]);float_budgets(argv[1]);recovery(argv[1]);large_fixed(argv[1]); }exr_font_free(font);printf("%u table fragment checks passed\n",checks);return 0;
 }

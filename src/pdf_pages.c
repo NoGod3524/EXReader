@@ -19,10 +19,7 @@ static uint32_t resolved(page_reader *r,uint32_t id) {
 static uint32_t property(page_reader *r,uint32_t dict,const char *name) {
   return resolved(r,exr_pdf_get(r->file,dict,name));
 }
-static int name_is(page_reader *r,uint32_t id,const char *name) {
-  size_t n; const unsigned char *data=exr_pdf_bytes(r->file,id,&n);
-  return data && exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NAME && n==strlen(name) && !memcmp(data,name,n);
-}
+static int name_is(page_reader *r,uint32_t id,const char *name) { return exr_pdf_name_is(r->file,id,name); }
 static int number(page_reader *r,uint32_t id,double *out) {
   const exr_pdf_value *v;
   id=resolved(r,id); v=exr_pdf_value_at(r->file,id);

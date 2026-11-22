@@ -10,16 +10,27 @@ struct exr_pdf_colorspace {
   struct exr_pdf_colorspace *alternate;
   exr_pdf_function *function;
   exr_icc *icc;
+  const exr_control *control;
+  int borrowed_icc;
 };
 typedef struct {
   exr_pdf_file *resources_file; uint32_t resources;
   const exr_control *control; exr_error *error; int used_resources;
   struct { exr_pdf_file *file; uint32_t value; } active[16];
 } color_reader;
-static int name_is(exr_pdf_file *file,uint32_t id,const char *name) {
-  size_t size; const unsigned char *bytes=exr_pdf_bytes(file,id,&size); const exr_pdf_value *v=exr_pdf_value_at(file,id);
-  return v && v->kind==EXR_PDF_NAME && size==strlen(name) && !memcmp(bytes,name,size);
+static void release_cmyk(void *profile) { exr_icc_free(profile); }
+static exr_status default_cmyk(color_reader *r,exr_pdf_colorspace *s) {
+  void **slot=exr_pdf_cmyk_profile_slot(r->resources_file,release_cmyk);
+  if(!*slot) {
+    exr_icc *profile=NULL;
+    exr_status status=exr_icc_default_cmyk_forward(r->control,&profile,r->error);
+    if(status!=EXR_OK) return status;
+    *slot=profile;
+  }
+  s->icc=*slot;s->control=r->control;s->borrowed_icc=1;
+  return EXR_OK;
 }
+#define name_is exr_pdf_name_is
 static int resolve(color_reader *r,exr_pdf_file *file,uint32_t id,uint32_t *out) {
   return exr_pdf_resolve(file,id,out,r->error)==EXR_OK;
 }
@@ -66,7 +77,8 @@ exr_status exr_pdf_colorspace_rgb_intent(const exr_pdf_colorspace *s,const doubl
   if(s->kind==SPACE_ALL) { rgb[0]=rgb[1]=rgb[2]=1-v[0]; return EXR_OK; }
   if(s->kind==SPACE_RGB) { memcpy(rgb,v,3*sizeof(double)); return EXR_OK; }
   if(s->kind==SPACE_CMYK) {
-    exr_device_cmyk_rgb(s->icc,v,rgb,intent);return exr_icc_deferred_status(s->icc,error);
+    if(s->icc) return exr_icc_rgb_intent_control(s->icc,v,rgb,intent,s->control,error);
+    exr_device_cmyk_rgb(NULL,v,rgb,intent);return EXR_OK;
   }
   if(s->kind==SPACE_INDEXED) {
     unsigned index=(unsigned)floor(v[0]+.5); for(i=0;i<3;i++) rgb[i]=s->palette[index*4+i]/255.0; return EXR_OK;
@@ -141,7 +153,7 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
   if(name_is(file,id,"DeviceGray") || name_is(file,id,"DeviceRGB") || name_is(file,id,"DeviceCMYK")) {
     channels=name_is(file,id,"DeviceGray") ? 1 : name_is(file,id,"DeviceRGB") ? 3 : 4;
     s=device(channels==1 ? SPACE_GRAY : channels==3 ? SPACE_RGB : SPACE_CMYK,channels); if(!s) goto memory;
-    if(channels==4) { exr_status status=exr_icc_default_cmyk(r->control,&s->icc,r->error);if(status!=EXR_OK) { exr_pdf_colorspace_free(s);return status; } }
+    if(channels==4) { exr_status status=default_cmyk(r,s);if(status!=EXR_OK) { exr_pdf_colorspace_free(s);return status; } }
     *out=s; return EXR_OK;
   }
   if(v->kind==EXR_PDF_NAME) {
@@ -178,7 +190,7 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     exr_pdf_colorspace_free(base); *out=s; return EXR_OK;
   }
   if(name_is(file,value,"DeviceN")) {
-    uint32_t at,names[EXR_PDF_MAX_COLORANTS]; size_t lengths[EXR_PDF_MAX_COLORANTS]; const unsigned char *labels[EXR_PDF_MAX_COLORANTS];
+    uint32_t at,names[EXR_PDF_MAX_COLORANTS];
     unsigned n=0,j,all_none=1;
     if(!array(r,file,id,ids,4)) {
       if(!array(r,file,id,ids,5)) goto bad;
@@ -186,15 +198,20 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     }
     v=exr_pdf_value_at(file,ids[1]); if(!v || v->kind!=EXR_PDF_ARRAY) goto bad;
     for(at=v->first;at!=EXR_PDF_NONE;) {
-      uint32_t next; const exr_pdf_value *entry=exr_pdf_value_at(file,at); if(!entry) goto bad; next=entry->next;
+      uint32_t next; const exr_pdf_value *entry=exr_pdf_value_at(file,at); const unsigned char *label; size_t length;
+      if(!entry) goto bad;
+      next=entry->next;
       if(n==EXR_PDF_MAX_COLORANTS) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN exceeds 32 colorants"); goto done; }
       if(!resolve(r,file,at,&names[n])) goto bad;
-      v=exr_pdf_value_at(file,names[n]); labels[n]=exr_pdf_bytes(file,names[n],&lengths[n]);
-      if(!v || v->kind!=EXR_PDF_NAME || !labels[n] || !lengths[n] || memchr(labels[n],0,lengths[n]) || name_is(file,names[n],"All")) goto bad;
-      if(lengths[n]>127) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN colorant name exceeds 127 bytes"); goto done; }
+      v=exr_pdf_value_at(file,names[n]); label=exr_pdf_bytes(file,names[n],&length);
+      if(!v || v->kind!=EXR_PDF_NAME || !label || !length || memchr(label,0,length) || name_is(file,names[n],"All")) goto bad;
+      if(length>127) { status=exr_fail(r->error,EXR_LIMIT,"DeviceN colorant name exceeds 127 bytes"); goto done; }
       if(!name_is(file,names[n],"None")) {
         all_none=0;
-        for(j=0;j<n;j++) if(lengths[j]==lengths[n] && !memcmp(labels[j],labels[n],lengths[n])) goto bad;
+        for(j=0;j<n;j++) {
+          size_t prev_length; const unsigned char *prev=exr_pdf_bytes(file,names[j],&prev_length);
+          if(prev && prev_length==length && !memcmp(prev,label,length)) goto bad;
+        }
       }
       n++; at=next;
     }
@@ -233,12 +250,12 @@ static exr_status open_space(color_reader *r,exr_pdf_file *file,uint32_t id,unsi
     { const unsigned char *profile;size_t size;
       status=exr_pdf_stream_data(file,ids[1],&profile,&size,r->error);if(status!=EXR_OK) goto done;
       status=exr_icc_open(profile,size,channels,r->control,&s->icc,r->error);if(status!=EXR_OK) goto done;
-      if(s->icc) { *out=s;return EXR_OK; }
+      if(s->icc) { s->control=r->control;*out=s;return EXR_OK; }
     }
 #endif
     alternate=get(r,file,ids[1],"Alternate");
     if(alternate==EXR_PDF_NONE) { s->alternate=device(channels==1 ? SPACE_GRAY : channels==3 ? SPACE_RGB : SPACE_CMYK,channels); if(!s->alternate) goto memory;
-      if(channels==4) { status=exr_icc_default_cmyk(r->control,&s->alternate->icc,r->error);if(status!=EXR_OK) goto done; } }
+      if(channels==4) { status=default_cmyk(r,s->alternate);if(status!=EXR_OK) goto done; } }
     else { status=open_space(r,file,alternate,depth+1,&s->alternate); if(status!=EXR_OK) goto done; }
     if(s->alternate->components!=channels) goto bad;
     *out=s; return EXR_OK;
@@ -285,14 +302,29 @@ exr_status exr_pdf_colorspace_open(exr_pdf_file *file,uint32_t value,exr_pdf_fil
   if(status==EXR_OK) (*out)->resource_dependent=r.used_resources;
   return status==EXR_OK ? exr_fail(error,EXR_OK,"") : status;
 }
-int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *s,int own_intent) {
-  if(!s) return 1;
-  if(s->resource_dependent) return 0;
-  if(!own_intent && (s->kind==SPACE_CMYK || s->kind==SPACE_ICC)) return 0;
-  return s->kind!=SPACE_TINT || exr_pdf_colorspace_cacheable(s->alternate,own_intent);
+int exr_pdf_colorspace_cacheable(const exr_pdf_colorspace *s) { return !s || !s->resource_dependent; }
+int exr_pdf_colorspace_uses_intent(const exr_pdf_colorspace *s) {
+  /* An Indexed palette is already evaluated in relative colorimetric. */
+  if(!s) return 0;
+  if(s->kind==SPACE_CMYK || s->kind==SPACE_ICC)
+    return s->icc!=NULL || exr_pdf_colorspace_uses_intent(s->alternate);
+  return s->kind==SPACE_TINT && exr_pdf_colorspace_uses_intent(s->alternate);
 }
-void exr_pdf_colorspace_free(exr_pdf_colorspace *s) { if(s) { exr_pdf_colorspace_free(s->alternate); exr_pdf_function_free(s->function); exr_icc_free(s->icc); free(s); } }
-size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *s) { return s ? sizeof(*s)+exr_pdf_colorspace_memory(s->alternate)+exr_pdf_function_memory(s->function)+exr_icc_memory(s->icc) : 0; }
+int exr_pdf_colorspace_can_batch(const exr_pdf_colorspace *s) {
+  return s && (s->kind==SPACE_CMYK || s->kind==SPACE_ICC) && s->icc;
+}
+exr_status exr_pdf_colorspace_rgb_batch(const exr_pdf_colorspace *s,double *samples,size_t count,double *rgb,
+  unsigned intent,exr_error *error) {
+  if(!exr_pdf_colorspace_can_batch(s) || !count || count>EXR_PDF_COLOR_BATCH)
+    return exr_fail(error,EXR_ARGUMENT,"Invalid ICC color batch");
+  for(size_t i=0;i<count;i++) for(unsigned k=0;k<s->components;k++) {
+    double *sample=samples+i*s->components+k;
+    *sample=clamp(*sample,s->ranges[2*k],s->ranges[2*k+1]);
+  }
+  return exr_icc_rgb_batch(s->icc,samples,count,rgb,intent,s->control,error);
+}
+void exr_pdf_colorspace_free(exr_pdf_colorspace *s) { if(s) { exr_pdf_colorspace_free(s->alternate); exr_pdf_function_free(s->function); if(!s->borrowed_icc) exr_icc_free(s->icc); free(s); } }
+size_t exr_pdf_colorspace_memory(const exr_pdf_colorspace *s) { return s ? sizeof(*s)+exr_pdf_colorspace_memory(s->alternate)+exr_pdf_function_memory(s->function)+(s->borrowed_icc ? 0 : exr_icc_memory(s->icc)) : 0; }
 int exr_pdf_colorspace_no_paint(const exr_pdf_colorspace *s) { return s && (s->no_paint || exr_pdf_colorspace_no_paint(s->alternate)); }
 size_t exr_pdf_colorspace_cost(const exr_pdf_colorspace *s) { return !s ? 0 : exr_pdf_colorspace_no_paint(s) ? s->components : s->components+exr_pdf_function_cost(s->function)+exr_icc_cost(s->icc)+exr_pdf_colorspace_cost(s->alternate); }
 unsigned exr_pdf_colorspace_components(const exr_pdf_colorspace *s) { return s ? s->components : 0; }

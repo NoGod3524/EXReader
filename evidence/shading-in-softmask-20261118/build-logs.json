@@ -1,5 +1,0 @@
-{
-  "A": "[0/2] Re-checking globbed directories...\n[1/4] Building C object CMakeFiles/exr_graphics_objects.dir/src/affine_image.c.obj\n[2/4] Linking C static library libexr_graphics.a\n[3/4] Linking C shared library libexreader.dll\n",
-  "B": "[0/2] Re-checking globbed directories...\n[1/4] Building C object CMakeFiles/exr_graphics_objects.dir/src/affine_image.c.obj\n[2/4] Linking C static library libexr_graphics.a\n[3/4] Linking C shared library libexreader.dll\n",
-  "production": "[0/2] Re-checking globbed directories...\n[1/4] Building C object CMakeFiles/exr_graphics_objects.dir/src/affine_image.c.obj\n[2/4] Linking C static library libexr_graphics.a\n[3/4] Linking C shared library libexreader.dll\n"
-}

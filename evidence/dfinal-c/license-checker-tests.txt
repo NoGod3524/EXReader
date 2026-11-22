@@ -1,1 +1,0 @@
-{"license_checker_self_check": true, "negative_cases": 31, "mandatory_missing_cases": 1, "source_material_positive_cases": 3, "manifest_components": 22}

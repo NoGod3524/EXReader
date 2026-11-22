@@ -1,8 +1,0 @@
-source=125e3e0548efdac25edc9a0d3819833874fd2bcd run=43783330321/1 passed=True accepted=True product_budget_accepted=True
-display_present_frame=measured (compose_page_view + paint_page_view + D2D shell_paint + GdiFlush)
-first_interactive=measured (cold bounded-EPUB import/open + initial frame present + keyboard selection round-trip)
-budgets={"first_interactive_ms": 2500.0, "peak_working_set_bytes": 268435456, "present_p50_ms": 50.0, "present_p95_ms": 100.0, "render_p50_ms": 50.0, "render_p95_ms": 100.0}
-pg1.epub processes=3 samples=192 render_p50=0.399350 render_p95=0.413900 present_p50=0.143100 present_p95=0.156200 first_interactive_ms=24.157 setup_ms=11.621 peak_ws=24735744 within_budgets=True exporter_budgets_passed=True ratios_passed=True
-pg10.epub processes=3 samples=192 render_p50=0.376850 render_p95=0.382400 present_p50=0.141000 present_p95=0.149200 first_interactive_ms=158.608 setup_ms=90.653 peak_ws=30826496 within_budgets=True exporter_budgets_passed=True ratios_passed=True
-pg11.epub processes=3 samples=192 render_p50=0.476500 render_p95=0.611900 present_p50=0.145550 present_p95=0.196600 first_interactive_ms=19.276 setup_ms=8.193 peak_ws=21753856 within_budgets=True exporter_budgets_passed=True ratios_passed=True
-recompute_agrees_with_exporter=True

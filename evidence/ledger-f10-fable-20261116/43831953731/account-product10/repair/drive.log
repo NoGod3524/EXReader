@@ -1,9 +1,0 @@
-HOST	phase=4	engine=3.42.0	pid=5492
-STEP	1	wait_idle	PASS	page=3;status=已打开《EXReader benchmark》 · 已按章节与文本锚点恢复到上次位置。
-STATE	2	product	PASS	book_id=1;page=2;page_count=1;font=160;zoom=100;offset=622;page_text_len=306;range_len=306;notes=1;selected_id=1;selection_active=0;page_text_fnv=8533917890574871042;page_hash_len=306;bounded=1;part=0;generation=1;progress_record_preserved=0;part_path=OPS/c0.xhtml;book_bytes=5960;index_bytes=147410;parse_workspace_bytes=158810;peak_parse_workspace_bytes=259830;projection_bytes=15199;page_cache_bytes=155264;checkpoint_bytes=0;explicit_snapshot_bytes=0;windows_loaded=1;windows_evicted=0;owned_frame_text_geometry_bytes=39705;bitmap_bytes=2995200;dib_bytes=2995200;state=product;product_pending=0;title=EXReader benchmark;kind=reflow;page_text=words [0-0006-c] and positions [0-0006-d].%0AReading [0-0007-a] native pages [0-0007-b] preserve words [0-0007-c] and positions [0-0007-d].%0AReading [0-0008-a] native pag;offset_text=words [0-0006-c] and positions [0-0006-d].%0AReading [0-0007-a] na;status=已打开《EXReader benchmark》 · 已按章节与文本锚点恢复到上次位置。
-SHELF	2	product	PASS	title=User catalog metadata;author=;id=1;format=4
-SHELF	2	product	PASS	title=User catalog metadata;author=;id=2;format=8
-NOTE	2	product	PASS	id=1;kind=reflow;storage=epub_notes;path=OPS/c0.xhtml;part=0;start=0;end=337;page=0;quote=Reading [0-0000-a] native pages [0-0000-b] preserve words [0-0000-c] and positions [0-0000-d].%0AReading [0-0001-a] native pages [0-0001-b] preserve words [0-0001-c] and positions [0-0001-d].%0AReading [0-0002-a] native pages [0-0002-b] preserve words [0-0002-c] and positions [0-0002-d].%0AReading [0-0003-a] native pages [0-0003-b] preserve ;comment=Updated automated note
-STEP	2	state	PASS	state captured
-STEP	3	quit	PASS	closing
-DONE	3	eof	PASS	script finished

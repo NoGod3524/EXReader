@@ -131,4 +131,35 @@ static void clipped_budget(int verify) {
     exr_canvas_free(c);
   }
 }
-int main(void) { coordinates();compositing();errors();prefixes();clipped_budget(1);printf("%u procedural paint checks passed\n",checks);return 0; }
+static exr_status opaque_handle_sample(void *context,double x,double y,unsigned space,double color[4],double *shape,double *opacity,exr_error *e) {
+  uintptr_t handle=(uintptr_t)context;
+  (void)x;(void)y;(void)space;(void)e;
+  *shape=1;*opacity=1;
+  color[0]=handle==1u ? 1.0 : 0.0;color[1]=0.5;color[2]=0.25;color[3]=0;
+  return EXR_OK;
+}
+static exr_status small_context_sample(void *context,double x,double y,unsigned space,double color[4],double *shape,double *opacity,exr_error *e) {
+  const unsigned char *tag=context;
+  (void)x;(void)y;(void)space;(void)e;
+  *shape=1;*opacity=1;
+  color[0]=*tag==7u ? 0.5 : 0.0;color[1]=0.25;color[2]=1.0;color[3]=0;
+  return EXR_OK;
+}
+static void opaque_contexts(void) {
+  { exr_paint_source source={sizeof(source),opaque_handle_sample,(void *)(uintptr_t)1};
+    exr_canvas *c=canvas(1,4,(exr_control){0});
+    OK(exr_canvas_paint(c,&source,NULL,1,&error));
+    const unsigned char *p=exr_canvas_bitmap(c)->pixels;
+    CHECK(p[0]==255 && p[1]==128 && p[2]==64 && p[3]==255);
+    exr_canvas_free(c);
+  }
+  { unsigned char tag=7u;
+    exr_paint_source source={sizeof(source),small_context_sample,&tag};
+    exr_canvas *c=canvas(1,4,(exr_control){0});
+    OK(exr_canvas_paint(c,&source,NULL,1,&error));
+    const unsigned char *p=exr_canvas_bitmap(c)->pixels;
+    CHECK(p[0]==128 && p[1]==64 && p[2]==255 && p[3]==255);
+    exr_canvas_free(c);
+  }
+}
+int main(void) { coordinates();compositing();errors();prefixes();opaque_contexts();clipped_budget(1);printf("%u procedural paint checks passed\n",checks);return 0; }

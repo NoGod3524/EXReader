@@ -18,11 +18,7 @@ typedef struct {
   const exr_epub_cover *cover; const char *cover_id,*cover_href,*cover_path,*package_path;
   int new_cover,version3; unsigned depth,metadata,manifest,skip;
 } writer;
-static int token(const char *list,const char *word) {
-  size_t n=strlen(word); if(!list) return 0;
-  while(*list) { size_t k; list+=strspn(list," \t\r\n"); k=strcspn(list," \t\r\n"); if(k==n && !memcmp(list,word,n)) return 1; list+=k; }
-  return 0;
-}
+#define token exr_has_token
 static const char *attr(const char **attributes,const char *key) {
   while(*attributes) { if(!strcmp(attributes[0],key)) return attributes[1]; attributes+=2; } return NULL;
 }

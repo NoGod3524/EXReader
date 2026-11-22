@@ -46,6 +46,61 @@ static void rejected(const char *name) {
   CHECK(!out.pixels);
   exr_fixed_free(d);
 }
+static exr_bitmap render_ri_update(const unsigned char *base,size_t base_size,size_t prev_xref,
+                                   const char *stream,exr_status expected) {
+  unsigned char *buf=malloc(base_size+2048); size_t at=base_size,obj_off,xref_off;
+  exr_fixed_document *d=NULL; exr_bitmap out={0}; exr_fixed_render_options options={0};
+  CHECK(buf); memcpy(buf,base,base_size);
+  obj_off=at;
+  at+=(size_t)snprintf((char *)buf+at,2048-(at-base_size),
+    "\n4 0 obj\n<< /Length %zu >>\nstream\n%s\nendstream\nendobj\n",strlen(stream),stream);
+  xref_off=at;
+  at+=(size_t)snprintf((char *)buf+at,2048-(at-base_size),
+    "xref\n4 1\n%010zu 00000 n \ntrailer\n<< /Size 10 /Root 1 0 R /Prev %zu >>\nstartxref\n%zu\n%%%%EOF\n",
+    obj_off+1,prev_xref,xref_off);
+  OK(exr_fixed_open_memory(EXR_PDF,buf,at,NULL,&d,&error)); CHECK(d);
+  options.channels=4; options.background=0xffffffff;
+  CHECK(exr_fixed_render(d,0,1,&options,&out,&error)==expected);
+  if(expected!=EXR_OK) CHECK(!out.pixels);
+  exr_fixed_free(d); free(buf); return out;
+}
+static void test_ri_operator(void) {
+  char path[4096]; FILE *f; long n; unsigned char *base; const char *sx; size_t prev_xref;
+  exr_bitmap page;
+  const char *stream=
+    "q /RelativeColorimetric ri /CS1 cs 0.2 0.8 0.8 0.1 scn 0 0 32 16 re f Q "
+    "q /Perceptual ri /CS1 cs 0.2 0.8 0.8 0.1 scn 32 0 32 16 re f Q "
+    "q /Saturation ri /CS1 cs 0.2 0.8 0.8 0.1 scn 64 0 32 16 re f Q "
+    "q /AbsoluteColorimetric ri /CS1 cs 0.2 0.8 0.8 0.1 scn 96 0 32 16 re f Q";
+  const char *fallback_stream=
+    "q /AbsoluteColorimetric ri /CustomVendorIntent ri /CS1 cs 0.2 0.8 0.8 0.1 scn 0 0 32 16 re f Q";
+  snprintf(path,sizeof(path),"%s/pdf-color/intent-intents.pdf",directory);
+  f=fopen(path,"rb"); CHECK(f && !fseek(f,0,SEEK_END)); n=ftell(f); CHECK(n>64); rewind(f);
+  base=malloc((size_t)n+1); CHECK(base && fread(base,1,(size_t)n,f)==(size_t)n && !fclose(f));
+  base[n]=0;
+  sx=strstr((const char *)base+n-64,"startxref"); CHECK(sx);
+  prev_xref=(size_t)strtoull(sx+9,NULL,10); CHECK(prev_xref>0);
+  page=render_ri_update(base,(size_t)n,prev_xref,stream,EXR_OK);
+#ifdef EXR_ENABLE_ICC
+  near(&page,16,8,174,74,53,"ri relative");
+  near(&page,48,8,175,80,63,"ri perceptual");
+  near(&page,80,8,175,80,63,"ri saturation");
+  near(&page,112,8,167,76,60,"ri absolute");
+#else
+  near(&page,16,8,179,26,26,"ri relative alternate");
+  near(&page,112,8,179,26,26,"ri absolute alternate");
+#endif
+  exr_bitmap_free(&page);
+  /* ISO 32000-1 8.6.5.8: unrecognized ri name falls back to RelativeColorimetric. */
+  page=render_ri_update(base,(size_t)n,prev_xref,fallback_stream,EXR_OK);
+#ifdef EXR_ENABLE_ICC
+  near(&page,16,8,174,74,53,"ri unknown fallback");
+#endif
+  exr_bitmap_free(&page);
+  /* Non-name operand for ri must fail. */
+  (void)render_ri_update(base,(size_t)n,prev_xref,"1 ri",EXR_FORMAT);
+  free(base);
+}
 int main(int argc,char **argv) {
   exr_bitmap page; unsigned char rel[3],per[3];
   CHECK(argc==2); directory=argv[1];
@@ -94,6 +149,7 @@ int main(int argc,char **argv) {
   exr_bitmap_free(&page);
   rejected("image-intent-bad.pdf");
   rejected("image-intent-bad-type.pdf");
+  test_ri_operator();
   printf("%u native PDF rendering-intent checks passed\n",checks);
   return 0;
 }

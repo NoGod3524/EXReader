@@ -28,6 +28,7 @@ const char *exr_edit_xml_wa(const exr_node *n,const char *key);
 const char *exr_edit_xml_ns(const source_xml *x);
 size_t exr_edit_xml_child(const source_xml *x,size_t parent,const char *tag);
 int exr_edit_xml_integer(const char *s,int32_t *out);
+int exr_edit_xml_escape(exr_buffer *b,const char *s,size_t n);
 exr_status exr_edit_xml_parse(source_xml *x,const void *data,size_t size,const char *root,exr_error *e);
 void exr_edit_xml_free(source_xml *x);
 int exr_edit_xml_raw(exr_buffer *b,const source_xml *x,size_t n);
@@ -39,6 +40,11 @@ int exr_edit_xml_start(exr_buffer *b,const source_xml *x,size_t n,const char *ta
 int exr_edit_xml_end(exr_buffer *b,const source_xml *x,size_t n,const char *tag);
 int exr_edit_xml_attrs(exr_buffer *b,const source_xml *x,size_t n,const char *tag,const attr_edit *edits,size_t count);
 const exr_edit_part *exr_edit_part_named(const exr_edit_part *p,size_t n,const char *name);
+static inline int exr_edit_resolve_target(const char *base,const char *target,char out[2048]) {
+  if (!target || !*target) return 0;
+  if (*target=='/') return target[1] && exr_resolve_path("",target+1,out) && out[0];
+  return exr_resolve_path(base,target,out) && out[0];
+}
 exr_status exr_edit_main_part(const exr_edit_part *parts,size_t n,char name[2048],exr_error *e);
 exr_status exr_edit_table_decode(const source_xml *x,size_t n,exr_edit_table **out);
 void exr_edit_table_decode_free(exr_edit_table *t);

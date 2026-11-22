@@ -37,12 +37,15 @@ void exr_lcp_free(void *context) {
 #endif
   free(p);
 }
+static int resource_compare(const void *a, const void *b) {
+  return strcmp(((const lcp_resource *)a)->path, ((const lcp_resource *)b)->path);
+}
 static const lcp_resource *resource(const void *context, const char *path) {
   const lcp *p = context;
-  size_t i;
-  if (p) for (i = 0; i < p->count; i++)
-    if (!strcmp(p->resources[i].path, path)) return &p->resources[i];
-  return NULL;
+  lcp_resource key;
+  if (!p || !p->count) return NULL;
+  key.path = (char *)path;
+  return bsearch(&key, p->resources, p->count, sizeof(*p->resources), resource_compare);
 }
 int exr_lcp_has(const void *context, const char *path) { return resource(context, path) != NULL; }
 
@@ -238,9 +241,12 @@ static int decrypt(const unsigned char key[32], unsigned char *data, size_t *siz
   if (!rc) rc = mbedtls_aes_crypt_cbc(&aes, MBEDTLS_AES_DECRYPT, n - 16, iv, data + 16, data + 16);
   mbedtls_aes_free(&aes);
   mbedtls_platform_zeroize(iv, sizeof(iv));
-  if (rc) return 0;
+  if (rc) { mbedtls_platform_zeroize(data + 16, n - 16); return 0; }
   padding = data[n-1];
-  if (!padding || padding > 16 || padding > n - 16) return 0;
+  if (!padding || padding > 16 || padding > n - 16) {
+    mbedtls_platform_zeroize(data + 16, n - 16);
+    return 0;
+  }
   *size = n - 16 - padding;
   memmove(data, data + 16, *size);
   mbedtls_platform_zeroize(data + *size, n - *size);
@@ -395,9 +401,8 @@ static void XMLCALL directory_end(void *context, const char *name) {
     if ((d->seen & 5) != 5 || (!d->obfuscated && !(d->seen & 2)))
       directory_fail(d, EXR_DRM_LICENSE_INVALID, "Incomplete LCP encryption entry");
     else if (!d->obfuscated && d->status == EXR_OK) {
-      if (resource(d->lcp, d->entry.path)) directory_fail(d, EXR_DRM_LICENSE_INVALID, "Duplicate LCP encrypted resource");
-      else if (d->lcp->count >= 10000 || !exr_grow((void **)&d->lcp->resources, &d->lcp->capacity,
-                                                 d->lcp->count + 1, sizeof(lcp_resource)))
+      if (d->lcp->count >= 10000 || !exr_grow((void **)&d->lcp->resources, &d->lcp->capacity,
+                                             d->lcp->count + 1, sizeof(lcp_resource)))
         directory_fail(d, EXR_LIMIT, "LCP encryption directory exceeds limit");
       else { d->lcp->resources[d->lcp->count++] = d->entry; d->entry.path = NULL; }
     }
@@ -462,6 +467,15 @@ exr_status exr_lcp_open(mz_zip_archive *zip, const char *passphrase, void **out,
       XML_ParserFree(d.parser);
     }
     free(d.entry.path); mz_free(bytes);
+    if (status == EXR_OK && p->count > 1) {
+      size_t i;
+      qsort(p->resources, p->count, sizeof(*p->resources), resource_compare);
+      for (i = 1; i < p->count; i++)
+        if (!strcmp(p->resources[i - 1].path, p->resources[i].path)) {
+          status = exr_fail(e, EXR_DRM_LICENSE_INVALID, "Duplicate LCP encrypted resource");
+          break;
+        }
+    }
     if (status == EXR_OK && index < 0 && p->count)
       status = exr_fail(e, EXR_DRM_LICENSE_INVALID, "LCP content key is referenced but META-INF/license.lcpl is missing");
     if (status != EXR_OK || !p->count) exr_lcp_free(p); else *out = p;
@@ -497,22 +511,32 @@ exr_status exr_lcp_decode(void *context, const char *path, void **bytes, size_t 
   if (!decrypt(p->key, *bytes, size))
     return exr_fail(e, EXR_DRM_LICENSE_INVALID, "Invalid LCP ciphertext or padding: %.160s", path);
   if (r->method == 0) {
-    if (r->has_length && *size != r->length)
+    if (r->has_length && *size != r->length) {
+      mbedtls_platform_zeroize(*bytes, *size);
       return exr_fail(e, EXR_DRM_LICENSE_INVALID, "LCP OriginalLength mismatch: %.160s", path);
+    }
     return EXR_OK;
   }
-  plain = allocator ? allocator->allocate(allocator->context, r->length ? r->length : 1) : malloc(r->length ? r->length : 1);
-  if (!plain) return exr_fail(e, EXR_MEMORY, "LCP resource allocation rejected");
-  /* Raw DEFLATE, never a ZIP or zlib wrapper. Limit both output and consumption. */
-  stream.next_in = *bytes; stream.avail_in = (mz_uint)*size;
-  stream.next_out = plain; stream.avail_out = (mz_uint)(r->length ? r->length : 1);
-  if (allocator) { stream.zalloc = inflate_alloc; stream.zfree = inflate_free; stream.opaque = (void *)allocator; }
-  rc = mz_inflateInit2(&stream, -MZ_DEFAULT_WINDOW_BITS);
-  if (rc == MZ_OK) { rc = mz_inflate(&stream, MZ_FINISH); mz_inflateEnd(&stream); }
-  if (rc != MZ_STREAM_END || stream.total_out != r->length || stream.total_in != *size) {
-    if (allocator) allocator->release(allocator->context, plain); else free(plain);
-    return exr_fail(e, rc == MZ_MEM_ERROR ? EXR_MEMORY : EXR_DRM_LICENSE_INVALID,
-                    "Invalid LCP deflate stream, allocation or OriginalLength: %.150s", path);
+  {
+    size_t plain_size = r->length ? r->length : 1;
+    plain = allocator ? allocator->allocate(allocator->context, plain_size) : malloc(plain_size);
+    if (!plain) {
+      mbedtls_platform_zeroize(*bytes, *size);
+      return exr_fail(e, EXR_MEMORY, "LCP resource allocation rejected");
+    }
+    /* Raw DEFLATE, never a ZIP or zlib wrapper. Limit both output and consumption. */
+    stream.next_in = *bytes; stream.avail_in = (mz_uint)*size;
+    stream.next_out = plain; stream.avail_out = (mz_uint)plain_size;
+    if (allocator) { stream.zalloc = inflate_alloc; stream.zfree = inflate_free; stream.opaque = (void *)allocator; }
+    rc = mz_inflateInit2(&stream, -MZ_DEFAULT_WINDOW_BITS);
+    if (rc == MZ_OK) { rc = mz_inflate(&stream, MZ_FINISH); mz_inflateEnd(&stream); }
+    if (rc != MZ_STREAM_END || stream.total_out != r->length || stream.total_in != *size) {
+      mbedtls_platform_zeroize(plain, plain_size);
+      mbedtls_platform_zeroize(*bytes, *size);
+      if (allocator) allocator->release(allocator->context, plain); else free(plain);
+      return exr_fail(e, rc == MZ_MEM_ERROR ? EXR_MEMORY : EXR_DRM_LICENSE_INVALID,
+                      "Invalid LCP deflate stream, allocation or OriginalLength: %.150s", path);
+    }
   }
   mbedtls_platform_zeroize(*bytes, *size);
   if (allocator) allocator->release(allocator->context, *bytes); else free(*bytes);

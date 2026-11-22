@@ -19,17 +19,7 @@ static const char *name(const exr_node *n) {
   if (!n->name) return "";
   p = strrchr(n->name, '|'); return p ? p + 1 : n->name;
 }
-static int token(const char *s, const char *wanted) {
-  size_t n = strlen(wanted);
-  while (s && *s) {
-    const char *start;
-    while (ws((unsigned char)*s)) s++;
-    start = s;
-    while (*s && !ws((unsigned char)*s)) s++;
-    if ((size_t)(s - start) == n && !memcmp(start, wanted, n)) return 1;
-  }
-  return 0;
-}
+#define token exr_has_token
 void exr_navigation_free(exr_navigation *entries, size_t count) {
   size_t i;
   for (i = 0; i < count; i++) {

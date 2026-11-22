@@ -1,2 +1,0 @@
-正文字体：C:\Windows\Fonts\NotoSerifSC-VF.ttf
-body_font=serif

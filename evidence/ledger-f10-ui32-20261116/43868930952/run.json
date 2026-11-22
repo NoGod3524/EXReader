@@ -1,9 +1,0 @@
-{
-  "id": 43868930952,
-  "head_sha": "ff9c470b9d3325f5ba99dc728549f43e6bf2038c",
-  "status": "completed",
-  "conclusion": "failure",
-  "html_url": "https://github.com/NoGod3524/EXReader/actions/runs/43868930952",
-  "run_attempt": 1,
-  "path": ".github/workflows/ledger-f8910-winaccount.yml"
-}

@@ -1,6 +1,0 @@
-test_machine_and_load_alignment (__main__.AndroidAbiChecks.test_machine_and_load_alignment) ... ok
-
-----------------------------------------------------------------------
-Ran 1 test in 0.002s
-
-OK

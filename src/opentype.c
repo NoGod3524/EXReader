@@ -1892,11 +1892,18 @@ static void myanmar_reorder(ot_work *w) {
       if (pos == IP_BELOW && cat != M_A) { pos = IP_SUB; w->items[i].position = pos; continue; }
       w->items[i].position = pos;
     }
-    for (i = start+1; i < end; i++) {
-      ot_item key = w->items[i];
-      size_t j = i;
-      while (j > start && w->items[j-1].position > key.position) { w->items[j] = w->items[j-1]; j--; }
-      w->items[j] = key;
+    /* Stable counting sort by position, as in indic_initial: linear in the
+       syllable. Ordinary syllables sort on the stack without allocating. */
+    if (!work(w, end-start)) return;
+    {
+      ot_item stack[32], *sorted = end-start <= 32 ? stack : malloc((end-start)*sizeof(*sorted));
+      size_t counts[IP_END+1] = {0}, positions[IP_END+1], j, cursor = 0;
+      if (!sorted) { w->status = EXR_MEMORY; return; }
+      for (i = start; i < end; i++) counts[w->items[i].position]++;
+      for (j = 0; j <= IP_END; j++) { positions[j] = cursor; cursor += counts[j]; }
+      for (i = start; i < end; i++) sorted[positions[w->items[i].position]++] = w->items[i];
+      memcpy(w->items+start, sorted, (end-start)*sizeof(*sorted));
+      if (sorted != stack) free(sorted);
     }
     {
       size_t first_left = end, last_left = end;

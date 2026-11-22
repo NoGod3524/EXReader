@@ -27,6 +27,8 @@ def main():
         targets.write_text('add_library(EXReader::exr_core INTERFACE IMPORTED)\n'
                            'add_library(EXReader::exr_pdf STATIC IMPORTED)\n')
         cache_file = directory / 'CMakeCache.txt'
+        modules = directory / 'exr-modules.json'
+        modules.write_text(json.dumps({'files': {'pdf_document.c': 'pdf'}}))
 
         def write_cache(values):
             cache_file.write_text(''.join(f'{key}:BOOL={value}\n' for key, value in values.items()))
@@ -37,11 +39,16 @@ def main():
             if not inspect('reading-core', directory, directory, executable)['accepted']:
                 raise RuntimeError('Valid composition rejected')
             for key, value in [('EXR_ENABLE_PDF', 'OFF'), ('EXR_ENABLE_AUDIO', 'ON'),
-                               ('EXR_ENABLE_LIBRARY', 'ON')]:
+                               ('EXR_ENABLE_LIBRARY', 'ON'), ('EXR_ENABLE_POWERPOINT', 'ON')]:
                 write_cache(dict(cache, **{key: value}))
                 if inspect('reading-core', directory, directory, executable)['accepted']:
                     raise RuntimeError(f'Invalid component selection accepted: {key}')
             write_cache(cache)
+            configured = modules.read_bytes()
+            modules.write_text(json.dumps({'files': {'pptx.c': 'pdf'}}))
+            if inspect('reading-core', directory, directory, executable)['accepted']:
+                raise RuntimeError('Optional source accepted in the reading build')
+            modules.write_bytes(configured)
             for output in ['libwebkit2gtk.so => /lib/libwebkit2gtk.so', 'libm.so => not found',
                            'libsqlite3.so => /lib/libsqlite3.so']:
                 runtime.stdout = output
@@ -51,7 +58,7 @@ def main():
             targets.write_text('add_library(EXReader::exr_core INTERFACE IMPORTED)\n')
             if inspect('reading-core', directory, directory, executable)['accepted']:
                 raise RuntimeError('Missing PDF target accepted')
-    print(json.dumps({'validator_self_check': True, 'negative_cases': 7,
+    print(json.dumps({'validator_self_check': True, 'negative_cases': 9,
                       'reading_profile_accepted': False}))
 
 

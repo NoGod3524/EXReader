@@ -1,1 +1,0 @@
-RUN: "C:\Program Files\Git\usr\bin\gpg.exe" --batch --homedir /<workspace>/build/c4-test-keyring --armor --detach-sign --local-user 9F4FA4A91FFB167C8E3EEECE19FC78ABA24F4924 --output /<workspace>/build/c4-complete-proof/run-1/artifacts/SHA256SUMS.asc /<workspace>/build/c4-complete-proof/run-1/artifacts/SHA256SUMS

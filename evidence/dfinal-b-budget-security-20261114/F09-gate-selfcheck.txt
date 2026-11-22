@@ -1,1 +1,0 @@
-PASS shell audit gate: unnamed controls, missing/extra surfaces, collection errors and abnormal child exits fail; keyboard/speech remain missing

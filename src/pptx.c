@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "pdf_internal.h"
+#include "ppt_internal.h"
 #include "flow_internal.h"
 #include "exr/font_manager.h"
 #include <miniz.h>
@@ -37,7 +38,7 @@ typedef struct {
   unsigned flags;
   int align,line_pct,before_pct,after_pct,number,start;
 } pptx_text_style;
-typedef struct { size_t faces[32],count; exr_font *font; } pptx_text_font;
+typedef exr_ppt_text_font pptx_text_font;
 typedef struct { exr_layout *layout; } pptx_paragraph;
 typedef struct { double width; uint32_t rgba; unsigned present; } pptx_border;
 
@@ -549,12 +550,7 @@ static int pair(const exr_document *xml,size_t xfrm,const char *tag,int extent,d
   return 1;
 }
 
-static void multiply(const double a[6],const double b[6],double out[6]) {
-  double result[6]={a[0]*b[0]+a[2]*b[1],a[1]*b[0]+a[3]*b[1],
-    a[0]*b[2]+a[2]*b[3],a[1]*b[2]+a[3]*b[3],
-    a[0]*b[4]+a[2]*b[5]+a[4],a[1]*b[4]+a[3]*b[5]+a[5]};
-  memcpy(out,result,sizeof(result));
-}
+#define multiply exr_ppt_multiply
 
 static int flipped(const exr_node *node,const char *attribute) {
   const char *value=exr_node_attribute(node,attribute);
@@ -886,14 +882,7 @@ static exr_status preset(pptx_document *d,const char *name,pptx_geometry *geomet
   return EXR_OK;
 }
 
-static int text_warning(exr_buffer *list,const char *name) {
-  size_t at=0;
-  while(at<list->size) {
-    if(!strcmp(list->data+at,name)) return 1;
-    at+=strlen(list->data+at)+1;
-  }
-  return list->size<65536 && exr_append(list,name,strlen(name)+1);
-}
+#define text_warning exr_ppt_text_warning
 
 static void text_run_style(pptx_document *d,pptx_text_style *s,const exr_document *xml,size_t at) {
   const exr_node *n;
@@ -1057,98 +1046,16 @@ static const char *text_theme_family(const pptx_document *d,const char *family) 
   return typeface && *typeface ? typeface : family;
 }
 
-/* Pick each requested script/style before constructing one bounded engine font
-   set. This preserves EA and bold faces that a coverage-compacted chain omits. */
 static exr_status text_font(pptx_document *d,exr_document *model,exr_style *styles,
-                            exr_font **out,exr_error *e) {
-  pptx_text_font key={0};
-  size_t i,j,at;
-  exr_status status;
-  if(!d->font_manager) {
-    exr_font_manager_options options={0};
-    options.struct_size=sizeof(options); options.flags=EXR_FONT_MANAGER_PLATFORM_DIRECTORIES;
-    status=exr_font_manager_create(&options,&d->font_manager,e);
-    if(status!=EXR_OK) return status;
-  }
-  for(i=3;i<model->node_count;i++) {
-    const exr_node *node=&model->nodes[i];
-    const char *family=styles[i].family;
-    exr_font_chain_link *chain=NULL;
-    size_t chain_count=0;
-    if(node->kind!=EXR_NODE_TEXT) continue;
-    family=text_theme_family(d,family);
-    styles[i].family=family;
-    if(strcmp(family,"sans-serif") && !exr_font_manager_has_family(d->font_manager,family)) {
-      if(!text_warning(&d->font_fallbacks,family)) return exr_fail(e,EXR_LIMIT,"PPTX font warnings exceed budget");
-      /* Carlito preserves Calibri's advances when Office fonts are absent. */
-      if(exr_family_equal(family,"Calibri") && exr_font_manager_has_family(d->font_manager,"Carlito")) family="Carlito";
-      else family=exr_font_manager_has_family(d->font_manager,"Segoe UI") ? "Segoe UI" : "sans-serif";
-      styles[i].family=family;
-    }
-    status=exr_font_manager_chain(d->font_manager,family,styles[i].flags&3,&chain,&chain_count,e);
-    if(status!=EXR_OK) return status;
-    at=node->start;
-    while(at<node->end) {
-      uint32_t cp;
-      exr_font_pick_result pick={0};
-      if(!exr_next(model->text,model->size,&at,&cp)) { free(chain); return exr_fail(e,EXR_ENCODING,"PPTX text is not UTF-8"); }
-      pick.struct_size=sizeof(pick);
-      pick.face=SIZE_MAX;
-      for(j=0;j<chain_count;j++) if(exr_font_manager_face_covers(d->font_manager,chain[j].face,cp)) {
-        pick.face=chain[j].face; pick.step=chain[j].step; break;
-      }
-      if(cp>32 && (pick.face==SIZE_MAX || pick.step>=EXR_FONT_STEP_FALLBACK)) {
-        char warning[192];
-        snprintf(warning,sizeof(warning),"%s U+%04X%s",family,(unsigned)cp,pick.face==SIZE_MAX ? " missing" : " fallback");
-        if(!text_warning(&d->glyph_fallbacks,warning)) { free(chain); return exr_fail(e,EXR_LIMIT,"PPTX glyph warnings exceed budget"); }
-      }
-      if(pick.face==SIZE_MAX) {
-        status=exr_font_manager_pick(d->font_manager,"sans-serif",0,'?',&pick,e);
-        if(status!=EXR_OK) { free(chain); return status; }
-        if(pick.face==SIZE_MAX) { free(chain); return exr_fail(e,EXR_FONT,"PPTX has no default font"); }
-      }
-      for(j=0;j<key.count && key.faces[j]!=pick.face;j++) { }
-      if(j==key.count) {
-        if(key.count==32) { free(chain); return exr_fail(e,EXR_LIMIT,"PPTX paragraph exceeds 32 font faces"); }
-        key.faces[key.count++]=pick.face;
-      }
-    }
-    free(chain);
-  }
-  if(!key.count) { *out=NULL; return EXR_OK; }
-  for(i=0;i<d->text_font_count;i++) if(key.count==d->text_fonts[i].count &&
-      !memcmp(key.faces,d->text_fonts[i].faces,key.count*sizeof(size_t))) {
-    *out=d->text_fonts[i].font; return EXR_OK;
-  }
-  status=exr_font_manager_shared_font(d->font_manager,&d->font_files,key.faces,key.count,&key.font,e);
-  if(status!=EXR_OK) return status;
-  if(!exr_grow((void **)&d->text_fonts,&d->text_font_capacity,d->text_font_count+1,sizeof(key))) {
-    exr_font_free(key.font); return exr_fail(e,EXR_MEMORY,"PPTX font directory allocation failed");
-  }
-  d->text_fonts[d->text_font_count++]=key; *out=key.font;
-  return EXR_OK;
+                            exr_font **out,const exr_control *control,exr_error *e) {
+  size_t i;
+  for(i=3;i<model->node_count;i++) if(model->nodes[i].kind==EXR_NODE_TEXT)
+    styles[i].family=text_theme_family(d,styles[i].family);
+  return exr_ppt_select_font(&d->font_manager,&d->text_fonts,&d->text_font_count,&d->text_font_capacity,
+                             &d->font_files,&d->font_fallbacks,&d->glyph_fallbacks,model,styles,1,"PPTX",out,control,e);
 }
 
 typedef struct { pptx_text_style style; const char *family; } pptx_text_span;
-
-/* DrawingML whitespace is significant. Avoid the HTML model projection's
-   whitespace folding while retaining the engine's ordinary text-node ranges. */
-static exr_status text_model_finish(exr_document *model,exr_error *e) {
-  exr_buffer text={0};
-  size_t i;
-  for(i=3;i<model->node_count;i++) {
-    exr_node *node=&model->nodes[i];
-    const char *s=node->kind==EXR_NODE_BREAK ? "\n" : node->text;
-    node->start=text.size;
-    if(s && !exr_append(&text,s,strlen(s))) {
-      free(text.data); return exr_fail(e,EXR_LIMIT,"PPTX text projection exceeds 64 MiB");
-    }
-    node->end=text.size;
-  }
-  model->text=text.data; model->size=text.size; model->text_capacity=text.capacity;
-  for(i=0;i<3;i++) { model->nodes[i].start=0; model->nodes[i].end=text.size; }
-  return EXR_OK;
-}
 
 static exr_status text_add(exr_document *model,pptx_text_span **spans,size_t *capacity,
                            const char *text,size_t length,const pptx_text_style *style,exr_error *e) {
@@ -1182,7 +1089,7 @@ static exr_status text_add(exr_document *model,pptx_text_span **spans,size_t *ca
 static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_document *xml,size_t para,
                                  const pptx_text_style *base,double scale,double reduction,double width,
                                  double left,double *y,int wrap,const exr_control *control,exr_error *e) {
-  exr_document *model=calloc(1,sizeof(*model));
+  exr_document *model=NULL;
   exr_style *styles=NULL;
   pptx_text_span *spans=NULL;
   size_t capacity=0,i,j,k,bullet_end=3;
@@ -1197,19 +1104,10 @@ static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_do
   exr_font *font=NULL;
   exr_layout *layout=NULL;
   exr_layout_config config=exr_layout_config_defaults();
-  exr_status status=EXR_OK;
+  exr_status status=exr_ppt_paragraph_model("PPTX",&model,e);
   flow parent={0}; exr_layout viewport={0},assets={0}; exr_float_state floats={0};
   float height;
-  if(!model) return exr_fail(e,EXR_MEMORY,"PPTX paragraph allocation failed");
-  model->chapters=calloc(1,sizeof(*model->chapters));
-  if(!model->chapters) { status=exr_fail(e,EXR_MEMORY,"PPTX chapter allocation failed"); goto done; }
-  model->chapter_count=1; model->chapters[0].root=1; model->chapters[0].resource=SIZE_MAX;
-  model->chapters[0].in_spine=model->chapters[0].linear=1;
-  if(exr_model_node(model,SIZE_MAX,0,EXR_NODE_DOCUMENT,NULL,NULL,0)==SIZE_MAX ||
-     exr_model_node(model,0,0,EXR_NODE_CHAPTER,NULL,NULL,0)==SIZE_MAX ||
-     exr_model_node(model,1,0,EXR_NODE_PARAGRAPH,"p",NULL,0)==SIZE_MAX) {
-    status=exr_fail(e,EXR_LIMIT,"PPTX paragraph model allocation failed"); goto done;
-  }
+  if(status!=EXR_OK) return status;
   for(i=xml->nodes[para].first_child;i!=SIZE_MAX;i=xml->nodes[i].next_sibling)
     if(named(&xml->nodes[i],A,AS,"r")) {
       text_run_style(d,&bullet_style,xml,drawing_child(xml,i,"rPr")); break;
@@ -1240,7 +1138,7 @@ static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_do
     if(status==EXR_OK) status=text_add(model,&spans,&capacity,plain.data,plain.size,&style,e);
   }
   if(status!=EXR_OK) goto done;
-  status=text_model_finish(model,e);
+  status=exr_ppt_text_model_finish(model,"PPTX",e);
   if(status!=EXR_OK) goto done;
   styles=calloc(model->node_count,sizeof(*styles));
   if(!styles) { status=exr_fail(e,EXR_MEMORY,"PPTX styles allocation failed"); goto done; }
@@ -1256,7 +1154,7 @@ static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_do
     if(i>=3 && i<bullet_end) s->display=EXR_CSS_NONE;
   }
   styles[2].align=wrap ? base->align : 0; styles[2].indent=bullet ? 0 : (float)base->indent;
-  status=text_font(d,model,styles,&font,e);
+  status=text_font(d,model,styles,&font,control,e);
   if(status!=EXR_OK) goto done;
   if(!font) {
     size_t lines=1;
@@ -1326,19 +1224,9 @@ static exr_status text_paragraph(pptx_document *d,pptx_shape *shape,const exr_do
     }
     *y+=advance;
   }
-  if(bullet && layout->line_count && layout->glyph_count) {
-    double x=left+base->margin+base->indent;
-    float baseline=layout->glyphs[layout->lines[0].glyph_start].baseline;
-    if(!exr_grow((void **)&layout->glyphs,&layout->glyph_cap,layout->glyph_count+bullet_count,sizeof(exr_glyph)))
-      status=exr_fail(e,EXR_MEMORY,"PPTX bullet glyph allocation failed");
-    if(status==EXR_OK) for(i=0;i<bullet_count;i++) {
-      exr_glyph g={0};
-      g.glyph=bullet_glyphs[i].glyph; g.font_index=bullet_face; g.size=(float)(bullet_style.size*scale); g.color=bullet_style.color;
-      g.x=(float)x; g.baseline=baseline; g.advance=bullet_glyphs[i].advance_x;
-      g.offset_x=bullet_glyphs[i].offset_x; g.offset_y=bullet_glyphs[i].offset_y;
-      g.flags=bullet_glyphs[i].flags|(bullet_style.flags&EXR_GLYPH_UNDERLINE);
-      layout->glyphs[layout->glyph_count++]=g; x+=g.advance;
-    }
+  if(bullet) {
+    status=exr_ppt_append_bullet(layout,bullet_glyphs,bullet_count,bullet_face,bullet_style.size*scale,
+                                 bullet_style.color,bullet_style.flags,left+base->margin+base->indent,"PPTX",e);
     if(status!=EXR_OK) goto done;
   }
   *y+=base->after_pct ? base->after*base->size*scale : base->after;
@@ -1946,41 +1834,11 @@ static void warnings(const pptx_document *d,exr_error *e) {
 
 static exr_status text_draw(const pptx_shape *shape,const double matrix[6],const exr_draw_sink *sink,
                             const exr_control *control,exr_error *e) {
-  size_t i,j;
+  size_t i;
   if(!sink->path) return EXR_OK;
   for(i=0;i<shape->paragraph_count;i++) {
-    const exr_layout *layout=shape->paragraphs[i].layout;
-    for(j=0;j<layout->glyph_count;j++) {
-      const exr_glyph *g=&layout->glyphs[j];
-      exr_path_segment *path=NULL;
-      size_t count=0;
-      double local[6],combined[6];
-      exr_draw_style style=exr_draw_style_defaults();
-      exr_status status=exr_control_cancel(control,e);
-      if(status!=EXR_OK) return status;
-      if(g->flags&EXR_GLYPH_HIDDEN) continue;
-      status=exr_font_glyph_outline(layout->font,g->font_index,g->glyph,&path,&count,control,e);
-      if(status==EXR_OK) status=exr_glyph_matrix(g,local,e);
-      /* Flow already clears style bits supplied by a physical bold/italic face. */
-      if(status==EXR_OK) {
-        if(g->flags&EXR_GLYPH_ITALIC) local[2]=local[0]*0.2;
-        multiply(matrix,local,combined);
-      }
-      style.flags=EXR_DRAW_FILL; style.fill=g->color;
-      if(g->flags&EXR_GLYPH_BOLD) {
-        style.flags|=EXR_DRAW_STROKE; style.stroke=g->color; style.line.width=25;
-      }
-      if(status==EXR_OK && count) status=sink->path(sink->context,path,count,combined,&style,e);
-      free(path);
-      if(status!=EXR_OK) return status;
-      if(g->flags&EXR_GLYPH_UNDERLINE) {
-        exr_path_segment underline[2]={{EXR_PATH_MOVE,{{g->x,g->baseline+g->size*0.1}}},
-                                      {EXR_PATH_LINE,{{g->x+g->advance,g->baseline+g->size*0.1}}}};
-        style.flags=EXR_DRAW_STROKE; style.stroke=g->color; style.line.width=fmax(0.5,g->size/16);
-        status=sink->path(sink->context,underline,2,matrix,&style,e);
-        if(status!=EXR_OK) return status;
-      }
-    }
+    exr_status status=exr_ppt_layout_draw(shape->paragraphs[i].layout,matrix,sink,control,e);
+    if(status!=EXR_OK) return status;
   }
   return EXR_OK;
 }

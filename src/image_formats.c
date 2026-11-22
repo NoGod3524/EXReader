@@ -24,6 +24,7 @@
 #define EXR_IMAGE_MAX_PAGES 4096u
 #define EXR_IMAGE_MAX_EXPANDED ((size_t)256 * 1024 * 1024)
 #define EXR_IMAGE_GIF_MAX_EXPANDED ((size_t)96 * 1024 * 1024)
+#define EXR_IMAGE_MAX_INPUT ((size_t)32 * 1024 * 1024)
 
 typedef enum {
   EXR_IMAGE_UNKNOWN = 0, EXR_IMAGE_PNG, EXR_IMAGE_JPEG, EXR_IMAGE_GIF,
@@ -158,18 +159,17 @@ static exr_status webp_probe(const unsigned char *data,size_t size,uint32_t *wid
     uint32_t n = le32(data + at + 4);
     if(!memcmp(data + at,"ANMF",4)) { *pages = 0; break; }
     if(n > size - at - 8) break;
-    at += 8 + n + (n & 1u);
+    at += 8 + (size_t)n + (n & 1u);
   }
   if(!*pages) {
-    WebPData bitstream = {data,size}; WebPAnimDecoderOptions options; WebPAnimInfo info; WebPAnimDecoder *decoder;
-    if(!WebPAnimDecoderOptionsInit(&options)) return exr_fail(e,EXR_MEMORY,"WebP decoder option allocation failed");
-    options.color_mode = MODE_RGBA; options.use_threads = 0;
-    decoder = WebPAnimDecoderNew(&bitstream,&options);
-    if(!decoder) return exr_fail(e,EXR_FORMAT,"Invalid WebP animation");
-    if(!WebPAnimDecoderGetInfo(decoder,&info)) { WebPAnimDecoderDelete(decoder); return exr_fail(e,EXR_FORMAT,"Invalid WebP animation info"); }
-    *pages = info.frame_count ? info.frame_count : 1;
-    w = (int)info.canvas_width; h = (int)info.canvas_height;
-    WebPAnimDecoderDelete(decoder);
+    WebPData bitstream = {data,size};
+    WebPDemuxer *demux = WebPDemux(&bitstream);
+    if(!demux) return exr_fail(e,EXR_FORMAT,"Invalid WebP animation");
+    *pages = WebPDemuxGetI(demux,WEBP_FF_FRAME_COUNT);
+    if(!*pages) *pages = 1;
+    w = (int)WebPDemuxGetI(demux,WEBP_FF_CANVAS_WIDTH);
+    h = (int)WebPDemuxGetI(demux,WEBP_FF_CANVAS_HEIGHT);
+    WebPDemuxDelete(demux);
   }
   *width = (uint32_t)w; *height = (uint32_t)h;
   return image_limits(*width,*height,*pages,e);
@@ -179,6 +179,7 @@ static exr_status webp_decode(const unsigned char *data,size_t size,size_t page,
   status = webp_probe(data,size,&width,&height,&pages,e);
   if(status != EXR_OK) return status;
   if(page >= pages) return exr_fail(e,EXR_LIMIT,"WebP page index exceeds frame count");
+  if(exr_control_cancel(control,e) != EXR_OK) return EXR_CANCELLED;
   bytes = (size_t)width * height * 4;
   if(pages > 1 && (bytes > EXR_IMAGE_MAX_EXPANDED / pages))
     return exr_fail(e,EXR_LIMIT,"WebP animation expand exceeds the decode budget");
@@ -243,33 +244,49 @@ static TIFF *tiff_open(const unsigned char *data,size_t size,tiff_memory *memory
   if(!tif) exr_fail(e,EXR_FORMAT,"Invalid TIFF header or directory");
   return tif;
 }
-static exr_status tiff_probe(const unsigned char *data,size_t size,uint32_t *width,uint32_t *height,size_t *pages,exr_error *e) {
-  tiff_memory memory; TIFF *tif = tiff_open(data,size,&memory,e); tdir_t count,i;
-  if(!tif) return e ? e->code : EXR_FORMAT;
-  count = TIFFNumberOfDirectories(tif);
-  if(!count) { TIFFClose(tif); return exr_fail(e,EXR_FORMAT,"TIFF contains no directories"); }
-  if(count > EXR_IMAGE_MAX_PAGES) { TIFFClose(tif); return exr_fail(e,EXR_LIMIT,"TIFF exceeds 4096 pages"); }
+static exr_status tiff_inspect(TIFF *tif,size_t page,uint32_t *width,uint32_t *height,size_t *pages,
+                               uint32_t **sizes,exr_error *e) {
+  tdir_t count=TIFFNumberOfDirectories(tif),i;
+  uint32_t selected_width=0,selected_height=0,*dimensions=NULL;
+  exr_status status=EXR_OK;
+  if(!count) return exr_fail(e,EXR_FORMAT,"TIFF contains no directories");
+  if(count > EXR_IMAGE_MAX_PAGES) return exr_fail(e,EXR_LIMIT,"TIFF exceeds 4096 pages");
+  if(sizes) {
+    dimensions=malloc((size_t)count*2*sizeof(*dimensions));
+    if(!dimensions) return exr_fail(e,EXR_MEMORY,"Image page size allocation failed");
+  }
   for(i = 0; i < count; i++) {
     uint32_t w = 0,h = 0;
-    if(!TIFFSetDirectory(tif,i) || !TIFFGetField(tif,TIFFTAG_IMAGEWIDTH,&w) || !TIFFGetField(tif,TIFFTAG_IMAGELENGTH,&h)) {
-      TIFFClose(tif); return exr_fail(e,EXR_FORMAT,"Invalid TIFF directory dimensions");
-    }
-    if(image_limits(w,h,1,e) != EXR_OK) { TIFFClose(tif); return e ? e->code : EXR_LIMIT; }
-    if(i == 0) { *width = w; *height = h; }
+    if((i && !TIFFReadDirectory(tif)) || !TIFFGetField(tif,TIFFTAG_IMAGEWIDTH,&w) ||
+       !TIFFGetField(tif,TIFFTAG_IMAGELENGTH,&h))
+      status=exr_fail(e,EXR_FORMAT,"Invalid TIFF directory dimensions");
+    else status=image_limits(w,h,1,e);
+    if(status!=EXR_OK) break;
+    if(i==page) { selected_width=w;selected_height=h; }
+    if(dimensions) { dimensions[2*i]=w;dimensions[2*i+1]=h; }
   }
-  TIFFClose(tif); *pages = count;
-  return image_limits(*width,*height,*pages,e);
+  if(status==EXR_OK && page>=count) status=exr_fail(e,EXR_LIMIT,"TIFF page index exceeds directory count");
+  if(status!=EXR_OK) { free(dimensions);return status; }
+  *width=selected_width;*height=selected_height;*pages=count;
+  if(sizes) *sizes=dimensions;
+  return EXR_OK;
+}
+static exr_status tiff_probe(const unsigned char *data,size_t size,size_t page,uint32_t *width,uint32_t *height,
+                             size_t *pages,uint32_t **sizes,exr_error *e) {
+  tiff_memory memory;TIFF *tif=tiff_open(data,size,&memory,e);
+  if(!tif) return e ? e->code : EXR_FORMAT;
+  exr_status status=tiff_inspect(tif,page,width,height,pages,sizes,e);
+  TIFFClose(tif);
+  return status;
 }
 static exr_status tiff_decode(const unsigned char *data,size_t size,size_t page,const exr_control *control,exr_bitmap *out,exr_error *e) {
-  tiff_memory memory; TIFF *tif; uint32_t w = 0,h = 0; size_t bytes; exr_status status = EXR_OK;
-  if(page > EXR_IMAGE_MAX_PAGES) return exr_fail(e,EXR_LIMIT,"TIFF page index exceeds 4096");
+  tiff_memory memory; TIFF *tif; uint32_t w = 0,h = 0; size_t bytes,pages; exr_status status;
   tif = tiff_open(data,size,&memory,e);
   if(!tif) return e ? e->code : EXR_FORMAT;
-  if(!TIFFSetDirectory(tif,(tdir_t)page) || !TIFFGetField(tif,TIFFTAG_IMAGEWIDTH,&w) || !TIFFGetField(tif,TIFFTAG_IMAGELENGTH,&h)) {
-    TIFFClose(tif); return exr_fail(e,EXR_LIMIT,"TIFF page index exceeds directory count or has invalid dimensions");
-  }
-  status = image_limits(w,h,1,e);
+  status = tiff_inspect(tif,page,&w,&h,&pages,NULL,e);
   if(status == EXR_OK && exr_control_cancel(control,e) != EXR_OK) status = EXR_CANCELLED;
+  if(status == EXR_OK && page+1!=pages && !TIFFSetDirectory(tif,(tdir_t)page))
+    status = exr_fail(e,EXR_FORMAT,"Invalid TIFF directory dimensions");
   bytes = (size_t)w * h * 4;
   if(status == EXR_OK) {
     out->pixels = malloc(bytes);
@@ -327,10 +344,15 @@ static exr_status avif_probe(const unsigned char *data,size_t size,uint32_t *wid
 }
 static exr_status avif_decode(const unsigned char *data,size_t size,size_t page,const exr_control *control,exr_bitmap *out,exr_error *e) {
   avifDecoder *decoder; avifRGBImage rgb; avifResult result; size_t i; uint32_t w,h; exr_status status;
-  if(page > EXR_IMAGE_MAX_PAGES) return exr_fail(e,EXR_LIMIT,"AVIF page index exceeds 4096");
   decoder = avif_open(data,size,e);
   if(!decoder) return e ? e->code : EXR_FORMAT;
-  if(page >= (size_t)decoder->imageCount) { avifDecoderDestroy(decoder); return exr_fail(e,EXR_LIMIT,"AVIF page index exceeds frame count"); }
+  if(!decoder->imageCount) { status=exr_fail(e,EXR_FORMAT,"AVIF contains no frames");goto done; }
+  status=image_limits(decoder->image->width,decoder->image->height,(size_t)decoder->imageCount,e);
+  if(status!=EXR_OK) goto done;
+  if(page >= (size_t)decoder->imageCount) { status=exr_fail(e,EXR_LIMIT,"AVIF page index exceeds frame count");goto done; }
+  if(decoder->imageCount > 1 && (size_t)decoder->image->width * decoder->image->height * 4 > EXR_IMAGE_MAX_EXPANDED / (size_t)decoder->imageCount) {
+    status = exr_fail(e,EXR_LIMIT,"AVIF expanded frames exceed the decode budget"); goto done;
+  }
   result = AVIF_RESULT_OK;
   for(i = 0; i <= page; i++) {
     if(exr_control_cancel(control,e) != EXR_OK) { status = EXR_CANCELLED; goto done; }
@@ -356,11 +378,9 @@ done:
 }
 #endif
 
-static exr_status probe_page(const unsigned char *data,size_t size,uint32_t *width,uint32_t *height,size_t *pages,exr_error *e) {
-  image_kind kind;
-  if(!data || !size || !width || !height || !pages) return exr_fail(e,EXR_ARGUMENT,"Invalid image header input/output");
+static exr_status probe_page(image_kind kind,const unsigned char *data,size_t size,
+                             uint32_t *width,uint32_t *height,size_t *pages,exr_error *e) {
   *width = *height = 0; *pages = 0;
-  kind = exr_image_format_detect(data,size);
   switch(kind) {
     case EXR_IMAGE_PNG:
     case EXR_IMAGE_JPEG:
@@ -380,7 +400,7 @@ static exr_status probe_page(const unsigned char *data,size_t size,uint32_t *wid
 #endif
     case EXR_IMAGE_TIFF:
 #if defined(EXR_ENABLE_IMAGE_TIFF)
-      return tiff_probe(data,size,width,height,pages,e);
+      return tiff_probe(data,size,0,width,height,pages,NULL,e);
 #else
       return unavailable("TIFF",e);
 #endif
@@ -395,54 +415,86 @@ static exr_status probe_page(const unsigned char *data,size_t size,uint32_t *wid
   }
 }
 
+/* Entry check shared by the public image calls: one encoded-size limit and a
+   fresh stb allocation budget, whose exhaustion exr_image_budget_status reports. */
+static exr_status image_input(const void *data,size_t size,exr_error *e) {
+  if(!data || !size) return exr_fail(e,EXR_ARGUMENT,"Invalid image header input/output");
+  if(size > EXR_IMAGE_MAX_INPUT) return exr_fail(e,EXR_LIMIT,"Encoded image exceeds 32 MiB");
+  exr_image_budget_reset();
+  return EXR_OK;
+}
 exr_status exr_image_page_count(const void *data,size_t size,size_t *count,exr_error *e) {
-  uint32_t w,h;
+  uint32_t w,h; exr_status status;
   if(!count) return exr_fail(e,EXR_ARGUMENT,"Missing image page count output");
   *count = 0;
-  return probe_page(data,size,&w,&h,count,e);
-}
-exr_status exr_image_page_dimensions(const void *data,size_t size,size_t page,uint32_t *width,uint32_t *height,exr_error *e) {
-  size_t pages;
-  exr_status status;
-  if(!width || !height) return exr_fail(e,EXR_ARGUMENT,"Missing image dimension output");
-  *width = *height = 0;
-  status = probe_page(data,size,width,height,&pages,e);
-  if(status != EXR_OK) return status;
-  if(page >= pages) { *width = *height = 0; return exr_fail(e,EXR_LIMIT,"Image page index exceeds page count"); }
-  if(page) {
-    /* Re-probe walking directories/frames for codecs whose pages can differ. */
-    uint32_t w = 0,h = 0; size_t n = 0;
-#if defined(EXR_ENABLE_IMAGE_TIFF)
-    if(exr_image_format_detect(data,size) == EXR_IMAGE_TIFF) {
-      tiff_memory memory; TIFF *tif = tiff_open(data,size,&memory,e);
-      if(!tif) return e ? e->code : EXR_FORMAT;
-      if(!TIFFSetDirectory(tif,(tdir_t)page) || !TIFFGetField(tif,TIFFTAG_IMAGEWIDTH,&w) || !TIFFGetField(tif,TIFFTAG_IMAGELENGTH,&h)) {
-        TIFFClose(tif); return exr_fail(e,EXR_LIMIT,"TIFF page index exceeds directory count");
-      }
-      TIFFClose(tif); *width = w; *height = h; return image_limits(w,h,1,e);
-    }
-#endif
-    status = probe_page(data,size,&w,&h,&n,e);
-    if(status == EXR_OK && page < n) { *width = w; *height = h; }
-  }
+  status = image_input(data,size,e);
+  if(status == EXR_OK)
+    status=exr_image_budget_status(probe_page(exr_image_format_detect(data,size),data,size,&w,&h,count,e),e);
   return status;
 }
+/* Every page's size in one pass. GIF, WebP and AVIF frames share one canvas;
+   TIFF directories are read once, in order. */
+exr_status exr_image_page_sizes(const void *data,size_t size,uint32_t **sizes,size_t *count,exr_error *e) {
+  uint32_t w=0,h=0;size_t pages=0,i;exr_status status;image_kind kind;
+  if(!sizes || !count) return exr_fail(e,EXR_ARGUMENT,"Missing image page size output");
+  *sizes = NULL; *count = 0;
+  status = image_input(data,size,e);
+  if(status != EXR_OK) return status;
+  kind=exr_image_format_detect(data,size);
+#if defined(EXR_ENABLE_IMAGE_TIFF)
+  if(kind==EXR_IMAGE_TIFF) return tiff_probe(data,size,0,&w,&h,count,sizes,e);
+#endif
+  status=exr_image_budget_status(probe_page(kind,data,size,&w,&h,&pages,e),e);
+  if(status != EXR_OK) return status;
+  *sizes = malloc(pages * 2 * sizeof(**sizes));
+  if(!*sizes) return exr_fail(e,EXR_MEMORY,"Image page size allocation failed");
+  for(i = 0; i < pages; i++) { (*sizes)[2 * i] = w; (*sizes)[2 * i + 1] = h; }
+  *count = pages;
+  return EXR_OK;
+}
+exr_status exr_image_page_dimensions(const void *data,size_t size,size_t page,uint32_t *width,uint32_t *height,exr_error *e) {
+  size_t pages;exr_status status;image_kind kind;
+  if(!width || !height) return exr_fail(e,EXR_ARGUMENT,"Missing image dimension output");
+  *width = *height = 0;
+  status = image_input(data,size,e);
+  if(status != EXR_OK) return status;
+  kind=exr_image_format_detect(data,size);
+#if defined(EXR_ENABLE_IMAGE_TIFF)
+  if(kind==EXR_IMAGE_TIFF) return tiff_probe(data,size,page,width,height,&pages,NULL,e);
+#endif
+  status=exr_image_budget_status(probe_page(kind,data,size,width,height,&pages,e),e);
+  if(status!=EXR_OK) return status;
+  if(page >= pages) { *width = *height = 0; return exr_fail(e,EXR_LIMIT,"Image page index exceeds page count"); }
+  return status;
+}
+static exr_status decode_page(const void *data,size_t size,size_t page,const exr_control *control,exr_bitmap *out,exr_error *e);
 exr_status exr_image_decode_page_control(const void *data,size_t size,size_t page,const exr_control *control,exr_bitmap *out,exr_error *e) {
-  uint32_t width = 0,height = 0; size_t pages = 0; exr_status status; image_kind kind;
+  exr_status status;
   if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing image output");
   memset(out,0,sizeof(*out));
-  status = probe_page(data,size,&width,&height,&pages,e);
+  status = image_input(data,size,e);
+  if(status == EXR_OK) status = exr_image_budget_status(decode_page(data,size,page,control,out,e),e);
+  return status;
+}
+static exr_status decode_page(const void *data,size_t size,size_t page,const exr_control *control,exr_bitmap *out,exr_error *e) {
+  uint32_t width=0,height=0;size_t pages=0;exr_status status;image_kind kind=exr_image_format_detect(data,size);
+#if defined(EXR_ENABLE_IMAGE_WEBP)
+  if(kind==EXR_IMAGE_WEBP) return webp_decode(data,size,page,control,out,e);
+#endif
+#if defined(EXR_ENABLE_IMAGE_TIFF)
+  if(kind==EXR_IMAGE_TIFF) return tiff_decode(data,size,page,control,out,e);
+#endif
+#if defined(EXR_ENABLE_IMAGE_AVIF)
+  if(kind==EXR_IMAGE_AVIF) return avif_decode(data,size,page,control,out,e);
+#endif
+  status = probe_page(kind,data,size,&width,&height,&pages,e);
   if(status != EXR_OK) return status;
   if(page >= pages) return exr_fail(e,EXR_LIMIT,"Image page index exceeds page count");
   if(exr_control_cancel(control,e) != EXR_OK) return EXR_CANCELLED;
-  kind = exr_image_format_detect(data,size);
   /* Reject a multi-frame expansion before the codec allocates its frame
-     array. GIF compositing needs every preceding frame; WebP animation keeps
-     one canvas but walks preceding frames. */
+     array. GIF compositing needs every preceding frame. */
   if(kind == EXR_IMAGE_GIF && pages > 1 && (size_t)width * height * 4 > EXR_IMAGE_GIF_MAX_EXPANDED / pages)
     return exr_fail(e,EXR_LIMIT,"GIF expanded frames exceed the 96 MiB decode budget");
-  if(kind == EXR_IMAGE_WEBP && pages > 1 && (size_t)width * height * 4 > EXR_IMAGE_MAX_EXPANDED / pages)
-    return exr_fail(e,EXR_LIMIT,"WebP expanded frames exceed the decode budget");
   switch(kind) {
     case EXR_IMAGE_PNG:
     case EXR_IMAGE_JPEG:
@@ -451,32 +503,12 @@ exr_status exr_image_decode_page_control(const void *data,size_t size,size_t pag
       unsigned char *pixels = stbi_load_from_memory(data,(int)size,&w,&h,&channels,4);
       if(!pixels) return exr_fail(e,EXR_FORMAT,"Image decoding failed");
       if((size_t)w * h * 4 > EXR_IMAGE_MAX_EXPANDED) { stbi_image_free(pixels); return exr_fail(e,EXR_LIMIT,"Image expand exceeds decode budget"); }
-      out->pixels = malloc((size_t)w * h * 4);
-      if(!out->pixels) { stbi_image_free(pixels); return exr_fail(e,EXR_MEMORY,"Image pixel allocation failed"); }
-      memcpy(out->pixels,pixels,(size_t)w * h * 4);
-      stbi_image_free(pixels);
+      out->pixels=exr_image_take_pixels(pixels,(size_t)w*h*4);
+      if(!out->pixels) return exr_fail(e,EXR_FORMAT,"Image decoder returned incomplete pixels");
       out->width = (uint32_t)w; out->height = (uint32_t)h; out->stride = (uint32_t)w * 4; out->channels = 4;
       return EXR_OK;
     }
     case EXR_IMAGE_GIF: return gif_decode(data,size,page,control,out,e);
-    case EXR_IMAGE_WEBP:
-#if defined(EXR_ENABLE_IMAGE_WEBP)
-      return webp_decode(data,size,page,control,out,e);
-#else
-      return unavailable("WebP",e);
-#endif
-    case EXR_IMAGE_TIFF:
-#if defined(EXR_ENABLE_IMAGE_TIFF)
-      return tiff_decode(data,size,page,control,out,e);
-#else
-      return unavailable("TIFF",e);
-#endif
-    case EXR_IMAGE_AVIF:
-#if defined(EXR_ENABLE_IMAGE_AVIF)
-      return avif_decode(data,size,page,control,out,e);
-#else
-      return unavailable("AVIF",e);
-#endif
     default: return exr_fail(e,EXR_FORMAT,"Unsupported image format");
   }
 }

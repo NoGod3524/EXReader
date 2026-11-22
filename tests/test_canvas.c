@@ -127,6 +127,22 @@ static void group_churn(void) {
   OK(exr_canvas_end_layer(c,1,&error));pixel(exr_canvas_bitmap(c),4,4,255,255,255);
   exr_canvas_free(c);
 }
+static void sparse_isolated_group(void) {
+  exr_canvas_config config={0};exr_canvas *c=NULL;exr_path_segment paint[5];
+  exr_draw_style style=exr_draw_style_defaults();size_t before;
+  config.width=256;config.height=128;config.background=0xffffffff;
+  OK(exr_canvas_create(&config,&c,&error));
+  OK(exr_canvas_begin_group(c,1,EXR_BLEND_NORMAL,EXR_GROUP_ISOLATED|EXR_GROUP_KNOCKOUT|EXR_GROUP_RGB,&error));
+  rectangle(paint,220,100,1,1);style.flags=EXR_DRAW_FILL;style.fill=0x3366ccff;
+  OK(exr_canvas_path(c,paint,5,NULL,&style,&error));
+  before=c->work.used;
+  OK(exr_canvas_end_layer(c,1,&error));
+  CHECK(c->work.used-before==2);
+  pixel(exr_canvas_bitmap(c),220,100,0x33,0x66,0xcc);
+  pixel(exr_canvas_bitmap(c),219,100,255,255,255);
+  pixel(exr_canvas_bitmap(c),220,99,255,255,255);
+  exr_canvas_free(c);
+}
 static int never_cancel(void *ctx) { (void)ctx; return 0; }
 static void path_cache_and_solid_clip(int full_span) {
   /* Compare cached path reuse + solid-clip elision against an uncached reference canvas
@@ -239,7 +255,7 @@ static void fractional_full_span_clip(void) {
 }
 int main(void) {
   fractional_clip_rows(); fractional_full_span_clip(); backgrounds(); clip_and_ownership();
-  stroke_and_images(); drawing_sink(); failures(); group_churn();
+  stroke_and_images(); drawing_sink(); failures(); group_churn(); sparse_isolated_group();
   path_cache_and_solid_clip(0); path_cache_and_solid_clip(1);
   printf("%u native canvas checks passed\n",checks); return 0;
 }

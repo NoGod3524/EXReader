@@ -312,7 +312,7 @@ static exr_status edit(const void *data,size_t size,size_t page_index,const char
   size_t page_count=0,n=0,match=SIZE_MAX,i; uint32_t page_object_id,page_generation,annotation=0,generation=0,ap=0; exr_status status;
   w.status=EXR_OK; w.error=e; w.control=control; w.input_size=size;
   status=exr_control_poll(control,EXR_STAGE_READ,0,size,e); if(status!=EXR_OK) return status;
-  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status; exr_pdf_control(w.file,control);
   status=exr_pdf_pages(w.file,&pages,&page_count,e); if(status!=EXR_OK) goto done;
   if(page_index>=page_count) { status=exr_fail(e,EXR_ARGUMENT,"PDF annotation page is out of range"); goto done; }
   status=slots(w.file,pages[page_index].annotations,id,control,&items,&n,&match,e); if(status!=EXR_OK) goto done;
@@ -343,11 +343,10 @@ static exr_status edit(const void *data,size_t size,size_t page_index,const char
     items[match].remove=1;
     /* Some files only keep Popup -> Parent, without the reverse link. */
     for(i=0;i<n;i++) if(!items[i].remove) {
-      uint32_t subtype,parent; size_t length; const unsigned char *name; const exr_pdf_value *v;
+      uint32_t subtype,parent; const exr_pdf_value *v;
       v=exr_pdf_value_at(w.file,items[i].value); if(!v || v->kind!=EXR_PDF_DICT) continue;
       status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,items[i].value,"Subtype"),&subtype,e); if(status!=EXR_OK) goto done;
-      v=exr_pdf_value_at(w.file,subtype); name=exr_pdf_bytes(w.file,subtype,&length);
-      if(!v || v->kind!=EXR_PDF_NAME || length!=5 || !name || memcmp(name,"Popup",5)) continue;
+      if(!exr_pdf_name_is(w.file,subtype,"Popup")) continue;
       if(popup!=EXR_PDF_NONE && items[i].value==popup) { items[i].remove=1; continue; }
       status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,items[i].value,"Parent"),&parent,e); if(status!=EXR_OK) goto done;
       if(parent==items[match].value) items[i].remove=1;
@@ -494,7 +493,7 @@ exr_status exr_pdf_metadata_write(const void *data,size_t size,const exr_metadat
   }
   w.status=EXR_OK; w.error=e; w.control=control; w.input_size=size;
   status=exr_control_poll(control,EXR_STAGE_READ,0,size,e); if(status!=EXR_OK) return status;
-  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status;
+  status=exr_pdf_open(data,size,&w.file,e); if(status!=EXR_OK) return status; exr_pdf_control(w.file,control);
   if(!count) { status=output(&w,data,out,out_size); goto done; }
   status=permission(w.file,e); if(status!=EXR_OK) goto done;
   status=exr_pdf_resolve(w.file,exr_pdf_get(w.file,exr_pdf_root(w.file),"AcroForm"),&form,e); if(status!=EXR_OK) goto done;
@@ -537,11 +536,12 @@ done:
 
 /* AcroForm uses the same bounded object arena and revision writer as annotation
    editing. IDs, never arena pointers, survive lazy indirect-object resolution. */
-typedef struct { uint32_t id,raw,inherit[8],*widgets; size_t widget_count; } form_entry;
+typedef struct { uint32_t id,raw; } form_reference;
+typedef struct { uint32_t id,raw,inherit[8]; form_reference *widgets; size_t widget_count; } form_entry;
 typedef struct {
   exr_pdf_file *file; exr_pdf_form_options options; exr_error *error;
   exr_pdf_form_field *fields; form_entry *entries; size_t count,widgets,text_bytes,nodes;
-  unsigned char *seen; uint32_t *pages; uint32_t acroform; unsigned issues;
+  unsigned char *seen; uint32_t *pages; uint32_t acroform,acroform_raw; unsigned issues;
 } form_reader;
 static const char *const form_inherited[]={"FT","Ff","V","DV","DA","Q","MaxLen","Opt"};
 static exr_status form_resolve(form_reader *r,uint32_t raw,uint32_t *id) {
@@ -553,10 +553,7 @@ static exr_status form_get(form_reader *r,uint32_t dict,const char *key,uint32_t
 static int form_kind(form_reader *r,uint32_t id,exr_pdf_kind kind) {
   const exr_pdf_value *v=exr_pdf_value_at(r->file,id); return v && v->kind==kind;
 }
-static int form_name_is(form_reader *r,uint32_t id,const char *name) {
-  size_t n; const unsigned char *s=exr_pdf_bytes(r->file,id,&n);
-  return form_kind(r,id,EXR_PDF_NAME) && n==strlen(name) && !memcmp(s,name,n);
-}
+static int form_name_is(form_reader *r,uint32_t id,const char *name) { return exr_pdf_name_is(r->file,id,name); }
 static exr_status form_charge(form_reader *r,size_t n) {
   if(n>r->options.max_text_bytes-r->text_bytes) return exr_fail(r->error,EXR_LIMIT,"PDF form text budget exceeded");
   r->text_bytes+=n; return EXR_OK;
@@ -646,7 +643,7 @@ done:
 }
 static exr_status form_widget(form_reader *r,size_t field_index,uint32_t raw,uint32_t id) {
   exr_pdf_form_field *field=&r->fields[field_index]; form_entry *entry=&r->entries[field_index];
-  exr_pdf_field_widget widget={0},*items; uint32_t *ids,rect,at,ap,normal,state; size_t i=0; exr_status status;
+  exr_pdf_field_widget widget={0},*items; form_reference *ids; uint32_t rect,at,ap,normal,state; size_t i=0; exr_status status;
   if(r->widgets==r->options.max_widgets) return exr_fail(r->error,EXR_LIMIT,"PDF form widget budget exceeded");
   widget.page=r->pages[id]==UINT32_MAX ? SIZE_MAX : r->pages[id];
   status=form_get(r,id,"Rect",&rect); if(status!=EXR_OK) return status;
@@ -684,7 +681,7 @@ static exr_status form_widget(form_reader *r,size_t field_index,uint32_t raw,uin
   field->widgets=items;
   ids=realloc(entry->widgets,(entry->widget_count+1)*sizeof(*ids));
   if(!ids) { free((void *)widget.on_state); return exr_fail(r->error,EXR_MEMORY,"PDF widget identity allocation failed"); }
-  entry->widgets=ids; ids[entry->widget_count++]=id; items[field->widget_count++]=widget; r->widgets++;
+  entry->widgets=ids; ids[entry->widget_count++]=(form_reference){id,raw}; items[field->widget_count++]=widget; r->widgets++;
   if(!form_kind(r,raw,EXR_PDF_REF)) field->issues|=EXR_PDF_FORM_DIRECT;
   return EXR_OK;
 }
@@ -774,6 +771,10 @@ exr_pdf_form_options exr_pdf_form_defaults(void) {
 }
 static exr_status form_scan(form_reader *r) {
   exr_pdf_page_info *pages=NULL; size_t count=0,i,annotations=0; uint32_t fields,at,value,inherited[8]; exr_status status;
+  r->acroform_raw=exr_pdf_get(r->file,exr_pdf_root(r->file),"AcroForm");
+  status=form_resolve(r,r->acroform_raw,&r->acroform);
+  if(status!=EXR_OK || r->acroform==EXR_PDF_NONE || form_kind(r,r->acroform,EXR_PDF_NULL)) return status;
+  if(!form_kind(r,r->acroform,EXR_PDF_DICT)) return exr_fail(r->error,EXR_FORMAT,"PDF AcroForm is not a dictionary");
   r->fields=calloc(r->options.max_fields,sizeof(*r->fields)); r->entries=calloc(r->options.max_fields,sizeof(*r->entries));
   r->seen=calloc(EXR_PDF_MAX_VALUES,1); r->pages=malloc(EXR_PDF_MAX_VALUES*sizeof(*r->pages));
   if(!r->fields || !r->entries || !r->seen || !r->pages) return exr_fail(r->error,EXR_MEMORY,"PDF form snapshot allocation failed");
@@ -791,9 +792,6 @@ static exr_status form_scan(form_reader *r) {
       if(id!=EXR_PDF_NONE) { if(r->pages[id]!=UINT32_MAX) { status=exr_fail(r->error,EXR_FORMAT,"PDF annotation appears on multiple pages"); goto done; } r->pages[id]=(uint32_t)i; } at=next;
     }
   }
-  status=form_get(r,exr_pdf_root(r->file),"AcroForm",&r->acroform); if(status!=EXR_OK) goto done;
-  if(r->acroform==EXR_PDF_NONE || form_kind(r,r->acroform,EXR_PDF_NULL)) goto done;
-  if(!form_kind(r,r->acroform,EXR_PDF_DICT)) { status=exr_fail(r->error,EXR_FORMAT,"PDF AcroForm is not a dictionary"); goto done; }
   status=form_get(r,r->acroform,"XFA",&value); if(status!=EXR_OK) goto done; if(value!=EXR_PDF_NONE) r->issues|=EXR_PDF_FORM_XFA;
   status=form_get(r,r->acroform,"Fields",&fields); if(status!=EXR_OK) goto done;
   if(!form_kind(r,fields,EXR_PDF_ARRAY)) { status=exr_fail(r->error,EXR_FORMAT,"PDF AcroForm Fields is not an array"); goto done; }
@@ -882,7 +880,7 @@ static exr_status form_change_valid(form_reader *r,size_t index,const exr_pdf_fo
       return exr_fail(r->error,EXR_ARGUMENT,"PDF radio group forbids turning all widgets off");
   }
   for(i=0;i<f->widget_count;i++) {
-    uint32_t mk,rotation; status=form_get(r,r->entries[index].widgets[i],"MK",&mk); if(status==EXR_OK) status=form_get(r,mk,"R",&rotation);
+    uint32_t mk,rotation; status=form_get(r,r->entries[index].widgets[i].id,"MK",&mk); if(status==EXR_OK) status=form_get(r,mk,"R",&rotation);
     if(status==EXR_OK) status=form_uint(r,rotation,&q);
     if(status!=EXR_OK) return status;
     if(q) return exr_fail(r->error,EXR_UNSUPPORTED,"Rotated PDF form widget is unsupported for writing");
@@ -1002,10 +1000,11 @@ static void form_value_write(pdf_writer *w,const exr_pdf_form_field *f,const exr
 static void form_widget_write(pdf_writer *w,form_reader *r,size_t field_index,size_t widget_index,
   uint32_t off,uint32_t on,const exr_pdf_form_change *change) {
   static const char *const skip[]={"AP","AS","V","I"},*const normal_skip[]={"N"};
-  const exr_pdf_form_field *f=&r->fields[field_index]; uint32_t id=r->entries[field_index].widgets[widget_index],object,generation,ap;
+  const exr_pdf_form_field *f=&r->fields[field_index];
+  form_reference widget=r->entries[field_index].widgets[widget_index]; uint32_t id=widget.id,object,generation,ap;
   int merged=id==r->entries[field_index].id,button=f->kind==EXR_PDF_FIELD_CHECKBOX || f->kind==EXR_PDF_FIELD_RADIO;
   int selected=button && change->value_count && !strcmp(change->values[0],f->widgets[widget_index].on_state);
-  if(w->status==EXR_OK) w->status=exr_pdf_object_identity(w->file,id,&object,&generation,w->error);
+  if(w->status==EXR_OK) w->status=exr_pdf_resolved_identity(w->file,widget.raw,id,&object,&generation,w->error);
   if(w->status!=EXR_OK) return;
   begin_object(w,object,generation); dictionary(w,id,skip,merged ? 4 : 2);
   if(merged) form_value_write(w,f,change);
@@ -1021,7 +1020,7 @@ static void form_widget_write(pdf_writer *w,form_reader *r,size_t field_index,si
 exr_status exr_pdf_form_write(const void *data,size_t size,const exr_pdf_form_change *changes,size_t count,
   const exr_pdf_form_write_options *options,void **out,size_t *out_size,exr_error *e) {
   pdf_writer w={0}; form_reader r={0}; exr_pdf_form_write_options config=exr_pdf_form_write_defaults(); exr_pdf_revision_info revision;
-  size_t i,j,k,*indices=NULL,next=0,work=0; uint32_t object,generation,root,root_generation,form_raw; exr_status status;
+  size_t i,j,k,*indices=NULL,next=0,work=0; uint32_t object,generation,root,root_generation; exr_status status;
   static const char *const value_skip[]={"V","I"},*const catalog_skip[]={"AcroForm"};
   if(out) *out=NULL;
   if(out_size) *out_size=0;
@@ -1062,16 +1061,15 @@ exr_status exr_pdf_form_write(const void *data,size_t size,const exr_pdf_form_ch
       form_widget_write(&w,&r,index,j,off,on,&changes[i]);
     }
     if(w.status!=EXR_OK) { status=w.status; goto done; }
-    for(k=0;k<entry->widget_count;k++) if(entry->widgets[k]==entry->id) break;
+    for(k=0;k<entry->widget_count;k++) if(entry->widgets[k].id==entry->id) break;
     if(k==entry->widget_count) {
-      status=exr_pdf_object_identity(w.file,entry->id,&object,&generation,e); if(status!=EXR_OK) goto done;
+      status=exr_pdf_resolved_identity(w.file,entry->raw,entry->id,&object,&generation,e); if(status!=EXR_OK) goto done;
       begin_object(&w,object,generation); dictionary(&w,entry->id,value_skip,2); form_value_write(&w,f,&changes[i]); literal(&w," >>\nendobj\n");
     }
   }
   if(w.status!=EXR_OK) { status=w.status; goto done; }
-  form_raw=exr_pdf_get(w.file,exr_pdf_root(w.file),"AcroForm");
-  if(form_kind(&r,form_raw,EXR_PDF_REF)) {
-    status=exr_pdf_object_identity(w.file,form_raw,&object,&generation,e); if(status!=EXR_OK) goto done;
+  if(form_kind(&r,r.acroform_raw,EXR_PDF_REF)) {
+    status=exr_pdf_resolved_identity(w.file,r.acroform_raw,r.acroform,&object,&generation,e); if(status!=EXR_OK) goto done;
     /* Partial edits cannot clear another field's appearance-generation request. */
     begin_object(&w,object,generation); dictionary(&w,r.acroform,NULL,0); literal(&w," >>\nendobj\n");
   } else {

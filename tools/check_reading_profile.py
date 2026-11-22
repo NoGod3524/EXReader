@@ -24,14 +24,26 @@ def inspect(profile, build, sdk, executable):
             key, value = line.split('=', 1)
             values[key.split(':', 1)[0]] = value
     on = ['EXR_ENABLE_PDF', 'EXR_ENABLE_PDF_CRYPTO', 'EXR_ENABLE_PDF_JPX', 'EXR_ENABLE_ICC',
-          'EXR_ENABLE_IMAGE_WEBP', 'EXR_ENABLE_IMAGE_TIFF', 'EXR_ENABLE_IMAGE_AVIF']
+          'EXR_ENABLE_IMAGE_WEBP', 'EXR_ENABLE_IMAGE_TIFF', 'EXR_ENABLE_IMAGE_AVIF',
+          'EXR_ENABLE_DOCUMENT_EXPORT']
     off = ['EXR_ENABLE_AUDIO', 'EXR_ENABLE_MP3', 'EXR_ENABLE_AAC',
            'EXR_ENABLE_TEXT_INDEX', 'EXR_BUILD_TEXT_INDEX', 'EXR_ENABLE_PDF_EDIT',
+           'EXR_ENABLE_DOCX_EDIT', 'EXR_ENABLE_OPDS', 'EXR_ENABLE_POWERPOINT', 'EXR_ENABLE_SEVENZ',
            'EXR_BUILD_SHARED_COMPAT', 'EXR_BUILD_JNI', 'EXR_BUILD_TOOLS', 'EXR_BUILD_TESTS']
     expected = dict.fromkeys(on, 'ON') | dict.fromkeys(off, 'OFF')
     expected['EXR_ENABLE_LIBRARY'] = 'ON' if profile == 'reading-library' else 'OFF'
     problems = [f'{key}: expected {value}, observed {values.get(key)}'
                 for key, value in expected.items() if values.get(key) != value]
+    optional = json.loads(Path(__file__).with_name('layers.json').read_text(encoding='utf-8'))['optional_files']
+    try:
+        configured = json.loads((build / 'exr-modules.json').read_text(encoding='utf-8'))['files']
+        for option, sources in optional.items():
+            if expected[option] == 'OFF':
+                leaked = sorted(configured.keys() & set(sources))
+                if leaked:
+                    problems.append(f'{option}: optional sources configured: {", ".join(leaked)}')
+    except (OSError, ValueError, KeyError, AttributeError):
+        problems.append('Missing or invalid configured source inventory')
     targets = (sdk / 'lib/cmake/EXReader/EXReaderTargets.cmake').read_text(encoding='utf-8')
     exported = set(re.findall(r'add_library\(EXReader::(\w+)\s', targets))
     if not {'exr_core', 'exr_pdf'} <= exported:

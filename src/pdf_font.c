@@ -19,10 +19,7 @@ static uint32_t resolve(font_reader *r,uint32_t id) {
   return out;
 }
 static uint32_t get(font_reader *r,uint32_t id,const char *key) { return resolve(r,exr_pdf_get(r->file,id,key)); }
-static int name_is(font_reader *r,uint32_t id,const char *name) {
-  size_t n; const unsigned char *data=exr_pdf_bytes(r->file,id,&n);
-  return data && exr_pdf_value_at(r->file,id)->kind==EXR_PDF_NAME && n==strlen(name) && !memcmp(data,name,n);
-}
+static int name_is(font_reader *r,uint32_t id,const char *name) { return exr_pdf_name_is(r->file,id,name); }
 static int integer(font_reader *r,uint32_t id,uint32_t maximum,uint32_t *out) {
   const exr_pdf_value *v;
   id=resolve(r,id); v=exr_pdf_value_at(r->file,id);

@@ -56,18 +56,18 @@ python3 tests/check_reading_licenses.py
 | Expat | libexpat/libexpat `R_2_9_0` | `6e8ce7b5…0700cec27` | 总是 | `expat` | `expat/COPYING` → `expat/COPYING`；根 `COPYING` → `expat/upstream-root/COPYING` | `31b15de8…39b25e87`；`73cc92f8…17d651e` | 是 | 是 |
 | miniz | richgel999/miniz `3.1.2` | `98468f89…20e2e9fb` | 总是 | `miniz` | `LICENSE` → `miniz/LICENSE` | `0115478d…a01646b3` | 是 | 是 |
 | stb_image | nothings/stb `2c980bb5…` | `9a955b1b…ba515` | 总是 | 头文件编入 `exr_graphics`（构建目录私有补丁副本） | `LICENSE` → `stb/LICENSE` | `bebfe904…6cff63` | 是 | 是 |
-| libwebp | webmproject/libwebp `v1.5.0` | `668c9aba…0f37` | `EXR_ENABLE_IMAGE_WEBP` | `webp`、`webpdemux`、`sharpyuv` | `COPYING` → `libwebp/COPYING`；`PATENTS` → `libwebp/PATENTS` | `5aec868f…e13acf`；`cc3273e0…f5023c` | 是 | 是 |
+| libwebp | webmproject/libwebp `v1.5.0` | `668c9aba…0f37` | `EXR_ENABLE_IMAGE_WEBP` | `webpdemux`、`webpdecoder` | `COPYING` → `libwebp/COPYING`；`PATENTS` → `libwebp/PATENTS` | `5aec868f…e13acf`；`cc3273e0…f5023c` | 是 | 是 |
 | zlib | madler/zlib `v1.3.1` | `17e88863…14d05c` | `EXR_ENABLE_IMAGE_TIFF` | `zlibstatic` | `LICENSE` → `zlib/LICENSE`；不再安装到 libtiff 目录 | `845efc77…95753243` | 是 | 是 |
 | libtiff | libsdl-org/libtiff `v4.7.0` | `8f568a0d…111e16` | `EXR_ENABLE_IMAGE_TIFF` | `tiff` | `LICENSE.md` → `libtiff/LICENSE.md` | `0780558a…e380d` | 是 | 是 |
 | libaom | arthenica/libaom `af3dc9aa…`（上游 `CHANGELOG` 实测 3.15.2） | `a606215e…baa62a` | `EXR_ENABLE_IMAGE_AVIF` | `aom`（仅解码器） | `LICENSE` → `libaom/LICENSE`；`PATENTS` → `libaom/PATENTS` | `4764a286…de7f2`；`661fb8e5…96e61` | 是 | 是 |
 | libavif | AOMediaCodec/libavif `v1.2.0` | `2182f490…7d8c` | `EXR_ENABLE_IMAGE_AVIF` | `avif` | `LICENSE` → `libavif/LICENSE` | `165abf92…8216f9` | 是 | 是 |
-| Mbed TLS 加密子集 | Mbed-TLS/mbedtls `mbedtls-3.6.7` | `807f0a1c…055fcc` | `EXR_ENABLE_PDF` 且 `EXR_ENABLE_PDF_CRYPTO` | `exr_crypto`（7 个上游源文件）；ARC4 改编自 2.28.10，位于 `src/pdf_crypto.c` | `LICENSE` → `mbedtls/LICENSE` | `9b405ef4…2ad09b` | 是 | 是 |
+| Mbed TLS 加密子集 | Mbed-TLS/mbedtls `mbedtls-3.6.7` | `807f0a1c…055fcc` | `EXR_ENABLE_PDF` 且 `EXR_ENABLE_PDF_CRYPTO`，或 `EXR_ENABLE_LCP` | `exr_crypto`（7 个上游源文件）；ARC4 改编自 2.28.10，位于 `src/pdf_crypto.c` | `LICENSE` → `mbedtls/LICENSE` | `9b405ef4…2ad09b` | 是 | 是 |
 | LittleCMS | mm2/Little-CMS `lcms2.19.1` | `267705e2…a709` | `EXR_ENABLE_ICC` | `exr_lcms` | `LICENSE` → `lcms/LICENSE` | `6dbd6043…484d31` | 是 | 是 |
 | SQLite | sqlite.org 3.54.0 amalgamation | `68e913b0…5aa4d` | `EXR_ENABLE_LIBRARY` 或 `EXR_BUILD_TEXT_INDEX` | `exr_sqlite` | 仓库 `licenses/sqlite-public-domain.txt` → `sqlite/sqlite-public-domain.txt`；与实际 `sqlite3.c` 开头 dedication 及 `sqlite3.h` 版本核对 | 完整固定值见检查器 | 否 | 是 |
 | minimp3 | lieff/minimp3 `ea99364f…` | `5628166e…768f34` | `EXR_ENABLE_AUDIO` 且 `EXR_ENABLE_MP3` | — | `LICENSE` → `minimp3/LICENSE`（未构建，未核对） | 未固定 | 否 | 否 |
 | FAAD2 | knik0/faad2 `521d1059…` | `9284bd9c…dfd8` | `EXR_ENABLE_AUDIO` 且 `EXR_ENABLE_AAC` | — | `COPYING`、仓库 `licenses/faad2-notice.txt` → `faad2/`（未构建，未核对） | 未固定 | 否 | 否 |
 | Unicode 数据派生表 | UCD 17.0.0 与 3.2（各生成器固定输入散列） | — | 总是 | 生成的 C 表 | 仓库 `tests/fixtures/unicode/LICENSE.txt` → `unicode/LICENSE.txt` | `e7a93b00…bc53d96` | 是 | 是 |
-| Argyll 默认 CMYK 配置文件 | 仓库 `src/profiles/default_cmyk.icc.zlib`（`20f63c91…53b2`） | — | `EXR_ENABLE_ICC` | 内嵌生成头 | 仓库 `licenses/default-cmyk-profile.txt` → `default-cmyk-profile.txt` | `45d3e9b1…80e1da` | 是 | 是 |
+| Argyll 默认 CMYK 配置文件 | 仓库 `src/profiles/default_cmyk.icc.zlib`（`8f37c1dc…e892642`） | — | `EXR_ENABLE_ICC` | 内嵌生成头 | 仓库 `licenses/default-cmyk-profile.txt` → `default-cmyk-profile.txt` | `45d3e9b1…80e1da` | 是 | 是 |
 | Adobe Glyph List | adobe-type-tools/agl-aglfn `4036a9ca…` | — | 数据用于 `EXR_ENABLE_PDF`；文件总是安装 | `src/pdf_font_data.h` | 仓库 `licenses/adobe-glyph-list.txt` → `pdf-font-data/adobe-glyph-list.txt` | `c85f2b0d…6f3aa7` | 是 | 是 |
 | PDF.js 编码与度量事实 | mozilla/pdf.js `81525fd4…` | — | 同上 | `src/pdf_font_data.h` | 仓库 `licenses/pdfjs.txt` → `pdf-font-data/pdfjs.txt` | `8d1fb642…15ca53` | 是 | 是 |
 | PostScript 计算器操作名 | PDF 32000-1 表 42 | — | `EXR_ENABLE_PDF` | `src/pdf_calculator.c` | 仅 `THIRD_PARTY_NOTICES.md` 段落 | — | 是 | 是 |
@@ -83,8 +83,8 @@ python3 tests/check_reading_licenses.py
 
 - **仓库源码许可证**：EXReader 自身 C 代码为 MIT（根目录 `LICENSE`）。这只说明仓库代码，
   不代表链接产物中第三方部分的许可证。
-- **实际链接组件**：以云端 stage 为准。`reading-core` 链接 12 个私有归档：
-  `aom avif expat exr_crypto exr_lcms freetype miniz sharpyuv tiff webp webpdemux zlibstatic`，
+- **链接组件**按每次构建的 stage 核对。当前 `reading-core` 配置链接 11 个私有归档
+  `aom avif expat exr_crypto exr_lcms freetype miniz tiff webpdemux webpdecoder zlibstatic`，
   另有头文件形式编入的 stb_image；`reading-library` 额外链接 `exr_sqlite`。
 - **可选功能**：两个 preset 的 `EXR_ENABLE_AUDIO`、`EXR_ENABLE_MP3`、`EXR_ENABLE_AAC`
   均为 OFF，实际构建层无 `audio`，`_deps` 中没有 `minimp3`、`faad2`，stage 中也没有它们的

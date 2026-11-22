@@ -239,6 +239,45 @@ static void devicen(const char *directory) {
     }
     free(c.data);
   }
+  /* Indirect DeviceN colorants force file->strings reallocs during resolve();
+     duplicate detection must re-fetch name bytes instead of keeping stale pointers. */
+  { unsigned duplicate; static const unsigned gray[]={128,128,128};
+    for(duplicate=0;duplicate<2;duplicate++) {
+      buffer b={0},c={0}; size_t offset[43],xref; char refs[512]="",domain[256]="",values[256]="",body[256]="{",row[256];
+      unsigned i; exr_fixed_document *d; exr_bitmap image={0};
+      for(i=0;i<32;i++) {
+        snprintf(row,sizeof(row),"%u 0 R ",11+i); strcat(refs,row);
+        strcat(domain,"0 1 "); strcat(values,".5 "); if(i) strcat(body," pop");
+      }
+      strcat(body," }");
+      add(&c,"/S cs "); add(&c,values); add(&c,"scn 0 0 8 8 re f");
+      add(&b,"%PDF-1.7\n");
+      object(&b,offset,1,"<< /Type /Catalog /Pages 2 0 R >>");
+      object(&b,offset,2,"<< /Type /Pages /Count 1 /Kids [3 0 R] >>");
+      snprintf(row,sizeof(row),"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 64 32] /Contents 4 0 R /Resources << /ColorSpace << /S 5 0 R >> >> >>");
+      object(&b,offset,3,row);
+      stream(&b,offset,4,"",c.data,c.size);
+      snprintf(function,sizeof(function),"[/DeviceN [%s] /DeviceGray 10 0 R]",refs);
+      object(&b,offset,5,function);
+      object(&b,offset,6,"null"); object(&b,offset,7,"null"); object(&b,offset,8,"null"); object(&b,offset,9,"null");
+      snprintf(function,sizeof(function),"<< /FunctionType 4 /Domain [%s] /Range [0 1] /Length %zu >>\nstream\n%s\nendstream",domain,strlen(body),body);
+      object(&b,offset,10,function);
+      for(i=0;i<32;i++) {
+        unsigned tag=(duplicate && i==31) ? 0 : i;
+        char pad[112]; memset(pad,'a'+(tag%26),sizeof(pad)-1); pad[sizeof(pad)-1]=0;
+        snprintf(row,sizeof(row),"/Ink%02u_%s",tag,pad);
+        object(&b,offset,11+i,row);
+      }
+      xref=b.size; add(&b,"xref\n0 43\n0000000000 65535 f \n");
+      for(i=1;i<43;i++) { snprintf(row,sizeof(row),"%010zu 00000 n \n",offset[i]); add(&b,row); }
+      snprintf(row,sizeof(row),"trailer\n<< /Size 43 /Root 1 0 R >>\nstartxref\n%zu\n%%%%EOF\n",xref); add(&b,row);
+      scenario=duplicate ? "DeviceN indirect duplicate colorant after strings realloc" : "DeviceN 32 indirect colorants across strings realloc";
+      d=opened(&b);
+      if(duplicate) { CHECK(exr_fixed_render(d,0,1,NULL,&image,&error)==EXR_FORMAT && !image.pixels); }
+      else { image=rendered(d); pixel(&image,4,4,gray,1); exr_bitmap_free(&image); }
+      exr_fixed_free(d); free(b.data); free(c.data);
+    }
+  }
 }
 static void bad_functions(void) {
   static const char *invalid[]={

@@ -1,6 +1,0 @@
-{
-  "reason": "Use existing sanitizer benchmark mode; root CMake excludes MSVC from its sanitizer branch",
-  "file": "<workspace>\\evidence\\runtime-20261109\\local\\a\\CTestTestfile.cmake",
-  "before": "add_test(\"native-convert-benchmark\" \"C:/Python314/python.exe\" \"<workspace>/tests/check_convert_benchmark.py\" \"<workspace>/evidence/runtime-20261109/local/a/exreader-convert.exe\" \"<workspace>/evidence/runtime-20261109/local/a/convert-corpus\" \"<workspace>/evidence/runtime-20261109/local/a/convert-benchmark-work\" \"<workspace>/evidence/runtime-20261109/local/a/native-convert-benchmark.json\")",
-  "after": "add_test(\"native-convert-benchmark\" \"C:/Python314/python.exe\" \"<workspace>/tests/check_convert_benchmark.py\" \"<workspace>/evidence/runtime-20261109/local/a/exreader-convert.exe\" \"<workspace>/evidence/runtime-20261109/local/a/convert-corpus\" \"<workspace>/evidence/runtime-20261109/local/a/convert-benchmark-work\" \"<workspace>/evidence/runtime-20261109/local/a/native-convert-benchmark.json\" \"--instrumented\")"
-}

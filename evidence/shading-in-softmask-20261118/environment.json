@@ -1,8 +1,0 @@
-{
-  "base_commit": "6e11e8c95b57beb77c56ffcc83a9331a1b50cbb2",
-  "platform": "Windows-11-10.0.26200-SP0",
-  "python": "3.14.7",
-  "qpc_frequency_hz": 10000000,
-  "compiler": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r1) 16.2.0",
-  "power_scheme": "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)"
-}

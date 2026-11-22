@@ -1,10 +1,47 @@
 /* SPDX-License-Identifier: MIT */
 #include "exr/formats.h"
+#include "base_internal.h"
+
+exr_sevenz_options exr_sevenz_options_defaults(void) {
+  exr_sevenz_options options={sizeof(options),128u*1024*1024,16u*1024*1024}; return options;
+}
+
+#ifdef EXR_NO_SEVENZ
+exr_status exr_sevenz_open(const char *path,const exr_sevenz_options *options,exr_sevenz **out,exr_error *e) {
+  (void)options;
+  if(out) *out=NULL;
+  if(!path || !out) return exr_fail(e,EXR_ARGUMENT,"Missing 7Z path or output");
+  return exr_fail(e,EXR_UNSUPPORTED,"7Z reading is disabled in this build");
+}
+exr_status exr_sevenz_open_source(const exr_source *source,const exr_sevenz_options *options,
+  exr_sevenz **out,exr_error *e) {
+  if(out) *out=NULL;
+  if(!out || !source || !source->read_at ||
+     (options && (options->struct_size<sizeof(*options) || !options->max_unpack_size || !options->max_header_size)))
+    return exr_fail(e,EXR_ARGUMENT,"Invalid 7Z open request");
+  return exr_fail(e,EXR_UNSUPPORTED,"7Z reading is disabled in this build");
+}
+const exr_sevenz_entry *exr_sevenz_entries(const exr_sevenz *z,size_t *count) {
+  (void)z;
+  if(count) *count=0;
+  return NULL;
+}
+exr_status exr_sevenz_extract(exr_sevenz *z,size_t index,void **out,size_t *size,exr_error *e) {
+  (void)index;
+  if(out) *out=NULL;
+  if(size) *size=0;
+  if(!z || !out || !size) return exr_fail(e,EXR_ARGUMENT,"Invalid 7Z file index or output");
+  return exr_fail(e,EXR_UNSUPPORTED,"7Z reading is disabled in this build");
+}
+void exr_sevenz_free(exr_sevenz *z) { (void)z; }
+
+#else
 #include "lzma_internal.h"
 #include <miniz.h>
 
 #define SEVENZ_ITEMS 10000
 #define SEVENZ_CODERS 4
+#define SEVENZ_SOLID_CACHE_LIMIT (8u*1024*1024)
 typedef struct { const unsigned char *data; size_t size,at; exr_status status; } reader;
 typedef struct { uint32_t value; int defined; } digest;
 typedef struct {
@@ -28,6 +65,7 @@ struct exr_sevenz {
   exr_sevenz_options options;
   streams main;
   exr_sevenz_entry *entries; size_t *sub_index,count;
+  unsigned char *solid; size_t solid_folder,solid_size;
 };
 
 static const unsigned char *take(reader *r,size_t n) {
@@ -336,10 +374,7 @@ void exr_sevenz_free(exr_sevenz *z) {
   if(z->source.release) z->source.release(z->source.context);
   streams_free(&z->main);
   if(z->entries) for(i=0;i<z->count;i++) free((void *)z->entries[i].path);
-  free(z->entries); free(z->sub_index); free(z);
-}
-exr_sevenz_options exr_sevenz_options_defaults(void) {
-  exr_sevenz_options options={sizeof(options),128u*1024*1024,16u*1024*1024}; return options;
+  free(z->entries); free(z->sub_index); free(z->solid); free(z);
 }
 exr_status exr_sevenz_open_source(const exr_source *source,const exr_sevenz_options *options,
   exr_sevenz **out,exr_error *e) {
@@ -417,7 +452,7 @@ const exr_sevenz_entry *exr_sevenz_entries(const exr_sevenz *z,size_t *count) {
   return z ? z->entries : NULL;
 }
 exr_status exr_sevenz_extract(exr_sevenz *z,size_t index,void **out,size_t *size,exr_error *e) {
-  unsigned char *data=NULL; size_t n=0; const substream *sub; exr_status status;
+  unsigned char *data=NULL; size_t n=0,member_size; const substream *sub; exr_status status;
   if(out) *out=NULL;
   if(size) *size=0;
   if(!z || !out || !size || index>=z->count || z->entries[index].is_directory)
@@ -430,12 +465,35 @@ exr_status exr_sevenz_extract(exr_sevenz *z,size_t index,void **out,size_t *size
     *out=data; return exr_fail(e,EXR_OK,"");
   }
   sub=&z->main.subs[z->sub_index[index]];
-  status=decode_folder(z,&z->main,sub->folder,z->options.max_unpack_size,&data,&n,e);
-  if(status!=EXR_OK) return status;
-  if(sub->offset>n || sub->size>n-sub->offset ||
-     (sub->crc.defined && sub->crc.value!=crc(data+(size_t)sub->offset,(size_t)sub->size))) {
-    free(data); return exr_fail(e,EXR_FORMAT,"7Z member size or CRC mismatch");
+  if(z->solid && z->solid_folder!=sub->folder) {
+    /* The held block must not overlap another folder's decode buffers. */
+    free(z->solid); z->solid=NULL;
   }
-  memmove(data,data+(size_t)sub->offset,(size_t)sub->size);
-  *out=data; *size=(size_t)sub->size; return exr_fail(e,EXR_OK,"");
+  if(z->solid) { data=z->solid; n=z->solid_size; }
+  else {
+    status=decode_folder(z,&z->main,sub->folder,z->options.max_unpack_size,&data,&n,e);
+    if(status!=EXR_OK) return status;
+  }
+  if(sub->offset>n || sub->size>n-sub->offset ||
+     (sub->crc.defined && sub->crc.value!=crc(data+(size_t)sub->offset,(size_t)sub->size)))
+    status=exr_fail(e,EXR_FORMAT,"7Z member size or CRC mismatch");
+  else status=exr_control_cancel(&z->source.control,e);
+  if(status!=EXR_OK) { if(!z->solid) free(data); return status; }
+  member_size=(size_t)sub->size;
+  if(z->solid || (n<=SEVENZ_SOLID_CACHE_LIMIT && z->main.folders[sub->folder].sub_count>1)) {
+    unsigned char *member=malloc(member_size ? member_size : 1);
+    if(member) {
+      memcpy(member,data+(size_t)sub->offset,member_size);
+      z->solid=data; z->solid_folder=sub->folder; z->solid_size=n;
+      data=member;
+    } else z->solid=NULL; /* Give the caller the decoded allocation if the copy fails. */
+  }
+  if(!z->solid && member_size!=n) {
+    unsigned char *shrunk;
+    memmove(data,data+(size_t)sub->offset,member_size);
+    shrunk=realloc(data,member_size ? member_size : 1);
+    if(shrunk) data=shrunk;
+  }
+  *out=data; *size=member_size; return exr_fail(e,EXR_OK,"");
 }
+#endif

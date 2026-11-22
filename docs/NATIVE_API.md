@@ -910,7 +910,7 @@ ID / xml:id 按 CFI 字符规则转义，索引失配时可在同章寻找唯一
 
 `exr_text_index_replace(index,source,provider,context,control,...)` 在一个事务内替换整个来源。provider 按递增 ordinal 返回 `exr_text_part{id,text,size}`，found=0 结束；空序列清空该来源。最多 100000 个分段，分段 ID 必须唯一，文字/ID 上限与 put 相同。输入仅借用到下一次回调或 replace 返回，宿主可在下一次回调释放上一个章节，不必同时保留整本书。
 
-旧 FTS posting 和正文与新分段一并提交。provider 错误、错误详情中报告的失败、重复 ID、非法 found、UTF-8/字节限制、取消或提交失败均回滚，保留整个旧来源。最终进度回调仍可取消提交。回调不能重入当前 index；其他来源不受替换影响。现有 WAL 索引的打开不再申请写事务，只在初始化时加锁并再次核对 schema，因此独立连接可在重建期间打开并读取旧快照。
+旧 FTS posting 和正文与新分段一并提交。provider 错误、错误详情中报告的失败、重复 ID、非法 found、UTF-8/字节限制、取消或提交失败均回滚，保留整个旧来源。最终进度回调仍可取消提交。回调不能重入当前 index；其他来源不受替换影响。初始化和为旧 schema 1 文件首次补齐部分索引时会申请写事务。日常打开 WAL 索引只读取 schema，独立连接可在重建期间打开并读取旧快照。
 
 安装后的 `exreader-search-example input.epub index.sqlite literal-query` 演示按阅读顺序逐章加载、回收上一章、原子重建与最多 20 条搜索结果。source 使用调用方文件路径，part 采用示例自选的序号；这是宿主选择，不是索引模型对标识的限制。原始 C 接口可接任意格式和宿主解析器。
 
@@ -1459,8 +1459,7 @@ CSS `hyphens` 支持 auto/manual/none/inherit，默认 manual。auto 与已配�
 缓存分页器可在错误修正后重试。无可用断点时保留现有字素紧急换行/裁剪策略。
 
 内置英文规则：`exr_hyphenator_create_builtin(left,right,auto_default,...)` 内嵌 hyph-en-us
-(Kuiken 2005，`data/hyph-en-us.pat.txt`，许可见 `data/hyph-en-us.LICENSE.txt`)，语言键 `en`、
-`en-us`；其他语言（含 zh）不断词。left/right=0 时两侧至少 3 个字素。`auto_default=0` 时
+(Kuiken 2005，`data/hyph-en-us.pat.txt`，许可见 `data/hyph-en-us.LICENSE.txt`)，规则注册在 `en`；`en-US` 等英语标签通过 RFC 4647 回退复用，其他语言（含 zh）不断词。left/right=0 时两侧至少 3 个字素。`auto_default=0` 时
 仍只有显式 `hyphens:auto` 才断词；非零时未声明 `hyphens` 的文字在其语言与所在块语言
 都有规则时按 auto 处理，显式 manual/none 与中文段落不受影响。撇号、连字符、en dash
 两侧不产生断点。断点处只生成 U+2010 的 GENERATED 字形（start==end），逻辑文本不变。

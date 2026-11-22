@@ -123,6 +123,11 @@ static void direct_axial_mask_parity(void) {
      "q\n0 3 48 25 re W* n\nq\n2 4 44 22 re W* n\n/M sh\nQ\nQ",
      "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [12 24 12 8] /Extend [false false] /Function << /FunctionType 2 /Domain [0 1] /C0 [1 0 0] /C1 [0 0 1] /N 1 >> >>",
      "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [12 24 12 8] /Extend [true true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.1 0.8 0.4] /C1 [0.9 0.2 0.5] /N 1 >> >>"},
+    /* Full-canvas clip after a narrow clip intersects (no-op); it must not clear the narrow clip. */
+    {"Luminosity","/BC [0 0 0]","","/I true","0 0 48 32",
+     "q\n10 8 20 12 re W* n\n0 0 48 32 re W* n\n/M sh\nQ",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [10 30 10 2] /Extend [true true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.2 0.2 0.2] /C1 [1 1 1] /N 1 >> >>",
+     "<< /ShadingType 2 /ColorSpace /DeviceRGB /Coords [10 30 10 2] /Extend [true true] /Function << /FunctionType 2 /Domain [0 1] /C0 [0.9 0.2 0.1] /C1 [0.1 0.3 0.9] /N 1 >> >>"},
   };
   const double scales[]={1.0,5.0/3.0};
   size_t c,s;unsigned w;

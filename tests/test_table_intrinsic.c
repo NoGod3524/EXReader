@@ -120,15 +120,19 @@ static void plain_pair_equivalence(exr_font *f) {
     "text-align:center", "width:30%;padding:1px", "text-indent:100px", "font-size:13.25px"};
   const char *phrases[]={"AV AVA LA Reading portable books. More words!", "A AAA AAAAA AAA A.",
     "Some words, other words: and more words?", "AV 123 AAA; 456 AVA.",
-    " AV AVA ", "AV  AVA   LA", "AV&#160;AVA", "AV.AVA and 1,234", "! AV ? AVA", "AV&#173;AVA"};
+    " AV AVA ", "AV  AVA   LA", "AV&#160;AVA", "AV.AVA and 1,234", "! AV ? AVA", "AV&#173;AVA",
+    "AV AVA LA AV AVA LA AV AVA LA AV AVA LA AV AVA LA AV AVA LA AV AVA LA AV AVA LA"};
   size_t a,b;
   for(a=0;a<sizeof(styles)/sizeof(*styles);a++) for(b=0;b<sizeof(phrases)/sizeof(*phrases);b++) {
     exr_document *docs[2]={NULL,NULL};exr_layout *layouts[2]={NULL,NULL};exr_layout_config cfg=config();
     size_t variant,pages[2],page;char html[2048];
     for(variant=0;variant<2;variant++) {
+      const char *open=variant ? "<span>" : "",*close=variant ? "</span>" : "";
+      int repeated=b==sizeof(phrases)/sizeof(*phrases)-1;
       int length=snprintf(html,sizeof(html),"<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><style>td{%s}</style></head>"
-        "<body><table style=\"width:210px\"><tr><td>%s%s%s</td><td>Peer</td></tr></table></body></html>",
-        styles[a],variant ? "<span>" : "",phrases[b],variant ? "</span>" : "");
+        "<body><table style=\"width:210px\"><tr><td>%s%s%s</td><td%s>%s%s%s</td></tr></table></body></html>",
+        styles[a],open,phrases[b],close,repeated ? " style=\"font-size:29px\"" : "",repeated ? open : "",
+        repeated ? phrases[b] : "Peer",repeated ? close : "");
       CHECK(length>0 && (size_t)length<sizeof(html));
       OK(exr_document_open_memory(EXR_HTML,html,(size_t)length,&docs[variant],&error));
       OK(exr_layout_create_ex(docs[variant],f,&cfg,&layouts[variant],&error));

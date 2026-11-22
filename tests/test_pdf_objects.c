@@ -52,7 +52,7 @@ static void basic(const char *dir,const char *name) {
   value=get(file,dict,"I64"); CHECK(exr_pdf_value_at(file,value)->u.integer==INT64_MAX);
   value=get(file,dict,"Min"); CHECK(exr_pdf_value_at(file,value)->u.integer==INT64_MIN);
   value=get(file,dict,"Null"); CHECK(exr_pdf_value_at(file,value)->kind==EXR_PDF_NULL);
-  value=get(file,dict,"Bool"); CHECK(exr_pdf_value_at(file,value)->kind==EXR_PDF_BOOL && exr_pdf_value_at(file,value)->u.number==1);
+  value=get(file,dict,"Bool"); CHECK(exr_pdf_value_at(file,value)->kind==EXR_PDF_BOOL && exr_pdf_value_at(file,value)->u.integer==1);
   array=get(file,dict,"Values"); v=exr_pdf_value_at(file,array); CHECK(v->kind==EXR_PDF_ARRAY);
   value=v->first; v=exr_pdf_value_at(file,value); CHECK(v->kind==EXR_PDF_INT && v->u.integer==-2);
   value=v->next; v=exr_pdf_value_at(file,value); CHECK(v->kind==EXR_PDF_REAL && v->u.number==0.5);
@@ -162,7 +162,8 @@ static void serialization(void) {
   const char *locales[]={"de_DE.UTF-8","de-DE","German_Germany.1252","fr_FR.UTF-8"};
   exr_buffer first={0},second={0},real={0}; char *saved; size_t size,i;
   OK(exr_pdf_content_ops(input,sizeof(input)-1,serialize_operand,&first,NULL,&error)); size=first.size;
-  CHECK(strstr(first.data,"/Bin <00FF2380>") && strstr(first.data,"/Name /A#00#23#2F") && strstr(first.data,"/Annots /Keep"));
+  CHECK(strstr(first.data,"/Bin <00FF2380>") && strstr(first.data,"/Name /A#00#23#2F") &&
+    strstr(first.data,"/Annots /Keep") && strstr(first.data,"0.00000000125"));
   CHECK(exr_append(&first," Check",6));
   OK(exr_pdf_content_ops(first.data,first.size,serialize_operand,&second,NULL,&error));
   CHECK(size==second.size && !memcmp(first.data,second.data,size));
@@ -196,10 +197,42 @@ static void content_operations(void) {
   CHECK(exr_pdf_content_ops(NULL,1,count_operation,&step,NULL,&error)==EXR_ARGUMENT);
   CHECK(exr_pdf_content_ops(sample,sizeof(sample)-1,NULL,NULL,NULL,&error)==EXR_ARGUMENT);
 }
+static exr_status inspect_token_boundary(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *e) {
+  unsigned char expected[257];
+  (void)context; (void)e;
+  CHECK(!strcmp(name,"Check") && count==2);
+  memset(expected,'x',255); expected[255]='+';
+  bytes(arena,values[0],expected,256);
+  memset(expected,0xaa,256); expected[256]=0xb0;
+  bytes(arena,values[1],expected,257);
+  return EXR_OK;
+}
+static exr_status inspect_predicted_rgb(void *context,exr_pdf_file *arena,const char *name,const uint32_t *values,size_t count,exr_error *e) {
+  static const unsigned char expected[]={250,10,200,5,250,100,20,5,150,3,222,10,2,4,250,1,70,5};
+  const unsigned char *decoded; size_t size;
+  (void)context;
+  CHECK(!strcmp(name,"BI") && count==1);
+  OK(exr_pdf_stream_data(arena,values[0],&decoded,&size,e));
+  CHECK(size==sizeof(expected) && !memcmp(decoded,expected,size));
+  return EXR_OK;
+}
+static void content_boundaries(void) {
+  /* Two RGB rows, with modulo-256 horizontal differences. */
+  static const char rgb[]="BI /W 3 /H 2 /CS /RGB /BPC 8 /F /Fl /DP << /Predictor 2 /Colors 3 /Columns 3 >> ID "
+    "\x78\x9c\xfb\xc5\x75\x82\xfb\xc3\x1c\x7e\x6e\x23\xe6\x7b\x5c\xff\xd5\x3e\xfc\x77\xe2\x06\x00\x4c\xf7\x07\xfc" " EI";
+  char tokens[784]; size_t at=0;
+  tokens[at++]='(';
+  memset(tokens+at,'x',255); at+=255;
+  memcpy(tokens+at,"\\053) <",7); at+=7;
+  memset(tokens+at,'a',512); at+=512;
+  memcpy(tokens+at,"b> Check",8); at+=8;
+  OK(exr_pdf_content_ops(tokens,at,inspect_token_boundary,NULL,NULL,&error));
+  OK(exr_pdf_content_ops(rgb,sizeof(rgb)-1,inspect_predicted_rgb,NULL,NULL,&error));
+}
 int main(int argc,char **argv) {
   const char *bad[]={"object-header-duplicate","object-header-offset","object-header-order","object-header-tail","object-body","xref-indirect","xref-empty-index","xref-size","xref-nested-hybrid","xref-width","xref-overlap","xref-odd-index","xref-generation","object-stream-number","object-stream-index","object-stream-self","object-stream-missing","prev-cycle","prev-offset","encrypted","hybrid","xref-offset","header","eof","startxref","root-type","root-direct","size","token","root-reference","generation","string","key","hex"};
   const char *streams[]={"invalid-length","cycle-length","bad-flate","unsupported-filter","bad-parameters","unsupported-predictor","trailing"}; size_t i;
-  CHECK(argc==2); content_operations(); serialization(); filter_cases(argv[1]); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
+  CHECK(argc==2); content_operations(); content_boundaries(); serialization(); filter_cases(argv[1]); basic(argv[1],"pdf-objects.pdf"); basic(argv[1],"pdf-objects-predictor-one.pdf"); basic(argv[1],"pdf-stream-whitespace.pdf");
   basic(argv[1],"pdf-stream-after-classic.pdf"); incremental(argv[1],"pdf-classic-after-stream.pdf");
   basic(argv[1],"pdf-xref-predictor.pdf"); basic(argv[1],"pdf-hybrid-predictor.pdf"); basic(argv[1],"pdf-xref-stream.pdf"); basic(argv[1],"pdf-object-stream.pdf"); basic(argv[1],"pdf-hybrid.pdf");
   basic(argv[1],"pdf-xref-index.pdf"); basic(argv[1],"pdf-xref-wide.pdf"); basic(argv[1],"pdf-xref-default-type.pdf");
