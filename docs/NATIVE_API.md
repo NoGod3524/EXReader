@@ -1459,8 +1459,7 @@ CSS `hyphens` 支持 auto/manual/none/inherit，默认 manual。auto 与已配�
 缓存分页器可在错误修正后重试。无可用断点时保留现有字素紧急换行/裁剪策略。
 
 内置英文规则：`exr_hyphenator_create_builtin(left,right,auto_default,...)` 内嵌 hyph-en-us
-(Kuiken 2005，`data/hyph-en-us.pat.txt`，许可见 `data/hyph-en-us.LICENSE.txt`)，语言键 `en`、
-`en-us`；其他语言（含 zh）不断词。left/right=0 时两侧至少 3 个字素。`auto_default=0` 时
+(Kuiken 2005，`data/hyph-en-us.pat.txt`，许可见 `data/hyph-en-us.LICENSE.txt`)，规则注册在 `en`；`en-US` 等英语标签通过 RFC 4647 回退复用，其他语言（含 zh）不断词。left/right=0 时两侧至少 3 个字素。`auto_default=0` 时
 仍只有显式 `hyphens:auto` 才断词；非零时未声明 `hyphens` 的文字在其语言与所在块语言
 都有规则时按 auto 处理，显式 manual/none 与中文段落不受影响。撇号、连字符、en dash
 两侧不产生断点。断点处只生成 U+2010 的 GENERATED 字形（start==end），逻辑文本不变。

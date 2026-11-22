@@ -22,8 +22,11 @@ static void rules(void) {
   render(h,"en","algorithm",out);     CHECK(!strcmp(out,"al-go-rithm") || !strcmp(out,"algo-rithm"));
   render(h,"en","extraordinarily",out); CHECK(strchr(out,'-'));
   /* Default minimums are 3 graphemes on both sides: never a break within 3 of an edge. */
-  { unsigned char bits[1025]={0}; const char *w="international"; size_t i,n=strlen(w);
-    OK(exr_hyphenator_breaks(h,"en",w,n,bits,NULL,&error)); for(i=0;i<n;i++) if(bits[i]) CHECK(i>=3 && n-i>=3); }
+  { const char w[]="international"; unsigned char bits[sizeof(w)],regional[sizeof(w)]; size_t i,n=sizeof(w)-1;
+    OK(exr_hyphenator_breaks(h,"en",w,n,bits,NULL,&error)); CHECK(memchr(bits,1,sizeof(bits)));
+    for(i=0;i<n;i++) if(bits[i]) CHECK(i>=3 && n-i>=3);
+    OK(exr_hyphenator_breaks(h,"en-US",w,n,regional,NULL,&error)); CHECK(!memcmp(bits,regional,sizeof(bits)));
+    OK(exr_hyphenator_breaks(h,"EN-us-x-edition",w,n,regional,NULL,&error)); CHECK(!memcmp(bits,regional,sizeof(bits))); }
   render(h,"en","cat",out); CHECK(!strcmp(out,"cat"));
   render(h,"en","table",out); CHECK(!strcmp(out,"table")); /* ta-ble leaves 2 letters on one side */
   /* No rules for other languages: no breaks at all, even for long English words. */

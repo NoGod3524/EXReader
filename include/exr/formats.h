@@ -21,9 +21,10 @@ typedef struct {
    Paths with '..' or '.' components, absolute paths, drive names and ADS are
    rejected at open. At most 10000 entries and four coders per block. Encryption,
    multi-input coders, external names/folder tables and anti-items return EXR_UNSUPPORTED.
-   A solid block is decoded in full for each extraction; max_unpack_size bounds
-   the whole block, not just the requested file. Oversized body blocks may be
-   listed but cannot be extracted. Peak decode buffers <= 2*the applicable limit,
+   A solid block is decoded in full on a cache miss. An archive can retain one
+   solid block up to 8 MiB. max_unpack_size bounds the whole decoded block.
+   Oversized body blocks may be listed but cannot be extracted. Peak decode
+   buffers <= 2*the applicable limit,
    plus metadata and at most 6 MiB of LZMA probability tables. No disk writes.
    Source ownership transfers only on success. Reads retry short callbacks and
    honor source.control cancellation. Calls on an object must be serialized. */

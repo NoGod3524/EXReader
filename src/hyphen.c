@@ -982,13 +982,9 @@ exr_status exr_hyphenator_create_patterns(const exr_hyphen_pattern_input *inputs
 }
 exr_status exr_hyphenator_create_builtin(unsigned left_min,unsigned right_min,int auto_default,
                                          const exr_control *control,exr_hyphenator **out,exr_error *e) {
-  exr_hyphen_pattern_input inputs[2];exr_status status;
-  if(!out) return exr_fail(e,EXR_ARGUMENT,"Missing hyphenator output");
-  *out=NULL;
-  inputs[0]=(exr_hyphen_pattern_input){sizeof(*inputs),"en",exr_hyphen_en_us_patterns,sizeof(exr_hyphen_en_us_patterns),
+  const exr_hyphen_pattern_input input={sizeof(input),"en",exr_hyphen_en_us_patterns,sizeof(exr_hyphen_en_us_patterns),
                                        left_min ? left_min : 3,right_min ? right_min : 3};
-  inputs[1]=inputs[0];inputs[1].language="en-us";
-  status=exr_hyphenator_create_patterns(inputs,2,0,control,out,e);
+  exr_status status=exr_hyphenator_create_patterns(&input,1,0,control,out,e);
   if(status==EXR_OK) (*out)->auto_default=!!auto_default;
   return status;
 }
